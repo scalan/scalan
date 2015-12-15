@@ -107,12 +107,30 @@ lazy val effects = Project("scalan-effects", file("effects"))
   .dependsOn(collections % allConfigDependency)
   .settings(commonSettings)
 
-lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
-  .dependsOn(collections % "compile->compile;it->test", linalg % "compile->compile;it->test", graphs % "compile->compile;it->test", pointers % "compile->compile;it->test", effects % "compile->compile;it->test")
+lazy val backendCore = Project("scalan-lms-backend-core", file("lms-backend") / "core")
+  .dependsOn(core % "compile->compile;it->test")
+  .configs(IntegrationTest).settings(commonBackendSettings)
+
+lazy val backendCollections = Project("scalan-lms-backend-collections", file("lms-backend") / "collections")
+  .dependsOn(backendCore, collections % "compile->compile;it->test")
+  .configs(IntegrationTest).settings(commonBackendSettings)
+
+lazy val backendLinAlg = Project("scalan-lms-backend-linear-algebra", file("lms-backend") / "linear-algebra")
+  .dependsOn(backendCollections, linalg % "compile->compile;it->test")
+  .configs(IntegrationTest).settings(commonBackendSettings)
+
+lazy val backendPointers = Project("scalan-lms-backend-pointers", file("lms-backend") / "pointers")
+  .dependsOn(backendCore, pointers % "compile->compile;it->test")
+  .configs(IntegrationTest).settings(commonBackendSettings)
+
+// contains the integration tests for library modules which don't have their own backend module
+// and tests which use multiple modules together
+lazy val backendIT = Project("scalan-lms-backend-tests", file("lms-backend") / "tests")
+  .dependsOn(backendCollections % "compile->compile;it->it", backendLinAlg % "compile->compile;it->it", graphs % "compile->compile;it->test", backendPointers % "compile->compile;it->it", effects % "compile->compile;it->test")
   .configs(IntegrationTest).settings(commonBackendSettings)
 
 lazy val root = Project("scalan", file("."))
   .aggregate(common, meta, core,
     collections, linalg, graphs, pointers, effects,
-    backend)
+    backendCore, backendLinAlg, backendPointers, backendIT)
   .settings(buildSettings, publishArtifact := false)

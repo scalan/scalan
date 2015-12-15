@@ -177,7 +177,7 @@ trait HelloScalan extends MatricesDsl {
 
 It can be seen to be very close to a usual Scala program, except for use of `Rep` type constructor and `fun` method. Note that `run` takes core types as argument and returns core types, not matrices and vectors themselves.
 
-This example is available [in the repository](lms-backend/src/it/scala/HelloScalan.scala). Please raise an issue if you find it isn't up-to-date!
+This example is available [in the repository](lms-backend/tests/src/it/scala/HelloScalan.scala). Please raise an issue if you find it isn't up-to-date!
 
 Now, there are two ways in which Scalan can work with this program:
 

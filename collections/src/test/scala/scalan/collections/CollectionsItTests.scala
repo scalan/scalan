@@ -81,14 +81,11 @@ trait CollectionsProg extends CollectionsDsl with CollectionExamples {
   }
 }
 
-/**
- *  Tests that very simple examples are run correctly
- */
 abstract class CollectionsItTests extends BaseItTests[CollectionsProg](new CollectionsDslSeq with CollectionsProg) {
 
-  class ProgCommunityExp extends CollectionsDslExp with JNIExtractorOpsExp with CollectionsProg
+  class CollectionsProgExp extends CollectionsDslExp with JNIExtractorOpsExp with CollectionsProg
 
-  test ("convertPairCollectionSOA")  {
+  test("convertPairCollectionSOA")  {
     val in = Array(Array((1,2.0),(2,3.0)), Array((3,4.0), (5,6.0)))
     compareOutputWithSequential(_.convertPairCollectionSOA)(in)
   }

@@ -104,4 +104,8 @@ object ReflectionUtil {
     } else
       clazz
   }
+
+  // Implemented in internal/Symbols.scala, but not exposed
+  /** True if the symbol represents an anonymous class */
+  def isAnonymousClass(symbol: Symbol) = symbol.isClass && symbol.name.toString.contains("$anon")
 }
