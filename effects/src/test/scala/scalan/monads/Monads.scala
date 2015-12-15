@@ -9,7 +9,7 @@ import scala.reflect.runtime.universe._
  */
 import language.higherKinds // Disable warnings for type constructor polymorphism
 
-trait Monads extends Base  with ListOps { self: MonadsDsl =>
+trait Monads extends Base with ListOps { self: MonadsDsl =>
 
   trait Monad[F[_]] extends Functor[F] {
     implicit def thisCont: Cont[F] = this

@@ -19,6 +19,13 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     val implicitArgs = entity.implicitArgs.args
     def implicitArgsDecl(prefix: String = "") =
       implicitArgs.opt(args => s"(implicit ${args.rep(a => s"$prefix${a.name}: ${a.tpe}")})")
+    def implicitArgsDeclConcreteElem = {
+      implicitArgs.opt(args => s"(implicit ${args.rep(a => {
+                                 val declared = entity.isInheritedDeclared(a.name, module)
+                                 val defined = entity.isInheritedDefined(a.name, module)
+                                 s"${(declared || defined).opt("override ")} val ${a.name}: ${a.tpe}"
+                                           })})")
+    }
     val implicitArgsUse = implicitArgs.opt(args => s"(${args.rep(_.name)})")
     val implicitArgsOrParens = if (implicitArgs.nonEmpty) implicitArgsUse else "()"
     val optBaseType = entity.optBaseType
@@ -133,7 +140,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     def entityElemMethodName(name: String) = StringUtil.lowerCaseFirst(name) + "Element"
 
     // TODO remove this hack
-    private[this] val highOrderTpes = Set("Array", "List", "ArrayBuffer", "Thunk")
+    private[this] val highOrderTpes = Set("Array", "List", "ArrayBuffer", "Thunk", "Collection", "Seq")
     def tpeToElement(t: STpeExpr, env: List[STpeArg]): String = t match {
       case STpePrimitive(name,_) => name + "Element"
       case STpeTuple(List(a, b)) => s"pairElement(${tpeToElement(a, env)},${tpeToElement(b, env)})"
@@ -454,7 +461,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |  // familyElem
         |  class $elemTypeDecl${e.implicitArgsDecl("_")}
         |    extends $parentElem {
-        |${e.implicitArgs.opt(_.rep(a => s"    def ${a.name} = _${a.name}", "\n"))}
+        |${e.implicitArgs.opt(_.rep(a => s"    ${(e.entity.isInheritedDeclared(a.name, e.module)).opt("override ")}def ${a.name} = _${a.name}", "\n"))}
         |    ${overrideIfHasParent}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
         |    ${overrideIfHasParent}lazy val tyArgSubst: Map[String, TypeDesc] = {
         |      Map(${e.tpeSubstStr})
@@ -622,7 +629,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         s"""
         |$defaultImpl
         |  // elem for concrete class
-        |  class $elemTypeDecl(val iso: Iso[$dataTpe, ${c.typeUse}])$implicitArgsDecl
+        |  class $elemTypeDecl(val iso: Iso[$dataTpe, ${c.typeUse}])${c.implicitArgsDeclConcreteElem}
         |    extends ${parent.name}Elem[${join(parentTpeArgsStr, c.typeUse)}]
         |    with $concreteElemSuperType {
         |    override lazy val parent: Option[Elem[_]] = Some($parentElem)
