@@ -626,6 +626,6 @@ object Segments_Module extends scalan.ModuleInfo {
 }
 }
 
-trait SegmentsDsl extends impl.SegmentsAbs {self: SegmentsDsl =>}
-trait SegmentsDslSeq extends impl.SegmentsSeq {self: SegmentsDslSeq =>}
-trait SegmentsDslExp extends impl.SegmentsExp {self: SegmentsDslExp =>}
+trait SegmentsDsl extends impl.SegmentsAbs
+trait SegmentsDslSeq extends impl.SegmentsSeq
+trait SegmentsDslExp extends impl.SegmentsExp

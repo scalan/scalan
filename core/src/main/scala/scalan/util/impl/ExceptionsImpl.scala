@@ -273,5 +273,5 @@ object Exceptions_Module extends scalan.ModuleInfo {
 }
 }
 
-trait ExceptionsDsl extends impl.ExceptionsAbs {self: ExceptionsDsl =>}
-trait ExceptionsDslExp extends impl.ExceptionsExp {self: ExceptionsDslExp =>}
+trait ExceptionsDsl extends impl.ExceptionsAbs
+trait ExceptionsDslExp extends impl.ExceptionsExp

@@ -344,6 +344,6 @@ object Kinds_Module extends scalan.ModuleInfo {
 }
 }
 
-trait KindsDsl extends impl.KindsAbs {self: KindsDsl =>}
-trait KindsDslSeq extends impl.KindsSeq {self: KindsDslSeq =>}
-trait KindsDslExp extends impl.KindsExp {self: KindsDslExp =>}
+trait KindsDsl extends impl.KindsAbs
+trait KindsDslSeq extends impl.KindsSeq
+trait KindsDslExp extends impl.KindsExp

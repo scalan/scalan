@@ -767,4 +767,4 @@ object Fronts_Module extends scalan.ModuleInfo {
 }
 }
 
-trait FrontsDsl extends impl.FrontsAbs {self: FrontsDsl =>}
+trait FrontsDsl extends impl.FrontsAbs

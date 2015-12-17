@@ -391,5 +391,5 @@ object HashSets_Module extends scalan.ModuleInfo {
 }
 }
 
-trait HashSetsDsl extends impl.HashSetsAbs {self: HashSetsDsl =>}
-trait HashSetsDslExp extends impl.HashSetsExp {self: HashSetsDslExp =>}
+trait HashSetsDsl extends impl.HashSetsAbs
+trait HashSetsDslExp extends impl.HashSetsExp

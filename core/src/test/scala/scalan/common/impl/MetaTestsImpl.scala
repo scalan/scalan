@@ -554,5 +554,5 @@ object MetaTests_Module extends scalan.ModuleInfo {
 }
 }
 
-trait MetaTestsDslSeq extends impl.MetaTestsSeq {self: MetaTestsDslSeq =>}
-trait MetaTestsDslExp extends impl.MetaTestsExp {self: MetaTestsDslExp =>}
+trait MetaTestsDslSeq extends impl.MetaTestsSeq
+trait MetaTestsDslExp extends impl.MetaTestsExp

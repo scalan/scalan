@@ -610,4 +610,4 @@ object Seqs_Module extends scalan.ModuleInfo {
 }
 }
 
-trait SeqsDsl extends impl.SeqsAbs {self: SeqsDsl =>}
+trait SeqsDsl extends impl.SeqsAbs

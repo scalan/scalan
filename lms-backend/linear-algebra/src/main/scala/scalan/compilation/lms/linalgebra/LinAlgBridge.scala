@@ -2,17 +2,7 @@ package scalan.compilation.lms.linalgebra
 
 import scalan.compilation.lms.collections.CollectionsBridgeScala
 import scalan.compilation.lms.{CoreBridge, CoreLmsBackend}
-import scalan.compilation.lms.linalgebra.VectorOpsExp
 import scalan.linalgebra.{VectorsDslExp, LinAlgMethodMappingDSL}
-
-trait LinAlgBridge extends CoreBridge with LinAlgMethodMappingDSL {
-  override val scalan: VectorsDslExp
-  import scalan._
-
-  val lms: CoreLmsBackend with VectorOpsExp
-
-  override protected def lmsMethodName(d: Def[_], primitiveName: String): String = d match {
-    case _: DotSparse[_] => "array_dotProductSparse"
 
 trait LinAlgBridge extends CoreBridge with LinAlgMethodMappingDSL {
   override val scalan: VectorsDslExp
