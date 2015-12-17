@@ -9,7 +9,7 @@ import scalan.collections.{CollectionsDsl, CollectionsDslSeq, CollectionsDslExp}
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.unchecked.uncheckedVariance
 
-trait Vectors { self: MatricesDsl =>
+trait Vectors { self: VectorsDsl =>
 
   type Vector[T] = Rep[AbstractVector[T]]
 
@@ -49,8 +49,6 @@ trait Vectors { self: MatricesDsl =>
     def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T]
 
     def /^(other: Rep[T])(implicit f: Fractional[T]): Vector[T] = *^ (toRep(f.one) / other)
-
-    def *(mat: Rep[AbstractMatrix[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[AbstractMatrix[T]] = ???
 
     def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T]
 
@@ -506,7 +504,7 @@ trait Vectors { self: MatricesDsl =>
   }
 }
 
-trait VectorsDsl extends CollectionsDsl with impl.VectorsAbs { self: MatricesDsl =>
+trait VectorsDsl extends CollectionsDsl with impl.VectorsAbs {
 
   type VectorCompanion = Rep[AbstractVectorCompanion]
 
@@ -534,12 +532,10 @@ trait VectorsDsl extends CollectionsDsl with impl.VectorsAbs { self: MatricesDsl
     def map[R: Elem](f: Rep[T] => Rep[R]): Vector[R] = vector.mapBy(fun(f))
 
     def filter(f: Rep[T] => Rep[Boolean]): Vector[T] = vector.filterBy(fun(f))
-
-    //def flatMap[R: Elem](f: Rep[T] => Coll[R]): Matrix[R] = matrix.flatMapBy(fun(f))
   }
 }
 
-trait VectorsDslSeq extends CollectionsDslSeq with impl.VectorsSeq { self: MatricesDslSeq =>
+trait VectorsDslSeq extends CollectionsDslSeq with impl.VectorsSeq {
 
   def dotSparse[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): Rep[T] = {
@@ -574,7 +570,7 @@ trait VectorsDslSeq extends CollectionsDslSeq with impl.VectorsSeq { self: Matri
   }
 }
 
-trait VectorsDslExp extends CollectionsDslExp with impl.VectorsExp { self: MatricesDslExp =>
+trait VectorsDslExp extends CollectionsDslExp with impl.VectorsExp {
   def dotSparse[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): Rep[T] = {
     DotSparse(xIndices.arr, xValues.arr, yIndices.arr, yValues.arr)

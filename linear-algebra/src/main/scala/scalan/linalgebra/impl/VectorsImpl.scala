@@ -10,7 +10,7 @@ import scalan.meta.ScalanAst._
 package impl {
 // Abs -----------------------------------
 trait VectorsAbs extends scalan.ScalanDsl with Vectors {
-  self: MatricesDsl =>
+  self: VectorsDsl =>
 
   // single proxy for each type family
   implicit def proxyAbstractVector[T](p: Rep[AbstractVector[T]]): AbstractVector[T] = {
@@ -407,7 +407,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
 
 // Seq -----------------------------------
 trait VectorsSeq extends scalan.ScalanDslSeq with VectorsDsl {
-  self: MatricesDslSeq =>
+  self: VectorsDslSeq =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs {
   }
 
@@ -470,7 +470,7 @@ trait VectorsSeq extends scalan.ScalanDslSeq with VectorsDsl {
 
 // Exp -----------------------------------
 trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
-  self: MatricesDslExp =>
+  self: VectorsDslExp =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs {
   }
 
@@ -1807,18 +1807,6 @@ trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
       }
     }
 
-    object * {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(mat, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$times" =>
-          Some((receiver, mat, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object pow_^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[Double], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(order, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "pow_$up" =>
@@ -1920,7 +1908,7 @@ trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
 }
 
 object Vectors_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAOVYTWwbRRSedfwT/zT9oSkFERGCoaKCOEGgHnKoguNAkJtE2bRCpioar8fOlNnZzc44sjlUnCoEN8QViUpckHpBnFClCgkhIQ49IYTEgROnUlT1QMUBxJvx7nod2/kBWkXCh9Hu7Jv33nzf92bf+vodlBAeelZYmGE+bROJp019PS9k3ixxSWX7nFNrMrJA6iedrz6Z/ezxL2PocAUlN7BYEKyC0p2LUssNr02yWUZpzC0ipOMJiZ4q6wgFy2GMWJI6vEBtuylxlZFCmQo5V0bxqlNrb6IryCijI5bDLY9IYhYZFoIIf36UqIxoeJ/W9+0VtxuDF9QuCpFdrHuYSkgfYhzp2K8R12xzh7dticb81FZclRbYpKjtOp4MQqTA3YZTC27jHMMEOla+jLdwAUI0Cqb0KG/AyqyLrbdxgyyDiTKPQ8KCsPp629X3I2WUEWQTAFqyXaZnWi5CCBh4UScx3cVnOsRnWuGTN4lHMaPvYPVw1XNabdT5GSMItVxw8fwuLgIPpMRr+fcvWm/eN7N2TC1uqVRSeodJcPTkEDVoKgDHb9c+FPdevXYmhjIVlKFiviqkhy0ZpdxHK4s5d6TOOQQQew1ga2oYWzrKPNhsk0TacmwXc/DkQ5kDnhi1qFTGai7nszME+pR0SWBqtFwj3O/kkP1q3RQxY6u3H3vhmV9Lb8RQrDdEGlyaIHwvcApyCtC4ACT4QCT1eFgiY10jrYZ0qzumdkgihOPU7d9q38ygi7EQRD/m3ngDFwnx4w/Z7587G0OjFa3yRYYbFcBRlBixV7yiw2UFjTpbxOs8SW1hpq4G8piqkTpuMumjG4VlBGCRaHJoPbpEYTantW8EAGQ78l12OMkvruZ/N7/76LpSp4dynSedAv2Lnvnzp7G61MKVKEElsUWA7wgUdi/imWJYDnuioktIphPVdGxydOoevXTtA6mhN1q91b9SvQz+5/S6J3ZgITiFPr96dfzup289oqtntEqljd38zD5qJ5D6A6wN1IvVWNE/jbWSZrc97BV8BNXA4tFei2I011QUdDWOh7N6mACOjy8QLsiAxRORZZGkThqBrLSRRDGyHuQSV1LfVQkSZSMxtZewyiaG8asRPLFWPs7unL0ZQ4nXUaIOxSPKKFF1mrwWUAOvNkla8pVgzuilBqjAHrZDKvRvEnX3uy1jbZg1diRlj6dQH5BoG5BxXW1Di60/rz4PSUZ4Q24M8OGhp4cju+pRG977W+Tlr2+cv3tzOaGP4mP+EXQBsybpvIV9ELuAqkPCmIFIS1wO3vEpPZ4+YJqH8GLQ4gep+UjMqObVOH+gdDgGvVuFeM4Sr1E4NPdx/KuhEo04OMAhP4BW1n/0ehkUSQ3n+933ZXnA1Tpuwpn1sI/oXDTowdZrLtBrtFmJK+3s2rzB4bfedBl56cYfl9579zVX9yB9fWdENv9PBZ6IimH2YUnwUE/U/WswgkFyIKoj0DD+e4UOwW4HNrOqN1zENmXtPVO5B5Z2YrkDUP8X1D9FVY0/d218w5QPm0RH/YJjlGPWIFUP+3h4aGpILZp+0wykXLn/8fLpW1/8ovuQjGq/4buFh38aRPuPbciew9CowEtrQbBIzqA51ZLrfP8GlPvKf5URAAA="
+  val dump = "H4sIAAAAAAAAAOVYTWwbRRSedew4ttP0h6YUREQIhooK7ASBesihCo4DQSaJsm6FTFU0Xo+dKbOzm51xZHOoOFUIbogrEpW4IPWCOKFKFRJCQhw4IYTUQ0+cSlHVAxUHEG/Gu+t1bOcHaBUJH0a7s2/ee/N935t962t3UEJ46FlhYYZ5ziYS50x9vSBk1ixySWX7DafWZGSR1E86X3869/njX8XQ4Qoa3cBiUbAKSnUuii03vDbJZgmlMLeIkI4nJHqqpCPkLYcxYknq8Dy17abEVUbyJSrkfAnFq06tvYkuI6OEjlgOtzwiiVlgWAgi/PkxojKi4X1K37dX3W4Mnle7yEd2UfYwlZA+xDjSsV8nrtnmDm/bEk34qa26Ki2wSVLbdTwZhEiCuw2nFtzGOYYJdKx0CW/hPIRo5E3pUd6AlRkXW+/gBlkBE2Ueh4QFYfVy29X3IyWUFmQTAFq2XaZnWi5CCBh4USeR6+KTC/HJKXyyJvEoZvRdrB6ueU6rjTo/YwShlgsunt/FReCBFHkt+8EF6637ZsaOqcUtlUpS73AUHD05RA2aCsDxu/WPxL1Xr56JoXQFpalYqArpYUtGKffRymDOHalzDgHEXgPYmhnGlo6yADbbJJGyHNvFHDz5UI4DT4xaVCpjNTfuszME+qR0SWBqtFwj3O/0kP1q3RQwY2u3H3vhmV+Lb8ZQrDdEClyaIHwvcApyCtA4DyT4QIzq8bBERlkjrYZUqzsmd0gihOPU7d9q386iC7EQRD/m3ngDFwnx80+ZH587G0NjFa3yJYYbFcBRFBmxV72Cw2UFjTlbxOs8SW5hpq4G8piskTpuMumjG4VlBGCRaHpoPbpEYTavtW8EAGQ68l1xOMkurWV/N7//+JpSp4fGO086BfoXPfPnzYm61MKVKEElsUWA7wgUdi/i6UJYDnuioktIuhPVdGxydOYevXj1Q6mhN1q91b9avQT+5/W6J3ZgITiFvrhyZfLuZ28/oqtnrEqljd3s7D5qJ5D6A6wN1IvVRME/jbWS5rY97BV8BNXA4tFei0I012QUdDVOhrN6mAKOjy8SLsiAxVORZZGkThqBrLSRRDFSDnKJK6nvqgSJMpGY2ktYZVPD+NUInlgvHWd3zt6IocTrKFGH4hEllKg6TV4LqIFXmyQt+UowZ/RSA1RgD9shFfo3jbr73ZaxNswYO5Kyx1OoD0i0Dci4rrahxdafV5+HUUZ4Q24M8OGhp4cju+ZRG977W+Tlb66fu3tjJaGP4mP+EXQesybpvIV9ELuAqkPCmIVIy1wO3vEpPZ4+YJqH8GLQ4gep+UjMqObVuHCgdDgBvVuFeM4yr1E4NPdx/KuhEo04OMAhP4BW1n/0ehkUSQ3n+t33ZXnA1Tppwpn1sI/o8WjQg63X8UCv0WYlrrSza/MGh1+56TLy0vU/Lr7/3muu7kH6+s6IbP6fCjwRFcPcw5LgoZ6o+9dgBIPRgaiOQMP47xU6BLsd2Myo3nAJ25S190zlHljaieUOQP1fUP8UVTXe6tr4hkkfNomO+gXHKMesQaoe9vHw0MyQWjT9phlIuXz/k5XTP3z5i+5D0qr9hu8WHv5pEO0/tr0x/AQWBYukDJJTHblO92/EwF9YlBEAAA=="
 }
 }
 
