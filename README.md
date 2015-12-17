@@ -158,10 +158,9 @@ There are certain rules how to declare UDTs that should be obeyed in order to ma
 
 ### Program structure and example
 
-Your program needs to extends `Scalan` trait (along with any traits describing the DSLs you use) or `ScalanCommunity` if you want to use `community-edition` instead of `core`. Here is a very simple example program:
+Your program needs to extends `ScalanDsl` trait (along with any traits describing the DSLs you use). Here is a very simple example program:
 ~~~scala
-// ScalanCommunityDsl includes ScalanCommunity and all DSLs defined in that project
-trait HelloScalan extends ScalanCommunityDsl {
+trait HelloScalan extends MatricesDsl {
   lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0).length
@@ -187,7 +186,7 @@ Now, there are two ways in which Scalan can work with this program:
 Run it without optimizations in order to ensure it works as desired and debug if necessary. This is done by mixing in `ScalanCommunityDslSeq` (and `Seq` versions of any additional DSLs used by your program):
 ~~~scala
 // to run: scalan-lms-backend/it:runMain HelloScalanSeq
-object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
+object HelloScalanSeq extends HelloScalan with MatricesDslSeq {
   def result = run(input)
 
   def main(args: Array[String]) = {
@@ -206,7 +205,7 @@ object HelloScalanExp {
   // allows use of standard Scala library, commented out to make tests faster
   // override val defaultCompilerConfig = CompilerConfig(Some("2.11.7"), Seq.empty)
 
-  val program = new HelloScalan with ScalanCommunityDslExp
+  val program = new HelloScalan with MatricesDslExp
 
   val compiler = new CommunityLmsCompilerScala(program)
   import compiler._

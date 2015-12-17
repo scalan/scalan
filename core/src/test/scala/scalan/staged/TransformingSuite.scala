@@ -6,11 +6,11 @@ import java.lang.reflect.Method
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.BaseShouldTests
 
-import scalan.ScalanCtxExp
+import scalan.ScalanDslExp
 
 class TransformingSuite extends BaseShouldTests {
 
-  def getCtx = new ScalanCtxExp with GraphVizExport {
+  def getCtx = new ScalanDslExp with GraphVizExport {
     override def isInvokeEnabled(d: Def[_], m: Method) = true
 
     lazy val test = fun { xyz: Rep[(Int, (Int, Int))] =>

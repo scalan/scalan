@@ -3,10 +3,10 @@ package scalan.compilation.lms
 import scalan.compilation.lms.common.{JNILmsOps, JNILmsOpsExp}
 import scalan.primitives.AbstractStringsDslExp
 import scalan.util.StringUtil
-import scalan.{ScalanCtxExp, JNIExtractorOpsExp}
+import scalan.{ScalanDslExp, JNIExtractorOpsExp}
 
 trait JNIBridge extends CoreBridge {
-  override val scalan: ScalanCtxExp with JNIExtractorOpsExp with AbstractStringsDslExp
+  override val scalan: ScalanDslExp with JNIExtractorOpsExp with AbstractStringsDslExp
   import scalan._
 
   val lms: CoreLmsBackend with JNILmsOpsExp

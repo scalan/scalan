@@ -1,17 +1,16 @@
 package scalan.it.lms
 
-import scalan.compilation.lms.CommunityBridge
+import scalan.collections.{MapItTests, SimpleMapProg}
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.uni.LmsCompilerUni
-import scalan.{CommunityMethodMappingDSL, ScalanCommunityDslExp, JNIExtractorOpsExp}
-import scalan.collections.{SimpleMapProg, MapItTests}
-import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.{JNIExtractorOpsExp, ScalanDslExp}
 
 class LmsMapItTests extends MapItTests {
-  class ProgExp extends ScalanCommunityDslExp with SimpleMapProg with JNIExtractorOpsExp
+  class ProgExp extends ScalanDslExp with SimpleMapProg with JNIExtractorOpsExp
 
-  val progStaged = new CommunityLmsCompilerScala(new ProgExp) with CommunityBridge
+  val progStaged = new LmsCompilerScala(new ProgExp)
 
-  val progStagedU = new LmsCompilerUni(new ProgExp) with CommunityBridge with CommunityMethodMappingDSL
+  val progStagedU = new LmsCompilerUni(new ProgExp)
 
   // TODO lack of maps support in LMS C++ backend
   val defaultCompilers = compilers(progStaged/*, progStagedU*/)

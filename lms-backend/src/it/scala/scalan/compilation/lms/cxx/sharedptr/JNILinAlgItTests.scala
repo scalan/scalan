@@ -7,9 +7,9 @@ package sharedptr
 import java.io.File
 
 import scalan.it.BaseItTests
-import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslExp, VectorsDslExp}
+import scalan.linalgebra._
 
-trait JNILinAlgProg extends ScalanCommunityDsl with LinearAlgebraExamples with JNIExtractorOps {
+trait JNILinAlgProg extends LinearAlgebraExamples with JNIExtractorOps {
   lazy val ddmvm_jni = JNI_Wrap(ddmvm)
 
   lazy val dsmvm_jni = JNI_Wrap(dsmvm)
@@ -25,9 +25,9 @@ trait JNILinAlgProg extends ScalanCommunityDsl with LinearAlgebraExamples with J
 
 class JNILinAlgItTests extends BaseItTests[JNILinAlgProg](???) {
 
-  class ProgExp extends ScalanCommunityDslExp with JNILinAlgProg with JNIExtractorOpsExp
+  class ProgExp extends MatricesDslExp with JNILinAlgProg with JNIExtractorOpsExp
 
-  val prog = new LmsCompilerCxx(new ProgExp) with JNIBridge with CommunityBridge with CommunityMethodMappingDSL
+  val prog = new LmsCompilerCxx(new ProgExp) with JNIBridge with LinAlgBridge
   implicit val cfg = prog.defaultCompilerConfig
 
   val defaultCompilers = compilers(prog)

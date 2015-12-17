@@ -1,22 +1,19 @@
 package scalan.it.lms
 
 import scalan._
-import scalan.util.FileUtil._
 import scalan.compilation.lms._
-import scalan.compilation.lms.scalac.{LmsCompilerScalaConfig, CommunityLmsCompilerScala}
+import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScalaConfig}
 import scalan.compilation.lms.source2bin.SbtConfig
 import scalan.compilation.lms.uni._
 import scalan.it.BaseItTests
-import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}
+import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslExp, MatricesDslSeq}
 
-trait LinAlgProg extends ScalanCommunityDsl with LinearAlgebraExamples
+abstract class LmsLinAlgItTests extends BaseItTests[LinearAlgebraExamples](new MatricesDslSeq with LinearAlgebraExamples) {
+  class ProgExp extends MatricesDslExp with JNIExtractorOpsExp with LinearAlgebraExamples
 
-abstract class LmsLinAlgItTests extends BaseItTests[LinAlgProg](new ScalanCommunityDslSeq with LinAlgProg) {
-  class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with LinAlgProg
+  val progStaged = new CommunityLmsCompilerScala(new ProgExp)
 
-  val progStaged = new CommunityLmsCompilerScala(new ProgExp) with CommunityBridge
-
-  val progStagedU = new LmsCompilerUni(new ProgExp) with CommunityBridge with CommunityMethodMappingDSL
+  val progStagedU = new CommunityLmsCompilerUni(new ProgExp)
 
   val compilerConfigU = LmsCompilerScalaConfig().withSbtConfig(SbtConfig(scalaVersion = "2.11.2"))
   

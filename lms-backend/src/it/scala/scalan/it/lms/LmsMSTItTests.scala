@@ -2,18 +2,18 @@ package scalan.it.lms
 
 import scalan.compilation.lms._
 import scalan.compilation.lms.cxx.LmsCompilerCxx
-import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.graphs.MST_example
 import scalan.it.BaseItTests
-import scalan.{ScalanCommunityDslExp, ScalanCtxSeq}
+import scalan.{ScalanDslExp, ScalanDslSeq}
 
-abstract class LmsMstItTests extends BaseItTests[MST_example](new ScalanCtxSeq with MST_example) {
+abstract class LmsMstItTests extends BaseItTests[MST_example](new ScalanDslSeq with MST_example) {
 
-  class ProgExp extends ScalanCommunityDslExp with MST_example
+  class ProgExp extends ScalanDslExp with MST_example
 
-  val progStaged = new CommunityLmsCompilerScala(new ProgExp) with CommunityBridge
+  val progStaged = new LmsCompilerScala(new ProgExp)
 
-  val progStagedCxx = new LmsCompilerCxx(new ProgExp) with CoreBridge
+  val progStagedCxx = new LmsCompilerCxx(new ProgExp)
 
   def sparseVectorData(arr: Array[Double]) = (arr.indices.toArray, (arr, arr.length))
 

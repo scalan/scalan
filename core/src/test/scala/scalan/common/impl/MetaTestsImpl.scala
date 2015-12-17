@@ -5,7 +5,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait MetaTestsAbs extends scalan.Scalan with MetaTests {
+trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
   self: MetaTestsDsl =>
 
   // single proxy for each type family
@@ -318,7 +318,7 @@ trait MetaTestsAbs extends scalan.Scalan with MetaTests {
 }
 
 // Seq -----------------------------------
-trait MetaTestsSeq extends scalan.ScalanSeq with MetaTestsDsl {
+trait MetaTestsSeq extends scalan.ScalanDslSeq with MetaTestsDsl {
   self: MetaTestsDslSeq =>
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }
@@ -367,7 +367,7 @@ trait MetaTestsSeq extends scalan.ScalanSeq with MetaTestsDsl {
 }
 
 // Exp -----------------------------------
-trait MetaTestsExp extends scalan.ScalanExp with MetaTestsDsl {
+trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
   self: MetaTestsDslExp =>
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }

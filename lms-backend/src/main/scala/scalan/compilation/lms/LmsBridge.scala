@@ -83,7 +83,7 @@ trait LmsBridge extends Passes {
             try {
               transformDef(m, fromGraph, s, d)
             } catch {
-              case e: Exception => !!!(s"Failed to transform ${s.toStringWithType} = $d\nCurrent mirror state: $m", e)
+              case e: Exception => !!!(s"Failed to transform ${s.toStringWithDefinition}\nCurrent mirror state: $m", e, s)
             }
         }
       }
@@ -144,7 +144,8 @@ trait LmsBridge extends Passes {
         }
         alternatives match {
           case List(method) => method
-          case _ => !!!(s"Multiple LMS method overloads with name $lmsMethodName and $paramsLength total parameters found")
+          case Nil => !!!(s"No LMS methods with name $lmsMethodName and $paramsLength total parameters found")
+          case _ => !!!(s"More than one LMS method with name $lmsMethodName and $paramsLength total parameters found:\n  ${alternatives.mkString("\n  ")}")
         }
       case m: MethodSymbol => m
     }

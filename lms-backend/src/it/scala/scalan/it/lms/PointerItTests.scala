@@ -7,8 +7,9 @@ import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.PointerBridge
 import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.it.BaseItTests
+import scalan.pointers.{PointerOpsExp, PointerOps}
 
-trait PointerProg extends ScalanCommunityDsl with PointerOps {
+trait PointerProg extends ScalanDsl with PointerOps {
   lazy val intPtr = fun { i: Rep[Int] =>
     val iPtr = scalarPtr(i)
     iPtr
@@ -40,9 +41,9 @@ trait PointerProg extends ScalanCommunityDsl with PointerOps {
 
 class PointerItTests extends BaseItTests[PointerProg](???) {
 
-  class ProgExp extends ScalanCommunityDslExp with PointerOpsExp with PointerProg
+  class ProgExp extends ScalanDslExp with PointerOpsExp with PointerProg
 
-  val progExp = new LmsCompilerCxx(new ProgExp) with PointerBridge with CommunityMethodMappingDSL
+  val progExp = new LmsCompilerCxx(new ProgExp) with PointerBridge
   val defaultCompilers = compilers(progExp)
   implicit val cfg = progExp.defaultCompilerConfig
 

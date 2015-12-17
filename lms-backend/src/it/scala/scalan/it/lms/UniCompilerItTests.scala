@@ -3,17 +3,16 @@ package scalan.it.lms
 import java.io.File
 
 import scalan._
-import scalan.compilation.lms.CommunityBridge
-import scalan.compilation.lms.uni.{LmsCompilerUni, NativeMethodsConfig}
+import scalan.compilation.lms.LinAlgBridge
+import scalan.compilation.lms.uni.{CommunityLmsCompilerUni, NativeMethodsConfig}
 import scalan.graphs.{GraphsDslExp, GraphsDslSeq}
 import scalan.it.BaseItTests
-import scalan.linalgebra.LinearAlgebraExamples
+import scalan.linalgebra.{MatricesDslExp, MatricesDslSeq, LinearAlgebraExamples}
 
 /**
  * Created by adel on 5/15/15.
  */
 
-//trait ProgUniTest extends ProgCommunity with MsfFuncs with LinearAlgebraExamples with CommunityMethodMappingDSL {
 trait UniCompilerTestProg extends MsfFuncs with LinearAlgebraExamples {
   lazy val nop = fun { p: Rep[Double] =>
     p
@@ -74,21 +73,21 @@ trait UniCompilerTestProg extends MsfFuncs with LinearAlgebraExamples {
     //              s & g  - superposition of 2 functions
     //              s & h  - superposition of 2 functions, second function called also directly
 
-    val x1 = x._1.map {y:Rep[Int] => test_config_f(y) + 1} . reduce
-    val x2 = x._2.map {y:Rep[Int] => test_config_s(test_config_g(y)) + 1} . reduce
-    val x3 = x._3.map {y:Rep[Int] => test_config_h(y) + 1} . reduce
+    val x1 = x._1.map {y:Rep[Int] => test_config_f(y) + 1}.reduce
+    val x2 = x._2.map {y:Rep[Int] => test_config_s(test_config_g(y)) + 1}.reduce
+    val x3 = x._3.map {y:Rep[Int] => test_config_h(y) + 1}.reduce
     x1 + x2 + test_config_s(test_config_h(x3))
   }
 
 }
 
-class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new ScalanCommunityDslSeq with UniCompilerTestProg with GraphsDslSeq) with GraphTestInputs {
+class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new GraphsDslSeq with MatricesDslSeq with UniCompilerTestProg) with GraphTestInputs {
 
   val in3Arrays = (Array(2, 3), (Array(1, 4), Array(1, -1)))
 
-  class ProgExp extends ScalanCommunityDslExp with UniCompilerTestProg with GraphsDslExp with JNIExtractorOpsExp
+  class ProgExp extends GraphsDslExp with MatricesDslExp with UniCompilerTestProg with JNIExtractorOpsExp
 
-  val progStaged = new LmsCompilerUni(new ProgExp) with CommunityBridge
+  val progStaged = new CommunityLmsCompilerUni(new ProgExp) with LinAlgBridge
 
   val defaultCompilers = compilers(progStaged)
 

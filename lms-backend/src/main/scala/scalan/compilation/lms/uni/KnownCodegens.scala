@@ -1,9 +1,9 @@
 package scalan.compilation.lms.uni
 
-import scalan.compilation.lms.common.JNILmsOpsExp
-import scalan.compilation.lms.cxx.sharedptr.CxxCodegen
+import scalan.compilation.lms.common.{PointerLmsOpsExp, JNILmsOpsExp}
+import scalan.compilation.lms.cxx.sharedptr.CxxCoreCodegen
 import scalan.compilation.lms.{BaseCodegen, LmsBackendFacade, JNIBridge}
-import scalan.{JNIExtractorOpsExp, ScalanCtxExp}
+import scalan.{JNIExtractorOpsExp, ScalanDslExp}
 
 /**
  * Created by adel on 6/8/15.
@@ -32,12 +32,12 @@ object KnownCodegens {
   }
 
 
-  def getAdapterByString[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp]
+  def getAdapterByString[ScalanCake <: ScalanDslExp with JNIExtractorOpsExp]
                 (sc: ScalanCake, xy: String): AdapterBase[ScalanCake] =
     getAdapter(sc, pairFromString(xy))
 
-  //[ScalanCake <: ScalanCtxExp, BackendCake <: LmsBackendFacade]
-  def getAdapter[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp]
+  //[ScalanCake <: ScalanDslExp, BackendCake <: LmsBackendFacade]
+  def getAdapter[ScalanCake <: ScalanDslExp with JNIExtractorOpsExp]
                 (sc: ScalanCake, xy: (CodegenType, CodegenType)): AdapterBase[ScalanCake] = {
     xy match {
       case (Scala, Cxx) =>  new AdapterScala2Cxx(sc)
@@ -45,17 +45,16 @@ object KnownCodegens {
     }
   }
 
-  //def getCodegenByString//???[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp with JNIBridge, BackendCake <: LmsBackendFacade with JNILmsOpsExp]
+  //def getCodegenByString//???[ScalanCake <: ScalanDslExp with JNIExtractorOpsExp with JNIBridge, BackendCake <: LmsBackendFacade with JNILmsOpsExp]
 
-  //[ScalanCake <: ScalanCtxExp, BackendCake <: LmsBackendFacade]
-  def getCodegen[BackendCake <: LmsBackendFacade with JNILmsOpsExp]
+  //[ScalanCake <: ScalanDslExp, BackendCake <: LmsBackendFacade]
+  def getCodegen[BackendCake <: LmsBackendFacade with JNILmsOpsExp with PointerLmsOpsExp]
                   (bc: BackendCake, codegen: CodegenType): BaseCodegen[BackendCake] = {
     codegen match {
-      case Cxx   =>  new CxxCodegen(bc)
+      case Cxx   =>  new CxxCoreCodegen(bc)
       case Scala =>  new JniCallCodegen(bc, null, "")
       case _ => throw new UnsupportedOperationException(s"Codegens: codegen '$codegen' not implemended yet")
     }
   }
 
 }
-

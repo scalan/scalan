@@ -8,7 +8,7 @@ import scala.lms.internal.{Expressions, GenericNestedCodegen, Effects}
 import scalan.compilation.lms.arrays.{ArrayMutationExp, ArrayLoopsFatExp}
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.graph.GraphCodegen
-import scalan.compilation.lms.scalac.ScalaCommunityCodegen
+import scalan.compilation.lms.scalac.ScalaCoreCodegen
 import scalan.util.FileUtil
 import java.util.HashMap
 
@@ -57,11 +57,11 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
   with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with ArrayMutationExp with OrderingOpsExp
   with IfThenElseFatExp with VariablesExpOpt
-  with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp with ExtNumOpsExp
+  with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with ExtNumOpsExp
 // FIXME using CastingOpsExpOpt instead of CastingOpsExp generates wrong code, perhaps due to LMS bug
 // Without it we get useless casts and more code than should be present
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
-  with WhileExpExt with ListOpsExpExt with FunctionsExpExt with PointerLmsOpsExp
+  with WhileExpExt with ListOpsExpExt with FunctionsExpExt
 // FIXME using StructFatExpOptCommon instead of StructExpOptCommon leads to bad code generated in LmsMstPrimeItTests
 // Not clear whether this is due to our or LMS error
 // Replace StructExpOptCommon with StructExp if needed to verify codegen works correctly;
@@ -323,10 +323,12 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
   def unitD[T: Manifest](x: T) = unit[T](x)
 }
 
-trait CoreLmsBackend extends LmsBackend
+abstract class CoreLmsBackend extends LmsBackend
 
-trait CommunityLmsBackendBase extends CoreLmsBackend with VectorOpsExp
+class ScalaCoreLmsBackend extends CoreLmsBackend { self =>
+  override val codegen = new ScalaCoreCodegen[self.type](self)
+}
 
-class CommunityLmsBackend extends CommunityLmsBackendBase { self =>
-  override val codegen = new ScalaCommunityCodegen[self.type](self)
+class ScalaLinAlgLmsBackend extends ScalaCoreLmsBackend with VectorOpsExp { self =>
+  override val codegen = new ScalaCoreCodegen[self.type](self) with ScalaGenVectorOps
 }

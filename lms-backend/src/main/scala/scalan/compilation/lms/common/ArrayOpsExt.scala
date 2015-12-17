@@ -15,6 +15,7 @@ trait ArrayOpsExt extends Base {
     array_insert(x, n, y)
   def infix_reverse[T:Manifest](x: Rep[Array[T]])(implicit pos: SourceContext): Rep[Array[T]] =
     array_reverse(x)
+  def arrayBinarySearch[A: Ordering: Manifest](idx: Rep[Int], idxs: Rep[Array[A]]): Rep[Int]
 }
 
 // Naming convention is e.g. `arrayNew` instead of `array_new` to
@@ -24,6 +25,8 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
 
   case class ArrayInsert[T](a: Exp[Array[T]], n: Exp[Int], y: Exp[T])(implicit val m: Manifest[T]) extends Def[Array[T]]
   case class ArrayReverse[T](x: Exp[Array[T]])(implicit val m: Manifest[T]) extends Def[Array[T]]
+  case class ArrayBinarySearch[A](idx: Exp[Int], idxs: Exp[Array[A]])(implicit val ordA: Ordering[A], val mA: Manifest[A])
+    extends Def[Int]
 
   def array_insert[T:Manifest](a: Exp[Array[T]], i: Exp[Int], x: Exp[T])(implicit pos: SourceContext) = ArrayInsert(a,i,x)
   def array_reverse[T:Manifest](x: Exp[Array[T]])(implicit pos: SourceContext) = ArrayReverse(x)
@@ -236,6 +239,9 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
   def arrayToList[A: Manifest](xs: Rep[Array[A]]): Rep[List[A]] =
     list_fromseq(array_toseq(xs))
 
+  def arrayBinarySearch[A: Ordering: Manifest](idx: Rep[Int], idxs: Rep[Array[A]]): Rep[Int] =
+    ArrayBinarySearch(idx, idxs)
+
   override def mirrorDef[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = {
     (e match {
       case ArrayToSeq(arr) =>
@@ -247,6 +253,7 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
       case a @ ArraySortBy(arr, by) => ArraySortBy(f(arr), f(by))(a.mA, a.mB)
       case e @ ArrayReverse(x) => ArrayReverse(f(x))(e.m)
       case ArrayInsert(l,i,r) => ArrayInsert(f(l),f(i),f(r))(mtype(manifest[A]))
+      case bs @ ArrayBinarySearch(i, is) => ArrayBinarySearch(f(i), f(is))(bs.ordA, mtype(bs.mA))
       case _ =>
         super.mirrorDef(e,f)
     }).asInstanceOf[Def[A]]
@@ -311,6 +318,8 @@ trait ScalaGenArrayOpsExt extends ScalaGenBase {
             |}"""
     case ArrayReverse(x) =>
       emitValDef(sym, src"$x.reverse")
+    case ds @ ArrayBinarySearch(i, is) =>
+      emitValDef(sym, src"java.util.Arrays.binarySearch($is, $i)")
     case _ => super.emitNode(sym, rhs)
   }
 }
@@ -318,6 +327,8 @@ trait ScalaGenArrayOpsExt extends ScalaGenBase {
 trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
   val IR: ArrayOpsExtExp with ArrayOpsExp
   import IR._
+
+  headerFiles += "scalan/algorithm.hpp"
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case a @ ArrayAppend(xs, v) =>
@@ -341,6 +352,8 @@ trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
            |std::copy($xs->begin(), $xs->begin() + $i, $sym->begin());
            |(*$sym)[$i] = $y;
            |std::copy($xs->begin() + $i, $xs->end(), $sym->begin() + $i + 1);"""
+    case ds @ ArrayBinarySearch(i, is) =>
+      emitValDef(sym, src"scalan::binary_search($is->begin(), $is->end(), $i);")
     // TODO implement for ArraySortBy
     case _ =>
       super.emitNode(sym, rhs)

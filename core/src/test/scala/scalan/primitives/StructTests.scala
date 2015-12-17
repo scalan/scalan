@@ -112,7 +112,7 @@ trait StructExamples extends Scalan with SegmentsDsl {
 class StructTests extends BaseViewTests {
 
   class Ctx extends TestCompilerContext {
-    class ScalanCake extends ScalanCtxExp with StructExamples with SegmentsDslExp {
+    class ScalanCake extends ScalanDslExp with StructExamples with SegmentsDslExp {
       // FIXME structWrapper test fails without this!
       override val cacheElems = false
 //      override val cachePairs = false
@@ -148,7 +148,7 @@ class StructTests extends BaseViewTests {
         element[Boolean])
     }
     override val compiler = new DummyCompiler(new ScalanCake)
-                           with StructsCompiler[ScalanCtxExp with StructExamples]
+                           with StructsCompiler[ScalanDslExp with StructExamples]
   }
 
   test("StructElem equality") {
@@ -363,7 +363,7 @@ class StructTests extends BaseViewTests {
   }
 }
 
-abstract class StructItTests extends BaseItTests[StructExamples](new ScalanCtxSeq with SegmentsDslSeq with StructExamples) {
+abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslSeq with SegmentsDslSeq with StructExamples) {
   import progSeq._
 
   test("struct out") {

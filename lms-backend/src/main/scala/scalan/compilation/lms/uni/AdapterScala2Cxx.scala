@@ -1,11 +1,11 @@
 package scalan.compilation.lms.uni
 
-import scalan.{JNIExtractorOpsExp, ScalanCtxExp}
+import scalan.{JNIExtractorOpsExp, ScalanDslExp}
 
 /**
  * Created by adel on 6/8/15.
  */
-class AdapterScala2Cxx[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp](sc: ScalanCake)
+class AdapterScala2Cxx[ScalanCake <: ScalanDslExp with JNIExtractorOpsExp](sc: ScalanCake)
   extends AdapterBase [ScalanCake](sc){
 
   import scalanIR._

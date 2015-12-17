@@ -545,7 +545,7 @@ trait StructsExp extends Expressions with Structs with EffectsExp with ViewsDslE
   }
 }
 
-trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compiler[ScalanCake] {
+trait StructsCompiler[ScalanCake <: ScalanDslExp with StructsExp] extends Compiler[ScalanCake] {
   import scalan._
 
   override def graphPasses(compilerConfig: CompilerConfig) =

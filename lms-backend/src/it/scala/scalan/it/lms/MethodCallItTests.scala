@@ -3,15 +3,15 @@ package scalan.it.lms
 import org.scalatest.BeforeAndAfterAll
 
 import scala.language.reflectiveCalls
-import scalan.compilation.lms._
-import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scala.reflect.runtime.universe.typeOf
+import scalan._
+import scalan.collections.{CollectionsDsl, CollectionsDslExp, CollectionsDslSeq}
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.source2bin.SbtConfig
 import scalan.it.BaseItTests
-import scalan.it.smoke.CommunitySmokeItTests
 import scalan.util.{Exceptions, FileUtil}
-import scalan._
 
-trait MethodCallTestProg extends ScalanCommunityDsl {
+trait MethodCallTestProg extends CollectionsDsl {
 
   lazy val emptyIf = fun { (in: Rep[(Boolean, (Double, Double))]) =>
     val Pair(x, Pair(y, z)) = in
@@ -84,15 +84,15 @@ trait MethodCallTestProg extends ScalanCommunityDsl {
   lazy val message = fun { (t: Rep[String]) => SThrowable(t).getMessage}
 }
 
-class MethodCallItTests extends BaseItTests[MethodCallTestProg](new ScalanCommunityDslSeq with MethodCallTestProg) with BeforeAndAfterAll {
+class MethodCallItTests extends BaseItTests[MethodCallTestProg](new CollectionsDslSeq with MethodCallTestProg) with BeforeAndAfterAll {
 
   override def beforeAll() = {
     FileUtil.deleteIfExist(prefix)
   }
 
-  class ProgStaged extends ScalanCommunityDslExp with MethodCallTestProg
+  class ProgStaged extends CollectionsDslExp with MethodCallTestProg
 
-  val progStaged = new CommunityLmsCompilerScala(new ProgStaged)
+  val progStaged = new LmsCompilerScala(new ProgStaged)
   val defaultCompilers = compilers(progStaged)
 
   test("emptyIfTrue") {
@@ -148,7 +148,7 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new ScalanCommun
 //    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIfGt, progStaged.scalan.mapWithLambdaIfGt, "mapWithLambdaIfGt")(in)
 //  }
 
-  val exceptionTestExp = new CommunityLmsCompilerScala(new ScalanCommunityDslExp {
+  val exceptionTestExp = new LmsCompilerScala(new ScalanDslExp {
     lazy val tElem = element[Throwable]
     lazy val defaultRep = tElem.defaultRepValue
 
@@ -189,13 +189,13 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new ScalanCommun
 //    text5 should equal("some text")
 //  }
 
-  val matricesExp = new CommunityLmsCompilerScala(new ProgStaged)
+  val matricesExp = new LmsCompilerScala(new ProgStaged)
 
   test("LMS Method Call") {
     compareOutputWithExpected(_.arrayLength, compilers(matricesExp))(Array(2, 5, 6) -> 3)
   }
 
-  val replaceMethExp = new CommunityLmsCompilerScala(new ProgStaged) with CommunityMethodMappingDSL {
+  val replaceMethExp = new LmsCompilerScala(new ProgStaged) {
     override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, invokeEnabler("skip_length_method") { (o, m) => !m.getName.equals("length")})
   }
 
@@ -211,8 +211,7 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new ScalanCommun
     compareOutputWithExpected(_.arrayLength, compilers(cwc(matricesExp)(conf)))(Array(5, 9, 2) -> 3)
   }
 
-  val jarReplaceExp = new CommunityLmsCompilerScala(new ProgStaged) {
-    import scala.reflect.runtime.universe.typeOf
+  val jarReplaceExp = new LmsCompilerScala(new ProgStaged) {
     val tyThrowable = typeOf[Throwable]
 
     trait TestConf extends MappingTags {

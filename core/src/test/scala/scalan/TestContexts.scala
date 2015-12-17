@@ -19,7 +19,7 @@ trait TestContexts extends TestsUtil {
     }
   }
 
-  abstract class TestContext(testName: String) extends ScalanCtxExp {
+  abstract class TestContext(testName: String) extends ScalanDslExp {
     def this() = this(currentTestNameAsFileName)
 
     override def isInvokeEnabled(d: Def[_], m: Method) = true

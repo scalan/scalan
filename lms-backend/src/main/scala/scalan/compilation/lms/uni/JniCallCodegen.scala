@@ -3,14 +3,14 @@ package scalan.compilation.lms.uni
 import java.io.PrintWriter
 
 import scalan.compilation.lms.{BaseCodegen, LmsBackendFacade}
-import scalan.compilation.lms.scalac.ScalaCommunityCodegen
+import scalan.compilation.lms.scalac.ScalaCoreCodegen
 
 /**
  * Created by adel on 5/14/15.
  */
 
 
-class JniCallCodegen [BackendCake <: LmsBackendFacade](backend: BackendCake, nativeCodegen: BaseCodegen[BackendCake], packageName:String) extends ScalaCommunityCodegen(backend){
+class JniCallCodegen [BackendCake <: LmsBackendFacade](backend: BackendCake, nativeCodegen: BaseCodegen[BackendCake], packageName:String) extends ScalaCoreCodegen(backend){
   //emitBlock()
   import IR._
 

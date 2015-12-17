@@ -7,21 +7,20 @@ package sharedptr
 import scala.lms.common._
 import scalan.compilation.lms.common._
 
-class CxxCodegen [BackendCake <: LmsBackendFacade with JNILmsOpsExp ](backend: BackendCake) extends BaseCodegen[BackendCake]
-with CxxShptrCodegen
-with CxxShptrGenPointer //it use PointerLmsOpsExp
-with CxxShptrGenVectorOps
-with CLikeGenEqual
-with CLikeGenPrimitiveOps
-with CxxShptrGenStruct
-with CxxShptrGenFatArrayLoopsFusionOpt
-with LoopFusionOpt
-with CxxShptrGenCastingOps
-with CxxShptrGenIfThenElseFat
-with CLikeGenOrderingOps
-with CLikeGenBooleanOps
-with CxxShptrGenFunctions
-//  with CxxShptrGenArrayOps
+class CxxCoreCodegen[BackendCake <: LmsBackendFacade with JNILmsOpsExp with PointerLmsOpsExp](backend: BackendCake) extends BaseCodegen[BackendCake]
+  with CxxShptrCodegen
+  with CxxShptrGenPointer // uses PointerLmsOpsExp
+  with CLikeGenEqual
+  with CLikeGenPrimitiveOps
+  with CxxShptrGenStruct
+  with CxxShptrGenFatArrayLoopsFusionOpt
+  with LoopFusionOpt
+  with CxxShptrGenCastingOps
+  with CxxShptrGenIfThenElseFat
+  with CLikeGenOrderingOps
+  with CLikeGenBooleanOps
+  with CxxShptrGenFunctions
+  //  with CxxShptrGenArrayOps
   with CxxShptrGenArrayOpsBoost
   with CxxShptrGenVariables
   with CxxShptrGenArrayBuilderOps
@@ -39,7 +38,6 @@ with CxxShptrGenFunctions
     override val IR: BackendCake = backend
     import IR._
 
-  //def codeExtension: String = "cxx" -
   override val kernelFileExt = "cxx"
 
 
@@ -48,8 +46,10 @@ with CxxShptrGenFunctions
   //    override def hashCode(): Int = super.hashCode()
 }
 
-
 class CoreCxxShptrLmsBackend extends CoreLmsBackend with JNILmsOpsExp with PointerLmsOpsExp { self =>
+  override val codegen = new CxxCoreCodegen[self.type](self)
+}
 
-  override val codegen = new CxxCodegen[self.type](self)  {}
+class CommunityCxxShptrLmsBackend extends CoreCxxShptrLmsBackend with VectorOpsExp { self =>
+  override val codegen = new CxxCoreCodegen[self.type](self) with CxxShptrGenVectorOps
 }

@@ -18,9 +18,9 @@ trait JNIMsfProg extends MsfFuncs with JNIExtractorOps {
   lazy val MSF_JNI_adjmatrix = JNI_Wrap(msfFunIncBase)
 }
 
-class JNI_MsfItTests extends BaseCtxItTests[JNIMsfProg](new ScalanCommunityDslSeq with JNIExtractorOpsSeq with GraphsDslSeq with JNIMsfProg) {
+class JNI_MsfItTests extends BaseCtxItTests[JNIMsfProg](new GraphsDslSeq with JNIExtractorOpsSeq with JNIMsfProg) {
 
-  class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with GraphsDslExp with JNIMsfProg
+  class ProgExp extends GraphsDslExp with JNIExtractorOpsExp with JNIMsfProg
 
   val compiler = new LmsCompilerCxx(new ProgExp) with JNIBridge
 

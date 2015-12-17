@@ -9,7 +9,6 @@ import java.net.{URL, URLClassLoader}
 
 import scala.reflect.runtime.universe._
 
-import scalan.compilation.language.MethodMappingDSL
 import scalan.compilation.lms.source2bin.{SbtConfig, Nsc, Sbt}
 import scalan.compilation.lms.uni.NativeMethodsConfig
 import scalan.util.{ReflectionUtil, FileUtil}
@@ -19,7 +18,9 @@ case class LmsCompilerScalaConfig(extraCompilerOptions: Seq[String] = Seq.empty,
   def withSbtConfig(sbtConfig: SbtConfig) = copy(sbtConfigOpt = Some(sbtConfig))
 }
 
-abstract class LmsCompilerScala[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreBridge with MethodMappingDSL {
+class LmsCompilerScala[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreBridgeScala {
+  val lms = new ScalaCoreLmsBackend
+
   import scalan._
 
   // optConstructor is defined when input is a struct, see below for usage
@@ -113,5 +114,5 @@ abstract class LmsCompilerScala[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake
       output
   }).asInstanceOf[A]
 
-  protected[this] lazy val scalanSeq = new ScalanCtxSeq
+  protected[this] lazy val scalanSeq = new ScalanDslSeq
 }

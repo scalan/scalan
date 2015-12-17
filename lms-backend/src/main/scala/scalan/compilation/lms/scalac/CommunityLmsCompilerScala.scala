@@ -1,8 +1,8 @@
 package scalan.compilation.lms.scalac
 
-import scalan.ScalanCommunityDslExp
-import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridgeScala}
+import scalan.compilation.lms.{ScalaLinAlgLmsBackend, CommunityBridgeScala}
+import scalan.linalgebra.MatricesDslExp
 
-class CommunityLmsCompilerScala[+ScalanCake <: ScalanCommunityDslExp](_scalan: ScalanCake) extends LmsCompilerScala(_scalan) with CommunityBridgeScala {
-  val lms = new CommunityLmsBackend
+class CommunityLmsCompilerScala[+ScalanCake <: MatricesDslExp](_scalan: ScalanCake) extends LmsCompilerScala(_scalan) with CommunityBridgeScala {
+  override val lms = new ScalaLinAlgLmsBackend
 }

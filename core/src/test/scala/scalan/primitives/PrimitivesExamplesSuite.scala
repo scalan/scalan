@@ -3,14 +3,14 @@ package scalan.primitives
 import java.io.File
 import java.lang.reflect.Method
 
-import scalan.{ScalanCtxExp, ScalanCtxSeq}
+import scalan.{ScalanDslExp, ScalanDslSeq}
 import scalan.BaseShouldTests
 import scalan.compilation.GraphVizExport
 
 class PrimitivesExamplesSuite extends BaseShouldTests {
 
-  def seq = new ScalanCtxSeq with PrimitiveExamples {}
-  def staged = new ScalanCtxExp with PrimitiveExamples {}
+  def seq = new ScalanDslSeq with PrimitiveExamples {}
+  def staged = new ScalanDslExp with PrimitiveExamples {}
   "Examples trait" should "be mixable in Seq context" in {
       val ctx = seq
   }
@@ -19,7 +19,7 @@ class PrimitivesExamplesSuite extends BaseShouldTests {
   }
   
   def testMethod(name: String) = {
-    val ctx = new ScalanCtxExp with PrimitiveExamples with GraphVizExport {
+    val ctx = new ScalanDslExp with PrimitiveExamples with GraphVizExport {
       override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
     import ctx._

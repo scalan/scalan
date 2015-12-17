@@ -12,7 +12,7 @@ import scalan.graphs.MST_example
 import scalan.it.BaseCtxItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 
-trait JNIMst extends ScalanCommunityDsl with MST_example with JNIExamples with JNIExtractorOps {
+trait JNIMst extends MST_example with JNIExamples with JNIExtractorOps {
   lazy val MST_JNI_adjlist = JNI_Wrap(MST_adjlist)
 
   lazy val MST_JNI_adjmatrix = JNI_Wrap(MST_adjmatrix)
@@ -27,7 +27,7 @@ trait JNIMst extends ScalanCommunityDsl with MST_example with JNIExamples with J
 }
 
 class LmsJNIExtractorItTests extends BaseCtxItTests[JNIMst](???) {
-  class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with JNIMst
+  class ProgExp extends ScalanDslExp with JNIExtractorOpsExp with JNIMst
 
   val compiler = new LmsCompilerCxx(new ProgExp) with JNIBridge
 

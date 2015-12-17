@@ -2,14 +2,14 @@
 
 import java.io.File
 
-import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
+import scalan.linalgebra.{MatricesDslExp, MatricesDslSeq, MatricesDsl}
 import scalan.compilation.GraphVizConfig
-import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
+import scalan.compilation.lms.{ScalaLinAlgLmsBackend, LinAlgBridge}
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
 import scalan.it.BaseItTests
 
-// ScalanCommunityDsl includes ScalanCommunity and all DSLs defined in that project
-trait HelloScalan extends ScalanCommunityDsl {
+// MatricesDsl includes ScalanCommunity and all DSLs defined in that project
+trait HelloScalan extends MatricesDsl {
   lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0).length
@@ -24,7 +24,7 @@ trait HelloScalan extends ScalanCommunityDsl {
 }
 
 // to run: scalan-lms-backend/test:runMain HelloScalanSeq
-object HelloScalanSeq extends ScalanCommunityDslSeq with HelloScalan {
+object HelloScalanSeq extends MatricesDslSeq with HelloScalan {
   def result = run(input)
 
   def main(args: Array[String]) = {
@@ -37,7 +37,7 @@ object HelloScalanExp {
   // allows use of standard Scala library, commented out to make tests faster
   // override val defaultCompilerConfig = CompilerConfig(Some("2.11.7"), Seq.empty)
 
-  val program = new ScalanCommunityDslExp with HelloScalan
+  val program = new MatricesDslExp with HelloScalan
 
   val compiler = new CommunityLmsCompilerScala(program)
   import compiler._

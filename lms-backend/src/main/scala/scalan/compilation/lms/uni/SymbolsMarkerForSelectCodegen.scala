@@ -1,12 +1,12 @@
 package scalan.compilation.lms.uni
 
-import scalan.{ScalanCtxExp, Metadata}
+import scalan.{ScalanDslExp, Metadata}
 
 /**
  * Created by adel on 6/4/15.
  */
 
-class SymbolsMarkerForSelectCodegen[ScalanCake <: ScalanCtxExp](val scalanIR: ScalanCake) {
+class SymbolsMarkerForSelectCodegen[ScalanCake <: ScalanDslExp](val scalanIR: ScalanCake) {
   import scalanIR._
 
   type CompilationPipelineContext = Unit

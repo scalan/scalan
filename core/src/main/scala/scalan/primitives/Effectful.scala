@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scala.io.StdIn
 import scalan.staged.Expressions
-import scalan.{ScalanCtxExp, ScalanExp, ScalanSeq, Scalan}
+import scalan.{ScalanDslExp, ScalanExp, ScalanSeq, Scalan}
 import scalan.compilation.Compiler
 
 trait Effectful { self: Scalan =>
@@ -40,7 +40,7 @@ trait EffectfulExp extends Effectful with Expressions { self: ScalanExp =>
   case class ReadLineE() extends BaseDef[String]
 }
 
-trait EffectfulCompiler[ScalanCake <: ScalanCtxExp with EffectfulExp] extends Compiler[ScalanCake] {
+trait EffectfulCompiler[ScalanCake <: ScalanDslExp with EffectfulExp] extends Compiler[ScalanCake] {
   import scalan._
 
   object EffectfulRewriter extends Rewriter {

@@ -1,21 +1,21 @@
 package scalan.it.lms
 
 import scalan.common.SegmentsDslExp
-import scalan.compilation.lms.CommunityBridge
+import scalan.compilation.lms.LinAlgBridge
 import scalan.compilation.lms.cxx.LmsCompilerCxx
-import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.uni.LmsCompilerUni
 import scalan.primitives.{StructItTests, StructExamples}
-import scalan.{CommunityMethodMappingDSL, JNIExtractorOpsExp, ScalanCommunityDslExp}
+import scalan.{JNIExtractorOpsExp, ScalanDslExp}
 
 class LmsStructItTests extends StructItTests {
-  class ProgExp extends ScalanCommunityDslExp with StructExamples with SegmentsDslExp with JNIExtractorOpsExp
+  class ProgExp extends ScalanDslExp with StructExamples with SegmentsDslExp with JNIExtractorOpsExp
 
-  val progStaged = new CommunityLmsCompilerScala(new ProgExp) with CommunityBridge with CommunityMethodMappingDSL
+  val progStaged = new LmsCompilerScala(new ProgExp)
 
-  val progStagedCxx = new LmsCompilerCxx(new ProgExp) with CommunityBridge with CommunityMethodMappingDSL
+  val progStagedCxx = new LmsCompilerCxx(new ProgExp)
 
-  val progStagedU = new LmsCompilerUni(new ProgExp) with CommunityBridge with CommunityMethodMappingDSL
+  val progStagedU = new LmsCompilerUni(new ProgExp)
 
   val defaultCompilers = compilers(progStaged, progStagedU)
 

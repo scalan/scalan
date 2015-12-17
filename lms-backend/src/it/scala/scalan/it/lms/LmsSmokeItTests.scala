@@ -2,16 +2,16 @@ package scalan
 package it.lms
 
 import scalan.compilation.lms._
-import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.uni.LmsCompilerUni
 import scalan.it.smoke.{SmokeItTests, SmokeProg}
 
 class LmsSmokeItTests extends SmokeItTests {
-  class ProgExp extends ScalanCommunityDslExp with SmokeProg with JNIExtractorOpsExp
+  class ProgExp extends ScalanDslExp with SmokeProg with JNIExtractorOpsExp
 
-  val progStaged = new CommunityLmsCompilerScala(new ProgExp) with CommunityBridge
+  val progStaged = new LmsCompilerScala(new ProgExp)
 
-  val progStagedU = new LmsCompilerUni(new ProgExp) with CommunityBridge with CommunityMethodMappingDSL
+  val progStagedU = new LmsCompilerUni(new ProgExp)
 
   val defaultCompilers = compilers(progStaged, progStagedU)
   val progStagedOnly = compilers(progStaged)

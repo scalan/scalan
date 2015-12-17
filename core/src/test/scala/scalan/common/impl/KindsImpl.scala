@@ -6,7 +6,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait KindsAbs extends scalan.Scalan with Kinds {
+trait KindsAbs extends scalan.ScalanDsl with Kinds {
   self: KindsDsl =>
 
   // single proxy for each type family
@@ -237,7 +237,7 @@ trait KindsAbs extends scalan.Scalan with Kinds {
 }
 
 // Seq -----------------------------------
-trait KindsSeq extends scalan.ScalanSeq with KindsDsl {
+trait KindsSeq extends scalan.ScalanDslSeq with KindsDsl {
   self: KindsDslSeq =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }
@@ -272,7 +272,7 @@ trait KindsSeq extends scalan.ScalanSeq with KindsDsl {
 }
 
 // Exp -----------------------------------
-trait KindsExp extends scalan.ScalanExp with KindsDsl {
+trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
   self: KindsDslExp =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }

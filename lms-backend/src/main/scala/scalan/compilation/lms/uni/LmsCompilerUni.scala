@@ -5,15 +5,15 @@ import java.net.URL
 
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms._
-import scalan.compilation.lms.common.JNILmsOpsExp
-import scalan.compilation.lms.cxx.sharedptr.CxxCodegen
-import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.compilation.lms.common._
+import scalan.compilation.lms.cxx.sharedptr.CxxCoreCodegen
+import scalan.compilation.lms.scalac.{ScalaCoreCodegen, LmsCompilerScala}
 import scalan.compilation.lms.source2bin.Gcc
-import scalan.{Base, JNIExtractorOpsExp, ScalanCommunityDslExp}
+import scalan.linalgebra.MatricesDslExp
+import scalan.{ScalanDslExp, Base, JNIExtractorOpsExp}
 
-//  case class CustomCompilerOutput(jar: URL)
-class LmsBackendUni extends CommunityLmsBackend with JNILmsOpsExp { self =>
-  val nativeCodegen: CxxCodegen[self.type] = new CxxCodegen(self)
+class LmsBackendUni extends ScalaCoreLmsBackend with JNILmsOpsExp with PointerLmsOpsExp { self =>
+  val nativeCodegen: CxxCoreCodegen[self.type] = new CxxCoreCodegen(self)
   val jniCallCodegen: JniCallCodegen[self.type] = new JniCallCodegen(self, nativeCodegen, "")
   // todo cppFunctionName and cppLibraryName should be moved from jniCallCodegen for use base codegen below (in doBuildExecutable), without information about subtype of codegen (native or jniCall)
 }
@@ -21,7 +21,7 @@ class LmsBackendUni extends CommunityLmsBackend with JNILmsOpsExp { self =>
 /**
  * Created by adel on 5/12/15.
  */
-class LmsCompilerUni[+ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsExp](_scalan: ScalanCake) extends CommunityLmsCompilerScala[ScalanCake](_scalan) with JNIBridge {
+class LmsCompilerUni[+ScalanCake <: ScalanDslExp with JNIExtractorOpsExp](_scalan: ScalanCake) extends LmsCompilerScala[ScalanCake](_scalan) with JNIBridge {
   import scalan._
 
   override val lms = new LmsBackendUni
@@ -114,4 +114,13 @@ class LmsCompilerUni[+ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsEx
       //todo make one library for all functions
     }
   }
+}
+
+class CommunityLmsBackendUni extends LmsBackendUni with VectorOpsExp { self =>
+  override val codegen = new ScalaCoreCodegen[self.type](self) with ScalaGenVectorOps
+  override val nativeCodegen = new CxxCoreCodegen[self.type](self) with CxxShptrGenVectorOps
+}
+
+class CommunityLmsCompilerUni[+ScalanCake <: ScalanDslExp with MatricesDslExp with JNIExtractorOpsExp](_scalan: ScalanCake) extends LmsCompilerUni[ScalanCake](_scalan) with LinAlgBridge {
+  override val lms = new CommunityLmsBackendUni
 }

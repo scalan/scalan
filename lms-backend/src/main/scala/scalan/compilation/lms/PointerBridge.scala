@@ -1,10 +1,11 @@
 package scalan.compilation.lms
 
 import scalan.compilation.lms.common.{PointerLmsOps, PointerLmsOpsExp}
-import scalan.{ScalanCtxExp, PointerOpsExp}
+import scalan.ScalanDslExp
+import scalan.pointers.PointerOpsExp
 
 trait PointerBridge extends CoreBridge {
-  override val scalan: ScalanCtxExp with PointerOpsExp
+  override val scalan: ScalanDslExp with PointerOpsExp
   import scalan._
 
   val lms: CoreLmsBackend with PointerLmsOpsExp

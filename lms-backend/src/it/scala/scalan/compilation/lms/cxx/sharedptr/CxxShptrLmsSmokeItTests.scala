@@ -19,10 +19,10 @@ trait CxxShptrTestProg extends SmokeProg {
   lazy val testStringDuplicate = fun {str:Rep[String] => (str + str + "duplicate").startsWith("hello")}
 }
 
-class CxxShptrLmsSmokeItTests extends BaseItTests[CxxShptrTestProg](new ScalanCommunitySeq with CxxShptrTestProg) {
-  class ProgExp extends ScalanCommunityExp with CxxShptrTestProg
+class CxxShptrLmsSmokeItTests extends BaseItTests[CxxShptrTestProg](new ScalanDslSeq with CxxShptrTestProg) {
+  class ProgExp extends ScalanDslExp with CxxShptrTestProg
 
-  val progStaged = new LmsCompilerCxx(new ProgExp) with CoreBridge
+  val progStaged = new LmsCompilerCxx(new ProgExp)
   val defaultCompilers = compilers(progStaged)
 
   import progStaged.scalan.{SOption, |}

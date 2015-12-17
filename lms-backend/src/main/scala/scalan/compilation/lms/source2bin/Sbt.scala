@@ -3,7 +3,7 @@ package scalan.compilation.lms.source2bin
 import java.io.File
 import java.io.File.separator
 
-import scalan.ScalanCtxExp
+import scalan.ScalanDslExp
 import scalan.compilation.lms.scalac.LmsCompilerScalaConfig
 import scalan.util.FileUtil._
 import scalan.util.{FileUtil, ExtensionFilter, ProcessUtil, StringUtil}
