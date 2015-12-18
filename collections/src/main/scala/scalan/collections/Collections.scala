@@ -40,7 +40,7 @@ trait Collections { self: CollectionsDsl =>
     } */
   }
 
-  def emptyColl[A: Elem]: Coll[A] = element[Collection[A]].defaultRepValue
+  def emptyColl[A: Elem]: Coll[A] = element[CollectionOverArray[A]].defaultRepValue
   type Segments1 = PairCollection[Int, Int]
 
   trait CollectionCompanion extends TypeFamily1[Collection] with CollectionManager {
@@ -517,6 +517,8 @@ trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
     def flatMap[B: Elem](f: Rep[A] => Coll[B]): Coll[B] = coll.flatMapBy(fun(f))
 
     def :+(x: Rep[A]) = coll.append(x)
+
+    def sort[O: Elem](c: Rep[A] => Rep[O])(implicit o: Ordering[O]) = coll.sortBy(fun(c))
   }
 
   trait CollectionManager {
