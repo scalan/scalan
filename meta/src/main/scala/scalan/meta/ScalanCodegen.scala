@@ -1107,7 +1107,12 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         (module.hasDslSeq, "Seq", "Seq"),
         (module.hasDslExp, "Exp", "Exp")).collect {
         case (hasDslTrait, dslTraitSuffix, traitSuffix) if !hasDslTrait =>
-          s"trait ${module.name}Dsl${dslTraitSuffix} extends impl.${module.name}${traitSuffix} {${selfTypeString(dslTraitSuffix)}}"
+          val DslName = s"${module.name}Dsl"
+          val selfTypeStr = module.selfType match {
+            case Some(SSelfTypeDef(_, List(STraitCall(DslName, Nil)))) => ""
+            case _ => s" {${selfTypeString(dslTraitSuffix)}}"
+          }
+          s"trait $DslName$dslTraitSuffix extends impl.${module.name}$traitSuffix$selfTypeStr"
       }.mkString("\n")
     }
 

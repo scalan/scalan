@@ -2,10 +2,10 @@ package scalan.compilation
 
 import java.io.File
 
-import scalan.ScalanCtxExp
+import scalan.ScalanDslExp
 import scalan.util.ReflectionUtil
 
-abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) extends Passes {
+abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) extends Passes {
   import scalan._
 
   type CompilerConfig

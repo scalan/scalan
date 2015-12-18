@@ -1,6 +1,6 @@
 package scalan.it.smoke
 
-import scalan.{ScalanCtxSeq, ScalanCtxExp, ScalanDsl}
+import scalan.{ScalanDslSeq, ScalanDslExp, ScalanDsl}
 import scalan.it.BaseItTests
 import scalan.compilation.Compiler
 
@@ -304,7 +304,7 @@ trait SmokeProg extends ScalanDsl {
 /**
  *  Tests that very simple examples are run correctly
  */
-abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanCtxSeq with SmokeProg) {
+abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanDslSeq with SmokeProg) {
   test("simpleArith") {
     compareOutputWithSequential(_.simpleArith)(2)
   }
@@ -358,7 +358,7 @@ abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanCtxSeq with
     compareOutputWithSequential(_.arrayReplicate)(in)
   }
 
-//  val progStaged: Prog with ScalanCtxExp
+//  val progStaged: Prog with ScalanDslExp
 
 //  test("test00simpleConst") {
 //    val (in, out) = Array(0) -> Array(1)

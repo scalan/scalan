@@ -1,9 +1,9 @@
 package scalan.primitives
 
-import scalan.{ScalanCtxExp, BaseTests}
+import scalan.{ScalanDslExp, BaseTests}
 
 class RewriteSuite extends BaseTests {
-  val scalan = new ScalanCtxExp
+  val scalan = new ScalanDslExp
   import scalan._
   // TODO will be a describe block
   {

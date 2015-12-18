@@ -85,7 +85,7 @@ abstract class ScalanSeq
   with EffectfulSeq
   with StructsSeq
 
-class ScalanCtxSeq
+class ScalanDslSeq
 extends ScalanSeq
   with ScalanDsl
   with ExceptionsDslSeq
@@ -128,7 +128,7 @@ abstract class ScalanExp
   with RewriteRulesExp
   with GraphVizExport
 
-class ScalanCtxExp
+class ScalanDslExp
 extends ScalanExp
   with ScalanDsl
   with Expressions

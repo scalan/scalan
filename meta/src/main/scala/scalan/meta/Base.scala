@@ -8,9 +8,9 @@ case class CodegenConfig(
   srcPath: String,
   entityFiles: List[String],
   entityTypeSynonyms: Map[String, String],
-  baseContextTrait: String = "scalan.Scalan",
-  seqContextTrait: String = "scalan.ScalanSeq",
-  stagedContextTrait: String = "scalan.ScalanExp",
+  baseContextTrait: String = "scalan.ScalanDsl",
+  seqContextTrait: String = "scalan.ScalanDslSeq",
+  stagedContextTrait: String = "scalan.ScalanDslExp",
   extraImports: List[String] = List(
     "scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}",
     "scalan.meta.ScalanAst._"),

@@ -3,7 +3,7 @@ package scalan
 import scalan.common.{KindsDslExp, KindsExamples}
 
 abstract class AbstractElemTests extends BaseNestedTests {
-  class Ctx extends ScalanCtxExp {
+  class Ctx extends ScalanDslExp {
     def elementsShouldBeEqual[A: Elem, B: Elem] =
       assert(element[A] == element[B])
     def elementsShouldNotBeEqual[A: Elem, B: Elem] =

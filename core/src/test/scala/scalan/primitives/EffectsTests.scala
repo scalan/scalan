@@ -33,7 +33,7 @@ class EffectsTests extends BaseCtxTests {
   }
 
   class Ctx(testName: String) extends TestCompilerContext(testName) {
-    override val compiler = new DummyCompiler(new ScalanCtxExp with MyProg) with EffectfulCompiler[ScalanCtxExp with MyProg]
+    override val compiler = new DummyCompiler(new ScalanDslExp with MyProg) with EffectfulCompiler[ScalanDslExp with MyProg]
   }
 
   test("simpleEffectsStaged") {
@@ -92,7 +92,7 @@ class EffectsTests extends BaseCtxTests {
   }
 
   test("throwablesSeq") {
-    val ctx = new ScalanCtxSeq with MyProg {
+    val ctx = new ScalanDslSeq with MyProg {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
       }

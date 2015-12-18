@@ -12,7 +12,7 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
   // can be overridden
   def defaultGraphVizConfig = GraphVizConfig.default
 
-  type ProgCompiler = Compiler[_ <: Prog with ScalanCtxExp]
+  type ProgCompiler = Compiler[_ <: Prog with ScalanDslExp]
 
   class CompilerWithConfig private (val compiler: ProgCompiler)(_config: ProgCompiler#CompilerConfig) {
     def config = _config.asInstanceOf[compiler.CompilerConfig]
@@ -121,7 +121,7 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
 
   // Note: deprecated API will be removed before next release (0.2.11 or 0.3.0)
 
-  final class GetStagedOutput[S <: Scalan, Back <: Compiler[S with ScalanCtxExp]](val back: Back) {
+  final class GetStagedOutput[S <: Scalan, Back <: Compiler[S with ScalanDslExp]](val back: Back) {
     def apply[A, B](f: S => S#Rep[A => B], functionName: String, input: A, compilerConfig: back.CompilerConfig = back.defaultCompilerConfig): B = {
       val compiled = compileSource[S](back)(f, functionName, compilerConfig)
       back.execute(compiled, input)
@@ -132,15 +132,15 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
   }
   // TODO still used in LmsMSTItTests
   // @deprecated("Use overload taking compilers instead", "0.2.11")
-  def getStagedOutput[S <: Scalan](back: Compiler[S with ScalanCtxExp]) = new GetStagedOutput[S, back.type](back)
+  def getStagedOutput[S <: Scalan](back: Compiler[S with ScalanDslExp]) = new GetStagedOutput[S, back.type](back)
 
   @deprecated("Use getStagedOutput with f: S => S#Rep[A => B] instead", "0.2.10")
-  def getStagedOutputConfig[A, B](back: Compiler[_ <: ScalanCtxExp])(f: back.scalan.Exp[A => B], functionName: String, input: A, compilerConfig: back.CompilerConfig): B = {
+  def getStagedOutputConfig[A, B](back: Compiler[_ <: ScalanDslExp])(f: back.scalan.Exp[A => B], functionName: String, input: A, compilerConfig: back.CompilerConfig): B = {
     val compiled = compileSource(back)(f, functionName, compilerConfig)
     back.execute(compiled, input)
   }
 
-  final class CompileSource[S <: Scalan, Back <: Compiler[S with ScalanCtxExp]](val back: Back) {
+  final class CompileSource[S <: Scalan, Back <: Compiler[S with ScalanDslExp]](val back: Back) {
     def apply[A, B](f: S => S#Rep[A => B], functionName: String, compilerConfig: back.CompilerConfig = back.defaultCompilerConfig): back.CompilerOutput[A, B] = {
       back.buildExecutable(sourceDir(functionName), functionName, f(back.scalan).asInstanceOf[back.Exp[A => B]], defaultGraphVizConfig)(compilerConfig)
     }
@@ -153,38 +153,38 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
 
   // TODO still used in UniCompilerItTests
   // @deprecated("Use overload taking compilers instead", "0.2.11")
-  def compileSource[S <: Scalan](back: Compiler[S with ScalanCtxExp]) = new CompileSource[S, back.type](back)
+  def compileSource[S <: Scalan](back: Compiler[S with ScalanDslExp]) = new CompileSource[S, back.type](back)
 
   implicit def defaultComparator[A](expected: A, actual: A): Unit = {
     actual should equal(expected)
   }
 
   @deprecated("Use overload taking compilers instead", "0.2.11")
-  final class CompareOutputWithSequential[S <: Scalan, Back <: Compiler[S with ScalanCtxExp]](val back: Back, forth: S with ScalanCtxSeq) {
+  final class CompareOutputWithSequential[S <: Scalan, Back <: Compiler[S with ScalanDslExp]](val back: Back, forth: S with ScalanDslSeq) {
     def apply[A, B](f: S => S#Rep[A => B], functionName: String, input: A, compilerConfig: back.CompilerConfig = back.defaultCompilerConfig)
                    (implicit comparator: (B, B) => Unit) = {
       compareOutputWithExpected[S](back)(f(forth).asInstanceOf[A => B](input), f, functionName, input, compilerConfig)
     }
   }
   @deprecated("Use overload taking compilers instead", "0.2.11")
-  def compareOutputWithSequential[S <: Scalan](back: Compiler[S with ScalanCtxExp], forth: S with ScalanCtxSeq) = new CompareOutputWithSequential[S, back.type](back, forth)
+  def compareOutputWithSequential[S <: Scalan](back: Compiler[S with ScalanDslExp], forth: S with ScalanDslSeq) = new CompareOutputWithSequential[S, back.type](back, forth)
 
   @deprecated("Use the overload taking f: S => S#Rep[A => B] instead", "0.2.10")
-  def compareOutputWithSequential[A, B](back: Compiler[_ <: ScalanCtxExp])
+  def compareOutputWithSequential[A, B](back: Compiler[_ <: ScalanDslExp])
                                        (fSeq: A => B, f: back.scalan.Exp[A => B], functionName: String, input: A)
                                        (implicit comparator: (B, B) => Unit) {
     compareOutputWithSequentialConfig(back)(fSeq, f, functionName, input, back.defaultCompilerConfig)
   }
 
   @deprecated("Use compareOutputWithSequential with f: S => S#Rep[A => B] instead", "0.2.10")
-  def compareOutputWithSequentialConfig[A, B](back: Compiler[_ <: ScalanCtxExp])
+  def compareOutputWithSequentialConfig[A, B](back: Compiler[_ <: ScalanDslExp])
                                              (fSeq: A => B, f: back.scalan.Exp[A => B], functionName: String, input: A, config: back.CompilerConfig)
                                              (implicit comparator: (B, B) => Unit) {
     compareOutputWithExpectedConfig(back)(fSeq(input), f, functionName, input, config)
   }
 
   @deprecated("Use overload taking compilers instead", "0.2.11")
-  final class CompareOutputWithExpected[S <: Scalan, Back <: Compiler[S with ScalanCtxExp]](val back: Back) {
+  final class CompareOutputWithExpected[S <: Scalan, Back <: Compiler[S with ScalanDslExp]](val back: Back) {
     def apply[A, B](expected: B, f: S => S#Rep[A => B], functionName: String, input: A, compilerConfig: back.CompilerConfig = back.defaultCompilerConfig)
                    (implicit comparator: (B, B) => Unit) = {
       val actual = getStagedOutput[S](back)(f, functionName, input, compilerConfig)
@@ -198,10 +198,10 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
     }
   }
   @deprecated("Use overload taking compilers instead", "0.2.11")
-  def compareOutputWithExpected[S <: Scalan](back: Compiler[S with ScalanCtxExp]) = new CompareOutputWithExpected[S, back.type](back)
+  def compareOutputWithExpected[S <: Scalan](back: Compiler[S with ScalanDslExp]) = new CompareOutputWithExpected[S, back.type](back)
 
   @deprecated("Use compareOutputWithExpected with f: S => S#Rep[A => B] instead", "0.2.10")
-  def compareOutputWithExpectedConfig[A, B](back: Compiler[_ <: ScalanCtxExp])
+  def compareOutputWithExpectedConfig[A, B](back: Compiler[_ <: ScalanDslExp])
                                            (expected: B, f: back.scalan.Exp[A => B], functionName: String, input: A, config: back.CompilerConfig)
                                            (implicit comparator: (B, B) => Unit) {
     val actual = getStagedOutputConfig(back)(f, functionName, input, config)

@@ -340,6 +340,6 @@ object AbstractStrings_Module extends scalan.ModuleInfo {
 }
 }
 
-trait AbstractStringsDsl extends impl.AbstractStringsAbs {self: AbstractStringsDsl =>}
-trait AbstractStringsDslSeq extends impl.AbstractStringsSeq {self: AbstractStringsDslSeq =>}
-trait AbstractStringsDslExp extends impl.AbstractStringsExp {self: AbstractStringsDslExp =>}
+trait AbstractStringsDsl extends impl.AbstractStringsAbs
+trait AbstractStringsDslSeq extends impl.AbstractStringsSeq
+trait AbstractStringsDslExp extends impl.AbstractStringsExp
