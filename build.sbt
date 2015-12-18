@@ -80,7 +80,7 @@ lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
       "org.scalatest" %% "scalatest" % "2.2.5" % "it"),
     // we know we use LMS snapshot here, ignore it
     releaseSnapshotDependencies := Seq.empty,
-    javaOptions in IntegrationTest ++= Seq("-Xmx2g", "-XX:PermSize=384m", "-XX:MaxPermSize=384m", "-XX:ReservedCodeCacheSize=384m"),
+    javaOptions in IntegrationTest ++= Seq("-Xmx3g", "-XX:PermSize=384m", "-XX:MaxPermSize=384m", "-XX:ReservedCodeCacheSize=384m"),
     parallelExecution in IntegrationTest := false,
     fork in IntegrationTest := true)
 
