@@ -1,4 +1,5 @@
-sudo: false
+sudo: required
+dist: trusty
 
 # Tricks to avoid unnecessary cache updates
 before_cache:
