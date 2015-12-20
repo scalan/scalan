@@ -146,7 +146,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     lazy val selfType = element[MT1[T]]
   }
   // elem for concrete class
-  class MT1Elem[T](val iso: Iso[MT1Data[T], MT1[T]])(implicit elem: Elem[T])
+  class MT1Elem[T](val iso: Iso[MT1Data[T], MT1[T]])(implicit override  val elem: Elem[T])
     extends MetaTestElem[T, MT1[T]]
     with ConcreteElem[MT1Data[T], MT1[T]] {
     override lazy val parent: Option[Elem[_]] = Some(metaTestElement(element[T]))
@@ -232,7 +232,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     lazy val selfType = element[MT2[T, R]]
   }
   // elem for concrete class
-  class MT2Elem[T, R](val iso: Iso[MT2Data[T, R], MT2[T, R]])(implicit eT: Elem[T], eR: Elem[R])
+  class MT2Elem[T, R](val iso: Iso[MT2Data[T, R], MT2[T, R]])(implicit  val eT: Elem[T],  val eR: Elem[R])
     extends MetaTestElem[(T, R), MT2[T, R]]
     with ConcreteElem[MT2Data[T, R], MT2[T, R]] {
     override lazy val parent: Option[Elem[_]] = Some(metaTestElement(pairElement(element[T],element[R])))

@@ -162,7 +162,7 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
   }
   trait SSeqImplCompanion
   // elem for concrete class
-  class SSeqImplElem[A](val iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit eA: Elem[A])
+  class SSeqImplElem[A](val iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit override  val eA: Elem[A])
     extends SSeqElem[A, SSeqImpl[A]]
     with ConcreteElem1[A, SSeqImplData[A], SSeqImpl[A], SSeq] {
     override lazy val parent: Option[Elem[_]] = Some(sSeqElement(element[A]))

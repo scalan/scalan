@@ -67,7 +67,7 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
     lazy val selfType = element[SVertex[V, E]]
   }
   // elem for concrete class
-  class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit eV: Elem[V], eE: Elem[E])
+  class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit override  val eV: Elem[V], override  val eE: Elem[E])
     extends VertexElem[V, E, SVertex[V, E]]
     with ConcreteElem[SVertexData[V, E], SVertex[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(vertexElement(element[V], element[E]))

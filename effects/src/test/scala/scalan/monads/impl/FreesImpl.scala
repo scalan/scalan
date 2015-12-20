@@ -67,7 +67,7 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
     lazy val selfType = element[Return[F, A]]
   }
   // elem for concrete class
-  class ReturnElem[F[_], A](val iso: Iso[ReturnData[F, A], Return[F, A]])(implicit eA: Elem[A], cF: Cont[F])
+  class ReturnElem[F[_], A](val iso: Iso[ReturnData[F, A], Return[F, A]])(implicit override  val eA: Elem[A], override  val cF: Cont[F])
     extends FreeElem[F, A, Return[F, A]]
     with ConcreteElem[ReturnData[F, A], Return[F, A]] {
     override lazy val parent: Option[Elem[_]] = Some(freeElement(container[F], element[A]))
@@ -152,7 +152,7 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
     lazy val selfType = element[Suspend[F, A]]
   }
   // elem for concrete class
-  class SuspendElem[F[_], A](val iso: Iso[SuspendData[F, A], Suspend[F, A]])(implicit eA: Elem[A], cF: Cont[F])
+  class SuspendElem[F[_], A](val iso: Iso[SuspendData[F, A], Suspend[F, A]])(implicit override  val eA: Elem[A], override  val cF: Cont[F])
     extends FreeElem[F, A, Suspend[F, A]]
     with ConcreteElem[SuspendData[F, A], Suspend[F, A]] {
     override lazy val parent: Option[Elem[_]] = Some(freeElement(container[F], element[A]))
@@ -237,7 +237,7 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
     lazy val selfType = element[Bind[F, S, B]]
   }
   // elem for concrete class
-  class BindElem[F[_], S, B](val iso: Iso[BindData[F, S, B], Bind[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+  class BindElem[F[_], S, B](val iso: Iso[BindData[F, S, B], Bind[F, S, B]])(implicit  val eS: Elem[S], override  val eA: Elem[B], override  val cF: Cont[F])
     extends FreeElem[F, B, Bind[F, S, B]]
     with ConcreteElem[BindData[F, S, B], Bind[F, S, B]] {
     override lazy val parent: Option[Elem[_]] = Some(freeElement(container[F], element[B]))
