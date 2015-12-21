@@ -2,29 +2,14 @@ package scalan.compilation.lms.uni
 
 import java.io.PrintWriter
 
-import scalan.compilation.lms.{BaseCodegen, LmsBackendFacade}
+import scalan.compilation.lms.{ScalaCoreLmsBackend, BaseCodegen, LmsBackendFacade}
 import scalan.compilation.lms.scalac.ScalaCoreCodegen
 
 /**
  * Created by adel on 5/14/15.
  */
-
-
-class JniCallCodegen [BackendCake <: LmsBackendFacade](backend: BackendCake, nativeCodegen: BaseCodegen[BackendCake], packageName:String) extends ScalaCoreCodegen(backend){
-  //emitBlock()
+class JniCallCodegen[BackendCake <: ScalaCoreLmsBackend](backend: BackendCake, nativeCodegen: BaseCodegen[BackendCake], packageName:String) extends ScalaCoreCodegen(backend){
   import IR._
-
-
-  /*def emitSource[T : Manifest, R : Manifest](f: Exp[T] => Exp[R], className: String, stream: PrintWriter): List[(Sym[Any], Any)] = {
-    val s = fresh[T]
-    val jnis  = JNIType
-
-
-
-    //val body = reifyBlock(f(s))
-    emitSource(List(s), body, className, stream)
-  } */
-
 
   def cppLibraryName(className:String) = "scalan_"+className.toLowerCase
 
@@ -55,11 +40,6 @@ class JniCallCodegen [BackendCake <: LmsBackendFacade](backend: BackendCake, nat
       if (packageName.length > 0) {
         stream.println("package " + packageName)
       }
-      /*
-      override def emitFileHeader(): Unit = {
-        super.emitFileHeader()
-      }
-      */
       emitFileHeader()
 
       val staticDataArgs = staticData.map(p => src"val p${p._1}: ${p._1.tp}")

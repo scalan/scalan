@@ -8,7 +8,7 @@ import scala.lms.internal.{Expressions, GenericNestedCodegen, Effects}
 import scalan.compilation.lms.arrays.{ArrayMutationExp, ArrayLoopsFatExp}
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.graph.GraphCodegen
-import scalan.compilation.lms.scalac.ScalaCoreCodegen
+import scalan.compilation.lms.scalac.{ScalaMethodCallOpsExp, ScalaCoreCodegen}
 import scalan.util.FileUtil
 import java.util.HashMap
 
@@ -60,7 +60,7 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with ExtNumOpsExp
 // FIXME using CastingOpsExpOpt instead of CastingOpsExp generates wrong code, perhaps due to LMS bug
 // Without it we get useless casts and more code than should be present
-  with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
+  with CastingOpsExp with EitherOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt
 // FIXME using StructFatExpOptCommon instead of StructExpOptCommon leads to bad code generated in LmsMstPrimeItTests
 // Not clear whether this is due to our or LMS error
@@ -342,8 +342,6 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
 
 abstract class CoreLmsBackend extends LmsBackend
 
-class ScalaCoreLmsBackend extends CoreLmsBackend { self =>
+class ScalaCoreLmsBackend extends CoreLmsBackend with ScalaMethodCallOpsExp { self =>
   override val codegen = new ScalaCoreCodegen[self.type](self)
 }
-
-

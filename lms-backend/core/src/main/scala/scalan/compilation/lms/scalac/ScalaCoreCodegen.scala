@@ -3,9 +3,9 @@ package scalan.compilation.lms.scalac
 import scala.lms.common._
 import scalan.compilation.lms.arrays.{ScalaGenArrayMutation, ScalaGenFatArrayLoopsFusionOpt}
 import scalan.compilation.lms.common._
-import scalan.compilation.lms.{BaseCodegen, LmsBackendFacade}
+import scalan.compilation.lms.{ScalaCoreLmsBackend, BaseCodegen, LmsBackendFacade}
 
-class ScalaCoreCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extends
+class ScalaCoreCodegen[BackendCake <: ScalaCoreLmsBackend](backend: BackendCake) extends
     BaseCodegen[BackendCake]
     with ScalaGenObjectOpsExt //from scalan.compilation.lms.common
     with ScalaGenArrayOps

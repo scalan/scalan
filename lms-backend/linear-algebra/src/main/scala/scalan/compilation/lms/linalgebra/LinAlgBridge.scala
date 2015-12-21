@@ -1,7 +1,7 @@
 package scalan.compilation.lms.linalgebra
 
 import scalan.compilation.lms.collections.CollectionsBridgeScala
-import scalan.compilation.lms.{CoreBridge, CoreLmsBackend}
+import scalan.compilation.lms.{ScalaCoreLmsBackend, CoreBridge, CoreLmsBackend}
 import scalan.linalgebra.{VectorsDslExp, LinAlgMethodMappingDSL}
 
 trait LinAlgBridge extends CoreBridge with LinAlgMethodMappingDSL {
@@ -16,4 +16,6 @@ trait LinAlgBridge extends CoreBridge with LinAlgMethodMappingDSL {
   }
 }
 
-trait LinAlgBridgeScala extends CollectionsBridgeScala with LinAlgBridge
+trait LinAlgBridgeScala extends CollectionsBridgeScala with LinAlgBridge {
+  val lms: ScalaCoreLmsBackend with VectorOpsExp
+}

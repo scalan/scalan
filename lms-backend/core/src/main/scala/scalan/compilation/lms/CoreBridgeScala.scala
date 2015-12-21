@@ -5,11 +5,10 @@ import java.lang.reflect.Method
 import scalan.compilation.language.ScalaInterpreter
 
 trait CoreBridgeScala extends CoreBridge with ScalaInterpreter {
+  override val lms: ScalaCoreLmsBackend
   import scalan._
 
   override def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] = {
-    import lms.EffectId._
-
     mappedFunc(method) match {
       case Some(func: ScalaMappingDSL#ScalaFunc) => func.lib match {
         case e: ScalaMappingDSL#ScalaLib =>
@@ -28,7 +27,7 @@ trait CoreBridgeScala extends CoreBridge with ScalaInterpreter {
           elemToManifest(returnType) match {
             case (mA: Manifest[a]) =>
               val lmsArgs = param ++ args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }
-              lms.scalaMethod[a](null, PURE, methodName, List.empty, lmsArgs: _*)(mA.asInstanceOf[Manifest[a]])
+              lms.scalaMethodCall[a](null, lms.Pure, methodName, List.empty, lmsArgs: _*)(mA.asInstanceOf[Manifest[a]])
           }
         case e: ScalaMappingDSL#EmbeddedObject if e.name == "lms" =>
           val obj = m.symMirrorUntyped(receiver)
@@ -41,10 +40,9 @@ trait CoreBridgeScala extends CoreBridge with ScalaInterpreter {
       case None =>
         val obj = m.symMirrorUntyped(receiver)
         elemToManifest(returnType) match {
-          case (mA: Manifest[a]) => lms.scalaMethod[a](obj, PURE, method.getName,
+          case (mA: Manifest[a]) => lms.scalaMethodCall[a](obj, lms.Pure, method.getName,
             args.collect {
-              case el: WrapperElem1[_, _, _, _] => el.baseElem.tag
-              case elem: Elem[_] => elem.tag
+              case elem: Elem[_] => elemToManifest(elem)
             },
             /* filter out implicit ClassTag params */
             args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }: _*)(mA.asInstanceOf[Manifest[a]])
