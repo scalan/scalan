@@ -2465,6 +2465,18 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
       }
     }
 
+    object length {
+      def unapply(d: Def[_]): Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "length" =>
+          Some(receiver).asInstanceOf[Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object apply {
       def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[Int]) forSome {type A; type B; type Env}] = d match {
         case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
@@ -2928,7 +2940,7 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
 }
 
 object Collections_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVYS2wbRRiedew4tqM0j0IhpSSkhtKqxEkF6iFCleMkEOTGUTatkFsFjdcTZ9t9ZXcc2RwquFQIxAVxRaISF6ReUE+oUoWEkBAHTgghceZUgqoeqDiAmBnvrvcdb2gC+LDancf/+P7v/z3/3N4FKUMHLxgClKAyLSMMp3n2XjRwnl9UsIjbF9V6U0ILaPMp9atPZz8f/zIBjlRB/xY0FgypCjKdl8WWZr/zaLsMMlARkIFV3cDguTLTUBBUSUICFlWlIMpyE8OahApl0cBzZZCsqfX2NrgBuDIYFlRF0BFGfEmChoEMc3wAUYtE+zvDvtsVratDKVAvCg4v1nUoYmI+0THcWb+GNL6tqEpbxmDINK2iUbPImrQoa6qOLRVpIm5LrVufSQWSATBavgZ3YIGoaBR4rItKg+zMaVC4DhtohSyhy5PEYANJm+ttjX33lUHWQNsEoGVZk9hISwMAkAicY0ZMd/GZtvGZpvjkeaSLUBLfhnRyVVdbbdD5cX0AtDQi4uweIiwJaFGp59+/Klx5xOfkBN3coqakmYf9RNBECBtYKAiO3659ZDx87db5BMhWQVY0ijUD61DAzpCbaOWgoqiY2WwDCPUGidZUWLSYliJZ46FERlBlDSpEkgnlIImTJAoipovp2KAZnRDo01hD1lKupXG2v5Mh/jLelKAkrd5/+qXnf118MwESbhUZIpInxNctoRhkSzb+toKTYQo0tKqLMiH0Dnrl67uXHtxbSTEdo3W0CZsSvgylJurQy9TY1U6VJV48jUHykiJiOpRpdZ/pCL9shE/d/63+zQy4mrDjYrrRGxWIiJTx04+5H05fSICBKkucJQk2qiQ0xqKE5IpeUhVcBQPqDtI7M+kdKNG3QGqkTbfNgDmR7iNIYzAZmuIaomGYY+nEWQDkOhmxoioov7Sa/53/7uPblPA6GOzMdHL+L/H8nz8PbWKWCxj0S0hp4C1m1BEM+kixMPGgzzEMuBkyuqwEYp7tCOZVGY1MPRQ3bn2AGbpcy10zKrVrhCRzbN+zEUBbteuLmzefePDZW2Ms5wZqIpahlp+JkXFWghxgRgEHTAS4oZJZwxlZZjyTlLTdVGHw+fGkz2P2HHtMkAgdc28uOd2Y8O4M1OVYlePclvkT2JxILmMkRxnqWD5u05BpI3yBuh7CKDKSKuo6bPeqzqn0FHueiYR+1j051nWwQvKSqY6H/zMBEkKD4ESF86CSQtRJ22NaM3oBIdyHCbtynQivuYSyT66Vj0q7F+4lQOoNkNokBckog1RNbSp1KxfICQSjFp63xjh3LhDuQx3KNvfZbxJ0vfcbf5h0kwwcTrckPQ4cEttG3ZGimuOR7bhfwOFyLcSDCcfujf9a+MkpMyL8PG9OH3z4R9zgEcXxoj/u23+4wQ+2//HEfmgVinpY/Lli1zX6Ob9fLiRIUEKpEEo/U71TX4j42r7EB7sTl2znPGRzA8pX/E5Ek823f19kS6BiBNNcyIYJmI8S4McuzPU9eepkWfCCea+1/w6Lk7StjUO0iCO1htabmoRevvvHxnvvvK6x87mvk9uPHwdB4mKF/0ckJvv/ryQ2XT8MEg+vkCYK1WNUwx55279DW3i7RCZLFo2joPQKIX1XQ0YKtsUMWEB1RNFH3n48lv/to15ASNMe8+B2IkjEQXPRolKo/b2yySnOscULYh/pzfcuRREXQMVOu47qJ++8u/tq7eyH7AIoxbp4ur1z98Fej9PbiZGmImwh4TqqX4a6yLp/C5qeznCOQEVwI0e7/CUoi1J7NtQ9L2/dx72LUIENpHsMCmWLo6ML4IjmU+yPI9fDEczrZ+ABhUsHEizG2SXAP8/fZBwqxilsPTkY9+TXg3u+ArrfXKP4X+muMRfmHNaSjsxMp+5Vt2FyWQdTIanGm1dXJF9vPPpk5cz3d35hmZall2CqQqsrFcG5r1h9FdNWuGBIDtsJ3ejdGLP7b87ihHVUGQAA"
+  val dump = "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"
 }
 }
 
