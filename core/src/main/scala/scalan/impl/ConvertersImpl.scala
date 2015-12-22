@@ -68,7 +68,7 @@ trait ConvertersAbs extends Converters {
     lazy val selfType = element[BaseConverter[T, R]]
   }
   // elem for concrete class
-  class BaseConverterElem[T, R](val iso: Iso[BaseConverterData[T, R], BaseConverter[T, R]])(implicit override  val eT: Elem[T], override  val eR: Elem[R])
+  class BaseConverterElem[T, R](val iso: Iso[BaseConverterData[T, R], BaseConverter[T, R]])(implicit override val eT: Elem[T], override val eR: Elem[R])
     extends ConverterElem[T, R, BaseConverter[T, R]]
     with ConcreteElem[BaseConverterData[T, R], BaseConverter[T, R]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(element[T], element[R]))
@@ -154,7 +154,7 @@ trait ConvertersAbs extends Converters {
     lazy val selfType = element[PairConverter[A1, A2, B1, B2]]
   }
   // elem for concrete class
-  class PairConverterElem[A1, A2, B1, B2](val iso: Iso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]])(implicit  val eA1: Elem[A1],  val eA2: Elem[A2],  val eB1: Elem[B1],  val eB2: Elem[B2])
+  class PairConverterElem[A1, A2, B1, B2](val iso: Iso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]])(implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
     extends ConverterElem[(A1, A2), (B1, B2), PairConverter[A1, A2, B1, B2]]
     with ConcreteElem[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(pairElement(element[A1],element[A2]), pairElement(element[B1],element[B2])))
@@ -246,7 +246,7 @@ trait ConvertersAbs extends Converters {
     lazy val selfType = element[SumConverter[A1, A2, B1, B2]]
   }
   // elem for concrete class
-  class SumConverterElem[A1, A2, B1, B2](val iso: Iso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]])(implicit  val eA1: Elem[A1],  val eA2: Elem[A2],  val eB1: Elem[B1],  val eB2: Elem[B2])
+  class SumConverterElem[A1, A2, B1, B2](val iso: Iso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]])(implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
     extends ConverterElem[$bar[A1, A2], $bar[B1, B2], SumConverter[A1, A2, B1, B2]]
     with ConcreteElem[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(sumElement(element[A1],element[A2]), sumElement(element[B1],element[B2])))
@@ -338,7 +338,7 @@ trait ConvertersAbs extends Converters {
     lazy val selfType = element[FunctorConverter[A, B, F]]
   }
   // elem for concrete class
-  class FunctorConverterElem[A, B, F[_]](val iso: Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]])(implicit  val eA: Elem[A],  val eB: Elem[B],  val F: Functor[F])
+  class FunctorConverterElem[A, B, F[_]](val iso: Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]])(implicit val eA: Elem[A], val eB: Elem[B], val F: Functor[F])
     extends ConverterElem[F[A], F[B], FunctorConverter[A, B, F]]
     with ConcreteElem[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(element[F[A]], element[F[B]]))

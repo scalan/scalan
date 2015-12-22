@@ -70,7 +70,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     lazy val selfType = element[AdjacencyGraph[V, E]]
   }
   // elem for concrete class
-  class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit override  val eV: Elem[V], override  val eE: Elem[E])
+  class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit override val eV: Elem[V], override val eE: Elem[E])
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
     with ConcreteElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
@@ -157,7 +157,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     lazy val selfType = element[IncidenceGraph[V, E]]
   }
   // elem for concrete class
-  class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit override  val eV: Elem[V], override  val eE: Elem[E])
+  class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit override val eV: Elem[V], override val eE: Elem[E])
     extends GraphElem[V, E, IncidenceGraph[V, E]]
     with ConcreteElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))

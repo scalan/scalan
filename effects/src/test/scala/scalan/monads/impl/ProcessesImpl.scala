@@ -68,7 +68,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     lazy val selfType = element[Await[F, A, O]]
   }
   // elem for concrete class
-  class AwaitElem[F[_], A, O](val iso: Iso[AwaitData[F, A, O], Await[F, A, O]])(implicit  val eA: Elem[A], override  val eO: Elem[O], override  val cF: Cont[F])
+  class AwaitElem[F[_], A, O](val iso: Iso[AwaitData[F, A, O], Await[F, A, O]])(implicit val eA: Elem[A], override val eO: Elem[O], override val cF: Cont[F])
     extends ProcessElem[F, O, Await[F, A, O]]
     with ConcreteElem[AwaitData[F, A, O], Await[F, A, O]] {
     override lazy val parent: Option[Elem[_]] = Some(processElement(container[F], element[O]))
@@ -156,7 +156,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     lazy val selfType = element[Emit[F, O]]
   }
   // elem for concrete class
-  class EmitElem[F[_], O](val iso: Iso[EmitData[F, O], Emit[F, O]])(implicit override  val eO: Elem[O], override  val cF: Cont[F])
+  class EmitElem[F[_], O](val iso: Iso[EmitData[F, O], Emit[F, O]])(implicit override val eO: Elem[O], override val cF: Cont[F])
     extends ProcessElem[F, O, Emit[F, O]]
     with ConcreteElem[EmitData[F, O], Emit[F, O]] {
     override lazy val parent: Option[Elem[_]] = Some(processElement(container[F], element[O]))
@@ -242,7 +242,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     lazy val selfType = element[Halt[F, O]]
   }
   // elem for concrete class
-  class HaltElem[F[_], O](val iso: Iso[HaltData[F, O], Halt[F, O]])(implicit override  val eO: Elem[O], override  val cF: Cont[F])
+  class HaltElem[F[_], O](val iso: Iso[HaltData[F, O], Halt[F, O]])(implicit override val eO: Elem[O], override val cF: Cont[F])
     extends ProcessElem[F, O, Halt[F, O]]
     with ConcreteElem[HaltData[F, O], Halt[F, O]] {
     override lazy val parent: Option[Elem[_]] = Some(processElement(container[F], element[O]))

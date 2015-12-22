@@ -112,7 +112,7 @@ trait ViewsAbs extends Views {
     lazy val selfType = element[IdentityIso[A]]
   }
   // elem for concrete class
-  class IdentityIsoElem[A](val iso: Iso[IdentityIsoData[A], IdentityIso[A]])(implicit  val eA: Elem[A])
+  class IdentityIsoElem[A](val iso: Iso[IdentityIsoData[A], IdentityIso[A]])(implicit val eA: Elem[A])
     extends IsoURElem[A, A, IdentityIso[A]]
     with ConcreteElem[IdentityIsoData[A], IdentityIso[A]] {
     override lazy val parent: Option[Elem[_]] = Some(isoURElement(element[A], element[A]))
@@ -197,7 +197,7 @@ trait ViewsAbs extends Views {
     lazy val selfType = element[PairIso[A1, A2, B1, B2]]
   }
   // elem for concrete class
-  class PairIsoElem[A1, A2, B1, B2](val iso: Iso[PairIsoData[A1, A2, B1, B2], PairIso[A1, A2, B1, B2]])(implicit  val eA1: Elem[A1],  val eA2: Elem[A2],  val eB1: Elem[B1],  val eB2: Elem[B2])
+  class PairIsoElem[A1, A2, B1, B2](val iso: Iso[PairIsoData[A1, A2, B1, B2], PairIso[A1, A2, B1, B2]])(implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
     extends IsoURElem[(A1, A2), (B1, B2), PairIso[A1, A2, B1, B2]]
     with ConcreteElem[PairIsoData[A1, A2, B1, B2], PairIso[A1, A2, B1, B2]] {
     override lazy val parent: Option[Elem[_]] = Some(isoURElement(pairElement(element[A1],element[A2]), pairElement(element[B1],element[B2])))
@@ -289,7 +289,7 @@ trait ViewsAbs extends Views {
     lazy val selfType = element[SumIso[A1, A2, B1, B2]]
   }
   // elem for concrete class
-  class SumIsoElem[A1, A2, B1, B2](val iso: Iso[SumIsoData[A1, A2, B1, B2], SumIso[A1, A2, B1, B2]])(implicit  val eA1: Elem[A1],  val eA2: Elem[A2],  val eB1: Elem[B1],  val eB2: Elem[B2])
+  class SumIsoElem[A1, A2, B1, B2](val iso: Iso[SumIsoData[A1, A2, B1, B2], SumIso[A1, A2, B1, B2]])(implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
     extends IsoURElem[$bar[A1, A2], $bar[B1, B2], SumIso[A1, A2, B1, B2]]
     with ConcreteElem[SumIsoData[A1, A2, B1, B2], SumIso[A1, A2, B1, B2]] {
     override lazy val parent: Option[Elem[_]] = Some(isoURElement(sumElement(element[A1],element[A2]), sumElement(element[B1],element[B2])))
@@ -381,7 +381,7 @@ trait ViewsAbs extends Views {
     lazy val selfType = element[ComposeIso[A, B, C]]
   }
   // elem for concrete class
-  class ComposeIsoElem[A, B, C](val iso: Iso[ComposeIsoData[A, B, C], ComposeIso[A, B, C]])(implicit  val eA: Elem[A],  val eB: Elem[B],  val eC: Elem[C])
+  class ComposeIsoElem[A, B, C](val iso: Iso[ComposeIsoData[A, B, C], ComposeIso[A, B, C]])(implicit val eA: Elem[A], val eB: Elem[B], val eC: Elem[C])
     extends IsoURElem[A, C, ComposeIso[A, B, C]]
     with ConcreteElem[ComposeIsoData[A, B, C], ComposeIso[A, B, C]] {
     override lazy val parent: Option[Elem[_]] = Some(isoURElement(element[A], element[C]))
@@ -471,7 +471,7 @@ trait ViewsAbs extends Views {
     lazy val selfType = element[FuncIso[A, B, C, D]]
   }
   // elem for concrete class
-  class FuncIsoElem[A, B, C, D](val iso: Iso[FuncIsoData[A, B, C, D], FuncIso[A, B, C, D]])(implicit  val eA: Elem[A],  val eB: Elem[B],  val eC: Elem[C],  val eD: Elem[D])
+  class FuncIsoElem[A, B, C, D](val iso: Iso[FuncIsoData[A, B, C, D], FuncIso[A, B, C, D]])(implicit val eA: Elem[A], val eB: Elem[B], val eC: Elem[C], val eD: Elem[D])
     extends IsoURElem[A => C, B => D, FuncIso[A, B, C, D]]
     with ConcreteElem[FuncIsoData[A, B, C, D], FuncIso[A, B, C, D]] {
     override lazy val parent: Option[Elem[_]] = Some(isoURElement(funcElement(element[A],element[C]), funcElement(element[B],element[D])))
@@ -563,7 +563,7 @@ trait ViewsAbs extends Views {
     lazy val selfType = element[ConverterIso[A, B]]
   }
   // elem for concrete class
-  class ConverterIsoElem[A, B](val iso: Iso[ConverterIsoData[A, B], ConverterIso[A, B]])(implicit  val eA: Elem[A],  val eB: Elem[B])
+  class ConverterIsoElem[A, B](val iso: Iso[ConverterIsoData[A, B], ConverterIso[A, B]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends IsoURElem[A, B, ConverterIso[A, B]]
     with ConcreteElem[ConverterIsoData[A, B], ConverterIso[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(isoURElement(element[A], element[B]))
@@ -651,7 +651,7 @@ trait ViewsAbs extends Views {
     lazy val selfType = element[ArrayIso[A, B]]
   }
   // elem for concrete class
-  class ArrayIsoElem[A, B](val iso: Iso[ArrayIsoData[A, B], ArrayIso[A, B]])(implicit override  val eA: Elem[A], override  val eB: Elem[B])
+  class ArrayIsoElem[A, B](val iso: Iso[ArrayIsoData[A, B], ArrayIso[A, B]])(implicit override val eA: Elem[A], override val eB: Elem[B])
     extends Iso1URElem[A, B, Array, ArrayIso[A, B]]
     with ConcreteElem[ArrayIsoData[A, B], ArrayIso[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(iso1URElement(element[A], element[B], container[Array]))
@@ -737,7 +737,7 @@ trait ViewsAbs extends Views {
     lazy val selfType = element[ListIso[A, B]]
   }
   // elem for concrete class
-  class ListIsoElem[A, B](val iso: Iso[ListIsoData[A, B], ListIso[A, B]])(implicit override  val eA: Elem[A], override  val eB: Elem[B])
+  class ListIsoElem[A, B](val iso: Iso[ListIsoData[A, B], ListIso[A, B]])(implicit override val eA: Elem[A], override val eB: Elem[B])
     extends Iso1URElem[A, B, List, ListIso[A, B]]
     with ConcreteElem[ListIsoData[A, B], ListIso[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(iso1URElement(element[A], element[B], container[List]))
@@ -823,7 +823,7 @@ trait ViewsAbs extends Views {
     lazy val selfType = element[ArrayBufferIso[A, B]]
   }
   // elem for concrete class
-  class ArrayBufferIsoElem[A, B](val iso: Iso[ArrayBufferIsoData[A, B], ArrayBufferIso[A, B]])(implicit override  val eA: Elem[A], override  val eB: Elem[B])
+  class ArrayBufferIsoElem[A, B](val iso: Iso[ArrayBufferIsoData[A, B], ArrayBufferIso[A, B]])(implicit override val eA: Elem[A], override val eB: Elem[B])
     extends Iso1URElem[A, B, ArrayBuffer, ArrayBufferIso[A, B]]
     with ConcreteElem[ArrayBufferIsoData[A, B], ArrayBufferIso[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(iso1URElement(element[A], element[B], container[ArrayBuffer]))
@@ -909,7 +909,7 @@ trait ViewsAbs extends Views {
     lazy val selfType = element[ThunkIso[A, B]]
   }
   // elem for concrete class
-  class ThunkIsoElem[A, B](val iso: Iso[ThunkIsoData[A, B], ThunkIso[A, B]])(implicit override  val eA: Elem[A], override  val eB: Elem[B])
+  class ThunkIsoElem[A, B](val iso: Iso[ThunkIsoData[A, B], ThunkIso[A, B]])(implicit override val eA: Elem[A], override val eB: Elem[B])
     extends Iso1URElem[A, B, Thunk, ThunkIso[A, B]]
     with ConcreteElem[ThunkIsoData[A, B], ThunkIso[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(iso1URElement(element[A], element[B], container[Thunk]))

@@ -23,7 +23,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       implicitArgs.opt(args => s"(implicit ${args.rep(a => {
                                  val declared = entity.isInheritedDeclared(a.name, module)
                                  val defined = entity.isInheritedDefined(a.name, module)
-                                 s"${(declared || defined).opt("override ")} val ${a.name}: ${a.tpe}"
+                                 s"${(declared || defined).opt("override ")}val ${a.name}: ${a.tpe}"
                                            })})")
     }
     val implicitArgsUse = implicitArgs.opt(args => s"(${args.rep(_.name)})")

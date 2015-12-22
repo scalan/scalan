@@ -227,7 +227,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[CollectionOverArray[Item]]
   }
   // elem for concrete class
-  class CollectionOverArrayElem[Item](val iso: Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]])(implicit override  val eItem: Elem[Item])
+  class CollectionOverArrayElem[Item](val iso: Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]])(implicit override val eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverArray[Item]]
     with ConcreteElem[CollectionOverArrayData[Item], CollectionOverArray[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
@@ -311,7 +311,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[CollectionOverList[Item]]
   }
   // elem for concrete class
-  class CollectionOverListElem[Item](val iso: Iso[CollectionOverListData[Item], CollectionOverList[Item]])(implicit override  val eItem: Elem[Item])
+  class CollectionOverListElem[Item](val iso: Iso[CollectionOverListData[Item], CollectionOverList[Item]])(implicit override val eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverList[Item]]
     with ConcreteElem[CollectionOverListData[Item], CollectionOverList[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
@@ -395,7 +395,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[CollectionOverSeq[Item]]
   }
   // elem for concrete class
-  class CollectionOverSeqElem[Item](val iso: Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]])(implicit override  val eItem: Elem[Item])
+  class CollectionOverSeqElem[Item](val iso: Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]])(implicit override val eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverSeq[Item]]
     with ConcreteElem[CollectionOverSeqData[Item], CollectionOverSeq[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
@@ -479,7 +479,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[PairCollectionSOA[A, B]]
   }
   // elem for concrete class
-  class PairCollectionSOAElem[A, B](val iso: Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]])(implicit override  val eA: Elem[A], override  val eB: Elem[B])
+  class PairCollectionSOAElem[A, B](val iso: Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]])(implicit override val eA: Elem[A], override val eB: Elem[B])
     extends PairCollectionElem[A, B, PairCollectionSOA[A, B]]
     with ConcreteElem[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
@@ -566,7 +566,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[PairCollectionAOS[A, B]]
   }
   // elem for concrete class
-  class PairCollectionAOSElem[A, B](val iso: Iso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]])(implicit override  val eA: Elem[A], override  val eB: Elem[B])
+  class PairCollectionAOSElem[A, B](val iso: Iso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]])(implicit override val eA: Elem[A], override val eB: Elem[B])
     extends PairCollectionElem[A, B, PairCollectionAOS[A, B]]
     with ConcreteElem[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
@@ -652,7 +652,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[NestedCollectionFlat[A]]
   }
   // elem for concrete class
-  class NestedCollectionFlatElem[A](val iso: Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]])(implicit override  val eA: Elem[A])
+  class NestedCollectionFlatElem[A](val iso: Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]])(implicit override val eA: Elem[A])
     extends NestedCollectionElem[A, NestedCollectionFlat[A]]
     with ConcreteElem[NestedCollectionFlatData[A], NestedCollectionFlat[A]] {
     override lazy val parent: Option[Elem[_]] = Some(nestedCollectionElement(element[A]))
@@ -737,7 +737,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[FuncCollection[A, B, Env]]
   }
   // elem for concrete class
-  class FuncCollectionElem[A, B, Env](val iso: Iso[FuncCollectionData[A, B, Env], FuncCollection[A, B, Env]])(implicit  val eA: Elem[A],  val eB: Elem[B],  val eEnv: Elem[Env])
+  class FuncCollectionElem[A, B, Env](val iso: Iso[FuncCollectionData[A, B, Env], FuncCollection[A, B, Env]])(implicit val eA: Elem[A], val eB: Elem[B], val eEnv: Elem[Env])
     extends CollectionElem[A => B, FuncCollection[A, B, Env]]
     with ConcreteElem[FuncCollectionData[A, B, Env], FuncCollection[A, B, Env]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(funcElement(element[A],element[B])))

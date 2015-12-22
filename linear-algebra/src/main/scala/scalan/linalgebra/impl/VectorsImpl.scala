@@ -68,7 +68,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     lazy val selfType = element[DenseVector[T]]
   }
   // elem for concrete class
-  class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit override  val eT: Elem[T])
+  class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit override val eT: Elem[T])
     extends AbstractVectorElem[T, DenseVector[T]]
     with ConcreteElem[DenseVectorData[T], DenseVector[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
@@ -152,7 +152,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     lazy val selfType = element[ConstVector[T]]
   }
   // elem for concrete class
-  class ConstVectorElem[T](val iso: Iso[ConstVectorData[T], ConstVector[T]])(implicit override  val eT: Elem[T])
+  class ConstVectorElem[T](val iso: Iso[ConstVectorData[T], ConstVector[T]])(implicit override val eT: Elem[T])
     extends AbstractVectorElem[T, ConstVector[T]]
     with ConcreteElem[ConstVectorData[T], ConstVector[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
@@ -238,7 +238,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     lazy val selfType = element[SparseVector[T]]
   }
   // elem for concrete class
-  class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit override  val eT: Elem[T])
+  class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit override val eT: Elem[T])
     extends AbstractVectorElem[T, SparseVector[T]]
     with ConcreteElem[SparseVectorData[T], SparseVector[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
@@ -323,7 +323,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     lazy val selfType = element[SparseVector1[T]]
   }
   // elem for concrete class
-  class SparseVector1Elem[T](val iso: Iso[SparseVector1Data[T], SparseVector1[T]])(implicit override  val eT: Elem[T])
+  class SparseVector1Elem[T](val iso: Iso[SparseVector1Data[T], SparseVector1[T]])(implicit override val eT: Elem[T])
     extends AbstractVectorElem[T, SparseVector1[T]]
     with ConcreteElem[SparseVector1Data[T], SparseVector1[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))

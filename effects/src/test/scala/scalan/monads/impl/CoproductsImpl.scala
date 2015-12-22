@@ -68,7 +68,7 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
     lazy val selfType = element[CoproductImpl[F, G, A]]
   }
   // elem for concrete class
-  class CoproductImplElem[F[_], G[_], A](val iso: Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]])(implicit override  val cF: Cont[F], override  val cG: Cont[G], override  val eA: Elem[A])
+  class CoproductImplElem[F[_], G[_], A](val iso: Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]])(implicit override val cF: Cont[F], override val cG: Cont[G], override val eA: Elem[A])
     extends CoproductElem[F, G, A, CoproductImpl[F, G, A]]
     with ConcreteElem[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] {
     override lazy val parent: Option[Elem[_]] = Some(coproductElement(container[F], container[G], element[A]))
