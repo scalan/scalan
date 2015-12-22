@@ -2,10 +2,12 @@ package scalan.compilation.lms
 
 import java.lang.reflect.Method
 
-import scalan.compilation.language.ScalaInterpreter
+import scalan.compilation.language.SCALA
 
-trait CoreBridgeScala extends CoreBridge with ScalaInterpreter {
+trait CoreBridgeScala extends CoreBridge with ObjectOrientedBridge {
   import scalan._
+
+  val languageId = SCALA
 
   override def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] = {
     mappedFunc(method) match {

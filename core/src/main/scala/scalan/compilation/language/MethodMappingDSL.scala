@@ -4,22 +4,16 @@ import scala.collection.mutable
 import scala.language.postfixOps
 import scala.reflect.runtime.universe.typeOf
 
-object LanguageId extends Enumeration {
-  type LANGUAGE_ID = Value
-  val SCALA, CPP = Value
+trait LanguageId
 
-  implicit def defaultLanguage: LANGUAGE_ID = SCALA
-}
+object SCALA extends LanguageId
+object CPP extends LanguageId
 
 trait MethodMappingDSL {
   // be explicit to avoid errors if scala.reflect.runtime.universe.Symbol will be imported later
   implicit def symbolToString(s: scala.Symbol): String = s.name
 
-  import LanguageId._
-
-  val mappingDSLs: mutable.HashMap[LANGUAGE_ID, mutable.ArrayBuffer[MappingTags#Mapping[_]]] = new mutable.HashMap()
-
-  def methodReplaceConf(implicit languageId: LANGUAGE_ID): mutable.ArrayBuffer[MappingTags#Mapping[_]] = mappingDSLs(languageId)
+  val mappingDSLs: mutable.HashMap[LanguageId, mutable.ArrayBuffer[MappingTags#Mapping[_]]] = new mutable.HashMap()
 
   trait Implicit[T] {
     this: T =>
@@ -85,7 +79,7 @@ trait MethodMappingDSL {
       def lib: Fn
     }
 
-    abstract class Mapping[TC <: MappingTags](languageId: LANGUAGE_ID)(implicit val l: TC) {
+    abstract class Mapping[TC <: MappingTags](languageId: LanguageId)(implicit val l: TC) {
       type Func <: Fun
 
       (mappingDSLs.get(languageId), this) match {
