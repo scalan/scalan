@@ -28,7 +28,8 @@ class EffectsItTests extends BaseItTests[EffectsProg](new MonadsDslSeq with Effe
     getStagedOutput(_.runAppW)(10)
   }
 
-  test("runInteract2") {
+  // TODO turn on after the problem from PR #174 is resolved
+  ignore("runInteract2") {
     getStagedOutput(_.runApp2W)(10)
   }
 }
