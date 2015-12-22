@@ -398,8 +398,15 @@ trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL
     }
   }
 
-  def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] =
-    !!!(s"Don't know how to transform method call: $method")
+  def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] = {
+    val obj = m.symMirrorUntyped(receiver)
+    elemToManifest(returnType) match {
+      case mA: Manifest[a] =>
+        val typeArgs = args.collect { case elem: Elem[_] => elemToManifest(elem) }
+        val lmsArgs = args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }
+        lms.methodCall[a](obj, lms.Pure, method.getName, typeArgs, lmsArgs: _*)(mA.asInstanceOf[Manifest[a]])
+    }
+  }
   def newObj[A: Manifest](aClass: Class[_], args: Seq[Any], newKeyWord: Boolean): lms.Exp[A] = {
     val name = mappedClassName(aClass).getOrElse(aClass.getName)
 

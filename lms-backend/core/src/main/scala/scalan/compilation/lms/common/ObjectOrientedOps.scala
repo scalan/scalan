@@ -3,6 +3,7 @@ package scalan.compilation.lms.common
 import scala.lms.common._
 import scala.lms.internal.Effects
 import scala.reflect.SourceContext
+import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait ObjectOrientedOps extends Base with Effects {
   def methodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, typeArgs: List[Manifest[_]], args: Rep[_]*): Rep[A]
@@ -82,6 +83,35 @@ trait ScalaGenObjectOrientedOps extends ScalaGenBase {
         case arg => arg
       }.mkString(",")
       emitValDef(sym, src"$newStr$className($argsStr)")
+    case _ => super.emitNode(sym, rhs)
+  }
+}
+
+trait CxxShptrGenObjectOrientedOps extends CxxShptrCodegen {
+  val IR: ObjectOrientedOpsExp
+
+  import IR._
+
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case MethodCall(caller, methodName, typeArgs, args) =>
+      val callerString = if (caller != null) src"$caller->" else ""
+      val argString = if (args.isEmpty) "" else src"($args)"
+      val rhs1 = callerString + methodName + argString
+      emitValDef(sym, rhs1)
+    case NewObj(className, args, newKeyWord) =>
+      val newStr = newKeyWord match {
+        case true => "new "
+        case false => ""
+      }
+      val argsStr = args.map {
+        case e: Exp[_] => quote(e)
+        case arg => arg
+      }.mkString(",")
+      val templateArgsStr = sym.tp.typeArguments match {
+        case Nil => ""
+        case typeArgs => src"<$typeArgs>"
+      }
+      emitValDef(sym, src"$newStr$className$templateArgsStr($argsStr)")
     case _ => super.emitNode(sym, rhs)
   }
 }

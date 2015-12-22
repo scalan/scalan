@@ -15,11 +15,11 @@ trait CoreBridgeScala extends CoreBridge with ScalaInterpreter {
             case true => Seq(m.symMirrorUntyped(receiver))
             case false => Seq.empty[lms.Exp[_]]
           }
-          val methodName:String = func.name match {
-            case n: String if n.isEmpty => n
+          val methodName: String = func.name match {
+            case "" => ""
             case _ =>
               e.pack match {
-                case p if p.isEmpty => func.name
+                case "" => func.name
                 case p => p + "." + func.name
               }
           }
@@ -37,15 +37,7 @@ trait CoreBridgeScala extends CoreBridge with ScalaInterpreter {
       case Some(nonScalaFunc) =>
         !!!(s"$nonScalaFunc is not a ScalaMappingDSL#ScalaFunc")
       case None =>
-        val obj = m.symMirrorUntyped(receiver)
-        elemToManifest(returnType) match {
-          case (mA: Manifest[a]) => lms.methodCall[a](obj, lms.Pure, method.getName,
-            args.collect {
-              case elem: Elem[_] => elemToManifest(elem)
-            },
-            /* filter out implicit ClassTag params */
-            args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }: _*)(mA.asInstanceOf[Manifest[a]])
-        }
+        super.transformMethodCall(m, receiver, method, args, returnType)
     }
   }
 }
