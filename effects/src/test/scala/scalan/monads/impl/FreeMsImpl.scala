@@ -67,7 +67,7 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     lazy val selfType = element[Done[F, A]]
   }
   // elem for concrete class
-  class DoneElem[F[_], A](val iso: Iso[DoneData[F, A], Done[F, A]])(implicit eA: Elem[A], cF: Cont[F])
+  class DoneElem[F[_], A](val iso: Iso[DoneData[F, A], Done[F, A]])(implicit override val eA: Elem[A], override val cF: Cont[F])
     extends FreeMElem[F, A, Done[F, A]]
     with ConcreteElem[DoneData[F, A], Done[F, A]] {
     override lazy val parent: Option[Elem[_]] = Some(freeMElement(container[F], element[A]))
@@ -152,7 +152,7 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     lazy val selfType = element[More[F, A]]
   }
   // elem for concrete class
-  class MoreElem[F[_], A](val iso: Iso[MoreData[F, A], More[F, A]])(implicit eA: Elem[A], cF: Cont[F])
+  class MoreElem[F[_], A](val iso: Iso[MoreData[F, A], More[F, A]])(implicit override val eA: Elem[A], override val cF: Cont[F])
     extends FreeMElem[F, A, More[F, A]]
     with ConcreteElem[MoreData[F, A], More[F, A]] {
     override lazy val parent: Option[Elem[_]] = Some(freeMElement(container[F], element[A]))
@@ -237,7 +237,7 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     lazy val selfType = element[FlatMap[F, S, B]]
   }
   // elem for concrete class
-  class FlatMapElem[F[_], S, B](val iso: Iso[FlatMapData[F, S, B], FlatMap[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+  class FlatMapElem[F[_], S, B](val iso: Iso[FlatMapData[F, S, B], FlatMap[F, S, B]])(implicit val eS: Elem[S], override val eA: Elem[B], override val cF: Cont[F])
     extends FreeMElem[F, B, FlatMap[F, S, B]]
     with ConcreteElem[FlatMapData[F, S, B], FlatMap[F, S, B]] {
     override lazy val parent: Option[Elem[_]] = Some(freeMElement(container[F], element[B]))

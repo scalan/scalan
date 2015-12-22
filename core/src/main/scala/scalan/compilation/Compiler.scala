@@ -21,7 +21,9 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
   // see comment for buildInitialGraph
   // TODO sequence may depend on input or intermediate graphs, use a state monad instead
   def graphPasses(compilerConfig: CompilerConfig): Seq[PGraph => GraphPass] = Seq()
-
+  def onFinishGraphPasses() = {
+    scalan.resetTesters()
+  }
   // Can it return ProgramGraph[Ctx] for some other Ctx?
   // If so, may want to add Ctx as type argument or type member
   protected def buildInitialGraph[A, B](func: Exp[A => B])(compilerConfig: CompilerConfig): PGraph = {
@@ -67,6 +69,7 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
         graph1
       }
     }
+    onFinishGraphPasses()
 
     CommonCompilerOutput(finalGraph, functionName, eInput, eOutput)
   }

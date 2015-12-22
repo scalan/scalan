@@ -69,7 +69,7 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
     lazy val selfType = element[StateGet[S, A]]
   }
   // elem for concrete class
-  class StateGetElem[S, A](val iso: Iso[StateGetData[S, A], StateGet[S, A]])(implicit eS: Elem[S], eA: Elem[A])
+  class StateGetElem[S, A](val iso: Iso[StateGetData[S, A], StateGet[S, A]])(implicit override val eS: Elem[S], override val eA: Elem[A])
     extends StateFElem[S, A, StateGet[S, A]]
     with ConcreteElem[StateGetData[S, A], StateGet[S, A]] {
     override lazy val parent: Option[Elem[_]] = Some(stateFElement(element[S], element[A]))
@@ -156,7 +156,7 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
     lazy val selfType = element[StatePut[S, A]]
   }
   // elem for concrete class
-  class StatePutElem[S, A](val iso: Iso[StatePutData[S, A], StatePut[S, A]])(implicit eS: Elem[S], eA: Elem[A])
+  class StatePutElem[S, A](val iso: Iso[StatePutData[S, A], StatePut[S, A]])(implicit override val eS: Elem[S], override val eA: Elem[A])
     extends StateFElem[S, A, StatePut[S, A]]
     with ConcreteElem[StatePutData[S, A], StatePut[S, A]] {
     override lazy val parent: Option[Elem[_]] = Some(stateFElement(element[S], element[A]))

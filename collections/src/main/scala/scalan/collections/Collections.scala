@@ -124,12 +124,6 @@ trait Collections { self: CollectionsDsl =>
     def indexRange(l: Rep[Int]): Coll[Int] = CollectionOverArray(array_rangeFrom0(l))
   }
 
-  implicit val collectionFunctor = new Functor[Collection] {
-    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Collection[A]]
-    def lift[A](implicit evA: Elem[A]) = element[Collection[A]]
-    def map[A:Elem,B:Elem](xs: Rep[Collection[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
-  }
-
   abstract class UnitCollection(val length: Rep[Int]) extends Collection[Unit] {
     def eItem = UnitElement
     def arr = SArray.replicate(length, ())
@@ -379,6 +373,41 @@ trait Collections { self: CollectionsDsl =>
     }
   }
 
+  abstract class FuncCollection[A,B,Env]
+      (val env1: Coll[Env], val indexedFunc: Rep[((Int, A)) => B])
+      (implicit val eA: Elem[A], val eB: Elem[B], val eEnv: Elem[Env])
+    extends Collection[A => B] {
+    lazy val eItem = element[A => B]
+
+    def arr = ???
+    def lst = ???
+    def length = env1.length
+    def apply(i: Rep[Int]) = fun { x: Rep[A] => indexedFunc(Pair(i, x)) }
+
+    def mapBy[R: Elem](f: Rep[((A => B)) => R @uncheckedVariance]): Coll[R] = {
+      val range = SArray.rangeFrom0(env1.length)
+      Collection(range.mapBy(fun { i: Rep[Int] =>
+        val itemFunc = apply(i)
+        f(itemFunc)
+      }))
+    }
+
+    @OverloadId("many")
+    def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[A=>B] = {
+      indices.mapBy(fun { i: Rep[Int] => apply(i) })
+    }
+
+    def slice(offset: Rep[Int], length: Rep[Int]) = ???
+    def reduce(implicit m: RepMonoid[A=>B @uncheckedVariance]): Rep[A=>B] = ???
+    def zip[C: Elem](ys: Coll[C]): PairColl[A=>B, C] = PairCollectionSOA(self, ys)
+    def update (idx: Rep[Int], value: Rep[A=>B]): Coll[A=>B] = ???
+    def updateMany (idxs: Coll[Int], vals: Coll[A=>B]): Coll[A=>B] = ???
+    def filterBy(f: Rep[(A=>B) => Boolean]): Coll[A=>B] = ???
+    def flatMapBy[R: Elem](f: Rep[((A=>B)) => Collection[R]]): Coll[R] = ???
+    def append(value: Rep[A=>B]): Coll[A=>B]  = ???
+    def sortBy[O: Elem](by: Rep[(A=>B) => O])(implicit o: Ordering[O]): Coll[A=>B] = ???
+  }
+
   implicit def convertCollectionElem[A](e: Elem[Collection[A]]): CollectionElem[A, _] =
     e.asInstanceOf[CollectionElem[A, _]]
 
@@ -401,6 +430,14 @@ trait Collections { self: CollectionsDsl =>
 }
 
 trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
+
+  trait CollectionFunctor extends Functor[Collection] {
+    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Collection[A]]
+    def lift[A](implicit evA: Elem[A]) = element[Collection[A]]
+    def map[A:Elem,B:Elem](xs: Rep[Collection[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
+  }
+  implicit val containerCollection: Functor[Collection] = new CollectionFunctor {}
+
   implicit class CollectionExtensions[A](coll: Coll[A]) {
     implicit def eItem: Elem[A] = coll.selfType1.eItem
 

@@ -68,7 +68,7 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
     lazy val selfType = element[ReaderBase[Env, A]]
   }
   // elem for concrete class
-  class ReaderBaseElem[Env, A](val iso: Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]])(implicit eEnv: Elem[Env], eA: Elem[A])
+  class ReaderBaseElem[Env, A](val iso: Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]])(implicit override val eEnv: Elem[Env], override val eA: Elem[A])
     extends ReaderElem[Env, A, ReaderBase[Env, A]]
     with ConcreteElem[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
     override lazy val parent: Option[Elem[_]] = Some(readerElement(element[Env], element[A]))

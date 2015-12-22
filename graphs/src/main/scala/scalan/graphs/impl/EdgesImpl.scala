@@ -68,7 +68,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     lazy val selfType = element[AdjEdge[V, E]]
   }
   // elem for concrete class
-  class AdjEdgeElem[V, E](val iso: Iso[AdjEdgeData[V, E], AdjEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
+  class AdjEdgeElem[V, E](val iso: Iso[AdjEdgeData[V, E], AdjEdge[V, E]])(implicit override val eV: Elem[V], override val eE: Elem[E])
     extends EdgeElem[V, E, AdjEdge[V, E]]
     with ConcreteElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
@@ -155,7 +155,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     lazy val selfType = element[IncEdge[V, E]]
   }
   // elem for concrete class
-  class IncEdgeElem[V, E](val iso: Iso[IncEdgeData[V, E], IncEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
+  class IncEdgeElem[V, E](val iso: Iso[IncEdgeData[V, E], IncEdge[V, E]])(implicit override val eV: Elem[V], override val eE: Elem[E])
     extends EdgeElem[V, E, IncEdge[V, E]]
     with ConcreteElem[IncEdgeData[V, E], IncEdge[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))

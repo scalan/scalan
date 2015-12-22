@@ -68,7 +68,7 @@ trait StatesAbs extends scalan.ScalanDsl with States {
     lazy val selfType = element[StateBase[S, A]]
   }
   // elem for concrete class
-  class StateBaseElem[S, A](val iso: Iso[StateBaseData[S, A], StateBase[S, A]])(implicit eS: Elem[S], eA: Elem[A])
+  class StateBaseElem[S, A](val iso: Iso[StateBaseData[S, A], StateBase[S, A]])(implicit override val eS: Elem[S], override val eA: Elem[A])
     extends State0Elem[S, A, StateBase[S, A]]
     with ConcreteElem[StateBaseData[S, A], StateBase[S, A]] {
     override lazy val parent: Option[Elem[_]] = Some(state0Element(element[S], element[A]))

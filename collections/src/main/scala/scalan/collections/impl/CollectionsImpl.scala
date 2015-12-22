@@ -227,7 +227,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[CollectionOverArray[Item]]
   }
   // elem for concrete class
-  class CollectionOverArrayElem[Item](val iso: Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]])(implicit eItem: Elem[Item])
+  class CollectionOverArrayElem[Item](val iso: Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]])(implicit override val eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverArray[Item]]
     with ConcreteElem[CollectionOverArrayData[Item], CollectionOverArray[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
@@ -311,7 +311,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[CollectionOverList[Item]]
   }
   // elem for concrete class
-  class CollectionOverListElem[Item](val iso: Iso[CollectionOverListData[Item], CollectionOverList[Item]])(implicit eItem: Elem[Item])
+  class CollectionOverListElem[Item](val iso: Iso[CollectionOverListData[Item], CollectionOverList[Item]])(implicit override val eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverList[Item]]
     with ConcreteElem[CollectionOverListData[Item], CollectionOverList[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
@@ -395,7 +395,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[CollectionOverSeq[Item]]
   }
   // elem for concrete class
-  class CollectionOverSeqElem[Item](val iso: Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]])(implicit eItem: Elem[Item])
+  class CollectionOverSeqElem[Item](val iso: Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]])(implicit override val eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverSeq[Item]]
     with ConcreteElem[CollectionOverSeqData[Item], CollectionOverSeq[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
@@ -479,7 +479,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[PairCollectionSOA[A, B]]
   }
   // elem for concrete class
-  class PairCollectionSOAElem[A, B](val iso: Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]])(implicit eA: Elem[A], eB: Elem[B])
+  class PairCollectionSOAElem[A, B](val iso: Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]])(implicit override val eA: Elem[A], override val eB: Elem[B])
     extends PairCollectionElem[A, B, PairCollectionSOA[A, B]]
     with ConcreteElem[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
@@ -566,7 +566,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[PairCollectionAOS[A, B]]
   }
   // elem for concrete class
-  class PairCollectionAOSElem[A, B](val iso: Iso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]])(implicit eA: Elem[A], eB: Elem[B])
+  class PairCollectionAOSElem[A, B](val iso: Iso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]])(implicit override val eA: Elem[A], override val eB: Elem[B])
     extends PairCollectionElem[A, B, PairCollectionAOS[A, B]]
     with ConcreteElem[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
@@ -652,7 +652,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val selfType = element[NestedCollectionFlat[A]]
   }
   // elem for concrete class
-  class NestedCollectionFlatElem[A](val iso: Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]])(implicit eA: Elem[A])
+  class NestedCollectionFlatElem[A](val iso: Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]])(implicit override val eA: Elem[A])
     extends NestedCollectionElem[A, NestedCollectionFlat[A]]
     with ConcreteElem[NestedCollectionFlatData[A], NestedCollectionFlat[A]] {
     override lazy val parent: Option[Elem[_]] = Some(nestedCollectionElement(element[A]))
@@ -730,6 +730,96 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   // 6) smart constructor and deconstructor
   def mkNestedCollectionFlat[A](values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]]
   def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[A]], Rep[PairCollection[Int, Int]])]
+
+  abstract class AbsFuncCollection[A, B, Env]
+      (env1: Coll[Env], indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env])
+    extends FuncCollection[A, B, Env](env1, indexedFunc) with Def[FuncCollection[A, B, Env]] {
+    lazy val selfType = element[FuncCollection[A, B, Env]]
+  }
+  // elem for concrete class
+  class FuncCollectionElem[A, B, Env](val iso: Iso[FuncCollectionData[A, B, Env], FuncCollection[A, B, Env]])(implicit val eA: Elem[A], val eB: Elem[B], val eEnv: Elem[Env])
+    extends CollectionElem[A => B, FuncCollection[A, B, Env]]
+    with ConcreteElem[FuncCollectionData[A, B, Env], FuncCollection[A, B, Env]] {
+    override lazy val parent: Option[Elem[_]] = Some(collectionElement(funcElement(element[A],element[B])))
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA), "B" -> Left(eB), "Env" -> Left(eEnv))
+    }
+
+    override def convertCollection(x: Rep[Collection[A => B]]) = // Converter is not generated by meta
+!!!("Cannot convert from Collection to FuncCollection: missing fields List(env1, indexedFunc)")
+    override def getDefaultRep = FuncCollection(element[Collection[Env]].defaultRepValue, constFun[(Int, A), B](element[B].defaultRepValue))
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
+      implicit val tagEnv = eEnv.tag
+      weakTypeTag[FuncCollection[A, B, Env]]
+    }
+  }
+
+  // state representation type
+  type FuncCollectionData[A, B, Env] = (Collection[Env], ((Int, A)) => B)
+
+  // 3) Iso for concrete class
+  class FuncCollectionIso[A, B, Env](implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env])
+    extends EntityIso[FuncCollectionData[A, B, Env], FuncCollection[A, B, Env]] with Def[FuncCollectionIso[A, B, Env]] {
+    override def from(p: Rep[FuncCollection[A, B, Env]]) =
+      (p.env1, p.indexedFunc)
+    override def to(p: Rep[(Collection[Env], ((Int, A)) => B)]) = {
+      val Pair(env1, indexedFunc) = p
+      FuncCollection(env1, indexedFunc)
+    }
+    lazy val eFrom = pairElement(element[Collection[Env]], element[((Int, A)) => B])
+    lazy val eTo = new FuncCollectionElem[A, B, Env](self)
+    lazy val selfType = new FuncCollectionIsoElem[A, B, Env](eA, eB, eEnv)
+    def productArity = 3
+    def productElement(n: Int) = (eA, eB, eEnv).productElement(n)
+  }
+  case class FuncCollectionIsoElem[A, B, Env](eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]) extends Elem[FuncCollectionIso[A, B, Env]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new FuncCollectionIso[A, B, Env]()(eA, eB, eEnv))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
+      implicit val tagEnv = eEnv.tag
+      weakTypeTag[FuncCollectionIso[A, B, Env]]
+    }
+  }
+  // 4) constructor and deconstructor
+  class FuncCollectionCompanionAbs extends CompanionDef[FuncCollectionCompanionAbs] {
+    def selfType = FuncCollectionCompanionElem
+    override def toString = "FuncCollection"
+    def apply[A, B, Env](p: Rep[FuncCollectionData[A, B, Env]])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Rep[FuncCollection[A, B, Env]] =
+      isoFuncCollection(eA, eB, eEnv).to(p)
+    def apply[A, B, Env](env1: Coll[Env], indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Rep[FuncCollection[A, B, Env]] =
+      mkFuncCollection(env1, indexedFunc)
+  }
+  object FuncCollectionMatcher {
+    def unapply[A, B, Env](p: Rep[Collection[A => B]]) = unmkFuncCollection(p)
+  }
+  lazy val FuncCollection: Rep[FuncCollectionCompanionAbs] = new FuncCollectionCompanionAbs
+  implicit def proxyFuncCollectionCompanion(p: Rep[FuncCollectionCompanionAbs]): FuncCollectionCompanionAbs = {
+    proxyOps[FuncCollectionCompanionAbs](p)
+  }
+
+  implicit case object FuncCollectionCompanionElem extends CompanionElem[FuncCollectionCompanionAbs] {
+    lazy val tag = weakTypeTag[FuncCollectionCompanionAbs]
+    protected def getDefaultRep = FuncCollection
+  }
+
+  implicit def proxyFuncCollection[A, B, Env](p: Rep[FuncCollection[A, B, Env]]): FuncCollection[A, B, Env] =
+    proxyOps[FuncCollection[A, B, Env]](p)
+
+  implicit class ExtendedFuncCollection[A, B, Env](p: Rep[FuncCollection[A, B, Env]])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]) {
+    def toData: Rep[FuncCollectionData[A, B, Env]] = isoFuncCollection(eA, eB, eEnv).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoFuncCollection[A, B, Env](implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Iso[FuncCollectionData[A, B, Env], FuncCollection[A, B, Env]] =
+    reifyObject(new FuncCollectionIso[A, B, Env]()(eA, eB, eEnv))
+
+  // 6) smart constructor and deconstructor
+  def mkFuncCollection[A, B, Env](env1: Coll[Env], indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Rep[FuncCollection[A, B, Env]]
+  def unmkFuncCollection[A, B, Env](p: Rep[Collection[A => B]]): Option[(Rep[Collection[Env]], Rep[((Int, A)) => B])]
 
   registerModule(Collections_Module)
 }
@@ -835,6 +925,20 @@ trait CollectionsSeq extends scalan.ScalanDslSeq with CollectionsDsl {
   def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]) = p match {
     case p: NestedCollectionFlat[A] @unchecked =>
       Some((p.values, p.segments))
+    case _ => None
+  }
+
+  case class SeqFuncCollection[A, B, Env]
+      (override val env1: Coll[Env], override val indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env])
+    extends AbsFuncCollection[A, B, Env](env1, indexedFunc) {
+  }
+
+  def mkFuncCollection[A, B, Env]
+    (env1: Coll[Env], indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Rep[FuncCollection[A, B, Env]] =
+    new SeqFuncCollection[A, B, Env](env1, indexedFunc)
+  def unmkFuncCollection[A, B, Env](p: Rep[Collection[A => B]]) = p match {
+    case p: FuncCollection[A, B, Env] @unchecked =>
+      Some((p.env1, p.indexedFunc))
     case _ => None
   }
 }
@@ -2332,6 +2436,202 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
       None
   }
 
+  case class ExpFuncCollection[A, B, Env]
+      (override val env1: Coll[Env], override val indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env])
+    extends AbsFuncCollection[A, B, Env](env1, indexedFunc)
+
+  object FuncCollectionMethods {
+    object arr {
+      def unapply(d: Def[_]): Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "arr" =>
+          Some(receiver).asInstanceOf[Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object lst {
+      def unapply(d: Def[_]): Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "lst" =>
+          Some(receiver).asInstanceOf[Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object length {
+      def unapply(d: Def[_]): Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "length" =>
+          Some(receiver).asInstanceOf[Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[FuncCollection[A, B, Env]] forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[Int]) forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Rep[Int]) forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[Int]) forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object mapBy {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => R @uncheckedVariance]) forSome {type A; type B; type Env; type R}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "mapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => R @uncheckedVariance]) forSome {type A; type B; type Env; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => R @uncheckedVariance]) forSome {type A; type B; type Env; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_many {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Coll[Int]) forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Coll[Int]) forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Coll[Int]) forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object slice {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[Int], Rep[Int]) forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "slice" =>
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Rep[Int], Rep[Int]) forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[Int], Rep[Int]) forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object reduce {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], RepMonoid[A => B @uncheckedVariance]) forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "reduce" =>
+          Some((receiver, m)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], RepMonoid[A => B @uncheckedVariance]) forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], RepMonoid[A => B @uncheckedVariance]) forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object zip {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Coll[C]) forSome {type A; type B; type Env; type C}] = d match {
+        case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "zip" =>
+          Some((receiver, ys)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Coll[C]) forSome {type A; type B; type Env; type C}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Coll[C]) forSome {type A; type B; type Env; type C}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object update {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[Int], Rep[A => B]) forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "update" =>
+          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Rep[Int], Rep[A => B]) forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[Int], Rep[A => B]) forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object updateMany {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Coll[Int], Coll[A => B]) forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "updateMany" =>
+          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Coll[Int], Coll[A => B]) forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Coll[Int], Coll[A => B]) forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => Boolean]) forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => Boolean]) forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => Boolean]) forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => Collection[R]]) forSome {type A; type B; type Env; type R}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => Collection[R]]) forSome {type A; type B; type Env; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => Collection[R]]) forSome {type A; type B; type Env; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object append {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B]) forSome {type A; type B; type Env}] = d match {
+        case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "append" =>
+          Some((receiver, value)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B]) forSome {type A; type B; type Env}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B]) forSome {type A; type B; type Env}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sortBy {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => O], Ordering[O]) forSome {type A; type B; type Env; type O}] = d match {
+        case MethodCall(receiver, method, Seq(by, o, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "sortBy" =>
+          Some((receiver, by, o)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => O], Ordering[O]) forSome {type A; type B; type Env; type O}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Rep[A => B => O], Ordering[O]) forSome {type A; type B; type Env; type O}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  def mkFuncCollection[A, B, Env]
+    (env1: Coll[Env], indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Rep[FuncCollection[A, B, Env]] =
+    new ExpFuncCollection[A, B, Env](env1, indexedFunc)
+  def unmkFuncCollection[A, B, Env](p: Rep[Collection[A => B]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: FuncCollectionElem[A, B, Env] @unchecked =>
+      Some((p.asRep[FuncCollection[A, B, Env]].env1, p.asRep[FuncCollection[A, B, Env]].indexedFunc))
+    case _ =>
+      None
+  }
+
   object CollectionMethods {
     object length {
       def unapply(d: Def[_]): Option[Rep[Collection[Item]] forSome {type Item}] = d match {
@@ -2640,7 +2940,7 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
 }
 
 object Collections_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVYS2wbRRiedew4tqM0j0IhpSSkhtKqxEkF6iFCleMkEOTGUTatkFsFjdcTZ9t9ZXcc2RwquFQIxAVxRaISF6ReUE+oUoWEkBAHTgghceZUgqoeqDiAmBnvrvcdb2gC+LDancf/+P7v/z3/3N4FKUMHLxgClKAyLSMMp3n2XjRwnl9UsIjbF9V6U0ILaPMp9atPZz8f/zIBjlRB/xY0FgypCjKdl8WWZr/zaLsMMlARkIFV3cDguTLTUBBUSUICFlWlIMpyE8OahApl0cBzZZCsqfX2NrgBuDIYFlRF0BFGfEmChoEMc3wAUYtE+zvDvtsVratDKVAvCg4v1nUoYmI+0THcWb+GNL6tqEpbxmDINK2iUbPImrQoa6qOLRVpIm5LrVufSQWSATBavgZ3YIGoaBR4rItKg+zMaVC4DhtohSyhy5PEYANJm+ttjX33lUHWQNsEoGVZk9hISwMAkAicY0ZMd/GZtvGZpvjkeaSLUBLfhnRyVVdbbdD5cX0AtDQi4uweIiwJaFGp59+/Klx5xOfkBN3coqakmYf9RNBECBtYKAiO3659ZDx87db5BMhWQVY0ijUD61DAzpCbaOWgoqiY2WwDCPUGidZUWLSYliJZ46FERlBlDSpEkgnlIImTJAoipovp2KAZnRDo01hD1lKupXG2v5Mh/jLelKAkrd5/+qXnf118MwESbhUZIpInxNctoRhkSzb+toKTYQo0tKqLMiH0Dnrl67uXHtxbSTEdo3W0CZsSvgylJurQy9TY1U6VJV48jUHykiJiOpRpdZ/pCL9shE/d/63+zQy4mrDjYrrRGxWIiJTx04+5H05fSICBKkucJQk2qiQ0xqKE5IpeUhVcBQPqDtI7M+kdKNG3QGqkTbfNgDmR7iNIYzAZmuIaomGYY+nEWQDkOhmxoioov7Sa/53/7uPblPA6GOzMdHL+L/H8nz8PbWKWCxj0S0hp4C1m1BEM+kixMPGgzzEMuBkyuqwEYp7tCOZVGY1MPRQ3bn2AGbpcy10zKrVrhCRzbN+zEUBbteuLmzefePDZW2Ms5wZqIpahlp+JkXFWghxgRgEHTAS4oZJZwxlZZjyTlLTdVGHw+fGkz2P2HHtMkAgdc28uOd2Y8O4M1OVYlePclvkT2JxILmMkRxnqWD5u05BpI3yBuh7CKDKSKuo6bPeqzqn0FHueiYR+1j051nWwQvKSqY6H/zMBEkKD4ESF86CSQtRJ22NaM3oBIdyHCbtynQivuYSyT66Vj0q7F+4lQOoNkNokBckog1RNbSp1KxfICQSjFp63xjh3LhDuQx3KNvfZbxJ0vfcbf5h0kwwcTrckPQ4cEttG3ZGimuOR7bhfwOFyLcSDCcfujf9a+MkpMyL8PG9OH3z4R9zgEcXxoj/u23+4wQ+2//HEfmgVinpY/Lli1zX6Ob9fLiRIUEKpEEo/U71TX4j42r7EB7sTl2znPGRzA8pX/E5Ek823f19kS6BiBNNcyIYJmI8S4McuzPU9eepkWfCCea+1/w6Lk7StjUO0iCO1htabmoRevvvHxnvvvK6x87mvk9uPHwdB4mKF/0ckJvv/ryQ2XT8MEg+vkCYK1WNUwx55279DW3i7RCZLFo2joPQKIX1XQ0YKtsUMWEB1RNFH3n48lv/to15ASNMe8+B2IkjEQXPRolKo/b2yySnOscULYh/pzfcuRREXQMVOu47qJ++8u/tq7eyH7AIoxbp4ur1z98Fej9PbiZGmImwh4TqqX4a6yLp/C5qeznCOQEVwI0e7/CUoi1J7NtQ9L2/dx72LUIENpHsMCmWLo6ML4IjmU+yPI9fDEczrZ+ABhUsHEizG2SXAP8/fZBwqxilsPTkY9+TXg3u+ArrfXKP4X+muMRfmHNaSjsxMp+5Vt2FyWQdTIanGm1dXJF9vPPpk5cz3d35hmZall2CqQqsrFcG5r1h9FdNWuGBIDtsJ3ejdGLP7b87ihHVUGQAA"
+  val dump = "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"
 }
 }
 

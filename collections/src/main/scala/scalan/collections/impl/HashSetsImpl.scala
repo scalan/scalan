@@ -120,7 +120,7 @@ trait HashSetsAbs extends scalan.ScalanDsl with HashSets {
   }
   trait SHashSetImplCompanion
   // elem for concrete class
-  class SHashSetImplElem[A](val iso: Iso[SHashSetImplData[A], SHashSetImpl[A]])(implicit eA: Elem[A])
+  class SHashSetImplElem[A](val iso: Iso[SHashSetImplData[A], SHashSetImpl[A]])(implicit override val eA: Elem[A])
     extends SHashSetElem[A, SHashSetImpl[A]]
     with ConcreteElem1[A, SHashSetImplData[A], SHashSetImpl[A], SHashSet] {
     override lazy val parent: Option[Elem[_]] = Some(sHashSetElement(element[A]))

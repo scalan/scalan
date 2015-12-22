@@ -67,7 +67,7 @@ trait MultiMapsAbs extends scalan.ScalanDsl with MultiMaps {
     lazy val selfType = element[HashMMultiMap[K, V]]
   }
   // elem for concrete class
-  class HashMMultiMapElem[K, V](val iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]])(implicit elemKey: Elem[K], elemValue: Elem[V])
+  class HashMMultiMapElem[K, V](val iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]])(implicit override val elemKey: Elem[K], override val elemValue: Elem[V])
     extends MMultiMapElem[K, V, HashMMultiMap[K, V]]
     with ConcreteElem[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
     override lazy val parent: Option[Elem[_]] = Some(mMultiMapElement(element[K], element[V]))

@@ -67,7 +67,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     lazy val selfType = element[DenseFlatMatrix[T]]
   }
   // elem for concrete class
-  class DenseFlatMatrixElem[T](val iso: Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]])(implicit eT: Elem[T])
+  class DenseFlatMatrixElem[T](val iso: Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]])(implicit override val eT: Elem[T])
     extends AbstractMatrixElem[T, DenseFlatMatrix[T]]
     with ConcreteElem[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
@@ -152,7 +152,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     lazy val selfType = element[CompoundMatrix[T]]
   }
   // elem for concrete class
-  class CompoundMatrixElem[T](val iso: Iso[CompoundMatrixData[T], CompoundMatrix[T]])(implicit eT: Elem[T])
+  class CompoundMatrixElem[T](val iso: Iso[CompoundMatrixData[T], CompoundMatrix[T]])(implicit override val eT: Elem[T])
     extends AbstractMatrixElem[T, CompoundMatrix[T]]
     with ConcreteElem[CompoundMatrixData[T], CompoundMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
@@ -237,7 +237,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     lazy val selfType = element[ConstMatrix[T]]
   }
   // elem for concrete class
-  class ConstMatrixElem[T](val iso: Iso[ConstMatrixData[T], ConstMatrix[T]])(implicit eT: Elem[T])
+  class ConstMatrixElem[T](val iso: Iso[ConstMatrixData[T], ConstMatrix[T]])(implicit override val eT: Elem[T])
     extends AbstractMatrixElem[T, ConstMatrix[T]]
     with ConcreteElem[ConstMatrixData[T], ConstMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
@@ -323,7 +323,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     lazy val selfType = element[DiagonalMatrix[T]]
   }
   // elem for concrete class
-  class DiagonalMatrixElem[T](val iso: Iso[DiagonalMatrixData[T], DiagonalMatrix[T]])(implicit eT: Elem[T])
+  class DiagonalMatrixElem[T](val iso: Iso[DiagonalMatrixData[T], DiagonalMatrix[T]])(implicit override val eT: Elem[T])
     extends AbstractMatrixElem[T, DiagonalMatrix[T]]
     with ConcreteElem[DiagonalMatrixData[T], DiagonalMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))

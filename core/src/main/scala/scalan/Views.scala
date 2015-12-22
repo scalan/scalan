@@ -451,7 +451,8 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
 
   type UnpackTester = Elem[_] => Boolean
 
-  protected var unpackTesters: Set[UnpackTester] = Set.empty
+  protected val initialUnpackTesters: Set[UnpackTester] = Set.empty
+  protected var unpackTesters: Set[UnpackTester] = initialUnpackTesters
 
   def addUnpackTester(tester: UnpackTester): Unit =
     unpackTesters += tester
