@@ -6,12 +6,12 @@ import java.net.URL
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms._
 import scalan.compilation.lms.common._
-import scalan.compilation.lms.cxx.sharedptr.CxxCoreCodegen
+import scalan.compilation.lms.cxx.sharedptr.{CxxMethodCallOpsExp, CxxCoreCodegen}
 import scalan.compilation.lms.scalac.{LmsCompilerScala}
 import scalan.compilation.lms.source2bin.Gcc
 import scalan.{ScalanDslExp, Base, JNIExtractorOpsExp}
 
-class LmsBackendUni extends ScalaCoreLmsBackend with JNILmsOpsExp { self =>
+class LmsBackendUni extends ScalaCoreLmsBackend with JNILmsOpsExp with CxxMethodCallOpsExp { self =>
   val nativeCodegen: CxxCoreCodegen[self.type] = new CxxCoreCodegen(self)
   val jniCallCodegen: JniCallCodegen[self.type] = new JniCallCodegen(self, nativeCodegen, "")
   // todo cppFunctionName and cppLibraryName should be moved from jniCallCodegen for use base codegen below (in doBuildExecutable), without information about subtype of codegen (native or jniCall)
