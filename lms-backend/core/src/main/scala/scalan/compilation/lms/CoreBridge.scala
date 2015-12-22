@@ -5,10 +5,10 @@ import java.lang.reflect.Method
 import scala.reflect.SourceContext
 import scala.reflect.runtime.universe._
 
-import scalan.compilation.language.{CoreMethodMappingDSL, Interpreter}
+import scalan.compilation.language.CoreMethodMappingDSL
 import scalan.util.{ParamMirror, StringUtil}
 
-trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL {
+trait CoreBridge extends StructBridge {
   import scalan._
 
   val lms: CoreLmsBackend
@@ -102,23 +102,6 @@ trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL
     case _: CompanionDef[_] =>  //TODO backend
       // ignore companion objects
       m
-
-    case mc@MethodCall(receiver, method, args, _) =>
-      val exp = ( isWrapperElem(receiver.elem) && isValueAccessor(method) ) match {
-        case true  => m.symMirror[T](receiver)
-        case false => transformMethodCall[T](m, receiver, method, args, mc.selfType.asInstanceOf[Elem[T]])
-      }
-
-      m.addSym(sym, exp)
-
-    case lr@NewObject(aClass, args, _) =>
-      Manifest.classType(aClass) match { //TODO backend: better manifest construction
-        case (mA: Manifest[a]) =>
-          // TODO handle case when some of params are functions
-          val lmsArgs = args.map(mapParam(m, _, false))
-          val exp = newObj[a](aClass, lmsArgs, true)(mA)
-          m.addSym(sym, exp)
-      }
 
     case lam: Lambda[a, b] =>
       val mA = elemToManifest(lam.eA).asInstanceOf[Manifest[a]]
@@ -397,13 +380,4 @@ trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL
         lms.math_pow(_arg1, _arg2)
     }
   }
-
-  def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] =
-    !!!(s"Don't know how to transform method call: $method")
-  def newObj[A: Manifest](aClass: Class[_], args: Seq[Any], newKeyWord: Boolean): lms.Exp[A] = {
-    val name = mappedClassName(aClass).getOrElse(aClass.getName)
-
-    lms.newObj[A](name, args, newKeyWord)
-  }
-
 }

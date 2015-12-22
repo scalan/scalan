@@ -371,7 +371,7 @@ trait HashSetsExp extends scalan.ScalanDslExp with HashSetsDsl {
       ViewSHashSet(arr, compIso)
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
-    case mc @ MethodCall(Def(wrapper: ExpSHashSetImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
+    case mc @ MethodCall(Def(wrapper: ExpSHashSetImpl[_]), m, args, neverInvoke) if !isWrappedValueAccessor(m) =>
       val resultElem = mc.selfType
       val wrapperIso = getIsoByElem(resultElem)
       wrapperIso match {
