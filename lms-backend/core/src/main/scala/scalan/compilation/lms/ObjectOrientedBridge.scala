@@ -58,12 +58,12 @@ trait ObjectOrientedBridge extends LmsBridge with CoreMethodMappingDSL {
 
       m.addSym(sym, exp)
 
-    case lr@NewObject(aClass, args, _) =>
-      Manifest.classType(aClass) match { //TODO backend: better manifest construction
-        case (mA: Manifest[a]) =>
+    case lr@NewObject(eA, args, _) =>
+      elemToManifest(eA) match {
+        case mA: Manifest[a] =>
           // TODO handle case when some of params are functions
           val lmsArgs = args.map(mapParam(m, _, false))
-          val exp = newObj[a](aClass, lmsArgs, true)(mA)
+          val exp = newObj[a](lmsArgs, true)(mA)
           m.addSym(sym, exp)
       }
 

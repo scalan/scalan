@@ -32,7 +32,7 @@ trait Proxy { self: Scalan =>
   }
 
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
-  def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A]
+  def newObjEx[A](args: Any*)(implicit eA: Elem[A]): Rep[A]
 
   /**
    * Can be thrown to prevent invoke
@@ -93,10 +93,10 @@ trait ProxyStd extends Proxy { self: ScalanStd =>
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
     m.invoke(receiver, args.map(_.asInstanceOf[AnyRef]): _*).asInstanceOf[A]
 
-  def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] = {
+  def newObjEx[A](args: Any*)(implicit eA: Elem[A]): Rep[A] = {
     val types = args.map(a => a.getClass)
-    val constr = c.getConstructor(types: _*)
-    constr.newInstance(args.map(_.asInstanceOf[AnyRef]): _*) //.asInstanceOf[Rep[A]]
+    val constr = eA.runtimeClass.getConstructor(types: _*)
+    constr.newInstance(args.map(_.asInstanceOf[AnyRef]): _*).asInstanceOf[Rep[A]]
   }
 }
 
@@ -138,7 +138,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       }
   }
 
-  case class NewObject[T](clazz: Class[T] , args: List[AnyRef], neverInvoke: Boolean)(implicit selfType: Elem[T]) extends BaseDef[T]
+  case class NewObject[A](eA: Elem[A], args: List[Any], neverInvoke: Boolean) extends BaseDef[A]()(eA)
 
   override def transformDef[A](d: Def[A], t: Transformer) = d match {
     // not the same as super because mkMethodCall can produce a more precise return type
@@ -195,8 +195,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         val className = ScalaNameUtil.cleanNestedClassName(method.getDeclaringClass.getName)
         s"$obj.$className.$methodCallStr"
       }
-    case NewObject(c, args, _) =>
-      val className = ScalaNameUtil.cleanNestedClassName(c.getName)
+    case NewObject(eA, args, _) =>
+      val className = ScalaNameUtil.cleanNestedClassName(eA.runtimeClass.getName)
       s"new $className(${args.mkString(", ")})"
     case _ => super.formatDef(d)
   }
@@ -204,8 +204,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
     mkMethodCall(receiver, m, args, true).asRep[A]
 
-  def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] = {
-    reifyObject(new NewObject[A](c, args, true))
+  def newObjEx[A](args: Any*)(implicit eA: Elem[A]): Rep[A] = {
+    reifyObject(NewObject[A](eA, args.toList, true))
   }
 
   private val proxies = scala.collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]

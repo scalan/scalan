@@ -208,7 +208,7 @@ trait ExceptionsExp extends scalan.ScalanExp with ExceptionsDsl {
   self: ExceptionsDslExp =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs {
     def apply(msg: Rep[String]): Rep[SThrowable] =
-      newObjEx(classOf[SThrowable], List(msg.asRep[Any]))
+      newObjEx[SThrowable](msg)
   }
 
   case class ExpSThrowableImpl
