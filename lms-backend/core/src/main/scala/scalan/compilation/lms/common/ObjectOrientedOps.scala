@@ -6,18 +6,23 @@ import scala.reflect.SourceContext
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait ObjectOrientedOps extends Base with Effects {
-  def methodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, typeArgs: List[Manifest[_]], args: Rep[_]*): Rep[A]
+  sealed trait Receiver
+  case class Static(path: String) extends Receiver
+  case class Instance(obj: Rep[_]) extends Receiver
+  
+  // caller: Left is for static methods, Right is for instance methods
+  def methodCall[A: Manifest](caller: Receiver, effects: Summary, methodName: String, typeArgs: List[Manifest[_]], args: Rep[_]*): Rep[A]
 
   def newObj[A: Manifest](className: String, args: Seq[Any], newKeyWord: Boolean): Rep[A]
 }
 
 trait ObjectOrientedOpsExp extends ObjectOrientedOps with BaseExp with EffectExp {
 
-  case class MethodCall[A: Manifest](caller: Rep[_], methodName: String, typeArgs: List[Manifest[_]], args: List[Rep[_]]) extends Def[A] {
+  case class MethodCall[A: Manifest](caller: Receiver, methodName: String, typeArgs: List[Manifest[_]], args: List[Rep[_]]) extends Def[A] {
     val m = manifest[A]
   }
 
-  def methodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, typeArgs: List[Manifest[_]], args: Rep[_]*): Exp[A] = {
+  def methodCall[A: Manifest](caller: Receiver, effects: Summary, methodName: String, typeArgs: List[Manifest[_]], args: Rep[_]*): Exp[A] = {
     reflectEffect(MethodCall[A](caller, methodName, typeArgs, args.toList), effects)
   }
 
@@ -29,10 +34,16 @@ trait ObjectOrientedOpsExp extends ObjectOrientedOps with BaseExp with EffectExp
     NewObj[A](className, args, newKeyWord)
   }
 
+  private def transformReceiver(r: Receiver, f: Transformer) = r match {
+    case Static(_) => r
+    case Instance(x) => Instance(f(x))
+  }
+
   override def mirror[A: Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
-    case MethodCall(caller, methodName, typeArgs, args) => MethodCall[A](f(caller), methodName, typeArgs, args.map(f(_)))
+    case MethodCall(caller, methodName, typeArgs, args) =>
+      MethodCall[A](transformReceiver(caller, f), methodName, typeArgs, args.map(f(_)))
     case Reflect(MethodCall(caller, methodName, typeArgs, args), u, es) =>
-      reflectMirrored(Reflect(MethodCall[A](f(caller), methodName, typeArgs, args.map(f(_))), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
+      reflectMirrored(Reflect(MethodCall[A](transformReceiver(caller, f), methodName, typeArgs, args.map(f(_))), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
     case NewObj(className, args, newKeyWord) =>
       val newArgs = args.map {
         case arg: Exp[_] => f(arg)
@@ -72,8 +83,10 @@ trait ScalaGenObjectOrientedOps extends ScalaGenBase {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case MethodCall(caller, methodName, typeArgs, args) =>
-      // TODO caller may be equal to null, see CoreBridgeScala; fix this (also in CxxShptrGenObjectOpsExp)
-      val callerString = if (caller != null) src"$caller." else ""
+      val callerString = caller match {
+        case Static(s) => src"$s."
+        case Instance(s) => src"$s."
+      }
       val argString = if (args.isEmpty) "" else src"($args)"
       val rhs1 = callerString + methodName + argString
       // Typed to allow type parameter inference
@@ -99,8 +112,12 @@ trait CxxShptrGenObjectOrientedOps extends CxxShptrCodegen {
   import IR._
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    // TODO distinguish between pointer/smart pointer and reference
     case MethodCall(caller, methodName, typeArgs, args) =>
-      val callerString = if (caller != null) src"$caller->" else ""
+      val callerString = caller match {
+        case Static(s) => src"$s::"
+        case Instance(s) => src"$s->"
+      }
       val argString = if (args.isEmpty) "" else src"($args)"
       val rhs1 = callerString + methodName + argString
       emitValDef(sym, rhs1)

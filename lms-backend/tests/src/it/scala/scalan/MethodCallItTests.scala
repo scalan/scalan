@@ -2,9 +2,9 @@ package scalan
 
 import org.scalatest.BeforeAndAfterAll
 
-import scala.language.reflectiveCalls
-import scala.reflect.runtime.universe.typeOf
 import scalan.collections.{CollectionsDsl, CollectionsDslExp, CollectionsDslStd}
+import scalan.compilation.language.MethodMappingDSL
+import scalan.compilation.language.ScalaMapping._
 import scalan.compilation.lms.collections.CollectionsBridgeScala
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.source2bin.SbtConfig
@@ -212,43 +212,11 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new CollectionsD
   }
 
   val jarReplaceExp = new LmsCompilerScala(new ProgStaged) {
-    val tyThrowable = typeOf[Throwable]
-
-    trait TestConf extends MappingTags {
-      val testLib = new Library("") {
-        val scalanUtilPack = new Pack("scalan.util") {
-          val exceptionsFam = new Family('Exceptions) {
-            val throwable = new ClassType('SThrowable) {
-              val getMessage = Method('getMessage, tyString, MethodArg(tyString))
-            }
-          }
-        }
-      }
-    }
-
-    new ScalaMappingDSL with TestConf {
-
-      val extLib = new ScalaLib("", "scalan.it.lms.MappingMethodFromJar.TestMethod") {
-        val testMessageMethod = ScalaFunc('testMessage)(true)
-      }
-
-      val scala2Scala = {
-        import scala.language.reflectiveCalls
-
-        Map(
-          testLib.scalanUtilPack.exceptionsFam.throwable.getMessage -> extLib.testMessageMethod
-        )
-      }
-
-      val main = new ScalaLib() {
-        val throwableImp = ScalaFunc("scalan.imp.ThrowableImp")(true)
-      }
-
-      val mapping = new ScalaMapping {
-        val functionMap = scala2Scala
-        override val classMap = Map[Class[_], ScalaFunc](classOf[Exceptions#SThrowable] -> main.throwableImp)
-      }
-    }
+    MapModuleScala[Exceptions].types(
+      MapTypeScala[Exceptions#SThrowable]().to("scalan.it.lms.MappingMethodFromJar.TestMethod").methods(
+        MapMethodScala("getMessage").to("testMessage").onCompanion.args('this)
+      )
+    )
   }
 
   // TODO: Slow test

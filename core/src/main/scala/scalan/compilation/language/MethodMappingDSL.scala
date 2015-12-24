@@ -1,164 +1,265 @@
 package scalan.compilation.language
 
+import java.io.File
+import java.lang.reflect.Method
 import scala.collection.mutable
-import scala.language.postfixOps
-import scala.reflect.runtime.universe.typeOf
+import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
+import scalan.util.ReflectionUtil
+
+trait Adjustment {
+  def apply[A](x: A) = Adjusted(x, Some(this))
+}
+
+/** Converts a function to an Ordering object */
+object MkOrdering extends Adjustment
+
+/** Converts a function A => B to (&A, &B) => void (for C++) */
+object VoidInOut extends Adjustment
+
+/** Converts a enum to its index */
+object EnumIndex extends Adjustment
+
+// TODO currently adjustments are simply ignored in MethodCallBridge
+// maybe adjustments: Seq[Adjustment] instead?
+case class Adjusted[+A](value: A, adjustment: Option[Adjustment]) {
+  def adjust(adjustment: Adjustment) = copy(adjustment = Some(adjustment))
+  def map[B](f: A => B) = copy(value = f(value))
+}
+
+object Adjusted {
+  implicit def apply[A](x: A): Adjusted[A] = Adjusted(x, None)
+}
 
 trait LanguageId
 
-object SCALA extends LanguageId
-object CPP extends LanguageId
+// TODO Should this be unified with ScalaMapping/CxxMapping?
+case object SCALA extends LanguageId
+case object CXX extends LanguageId
 
-trait MethodMappingDSL {
-  // be explicit to avoid errors if scala.reflect.runtime.universe.Symbol will be imported later
-  implicit def symbolToString(s: scala.Symbol): String = s.name
-
-  val mappingDSLs: mutable.HashMap[LanguageId, mutable.ArrayBuffer[MappingTags#Mapping[_]]] = new mutable.HashMap()
-
-  trait Implicit[T] {
-    this: T =>
-    implicit val v: T = this
+class Mapping[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep](library: LibraryT, types: Map[String, (TypeT, Map[(String, Option[String]), MethodT])]) {
+  private def supertypes(clazz: Class[_]): Iterable[Class[_]] = {
+    val superclass = clazz.getSuperclass
+    val immediateSupertypes =
+      (if (superclass != null) Iterable(superclass) else Iterable.empty[Class[_]]) ++ clazz.getInterfaces
+    immediateSupertypes ++ immediateSupertypes.flatMap(supertypes)
   }
+  private def supertypesIncluding(clazz: Class[_]) = Iterable(clazz) ++ supertypes(clazz)
 
-  trait MappingTags extends Implicit[MappingTags] {
-    import scala.reflect.runtime.universe.Type
+  def getMethod(method: Method): Option[(LibraryT, TypeT, MethodT)] = {
+    val overloadId = ReflectionUtil.overloadId(method)
+    val methodName = method.getName
 
-    val tyInt = typeOf[Int]
-    val tyString = typeOf[String]
-    val tyArray = typeOf[Array[_]]
-
-    case class CaseClassObject(aType: Type) extends Fn with Implicit[CaseClassObject]
-
-    val mapping: Mapping[_]
-
-    trait Fn {
-      fns += this
-    }
-
-    case class Library(packageName: String = null, dependencies: Array[String] = Array.empty[String]) {
-      implicit val v = this
-      libs += this
-    }
-
-    val fns: mutable.HashSet[Fn] = new mutable.HashSet()
-    
-    val libs: mutable.HashSet[Library] = new mutable.HashSet()
-
-    case class Pack(pack: String)(implicit val lib: Library) extends Implicit[Pack]
-
-    case class Family(familyName: String)(implicit val pack: Pack = null) extends Implicit[Family]
-
-    trait Ty {
-      def name: String
-    }
-
-    case class BaseTy(name: String) extends Ty
-
-    case class TyArg(name: String)
-
-    trait DomainType extends Ty
-
-    case class ClassType(name: String, tyArgs: TyArg*)(implicit val family: Family = null, val pack: Pack = null) extends DomainType with Implicit[ClassType]{
-      override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[ClassType] && {
-        val m = obj.asInstanceOf[ClassType]
-        m.name == name && m.tyArgs == tyArgs && m.family == family && m.pack == pack
+    supertypesIncluding(method.getDeclaringClass).
+      map(clazz => getMethod(clazz.getName, methodName, overloadId)).collectFirst {
+        case Some(x) => x
       }
-    }
-
-    case class MethodArg(name: Type)
-
-    case class Method(name: String, tyRes: Type, args: MethodArg*)(implicit val theType: ClassType){
-      override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[Method] && {
-       val m = obj.asInstanceOf[Method]
-        m.name == name && m.tyRes == tyRes && m.args == args && m.theType == theType
-      }
-    }
-
-    trait Fun {
-      def name: String
-      def lib: Fn
-    }
-
-    abstract class Mapping[TC <: MappingTags](languageId: LanguageId)(implicit val l: TC) {
-      type Func <: Fun
-
-      (mappingDSLs.get(languageId), this) match {
-        case (Some(conf: mutable.ArrayBuffer[_]), current) => conf += current
-        case _ => mappingDSLs +=  languageId -> mutable.ArrayBuffer(this)
-      }
-
-      def get(classPath: String, method: String): Option[Func] = {
-        methodMap.getOrElse((classPath, method), None)
-      }
-
-      lazy val fns = l.fns
-      lazy val dependencies = l.libs.flatMap(_.dependencies)
-      
-      val libPaths: Set[String]
-
-      val functionMap: Map[Method, Func]
-
-      val classMap: Map[Class[_], Func] = Map.empty[Class[_], Func]
-
-      // To simplify config usage, data are transformed to Backend representation. Direct link to LanguageConf is never used
-      lazy val methodMap: Map[(String, String), Option[Func]] = functionMap.map { case (m, f) =>
-        (((m.theType.family match {
-          case f: Family => f.pack.pack + "." + f.familyName + "$"
-          case _ =>
-            m.theType.pack match {
-              case p: Pack => p.pack + "."
-              case _ => ""
-            }
-        }) + m.theType.name, m.name), Some(f))
-      }
+  }
+  def getMethod(className: String, methodName: String, overloadId: Option[String]): Option[(LibraryT, TypeT, MethodT)] = {
+    val typeMapping = types.get(className)
+    typeMapping.flatMap(pair => pair._2.get((methodName, overloadId)).map(methodT => (library, pair._1, methodT)))
+  }
+  // TODO handle type arguments
+  def getType(m: Manifest[_]): Option[(LibraryT, TypeT)] = {
+    supertypesIncluding(m.runtimeClass).map(clazz => getType(clazz.getName)).collectFirst {
+      case Some(x) => x
     }
   }
+  def getType(className: String) = types.get(className).map(pair => (library, pair._1))
+}
 
-  trait CppMappingDSL extends MappingTags {
+trait MappingBuilder[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep] {
+  def language: LanguageId
+  type TypeBuilderT <: TypeBuilder[LibraryT, TypeT, MethodT, TypeBuilderT]
 
-    case class CppLib(hfile: String, libfile: String) extends Fn with Implicit[CppLib]
-
-    case class CppType(name: String)
-
-    case class CppArg(ty: CppType, name: String)
-
-    case class CppFunc(name: String, args: CppArg*)(implicit val lib: CppLib) extends Fun
-
-    abstract class CppMapping extends Mapping(CPP) {
-      type Func = CppFunc
-
-      lazy val libPaths: Set[String] = Set.empty[String]
-    }
-  }
-
-  trait ScalaMappingDSL extends MappingTags {
-
-    case class ScalaLib(jar: String = "", pack: String = "") extends Fn with Implicit[ScalaLib]
-
-    case class EmbeddedObject(name: String) extends Fn with Implicit[EmbeddedObject]
-
-    case class ScalaType(name: String)
-
-    case class ScalaArg(ty: ScalaType, name: String)
-
-    case class ScalaFunc(name: String, args: ScalaArg*)(val wrapper: Boolean = false)(implicit val lib: Fn) extends Fun
-
-    abstract class ScalaMapping extends Mapping(SCALA) {
-      type Func = ScalaFunc
-
-      lazy val libPaths: Set[String] = fns filter(_.isInstanceOf[ScalaLib]) map (_.asInstanceOf[ScalaLib].jar) filter (!_.isEmpty) to
-    }
+  def moduleName: String
+  def library: LibraryT
+  // If we make this a nested class along with everything else, TypeRep and MethodRep can't be params of MethodCallBridge
+  def types(types: TypeT*)(implicit outer: MethodMappingDSL) = {
+    val typeMap = types.map { sType =>
+      val fullClassName = moduleName + "$" + sType.scalanName
+      val methodMap = sType.methods.map { sMethod =>
+        ((sMethod.scalanName, sMethod.overloadId), sMethod)
+      }.toMap
+      (fullClassName, (sType, methodMap))
+    }.toMap
+    val mapping = new Mapping[LibraryT, TypeT, MethodT](library, typeMap)
+    outer.addMapping(language, mapping)
   }
 }
 
-trait CoreMethodMappingDSL extends MethodMappingDSL {
+trait TypeRep[MethodT <: MethodRep] {
+  def scalanName: String
+  def mappedName: String
+  def methods: Seq[MethodT]
+}
 
-  trait CoreMapping extends MappingTags
+trait MethodRep {
+  def scalanName: String
+  def mappedName: String
+  def overloadId: Option[String]
+  def isStatic: Boolean
+  def receiverIndex: Adjusted[Int]
+  def argOrder: Seq[Adjusted[Int]]
+}
 
-  new ScalaMappingDSL with CoreMapping {
+object MappingBuilder {
+  def symbolIndex(originalArgs: Seq[Symbol], symbol: Adjusted[Symbol], name: String) = symbol.map {
+    case 'this => -1
+    case a =>
+      originalArgs.indexOf(a) match {
+        case -1 =>
+          throw new NoSuchElementException(s"$a not found in argument list $name(${originalArgs.mkString(", ")})")
+        case index => index
+      }
+  }
 
-    val mapping = new ScalaMapping {
-      val functionMap = Map.empty[Method, Func]
+  def symbolOrder(originalArgs: Seq[Symbol], reorderedArgs: Seq[Adjusted[Symbol]], name: String) = {
+    reorderedArgs.map(argSym => symbolIndex(originalArgs, argSym, name))
+  }
+}
+
+import MappingBuilder.{symbolIndex, symbolOrder}
+
+trait TypeBuilder[LibraryT, TypeT, MethodT, TypeBuilderT] {
+  type MethodBuilderT <: MethodBuilder[LibraryT, TypeT, MethodT, MethodBuilderT]
+
+  def to(mappedName: String): TypeBuilderT
+  def methods(methodBuilders: MethodBuilderT*): TypeT
+}
+
+trait MethodBuilder[LibraryT, TypeT, MethodT, MethodBuilderT] {
+  def to(mappedName: String): MethodBuilderT
+  def apply(): MethodT
+}
+
+object ScalaMapping {
+  def MapModuleScala(moduleName: String): ScalaMappingBuilder = new ScalaMappingBuilder(moduleName, None, Nil)
+  def MapModuleScala[A](implicit tag: ClassTag[A]): ScalaMappingBuilder = MapModuleScala(tag.runtimeClass.getName)
+
+  case class ScalaLibrary(packageName: Option[String], jars: Seq[File]) // Add SBT dependency support?
+
+  case class ScalaType(scalanName: String, mappedName: String, methods: Seq[ScalaMethod]) extends TypeRep[ScalaMethod] // TODO constructor arguments
+
+  case class ScalaMethod(scalanName: String, overloadId: Option[String], mappedName: String, isStatic: Boolean, receiverIndex: Adjusted[Int], typeArgOrder: Seq[Adjusted[Int]], argOrder: Seq[Adjusted[Int]], implicitArgOrder: Seq[Adjusted[Int]]) extends MethodRep
+
+  case class ScalaMappingBuilder(moduleName: String, packageName: Option[String], jars: Seq[File]) extends MappingBuilder[ScalaLibrary, ScalaType, ScalaMethod] {
+    def language = SCALA
+    def packageName(name: String): ScalaMappingBuilder = copy(packageName = Some(name))
+    def jars(files: File*) = copy(jars = this.jars ++ files)
+    def library = ScalaLibrary(packageName, jars)
+
+    type TypeBuilderT = MapTypeScala
+  }
+
+  case class MapTypeScala(scalanName: String, fieldSyms: Seq[Symbol], mappedName: String) extends TypeBuilder[ScalaLibrary, ScalaType, ScalaMethod, MapTypeScala] {
+    def to(mappedName: String) = copy(mappedName = mappedName)
+    def methods(methodBuilders: MethodBuilderT*) =
+      ScalaType(scalanName, mappedName, methodBuilders.map(_.apply()))
+
+    type MethodBuilderT = MapMethodScala
+  }
+
+  object MapTypeScala {
+    def apply(scalanName: String, fieldSyms: Symbol*): MapTypeScala =
+      new MapTypeScala(scalanName, fieldSyms, scalanName)
+    def apply[A](fieldSyms: Symbol*)(implicit tag: ClassTag[A]): MapTypeScala =
+      apply(tag.runtimeClass.getSimpleName, fieldSyms: _*)
+  }
+
+  case class MapMethodScala(scalanName: String, overloadId: Option[String], scalanArgs: Seq[Symbol], mappedName: String, isStatic: Boolean, receiverSym: Adjusted[Symbol], typeArgs: Seq[Adjusted[Symbol]], args: Seq[Adjusted[Symbol]], implicitArgs: Seq[Adjusted[Symbol]]) extends MethodBuilder[ScalaLibrary, ScalaType, ScalaMethod, MapMethodScala] {
+    def to(mappedName: String) = copy(mappedName = mappedName)
+    def onCompanion = copy(isStatic = true)
+    def onArg(receiver: Adjusted[Symbol]) =
+      copy(receiverSym = receiver, args = this.args.filter(_.value != receiver.value))
+    def typeArgs(typeArgs: Adjusted[Symbol]*): MapMethodScala = copy(typeArgs = typeArgs)
+    def args(args: Adjusted[Symbol]*): MapMethodScala = copy(args = args)
+    def implicitArgs(implicitArgs: Adjusted[Symbol]*): MapMethodScala = copy(implicitArgs = implicitArgs)
+
+    def apply() = {
+      val receiverIndex = symbolIndex(scalanArgs, receiverSym, scalanName)
+      val typeArgOrder = symbolOrder(scalanArgs, typeArgs, scalanName)
+      val argOrder = symbolOrder(scalanArgs, args, scalanName)
+      val implicitArgOrder = symbolOrder(scalanArgs, implicitArgs, scalanName)
+
+      ScalaMethod(scalanName, overloadId, mappedName, isStatic, receiverIndex, typeArgOrder, argOrder, implicitArgOrder)
     }
   }
+
+  object MapMethodScala {
+    def apply(scalanName: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, None, argSyms, scalanName, false, 'this, Nil, argSyms.map(Adjusted(_)), Nil)
+    def apply(scalanName: String, overloadId: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, Some(overloadId), argSyms, scalanName, false, 'this, Nil, argSyms.map(Adjusted(_)), Nil)
+  }
+}
+
+object CxxMapping {
+  def MapModuleCxx(moduleName: String): CxxMappingBuilder = new CxxMappingBuilder(moduleName, None, None)
+  def MapModuleCxx[A](implicit tag: ClassTag[A]): CxxMappingBuilder = MapModuleCxx(tag.runtimeClass.getName)
+
+  // Distinguish <> and "" headers in the future? For now, always use "", since it works for both.
+  case class CxxLibrary(headerName: Option[String], namespace: Option[String])
+
+  case class CxxType(scalanName: String, mappedName: String, templateArgOrder: Seq[Adjusted[Int]], methods: Seq[CxxMethod]) extends TypeRep[CxxMethod]
+
+  case class CxxMethod(scalanName: String, overloadId: Option[String], mappedName: String, isStatic: Boolean, receiverIndex: Adjusted[Int], templateArgOrder: Seq[Adjusted[Int]], argOrder: Seq[Adjusted[Int]]) extends MethodRep
+
+  case class CxxMappingBuilder(moduleName: String, headerName: Option[String], namespace: Option[String]) extends MappingBuilder[CxxLibrary, CxxType, CxxMethod] {
+    def language = CXX
+    def withHeader(name: String): CxxMappingBuilder = copy(headerName = Some(name))
+    def withNamespace(namespace: String): CxxMappingBuilder = copy(namespace = Some(namespace))
+    def library = CxxLibrary(headerName, namespace)
+
+    type TypeBuilderT = MapTypeCxx
+  }
+
+  case class MapTypeCxx(scalanName: String, fieldSyms: Seq[Symbol], mappedName: String, templateArgs: Seq[Adjusted[Symbol]]) extends TypeBuilder[CxxLibrary, CxxType, CxxMethod, MapTypeCxx] {
+    def to(mappedName: String) = copy(mappedName = mappedName)
+    def methods(methodBuilders: MethodBuilderT*) =
+      CxxType(scalanName, mappedName, Nil /* TODO use templateArgs */, methodBuilders.map(_.apply()))
+
+    type MethodBuilderT = MapMethodCxx
+  }
+
+  object MapTypeCxx {
+    def apply(scalanName: String, fieldSyms: Symbol*): MapTypeCxx =
+      new MapTypeCxx(scalanName, fieldSyms, scalanName, Nil)
+    def apply[A](fieldSyms: Symbol*)(implicit tag: ClassTag[A]): MapTypeCxx =
+      apply(tag.runtimeClass.getSimpleName, fieldSyms: _*)
+  }
+
+  case class MapMethodCxx(scalanName: String, overloadId: Option[String], scalanArgs: Seq[Symbol], mappedName: String, isStatic: Boolean, receiverSym: Adjusted[Symbol], templateArgs: Seq[Adjusted[Symbol]], args: Seq[Adjusted[Symbol]]) extends MethodBuilder[CxxLibrary, CxxType, CxxMethod, MapMethodCxx] {
+    def to(mappedName: String) = copy(mappedName = mappedName)
+    def static = copy(isStatic = true)
+    def templateArgs(templateArgs: Adjusted[Symbol]*): MapMethodCxx = copy(templateArgs = templateArgs)
+    def args(args: Adjusted[Symbol]*): MapMethodCxx = copy(args = args)
+
+    def apply() = {
+      val receiverIndex = symbolIndex(scalanArgs, receiverSym, scalanName)
+      val templateArgOrder = symbolOrder(scalanArgs, templateArgs, scalanName)
+      val argOrder = symbolOrder(scalanArgs, args, scalanName)
+
+      CxxMethod(scalanName, overloadId, mappedName, isStatic, receiverIndex, templateArgOrder, argOrder)
+    }
+  }
+
+  object MapMethodCxx {
+    def apply(scalanName: String, argSyms: Symbol*): MapMethodCxx =
+      new MapMethodCxx(scalanName, None, argSyms, scalanName, false, 'this, Nil, argSyms.map(Adjusted(_)))
+    def apply(scalanName: String, overloadId: String, argSyms: Symbol*): MapMethodCxx =
+      new MapMethodCxx(scalanName, Some(overloadId), argSyms, scalanName, false, 'this, Nil, argSyms.map(Adjusted(_)))
+  }
+}
+
+trait MethodMappingDSL {
+  implicit def mm: MethodMappingDSL = this
+
+  type AMapping = Mapping[LibraryT, TypeT, MethodT] forSome {
+    type LibraryT
+    type TypeT <: TypeRep[MethodT]
+    type MethodT <: MethodRep
+  }
+
+  val mappingDSLs: mutable.Map[LanguageId, ArrayBuffer[AMapping]] = mutable.Map.empty
+  def addMapping(language: LanguageId, mapping: AMapping) =
+    mappingDSLs.getOrElseUpdate(language, ArrayBuffer.empty) += mapping
 }

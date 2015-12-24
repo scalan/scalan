@@ -5,7 +5,6 @@ import java.lang.reflect.Method
 import scala.reflect.SourceContext
 import scala.reflect.runtime.universe._
 
-import scalan.compilation.language.CoreMethodMappingDSL
 import scalan.util.{ParamMirror, StringUtil}
 
 trait CoreBridge extends StructBridge {

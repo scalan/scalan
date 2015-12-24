@@ -3,73 +3,35 @@ package scalan
 import scalan.compilation.language._
 
 class MethodMappingDSLTest extends BaseTests {
+  object TestMethodMappingDSL extends MethodMappingDSL {
+    import CxxMapping._
+    import ScalaMapping._
 
-  object TestMethodMappingDSL$ extends MethodMappingDSL {
+    MapModuleScala("scalan.flint.DataFrames").types( // apply?
+      MapTypeScala("FlintDataFrame").to("org.spark.RDD").methods(
+        MapMethodScala("length").to("count"),
+        MapMethodScala("top", 'compare, 'n).args('n).implicitArgs(MkOrdering('compare))
+      ))
 
-    trait CommunityConf extends MappingTags {
-
-      val scalanCE = new Library("scalan-ce.jar") {
-
-        val collectionsPack = new Pack("scalan.collections") {
-          val collectionsFam = new Family('Collections) {
-            val collection = new ClassType('Collection, TyArg('A)) {
-              val length = Method('length, tyInt)
-            }
-          }
-        }
-      }
-    }
-
-    new ScalaMappingDSL with CommunityConf {
-      import scala.language.reflectiveCalls
-
-      val linpackScala = new ScalaLib("linpack.jar", "org.linpack") {
-        val invertMatr = ScalaFunc('invertMatrixDouble, ScalaArg(ScalaType('lapack_matr), 'm), ScalaArg(ScalaType('T1), 'V1))()
-        val arrayLength = ScalaFunc('arrayLength)()
-      }
-
-      val mapScalanCE2Scala = {
-        import scalanCE._
-        Map(
-          collectionsPack.collectionsFam.collection.length -> linpackScala.arrayLength
-        )
-      }
-
-      val mapping = new ScalaMapping {
-        val functionMap = mapScalanCE2Scala
-      }
-    }
-
-    new CppMappingDSL with CommunityConf {
-      import scala.language.reflectiveCalls
-
-      val linpackCpp = new CppLib("linpack.h", "linpack.o") {
-        val invertMatr = CppFunc("invertMatrix", CppArg(CppType("lapack_matr"), "m"), CppArg(CppType("T2"), "V2"))
-        val transMatr = CppFunc("transMatrixDouble")
-      }
-
-      val mapScalanCE2Cpp = {
-        import scalanCE._
-        Map(
-          collectionsPack.collectionsFam.collection.length -> linpackCpp.invertMatr
-        )
-      }
-
-      val mapping = new CppMapping {
-        val functionMap = mapScalanCE2Cpp
-      }
-    }
+    MapModuleCxx("scalan.flint.DataFrames").withHeader("flint.h").withNamespace("flint").types(
+      MapTypeCxx("FlintDataFrame", 'eT).to("data_frame").methods(
+        MapMethodCxx("saveFile").to("output"),
+        MapMethodCxx("top", 'compare, 'n).templateArgs('compare).args('n),
+        MapMethodCxx("join", 'innerRdd, 'outerKey, 'innerKey, 'estimation, 'kind, 'eI, 'eK)
+          .templateArgs('eI, 'eK, VoidInOut('outerKey), VoidInOut('innerKey))
+          .args('innerRdd, 'estimation, EnumIndex('kind))),
+      MapTypeCxx("InputDF").to("input_data_frame").methods())
   }
 
   test("Scala Method") {
-    val m = TestMethodMappingDSL$.mappingDSLs(SCALA).head.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMappingDSL#ScalaMappingDSL#ScalaFunc]
-    "arrayLength" should equal(m.name)
-    m.args.size should equal(0)
+    // TODO asInstanceOf should be possible to remove
+    val scalaMethod = TestMethodMappingDSL.mappingDSLs(SCALA).head.getMethod("scalan.flint.DataFrames$FlintDataFrame", "length", None)
+    scalaMethod.map(_._3.mappedName) should be(Some("count"))
   }
 
   test("C++ Method") {
-    val m = TestMethodMappingDSL$.mappingDSLs(CPP).head.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMappingDSL#CppMappingDSL#CppFunc]
-    "invertMatrix" should equal(m.name)
-    m.args.size should equal(2)
+    val cxxMethod = TestMethodMappingDSL.mappingDSLs(CXX).head.getMethod("scalan.flint.DataFrames$FlintDataFrame", "length", None)
+    cxxMethod should be(None)
+//    cxxMethod.mappedName should equal("length")
   }
 }
