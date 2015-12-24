@@ -14,24 +14,39 @@ trait CxxMethodCallOps extends Base with Effects {
   // LValueRefArg, MemberPointerArg, EnumerationArg not needed yet
 
   def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: List[TemplateArg], args: Rep[_]*): Rep[A]
+
+  def cxxNewObj[A: Manifest](templateArgs: List[TemplateArg], args: Rep[_]*): Rep[A]
 }
 
 trait CxxMethodCallOpsExp extends CxxMethodCallOps with BaseExp with EffectExp {
 
-  case class CxxMethodCall[A: Manifest](caller: Rep[_], methodName: String, templateArgs: List[TemplateArg], args: List[Rep[_]]) extends Def[A] {
-    val m = manifest[A]
-  }
+  case class CxxMethodCall[A](caller: Rep[_], methodName: String, templateArgs: List[TemplateArg], args: List[Rep[_]])(implicit val m: Manifest[A]) extends Def[A]
+
+  case class CxxNewObj[A](m: Manifest[A], templateArgs: List[TemplateArg], args: List[Rep[_]]) extends Def[A]
 
   def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: List[TemplateArg], args: Rep[_]*): Exp[A] = {
     reflectEffect(CxxMethodCall[A](caller, methodName, templateArgs, args.toList), effects)
   }
 
+  def cxxNewObj[A: Manifest](templateArgs: List[TemplateArg], args: Rep[_]*): Rep[A] =
+    reflectEffect(CxxNewObj(manifest[A], templateArgs, args.toList), Alloc)
+
   override def mirror[A: Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
-    case CxxMethodCall(caller, methodName, templateArgs, args) => CxxMethodCall[A](f(caller), methodName, templateArgs, args.map(f(_)))
+    case CxxMethodCall(caller, methodName, templateArgs, args) => CxxMethodCall[A](f(caller), methodName, transformTemplateArgs(f, templateArgs), args.map(f(_)))
+    case CxxNewObj(m, templateArgs, args) => CxxNewObj[A](mtype(m), transformTemplateArgs(f, templateArgs), args.map(f(_)))
     case Reflect(CxxMethodCall(caller, methodName, templateArgs, args), u, es) =>
-      reflectMirrored(Reflect(CxxMethodCall[A](f(caller), methodName, templateArgs, args.map(f(_))), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
+      reflectMirrored(Reflect(CxxMethodCall[A](f(caller), methodName, transformTemplateArgs(f, templateArgs), args.map(f(_))), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
+    case Reflect(CxxNewObj(m, templateArgs, args), u, es) =>
+      reflectMirrored(Reflect(CxxNewObj[A](mtype(m), transformTemplateArgs(f, templateArgs), args.map(f(_))), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
     case _ => super.mirror(e, f)
   }
+
+  def transformTemplateArg(f: Transformer, a: TemplateArg): TemplateArg = a match {
+    case PointerArg(target) => PointerArg(f(target))
+    case _ => a
+  }
+
+  def transformTemplateArgs(f: Transformer, as: List[TemplateArg]) = as.map(transformTemplateArg(f, _))
 
   override def syms(e: Any): List[Sym[Any]] = e match {
     case CxxMethodCall(caller, methodName, templateArgs, args) if addControlDeps => syms(caller) ::: syms(args)
@@ -69,6 +84,12 @@ trait CxxShptrGenMethodCallOps extends CxxShptrCodegen {
         if (templateArgs.isEmpty) "" else s"<${templateArgs.map(quoteTemplateArg).mkString(",")}>"
       val argString = if (args.isEmpty) "" else src"($args)"
       val rhs1 = src"$caller->$methodName$templateArgString$argString"
+      emitValDef(sym, rhs1)
+    case CxxNewObj(m, templateArgs, args) =>
+      val templateArgString =
+        if (templateArgs.isEmpty) "" else s"<${templateArgs.map(quoteTemplateArg).mkString(",")}>"
+      val argString = if (args.isEmpty) "" else src"($args)"
+      val rhs1 = src"new ${remapWithoutTemplateArgs(m)}$templateArgString$argString"
       emitValDef(sym, rhs1)
     case _ => super.emitNode(sym, rhs)
   }

@@ -6,6 +6,8 @@ import scala.reflect.SourceContext
 
 trait ScalaMethodCallOps extends Base with Effects {
   def scalaMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, typeArgs: List[Manifest[_]], args: Rep[_]*): Rep[A]
+
+  def scalaNewObj[A: Manifest](args: Rep[_]*): Rep[A]
 }
 
 trait ScalaMethodCallOpsExp extends ScalaMethodCallOps with BaseExp with EffectExp {
@@ -14,14 +16,22 @@ trait ScalaMethodCallOpsExp extends ScalaMethodCallOps with BaseExp with EffectE
     val m = manifest[A]
   }
 
+  case class ScalaNewObj[A](m: Manifest[A], args: List[Rep[_]]) extends Def[A]
+
   def scalaMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, typeArgs: List[Manifest[_]], args: Rep[_]*): Exp[A] = {
     reflectEffect(ScalaMethodCall[A](caller, methodName, typeArgs, args.toList), effects)
   }
 
+  def scalaNewObj[A: Manifest](args: Rep[_]*): Rep[A] =
+    reflectEffect(ScalaNewObj(manifest[A], args.toList), Alloc)
+
   override def mirror[A: Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
     case ScalaMethodCall(caller, methodName, typeArgs, args) => ScalaMethodCall[A](f(caller), methodName, typeArgs, args.map(f(_)))
+    case ScalaNewObj(m, args) => ScalaNewObj[A](mtype(m), args.map(f(_)))
     case Reflect(ScalaMethodCall(caller, methodName, typeArgs, args), u, es) =>
       reflectMirrored(Reflect(ScalaMethodCall[A](f(caller), methodName, typeArgs, args.map(f(_))), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
+    case Reflect(ScalaNewObj(m, args), u, es) =>
+      reflectMirrored(Reflect(ScalaNewObj[A](mtype(m), args.map(f(_))), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
     case _ => super.mirror(e, f)
   }
 
@@ -50,6 +60,10 @@ trait ScalaGenMethodCallOps extends ScalaGenBase {
     case ScalaMethodCall(caller, methodName, typeArgs, args) =>
       val argString = if (args.isEmpty) "" else src"($args)"
       val rhs1 = src"$caller.$methodName$argString"
+      emitTypedValDef(sym, rhs1)
+    case ScalaNewObj(m, args) =>
+      val argString = if (args.isEmpty) "" else src"($args)"
+      val rhs1 = src"new $m$argString"
       emitTypedValDef(sym, rhs1)
     case _ => super.emitNode(sym, rhs)
   }

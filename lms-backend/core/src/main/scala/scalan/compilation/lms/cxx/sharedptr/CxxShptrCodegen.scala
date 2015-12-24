@@ -64,6 +64,11 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
     }
   }
 
+  def remapWithoutTemplateArgs[A](m: Manifest[A]) = {
+    val remappedM = remap(m)
+    remappedM.split("<")(0)
+  }
+
   final override def emitVarDecl(sym: Sym[Any]): Unit = {
     emitConstruct(sym)
   }

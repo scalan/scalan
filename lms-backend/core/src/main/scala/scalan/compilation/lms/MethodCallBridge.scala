@@ -29,9 +29,10 @@ trait MethodCallBridge extends LmsBridge with CoreMethodMappingDSL {
   def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] =
     !!!(s"Don't know how to transform method call: $method")
 
-  def newObj[A: Manifest](aClass: Class[_], args: Seq[Any], newKeyWord: Boolean): lms.Exp[A] = {
+  def newObj[A](m: Manifest[A], args: Seq[Any]): lms.Exp[A] = {
+    val aClass = m.runtimeClass
     val name = mappedClassName(aClass).getOrElse(aClass.getName)
-    lms.newObj[A](name, args, newKeyWord)
+    lms.newObj[A](name, args, true)(m)
   }
 
   override protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
@@ -48,7 +49,7 @@ trait MethodCallBridge extends LmsBridge with CoreMethodMappingDSL {
         case mA: Manifest[a] =>
           // TODO handle case when some of params are functions
           val lmsArgs = args.map(mapParam(m, _, false))
-          val exp = newObj[a](eA.runtimeClass, lmsArgs, true)(mA)
+          val exp = newObj[a](mA, lmsArgs)
           m.addSym(sym, exp)
       }
 
