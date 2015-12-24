@@ -1,128 +1,100 @@
 package scalan.compilation.language
 
 import scala.collection.mutable
-import scala.language.postfixOps
-import scala.reflect.runtime.universe.typeOf
 
 trait LanguageId
 
 object SCALA extends LanguageId
 object CPP extends LanguageId
 
-trait MethodMappingDSL {
+trait Implicit[T] { this: T =>
+  implicit val v: T = this
+}
+
+// E below is short for Entity, to avoid conflict with Type, Method, etc.
+case class EPackage(name: String) extends Implicit[EPackage]
+
+case class EModule(name: String)(implicit val ePackage: EPackage) extends Implicit[EModule]
+
+case class EType(name: String)(implicit val module: EModule = null, val ePackage: EPackage = null) extends Implicit[EType] {
+  override def equals(obj: Any): Boolean = obj match {
+    case m: EType => m.name == name && m.module == module && m.ePackage == ePackage
+    case _ => false
+  }
+}
+
+case class EMethod(name: String, overloadIdOpt: Option[String])(implicit val eType: EType) {
+  override def equals(obj: Any): Boolean = obj match {
+    case m: EMethod => m.name == name && m.overloadIdOpt == overloadIdOpt && m.eType == eType
+    case _ => false
+  }
+}
+
+object EMethod {
+  def apply(name: String)(implicit eType: EType): EMethod = new EMethod(name, None)
+  def apply(name: String, overloadId: String)(implicit eType: EType): EMethod = new EMethod(name, Some(overloadId))
+}
+
+trait MethodMappingDSL { self =>
   // be explicit to avoid errors if scala.reflect.runtime.universe.Symbol will be imported later
   implicit def symbolToString(s: scala.Symbol): String = s.name
 
-  val mappingDSLs: mutable.HashMap[LanguageId, mutable.ArrayBuffer[MappingTags#Mapping[_]]] = new mutable.HashMap()
+  val mappingDSLs: mutable.HashMap[LanguageId, mutable.ArrayBuffer[Mapping]] = new mutable.HashMap()
 
-  trait Implicit[T] {
-    this: T =>
-    implicit val v: T = this
-  }
-
-  trait MappingTags extends Implicit[MappingTags] {
-    import scala.reflect.runtime.universe.Type
-
-    val tyInt = typeOf[Int]
-    val tyString = typeOf[String]
-    val tyArray = typeOf[Array[_]]
-
-    case class CaseClassObject(aType: Type) extends Fn with Implicit[CaseClassObject]
-
-    val mapping: Mapping[_]
-
-    trait Fn {
-      fns += this
+  abstract class Mapping(languageId: LanguageId) {
+    type Func
+    trait TypeT {
+      def name: String
     }
 
-    case class Library(packageName: String = null, dependencies: Array[String] = Array.empty[String]) {
-      implicit val v = this
+    mappingDSLs.get(languageId) match {
+      case Some(conf) => conf += this
+      case _ => mappingDSLs += languageId -> mutable.ArrayBuffer(this)
+    }
+
+    def get(className: String, method: String): Option[Func] = {
+      methodMap.get((className, method))
+    }
+
+    val libPaths: Set[String]
+
+    val functionMap: Map[EMethod, Func]
+
+    val classMap: Map[Class[_], TypeT] = Map.empty[Class[_], TypeT]
+
+    // To simplify config usage, data are transformed to Backend representation. Direct link to LanguageConf is never used
+    lazy val methodMap: Map[(String, String), Func] = functionMap.map { case (m, f) =>
+      val prefix = m.eType.module match {
+        case null =>
+          m.eType.ePackage match {
+            case null => ""
+            case p => p.name + "."
+          }
+        case family => family.ePackage.name + "." + family.name + "$"
+      }
+      ((prefix + m.eType.name, m.name), f)
+    }
+  }
+
+  trait MappingTags {
+    val mapping: Mapping
+
+    trait Lib {
       libs += this
     }
 
-    val fns: mutable.HashSet[Fn] = new mutable.HashSet()
-    
-    val libs: mutable.HashSet[Library] = new mutable.HashSet()
-
-    case class Pack(pack: String)(implicit val lib: Library) extends Implicit[Pack]
-
-    case class Family(familyName: String)(implicit val pack: Pack = null) extends Implicit[Family]
-
-    trait Ty {
-      def name: String
-    }
-
-    case class BaseTy(name: String) extends Ty
-
-    case class TyArg(name: String)
-
-    trait DomainType extends Ty
-
-    case class ClassType(name: String, tyArgs: TyArg*)(implicit val family: Family = null, val pack: Pack = null) extends DomainType with Implicit[ClassType]{
-      override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[ClassType] && {
-        val m = obj.asInstanceOf[ClassType]
-        m.name == name && m.tyArgs == tyArgs && m.family == family && m.pack == pack
-      }
-    }
-
-    case class MethodArg(name: Type)
-
-    case class Method(name: String, tyRes: Type, args: MethodArg*)(implicit val theType: ClassType){
-      override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[Method] && {
-       val m = obj.asInstanceOf[Method]
-        m.name == name && m.tyRes == tyRes && m.args == args && m.theType == theType
-      }
-    }
-
-    trait Fun {
-      def name: String
-      def lib: Fn
-    }
-
-    abstract class Mapping[TC <: MappingTags](languageId: LanguageId)(implicit val l: TC) {
-      type Func <: Fun
-
-      (mappingDSLs.get(languageId), this) match {
-        case (Some(conf: mutable.ArrayBuffer[_]), current) => conf += current
-        case _ => mappingDSLs +=  languageId -> mutable.ArrayBuffer(this)
-      }
-
-      def get(classPath: String, method: String): Option[Func] = {
-        methodMap.getOrElse((classPath, method), None)
-      }
-
-      lazy val fns = l.fns
-      lazy val dependencies = l.libs.flatMap(_.dependencies)
-      
-      val libPaths: Set[String]
-
-      val functionMap: Map[Method, Func]
-
-      val classMap: Map[Class[_], Func] = Map.empty[Class[_], Func]
-
-      // To simplify config usage, data are transformed to Backend representation. Direct link to LanguageConf is never used
-      lazy val methodMap: Map[(String, String), Option[Func]] = functionMap.map { case (m, f) =>
-        (((m.theType.family match {
-          case f: Family => f.pack.pack + "." + f.familyName + "$"
-          case _ =>
-            m.theType.pack match {
-              case p: Pack => p.pack + "."
-              case _ => ""
-            }
-        }) + m.theType.name, m.name), Some(f))
-      }
-    }
+    val libs: mutable.HashSet[Lib] = new mutable.HashSet()
   }
 
   trait CppMappingDSL extends MappingTags {
 
-    case class CppLib(hfile: String, libfile: String) extends Fn with Implicit[CppLib]
+    case class CppLib(hfile: String, libfile: String) extends Lib with Implicit[CppLib]
 
     case class CppType(name: String)
 
     case class CppArg(ty: CppType, name: String)
 
-    case class CppFunc(name: String, args: CppArg*)(implicit val lib: CppLib) extends Fun
+    case class CppFunc(name: String, args: CppArg*)(implicit val lib: CppLib)
 
     abstract class CppMapping extends Mapping(CPP) {
       type Func = CppFunc
@@ -133,20 +105,25 @@ trait MethodMappingDSL {
 
   trait ScalaMappingDSL extends MappingTags {
 
-    case class ScalaLib(jar: String = "", pack: String = "") extends Fn with Implicit[ScalaLib]
+    case class ScalaLib(jar: String = "", pack: String = "") extends Lib with Implicit[ScalaLib]
 
-    case class EmbeddedObject(name: String) extends Fn with Implicit[EmbeddedObject]
+    case class EmbeddedObject(name: String) extends Lib with Implicit[EmbeddedObject]
 
     case class ScalaType(name: String)
 
     case class ScalaArg(ty: ScalaType, name: String)
 
-    case class ScalaFunc(name: String, args: ScalaArg*)(val wrapper: Boolean = false)(implicit val lib: Fn) extends Fun
+    case class ScalaFunc(name: String, args: ScalaArg*)(val wrapper: Boolean = false)(implicit val lib: Lib)
+
+    case class ScalaClass(name: String)
 
     abstract class ScalaMapping extends Mapping(SCALA) {
       type Func = ScalaFunc
+      type TypeT = ScalaClass
 
-      lazy val libPaths: Set[String] = fns filter(_.isInstanceOf[ScalaLib]) map (_.asInstanceOf[ScalaLib].jar) filter (!_.isEmpty) to
+      lazy val libPaths: Set[String] = libs.collect {
+        case l: ScalaLib => l.jar
+      }.filter(_.nonEmpty).toSet
     }
   }
 }
@@ -158,7 +135,7 @@ trait CoreMethodMappingDSL extends MethodMappingDSL {
   new ScalaMappingDSL with CoreMapping {
 
     val mapping = new ScalaMapping {
-      val functionMap = Map.empty[Method, Func]
+      val functionMap = Map.empty[EMethod, Func]
     }
   }
 }

@@ -1,6 +1,6 @@
 package scalan.linalgebra
 
-import scalan.compilation.language.CoreMethodMappingDSL
+import scalan.compilation.language._
 
 // TODO separate collection mapping
 trait LinAlgMethodMappingDSL extends CoreMethodMappingDSL {
@@ -11,26 +11,21 @@ trait LinAlgMethodMappingDSL extends CoreMethodMappingDSL {
 
     val tyMatrix = typeOf[Matrices#Matrix[_]]
 
-    val scalanCE = new Library() {
-
-      val collectionsPack = new Pack("scalan.collections") {
-        val collectionsFam = new Family('Collections) {
-          val collection = new ClassType('Collection, TyArg('A)) {
-            val length = Method('length, tyInt)
-            val arr = Method('arr, tyArray)
-          }
-        }
-      }
-      val matrixPack = new Pack("scalan.linalgebra") {
-        val matrixFam = new Family('Matrices) {
-          val matrix = new ClassType('Matrix, TyArg('A)) {
-            val invert = Method('invert, tyMatrix)
-          }
+    val collectionsPack = new EPackage("scalan.collections") {
+      val collectionsFam = new EModule('Collections) {
+        val collection = new EType('Collection) {
+          val length = EMethod('length)
+          val arr = EMethod('arr)
         }
       }
     }
-
-    val expCollectionOverArray = new CaseClassObject(typeOf[scalan.collections.impl.CollectionsExp#ExpCollectionOverArray[_]])
+    val matrixPack = new EPackage("scalan.linalgebra") {
+      val matrixFam = new EModule('Matrices) {
+        val matrix = new EType('AbstractMatrix) {
+          val invert = EMethod('invert)
+        }
+      }
+    }
   }
 
   new ScalaMappingDSL with LinAlgMappingTags {
@@ -44,9 +39,7 @@ trait LinAlgMethodMappingDSL extends CoreMethodMappingDSL {
     }
 
     val mapScalanCE2Scala = {
-      import scala.language.reflectiveCalls
-
-      Map[Method, ScalaFunc]()
+      Map[EMethod, ScalaFunc]()
     }
 
     val mapping = new ScalaMapping {
@@ -63,7 +56,6 @@ trait LinAlgMethodMappingDSL extends CoreMethodMappingDSL {
     }
 
     val mapScalanCE2Cpp = {
-      import scalanCE._
       Map(
         matrixPack.matrixFam.matrix.invert -> linpackCpp.invertMatr
       )

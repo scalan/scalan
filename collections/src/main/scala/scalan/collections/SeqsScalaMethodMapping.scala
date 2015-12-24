@@ -1,11 +1,9 @@
 package scalan.collections
 
-import scalan.compilation.language.CoreMethodMappingDSL
-import scalan._
+import scalan.compilation.language.{EType, EMethod, CoreMethodMappingDSL}
 
 trait SeqsScalaMethodMapping extends CoreMethodMappingDSL { self: { val scalan: SeqsDslExp } =>
   import scala.language.reflectiveCalls
-  import scala.reflect.runtime.universe._
   import scalan._
 
   new ScalaMappingDSL with MappingTags {
@@ -16,10 +14,10 @@ trait SeqsScalaMethodMapping extends CoreMethodMappingDSL { self: { val scalan: 
           rhs.getClass
       }
 
-      new ClassType(Symbol(sseqClass.getName)) {
-        val apply = Method('apply, typeOf[Seq[_]], MethodArg(typeOf[Array[_]]))
-        val single = Method('single, typeOf[Seq[_]])
-        val empty = Method('empty, typeOf[Seq[_]])
+      new EType(Symbol(sseqClass.getName)) {
+        val apply = EMethod('apply)
+        val single = EMethod('single)
+        val empty = EMethod('empty)
       }
     }
 

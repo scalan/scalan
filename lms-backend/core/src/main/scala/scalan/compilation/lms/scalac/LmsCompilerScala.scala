@@ -44,7 +44,7 @@ class LmsCompilerScala[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends
     val mainClass = mainClassName(functionName, compilerConfig)
     val output: Option[Array[String]] = compilerConfig.sbtConfigOpt match {
       case Some(sbtConfig) =>
-        val dependencies:Array[String] = methodReplaceConf.flatMap(conf => conf.dependencies).toArray
+        val dependencies: Array[String] = Array() // TODO methodReplaceConf.flatMap(conf => conf.dependencies).toArray
         Some(Sbt.compile(sourcesDir, executableDir, functionName, compilerConfig.extraCompilerOptions, sbtConfig, dependencies, sourceFile, jarPath))
       case None =>
         Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, sourceFile, jarPath)

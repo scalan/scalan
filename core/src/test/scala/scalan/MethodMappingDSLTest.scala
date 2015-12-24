@@ -8,13 +8,10 @@ class MethodMappingDSLTest extends BaseTests {
 
     trait CommunityConf extends MappingTags {
 
-      val scalanCE = new Library("scalan-ce.jar") {
-
-        val collectionsPack = new Pack("scalan.collections") {
-          val collectionsFam = new Family('Collections) {
-            val collection = new ClassType('Collection, TyArg('A)) {
-              val length = Method('length, tyInt)
-            }
+      val collectionsPack = new EPackage("scalan.collections") {
+        val collectionsFam = new EModule('Collections) {
+          val collection = new EType('Collection) {
+            val length = EMethod('length)
           }
         }
       }
@@ -29,7 +26,6 @@ class MethodMappingDSLTest extends BaseTests {
       }
 
       val mapScalanCE2Scala = {
-        import scalanCE._
         Map(
           collectionsPack.collectionsFam.collection.length -> linpackScala.arrayLength
         )
@@ -49,7 +45,6 @@ class MethodMappingDSLTest extends BaseTests {
       }
 
       val mapScalanCE2Cpp = {
-        import scalanCE._
         Map(
           collectionsPack.collectionsFam.collection.length -> linpackCpp.invertMatr
         )

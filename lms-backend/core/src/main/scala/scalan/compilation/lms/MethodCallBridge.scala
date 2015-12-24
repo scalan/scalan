@@ -7,7 +7,7 @@ import scalan.compilation.language.{CoreMethodMappingDSL, LanguageId}
 trait MethodCallBridge extends LmsBridge with CoreMethodMappingDSL {
   import scalan._
 
-  def mappedFunc(method: Method): Option[MappingTags#Fun] =
+  def mappedFunc(method: Method): Option[Mapping#Func] =
     methodReplaceConf.map(_.get(method.getDeclaringClass.getName, method.getName)).reverse.find(_.isDefined).getOrElse(None)
 
   def mappedClassName(c: Class[_]): Option[String] = {
