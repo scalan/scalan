@@ -97,7 +97,7 @@ trait TypeWrappersExp extends TypeWrappers with GraphVizExport { scalan: ScalanE
   }
   def unwrapNewObj[T](clazz: Class[T], args: List[AnyRef], neverInvoke: Boolean, eUnwrappedRes: Elem[T]): Rep[T] = {
     val newArgs = unwrapSyms(args)
-    val newObj = new NewObject[T](clazz, newArgs, neverInvoke)(eUnwrappedRes)
+    val newObj = new NewObject[T](eUnwrappedRes, newArgs, neverInvoke)
     newObj
   }
 }
