@@ -207,7 +207,7 @@ object ScalanAst {
         val params = tparams.rep(_.declaration)
         s"$name[$params]"
       }
-      else name
+      else name + bound.opt(b => s" <: ${b.name}")
     def toTraitCall: STraitCall = STraitCall(name, tparams.map(_.toTraitCall))
   }
   type STpeArgs = List[STpeArg]

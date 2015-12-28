@@ -742,6 +742,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) Array.empty[AnyRef] else _args
+      def mkMC(e: ExternalMethodException) = {
+        val res = mkMethodCall(receiver, m, args.toList, neverInvoke = true)
+        res.setMetadata(externalClassNameMetaKey)(e.className)
+        res.setMetadata(externalMethodNameMetaKey)(e.methodName)
+        res
+      }
       receiver match {
         case Def(d) =>
           if (shouldInvoke(d, m, args)) {
@@ -751,12 +757,13 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
               res
             } catch {
               case e: ExternalMethodException =>
-                val res = mkMethodCall(receiver, m, args.toList, neverInvoke = true)
-                res.setMetadata(externalClassNameMetaKey)(e.className)
-                res.setMetadata(externalMethodNameMetaKey)(e.methodName)
-                res
-              case e: Exception =>
-                throwInvocationException("Method invocation", baseCause(e), receiver, m, args)
+                mkMC(e)
+              case e: Exception => e.getCause match {
+                case e: ExternalMethodException =>
+                  mkMC(e)
+                case _ =>
+                  throwInvocationException("Method invocation", baseCause(e), receiver, m, args)
+              }
             }
           } else {
             // try to call method m via inherited class or interfaces
