@@ -45,6 +45,8 @@ trait AuthenticationsDsl extends ScalanDsl with impl.AuthenticationsAbs with Aut
   implicit val AuthCont: Cont[Auth] = new Cont[Auth] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Auth[T]]
     def lift[T](implicit eT: Elem[T]) = element[Auth[T]]
+    def unlift[T](implicit eFT: Elem[Auth[T]]) = eFT.asInstanceOf[AuthElem[T,_]].eA
+    def getElem[T](fa: Rep[Auth[T]]) = fa.selfType1
   }
 
   class Auths[F[_]:Cont](implicit I: Inject[Auth,F]) {

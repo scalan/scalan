@@ -341,12 +341,19 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       }
 
       def familyCont(e: EntityTemplateData) = {
-        def container(name: String, isFunctor: Boolean) = {
+        def container(name: String, isFunctor: Boolean, isWrapper: Boolean) = {
           val contType = if (isFunctor) "Functor" else "Cont"
           s"""\n
              |  implicit lazy val container$name: $contType[$name] = new $contType[$name] {
              |    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[$name[A]]
              |    def lift[A](implicit evA: Elem[A]) = element[$name[A]]
+             |    def unlift[A](implicit eFT: Elem[$name[A]]) =
+             |      cast${e.name}Element(eFT${(!isWrapper).opt(s".asInstanceOf[Elem[${e.name}[A]]]")}).eA
+             |    def getElem[A](fa: Rep[$name[A]]) = ${
+                       if (isWrapper)
+                         s"fa.selfType1"
+                       else
+                         s"""!!!("Operation is not supported by $name container " + fa)""" }
              |    ${isFunctor.opt(s"def map[A:Elem,B:Elem](xs: Rep[$name[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))")}
              |  }
            """.stripMargin
@@ -358,9 +365,9 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |  implicit def cast${e.name}Element${e.tpeArgsDecl}(elem: Elem[${e.typeUse}]): $entityElem =
         |    elem.asInstanceOf[$entityElem]
         |
-        |  ${optBaseType.opt(bt => container(bt.name, false))}
+        |  ${optBaseType.opt(bt => container(bt.name, false, false))}
         |
-        |  ${container(e.name, e.isFunctor)}
+        |  ${container(e.name, e.isFunctor, true)}
         |
         |  case class ${e.name}Iso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, ${e.name}] {
         |    lazy val selfType = new ConcreteIsoElem[${e.name}[A], ${e.name}[B], ${e.name}Iso[A, B]](eFrom, eTo).

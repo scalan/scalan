@@ -72,6 +72,8 @@ trait FreeMsDsl extends ScalanDsl with impl.FreeMsAbs with FreeMs with Monads { 
     implicit def cF: Cont[F]
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[FreeM[F,T]]
     def lift[T](implicit eT: Elem[T]) = element[FreeM[F,T]]
+    def unlift[T](implicit eFT: Elem[FreeM[F, T]]) = eFT.asInstanceOf[FreeMElem[F,T,_]].eA
+    def getElem[T](fa: Rep[FreeM[F, T]]) = fa.selfType1
   }
 
   implicit def freeMMonad[F[_]:Cont]: FreeMCont[F] with Monad[({type f[a] = FreeM[F,a]})#f] =

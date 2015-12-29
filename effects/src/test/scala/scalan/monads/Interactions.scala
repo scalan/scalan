@@ -40,6 +40,8 @@ trait InteractionsDsl extends ScalanDsl with impl.InteractionsAbs with Interacti
   implicit def interactCont: Cont[Interact] = new Cont[Interact] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Interact[T]]
     def lift[T](implicit eT: Elem[T]) = element[Interact[T]]
+    def unlift[T](implicit eFT: Elem[Interact[T]]) = eFT.asInstanceOf[InteractElem[T,_]].eA
+    def getElem[T](fa: Rep[Interact[T]]) = fa.selfType1
   }
 
   class Interacts[F[_]:Cont](implicit I: Inject[Interact,F]) {

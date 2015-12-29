@@ -434,6 +434,8 @@ trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
   trait CollectionFunctor extends Functor[Collection] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Collection[A]]
     def lift[A](implicit evA: Elem[A]) = element[Collection[A]]
+    def unlift[T](implicit eFT: Elem[Collection[T]]) = eFT.asInstanceOf[CollectionElem[T,_]].eItem
+    def getElem[T](fa: Rep[Collection[T]]) = fa.selfType1
     def map[A:Elem,B:Elem](xs: Rep[Collection[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
   implicit val containerCollection: Functor[Collection] = new CollectionFunctor {}

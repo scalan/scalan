@@ -32,11 +32,17 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
   implicit lazy val containerSeq: Cont[Seq] = new Cont[Seq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Seq[A]]
     def lift[A](implicit evA: Elem[A]) = element[Seq[A]]
+    def unlift[A](implicit eFT: Elem[Seq[A]]) =
+      castSSeqElement(eFT.asInstanceOf[Elem[SSeq[A]]]).eA
+    def getElem[A](fa: Rep[Seq[A]]) = !!!("Operation is not supported by Seq container " + fa)
   }
 
   implicit lazy val containerSSeq: Functor[SSeq] = new Functor[SSeq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SSeq[A]]
     def lift[A](implicit evA: Elem[A]) = element[SSeq[A]]
+    def unlift[A](implicit eFT: Elem[SSeq[A]]) =
+      castSSeqElement(eFT).eA
+    def getElem[A](fa: Rep[SSeq[A]]) = fa.selfType1
     def map[A:Elem,B:Elem](xs: Rep[SSeq[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))
   }
 

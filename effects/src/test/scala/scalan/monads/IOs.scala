@@ -33,6 +33,8 @@ trait IOsDsl extends ScalanDsl with impl.IOsAbs with IOs
   implicit def ioCont: Cont[IO] = new Cont[IO] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[IO[T]]
     def lift[T](implicit eT: Elem[T]) = element[IO[T]]
+    def unlift[T](implicit eFT: Elem[IO[T]]) = eFT.asInstanceOf[IOElem[T,_]].eA
+    def getElem[T](fa: Rep[IO[T]]) = fa.selfType1
   }
 
   class IOs[F[_]:Cont](implicit I: Inject[IO,F]) {

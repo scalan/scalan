@@ -35,8 +35,9 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
           weakTypeTag[CoproductImpl[F, H, T]].asInstanceOf[WeakTypeTag[Coproduct[F,H,T]]]
           //TODO how to make it simple like this "element[Coproduct[F,H,T]].tag"
         }
-
         def lift[T](implicit eT: Elem[T]) = element[Coproduct[F,H,T]]
+        def unlift[T](implicit eFT: Elem[Coproduct[F, H, T]]) = eFT.asInstanceOf[CoproductElem[F,H,T,_]].eA
+        def getElem[T](fa: Rep[Coproduct[F, H, T]]) = fa.selfType1
       }
 
   trait ~>[F[_],G[_]] { self =>
