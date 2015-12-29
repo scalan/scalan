@@ -605,10 +605,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       val scalaMethod1 = (if (overloads.length == 1) {
         scalaMethod0
       } else {
-        val javaOverloadId = m.getAnnotation(classOf[OverloadId]) match {
-          case null => None
-          case jAnnotation => Some(jAnnotation.value)
-        }
+        val javaOverloadId = ReflectionUtil.overloadId(m)
 
         overloads.find { sym =>
           !isSupertypeOfDef(sym.owner) && {

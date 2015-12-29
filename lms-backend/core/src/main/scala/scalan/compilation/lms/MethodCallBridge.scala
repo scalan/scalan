@@ -2,36 +2,31 @@ package scalan.compilation.lms
 
 import java.lang.reflect.Method
 
-import scalan.compilation.language.{CoreMethodMappingDSL, LanguageId}
+import scalan.compilation.language._
 
-trait MethodCallBridge extends LmsBridge with CoreMethodMappingDSL {
+trait MethodCallBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep] extends LmsBridge with MethodMappingDSL {
   import scalan._
 
-  def mappedFunc(method: Method): Option[Mapping#Func] =
-    methodReplaceConf.map(_.get(method.getDeclaringClass.getName, method.getName)).reverse.find(_.isDefined).getOrElse(None)
+  def mappedMethod(method: Method): Option[(LibraryT, TypeT, MethodT)] =
+    methodReplaceConf.map { mapping =>
+      mapping.getMethod(method)
+    }.collectFirst { case Some(x) => x}
 
-  def mappedClassName(c: Class[_]): Option[String] = {
-    var fun: Option[String] = None
-    methodReplaceConf.foreach(languageBackend => {
-      val f = languageBackend.classMap.get(c)
-      f match {
-        case Some(func) => fun = Some(func.name)
-        case _ =>
-      }
-    })
-    fun
+  def mappedType(m: Manifest[_]): Option[(LibraryT, TypeT)] = {
+    methodReplaceConf.map { mapping =>
+      mapping.getType(m).map(typeT => (mapping.library, typeT))
+    }.collectFirst { case Some(x) => x}
   }
 
   val languageId: LanguageId
 
-  def methodReplaceConf = mappingDSLs(languageId)
+  lazy val methodReplaceConf = mappingDSLs(languageId).asInstanceOf[Seq[Mapping[LibraryT, TypeT, MethodT]]]
 
   def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] =
     !!!(s"Don't know how to transform method call: $method")
 
   def newObj[A](m: Manifest[A], args: Seq[Any]): lms.Exp[A] = {
-    val aClass = m.runtimeClass
-    val name = mappedClassName(aClass).getOrElse(aClass.getName)
+    val name = mappedType(m).getOrElse(m.runtimeClass.getName)
     lms.newObj[A](name, args, true)(m)
   }
 
