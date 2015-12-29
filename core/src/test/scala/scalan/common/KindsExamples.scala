@@ -10,6 +10,8 @@ trait KindsExamples extends Scalan with KindsDsl {
   implicit val functorId: Functor[Id] = new Functor[Id] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Id[A]]
     def lift[A](implicit evA: Elem[A]) = evA
+    def unlift[T](implicit eFT: Elem[Id[T]]) = eFT
+    def getElem[T](fa: Rep[Id[T]]) = !!!("Operation is not supported by Id container " + fa)
     def map[A: Elem, B: Elem](a: Rep[Id[A]])(f: (Rep[A]) => Rep[B]) = f(a)
   }
 

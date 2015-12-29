@@ -45,6 +45,8 @@ trait StatesDsl extends impl.StatesAbs { self: MonadsDsl =>
     implicit def eS: Elem[S]
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[State0[S,T]]
     def lift[T](implicit eT: Elem[T]) = element[State0[S,T]]
+    def unlift[T](implicit eFT: Elem[State0[S, T]]) = eFT.asInstanceOf[State0Elem[S,T,_]].eA
+    def getElem[T](fa: Rep[State0[S, T]]) = fa.selfType1
   }
 
   implicit def state0Monad[S:Elem]: Monad[({type f[x] = State0[S,x]})#f] = new State0Cont[S] with Monad[({type f[x] = State0[S,x]})#f] {

@@ -29,6 +29,8 @@ trait ReadersDsl extends impl.ReadersAbs { self: MonadsDsl =>
     implicit def eR: Elem[R]
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Reader[R,T]]
     def lift[T](implicit eT: Elem[T]) = element[Reader[R,T]] //.asElem[Reader[R,T]]
+    def unlift[T](implicit eFT: Elem[Reader[R, T]]) = eFT.asInstanceOf[ReaderElem[R,T,_]].eA
+    def getElem[T](fa: Rep[Reader[R, T]]) = fa.selfType1
   }
 
   implicit def readerMonad[R:Elem]: Monad[({type f[x] = Reader[R,x]})#f] = new ReaderCont[R] with Monad[({type f[x] = Reader[R,x]})#f] {

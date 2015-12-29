@@ -117,7 +117,9 @@ trait ProcessesDsl extends ScalanDsl with impl.ProcessesAbs with Processes with 
 
   implicit def processCont[F[_]:Cont]: Cont[({type f[x] = Process[F,x]})#f] = new Cont[({type f[x] = Process[F,x]})#f] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Process[F,T]]
-    def lift[T](implicit eT: Elem[T]) = element[Emit[F,T]].asElem[Process[F,T]]
+    def lift[T](implicit eT: Elem[T]) = element[Process[F,T]].asElem[Process[F,T]]
+    def unlift[T](implicit eFT: Elem[Process[F,T]]) = eFT.asInstanceOf[ProcessElem[F,T,_]].eO
+    def getElem[T](fa: Rep[Process[F,T]]) = fa.selfType1
   }
 
   /* Special exception indicating normal termination */

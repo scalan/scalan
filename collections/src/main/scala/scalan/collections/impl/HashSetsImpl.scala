@@ -31,11 +31,17 @@ trait HashSetsAbs extends scalan.ScalanDsl with HashSets {
   implicit lazy val containerHashSet: Cont[HashSet] = new Cont[HashSet] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[HashSet[A]]
     def lift[A](implicit evA: Elem[A]) = element[HashSet[A]]
+    def unlift[A](implicit eFT: Elem[HashSet[A]]) =
+      castSHashSetElement(eFT.asInstanceOf[Elem[SHashSet[A]]]).eA
+    def getElem[A](fa: Rep[HashSet[A]]) = !!!("Operation is not supported by HashSet container " + fa)
   }
 
   implicit lazy val containerSHashSet: Cont[SHashSet] = new Cont[SHashSet] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SHashSet[A]]
     def lift[A](implicit evA: Elem[A]) = element[SHashSet[A]]
+    def unlift[A](implicit eFT: Elem[SHashSet[A]]) =
+      castSHashSetElement(eFT).eA
+    def getElem[A](fa: Rep[SHashSet[A]]) = fa.selfType1
   }
 
   case class SHashSetIso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, SHashSet] {

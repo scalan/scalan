@@ -101,6 +101,8 @@ trait ArrayOps { self: Scalan =>
   trait ArrayFunctor extends Functor[Array] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Array[T]]
     def lift[T](implicit eT: Elem[T]) = element[Array[T]]
+    def unlift[T](implicit eFT: Elem[Array[T]]) = eFT.eItem
+    def getElem[T](fa: Rep[Array[T]]) = !!!("Operation is not supported by Array container " + fa)
     def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.mapBy(fun(f))
   }
   implicit val containerArray: Functor[Array] = new ArrayFunctor {}

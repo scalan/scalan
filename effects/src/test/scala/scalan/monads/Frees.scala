@@ -103,6 +103,8 @@ trait FreesDsl extends ScalanDsl with impl.FreesAbs with Frees with Monads { sel
     implicit def cF: Cont[F]
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Free[F,T]]
     def lift[T](implicit eT: Elem[T]) = element[Free[F,T]]
+    def unlift[T](implicit eFT: Elem[Free[F, T]]) = eFT.asInstanceOf[FreeElem[F,T,_]].eA
+    def getElem[T](fa: Rep[Free[F, T]]) = fa.selfType1
   }
 
   def freeMonad[F[_]:Cont]: Monad[({type f[a] = Free[F,a]})#f] =
