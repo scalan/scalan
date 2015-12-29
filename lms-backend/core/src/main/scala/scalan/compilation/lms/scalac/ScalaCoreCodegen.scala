@@ -18,7 +18,7 @@ class ScalaCoreCodegen[BackendCake <: ScalaCoreLmsBackend](backend: BackendCake)
     with ScalaGenFatArrayLoopsFusionOpt
     with ScalaGenArrayMutation
     with ScalaGenIfThenElseFat with LoopFusionOpt with ScalaGenCastingOps with ScalaGenMathOps
-    with ScalaGenMethodCallOps //from scalan.compilation.lms.common
+    with ScalaGenMethodCallOps[BackendCake] //from scalan.compilation.lms.common
     with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile with ScalaGenIfThenElse
     with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions
     with ScalaGenRangeOps

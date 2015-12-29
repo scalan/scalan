@@ -2,31 +2,48 @@ package scalan.compilation.lms
 
 import java.lang.reflect.Method
 
+import scala.lms.common.{EffectExp, BaseExp}
+import scala.lms.internal.{Effects, Expressions}
 import scalan.compilation.language._
+import scalan.compilation.lms.common.TransformingExt
+import scalan.util.ScalaNameUtil
 
 trait MethodCallBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep] extends LmsBridge with MethodMappingDSL {
+  override val lms: LmsBackend with MethodCallOpsExp
   import scalan._
 
   def mappedMethod(method: Method): Option[(LibraryT, TypeT, MethodT)] =
     methodReplaceConf.map { mapping =>
       mapping.getMethod(method)
-    }.collectFirst { case Some(x) => x}
+    }.collectFirst { case Some(x) => x }
 
   def mappedType(m: Manifest[_]): Option[(LibraryT, TypeT)] = {
     methodReplaceConf.map { mapping =>
-      mapping.getType(m).map(typeT => (mapping.library, typeT))
-    }.collectFirst { case Some(x) => x}
+      mapping.getType(m)
+    }.collectFirst { case Some(x) => x }
   }
 
   val languageId: LanguageId
 
   lazy val methodReplaceConf = mappingDSLs(languageId).asInstanceOf[Seq[Mapping[LibraryT, TypeT, MethodT]]]
 
+  def adjustArgs(m: LmsMirror, args: Seq[Any], shuffle: Seq[Adjusted[Int]]) = shuffle.map { adjIndex =>
+    val arg = args(adjIndex.value)
+    val lmsArg = mapParam(m, arg, false)
+    adjIndex.adjustment match {
+      case None => lmsArg
+      case Some(adjustment) => lms.adjust(adjustment, lmsArg)
+    }
+  }
+
   def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] =
     !!!(s"Don't know how to transform method call: $method")
 
   def newObj[A](m: Manifest[A], args: Seq[Any]): lms.Exp[A] = {
-    val name = mappedType(m).getOrElse(m.runtimeClass.getName)
+    val name = mappedType(m) match {
+      case Some((_, typeT)) => typeT.mappedName
+      case None => ScalaNameUtil.cleanNestedClassName(m.runtimeClass.getName)
+    }
     lms.newObj[A](name, args, true)(m)
   }
 
@@ -49,5 +66,22 @@ trait MethodCallBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep
       }
 
     case _ => super.transformDef(m, g, sym, d)
+  }
+}
+
+trait MethodCallOpsExp extends BaseExp with EffectExp with TransformingExt {
+  /** Applies the given adjustment to the given value. By default just passes through so it can be used in codegen.
+    * Override to transform Exps/Manifests/etc. */
+  def adjust(adjustment: Adjustment, value: Any): Any = adjustment(value)
+}
+
+trait GenMethodCallOps[BackendType <: Expressions with Effects with MethodCallOpsExp] extends BaseCodegen[BackendType] {
+
+  def adjust(adjustment: Adjustment, value: Any): Any = IR.adjust(adjustment, value)
+
+  override def quoteOrRemap(arg: Any) = arg match {
+    case Adjusted(value, None) => quoteOrRemap(value)
+    case Adjusted(value, Some(adj)) => quoteOrRemap(adjust(adj, value))
+    case _ => super.quoteOrRemap(arg)
   }
 }

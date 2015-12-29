@@ -1,11 +1,11 @@
 package scalan
 
 import scalan.compilation.language._
+import CxxMapping._
+import ScalaMapping._
 
 class MethodMappingDSLTest extends BaseTests {
   object TestMethodMappingDSL extends MethodMappingDSL {
-    import CxxMapping._
-    import ScalaMapping._
 
     MapModuleScala("scalan.flint.DataFrames").types( // apply?
       MapTypeScala("FlintDataFrame").to("org.spark.RDD").methods(
@@ -25,7 +25,7 @@ class MethodMappingDSLTest extends BaseTests {
 
   test("Scala Method") {
     // TODO asInstanceOf should be possible to remove
-    val scalaMethod = TestMethodMappingDSL.mappingDSLs(SCALA).head.getMethod("scalan.flint.DataFrames$FlintDataFrame", "length", None).get.asInstanceOf[ScalaMapping.ScalaMethod]
+    val scalaMethod = TestMethodMappingDSL.mappingDSLs(SCALA).head.getMethod("scalan.flint.DataFrames$FlintDataFrame", "length", None).get.asInstanceOf[(ScalaLibrary, ScalaType, ScalaMethod)]._3
     scalaMethod.mappedName should equal("count")
   }
 

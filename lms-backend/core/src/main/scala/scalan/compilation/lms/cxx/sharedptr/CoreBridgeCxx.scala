@@ -14,23 +14,15 @@ trait CoreBridgeCxx extends CoreBridge with MethodCallBridge[CxxLibrary, CxxType
 
   override def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] = {
     mappedMethod(method) match {
-      case Some((libraryT, typeT, methodT)) => func.lib match {
-        case e: CppMappingDSL#CppLib =>
-//          val param = func.wrapper match {
-//            case true => Seq(m.symMirrorUntyped(receiver))
-//            case false => Seq.empty[lms.Exp[_]]
-//          }
-          elemToManifest(returnType) match {
-            case (mA: Manifest[a]) =>
-              val lmsArgs = /*param ++ */args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }
-              lms.cxxMethodCall[a](null, lms.Pure, func.name, List.empty, lmsArgs: _*)(mA.asInstanceOf[Manifest[a]])
-          }
-//        case e: CppMappingDSL#EmbeddedObject if e.name == "lms" =>
-//          val obj = m.symMirrorUntyped(receiver)
-//          val name = func.name
-//          val lmsMethod = lmsMemberByName(name).asMethod
-//          lmsMirror.reflectMethod(lmsMethod).apply(obj, elemToManifest(receiver.elem)).asInstanceOf[lms.Exp[_]]
-      }
+      case Some((libraryT, typeT, methodT)) =>
+        elemToManifest(returnType) match {
+          case mA: Manifest[a] =>
+            val lmsReceiver = m.symMirrorUntyped(receiver)
+            val lmsArgs = adjustArgs(m, args, methodT.argOrder)
+            // TODO For now assume inference is enough here
+            val typeArgs = Nil
+            lms.cxxMethodCall[a](lmsReceiver, lms.Pure, methodT.mappedName, typeArgs, lmsArgs: _*)(mA.asInstanceOf[Manifest[a]])
+        }
       case None =>
         val obj = m.symMirrorUntyped(receiver)
         elemToManifest(returnType) match {

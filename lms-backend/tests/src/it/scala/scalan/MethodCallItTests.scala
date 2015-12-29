@@ -2,9 +2,9 @@ package scalan
 
 import org.scalatest.BeforeAndAfterAll
 
-import scala.language.reflectiveCalls
 import scalan.collections.{CollectionsDsl, CollectionsDslExp, CollectionsDslStd}
-import scalan.compilation.language.{EMethod, EModule, EPackage, EType}
+import scalan.compilation.language.ScalaMapping
+import scalan.compilation.language.ScalaMapping._
 import scalan.compilation.lms.collections.CollectionsBridgeScala
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.source2bin.SbtConfig
@@ -212,35 +212,39 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new CollectionsD
   }
 
   val jarReplaceExp = new LmsCompilerScala(new ProgStaged) {
-    trait TestConf extends MappingTags {
-      val scalanUtilPack = new EPackage("scalan.util") {
-        val exceptionsFam = new EModule('Exceptions) {
-          val throwable = new EType('SThrowable) {
-            val getMessage = EMethod('getMessage)
-          }
-        }
-      }
-    }
-
-    new ScalaMappingDSL with TestConf {
-
-      val extLib = new ScalaLib("", "scalan.it.lms.MappingMethodFromJar.TestMethod") {
-        val testMessageMethod = ScalaFunc('testMessage)(true)
-      }
-
-      val scala2Scala = Map(
-        scalanUtilPack.exceptionsFam.throwable.getMessage -> extLib.testMessageMethod
-      )
-
-      val main = new ScalaLib() {
-        val throwableImp = ScalaFunc("scalan.imp.ThrowableImp")(true)
-      }
-
-      val mapping = new ScalaMapping {
-        val functionMap = scala2Scala
-        // override val classMap: Map[Class[_], TypeT] = Map[Class[_], TypeT](classOf[Exceptions#SThrowable] -> main.throwableImp)
-      }
-    }
+    ScalaMapping.MapModuleScala("scalan.util.Exceptions").types(
+      MapTypeScala("SThrowable").to("scalan.it.lms.MappingMethodFromJar.TestMethod").
+        methods(MapMethodScala("getMessage").to("testMessage").static)
+    )
+//    trait TestConf extends MappingTags {
+//      val scalanUtilPack = new EPackage("scalan.util") {
+//        val exceptionsFam = new EModule('Exceptions) {
+//          val throwable = new EType('SThrowable) {
+//            val getMessage = EMethod('getMessage)
+//          }
+//        }
+//      }
+//    }
+//
+//    new ScalaMappingDSL with TestConf {
+//
+//      val extLib = new ScalaLib("", "scalan.it.lms.MappingMethodFromJar.TestMethod") {
+//        val testMessageMethod = ScalaFunc('testMessage)(true)
+//      }
+//
+//      val scala2Scala = Map(
+//        scalanUtilPack.exceptionsFam.throwable.getMessage -> extLib.testMessageMethod
+//      )
+//
+//      val main = new ScalaLib() {
+//        val throwableImp = ScalaFunc("scalan.imp.ThrowableImp")(true)
+//      }
+//
+//      val mapping = new ScalaMapping {
+//        val functionMap = scala2Scala
+//        // override val classMap: Map[Class[_], TypeT] = Map[Class[_], TypeT](classOf[Exceptions#SThrowable] -> main.throwableImp)
+//      }
+//    }
   }
 
   // TODO: Slow test

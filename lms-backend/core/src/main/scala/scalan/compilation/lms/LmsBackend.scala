@@ -5,6 +5,7 @@ import java.io.File
 import scala.collection.mutable
 import scala.lms.common._
 import scala.lms.internal.{Expressions, GenericNestedCodegen, Effects}
+import scalan.compilation.language.Adjusted
 import scalan.compilation.lms.arrays.{ArrayMutationExp, ArrayLoopsFatExp}
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.graph.GraphCodegen
@@ -13,7 +14,7 @@ import scalan.util.FileUtil
 import java.util.HashMap
 
 
-trait BaseCodegen[BackendType <: Expressions with Effects] extends GenericNestedCodegen {
+trait BaseCodegen[BackendType <: Expressions with Effects] extends GenericNestedCodegen { codegen =>
   val IR: BackendType
   import IR._
 
@@ -43,6 +44,20 @@ trait BaseCodegen[BackendType <: Expressions with Effects] extends GenericNested
 
   }
 
+  // Below definitions make src"" extensible by allowing override of quoteOrRemap
+  class CodegenHelper1(sc: StringContext) extends CodegenHelper(sc) {
+    override def quoteOrRemap(arg: Any) = codegen.quoteOrRemap(arg)
+  }
+
+  override implicit def CodegenHelper(sc: StringContext) = new CodegenHelper1(sc)
+
+  def quoteOrRemap(arg: Any): String = arg match {
+    case xs: Seq[_] => xs.map(quoteOrRemap).mkString(",")
+    case e: Exp[_] => quote(e)
+    case m: Manifest[_] => remap(m)
+    case s: String => s
+    case _ => throw new RuntimeException(s"Could not quote or remap $arg")
+  }
 }
 
 

@@ -13,40 +13,55 @@ trait CoreBridgeScala extends CoreBridge with MethodCallBridge[ScalaLibrary, Sca
 
   override def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] = {
     mappedMethod(method) match {
-      case Some((libraryT, typeT, methodT)) => libraryT match {
-        case e: ScalaMappingDSL#ScalaLib =>
-          val param = methodT.wrapper match {
-            case true => Seq(m.symMirrorUntyped(receiver))
-            case false => Seq.empty[lms.Exp[_]]
-          }
-          val methodName: String = methodT.name match {
-            case "" => ""
-            case _ =>
-              e.pack match {
-                case "" => methodT.name
-                case p => p + "." + methodT.name
-              }
-          }
-          elemToManifest(returnType) match {
-            case (mA: Manifest[a]) =>
-              val lmsArgs = param ++ args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }
-              lms.scalaMethodCall[a](null, lms.Pure, methodName, List.empty, lmsArgs: _*)(mA.asInstanceOf[Manifest[a]])
-          }
-        case e: ScalaMappingDSL#EmbeddedObject if e.name == "lms" =>
-          val obj = m.symMirrorUntyped(receiver)
-          val name = methodT.name
-          val lmsMethod = lmsMemberByName(name).asMethod
-          // FIXME why only elemToManifest(receiver.elem)?
-          lmsMirror.reflectMethod(lmsMethod).apply(obj, elemToManifest(receiver.elem)).asInstanceOf[lms.Exp[_]]
-      }
+      case Some((libraryT, typeT, methodT)) =>
+        elemToManifest(returnType) match {
+          case mA: Manifest[a] =>
+            val lmsReceiver = if (methodT.isStatic) lms.Static(typeT.mappedName) else {
+              val mirrored = m.symMirrorUntyped(receiver)
+              lms.Obj(mirrored)
+            }
+            val lmsArgs = adjustArgs(m, args, methodT.argOrder)
+            // TODO For now assume inference is enough here
+            val typeArgs = Nil
+            val lmsImplicitArgs = Nil
+            lms.scalaMethodCall[a](lmsReceiver, lms.Pure, methodT.mappedName, typeArgs, lmsArgs: _*)(mA.asInstanceOf[Manifest[a]])
+        }
+
+        // TODO figure out what we can actually use below
+      //      case Some((libraryT, typeT, methodT)) => libraryT match {
+      //        case e: ScalaMappingDSL#ScalaLib =>
+      //          val param = methodT.wrapper match {
+      //            case true => Seq(m.symMirrorUntyped(receiver))
+      //            case false => Seq.empty[lms.Exp[_]]
+      //          }
+      //          val methodName: String = methodT.name match {
+      //            case "" => ""
+      //            case _ =>
+      //              e.pack match {
+      //                case "" => methodT.name
+      //                case p => p + "." + methodT.name
+      //              }
+      //          }
+      //          elemToManifest(returnType) match {
+      //            case (mA: Manifest[a]) =>
+      //              val lmsArgs = param ++ args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }
+      //              lms.scalaMethodCall[a](null, lms.Pure, methodName, List.empty, lmsArgs: _*)(mA.asInstanceOf[Manifest[a]])
+      //          }
+      //        case e: ScalaMappingDSL#EmbeddedObject if e.name == "lms" =>
+      //          val obj = m.symMirrorUntyped(receiver)
+      //          val name = methodT.name
+      //          val lmsMethod = lmsMemberByName(name).asMethod
+      //          // FIXME why only elemToManifest(receiver.elem)?
+      //          lmsMirror.reflectMethod(lmsMethod).apply(obj, elemToManifest(receiver.elem)).asInstanceOf[lms.Exp[_]]
+      //      }
       case None =>
         val obj = m.symMirrorUntyped(receiver)
         elemToManifest(returnType) match {
-          case (mA: Manifest[a]) => lms.scalaMethodCall[a](obj, lms.Pure, method.getName,
+          case (mA: Manifest[a]) => lms.scalaMethodCall[a](lms.Obj(obj), lms.Pure, method.getName,
             args.collect {
               case elem: Elem[_] => elemToManifest(elem)
             },
-            /* filter out implicit ClassTag params */
+            /* filter out implicit Elem params */
             args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }: _*)(mA.asInstanceOf[Manifest[a]])
         }
     }

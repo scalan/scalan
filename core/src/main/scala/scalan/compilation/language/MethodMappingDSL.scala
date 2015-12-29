@@ -4,6 +4,7 @@ import java.io.File
 import java.lang.reflect.Method
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 import scalan.util.ReflectionUtil
 
 trait LanguageId
@@ -47,11 +48,13 @@ trait MappingBuilder[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep] 
 
 trait TypeRep[MethodT <: MethodRep] {
   def scalanName: String
+  def mappedName: String
   def methods: Seq[MethodT]
 }
 
 trait MethodRep {
   def scalanName: String
+  def mappedName: String
   def overloadId: Option[String]
 }
 
@@ -108,13 +111,14 @@ object Adjusted {
 }
 
 object ScalaMapping {
-  def MapModuleScala(moduleName: String) = new ScalaMappingBuilder(moduleName, None, Nil)
+  def MapModuleScala(moduleName: String): ScalaMappingBuilder = new ScalaMappingBuilder(moduleName, None, Nil)
+  def MapModuleScala[A](implicit tag: ClassTag[A]): ScalaMappingBuilder = MapModuleScala(tag.runtimeClass.getName)
 
   case class ScalaLibrary(packageName: Option[String], jars: Seq[File]) // Add SBT dependency support?
 
   case class ScalaType(scalanName: String, mappedName: String, methods: Seq[ScalaMethod]) extends TypeRep[ScalaMethod] // TODO constructor arguments
 
-  case class ScalaMethod(scalanName: String, overloadId: Option[String], mappedName: String, typeArgOrder: Seq[Adjusted[Int]], argOrder: Seq[Adjusted[Int]], implicitArgOrder: Seq[Adjusted[Int]]) extends MethodRep
+  case class ScalaMethod(scalanName: String, overloadId: Option[String], mappedName: String, isStatic: Boolean, typeArgOrder: Seq[Adjusted[Int]], argOrder: Seq[Adjusted[Int]], implicitArgOrder: Seq[Adjusted[Int]]) extends MethodRep
 
   case class ScalaMappingBuilder(moduleName: String, packageName: Option[String], jars: Seq[File]) extends MappingBuilder[ScalaLibrary, ScalaType, ScalaMethod] {
     def language = SCALA
@@ -137,11 +141,12 @@ object ScalaMapping {
     def apply(scalanName: String, fieldSyms: Symbol*): MapTypeScala = new MapTypeScala(scalanName, fieldSyms, scalanName)
   }
 
-  case class MapMethodScala(scalanName: String, overloadId: Option[String], scalanArgs: Seq[Symbol], mappedName: String, typeArgs: Option[Seq[Adjusted[Symbol]]], args: Option[Seq[Adjusted[Symbol]]], implicitArgs: Option[Seq[Adjusted[Symbol]]]) extends MethodBuilder[ScalaLibrary, ScalaType, ScalaMethod, MapMethodScala] {
+  case class MapMethodScala(scalanName: String, overloadId: Option[String], scalanArgs: Seq[Symbol], mappedName: String, typeArgs: Option[Seq[Adjusted[Symbol]]], args: Option[Seq[Adjusted[Symbol]]], implicitArgs: Option[Seq[Adjusted[Symbol]]], isStatic: Boolean) extends MethodBuilder[ScalaLibrary, ScalaType, ScalaMethod, MapMethodScala] {
     def to(mappedName: String) = copy(mappedName = mappedName)
     def typeArgs(typeArgs: Adjusted[Symbol]*): MapMethodScala = copy(typeArgs = Some(typeArgs))
     def args(args: Adjusted[Symbol]*): MapMethodScala = copy(args = Some(args))
     def implicitArgs(implicitArgs: Adjusted[Symbol]*): MapMethodScala = copy(implicitArgs = Some(implicitArgs))
+    def static: MapMethodScala = copy(isStatic = true)
 
     def apply() = {
       val typeArgOrder = symbolOrder(scalanArgs, typeArgs, scalanName, false)
@@ -150,18 +155,19 @@ object ScalaMapping {
 
       val implicitArgOrder = symbolOrder(scalanArgs, implicitArgs, scalanName, false)
 
-      ScalaMethod(scalanName, overloadId, mappedName, typeArgOrder, argOrder, implicitArgOrder)
+      ScalaMethod(scalanName, overloadId, mappedName, isStatic, typeArgOrder, argOrder, implicitArgOrder)
     }
   }
 
   object MapMethodScala {
-    def apply(scalanName: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, None, argSyms, scalanName, None, None, None)
-    def apply(scalanName: String, overloadId: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, Some(overloadId), argSyms, scalanName, None, None, None)
+    def apply(scalanName: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, None, argSyms, scalanName, None, None, None, false)
+    def apply(scalanName: String, overloadId: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, Some(overloadId), argSyms, scalanName, None, None, None, false)
   }
 }
 
 object CxxMapping {
-  def MapModuleCxx(moduleName: String) = new CxxMappingBuilder(moduleName, None, None)
+  def MapModuleCxx(moduleName: String): CxxMappingBuilder = new CxxMappingBuilder(moduleName, None, None)
+  def MapModuleCxx[A](implicit tag: ClassTag[A]): CxxMappingBuilder = MapModuleCxx(tag.runtimeClass.getName)
 
   // Distinguish <> and "" headers in the future? For now, always use "", since it works for both.
   case class CxxLibrary(headerName: Option[String], namespace: Option[String])

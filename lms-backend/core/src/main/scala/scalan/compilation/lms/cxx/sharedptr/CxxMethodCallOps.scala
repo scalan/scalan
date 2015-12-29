@@ -1,8 +1,9 @@
 package scalan.compilation.lms.cxx.sharedptr
 
 import scala.lms.common._
-import scala.lms.internal.Effects
+import scala.lms.internal.{Expressions, Effects}
 import scala.reflect.SourceContext
+import scalan.compilation.lms.{GenMethodCallOps, MethodCallOpsExp}
 
 trait CxxMethodCallOps extends Base with Effects {
   // see http://en.cppreference.com/w/cpp/language/template_parameters
@@ -13,31 +14,31 @@ trait CxxMethodCallOps extends Base with Effects {
   case class PointerArg[A](target: Rep[A]) extends TemplateArg
   // LValueRefArg, MemberPointerArg, EnumerationArg not needed yet
 
-  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: List[TemplateArg], args: Rep[_]*): Rep[A]
+  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: List[TemplateArg], args: Any*): Rep[A]
 
-  def cxxNewObj[A: Manifest](templateArgs: List[TemplateArg], args: Rep[_]*): Rep[A]
+  def cxxNewObj[A: Manifest](templateArgs: List[TemplateArg], args: Any*): Rep[A]
 }
 
-trait CxxMethodCallOpsExp extends CxxMethodCallOps with BaseExp with EffectExp {
+trait CxxMethodCallOpsExp extends CxxMethodCallOps with MethodCallOpsExp {
 
-  case class CxxMethodCall[A](caller: Rep[_], methodName: String, templateArgs: List[TemplateArg], args: List[Rep[_]])(implicit val m: Manifest[A]) extends Def[A]
+  case class CxxMethodCall[A](caller: Rep[_], methodName: String, templateArgs: List[TemplateArg], args: List[Any])(implicit val m: Manifest[A]) extends Def[A]
 
-  case class CxxNewObj[A](m: Manifest[A], templateArgs: List[TemplateArg], args: List[Rep[_]]) extends Def[A]
+  case class CxxNewObj[A](m: Manifest[A], templateArgs: List[TemplateArg], args: List[Any]) extends Def[A]
 
-  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: List[TemplateArg], args: Rep[_]*): Exp[A] = {
+  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: List[TemplateArg], args: Any*): Exp[A] = {
     reflectEffect(CxxMethodCall[A](caller, methodName, templateArgs, args.toList), effects)
   }
 
-  def cxxNewObj[A: Manifest](templateArgs: List[TemplateArg], args: Rep[_]*): Rep[A] =
+  def cxxNewObj[A: Manifest](templateArgs: List[TemplateArg], args: Any*): Rep[A] =
     reflectEffect(CxxNewObj(manifest[A], templateArgs, args.toList), Alloc)
 
   override def mirror[A: Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
-    case CxxMethodCall(caller, methodName, templateArgs, args) => CxxMethodCall[A](f(caller), methodName, transformTemplateArgs(f, templateArgs), args.map(f(_)))
-    case CxxNewObj(m, templateArgs, args) => CxxNewObj[A](mtype(m), transformTemplateArgs(f, templateArgs), args.map(f(_)))
+    case CxxMethodCall(caller, methodName, templateArgs, args) => CxxMethodCall[A](f(caller), methodName, transformTemplateArgs(f, templateArgs), transformAny(f, args))
+    case CxxNewObj(m, templateArgs, args) => CxxNewObj[A](mtype(m), transformTemplateArgs(f, templateArgs), transformAny(f, args))
     case Reflect(CxxMethodCall(caller, methodName, templateArgs, args), u, es) =>
-      reflectMirrored(Reflect(CxxMethodCall[A](f(caller), methodName, transformTemplateArgs(f, templateArgs), args.map(f(_))), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
+      reflectMirrored(Reflect(CxxMethodCall[A](f(caller), methodName, transformTemplateArgs(f, templateArgs), transformAny(f, args)), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
     case Reflect(CxxNewObj(m, templateArgs, args), u, es) =>
-      reflectMirrored(Reflect(CxxNewObj[A](mtype(m), transformTemplateArgs(f, templateArgs), args.map(f(_))), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
+      reflectMirrored(Reflect(CxxNewObj[A](mtype(m), transformTemplateArgs(f, templateArgs), transformAny(f, args)), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
     case _ => super.mirror(e, f)
   }
 
@@ -47,6 +48,11 @@ trait CxxMethodCallOpsExp extends CxxMethodCallOps with BaseExp with EffectExp {
   }
 
   def transformTemplateArgs(f: Transformer, as: List[TemplateArg]) = as.map(transformTemplateArg(f, _))
+
+  override def transformAny(f: Transformer, x: Any) = x match {
+    case ta: TemplateArg => transformTemplateArg(f, ta)
+    case _ => super.transformAny(f, x)
+  }
 
   override def syms(e: Any): List[Sym[Any]] = e match {
     case CxxMethodCall(caller, methodName, templateArgs, args) if addControlDeps => syms(caller) ::: syms(args)
@@ -64,9 +70,7 @@ trait CxxMethodCallOpsExp extends CxxMethodCallOps with BaseExp with EffectExp {
   }
 }
 
-trait CxxShptrGenMethodCallOps extends CxxShptrCodegen {
-  val IR: CxxMethodCallOpsExp
-
+trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxMethodCallOpsExp] extends CxxShptrCodegen with GenMethodCallOps[BackendType] {
   import IR._
 
   def quoteTemplateArg(x: TemplateArg) = x match {
