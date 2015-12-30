@@ -1,14 +1,14 @@
 package scalan.primitives
 
-import scala.reflect.runtime.universe._
 import scalan._
-import scalan.common.Lazy
+import scala.reflect.runtime.universe._
+import scalan.common.{Default, Lazy}
 import scalan.common.OverloadHack._
 import scalan.compilation.{Compiler, GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
 
 /**
- The code is taken from LMS and is used in Scalan with the same semantics
+ The code is inspired by LMS structs and is used in Scalan with the same semantics
  in order to easily translate operations to the equivalents via LmsBridge.
  Their usage in Scalan is limited to be consistent with functional semantics of Scalan.
  Don't expect everything possible in LMS to be also possible in Scalan in the same way.
@@ -19,8 +19,18 @@ import scalan.staged.Expressions
  - no SourceContext, withPos
  - mirroring implemented in Scalan way (though consistent with LMS)
  */
+trait Structs extends Base { self: StructsDsl with Scalan =>
 
-trait Structs { self: Scalan =>
+  type SKey = Rep[StructKey]
+  trait StructKey extends Def[StructKey] {
+    def keys: Rep[KeySet]
+    def index: Rep[Int]
+  }
+  abstract class IndexStructKey(val keys: Rep[KeySet], val index: Rep[Int]) extends StructKey {
+  }
+}
+
+trait StructsDsl extends impl.StructsAbs with StructItemsDsl  { self: StructsDsl with Scalan =>
   // TODO consider if T type parameter is needed here and for AbstractStruct
   // It's only useful if we'll have some static typing on structs later (Shapeless' records?)
   abstract class StructTag[T <: Struct](implicit val typeTag: TypeTag[T]) {
@@ -29,16 +39,13 @@ trait Structs { self: Scalan =>
   }
   case class SimpleTag[T <: Struct : TypeTag](name: String) extends StructTag[T] {
     override def equals(other: Any) = other match {
-      case tag: Structs#SimpleTag[_] => name == tag.name && typeTag == tag.typeTag
+      case tag: StructsDsl#SimpleTag[_] => name == tag.name && typeTag == tag.typeTag
       case _ => false
     }
   }
   object SimpleTag {
     def apply[T <: Struct](implicit tag: TypeTag[T]): SimpleTag[T] = SimpleTag[T](tag.tpe.typeSymbol.name.toString)
   }
-  //  case class NestClassTag[C[_],T](elem: StructTag[T]) extends StructTag[C[T]]
-  //  case class AnonTag[T](fields: RefinedManifest[T]) extends StructTag[T]
-  //  case class MapTag[T]() extends StructTag[T]
   val defaultStructTag = SimpleTag[Struct]
 
   protected def baseStructName(tag: StructTag[_]) = tag match {
@@ -47,8 +54,38 @@ trait Structs { self: Scalan =>
     // Intentionally no case _, add something here or override when extending StructTag!
   }
 
+  type KSet = Rep[KeySet]
+  trait KeySet {
+    def keys: Seq[String]
+  }
+  class KeySetCompanion {
+    def apply(names: Seq[String]) = keyset_create(names)
+  }
+  val KeySet: KeySetCompanion = new KeySetCompanion
+
+  case class KeySetSeq(keys: Seq[String]) extends KeySet
+
+  implicit class KeySetOps(ks: Rep[KeySet]) {
+//    def apply(i: Rep[Int]) = keyset_getAt(ks, i)
+  }
+  class KeySetElem extends BaseElem[KeySet]()(weakTypeTag[KeySet], Default.defaultVal(KeySetSeq(Seq())))
+  implicit val KeySetElement: Elem[KeySet] = new KeySetElem
+  def keyset_create(keys: Seq[String]): Rep[KeySet]
+//  def keyset_getAt(ks: KSet, i: Rep[Int]): Rep[StructKey]
+
+//  trait StructFunctor extends Functor[Struct] {
+//    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Struct[T]]
+//    def lift[T](implicit eT: Elem[T]) = element[Array[T]]
+//    def unlift[T](implicit eFT: Elem[Array[T]]) = eFT.eItem
+//    def getElem[T](fa: Rep[Array[T]]) = !!!("Operation is not supported by Array container " + fa)
+//    def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.mapBy(fun(f))
+//  }
+//  implicit val containerArray: Functor[Array] = new ArrayFunctor {}
+
   trait Struct {
     def tag: StructTag[_] // TODO add type argument?
+//    def keys: Rep[KeySet]
+//    def values: Rep[HList]
     def fields: Seq[(String, Rep[Any])]
   }
 
@@ -101,7 +138,7 @@ trait Structs { self: Scalan =>
   case class StructToPairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
     extends IsoUR[Struct, (B1, B2)] {
     override def equals(other: Any) = other match {
-      case iso: Structs#StructToPairIso[_, _, _, _] =>
+      case iso: StructsDsl#StructToPairIso[_, _, _, _] =>
         (this eq iso) || (iso1 == iso.iso1 && iso2 == iso.iso2)
       case _ => false
     }
@@ -135,7 +172,7 @@ trait Structs { self: Scalan =>
     assert(eTo.isEqualType(itemIsos.map(_.eTo)))
 
     override def equals(other: Any) = other match {
-      case iso: Structs#StructIso[_, _] =>
+      case iso: StructsDsl#StructIso[_, _] =>
         (this eq iso) || (eFrom == iso.eFrom && eTo == iso.eTo)
       case _ => false
     }
@@ -194,7 +231,7 @@ trait Structs { self: Scalan =>
   case class FlatteningIso[T <: Struct](eTo: StructElem[T], flatIsos: Map[String, Iso[_,_]], links: Seq[Link])
       extends IsoUR[Struct,T] {
     override def equals(other: Any) = other match {
-      case iso: Structs#FlatteningIso[_] =>
+      case iso: StructsDsl#FlatteningIso[_] =>
         (this eq iso) || (eFrom == iso.eFrom && eTo == iso.eTo)
       case _ => false
     }
@@ -377,10 +414,11 @@ trait Structs { self: Scalan =>
 
 }
 
-trait StructsSeq extends Structs { self: ScalanSeq =>
+trait StructsDslSeq extends impl.StructsSeq with StructItemsDslSeq { self: StructsDslSeq with ScalanSeq =>
+  def keyset_create(keys: Seq[String]): Rep[KeySet] = KeySetSeq(keys)
   case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends Struct {
     override def equals(other: Any) = other match {
-      case ss: StructsSeq#StructSeq[_] =>
+      case ss: StructsDslSeq#StructSeq[_] =>
         tag == ss.tag && fields.sameElements(ss.fields)
       case _ => false
     }
@@ -399,8 +437,13 @@ trait StructsSeq extends Structs { self: ScalanSeq =>
   }
 }
 
-trait StructsExp extends Expressions with Structs with EffectsExp with ViewsDslExp
-    with GraphVizExport { self: ScalanExp =>
+trait StructsDslExp extends impl.StructsExp with Expressions with EffectsExp with ViewsDslExp with StructItemsDslExp
+    with GraphVizExport { self: StructsDslExp with ScalanExp =>
+
+  def keyset_create(keys: Seq[String]): Rep[KeySet] = KeySetDef(keys)
+  case class KeySetDef(keys: Seq[String]) extends BaseDef[KeySet] {
+    override def toString = s"KeySet(${keys.mkString(",")})"
+  }
 
   abstract class AbstractStruct[T <: Struct] extends Def[T] {
     def tag: StructTag[T]
@@ -546,22 +589,6 @@ trait StructsExp extends Expressions with Structs with EffectsExp with ViewsDslE
   }
 }
 
-trait StructsCompiler[ScalanCake <: ScalanDslExp with StructsExp] extends Compiler[ScalanCake] {
-  import scalan._
 
-  override def graphPasses(compilerConfig: CompilerConfig) =
-    super.graphPasses(compilerConfig) ++
-      Seq(AllInvokeEnabler,
-          constantPass(StructsPass(DefaultMirror, StructsRewriter)))
-
-  case class StructsPass(mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
-    def name = "structs"
-    override val config = PassConfig(shouldUnpackTuples = true)
-    def apply(graph: PGraph): PGraph = {
-      graph.transform(mirror, rewriter, MapTransformer.Empty)
-    }
-  }
-
-}
 
 

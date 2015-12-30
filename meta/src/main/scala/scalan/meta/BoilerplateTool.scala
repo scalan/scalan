@@ -151,6 +151,20 @@ class BoilerplateTool extends StrictLogging {
     graphTypeSynonyms
   )
 
+  val structsTypeSynonyms = Map[String, String]()
+  lazy val structsConfig = CodegenConfig(
+    name = "structs",
+    srcPath = "../core/src/main/scala",
+    entityFiles = List(
+      "scalan/primitives/Structs.scala",
+      "scalan/primitives/StructItems.scala"
+    ),
+    structsTypeSynonyms,
+    baseContextTrait = "", // not defined means not declare
+    seqContextTrait = "",
+    stagedContextTrait = ""
+  )
+
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
     args.flatMap { arg => configsMap.getOrElse(arg,
       sys.error(s"Unknown codegen config $arg. Allowed values: ${configsMap.keySet.mkString(", ")}"))
@@ -158,6 +172,7 @@ class BoilerplateTool extends StrictLogging {
 
   val configsMap = Map(
     "scalan" -> List(scalanConfig),
+    "structs" -> List(structsConfig),
     "core" -> List(coreConfig),
     "core-tests" -> List(coreTestsConfig),
     "collections" -> List(collectionsConfig),
