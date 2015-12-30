@@ -51,6 +51,8 @@ trait ListOps { self: Scalan =>
   implicit val listFunctor: Functor[List] = new Functor[List] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[List[T]]
     def lift[T](implicit eT: Elem[T]) = element[List[T]]
+    def unlift[T](implicit eFT: Elem[List[T]]) = eFT.eItem
+    def getElem[T](fa: Rep[List[T]]) = !!!("Operation is not supported by List container " + fa)
     def map[A:Elem,B:Elem](xs: Rep[List[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
 

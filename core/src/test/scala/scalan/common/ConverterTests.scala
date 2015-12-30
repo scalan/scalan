@@ -12,7 +12,7 @@ class ConverterTests extends BaseCtxTests {
 
   class ConvProgStaged extends TestContext with ConvProg with SegmentsDslExp {
   }
-  class ConvProgSeq extends ScalanCtxSeq with ConvProg with SegmentsDslSeq {
+  class ConvProgSeq extends ScalanDslSeq with ConvProg with SegmentsDslSeq {
   }
 
   test("simple converter tests") {
@@ -24,6 +24,7 @@ class ConverterTests extends BaseCtxTests {
     ctx.emit("t5", ctx.t5)
   }
 
+  // TODO can't convert from Segment to Centered. Should we be able to?
   ignore("convertToCentered") {
     val ctx = new ConvProgStaged
     ctx.emit("t6", ctx.t6)

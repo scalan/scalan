@@ -6,7 +6,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait KindsAbs extends scalan.Scalan with Kinds {
+trait KindsAbs extends scalan.ScalanDsl with Kinds {
   self: KindsDsl =>
 
   // single proxy for each type family
@@ -66,7 +66,7 @@ trait KindsAbs extends scalan.Scalan with Kinds {
     lazy val selfType = element[Return[F, A]]
   }
   // elem for concrete class
-  class ReturnElem[F[_], A](val iso: Iso[ReturnData[F, A], Return[F, A]])(implicit eA: Elem[A], cF: Cont[F])
+  class ReturnElem[F[_], A](val iso: Iso[ReturnData[F, A], Return[F, A]])(implicit override val eA: Elem[A], override val cF: Cont[F])
     extends KindElem[F, A, Return[F, A]]
     with ConcreteElem[ReturnData[F, A], Return[F, A]] {
     override lazy val parent: Option[Elem[_]] = Some(kindElement(container[F], element[A]))
@@ -151,7 +151,7 @@ trait KindsAbs extends scalan.Scalan with Kinds {
     lazy val selfType = element[Bind[F, S, B]]
   }
   // elem for concrete class
-  class BindElem[F[_], S, B](val iso: Iso[BindData[F, S, B], Bind[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+  class BindElem[F[_], S, B](val iso: Iso[BindData[F, S, B], Bind[F, S, B]])(implicit val eS: Elem[S], override val eA: Elem[B], override val cF: Cont[F])
     extends KindElem[F, B, Bind[F, S, B]]
     with ConcreteElem[BindData[F, S, B], Bind[F, S, B]] {
     override lazy val parent: Option[Elem[_]] = Some(kindElement(container[F], element[B]))
@@ -237,7 +237,7 @@ trait KindsAbs extends scalan.Scalan with Kinds {
 }
 
 // Seq -----------------------------------
-trait KindsSeq extends scalan.ScalanSeq with KindsDsl {
+trait KindsSeq extends scalan.ScalanDslSeq with KindsDsl {
   self: KindsDslSeq =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }
@@ -272,7 +272,7 @@ trait KindsSeq extends scalan.ScalanSeq with KindsDsl {
 }
 
 // Exp -----------------------------------
-trait KindsExp extends scalan.ScalanExp with KindsDsl {
+trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
   self: KindsDslExp =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }
@@ -344,6 +344,6 @@ object Kinds_Module extends scalan.ModuleInfo {
 }
 }
 
-trait KindsDsl extends impl.KindsAbs {self: KindsDsl =>}
-trait KindsDslSeq extends impl.KindsSeq {self: KindsDslSeq =>}
-trait KindsDslExp extends impl.KindsExp {self: KindsDslExp =>}
+trait KindsDsl extends impl.KindsAbs
+trait KindsDslSeq extends impl.KindsSeq
+trait KindsDslExp extends impl.KindsExp

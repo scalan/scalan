@@ -2,86 +2,117 @@ package scalan.primitives
 
 import scala.language.reflectiveCalls
 import scalan._
-import scalan.common.{SegmentsDsl, SegmentsDslExp, Lazy}
+import scalan.common.{SegmentsDslSeq, SegmentsDsl, SegmentsDslExp, Lazy}
 import scalan.compilation.DummyCompiler
+import scalan.it.BaseItTests
 
-class StructTests extends BaseViewTests {
-  trait MyProg extends Scalan with SegmentsDsl {
-    val eInt = IntElement
-    lazy val t1 = fun({ (in: Rep[Int]) =>
-      struct("in" -> in)
-    })(Lazy(element[Int]), structElement(Seq("in" -> eInt)))
+trait StructExamples extends Scalan with SegmentsDsl {
+  def eInt = IntElement
 
-    lazy val t2 = fun({ (in: Rep[Int]) =>
-      field(struct("in" -> in), "in").asRep[Int]
-    })
+  lazy val t1 = fun({ (in: Rep[Int]) =>
+    struct("in" -> in)
+  })(Lazy(element[Int]), structElement(Seq("in" -> eInt)))
 
-    lazy val t3 = fun({ (in: Rep[Int]) =>
-      val b = in + toRep(1)
-      val c = in + in
-      fields(struct("a" -> in, "b" -> b, "c" -> c), Seq("a", "c"))
-    })(Lazy(element[Int]), structElement(Seq("a" -> eInt, "c" -> eInt)))
+  lazy val singleFieldStructIn = fun({ (in: Rep[Struct]) =>
+    field(in, "in").asRep[Int]
+  })(Lazy(structElement(Seq("in" -> eInt))), eInt)
 
-    lazy val t4 = fun({ (in: Rep[Int]) =>
-      Pair(in, in)
-    })
+  lazy val manyFieldsStructIn = fun({ (in: Rep[Struct]) =>
+    field(in, "in1").asRep[Int] - field(in, "in2").asRep[Int]
+  })(Lazy(structElement(Seq("in1" -> eInt, "in2" -> eInt))), eInt)
 
-    lazy val t5 = fun({ (in: Rep[Int]) =>
-      Pair(in, Pair(in, in + 1))
-    })
+  lazy val structInOut = fun({ (in: Rep[Struct]) =>
+    val outVal = field(in, "in").asRep[Int] - 1
+    struct("out" -> outVal)
+  })(Lazy(structElement(Seq("in" -> eInt))), structElement(Seq("out" -> eInt)))
 
+  lazy val crossFields = fun({ (in: Rep[Struct]) =>
+    val in1 = field(in, "in1").asRep[Int]
+    val in2 = field(in, "in2").asRep[Int]
+    struct("out1" -> in2, "out2" -> in1)
+  })(Lazy(structElement(Seq("in1" -> eInt, "in2" -> eInt))), structElement(Seq("out1" -> eInt, "out2" -> eInt)))
 
-    lazy val t6 = structWrapper(fun { (in: Rep[(Int,Int)]) => Interval(in).shift(10).toData })
-
-    lazy val t2x2_7 = fun { (in: Rep[(Int,Int)]) =>
-      Pair(in._1 + in._2, in._1 - in._2)
-    }
-    lazy val t7 = structWrapper(t2x2_7)
-
-    lazy val t8 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
-      Pair(in._2, in._1)
-    })
-    lazy val t9f = fun { (in: Rep[((Int,Int),Int)]) =>
-      val Pair(Pair(x, y), z) = in
-      Pair(x + y, Pair(x - z, y - z))
-    }
-    lazy val t9 = structWrapper(t9f)
-    lazy val t10 = structWrapper(fun { (in: Rep[((Int,Int),Int)]) =>
-      val Pair(Pair(x, y), z) = in
-      val i = Interval(x,y)
-      Pair(i.length, i.shift(z).toData)
-    })
-    lazy val t11 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
-      val Pair(segs, z) = in
-      Pair(segs, segs.length + z)
-    })
-    lazy val t12 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
-      val Pair(segs, z) = in
-      val sums = segs.map(p => p._1 + p._2)
-      Pair(sums, sums.length)
-    })
-    lazy val t13 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
-      val Pair(segs, z) = in
-      val intervals = segs.map(Interval(_))
-      Pair(intervals.map(_.length), intervals.length)
-    })
-    lazy val t14 = fun { (in: Rep[Int]) =>
-      Pair(in, in)
-    }
-    lazy val t15 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
-      val Pair(x, y) = in
-      IF (x > y) { Pair(x,y) } ELSE { Pair(y,x) }
-    })
-    lazy val t16 = structWrapper(fun { (in: Rep[((Array[(Int,Int)],Array[((Int,Int), Boolean)]),Int)]) =>
-      val Pair(Pair(segs1, segs2), z) = in
-      val intervals1 = segs1.map(Interval(_))
-      val intervals2 = segs2.map(t => IF (t._2) { Interval(t._1).asRep[Segment] } ELSE { Slice(t._1).asRep[Segment]})
-      Pair(intervals1.map(_.length), intervals2.map(_.length))
-    })
+  lazy val structInside = fun { (n: Rep[Int]) =>
+    // This should ensure we get structs left inside
+    // If rewritings are added which optimize this to `if (n > 0) then n else n + 1`, change this!
+    val s1 = struct("a" -> n, "b" -> n)
+    val s2 = struct("a" -> (n + 1), "b" -> (n + 2))
+    val s3 = IF (n > 0) THEN s1 ELSE s2
+    field(s3, "a").asRep[Int] + field(s3, "b").asRep[Int]
   }
 
+  lazy val t2 = fun({ (in: Rep[Int]) =>
+    field(struct("in" -> in), "in").asRep[Int]
+  })
+
+  lazy val t3 = fun({ (in: Rep[Int]) =>
+    val b = in + toRep(1)
+    val c = in + in
+    fields(struct("a" -> in, "b" -> b, "c" -> c), Seq("a", "c"))
+  })(Lazy(element[Int]), structElement(Seq("a" -> eInt, "c" -> eInt)))
+
+  lazy val t4 = fun({ (in: Rep[Int]) =>
+    Pair(in, in)
+  })
+
+  lazy val t5 = fun({ (in: Rep[Int]) =>
+    Pair(in, Pair(in, in + 1))
+  })
+
+
+  lazy val t6 = structWrapper(fun { (in: Rep[(Int,Int)]) => Interval(in).shift(10).toData })
+
+  lazy val t2x2_7 = fun { (in: Rep[(Int,Int)]) =>
+    Pair(in._1 + in._2, in._1 - in._2)
+  }
+  lazy val t7 = structWrapper(t2x2_7)
+
+  lazy val t8 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
+    Pair(in._2, in._1)
+  })
+  lazy val t9f = fun { (in: Rep[((Int,Int),Int)]) =>
+    val Pair(Pair(x, y), z) = in
+    Pair(x + y, Pair(x - z, y - z))
+  }
+  lazy val t9 = structWrapper(t9f)
+  lazy val t10 = structWrapper(fun { (in: Rep[((Int,Int),Int)]) =>
+    val Pair(Pair(x, y), z) = in
+    val i = Interval(x,y)
+    Pair(i.length, i.shift(z).toData)
+  })
+  lazy val t11 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
+    val Pair(segs, z) = in
+    Pair(segs, segs.length + z)
+  })
+  lazy val t12 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
+    val Pair(segs, z) = in
+    val sums = segs.map(p => p._1 + p._2)
+    Pair(sums, sums.length)
+  })
+  lazy val t13 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
+    val Pair(segs, z) = in
+    val intervals = segs.map(Interval(_))
+    Pair(intervals.map(_.length), intervals.length)
+  })
+  lazy val t14 = fun { (in: Rep[Int]) =>
+    Pair(in, in)
+  }
+  lazy val t15 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
+    val Pair(x, y) = in
+    IF (x > y) { Pair(x,y) } ELSE { Pair(y,x) }
+  })
+  lazy val t16 = structWrapper(fun { (in: Rep[((Array[(Int,Int)],Array[((Int,Int), Boolean)]),Int)]) =>
+    val Pair(Pair(segs1, segs2), z) = in
+    val intervals1 = segs1.map(Interval(_))
+    val intervals2 = segs2.map(t => IF (t._2) { Interval(t._1).asRep[Segment] } ELSE { Slice(t._1).asRep[Segment]})
+    Pair(intervals1.map(_.length), intervals2.map(_.length))
+  })
+}
+
+class StructTests extends BaseViewTests {
+
   class Ctx extends TestCompilerContext {
-    class ScalanCake extends ScalanCtxExp with MyProg with SegmentsDslExp {
+    class ScalanCake extends ScalanDslExp with StructExamples with SegmentsDslExp {
       // FIXME structWrapper test fails without this!
       override val cacheElems = false
 //      override val cachePairs = false
@@ -117,7 +148,7 @@ class StructTests extends BaseViewTests {
         element[Boolean])
     }
     override val compiler = new DummyCompiler(new ScalanCake)
-                           with StructsCompiler[ScalanCtxExp with MyProg]
+                           with StructsCompiler[ScalanDslExp with StructExamples]
   }
 
   test("StructElem equality") {
@@ -207,7 +238,7 @@ class StructTests extends BaseViewTests {
   }
 
   test("structWrapper_IfThenElse") {
-    val ctx = new CtxForStructs with MyProg {
+    val ctx = new CtxForStructs with StructExamples {
     }
     import ctx._
     emit("t14", t14)
@@ -317,5 +348,46 @@ class StructTests extends BaseViewTests {
     val flatElems = fis.map(_.eFrom)
 
     all(flatElems) should equal(expectedFlat)
+  }
+
+  test("mergeIso") {
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
+
+    val nested1 = structElement(Seq("a" -> element[Int], "b" -> element[Int]))
+    val nested2 = structElement(Seq("c" -> element[Int], "d" -> element[Int]))
+    val se = structElement(Seq("_1" -> nested1, "_2" -> nested2))
+    val iso = getStructMergeIso(se)
+    ctx.test("iso.to", iso.toFun)
+    ctx.test("iso.from", iso.fromFun)
+  }
+}
+
+abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslSeq with SegmentsDslSeq with StructExamples) {
+  import progSeq._
+
+  test("struct out") {
+    compareOutputWithSequential(s => s.t1.asInstanceOf[s.Rep[Int => Struct]])(100)
+  }
+
+  test("struct with one field in") {
+    compareOutputWithSequential(s => s.singleFieldStructIn.asInstanceOf[s.Rep[Struct => Int]])(struct("in" -> 100))
+  }
+
+  test("struct with many fields in") {
+    compareOutputWithSequential(s => s.manyFieldsStructIn.asInstanceOf[s.Rep[Struct => Int]])(struct("in1" -> 200, "in2" -> 50))
+  }
+
+  test("struct in and out") {
+    compareOutputWithSequential(s => s.structInOut.asInstanceOf[s.Rep[Struct => Struct]])(struct("in" -> 100))
+  }
+
+  test("struct with many fields in and out") {
+    compareOutputWithSequential(s => s.crossFields.asInstanceOf[s.Rep[Struct => Struct]])(struct("in1" -> 200, "in2" -> 50))
+  }
+
+
+  test("struct used inside") {
+    compareOutputWithSequential(_.structInside)(100)
   }
 }

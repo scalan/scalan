@@ -23,12 +23,23 @@ import scalan.staged.Expressions
 trait Structs { self: Scalan =>
   // TODO consider if T type parameter is needed here and for AbstractStruct
   // It's only useful if we'll have some static typing on structs later (Shapeless' records?)
-  abstract class StructTag[T <: Struct](implicit val typeTag: TypeTag[T])
-  case class SimpleTag[T <: Struct : TypeTag](name: String) extends StructTag[T]
+  abstract class StructTag[T <: Struct](implicit val typeTag: TypeTag[T]) {
+    override def equals(other: Any): Boolean =
+      !!!("StructTag.equals must be overridden so that the outer instances aren't compared")
+  }
+  case class SimpleTag[T <: Struct : TypeTag](name: String) extends StructTag[T] {
+    override def equals(other: Any) = other match {
+      case tag: Structs#SimpleTag[_] => name == tag.name && typeTag == tag.typeTag
+      case _ => false
+    }
+  }
+  object SimpleTag {
+    def apply[T <: Struct](implicit tag: TypeTag[T]): SimpleTag[T] = SimpleTag[T](tag.tpe.typeSymbol.name.toString)
+  }
   //  case class NestClassTag[C[_],T](elem: StructTag[T]) extends StructTag[C[T]]
   //  case class AnonTag[T](fields: RefinedManifest[T]) extends StructTag[T]
   //  case class MapTag[T]() extends StructTag[T]
-  val defaultStructTag = SimpleTag[Struct]("Struct")
+  val defaultStructTag = SimpleTag[Struct]
 
   protected def baseStructName(tag: StructTag[_]) = tag match {
     case `defaultStructTag` => ""
@@ -36,7 +47,10 @@ trait Structs { self: Scalan =>
     // Intentionally no case _, add something here or override when extending StructTag!
   }
 
-  trait Struct // TODO add tag/fields members from AbstractStruct here?
+  trait Struct {
+    def tag: StructTag[_] // TODO add type argument?
+    def fields: Seq[(String, Rep[Any])]
+  }
 
   case class StructElem[T <: Struct](structTag: StructTag[T], fields: Seq[(String, Elem[_])]) extends Elem[T] {
     override def isEntityType = fields.exists(_._2.isEntityType)
@@ -44,6 +58,8 @@ trait Structs { self: Scalan =>
     protected def getDefaultRep =
       struct(structTag, fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)
     def get(fieldName: String): Option[Elem[_]] = fields.find(_._1 == fieldName).map(_._2)
+    def apply(fieldName: String): Elem[_] = fields.find(_._1 == fieldName).map(_._2).get
+    def fieldNames = fields.map(_._1)
     def fieldElems: Seq[Elem[_]] = fields.map(_._2)
     def isEqualType(tuple: Seq[Elem[_]]) = {
       fields.length == tuple.length && fields.zip(tuple).forall { case ((fn,fe), e) => fe == e }
@@ -63,6 +79,8 @@ trait Structs { self: Scalan =>
   def structElement(fields: Seq[(String, Elem[_])]): StructElem[Struct] =
     structElement(defaultStructTag, fields)
 
+  def structElementFor[T <: Struct : TypeTag](fields: Seq[(String, Elem[_])]): StructElem[T] =
+    structElement(SimpleTag[T], fields)
   /**
     * Get tuple field name by index
     */
@@ -171,7 +189,7 @@ trait Structs { self: Scalan =>
   def field(struct: Rep[Struct], fieldIndex: Int): Rep[_] = field(struct, tupleFN(fieldIndex))
   def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct]
 
-  case class Link(field: String, nestedField: String, nestedElem: Elem[_], flatIndex: Int)
+  case class Link(field: String, nestedField: String, nestedElem: Elem[_], flatName: String)
 
   case class FlatteningIso[T <: Struct](eTo: StructElem[T], flatIsos: Map[String, Iso[_,_]], links: Seq[Link])
       extends IsoUR[Struct,T] {
@@ -191,12 +209,12 @@ trait Structs { self: Scalan =>
         val g = groups(fn)
         flatIsos.get(fn) match {
           case Some(iso: Iso[a, _] @unchecked) =>
-            val projectedStruct = struct(g.map(link => (link.nestedField -> x(link.flatIndex))): _*)
+            val projectedStruct = struct(g.map(link => (link.nestedField -> x(link.flatName))): _*)
             val s = iso.to(projectedStruct.asRep[a])
             (fn -> s)
           case _ =>
             assert(g.length == 1, s"Many fields $g can't relate to the single field $fn without iso")
-            (fn -> x(g(0).flatIndex))
+            (fn -> x(g(0).flatName))
         }
       }
       struct(eTo.structTag, items: _*)
@@ -210,10 +228,10 @@ trait Structs { self: Scalan =>
             val nestedStruct = iso.from(y(fn).asRep[a]).asRep[Struct]
             // nestedStruct is guaranteed to be a Rep[Struct], because iso can be either IdentityIso on a struct or FlatteningIso
             g.map { link =>
-              tupleFN(link.flatIndex) -> nestedStruct(link.nestedField)
+              link.flatName -> nestedStruct(link.nestedField)
             }
           case _ =>
-            List(tupleFN(g(0).flatIndex) -> y(fn))
+            List(g(0).flatName -> y(fn))
         }
       }
       struct(items: _*)
@@ -272,9 +290,10 @@ trait Structs { self: Scalan =>
         }
     }
 
-    val links = fromFields.zipWithIndex.map {
-      case ((fn, (nestedN, nestedE)), i) => Link(fn, nestedN, nestedE, i + 1)
-    }
+    val links =
+      fromFields.zipWithIndex.map {
+        case ((fn, (nestedN, nestedE)), i) => Link(fn, nestedN, nestedE, tupleFN(i + 1))
+      }
 
     val res: Iso[_, T] = reifyObject(FlatteningIso(eTo, flatIsos, links))
     res
@@ -303,6 +322,41 @@ trait Structs { self: Scalan =>
     }
   }
 
+  case class MergeIso[T <: Struct](eTo: StructElem[T]) extends IsoUR[Struct,T] {
+    override def equals(other: Any) = other match {
+      case iso: MergeIso[_] =>
+        (this eq iso) || (eFrom == iso.eFrom && eTo == iso.eTo)
+      case _ => false
+    }
+
+    val eFrom = structElement(eTo.fields.flatMap { case (fn, fe: StructElem[_]) => fe.fields })
+
+    lazy val selfType = new ConcreteIsoElem[Struct, T, MergeIso[T]](eFrom, eTo).asElem[IsoUR[Struct, T]]
+
+    def to(x: Rep[Struct]) = {
+      val items = eTo.fields.map { case (outerN, outerE: StructElem[_]) =>
+        val s = struct(outerE.fields.map { case (innerN, innerE) => innerN -> x(innerN) })
+        outerN -> s
+      }
+      struct(eTo.structTag, items: _*)
+    }
+
+    def from(y: Rep[T]) = {
+      val items = eTo.fields.flatMap { case (outerN, outerE: StructElem[_]) =>
+        val s = y(outerN)
+        outerE.fields.map { case (innerN, innerE) => innerN -> s.asRep[Struct](innerN) }
+      }
+      struct(items: _*)
+    }
+  }
+
+  def getStructMergeIso[T](implicit e: Elem[T]): Iso[_,T] = (e match {
+    case se: StructElem[_] =>
+      reifyObject(MergeIso(se.asElem[Struct]))
+    case _ =>
+      !!!(s"Don't know how merge non struct $e")
+  }).asInstanceOf[Iso[_,T]]
+
   def structWrapper[A:Elem,B:Elem](f: Rep[A => B]): Rep[Any => Any] = {
     val wrapperFun = (getStructWrapperIso[A], getStructWrapperIso[B]) match {
       case (inIso: Iso[a, A] @unchecked, outIso: Iso[b, B] @unchecked) =>
@@ -324,7 +378,13 @@ trait Structs { self: Scalan =>
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
-  case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends Struct
+  case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends Struct {
+    override def equals(other: Any) = other match {
+      case ss: StructsSeq#StructSeq[_] =>
+        tag == ss.tag && fields.sameElements(ss.fields)
+      case _ => false
+    }
+  }
 
   def struct[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T] =
     StructSeq(tag, fields).asRep[T]
@@ -348,6 +408,7 @@ trait StructsExp extends Expressions with Structs with EffectsExp with ViewsDslE
     lazy val selfType = structElement(tag, fields.map { case (name, value) => (name, value.elem) })
   }
 
+  // should this just extend BaseDef? Having field[T] would simplify usage in some cases
   abstract class AbstractField[T] extends Def[T] {
     def struct: Rep[Struct]
     def field: String
@@ -470,15 +531,12 @@ trait StructsExp extends Expressions with Structs with EffectsExp with ViewsDslE
   }
 
   def shouldUnpackTuples = currentPass.config.shouldUnpackTuples
+  def shouldExtractFields = currentPass.config.shouldExtractFields
 
   override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
-    case FieldGet(v) if shouldUnpackTuples => v
+    case FieldGet(v) if shouldExtractFields => v
     case _ => super.rewriteDef(d)
   }
-}
-
-trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compiler[ScalanCake] {
-  import scalan._
 
   object StructsRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = (x match {
@@ -486,6 +544,10 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
       case _ => x
     }).asRep[T]
   }
+}
+
+trait StructsCompiler[ScalanCake <: ScalanDslExp with StructsExp] extends Compiler[ScalanCake] {
+  import scalan._
 
   override def graphPasses(compilerConfig: CompilerConfig) =
     super.graphPasses(compilerConfig) ++

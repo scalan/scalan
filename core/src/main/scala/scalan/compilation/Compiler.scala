@@ -2,9 +2,10 @@ package scalan.compilation
 
 import java.io.File
 
-import scalan.ScalanCtxExp
+import scalan.ScalanDslExp
+import scalan.util.ReflectionUtil
 
-abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) extends Passes {
+abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) extends Passes {
   import scalan._
 
   type CompilerConfig
@@ -20,7 +21,9 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
   // see comment for buildInitialGraph
   // TODO sequence may depend on input or intermediate graphs, use a state monad instead
   def graphPasses(compilerConfig: CompilerConfig): Seq[PGraph => GraphPass] = Seq()
-
+  def onFinishGraphPasses() = {
+    scalan.resetTesters()
+  }
   // Can it return ProgramGraph[Ctx] for some other Ctx?
   // If so, may want to add Ctx as type argument or type member
   protected def buildInitialGraph[A, B](func: Exp[A => B])(compilerConfig: CompilerConfig): PGraph = {
@@ -66,6 +69,7 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
         graph1
       }
     }
+    onFinishGraphPasses()
 
     CommonCompilerOutput(finalGraph, functionName, eInput, eOutput)
   }
@@ -92,6 +96,8 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
   }
 
   protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B
+
+  lazy val name = ReflectionUtil.namedSuperclass(getClass).getSimpleName
 }
 
 class CompilationException(message: String, cause: Exception) extends RuntimeException(message, cause)

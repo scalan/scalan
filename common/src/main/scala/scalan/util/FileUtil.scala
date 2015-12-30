@@ -69,7 +69,11 @@ object FileUtil {
 
   def copyFromClassPath(source: String, target: File): Unit = {
     target.getParentFile.mkdirs()
-    new FileOutputStream(target).getChannel.transferFrom(Channels.newChannel(getClass.getClassLoader.getResourceAsStream(source)), 0, Long.MaxValue)
+    val stream = getClass.getClassLoader.getResourceAsStream(source)
+    if (stream != null)
+      new FileOutputStream(target).getChannel.transferFrom(Channels.newChannel(stream), 0, Long.MaxValue)
+    else
+      throw new IllegalArgumentException(s"Resource $source not found on classpath")
   }
 
   /**

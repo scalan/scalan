@@ -207,7 +207,7 @@ object ScalanAst {
         val params = tparams.rep(_.declaration)
         s"$name[$params]"
       }
-      else name
+      else name + bound.opt(b => s" <: ${b.name}")
     def toTraitCall: STraitCall = STraitCall(name, tparams.map(_.toTraitCall))
   }
   type STpeArgs = List[STpeArg]
@@ -268,6 +268,14 @@ object ScalanAst {
     def implicitArgs: SClassArgs
     def isHighKind = tpeArgs.exists(_.isHighKind)
 
+    def isInheritedDeclared(propName: String, module: SEntityModuleDef) = {
+      getInheritedDeclaredFields(module).contains(propName)
+    }
+
+    def isInheritedDefined(propName: String, module: SEntityModuleDef) = {
+      getInheritedDefinedFields(module).contains(propName)
+    }
+
     def getMethodsWithAnnotation(annClass: String) = body.collect {
       case md: SMethodDef if md.annotations.exists(a => a.annotationClass == annClass) => md
     }
@@ -282,6 +290,22 @@ object ScalanAst {
 
     def getAvailableFields(module: SEntityModuleDef): Set[String] = {
       getFieldDefs.map(_.name).toSet ++ getAncestorTraits(module).flatMap(_.getAvailableFields(module))
+    }
+
+    def getAvailableMethodDefs(module: SEntityModuleDef): Seq[SMethodDef] = {
+      getFieldDefs ++ getAncestorTraits(module).flatMap(_.getAvailableMethodDefs(module))
+    }
+
+    def getInheritedMethodDefs(module: SEntityModuleDef): Seq[SMethodDef] = {
+      getAncestorTraits(module).flatMap(_.getAvailableMethodDefs(module))
+    }
+
+    def getInheritedDeclaredFields(module: SEntityModuleDef): Set[String] = {
+      getInheritedMethodDefs(module).collect { case md if md.body.isEmpty => md.name }.toSet
+    }
+
+    def getInheritedDefinedFields(module: SEntityModuleDef): Set[String] = {
+      getInheritedMethodDefs(module).collect { case md if md.body.isDefined => md.name }.toSet
     }
 
     def getConcreteClasses = body.collect { case c: SClassDef if !c.hasAnnotation("InternalType") => c }

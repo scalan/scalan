@@ -5,7 +5,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait MetaTestsAbs extends scalan.Scalan with MetaTests {
+trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
   self: MetaTestsDsl =>
 
   // single proxy for each type family
@@ -146,7 +146,7 @@ trait MetaTestsAbs extends scalan.Scalan with MetaTests {
     lazy val selfType = element[MT1[T]]
   }
   // elem for concrete class
-  class MT1Elem[T](val iso: Iso[MT1Data[T], MT1[T]])(implicit elem: Elem[T])
+  class MT1Elem[T](val iso: Iso[MT1Data[T], MT1[T]])(implicit override val elem: Elem[T])
     extends MetaTestElem[T, MT1[T]]
     with ConcreteElem[MT1Data[T], MT1[T]] {
     override lazy val parent: Option[Elem[_]] = Some(metaTestElement(element[T]))
@@ -232,7 +232,7 @@ trait MetaTestsAbs extends scalan.Scalan with MetaTests {
     lazy val selfType = element[MT2[T, R]]
   }
   // elem for concrete class
-  class MT2Elem[T, R](val iso: Iso[MT2Data[T, R], MT2[T, R]])(implicit eT: Elem[T], eR: Elem[R])
+  class MT2Elem[T, R](val iso: Iso[MT2Data[T, R], MT2[T, R]])(implicit val eT: Elem[T], val eR: Elem[R])
     extends MetaTestElem[(T, R), MT2[T, R]]
     with ConcreteElem[MT2Data[T, R], MT2[T, R]] {
     override lazy val parent: Option[Elem[_]] = Some(metaTestElement(pairElement(element[T],element[R])))
@@ -318,7 +318,7 @@ trait MetaTestsAbs extends scalan.Scalan with MetaTests {
 }
 
 // Seq -----------------------------------
-trait MetaTestsSeq extends scalan.ScalanSeq with MetaTestsDsl {
+trait MetaTestsSeq extends scalan.ScalanDslSeq with MetaTestsDsl {
   self: MetaTestsDslSeq =>
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }
@@ -367,7 +367,7 @@ trait MetaTestsSeq extends scalan.ScalanSeq with MetaTestsDsl {
 }
 
 // Exp -----------------------------------
-trait MetaTestsExp extends scalan.ScalanExp with MetaTestsDsl {
+trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
   self: MetaTestsDslExp =>
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }
@@ -554,5 +554,5 @@ object MetaTests_Module extends scalan.ModuleInfo {
 }
 }
 
-trait MetaTestsDslSeq extends impl.MetaTestsSeq {self: MetaTestsDslSeq =>}
-trait MetaTestsDslExp extends impl.MetaTestsExp {self: MetaTestsDslExp =>}
+trait MetaTestsDslSeq extends impl.MetaTestsSeq
+trait MetaTestsDslExp extends impl.MetaTestsExp

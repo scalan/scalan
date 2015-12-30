@@ -7,9 +7,10 @@ import scala.collection.mutable.Map;
 trait Maps extends  Base  { self: Scalan =>
   type MM[K, V] = Rep[MMap[K, V]]
 
-  trait MMap[K, V] {
+  trait MMap[K, V] extends Def[MMap[K,V]] {
     implicit def elemKey: Elem[K]
     implicit def elemValue: Elem[V]
+    val selfType = mMapElement(elemKey, elemValue)
 
     def union(that: MM[K, V]): MM[K, V]
     def difference(that: MM[K, V]): MM[K, V]
@@ -61,7 +62,7 @@ trait Maps extends  Base  { self: Scalan =>
 }
 
 trait MapsSeq extends Maps { self: ScalanSeq =>
-  implicit class SeqMMap[K, V](val impl: Map[K, V])(implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MMap[K, V] {
+  case class SeqMMap[K, V](val impl: Map[K, V])(implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MMap[K, V] {
     private def implOf[A,B](that: MMap[A, B]) = that match {
       case m: SeqMMap[A, B] => m.impl
       case _ => !!!(s"$that implements MMap in sequential context but is not SeqMap")
@@ -109,6 +110,8 @@ trait MapsSeq extends Maps { self: ScalanSeq =>
     }
   }
 
+  implicit def extendMap[K:Elem,V:Elem](m: Map[K,V]): MMap[K,V] = new SeqMMap(m)
+
   implicit def resolveMMap[K: Elem, V: Elem](map: MM[K, V]): MMap[K, V] = map
 
   def emptyMap[K: Elem, V: Elem]: MM[K, V] = Map.empty[K, V]
@@ -128,8 +131,7 @@ trait MapsSeq extends Maps { self: ScalanSeq =>
 
 
 trait MapsExp extends Maps { self: ScalanExp =>
-  abstract class MMapDef[K, V](implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MMap[K, V] with Def[MMap[K, V]] {
-    lazy val selfType = element[MMap[K, V]]
+  abstract class MMapDef[K, V](implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MMap[K, V]  {
 
     def union(that: MM[K, V]): MM[K, V] = MapUnion(this, that)
     def difference(that: MM[K, V]): MM[K, V] = MapDifference(this, that)

@@ -273,11 +273,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     isFieldGetterCache.getOrElseUpdate((tpe, m),
       findScalaMethod(tpe, m).isParamAccessor)
   }
-  private var invokeTesters: Set[InvokeTester] = Set(isCompanionApply, isFieldGetter)
+  protected val initialInvokeTesters = Set(isCompanionApply, isFieldGetter)
+  private var invokeTesters: Set[InvokeTester] = initialInvokeTesters
 
   def isInvokeEnabled(d: Def[_], m: Method) = invokeTesters.exists(_(d, m))
 
-  private def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) = {
+  protected def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) = {
     if (m.getDeclaringClass.isAssignableFrom(d.getClass)) {
       isInvokeEnabled(d, m) || hasFuncArg(args) ||
         // e.g. for methods returning Elem
@@ -294,6 +295,11 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   def removeInvokeTester(pred: InvokeTester): Unit = {
     invokeTesters -= pred
+  }
+
+  def resetTesters() = {
+    invokeTesters = initialInvokeTesters
+    unpackTesters = initialUnpackTesters
   }
 
   protected def hasFuncArg(args: Array[AnyRef]): Boolean =
@@ -387,7 +393,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                     // TODO incorrect baseType
                     elemFromType(tpe1, elemMap1, baseType).asInstanceOf[Elem[F[T]]]
                   }
-
+                  def unlift[T](implicit eFT: Elem[F[T]]) = ???
+                  def getElem[T](fa: Exp[F[T]]) = ???
                   override protected def getName = typaram.toString
                 }
             }
@@ -736,6 +743,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) Array.empty[AnyRef] else _args
+      def mkMC(e: ExternalMethodException) = {
+        val res = mkMethodCall(receiver, m, args.toList, neverInvoke = true)
+        res.setMetadata(externalClassNameMetaKey)(e.className)
+        res.setMetadata(externalMethodNameMetaKey)(e.methodName)
+        res
+      }
       receiver match {
         case Def(d) =>
           if (shouldInvoke(d, m, args)) {
@@ -745,12 +758,13 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
               res
             } catch {
               case e: ExternalMethodException =>
-                val res = mkMethodCall(receiver, m, args.toList, neverInvoke = true)
-                res.setMetadata(externalClassNameMetaKey)(e.className)
-                res.setMetadata(externalMethodNameMetaKey)(e.methodName)
-                res
-              case e: Exception =>
-                throwInvocationException("Method invocation", baseCause(e), receiver, m, args)
+                mkMC(e)
+              case e: Exception => e.getCause match {
+                case e: ExternalMethodException =>
+                  mkMC(e)
+                case _ =>
+                  throwInvocationException("Method invocation", baseCause(e), receiver, m, args)
+              }
             }
           } else {
             // try to call method m via inherited class or interfaces

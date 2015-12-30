@@ -37,6 +37,8 @@ trait ArrayBuffers extends Base { self: Scalan =>
   implicit val arrayBufferFunctor = new Functor[ArrayBuffer] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[ArrayBuffer[T]]
     def lift[T](implicit eT: Elem[T]) = element[ArrayBuffer[T]]
+    def unlift[T](implicit eFT: Elem[ArrayBuffer[T]]) = eFT.eItem
+    def getElem[T](fa: Rep[ArrayBuffer[T]]) = !!!("Operation is not supported by ArrayBuffer container " + fa)
     def map[A:Elem,B:Elem](xs: Rep[ArrayBuffer[A]])(f: Rep[A] => Rep[B]) = xs.mapBy(fun(f))
   }
 

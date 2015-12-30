@@ -19,7 +19,7 @@ trait TestContexts extends TestsUtil {
     }
   }
 
-  abstract class TestContext(testName: String) extends ScalanCtxExp {
+  abstract class TestContext(testName: String) extends ScalanDslExp {
     def this() = this(currentTestNameAsFileName)
 
     override def isInvokeEnabled(d: Def[_], m: Method) = true
@@ -43,7 +43,7 @@ trait TestContexts extends TestsUtil {
     import compiler._
 
     def test[A,B](functionName: String, f: => scalan.Exp[A => B]): CompilerOutput[A, B] = {
-      buildExecutable(FileUtil.file(prefix, functionName), functionName, f, GraphVizConfig.default)(defaultCompilerConfig)
+      buildExecutable(FileUtil.file(prefix + "/" + testName, functionName), functionName, f, GraphVizConfig.default)(defaultCompilerConfig)
     }
     def test[A,B](f: => scalan.Exp[A => B]): CompilerOutput[A, B] = test(testName, f)
 

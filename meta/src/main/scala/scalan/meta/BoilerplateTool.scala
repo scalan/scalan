@@ -43,18 +43,23 @@ class BoilerplateTool extends StrictLogging {
       "scalan/primitives/AbstractStrings.scala",
       "scalan/util/Exceptions.scala"
     ),
-    coreTypeSynonyms
+    coreTypeSynonyms,
+    baseContextTrait = "scalan.Scalan",
+    seqContextTrait = "scalan.ScalanSeq",
+    stagedContextTrait = "scalan.ScalanExp"
   )
 
   val coreTestsTypeSynonyms = coreTypeSynonyms ++ Map(
-    "RSeg" -> "Segment"
+    "RSeg" -> "Segment",
+    "RMetaTest" -> "MetaTest"
   )
   lazy val coreTestsConfig = CodegenConfig(
     name = "coretests",
     srcPath = "../core/src/test/scala",
     entityFiles = List(
-      "scalan/common/Segments.scala"
-      , "scalan/common/Kinds.scala"
+      "scalan/common/Segments.scala",
+      "scalan/common/Kinds.scala",
+      "scalan/common/MetaTests.scala"
     ),
     coreTestsTypeSynonyms
   )
@@ -62,14 +67,15 @@ class BoilerplateTool extends StrictLogging {
   val collectTypeSynonyms = coreTypeSynonyms ++ Map(
     "Coll" -> "Collection", "PairColl" -> "PairCollection", "NColl" -> "NestedCollection"
   )
-  lazy val libConfig = CodegenConfig(
-    name = "lib",
-    srcPath = "../library/src/main/scala",
+  lazy val collectionsConfig = CodegenConfig(
+    name = "collections",
+    srcPath = "../collections/src/main/scala",
     entityFiles = List(
        "scalan/collections/HashSets.scala"
       , "scalan/collections/Seqs.scala"
       , "scalan/collections/MultiMap.scala"
       , "scalan/collections/BitSets.scala"
+      , "scalan/collections/Collections.scala"
     ),
     collectTypeSynonyms
   )
@@ -79,7 +85,7 @@ class BoilerplateTool extends StrictLogging {
   )
   lazy val laConfig = CodegenConfig(
     name = "la",
-    srcPath = "../library/src/main/scala",
+    srcPath = "../linear-algebra/src/main/scala",
     entityFiles = List(
         "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
@@ -109,65 +115,33 @@ class BoilerplateTool extends StrictLogging {
   )
 
   val effectsTypeSynonyms = Map(
-    "MonadRep"    -> "Monad",
     "RFree"       -> "Free",
     "RCoproduct"  -> "Coproduct",
-    "RepReader" -> "Reader",
     "RepInteract" -> "Interact",
     "RepAuth" -> "Auth"
   )
   lazy val effectsConfig = CodegenConfig(
     name = "effects",
-    srcPath = "../library/src/test/scala/scalan/effects",
+    srcPath = "../effects/src/test/scala/",
     entityFiles = List(
-      "Frees.scala",
-      "Coproducts.scala",
-      "Interactions.scala",
-      "Auths.scala",
-      "IOs.scala",
-      "Readers.scala",
-      "Processes.scala"
+      "scalan/monads/IOs.scala",
+      "scalan/monads/Readers.scala",
+      "scalan/monads/States.scala",
+      "scalan/monads/FreeStates.scala",
+      "scalan/monads/FreeMs.scala",
+      "scalan/monads/Processes.scala",
+      "scalan/monads/Frees.scala",
+      "scalan/monads/Coproducts.scala",
+      "scalan/monads/Interactions.scala",
+      "scalan/monads/Auths.scala"
     ),
     effectsTypeSynonyms
-  )
-
-  val effects2TypeSynonyms = Map(
-    "RFree"       -> "Free",
-    "RCoproduct"  -> "Coproduct",
-    "RepInteract" -> "Interact",
-    "RepAuth" -> "Auth"
-  )
-  lazy val effects2Config = CodegenConfig(
-    name = "effects2",
-    srcPath = "../library/src/test/scala/",
-    entityFiles = List(
-      "scalan/effects/IOs.scala",
-      "scalan/effects/Readers.scala",
-      "scalan/effects/States.scala",
-      "scalan/effects/FreeStates.scala",
-      "scalan/effects/FreeMs.scala",
-      "scalan/effects/Processes.scala",
-      "scalan/effects/Frees.scala",
-      "scalan/effects/Coproducts.scala",
-      "scalan/effects/Interactions.scala",
-      "scalan/effects/Auths.scala"
-    ),
-    effects2TypeSynonyms
-  )
-
-  lazy val collectionsConfig = CodegenConfig(
-    name = "collections",
-    srcPath = "../library/src/main/scala",
-    entityFiles = List(
-      "scalan/collections/Collections.scala"
-     ),
-    collectTypeSynonyms
   )
 
   val graphTypeSynonyms = collectTypeSynonyms ++ Map("PG" -> "Graph", "REdge" -> "EdgeType")
   lazy val graphConfig = CodegenConfig(
     name = "graphs",
-    srcPath = "../library/src/main/scala",
+    srcPath = "../graphs/src/main/scala",
     entityFiles = List(
       "scalan/graphs/Graphs.scala",
       "scalan/graphs/Vertices.scala",
@@ -175,18 +149,6 @@ class BoilerplateTool extends StrictLogging {
       "scalan/graphs/Fronts.scala"
     ),
     graphTypeSynonyms
-  )
-
-  val metaTestTypeSynonyms = coreTypeSynonyms ++ Map(
-    "RMetaTest" -> "MetaTest"
-  )
-  lazy val metaTestConfig = CodegenConfig(
-    name = "metaTest",
-    srcPath = "../core/src/test/scala",
-    entityFiles = List(
-      "scalan/common/MetaTests.scala"
-    ),
-    metaTestTypeSynonyms
   )
 
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
@@ -197,17 +159,14 @@ class BoilerplateTool extends StrictLogging {
   val configsMap = Map(
     "scalan" -> List(scalanConfig),
     "core" -> List(coreConfig),
-    "coretests" -> List(coreTestsConfig),
-    "lib" -> List(libConfig),
+    "core-tests" -> List(coreTestsConfig),
     "collections" -> List(collectionsConfig),
     "la" -> List(laConfig),
     "graphs" -> List(graphConfig),
-    "mt" -> List(metaTestConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "effects2" -> List(effects2Config),
-    "lib-all" -> List(scalanConfig, coreConfig, coreTestsConfig, libConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config),
-    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, libConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config)
+    "lib-all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig),
+    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig)
   )
 
   def main(args: Array[String]) {
