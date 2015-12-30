@@ -242,8 +242,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
     def toArray: Arr[T] = ArrayBufferToArray(this)
   }
     
-//  def emptyArrayBuffer[T: Elem]: Rep[ArrayBuffer[T]] = ArrayBufferEmpty[T]()
-  def emptyArrayBuffer[T: Elem]: Rep[ArrayBuffer[T]] = ArrayBufferUsingFunc(0, fun { i => element[T].defaultRepValue })
+  def emptyArrayBuffer[T: Elem]: Rep[ArrayBuffer[T]] = ArrayBufferEmpty[T]()
   def initArrayBuffer[T: Elem](v: Rep[T]): Rep[ArrayBuffer[T]] = ArrayBufferFromElem(v)
   def makeArrayBuffer[T](name: Rep[String])(implicit e:Elem[T]): Rep[ArrayBuffer[T]] = MakeArrayBuffer(name)(e)
   def createArrayBuffer[T: Elem](count: Rep[Int], f:Rep[Int=>T]): Rep[ArrayBuffer[T]] = ArrayBufferUsingFunc(count, f)
