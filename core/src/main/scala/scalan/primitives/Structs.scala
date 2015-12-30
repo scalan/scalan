@@ -73,14 +73,7 @@ trait StructsDsl extends impl.StructsAbs with StructItemsDsl  { self: StructsDsl
   def keyset_create(keys: Seq[String]): Rep[KeySet]
 //  def keyset_getAt(ks: KSet, i: Rep[Int]): Rep[StructKey]
 
-//  trait StructFunctor extends Functor[Struct] {
-//    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Struct[T]]
-//    def lift[T](implicit eT: Elem[T]) = element[Array[T]]
-//    def unlift[T](implicit eFT: Elem[Array[T]]) = eFT.eItem
-//    def getElem[T](fa: Rep[Array[T]]) = !!!("Operation is not supported by Array container " + fa)
-//    def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.mapBy(fun(f))
-//  }
-//  implicit val containerArray: Functor[Array] = new ArrayFunctor {}
+
 
   trait Struct {
     def tag: StructTag[_] // TODO add type argument?
@@ -105,7 +98,7 @@ trait StructsDsl extends impl.StructsAbs with StructItemsDsl  { self: StructsDsl
       s"${baseStructName(structTag)}{${fields.map { case (fn,fe) => s"$fn: ${fe.name}"}.mkString("; ")}}"
     }
   }
-  implicit def StructElemExtensions[T <: Struct](e: Elem[T]) = e.asInstanceOf[StructElem[T]]
+  implicit def StructElemExtensions[T <: Struct](e: Elem[T]): StructElem[T] = e.asInstanceOf[StructElem[T]]
 
   def structElement[T <: Struct](tag: StructTag[T], fields: Seq[(String, Elem[_])]): StructElem[T] =
     if (cacheElems)

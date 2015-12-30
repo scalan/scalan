@@ -223,6 +223,5 @@ object StructItems_Module extends scalan.ModuleInfo {
 }
 }
 
-trait StructItemsDsl extends impl.StructItemsAbs {self: StructsDsl with Scalan =>}
 trait StructItemsDslSeq extends impl.StructItemsSeq {self: StructsDsl with ScalanSeq =>}
 trait StructItemsDslExp extends impl.StructItemsExp {self: StructsDsl with ScalanExp =>}
