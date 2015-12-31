@@ -257,6 +257,11 @@ trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL
       }
 
     // TODO can we make generic version for Reflect?
+    case Reflect(array: ArrayBufferEmpty[a], _, _) =>
+      implicit val mA = elemToManifest(array.elem.eItem)
+      val exp = lms.arraybuilder_make()
+      m.addSym(sym, exp)
+
     case Reflect(PrintlnE(s), _, _) =>
       val s1 = m.symMirror[String](s)
       val exp = lms.println(s1)
