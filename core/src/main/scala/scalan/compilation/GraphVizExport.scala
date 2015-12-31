@@ -95,8 +95,6 @@ trait GraphVizExport { self: ScalanExp =>
     emitDepGraph(new PGraph(ss.toList), file)(config)
   def emitExceptionGraph(e: Throwable, file: File)(implicit config: GraphVizConfig): Unit =
     emitDepGraph(Left(e), file)
-  def emitExceptionGraph(contextName: String, ss: Exp[_]*): Unit =
-    emitDepGraph(ss, FileUtil.file("test-out", "exceptions", s"${contextName}_context.dot"))(defaultGraphVizConfig)
   def emitDepGraph(graph: AstGraph, file: File)(implicit config: GraphVizConfig): Unit =
     emitDepGraph(Right(graph), file)
   def emitDepGraph(exceptionOrGraph: Either[Throwable, AstGraph], file: File)(implicit config: GraphVizConfig): Unit =
@@ -111,6 +109,10 @@ trait GraphVizExport { self: ScalanExp =>
         _.println(dotText)
       }
     }
+
+  implicit class EmitGraphForSomeOps(symbol: Exp[_]) {
+    def emitGraph(file: File) = emitDepGraph(symbol, file)(defaultGraphVizConfig)
+  }
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
     case Def(l1: Lambda[_, _]) =>

@@ -374,7 +374,6 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     }
     def tp: TableEntry[_] = findDefinition(symbol).get
     def sameScopeAs(other: Exp[_]): Boolean = this.tp.lambda == other.tp.lambda
-    def emitGraph(context: String) = emitExceptionGraph(context, symbol)
   }
 
   implicit class DefForSomeOps(d: Def[_]) {
