@@ -4,7 +4,7 @@ import scalan._
 import scala.reflect.runtime.universe._
 import scala.collection.mutable.Map;
 
-trait Maps extends  Base  { self: Scalan =>
+trait MapOps extends  Base  { self: Scalan =>
   type MM[K, V] = Rep[MMap[K, V]]
 
   trait MMap[K, V] extends Def[MMap[K,V]] {
@@ -61,7 +61,7 @@ trait Maps extends  Base  { self: Scalan =>
   def makeMap[K: Elem, V: Elem](name: Rep[String]): MM[K, V]
 }
 
-trait MapsSeq extends Maps { self: ScalanSeq =>
+trait MapOpsSeq extends MapOps { self: ScalanSeq =>
   case class SeqMMap[K, V](val impl: Map[K, V])(implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MMap[K, V] {
     private def implOf[A,B](that: MMap[A, B]) = that match {
       case m: SeqMMap[A, B] => m.impl
@@ -130,7 +130,7 @@ trait MapsSeq extends Maps { self: ScalanSeq =>
 }
 
 
-trait MapsExp extends Maps { self: ScalanExp =>
+trait MapOpsExp extends MapOps { self: ScalanExp =>
   abstract class MMapDef[K, V](implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MMap[K, V]  {
 
     def union(that: MM[K, V]): MM[K, V] = MapUnion(this, that)

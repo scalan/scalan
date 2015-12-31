@@ -48,6 +48,7 @@ trait Entities extends Elems { self: Scalan =>
   }
 
   private[this] lazy val modules = MutMap.empty[String, SEntityModuleDef]
+  def getModules = modules
 
   def allEntities = modules.values.flatMap(_.allEntities)
 

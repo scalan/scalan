@@ -32,7 +32,8 @@ abstract class Scalan
   with Blocks
   with Monoids
   with PatternMatching
-  with Maps
+  with MapOps
+  with MapViews
   with Transforming
   with ArrayOps
   with ArrayBuffers
@@ -69,7 +70,8 @@ abstract class ScalanSeq
   with IfThenElseSeq
   with BlocksSeq
   with PatternMatchingSeq
-  with MapsSeq
+  with MapOpsSeq
+  with MapViewsSeq
   with MonoidsSeq
   with ArrayOpsSeq
   with ArrayBuffersSeq
@@ -110,7 +112,8 @@ abstract class ScalanExp
   with IfThenElseExp
   with BlocksExp
   with PatternMatchingExp
-  with MapsExp
+  with MapOpsExp
+  with MapViewsExp
   with TransformingExp
   with ArrayOpsExp
   with ArrayBuffersExp
