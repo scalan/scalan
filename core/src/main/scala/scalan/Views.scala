@@ -200,6 +200,17 @@ trait Views extends Elems { self: ViewsDsl with Scalan =>
     def to(x: Th[A]) = x.map(innerIso.toFun)
     lazy val defaultRepTo = Thunk(eB.defaultRepValue)(eB)
   }
+
+  abstract class MapIso[K1, V1, K2, V2](val iso1: Iso[K1, K2], val iso2: Iso[V1, V2])(
+    implicit val eK1: Elem[K1], val eV1: Elem[V1], val eK2: Elem[K2], val eV2: Elem[V2])
+    extends IsoUR[MMap[K1, V1], MMap[K2, V2]] {
+//    def cC = container[MMap]
+    lazy val eFrom: Elem[MMap[K1, V1]] = element[MMap[K1, V1]]
+    lazy val eTo: Elem[MMap[K2, V2]] = element[MMap[K2, V2]]
+    def from(b: MM[K2, V2]) = MMap.fromArray[K1, V1](b.keys.map(iso1.from) zip b.values.map(iso2.from))
+    def to(a: MM[K1, V1]) = MMap.fromArray[K2, V2](a.keys.map(iso1.to) zip a.values.map(iso2.to))
+    lazy val defaultRepTo = emptyMap[K2, V2](eK2, eV2)
+  }
 }
 
 trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
@@ -406,6 +417,9 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
   def arrayBufferIso[A,B](iso: Iso[A, B]) = reifyObject(ArrayBufferIso[A, B](iso)(iso.eFrom, iso.eTo)).asInstanceOf[Iso1[A, B, ArrayBuffer]]
 
   def thunkIso[A,B](iso: Iso[A, B]) = reifyObject(ThunkIso[A, B](iso)(iso.eFrom, iso.eTo)).asInstanceOf[Iso1[A, B, Thunk]]
+
+  def mapIso[K1, V1, K2, V2](iso1: Iso[K1, K2], iso2: Iso[V1, V2]): Iso[MMap[K1, V1], MMap[K2, V2]] =
+    MapIso[K1, V1, K2, V2](iso1, iso2)(iso1.eFrom, iso2.eFrom, iso1.eTo, iso2.eTo)
 
   def converterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A]): Iso[A,B] = {
     val convToElem = convTo.selfType1.asInstanceOf[ConverterElem[A, B, _]]
