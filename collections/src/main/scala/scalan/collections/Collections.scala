@@ -427,6 +427,47 @@ trait Collections { self: CollectionsDsl =>
       case _ => coll.map(_._2)(collElem.eItem.eSnd)
     }
   }
+
+  abstract class StructItemCollection[Val, Schema <: Struct]
+        (val struct: Rep[Schema])
+        (implicit val eVal: Elem[Val], val eSchema: Elem[Schema])
+    extends Collection[StructItem[Val,Schema]] {
+    def eItem = element[StructItem[Val,Schema]]
+    def length = eSchema.fields.length
+
+    def arr: Arr[StructItem[Val,Schema]] = ???
+
+    def lst = arr.toList
+
+    def apply(i: Rep[Int]) = struct.getItem(i).asRep[StructItem[Val,Schema]]
+
+    @OverloadId("many")
+    def apply(indices: Coll[Int])(implicit o: Overloaded1) = ???
+
+    def mapBy[B: Elem](f: Rep[(StructItem[Val, Schema]) => B]) = ???
+
+    //= Collection(arr.mapBy(f))
+    def zip[B: Elem](ys: Coll[B]) = ???
+
+    // = PairCollectionSOA(self, ys)
+    def slice(offset: Rep[Int], length: Rep[Int]) = ???
+
+    def reduce(implicit m: RepMonoid[StructItem[Val, Schema]]) = ???
+
+    //= arr.reduce(m)
+    def update(idx: Rep[Int], value: Rep[StructItem[Val, Schema]]) = ???
+
+    def updateMany(idxs: Coll[Int], vals: Coll[StructItem[Val, Schema]]) = ???
+
+    def filterBy(f: Rep[(StructItem[Val, Schema]) => Boolean]) = ???
+
+    def flatMapBy[B: Elem](f: Rep[(StructItem[Val, Schema]) => Collection[B]]) = ???
+
+    // = Collection(arr.flatMap {in => f(in).arr} )
+    def append(value: Rep[StructItem[Val, Schema]]) = ???
+
+    def sortBy[O: Elem](by: Rep[(StructItem[Val, Schema]) => O])(implicit o: Ordering[O]) = ???
+  }
 }
 
 trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
