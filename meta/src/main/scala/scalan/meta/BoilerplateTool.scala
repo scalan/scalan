@@ -156,7 +156,8 @@ class BoilerplateTool extends StrictLogging {
     name = "structs",
     srcPath = "../core/src/main/scala",
     entityFiles = List(
-      "scalan/primitives/Structs.scala",
+//      "scalan/primitives/Structs.scala",
+      "scalan/primitives/StructKeys.scala",
       "scalan/primitives/StructItems.scala"
     ),
     structsTypeSynonyms,

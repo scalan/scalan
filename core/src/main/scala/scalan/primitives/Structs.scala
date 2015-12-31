@@ -20,17 +20,9 @@ import scalan.staged.Expressions
  - mirroring implemented in Scalan way (though consistent with LMS)
  */
 trait Structs extends Base { self: StructsDsl with Scalan =>
-
-  type SKey = Rep[StructKey]
-  trait StructKey extends Def[StructKey] {
-    def keys: Rep[KeySet]
-    def index: Rep[Int]
-  }
-  abstract class IndexStructKey(val keys: Rep[KeySet], val index: Rep[Int]) extends StructKey {
-  }
 }
 
-trait StructsDsl extends impl.StructsAbs with StructItemsDsl  { self: StructsDsl with Scalan =>
+trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: StructsDsl with Scalan =>
   // TODO consider if T type parameter is needed here and for AbstractStruct
   // It's only useful if we'll have some static typing on structs later (Shapeless' records?)
   abstract class StructTag[T <: Struct](implicit val typeTag: TypeTag[T]) {
@@ -53,27 +45,6 @@ trait StructsDsl extends impl.StructsAbs with StructItemsDsl  { self: StructsDsl
     case SimpleTag(name) => s"$name "
     // Intentionally no case _, add something here or override when extending StructTag!
   }
-
-  type KSet = Rep[KeySet]
-  trait KeySet {
-    def keys: Seq[String]
-  }
-  class KeySetCompanion {
-    def apply(names: Seq[String]) = keyset_create(names)
-  }
-  val KeySet: KeySetCompanion = new KeySetCompanion
-
-  case class KeySetSeq(keys: Seq[String]) extends KeySet
-
-  implicit class KeySetOps(ks: Rep[KeySet]) {
-//    def apply(i: Rep[Int]) = keyset_getAt(ks, i)
-  }
-  class KeySetElem extends BaseElem[KeySet]()(weakTypeTag[KeySet], Default.defaultVal(KeySetSeq(Seq())))
-  implicit val KeySetElement: Elem[KeySet] = new KeySetElem
-  def keyset_create(keys: Seq[String]): Rep[KeySet]
-//  def keyset_getAt(ks: KSet, i: Rep[Int]): Rep[StructKey]
-
-
 
   trait Struct {
     def tag: StructTag[_] // TODO add type argument?
@@ -407,8 +378,8 @@ trait StructsDsl extends impl.StructsAbs with StructItemsDsl  { self: StructsDsl
 
 }
 
-trait StructsDslSeq extends impl.StructsSeq with StructItemsDslSeq { self: StructsDslSeq with ScalanSeq =>
-  def keyset_create(keys: Seq[String]): Rep[KeySet] = KeySetSeq(keys)
+trait StructsDslSeq extends StructsDsl with StructItemsDslSeq with StructKeysDslSeq { self: StructsDslSeq with ScalanSeq =>
+
   case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends Struct {
     override def equals(other: Any) = other match {
       case ss: StructsDslSeq#StructSeq[_] =>
@@ -430,13 +401,8 @@ trait StructsDslSeq extends impl.StructsSeq with StructItemsDslSeq { self: Struc
   }
 }
 
-trait StructsDslExp extends impl.StructsExp with Expressions with EffectsExp with ViewsDslExp with StructItemsDslExp
-    with GraphVizExport { self: StructsDslExp with ScalanExp =>
-
-  def keyset_create(keys: Seq[String]): Rep[KeySet] = KeySetDef(keys)
-  case class KeySetDef(keys: Seq[String]) extends BaseDef[KeySet] {
-    override def toString = s"KeySet(${keys.mkString(",")})"
-  }
+trait StructsDslExp extends StructsDsl with Expressions with EffectsExp with ViewsDslExp with StructItemsDslExp
+    with StructKeysDslExp with GraphVizExport { self: StructsDslExp with ScalanExp =>
 
   abstract class AbstractStruct[T <: Struct] extends Def[T] {
     def tag: StructTag[T]

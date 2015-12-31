@@ -1,6 +1,7 @@
 package scalan.primitives
 
 import scalan._
+import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
 
