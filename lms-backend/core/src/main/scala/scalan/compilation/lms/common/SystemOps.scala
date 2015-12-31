@@ -54,9 +54,9 @@ trait ScalaGenSystemOps extends ScalaGenBase {
       stream.println("// generating parallel execute")
       stream.println(src"val $sym ={")
       //stream.println("\tval tasks: Seq[scala.concurrent.Future[" + m + "]] = for (i <- 0 until " + n + ") yield future {" ote(f) + "(i) }")
-      stream.println("\timport scala.concurrent.ExecutionContext.Implicits.global")
-      stream.println(src"\tval tasks = for (i <- 0 until $nJobs) yield scala.concurrent.future {$f(i) }")
-      stream.println("\tscala.concurrent.Await.result(scala.concurrent.Future.sequence(tasks), scala.concurrent.duration.Duration.Inf).toArray")
+      stream.println("import scala.concurrent.ExecutionContext.Implicits.global")
+      stream.println(src"val tasks = for (i <- 0 until $nJobs) yield scala.concurrent.future {$f(i) }")
+      stream.println("scala.concurrent.Await.result(scala.concurrent.Future.sequence(tasks), scala.concurrent.duration.Duration.Inf).toArray")
       stream.println("}")
     case StringMatches(str, pattern) =>
       stream.println(src"val $sym = $str.matches($pattern)")

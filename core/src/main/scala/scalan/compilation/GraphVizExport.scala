@@ -110,6 +110,10 @@ trait GraphVizExport { self: ScalanExp =>
       }
     }
 
+  implicit class EmitGraphForSomeOps(symbol: Exp[_]) {
+    def emitGraph(file: File) = emitDepGraph(symbol, file)(defaultGraphVizConfig)
+  }
+
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
     case Def(l1: Lambda[_, _]) =>
       val (ds, vs) = lambdaDeps(l1)
