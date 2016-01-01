@@ -6,12 +6,15 @@ import scala.reflect.runtime.universe._
 
 trait StructKeys extends ViewsDsl with Entities  { self: StructsDsl with Scalan =>
 
-  type SKey = Rep[StructKey]
-  trait StructKey extends Def[StructKey] {
-    def keys: Rep[KeySet]
+  type SKey[S <: Struct] = Rep[StructKey[S]]
+  trait StructKey[Schema <: Struct] extends Def[StructKey[Schema]] {
+    def eSchema: Elem[Schema]
     def index: Rep[Int]
   }
-  abstract class IndexStructKey(val keys: Rep[KeySet], val index: Rep[Int]) extends StructKey {
+  abstract class IndexStructKey[Schema <: Struct]
+      (val index: Rep[Int])
+      (implicit val eSchema: Elem[Schema]) extends StructKey[Schema] {
+    override def toString = s"${eSchema.fieldsString}($index)"
   }
 
 }

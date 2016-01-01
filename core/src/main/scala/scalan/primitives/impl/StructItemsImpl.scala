@@ -3,6 +3,7 @@ package scalan.primitives
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scala.reflect.runtime.universe._
+import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
 
@@ -12,12 +13,12 @@ trait StructItemsAbs extends StructItems {
   self: StructsDsl with Scalan =>
 
   // single proxy for each type family
-  implicit def proxyStructItem[Val, Schema](p: Rep[StructItem[Val, Schema]]): StructItem[Val, Schema] = {
+  implicit def proxyStructItem[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]): StructItem[Val, Schema] = {
     proxyOps[StructItem[Val, Schema]](p)(scala.reflect.classTag[StructItem[Val, Schema]])
   }
 
   // familyElem
-  class StructItemElem[Val, Schema, To <: StructItem[Val, Schema]](implicit _eVal: Elem[Val @uncheckedVariance], _eSchema: Elem[Schema])
+  class StructItemElem[Val, Schema <: Struct, To <: StructItem[Val, Schema]](implicit _eVal: Elem[Val @uncheckedVariance], _eSchema: Elem[Schema])
     extends EntityElem[To] {
     def eVal = _eVal
     def eSchema = _eSchema
@@ -47,7 +48,7 @@ trait StructItemsAbs extends StructItems {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def structItemElement[Val, Schema](implicit eVal: Elem[Val @uncheckedVariance], eSchema: Elem[Schema]): Elem[StructItem[Val, Schema]] =
+  implicit def structItemElement[Val, Schema <: Struct](implicit eVal: Elem[Val @uncheckedVariance], eSchema: Elem[Schema]): Elem[StructItem[Val, Schema]] =
     cachedElem[StructItemElem[Val, Schema, StructItem[Val, Schema]]](eVal, eSchema)
 
   implicit case object StructItemCompanionElem extends CompanionElem[StructItemCompanionAbs] {
@@ -63,13 +64,13 @@ trait StructItemsAbs extends StructItems {
   implicit def proxyStructItemCompanionAbs(p: Rep[StructItemCompanionAbs]): StructItemCompanionAbs =
     proxyOps[StructItemCompanionAbs](p)
 
-  abstract class AbsStructItemBase[Val, Schema]
-      (key: Rep[StructKey], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
+  abstract class AbsStructItemBase[Val, Schema <: Struct]
+      (key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
     extends StructItemBase[Val, Schema](key, value) with Def[StructItemBase[Val, Schema]] {
     lazy val selfType = element[StructItemBase[Val, Schema]]
   }
   // elem for concrete class
-  class StructItemBaseElem[Val, Schema](val iso: Iso[StructItemBaseData[Val, Schema], StructItemBase[Val, Schema]])(implicit override val eVal: Elem[Val], override val eSchema: Elem[Schema])
+  class StructItemBaseElem[Val, Schema <: Struct](val iso: Iso[StructItemBaseData[Val, Schema], StructItemBase[Val, Schema]])(implicit override val eVal: Elem[Val], override val eSchema: Elem[Schema])
     extends StructItemElem[Val, Schema, StructItemBase[Val, Schema]]
     with ConcreteElem[StructItemBaseData[Val, Schema], StructItemBase[Val, Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(structItemElement(element[Val], element[Schema]))
@@ -78,7 +79,7 @@ trait StructItemsAbs extends StructItems {
     }
 
     override def convertStructItem(x: Rep[StructItem[Val, Schema]]) = StructItemBase(x.key, x.value)
-    override def getDefaultRep = StructItemBase(element[StructKey].defaultRepValue, element[Val].defaultRepValue)
+    override def getDefaultRep = StructItemBase(element[StructKey[Schema]].defaultRepValue, element[Val].defaultRepValue)
     override lazy val tag = {
       implicit val tagVal = eVal.tag
       implicit val tagSchema = eSchema.tag
@@ -87,24 +88,24 @@ trait StructItemsAbs extends StructItems {
   }
 
   // state representation type
-  type StructItemBaseData[Val, Schema] = (StructKey, Val)
+  type StructItemBaseData[Val, Schema <: Struct] = (StructKey[Schema], Val)
 
   // 3) Iso for concrete class
-  class StructItemBaseIso[Val, Schema](implicit eVal: Elem[Val], eSchema: Elem[Schema])
+  class StructItemBaseIso[Val, Schema <: Struct](implicit eVal: Elem[Val], eSchema: Elem[Schema])
     extends EntityIso[StructItemBaseData[Val, Schema], StructItemBase[Val, Schema]] with Def[StructItemBaseIso[Val, Schema]] {
     override def from(p: Rep[StructItemBase[Val, Schema]]) =
       (p.key, p.value)
-    override def to(p: Rep[(StructKey, Val)]) = {
+    override def to(p: Rep[(StructKey[Schema], Val)]) = {
       val Pair(key, value) = p
       StructItemBase(key, value)
     }
-    lazy val eFrom = pairElement(element[StructKey], element[Val])
+    lazy val eFrom = pairElement(element[StructKey[Schema]], element[Val])
     lazy val eTo = new StructItemBaseElem[Val, Schema](self)
     lazy val selfType = new StructItemBaseIsoElem[Val, Schema](eVal, eSchema)
     def productArity = 2
     def productElement(n: Int) = (eVal, eSchema).productElement(n)
   }
-  case class StructItemBaseIsoElem[Val, Schema](eVal: Elem[Val], eSchema: Elem[Schema]) extends Elem[StructItemBaseIso[Val, Schema]] {
+  case class StructItemBaseIsoElem[Val, Schema <: Struct](eVal: Elem[Val], eSchema: Elem[Schema]) extends Elem[StructItemBaseIso[Val, Schema]] {
     def isEntityType = true
     def getDefaultRep = reifyObject(new StructItemBaseIso[Val, Schema]()(eVal, eSchema))
     lazy val tag = {
@@ -117,13 +118,13 @@ trait StructItemsAbs extends StructItems {
   class StructItemBaseCompanionAbs extends CompanionDef[StructItemBaseCompanionAbs] {
     def selfType = StructItemBaseCompanionElem
     override def toString = "StructItemBase"
-    def apply[Val, Schema](p: Rep[StructItemBaseData[Val, Schema]])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
+    def apply[Val, Schema <: Struct](p: Rep[StructItemBaseData[Val, Schema]])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
       isoStructItemBase(eVal, eSchema).to(p)
-    def apply[Val, Schema](key: Rep[StructKey], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
+    def apply[Val, Schema <: Struct](key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
       mkStructItemBase(key, value)
   }
   object StructItemBaseMatcher {
-    def unapply[Val, Schema](p: Rep[StructItem[Val, Schema]]) = unmkStructItemBase(p)
+    def unapply[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]) = unmkStructItemBase(p)
   }
   lazy val StructItemBase: Rep[StructItemBaseCompanionAbs] = new StructItemBaseCompanionAbs
   implicit def proxyStructItemBaseCompanion(p: Rep[StructItemBaseCompanionAbs]): StructItemBaseCompanionAbs = {
@@ -135,20 +136,20 @@ trait StructItemsAbs extends StructItems {
     protected def getDefaultRep = StructItemBase
   }
 
-  implicit def proxyStructItemBase[Val, Schema](p: Rep[StructItemBase[Val, Schema]]): StructItemBase[Val, Schema] =
+  implicit def proxyStructItemBase[Val, Schema <: Struct](p: Rep[StructItemBase[Val, Schema]]): StructItemBase[Val, Schema] =
     proxyOps[StructItemBase[Val, Schema]](p)
 
-  implicit class ExtendedStructItemBase[Val, Schema](p: Rep[StructItemBase[Val, Schema]])(implicit eVal: Elem[Val], eSchema: Elem[Schema]) {
+  implicit class ExtendedStructItemBase[Val, Schema <: Struct](p: Rep[StructItemBase[Val, Schema]])(implicit eVal: Elem[Val], eSchema: Elem[Schema]) {
     def toData: Rep[StructItemBaseData[Val, Schema]] = isoStructItemBase(eVal, eSchema).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoStructItemBase[Val, Schema](implicit eVal: Elem[Val], eSchema: Elem[Schema]): Iso[StructItemBaseData[Val, Schema], StructItemBase[Val, Schema]] =
+  implicit def isoStructItemBase[Val, Schema <: Struct](implicit eVal: Elem[Val], eSchema: Elem[Schema]): Iso[StructItemBaseData[Val, Schema], StructItemBase[Val, Schema]] =
     reifyObject(new StructItemBaseIso[Val, Schema]()(eVal, eSchema))
 
   // 6) smart constructor and deconstructor
-  def mkStructItemBase[Val, Schema](key: Rep[StructKey], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]]
-  def unmkStructItemBase[Val, Schema](p: Rep[StructItem[Val, Schema]]): Option[(Rep[StructKey], Rep[Val])]
+  def mkStructItemBase[Val, Schema <: Struct](key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]]
+  def unmkStructItemBase[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]): Option[(Rep[StructKey[Schema]], Rep[Val])]
 
   registerModule(StructItems_Module)
 }
@@ -159,15 +160,15 @@ trait StructItemsSeq extends StructItemsDsl {
   lazy val StructItem: Rep[StructItemCompanionAbs] = new StructItemCompanionAbs {
   }
 
-  case class SeqStructItemBase[Val, Schema]
-      (override val key: Rep[StructKey], override val value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
+  case class SeqStructItemBase[Val, Schema <: Struct]
+      (override val key: Rep[StructKey[Schema]], override val value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
     extends AbsStructItemBase[Val, Schema](key, value) {
   }
 
-  def mkStructItemBase[Val, Schema]
-    (key: Rep[StructKey], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
+  def mkStructItemBase[Val, Schema <: Struct]
+    (key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
     new SeqStructItemBase[Val, Schema](key, value)
-  def unmkStructItemBase[Val, Schema](p: Rep[StructItem[Val, Schema]]) = p match {
+  def unmkStructItemBase[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]) = p match {
     case p: StructItemBase[Val, Schema] @unchecked =>
       Some((p.key, p.value))
     case _ => None
@@ -180,17 +181,17 @@ trait StructItemsExp extends StructItemsDsl {
   lazy val StructItem: Rep[StructItemCompanionAbs] = new StructItemCompanionAbs {
   }
 
-  case class ExpStructItemBase[Val, Schema]
-      (override val key: Rep[StructKey], override val value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
+  case class ExpStructItemBase[Val, Schema <: Struct]
+      (override val key: Rep[StructKey[Schema]], override val value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
     extends AbsStructItemBase[Val, Schema](key, value)
 
   object StructItemBaseMethods {
   }
 
-  def mkStructItemBase[Val, Schema]
-    (key: Rep[StructKey], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
+  def mkStructItemBase[Val, Schema <: Struct]
+    (key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
     new ExpStructItemBase[Val, Schema](key, value)
-  def unmkStructItemBase[Val, Schema](p: Rep[StructItem[Val, Schema]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkStructItemBase[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: StructItemBaseElem[Val, Schema] @unchecked =>
       Some((p.asRep[StructItemBase[Val, Schema]].key, p.asRep[StructItemBase[Val, Schema]].value))
     case _ =>
@@ -199,24 +200,24 @@ trait StructItemsExp extends StructItemsDsl {
 
   object StructItemMethods {
     object key {
-      def unapply(d: Def[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema}] = d match {
+      def unapply(d: Def[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructItemElem[_, _, _]] && method.getName == "key" =>
-          Some(receiver).asInstanceOf[Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema}]]
+          Some(receiver).asInstanceOf[Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object value {
-      def unapply(d: Def[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema}] = d match {
+      def unapply(d: Def[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructItemElem[_, _, _]] && method.getName == "value" =>
-          Some(receiver).asInstanceOf[Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema}]]
+          Some(receiver).asInstanceOf[Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -225,8 +226,7 @@ trait StructItemsExp extends StructItemsDsl {
 }
 
 object StructItems_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRR+duw4tqP+8VMIgobUtAIVu3DpIUJRmjqoYJIoW1XIVFTj9djZZnZ2szOOdjlU4tIDiAviikQlLki9oJ64IC5IiAMnhJA4cypBqIf2VMSb2V+72RQQ7GE0O/v2/Xzf997urT0oCw9OCZMwwps2laRp6P2ykA2jzaUlg7ec/ojRC3TwlPPNZ698MfdVEQ53YXqLiAuCdaEabtq+m+wNutOBKuEmFdLxhITnOzpCy3QYo6a0HN6ybHskSY/RVscScrEDpZ7TD3bgOhQ6cMR0uOlRSY0VRoSgIjqfoSojK7mv6vtg3U1j8JaqopWp4pJHLInpY4wjof0mdY2AOzywJRyKUlt3VVpoU7Fs1/FkHKKC7racfnxb4gQP4FjnGtklLQwxbBnSs/gQ36y7xNwmQ7qGJsq8hAkLygaXAlffT3WgJugOAnTRdpk+8V0AQAZe1Uk0U3yaCT5NhU/DoJ5FmPUeUQ83PMcPILwKUwC+iy7OPMJF7IG2eb/xwRXznftG3S6ql32VSkVXOI2OTuSoQVOBOH63+bG4+/rNc0WodaFmieWekB4xZZbyCK064dyROucEQOINka2FPLZ0lGW0mZBE1XRsl3D0FEE5izwxy7SkMlZnsxE7OdBXpEtj04LvFpJ653Pq1bpZIYxt3Hn65Rd+a79dhOJ4iCq6NFD4XuxUQg3VMDLlRUntKIBaD0uYukxYijMeTBvmFrWJPlNL1U/XygFpJQCdvvN7/9uzcKWYwBpl8feYRBdl8fNP9R9fXCrCTFfrfpWRYReRFW1G7XVvxeGyCzPOLvXCJ5VdwtRuX2YrfTogIyYjvLNATSFQEuZzO9SlCsVF3Q2FGIB6KOg1h9PG6kbjnvH9J7eUXj2YDZ+ELfunde7BL4cGUksZcd6mQYI5Nvo4C9WQnjdpkMFdP5xLQqvlhIQy1jqi+a4SQh8iTzvQZsczr8wVJgKUKHqIvZUU4gcG2N9JhYYyOsBPntBw9qViPU8ETfNW4nk2ry10Gz252Xmc7S19XYTyG1AeoCZEB8o9Z8T7cX/iDJfUl+fjs8K4JrAfiUfsWLThNJsHnYTOdbJnlvYzySvukT0QfxW+vHHjiT8+v/qYnmYzPUvaxG2c/QezLB49/+OsgglhYNrjJw9PHQ9OHsBfWAntn7z9/t5rvTMf6clW1gWmHau3z6ieOjriiLK5TfuXCX5EFDD/ZqpVMx+a44lFqOTx0ZlVYkp94T9Th1pXU8PIup5BEYuO8HM9y8Z/jl0qENRaOHkMx6ZHF+5a7978UOrxW/DH/wnWe9fwI7yoAz2H7y3kkGFEvCOj1+9/uvbSD7d/1VzUlIJw8PHkPySVi+/uS7768ZqkQsXJFI/jQQlNF/4XTIN3QfsJAAA="
+  val dump = "H4sIAAAAAAAAALVWTWwbRRR+69jZ2I76w18hCJqmhgpU7MKlhwhVSeqggkmibFUhU4HG67GzzezsZmccrTlU4tIDiAviikQlLki9oJ64IC5IiAMnhJB65lRSoR7oqRVvZv9sN3baSvgwmpl9+36+73tvfWMPCiKAV4VNGOFVl0pStfR+SciKVefSkf33vXaP0fO087z30zdvfjf3Qw4ON2F6i4jzgjWhGG3qoZ/uLbrTgCLhNhXSC4SEEw0doWZ7jFFbOh6vOa7bk6TFaK3hCLnYgHzLa/d34CoYDThie9wOqKTWCiNCUBHfz1CVkZOei/rcX/ezGLymqqgNVHExII7E9DHGkch+k/pWn3u870o4FKe27qu00MZ0XN8LZBLCRHdbXjs55jnBC3iqcYXskhqG6NYsGTi8i2+WfWJvky5dQxNlnseEBWWdi31fn6caUBJ0BwG64PpM34Q+ACADb+kkqhk+1RSfqsKnYtHAIcz5hKiHG4EX9iH6GVMAoY8uTh/gIvFA67xd+eyy/eE9q+zm1MuhSsXUFU6jo+Nj1KCpQBx/2fxS3H3n+tkclJpQcsRSS8iA2HKQ8hitMuHckzrnFEASdJGthXFs6ShLaDMiiaLtuT7h6CmGchZ5Yo7tSGWs7mZjdsZAb0qfJqZG6BtpvfNj6tW6WSGMbdx+4Y1X/q5/kIPccIgiurRQ+EHiVEIJ1dCz5QVJ3TiAWg9LmLpEWIYzXkxb9hZ1ib5TSzHMVnNCWilAp27faf98Bi7nUljjLB6NSXRREH/+Uf79tXM5mGlq3a8y0m0isqLOqLserHhcNmHG26VB9MTcJUzt9mXWbNMO6TEZ4z0I1BQCJWF+bIf6VKG4qLvBSAAoR4Je8zitrG5U/rV+/eqG0msAs9GTqGUfOGfv3zrUkVrKiPM27aeYY6MPs1CM6Hkvtpk+iAz9fC7NSi3HJRQQhh4dHyXl+iFetQNtdmzglTljJECeoofEW16RMTHA/k5MGhU1wc+4snEsZjpeJoJmeStdvTSuY3SHPbfZeIbtnfsxB4V3odBBuYgGFFpej7eT1sXxLmkol5M7Y1gu2KokIG6i52jQzYNOQuc62k7LiQkmV4rEYXkuPbpw1/no+udSd4gRDo/t9dYVnJOLuuKXM0B02Skg5gHSmNRlyXfn+2vXnv3n24+f1vNypuVIl/iVM48xLZPh9j9OQxjRF6Y9fPPwXAvg5AQZRJXQ9smbn+693Tr9hZ6dBV1gNhP09kXVtUd7HFG2t2n7EsHPlALmSeZmceBTdiwjUQtneDgPCjpTkPFoIlOn1SeQjFrXsgCxdXkAWkQiBtUPHBf/6uxSEYcLYGEM3lZMLZJ29d7Xa6//dvMvDXdJiQSnJ0//zGSKCP19+VX/3kbRVnEGSsFBorSky/gP5qL860AKAAA="
 }
 }
-
 

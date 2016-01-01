@@ -66,8 +66,9 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
       fields.length == tuple.length && fields.zip(tuple).forall { case ((fn,fe), e) => fe == e }
     }
     override def getName = {
-      s"${baseStructName(structTag)}{${fields.map { case (fn,fe) => s"$fn: ${fe.name}"}.mkString("; ")}}"
+      s"${baseStructName(structTag)}$fieldsString"
     }
+    def fieldsString = s"{${fields.map { case (fn,fe) => s"$fn: ${fe.name}"}.mkString("; ")}}"
   }
   implicit def StructElemExtensions[T <: Struct](e: Elem[T]): StructElem[T] = e.asInstanceOf[StructElem[T]]
 

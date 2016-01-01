@@ -12,39 +12,41 @@ trait StructKeysAbs extends StructKeys {
   self: StructsDsl with Scalan =>
 
   // single proxy for each type family
-  implicit def proxyStructKey(p: Rep[StructKey]): StructKey = {
-    proxyOps[StructKey](p)(scala.reflect.classTag[StructKey])
+  implicit def proxyStructKey[Schema <: Struct](p: Rep[StructKey[Schema]]): StructKey[Schema] = {
+    proxyOps[StructKey[Schema]](p)(scala.reflect.classTag[StructKey[Schema]])
   }
 
   // familyElem
-  class StructKeyElem[To <: StructKey]
+  class StructKeyElem[Schema <: Struct, To <: StructKey[Schema]](implicit _eSchema: Elem[Schema])
     extends EntityElem[To] {
+    def eSchema = _eSchema
     lazy val parent: Option[Elem[_]] = None
     lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map()
+      Map("Schema" -> Left(eSchema))
     }
     override def isEntityType = true
     override lazy val tag = {
-      weakTypeTag[StructKey].asInstanceOf[WeakTypeTag[To]]
+      implicit val tagSchema = eSchema.tag
+      weakTypeTag[StructKey[Schema]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
-      val conv = fun {x: Rep[StructKey] => convertStructKey(x) }
-      tryConvert(element[StructKey], this, x, conv)
+      val conv = fun {x: Rep[StructKey[Schema]] => convertStructKey(x) }
+      tryConvert(element[StructKey[Schema]], this, x, conv)
     }
 
-    def convertStructKey(x: Rep[StructKey]): Rep[To] = {
+    def convertStructKey(x: Rep[StructKey[Schema]]): Rep[To] = {
       x.selfType1 match {
-        case _: StructKeyElem[_] => x.asRep[To]
-        case e => !!!(s"Expected $x to have StructKeyElem[_], but got $e", x)
+        case _: StructKeyElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have StructKeyElem[_, _], but got $e", x)
       }
     }
 
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def structKeyElement: Elem[StructKey] =
-    cachedElem[StructKeyElem[StructKey]]()
+  implicit def structKeyElement[Schema <: Struct](implicit eSchema: Elem[Schema]): Elem[StructKey[Schema]] =
+    cachedElem[StructKeyElem[Schema, StructKey[Schema]]](eSchema)
 
   implicit case object StructKeyCompanionElem extends CompanionElem[StructKeyCompanionAbs] {
     lazy val tag = weakTypeTag[StructKeyCompanionAbs]
@@ -59,63 +61,64 @@ trait StructKeysAbs extends StructKeys {
   implicit def proxyStructKeyCompanionAbs(p: Rep[StructKeyCompanionAbs]): StructKeyCompanionAbs =
     proxyOps[StructKeyCompanionAbs](p)
 
-  abstract class AbsIndexStructKey
-      (keys: Rep[KeySet], index: Rep[Int])
-    extends IndexStructKey(keys, index) with Def[IndexStructKey] {
-    lazy val selfType = element[IndexStructKey]
+  abstract class AbsIndexStructKey[Schema <: Struct]
+      (index: Rep[Int])(implicit eSchema: Elem[Schema])
+    extends IndexStructKey[Schema](index) with Def[IndexStructKey[Schema]] {
+    lazy val selfType = element[IndexStructKey[Schema]]
   }
   // elem for concrete class
-  class IndexStructKeyElem(val iso: Iso[IndexStructKeyData, IndexStructKey])
-    extends StructKeyElem[IndexStructKey]
-    with ConcreteElem[IndexStructKeyData, IndexStructKey] {
-    override lazy val parent: Option[Elem[_]] = Some(structKeyElement)
+  class IndexStructKeyElem[Schema <: Struct](val iso: Iso[IndexStructKeyData[Schema], IndexStructKey[Schema]])(implicit override val eSchema: Elem[Schema])
+    extends StructKeyElem[Schema, IndexStructKey[Schema]]
+    with ConcreteElem[IndexStructKeyData[Schema], IndexStructKey[Schema]] {
+    override lazy val parent: Option[Elem[_]] = Some(structKeyElement(element[Schema]))
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map()
+      Map("Schema" -> Left(eSchema))
     }
 
-    override def convertStructKey(x: Rep[StructKey]) = IndexStructKey(x.keys, x.index)
-    override def getDefaultRep = IndexStructKey(element[KeySet].defaultRepValue, 0)
+    override def convertStructKey(x: Rep[StructKey[Schema]]) = IndexStructKey(x.index)
+    override def getDefaultRep = IndexStructKey(0)
     override lazy val tag = {
-      weakTypeTag[IndexStructKey]
+      implicit val tagSchema = eSchema.tag
+      weakTypeTag[IndexStructKey[Schema]]
     }
   }
 
   // state representation type
-  type IndexStructKeyData = (KeySet, Int)
+  type IndexStructKeyData[Schema <: Struct] = Int
 
   // 3) Iso for concrete class
-  class IndexStructKeyIso
-    extends EntityIso[IndexStructKeyData, IndexStructKey] with Def[IndexStructKeyIso] {
-    override def from(p: Rep[IndexStructKey]) =
-      (p.keys, p.index)
-    override def to(p: Rep[(KeySet, Int)]) = {
-      val Pair(keys, index) = p
-      IndexStructKey(keys, index)
+  class IndexStructKeyIso[Schema <: Struct](implicit eSchema: Elem[Schema])
+    extends EntityIso[IndexStructKeyData[Schema], IndexStructKey[Schema]] with Def[IndexStructKeyIso[Schema]] {
+    override def from(p: Rep[IndexStructKey[Schema]]) =
+      p.index
+    override def to(p: Rep[Int]) = {
+      val index = p
+      IndexStructKey(index)
     }
-    lazy val eFrom = pairElement(element[KeySet], element[Int])
-    lazy val eTo = new IndexStructKeyElem(self)
-    lazy val selfType = new IndexStructKeyIsoElem
-    def productArity = 0
-    def productElement(n: Int) = ???
+    lazy val eFrom = element[Int]
+    lazy val eTo = new IndexStructKeyElem[Schema](self)
+    lazy val selfType = new IndexStructKeyIsoElem[Schema](eSchema)
+    def productArity = 1
+    def productElement(n: Int) = eSchema
   }
-  case class IndexStructKeyIsoElem() extends Elem[IndexStructKeyIso] {
+  case class IndexStructKeyIsoElem[Schema <: Struct](eSchema: Elem[Schema]) extends Elem[IndexStructKeyIso[Schema]] {
     def isEntityType = true
-    def getDefaultRep = reifyObject(new IndexStructKeyIso())
+    def getDefaultRep = reifyObject(new IndexStructKeyIso[Schema]()(eSchema))
     lazy val tag = {
-      weakTypeTag[IndexStructKeyIso]
+      implicit val tagSchema = eSchema.tag
+      weakTypeTag[IndexStructKeyIso[Schema]]
     }
   }
   // 4) constructor and deconstructor
   class IndexStructKeyCompanionAbs extends CompanionDef[IndexStructKeyCompanionAbs] {
     def selfType = IndexStructKeyCompanionElem
     override def toString = "IndexStructKey"
-    def apply(p: Rep[IndexStructKeyData]): Rep[IndexStructKey] =
-      isoIndexStructKey.to(p)
-    def apply(keys: Rep[KeySet], index: Rep[Int]): Rep[IndexStructKey] =
-      mkIndexStructKey(keys, index)
+
+    def apply[Schema <: Struct](index: Rep[Int])(implicit eSchema: Elem[Schema]): Rep[IndexStructKey[Schema]] =
+      mkIndexStructKey(index)
   }
   object IndexStructKeyMatcher {
-    def unapply(p: Rep[StructKey]) = unmkIndexStructKey(p)
+    def unapply[Schema <: Struct](p: Rep[StructKey[Schema]]) = unmkIndexStructKey(p)
   }
   lazy val IndexStructKey: Rep[IndexStructKeyCompanionAbs] = new IndexStructKeyCompanionAbs
   implicit def proxyIndexStructKeyCompanion(p: Rep[IndexStructKeyCompanionAbs]): IndexStructKeyCompanionAbs = {
@@ -127,20 +130,20 @@ trait StructKeysAbs extends StructKeys {
     protected def getDefaultRep = IndexStructKey
   }
 
-  implicit def proxyIndexStructKey(p: Rep[IndexStructKey]): IndexStructKey =
-    proxyOps[IndexStructKey](p)
+  implicit def proxyIndexStructKey[Schema <: Struct](p: Rep[IndexStructKey[Schema]]): IndexStructKey[Schema] =
+    proxyOps[IndexStructKey[Schema]](p)
 
-  implicit class ExtendedIndexStructKey(p: Rep[IndexStructKey]) {
-    def toData: Rep[IndexStructKeyData] = isoIndexStructKey.from(p)
+  implicit class ExtendedIndexStructKey[Schema <: Struct](p: Rep[IndexStructKey[Schema]])(implicit eSchema: Elem[Schema]) {
+    def toData: Rep[IndexStructKeyData[Schema]] = isoIndexStructKey(eSchema).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoIndexStructKey: Iso[IndexStructKeyData, IndexStructKey] =
-    reifyObject(new IndexStructKeyIso())
+  implicit def isoIndexStructKey[Schema <: Struct](implicit eSchema: Elem[Schema]): Iso[IndexStructKeyData[Schema], IndexStructKey[Schema]] =
+    reifyObject(new IndexStructKeyIso[Schema]()(eSchema))
 
   // 6) smart constructor and deconstructor
-  def mkIndexStructKey(keys: Rep[KeySet], index: Rep[Int]): Rep[IndexStructKey]
-  def unmkIndexStructKey(p: Rep[StructKey]): Option[(Rep[KeySet], Rep[Int])]
+  def mkIndexStructKey[Schema <: Struct](index: Rep[Int])(implicit eSchema: Elem[Schema]): Rep[IndexStructKey[Schema]]
+  def unmkIndexStructKey[Schema <: Struct](p: Rep[StructKey[Schema]]): Option[(Rep[Int])]
 
   registerModule(StructKeys_Module)
 }
@@ -151,17 +154,17 @@ trait StructKeysSeq extends StructKeysDsl {
   lazy val StructKey: Rep[StructKeyCompanionAbs] = new StructKeyCompanionAbs {
   }
 
-  case class SeqIndexStructKey
-      (override val keys: Rep[KeySet], override val index: Rep[Int])
-    extends AbsIndexStructKey(keys, index) {
+  case class SeqIndexStructKey[Schema <: Struct]
+      (override val index: Rep[Int])(implicit eSchema: Elem[Schema])
+    extends AbsIndexStructKey[Schema](index) {
   }
 
-  def mkIndexStructKey
-    (keys: Rep[KeySet], index: Rep[Int]): Rep[IndexStructKey] =
-    new SeqIndexStructKey(keys, index)
-  def unmkIndexStructKey(p: Rep[StructKey]) = p match {
-    case p: IndexStructKey @unchecked =>
-      Some((p.keys, p.index))
+  def mkIndexStructKey[Schema <: Struct]
+    (index: Rep[Int])(implicit eSchema: Elem[Schema]): Rep[IndexStructKey[Schema]] =
+    new SeqIndexStructKey[Schema](index)
+  def unmkIndexStructKey[Schema <: Struct](p: Rep[StructKey[Schema]]) = p match {
+    case p: IndexStructKey[Schema] @unchecked =>
+      Some((p.index))
     case _ => None
   }
 }
@@ -172,43 +175,31 @@ trait StructKeysExp extends StructKeysDsl {
   lazy val StructKey: Rep[StructKeyCompanionAbs] = new StructKeyCompanionAbs {
   }
 
-  case class ExpIndexStructKey
-      (override val keys: Rep[KeySet], override val index: Rep[Int])
-    extends AbsIndexStructKey(keys, index)
+  case class ExpIndexStructKey[Schema <: Struct]
+      (override val index: Rep[Int])(implicit eSchema: Elem[Schema])
+    extends AbsIndexStructKey[Schema](index)
 
   object IndexStructKeyMethods {
   }
 
-  def mkIndexStructKey
-    (keys: Rep[KeySet], index: Rep[Int]): Rep[IndexStructKey] =
-    new ExpIndexStructKey(keys, index)
-  def unmkIndexStructKey(p: Rep[StructKey]) = p.elem.asInstanceOf[Elem[_]] match {
-    case _: IndexStructKeyElem @unchecked =>
-      Some((p.asRep[IndexStructKey].keys, p.asRep[IndexStructKey].index))
+  def mkIndexStructKey[Schema <: Struct]
+    (index: Rep[Int])(implicit eSchema: Elem[Schema]): Rep[IndexStructKey[Schema]] =
+    new ExpIndexStructKey[Schema](index)
+  def unmkIndexStructKey[Schema <: Struct](p: Rep[StructKey[Schema]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: IndexStructKeyElem[Schema] @unchecked =>
+      Some((p.asRep[IndexStructKey[Schema]].index))
     case _ =>
       None
   }
 
   object StructKeyMethods {
-    object keys {
-      def unapply(d: Def[_]): Option[Rep[StructKey]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructKeyElem[_]] && method.getName == "keys" =>
-          Some(receiver).asInstanceOf[Option[Rep[StructKey]]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Rep[StructKey]] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object index {
-      def unapply(d: Def[_]): Option[Rep[StructKey]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructKeyElem[_]] && method.getName == "index" =>
-          Some(receiver).asInstanceOf[Option[Rep[StructKey]]]
+      def unapply(d: Def[_]): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructKeyElem[_, _]] && method.getName == "index" =>
+          Some(receiver).asInstanceOf[Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[StructKey]] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -217,7 +208,7 @@ trait StructKeysExp extends StructKeysDsl {
 }
 
 object StructKeys_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVVTYhbVRQ+SWYmk2Toz5SCnY11jIpFk6kgXcyiDNO0DMaZoa9KicVy83Inve19995592ZIuuiyi3Yn3RZacCN0I65EEEEEceFKRHDtqiqli3aleO59970kY58/i2YR7s+553znO98578FvMKtjeFWHhBPRiKghjcCt17SpBy1hmBm9K3sDTs/QnRfkV/dOfrL0eREOdmDuCtFnNO9AJVm0hipbB3S3DRUiQqqNjLWBl9ouQjOUnNPQMCmaLIoGhnQ5bbaZNqttmOnK3mgXbkChDYdCKcKYGhqsc6I11f58nlpELNtX3H60pcYxRNNm0ZzI4kJMmEH4GONQYn+eqmAkpBhFBg54aFvKwkKbMouUjE0aoozursheup0RBA9gsX2V7JEmhug3AxMz0ceXNUXCa6RPN9HEms8gYE35zoWRcvtSG6qa7iJBG5Hi7mSoAAAr8JYD0Rjz08j4aVh+6gGNGeHsOrGX27EcjiD5FUoAQ4Uu3vgXF6kH2hK9+q1L4QdPg1pUtI+HFkrZZTiHjl7MUYMrBfL47fmP9ONz908VodqBKtNrXW1iEprJknu2akQIaRzmjEAS97Fay3nVclHW0GafJCqhjBQR6MlTuYB14ixkxhrbswVfnRzqy0bR1LQwVIUs3+M5+TrdrBPOtx8ee/OVX1sXi1CcDlFBlwEKP06dGqigGgaheYc63GX7V/H85kfKcn7t4e+9b1bgUjFjyjv+b8VBF7P6px9rP7x+ugjzHSfls5z0O0iWbnEabcXrUpgOzMs9Gic35T3C7eqZxSr36A4ZcOMpnMy9hLkbOJ7bdIpaYladwAspAbVEo5tS0PrZ7fqT4Ls7D6wEY1hIbpIu/JOd+uPnAzvGqdPAzDU60g7SQQMlbF7Phj+ZQ7IDaib4djdHs8D2b8nALBM9OnyGnxhezpOAotsxi3Dk7NG3v/7ivUdfbs46FSx6Yt4nfECTAeB5GXNkoRdWMNKGMGMdeDU4TC7+otvjINqw8Kbks7Q/p39SQDrmPr158+ijjy8fce0532UmIqq+8j+aM+2l59h8MF3BEsKePslto8rEsFrM7hI6/9Z+S/seN6YPkfRqZo8z6bBnVqUl10h3NRFmICN6ePkx+/D+beO6szCc/gpsda/i2F11cY7hu+WcMgWeGEz5xtO7mye+/+wXp6iqpRj7QpipT41X0jQ7HrX91I7ZsJ2QxJnIGpvHVsLl/RckyoAo7QcAAA=="
+  val dump = "H4sIAAAAAAAAALVWTYgcRRR+PbOzvTOz5E8jUVxc11FRdGajSA57COtmIqvt7rIdRcag1PTUzFasru7tqll6POSYg97Eq2DAi5CLeBIhCCKIB08igmdPMRJyMCfFV9V/MzFtouAeiq7q6vfe9/Pe7JXrUJMRPCE9wolo+1SRtmue16VquV2hmJq8GgzGnJ6hwxPBVx+f/PShLypwuAfze0SekbwH9eShG4f5s0v3HagT4VGpgkgqeNQxGTpewDn1FAtEh/n+WJE+px2HSbXmwFw/GEz24SJYDhzxAuFFVFF3gxMpqUzPF6iuiOX7utlPtsMih+hoFJ0pFOciwhSWjzmOJPd3aehORCAmvoJDaWnboS4L79jMD4NIZSlsDLcXDLLtnCB4AMecC+SAdDDFqOOqiIkRftkMifcOGdEtvKKvz2HBkvLhuUlo9lUHGpLuI0GbfsjNSRwCACrwnCmiXfDTzvlpa35aLo0Y4exdol/uREE8geTPqgLEIYZ45i4hsgi0Kwat9857b95ym35FfxzrUmyDcB4DPVLiBiMF8vjt7gfy5kuXT1Wg0YMGk+t9qSLiqWnJU7aaRIhAmZpzAkk0QrVWytQyWdbxzm2WqHuBHxKBkVIqF1Enzjym9GV9tpiqU0K9rUKaXbXi0MrxLpfgNb7ZIJzvXHvw2cd/7b5RgcpsijqGdNH4URZUQR3dMPbUK3SSxtfrYQXzrrdHfWKY1ks9Llb7H4rI6Xjy2m+Db1bhfCUnMc15b7phiJr86cfmD0+drsBCz7j8LCejHvIou5z629FGIFQPFoIDGiVv7APC9dMddbQHdEjGXKXsTtNSRVoULJf2Y0g1Z2vG+1ZGQDOx71YgaOvsTut397sPr2h3RrCYvEka9E926o+fDw2VMa6CGhMDGmckV7GxczoeK5M1pDsR83GMHNAXvv7ytRtXt2pG2WMpotcJH9OkqVNABTid01rFTJtC/U1GvSyZ/MenxD9hZSjNewU2TbyQVT2n6b83t+C42tSAc5MVKTXkpXLIqP8Du879/PrpqxWovQy1IQorHaj1g7EYZC2FY1fRWL2YnVmzwmILkYj4mfOSAbSs51cj0cgNfHp05SZ76/L7yhjVimdn5Xb/Ag6nNQPn4QKtgZOjtcsJuKvZs2H/2aVLx2988vZ9Zkgt9JnySdha/RcjKpso/+MIglnRq1j27El9Ruc7zA3jtYI344bw9u+WpoKezDXTu+f/gwJ6XTNhp283irGn4GiqTZi1mUyzRbBSIpubEoUUXLz10dbT33/+i+nJhqYcR4LIf4+ne3GWrbQG/Q9IwU7STDrPFBLsOa2MQfEXbNVjagMJAAA="
 }
 }
 
