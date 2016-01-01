@@ -115,6 +115,7 @@ trait Elems extends Base { self: Scalan =>
     }
   }
 
+  val AnyElement: Elem[Any] = new BaseElem[Any]()(typeTag[Any], Default.OfAny)
   val AnyRefElement: Elem[AnyRef] = new BaseElem[AnyRef]()(typeTag[AnyRef], Default.OfAnyRef)
   implicit val BooleanElement: Elem[Boolean] = new BaseElem[Boolean]
   implicit val ByteElement: Elem[Byte] = new BaseElem[Byte]

@@ -3,6 +3,7 @@ package scalan.primitives
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scala.reflect.runtime.universe._
+import scalan.common.OverloadHack.Overloaded1
 
 trait StructItems extends ViewsDsl with Entities  { self: StructsDsl with Scalan =>
 
@@ -22,6 +23,16 @@ trait StructItems extends ViewsDsl with Entities  { self: StructsDsl with Scalan
 
 trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan =>
 
+  def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int])(implicit eS: Elem[S]): Rep[StructItem[_,S]]
+
+  def struct_getItem[S <: Struct](s: Rep[S], i: Int)(implicit eS: Elem[S], o1: Overloaded1): Rep[StructItem[_,S]] = {
+    val names = eS.fieldNames
+    val keySet = KeySet(names)
+    val value = s(names(i))
+    val key = IndexStructKey(keySet, i)
+    StructItemBase(key, value)(eS.fields(i)._2.asElem[Any], eS)
+  }
+
   trait StructItemFunctor[S] extends Functor[({type f[x] = StructItem[x,S]})#f] {
     implicit def eS: Elem[S]
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[StructItem[T,S]]
@@ -34,6 +45,20 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
     new StructItemFunctor[S] { def eS = element[S] }
 
   implicit class StructExtensionsForStructItem[S <: Struct](s: Rep[S])(implicit eS: Elem[S]) {
-    def getItem(i: Rep[Int]): Rep[StructItem[_, S]] = ??? // TODO struct
+    def getItem(i: Rep[Int]): Rep[StructItem[_, S]] = struct_getItem(s, i)
   }
+
+}
+
+trait StructItemsDslSeq extends impl.StructItemsSeq {self: StructsDsl with ScalanSeq =>
+  def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int])(implicit eS: Elem[S]): Rep[StructItem[_,S]] = struct_getItem(s, i)
+}
+trait StructItemsDslExp extends impl.StructItemsExp {self: StructsDsl with ScalanExp =>
+
+  def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int])(implicit eS: Elem[S]): Rep[StructItem[_,S]] =
+    i match {
+      case Def(Const(i: Int)) => struct_getItem(s, i)
+      case _ =>
+        ???
+    }
 }
