@@ -44,6 +44,7 @@ trait Proxy { self: Scalan =>
   def externalMethod(className: String, methodName: String) = {
     throw new ExternalMethodException(className, methodName)
   }
+  def delayInvoke = throw new DelayInvokeException
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>

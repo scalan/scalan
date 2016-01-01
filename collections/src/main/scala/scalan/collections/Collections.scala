@@ -1,5 +1,7 @@
 package scalan.collections
 
+import java.lang.reflect.Method
+
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.arrays.ArrayOps
@@ -447,7 +449,19 @@ trait Collections { self: CollectionsDsl =>
     def mapBy[B: Elem](f: Rep[(StructItem[Val, Schema]) => B]) = ???
 
     //= Collection(arr.mapBy(f))
-    def zip[B: Elem](ys: Coll[B]) = ???
+    def zip[B: Elem](ys: Coll[B]): PairColl[StructItem[Val,Schema], B] = {
+      def error = !!!(s"Argument is not StructItemCollection: $ys", self)
+      ys.selfType1 match {
+        case ce: CollectionElem[b,_] => ce.eItem match {
+          case eSI: StructItemElem[v, s, _] =>
+            if (eSchema != eSI.eSchema)
+              !!!(s"Can zip StructItemCollections only with the same Schema but found $eSchema and ${eSI.eSchema}")
+            PairCollectionSOA(self, ys)(eItem, ce.eItem.asElem[B])
+          case _ => error
+        }
+        case _ => error
+      }
+    }
 
     // = PairCollectionSOA(self, ys)
     def slice(offset: Rep[Int], length: Rep[Int]) = ???
@@ -637,6 +651,26 @@ trait CollectionsDslExp extends impl.CollectionsExp with SeqsDslExp {
   override def rewriteDef[T](d: Def[T]) = d match {
 //    case ExpPairCollectionAOS(pairColl @ Def(_: PairCollection[_, _])) => pairColl
     case _ => super.rewriteDef(d)
+  }
+
+  override protected def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = receiver.elem match {
+    case e: StructItemCollectionElem[v,s] => m.getName match {
+      case "apply" => structItemElement(e.eVal, e.eSchema.asElem[Struct])
+      case "zip" =>
+        val eA = structItemElement(e.eVal, e.eSchema.asElem[Struct])
+        val eB = args(0).asInstanceOf[Coll[Any]].elem.eItem
+        pairCollectionElement(eA, eB)
+      case _ => super.getResultElem(receiver, m, args)
+    }
+    case e: PairCollectionElem[a,b,_] => m.getName match {
+      case "apply" => e.eItem
+      case _ => super.getResultElem(receiver, m, args)
+    }
+    case e: StructItemElem[v,s,_] => m.getName match {
+      case "value" => e.eVal
+      case _ => super.getResultElem(receiver, m, args)
+    }
+    case _ => super.getResultElem(receiver, m, args)
   }
 
   def pairColl_innerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R])
