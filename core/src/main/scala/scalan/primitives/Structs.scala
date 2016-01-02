@@ -1,14 +1,14 @@
 package scalan.primitives
 
-import scala.reflect.runtime.universe._
 import scalan._
-import scalan.common.Lazy
+import scala.reflect.runtime.universe._
+import scalan.common.{Default, Lazy}
 import scalan.common.OverloadHack._
 import scalan.compilation.{Compiler, GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
 
 /**
- The code is taken from LMS and is used in Scalan with the same semantics
+ The code is inspired by LMS structs and is used in Scalan with the same semantics
  in order to easily translate operations to the equivalents via LmsBridge.
  Their usage in Scalan is limited to be consistent with functional semantics of Scalan.
  Don't expect everything possible in LMS to be also possible in Scalan in the same way.
@@ -19,8 +19,10 @@ import scalan.staged.Expressions
  - no SourceContext, withPos
  - mirroring implemented in Scalan way (though consistent with LMS)
  */
+trait Structs extends Base { self: StructsDsl with Scalan =>
+}
 
-trait Structs { self: Scalan =>
+trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: StructsDsl with Scalan =>
   // TODO consider if T type parameter is needed here and for AbstractStruct
   // It's only useful if we'll have some static typing on structs later (Shapeless' records?)
   abstract class StructTag[T <: Struct](implicit val typeTag: TypeTag[T]) {
@@ -29,16 +31,13 @@ trait Structs { self: Scalan =>
   }
   case class SimpleTag[T <: Struct : TypeTag](name: String) extends StructTag[T] {
     override def equals(other: Any) = other match {
-      case tag: Structs#SimpleTag[_] => name == tag.name && typeTag == tag.typeTag
+      case tag: StructsDsl#SimpleTag[_] => name == tag.name && typeTag == tag.typeTag
       case _ => false
     }
   }
   object SimpleTag {
     def apply[T <: Struct](implicit tag: TypeTag[T]): SimpleTag[T] = SimpleTag[T](tag.tpe.typeSymbol.name.toString)
   }
-  //  case class NestClassTag[C[_],T](elem: StructTag[T]) extends StructTag[C[T]]
-  //  case class AnonTag[T](fields: RefinedManifest[T]) extends StructTag[T]
-  //  case class MapTag[T]() extends StructTag[T]
   val defaultStructTag = SimpleTag[Struct]
 
   protected def baseStructName(tag: StructTag[_]) = tag match {
@@ -49,6 +48,8 @@ trait Structs { self: Scalan =>
 
   trait Struct {
     def tag: StructTag[_] // TODO add type argument?
+//    def keys: Rep[KeySet]
+//    def values: Rep[HList]
     def fields: Seq[(String, Rep[Any])]
   }
 
@@ -65,10 +66,11 @@ trait Structs { self: Scalan =>
       fields.length == tuple.length && fields.zip(tuple).forall { case ((fn,fe), e) => fe == e }
     }
     override def getName = {
-      s"${baseStructName(structTag)}{${fields.map { case (fn,fe) => s"$fn: ${fe.name}"}.mkString("; ")}}"
+      s"${baseStructName(structTag)}$fieldsString"
     }
+    def fieldsString = s"{${fields.map { case (fn,fe) => s"$fn: ${fe.name}"}.mkString("; ")}}"
   }
-  implicit def StructElemExtensions[T <: Struct](e: Elem[T]) = e.asInstanceOf[StructElem[T]]
+  implicit def StructElemExtensions[T <: Struct](e: Elem[T]): StructElem[T] = e.asInstanceOf[StructElem[T]]
 
   def structElement[T <: Struct](tag: StructTag[T], fields: Seq[(String, Elem[_])]): StructElem[T] =
     if (cacheElems)
@@ -101,7 +103,7 @@ trait Structs { self: Scalan =>
   case class StructToPairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
     extends IsoUR[Struct, (B1, B2)] {
     override def equals(other: Any) = other match {
-      case iso: Structs#StructToPairIso[_, _, _, _] =>
+      case iso: StructsDsl#StructToPairIso[_, _, _, _] =>
         (this eq iso) || (iso1 == iso.iso1 && iso2 == iso.iso2)
       case _ => false
     }
@@ -135,7 +137,7 @@ trait Structs { self: Scalan =>
     assert(eTo.isEqualType(itemIsos.map(_.eTo)))
 
     override def equals(other: Any) = other match {
-      case iso: Structs#StructIso[_, _] =>
+      case iso: StructsDsl#StructIso[_, _] =>
         (this eq iso) || (eFrom == iso.eFrom && eTo == iso.eTo)
       case _ => false
     }
@@ -194,7 +196,7 @@ trait Structs { self: Scalan =>
   case class FlatteningIso[T <: Struct](eTo: StructElem[T], flatIsos: Map[String, Iso[_,_]], links: Seq[Link])
       extends IsoUR[Struct,T] {
     override def equals(other: Any) = other match {
-      case iso: Structs#FlatteningIso[_] =>
+      case iso: StructsDsl#FlatteningIso[_] =>
         (this eq iso) || (eFrom == iso.eFrom && eTo == iso.eTo)
       case _ => false
     }
@@ -377,10 +379,11 @@ trait Structs { self: Scalan =>
 
 }
 
-trait StructsSeq extends Structs { self: ScalanSeq =>
+trait StructsDslSeq extends StructsDsl with StructItemsDslSeq with StructKeysDslSeq { self: StructsDslSeq with ScalanSeq =>
+
   case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends Struct {
     override def equals(other: Any) = other match {
-      case ss: StructsSeq#StructSeq[_] =>
+      case ss: StructsDslSeq#StructSeq[_] =>
         tag == ss.tag && fields.sameElements(ss.fields)
       case _ => false
     }
@@ -399,8 +402,8 @@ trait StructsSeq extends Structs { self: ScalanSeq =>
   }
 }
 
-trait StructsExp extends Expressions with Structs with EffectsExp with ViewsDslExp
-    with GraphVizExport { self: ScalanExp =>
+trait StructsDslExp extends StructsDsl with Expressions with EffectsExp with ViewsDslExp with StructItemsDslExp
+    with StructKeysDslExp with GraphVizExport { self: StructsDslExp with ScalanExp =>
 
   abstract class AbstractStruct[T <: Struct] extends Def[T] {
     def tag: StructTag[T]
@@ -546,22 +549,6 @@ trait StructsExp extends Expressions with Structs with EffectsExp with ViewsDslE
   }
 }
 
-trait StructsCompiler[ScalanCake <: ScalanDslExp with StructsExp] extends Compiler[ScalanCake] {
-  import scalan._
 
-  override def graphPasses(compilerConfig: CompilerConfig) =
-    super.graphPasses(compilerConfig) ++
-      Seq(AllInvokeEnabler,
-          constantPass(StructsPass(DefaultMirror, StructsRewriter)))
-
-  case class StructsPass(mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
-    def name = "structs"
-    override val config = PassConfig(shouldUnpackTuples = true)
-    def apply(graph: PGraph): PGraph = {
-      graph.transform(mirror, rewriter, MapTransformer.Empty)
-    }
-  }
-
-}
 
 

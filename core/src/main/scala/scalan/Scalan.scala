@@ -46,7 +46,7 @@ abstract class Scalan
   with ListViews
   with ConvertersDsl
   with Effectful
-  with Structs
+  with StructsDsl
 
 trait ScalanDsl
 extends Scalan
@@ -85,7 +85,7 @@ abstract class ScalanSeq
   with ListViewsSeq
   with ConvertersDslSeq
   with EffectfulSeq
-  with StructsSeq
+  with StructsDslSeq
 
 class ScalanDslSeq
 extends ScalanSeq
@@ -127,9 +127,9 @@ abstract class ScalanExp
   with ListViewsExp
   with ConvertersDslExp
   with EffectfulExp
-  with StructsExp
   with RewriteRulesExp
   with GraphVizExport
+  with StructsDslExp
 
 class ScalanDslExp
 extends ScalanExp
