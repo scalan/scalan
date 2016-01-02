@@ -1,8 +1,7 @@
 package scalan.collections
 
 import scala.language.reflectiveCalls
-import scalan.compilation.DummyCompiler
-import scalan.primitives.StructsCompiler
+import scalan.compilation.{StructsCompiler, DummyCompiler}
 import scalan.{ScalanDslExp, BaseViewTests}
 import scalan.common.{Lazy, SegmentsDslExp}
 

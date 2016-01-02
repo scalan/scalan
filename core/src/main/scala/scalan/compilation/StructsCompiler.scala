@@ -1,8 +1,7 @@
-package scalan.primitives
+package scalan.compilation
 
-import scalan._
-import scalan.compilation.Compiler
 import scalan.ScalanDslExp
+import scalan.primitives.StructsDslExp
 
 /**
   * Created by slesarenko on 30/12/15.

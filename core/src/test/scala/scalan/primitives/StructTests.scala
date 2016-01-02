@@ -3,7 +3,7 @@ package scalan.primitives
 import scala.language.reflectiveCalls
 import scalan._
 import scalan.common.{SegmentsDslSeq, SegmentsDsl, SegmentsDslExp, Lazy}
-import scalan.compilation.DummyCompiler
+import scalan.compilation.{StructsCompiler, DummyCompiler}
 import scalan.it.BaseItTests
 
 trait StructExamples extends Scalan with SegmentsDsl {
