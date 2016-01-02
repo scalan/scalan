@@ -435,21 +435,26 @@ trait Collections { self: CollectionsDsl =>
         (implicit val eVal: Elem[Val], val eSchema: Elem[Schema])
     extends Collection[StructItem[Val,Schema]] {
     def eItem = element[StructItem[Val,Schema]]
+
+    private def itemSymbols: Seq[Rep[StructItem[Val,Schema]]] = {
+      val len = eSchema.fields.length
+      val syms = Seq.tabulate(len) { i =>
+        val item = struct.getItem(i).asRep[StructItem[Val, Schema]]
+        item
+      }
+      syms
+    }
+
     def length = eSchema.fields.length
-
-    def arr: Arr[StructItem[Val,Schema]] = ???
-
+    def arr: Arr[StructItem[Val,Schema]] = SArray.fromSyms(itemSymbols)
     def lst = arr.toList
-
     def apply(i: Rep[Int]) = struct.getItem(i).asRep[StructItem[Val,Schema]]
 
     @OverloadId("many")
     def apply(indices: Coll[Int])(implicit o: Overloaded1) = ???
 
     def mapBy[B: Elem](f: Rep[(StructItem[Val, Schema]) => B]) = {
-      val len = eSchema.fields.length
-      val syms = Seq.tabulate(len) { i =>
-        val item = struct.getItem(i).asRep[StructItem[Val, Schema]]
+      val syms = itemSymbols.map { item =>
         f(item)
       }
       Collection(SArray.fromSyms(syms))
