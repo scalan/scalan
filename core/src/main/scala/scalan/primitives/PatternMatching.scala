@@ -64,7 +64,7 @@ trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
           case None => super.rewriteDef(d) // TODO replace with Throw when we have better exceptions/effects support
         }
         // cheap check compared to TypeTag.<:<, we don't care about type arguments
-        case Branch(elem, guard, body) :: branchesTail if elem.runtimeClass.isAssignableFrom(selectorClass) =>
+        case Branch(elem, guard, body) :: branchesTail if selector.elem <:< elem => //elem.runtimeClass.isAssignableFrom(selectorClass) =>
           IF (guard(selector)) THEN {
             body(selector).asRep[A]
           } ELSE {
@@ -73,9 +73,10 @@ trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
           }
         case _ if selector.elem.isInstanceOf[ConcreteElem[_, _]] =>
           val possibleBranches = branches.filter { case Branch(elem, _, _) =>
-            val branchClass = elem.runtimeClass
-            // could be wrong if we match on mix-ins instead of the main hierarchy; currently they aren't supported
-            branchClass.isAssignableFrom(selectorClass) || selectorClass.isAssignableFrom(branchClass)
+//            val branchClass = elem.runtimeClass
+//            // could be wrong if we match on mix-ins instead of the main hierarchy; currently they aren't supported
+//            branchClass.isAssignableFrom(selectorClass) || selectorClass.isAssignableFrom(branchClass)
+            selector.elem <:< elem
           }
           if (possibleBranches.length < branches.length) {
             implicit val eA = d.selfType

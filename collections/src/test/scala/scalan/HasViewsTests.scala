@@ -2,8 +2,7 @@ package scalan
 
 import scalan.collections.CollectionsDslExp
 import scalan.common.SegmentsDslExp
-import scalan.compilation.DummyCompiler
-import scalan.primitives.StructsCompiler
+import scalan.compilation.{StructsCompiler, DummyCompiler}
 
 // TODO split tests which can be run in scalan-core
 class HasViewsTests extends BaseViewTests {
