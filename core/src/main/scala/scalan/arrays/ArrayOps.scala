@@ -96,6 +96,7 @@ trait ArrayOps { self: Scalan =>
     def repeat[T: Elem](n: Rep[Int])(f: Rep[Int => T]): Arr[T] = rangeFrom0(n).mapBy(f)
     def replicate[T: Elem](len: Rep[Int], v: Rep[T]) = array_replicate(len, v)
     def empty[T: Elem] = array_empty[T]
+    def fromSyms[T:Elem](syms: Seq[Rep[T]]): Arr[T] = array_fromSyms(syms)
   }
 
   trait ArrayFunctor extends Functor[Array] {
@@ -199,6 +200,12 @@ trait ArrayOps { self: Scalan =>
   def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[Int]
 
   def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double]
+  def array_fromSyms[T:Elem](syms: Seq[Rep[T]]): Arr[T]
+
+  def array_concat[A: Elem](arrs: Arr[A]*): Arr[A] = {
+    val arr: Arr[Array[A]] = SArray.fromSyms(arrs)
+    arr.flatten
+  }
 }
 
 trait ArrayOpsSeq extends ArrayOps {
@@ -363,6 +370,8 @@ trait ArrayOpsSeq extends ArrayOps {
 
   def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double] =
     arr.map(_ => scala.util.Random.nextGaussian() * e + m)
+
+  def array_fromSyms[T:Elem](syms: Seq[Rep[T]]): Arr[T] = syms.toArray
 }
 
 trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
@@ -415,6 +424,10 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class ArrayBinarySearch[T](i: Exp[T], xs: Exp[Array[T]], o: Ordering[T])(implicit val eT: Elem[T]) extends BaseDef[Int]
 
   case class ArrayRandomGaussian[T](m: Exp[T], e: Exp[T], xs: Exp[Array[T]])(implicit eItem: Elem[T]) extends ArrayDef[T]
+
+  case class SymsArray[A](symbols: Seq[Exp[A]])(implicit override val eItem: Elem[A]) extends ArrayDef[A] {
+    val length: Rep[Int] = symbols.length
+  }
 
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val eT = xs.elem.eItem
@@ -614,7 +627,35 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     ArrayRandomGaussian(m, e, arr)
   }
 
+  def array_fromSyms[T:Elem](syms: Seq[Rep[T]]): Arr[T] = {
+    SymsArray(syms)
+  }
+
+  type UnpackedSeq[T] = (Seq[Rep[Source]], Iso[Source, T]) forSome { type Source }
+
+  object HasEqualViews {
+    def unapply[T](syms: Seq[Exp[T]]): Option[UnpackedSeq[T]] = {
+      val sourceIsos = syms.map { l => l match {
+        case HasViews(source, iso) => (source, iso)
+        case s:Exp[a] => (s, identityIso[a](s.elem))
+      }}
+      val sources = sourceIsos.map(_._1)
+      val isos = sourceIsos.map(_._2)
+      isos.filterNot(_.asInstanceOf[Iso[_,_]].isIdentity).distinct.length == 1 match {
+        case true => isos.head match {
+          case iso: Iso[a,_] => Some((sources.map(_.asRep[a]), iso.asInstanceOf[Iso[a,T]]))
+        }
+        case _ => None
+      }
+    }
+  }
   override def rewriteDef[T](d: Def[T]) = d match {
+    case SymsArray(HasEqualViews(sources: Seq[Rep[a]], iso: Iso[_,b])) => {
+      val iso1 = iso.asInstanceOf[Iso[a,b]]
+      implicit val eA = iso1.eFrom
+      implicit val eB = iso1.eTo
+      ArrayIso(iso1).to(SArray.fromSyms[a](sources)(iso1.eFrom))
+    }
     case ArrayApply(Def(d2), i) => d2 match {
       case ArrayApplyMany(xs, is) =>
         implicit val eT = xs.elem.eItem
