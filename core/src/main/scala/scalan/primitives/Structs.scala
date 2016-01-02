@@ -59,6 +59,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     protected def getDefaultRep =
       struct(structTag, fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)
     def get(fieldName: String): Option[Elem[_]] = fields.find(_._1 == fieldName).map(_._2)
+    def apply(fieldIndex: Int): Elem[_] = fields(fieldIndex)._2
     def apply(fieldName: String): Elem[_] = fields.find(_._1 == fieldName).map(_._2).get
     def fieldNames = fields.map(_._1)
     def fieldElems: Seq[Elem[_]] = fields.map(_._2)

@@ -44,6 +44,17 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
   implicit def containerStructItem[S <: Struct : Elem]: Functor[({type f[x] = StructItem[x,S]})#f] =
     new StructItemFunctor[S] { def eS = element[S] }
 
+  implicit class StructElemExtensionsForStructItem[S <: Struct](e: Elem[S]) {
+    def getItemElem[V](i: Int): Elem[StructItem[V, S]] = {
+      val eV = e(i).asElem[V]
+      structItemElement(eV, e)
+    }
+    def getItemElem[V](fieldName: String): Elem[StructItem[V, S]] = {
+      val eV = e(fieldName).asElem[V]
+      structItemElement(eV, e)
+    }
+  }
+
   implicit class StructExtensionsForStructItem[S <: Struct](s: Rep[S])(implicit eS: Elem[S]) {
     def getItem(i: Int): Rep[StructItem[_, S]] = struct_getItem(s, i)
     def getItem(i: Rep[Int]): Rep[StructItem[_, S]] = struct_getItem(s, i)
