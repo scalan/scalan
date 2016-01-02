@@ -446,7 +446,14 @@ trait Collections { self: CollectionsDsl =>
     @OverloadId("many")
     def apply(indices: Coll[Int])(implicit o: Overloaded1) = ???
 
-    def mapBy[B: Elem](f: Rep[(StructItem[Val, Schema]) => B]) = ???
+    def mapBy[B: Elem](f: Rep[(StructItem[Val, Schema]) => B]) = {
+      val len = eSchema.fields.length
+      val syms = Seq.tabulate(len) { i =>
+        val item = struct.getItem(i).asRep[StructItem[Val, Schema]]
+        f(item)
+      }
+      Collection(SArray.fromSyms(syms))
+    }
 
     //= Collection(arr.mapBy(f))
     def zip[B: Elem](ys: Coll[B]): PairColl[StructItem[Val,Schema], B] = {

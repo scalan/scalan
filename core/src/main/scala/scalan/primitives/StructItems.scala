@@ -45,6 +45,7 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
     new StructItemFunctor[S] { def eS = element[S] }
 
   implicit class StructExtensionsForStructItem[S <: Struct](s: Rep[S])(implicit eS: Elem[S]) {
+    def getItem(i: Int): Rep[StructItem[_, S]] = struct_getItem(s, i)
     def getItem(i: Rep[Int]): Rep[StructItem[_, S]] = struct_getItem(s, i)
   }
 
