@@ -9,6 +9,7 @@ trait BaseSeq extends Base { self: ScalanSeq =>
   override protected def stagingExceptionMessage(message: String, syms: Seq[Rep[_]]) = message
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = x
+  def valueFromRep[A](x: Rep[A]): A = x
 
   override def def_unapply[A](e: Rep[A]): Option[Def[A]] = e match {
     case e: Def[A @unchecked] => Some(e)
