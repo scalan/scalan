@@ -10,10 +10,15 @@ trait StructKeys extends ViewsDsl with Entities  { self: StructsDsl with Scalan 
   trait StructKey[Schema <: Struct] extends Def[StructKey[Schema]] {
     def eSchema: Elem[Schema]
     def index: Rep[Int]
+    def name: Rep[String]
   }
   abstract class IndexStructKey[Schema <: Struct]
       (val index: Rep[Int])
       (implicit val eSchema: Elem[Schema]) extends StructKey[Schema] {
+    def name = {
+      val i = index.asValue
+      eSchema.fieldNames(i)
+    }
     override def toString = s"${eSchema.fieldsString}($index)"
   }
 
