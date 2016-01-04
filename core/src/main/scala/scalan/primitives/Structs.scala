@@ -46,11 +46,12 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     // Intentionally no case _, add something here or override when extending StructTag!
   }
 
+  type StructField = (String, Rep[Any])
   trait Struct {
     def tag: StructTag[_] // TODO add type argument?
 //    def keys: Rep[KeySet]
 //    def values: Rep[HList]
-    def fields: Seq[(String, Rep[Any])]
+    def fields: Seq[StructField]
   }
 
   case class StructElem[T <: Struct](structTag: StructTag[T], fields: Seq[(String, Elem[_])]) extends Elem[T] {
@@ -70,6 +71,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
       s"${baseStructName(structTag)}$fieldsString"
     }
     def fieldsString = s"{${fields.map { case (fn,fe) => s"$fn: ${fe.name}"}.mkString("; ")}}"
+    def findFieldIndex(fieldName: String): Int = fields.iterator.map(_._1).indexOf(fieldName)
   }
   implicit def StructElemExtensions[T <: Struct](e: Elem[T]): StructElem[T] = e.asInstanceOf[StructElem[T]]
 
@@ -179,16 +181,17 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     def getShort(fieldName: String): Rep[Short] = field(s, fieldName).asRep[Short]
   }
 
-  def struct(fields: (String, Rep[Any])*)(implicit o: Overloaded1): Rep[Struct] = struct(fields)
-  def struct(fields: Seq[(String, Rep[Any])]): Rep[Struct] = struct(defaultStructTag, fields)
-  def struct[T <: Struct](tag: StructTag[T], fields: (String, Rep[Any])*)(implicit o: Overloaded1): Rep[T] =
+  def struct(fields: StructField*)(implicit o: Overloaded1): Rep[Struct] = struct(fields)
+  def struct(fields: Seq[StructField]): Rep[Struct] = struct(defaultStructTag, fields)
+  def struct[T <: Struct](tag: StructTag[T], fields: StructField*)(implicit o: Overloaded1): Rep[T] =
     struct(tag, fields)
-  def struct[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T]
+  def struct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]): Rep[T]
   def tupleStruct(items: Rep[_]*): Rep[Struct] = {
     val fields = items.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f }
     struct(defaultStructTag, fields)
   }
   def field(struct: Rep[Struct], field: String): Rep[_]
+  def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[Any]): Rep[S]
   def field(struct: Rep[Struct], fieldIndex: Int): Rep[_] = field(struct, tupleFN(fieldIndex))
   def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct]
 
@@ -382,21 +385,32 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
 
 trait StructsDslSeq extends StructsDsl with StructItemsDslSeq with StructKeysDslSeq { self: StructsDslSeq with ScalanSeq =>
 
-  case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends Struct {
+  case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[StructField]) extends Struct {
     override def equals(other: Any) = other match {
       case ss: StructsDslSeq#StructSeq[_] =>
         tag == ss.tag && fields.sameElements(ss.fields)
       case _ => false
     }
+    def findFieldIndex(fieldName: String): Int = fields.iterator.map(_._1).indexOf(fieldName)
   }
 
-  def struct[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T] =
+  def struct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]): Rep[T] =
     StructSeq(tag, fields).asRep[T]
   def field(struct: Rep[Struct], field: String): Rep[_] =
     struct.asInstanceOf[StructSeq[_]].fields.find(_._1 == field) match {
       case Some((_, value)) => value
       case None => !!!(s"Field $field not found in structure $struct", struct)
     }
+
+  def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[Any]): Rep[S] = {
+    val s = struct.asInstanceOf[StructSeq[S]]
+    val buf = new scala.collection.mutable.ArrayBuffer[StructField](s.fields.length)
+    s.fields.copyToBuffer(buf)
+    val i = s.findFieldIndex(fieldName)
+    buf(i) = (buf(i)._1, v)
+    StructSeq(s.tag, buf).asInstanceOf[S]
+  }
+
   def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct] = {
     val StructSeq(tag, fieldsInStruct) = struct
     StructSeq(tag, fieldsInStruct.filter(fields.contains))
@@ -408,7 +422,7 @@ trait StructsDslExp extends StructsDsl with Expressions with EffectsExp with Vie
 
   abstract class AbstractStruct[T <: Struct] extends Def[T] {
     def tag: StructTag[T]
-    def fields: Seq[(String, Rep[Any])]
+    def fields: Seq[StructField]
     lazy val selfType = structElement(tag, fields.map { case (name, value) => (name, value.elem) })
   }
 
@@ -429,7 +443,7 @@ trait StructsDslExp extends StructsDsl with Expressions with EffectsExp with Vie
     def unapply[T <: Struct](d: Def[T]) = unapplyStruct(d)
   }
 
-  def unapplyStruct[T <: Struct](d: Def[T]): Option[(StructTag[T], Seq[(String, Rep[Any])])] = d match {
+  def unapplyStruct[T <: Struct](d: Def[T]): Option[(StructTag[T], Seq[StructField])] = d match {
     case s: AbstractStruct[T] => Some((s.tag, s.fields))
     case _ => None
   }
@@ -443,19 +457,32 @@ trait StructsDslExp extends StructsDsl with Expressions with EffectsExp with Vie
     case _ => None
   }
 
-  case class SimpleStruct[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends AbstractStruct[T]
+  case class SimpleStruct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]) extends AbstractStruct[T]
   case class FieldApply[T](struct: Rep[Struct], field: String) extends AbstractField[T]
+
+  case class FieldUpdate[S <: Struct, T](struct: Rep[S], fieldName: String, value: Rep[T]) extends AbstractStruct[S] {
+    val tag = struct.elem.structTag
+    val fields = struct.elem.fields.map { case (fn, _) =>
+      if (fn == fieldName)
+        (fieldName, value)
+      else
+        (fn, field(struct, fn))
+    }
+  }
+
   case class ProjectionStruct(struct: Rep[Struct], outFields: Seq[String]) extends AbstractStruct[Struct] {
     def tag = defaultStructTag
     val fields = outFields.map(fn => (fn, field(struct, fn)))
   }
 
-  def struct[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T] = SimpleStruct(tag, fields)
+  def struct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]): Rep[T] = SimpleStruct(tag, fields)
   def field(struct: Rep[Struct], field: String): Rep[_] = FieldApply[Any](struct, field) // TODO Any?
+  def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[Any]): Rep[S] = FieldUpdate[S,Any](struct, fieldName, v)
   def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct] = ProjectionStruct(struct, fields)
 
   override def syms(e: Any): List[Exp[Any]] = e match {
     case s: ProjectionStruct => syms(s.struct)
+    case FieldUpdate(s, _, v) => syms(s) :+ v
     case s: AbstractStruct[_] => s.fields.flatMap(e => this.syms(e._2)).toList
     case _ => super.syms(e)
   }
@@ -479,24 +506,28 @@ trait StructsDslExp extends StructsDsl with Expressions with EffectsExp with Vie
 
   override def aliasSyms(e: Any): List[Exp[Any]] = e match {
     case SimpleStruct(tag,fields) => Nil
+    case FieldUpdate(s, fn, v) => Nil
     case FieldApply(s,x) => Nil
     case _ => super.aliasSyms(e)
   }
 
   override def containSyms(e: Any): List[Exp[Any]] = e match {
     case SimpleStruct(tag,fields) => fields.collect { case (k, v: Sym[_]) => v }.toList
+    case FieldUpdate(s, fn, v) => List(v)
     case FieldApply(s,x) => Nil
     case _ => super.containSyms(e)
   }
 
   override def extractSyms(e: Any): List[Exp[Any]] = e match {
     case SimpleStruct(tag,fields) => Nil
+    case FieldUpdate(_,_,_) => Nil
     case FieldApply(s,x) => syms(s)
     case _ => super.extractSyms(e)
   }
 
   override def copySyms(e: Any): List[Exp[Any]] = e match {
     case SimpleStruct(tag,fields) => Nil
+    case FieldUpdate(_,_,_) => Nil
     case FieldApply(s,x) => Nil
     case _ => super.copySyms(e)
   }
@@ -505,7 +536,8 @@ trait StructsDslExp extends StructsDsl with Expressions with EffectsExp with Vie
     case SimpleStruct(tag, fields) =>
       s"${baseStructName(tag)}{${fields.map { case (fn, s) => s"$fn:$s" }.mkString("; ")}}"
     case ProjectionStruct(struct, outs) => s"$struct.{${outs.mkString(",")}}"
-    case FieldApply(struct, fn) => s"$struct.[$fn]"
+    case FieldUpdate(s, fn, v) => s"$s.$fn := $v"
+    case FieldApply(struct, fn) => s"$struct.$fn"
     case _ => super.formatDef(d)
   }
 

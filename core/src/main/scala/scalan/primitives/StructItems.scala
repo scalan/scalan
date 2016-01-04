@@ -3,7 +3,7 @@ package scalan.primitives
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scala.reflect.runtime.universe._
-import scalan.common.OverloadHack.Overloaded1
+import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 
 trait StructItems extends ViewsDsl with Entities  { self: StructsDsl with Scalan =>
 
@@ -27,10 +27,13 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
 
   def struct_getItem[S <: Struct](s: Rep[S], i: Int)(implicit eS: Elem[S], o1: Overloaded1): Rep[StructItem[_,S]] = {
     val names = eS.fieldNames
-    val keySet = KeySet(names)
     val value = s(names(i))
     val key = IndexStructKey[S](i)
     StructItemBase(key, value)(eS.fields(i)._2.asElem[Any], eS)
+  }
+
+  def struct_setItem[S <: Struct](s: Rep[S], i: Rep[Int], v: Rep[_])(implicit eS: Elem[S]): Rep[S] = {
+    updateField(s, eS.fieldNames(i.asValue), v)
   }
 
   trait StructItemFunctor[S <: Struct] extends Functor[({type f[x] = StructItem[x,S]})#f] {
@@ -56,14 +59,17 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
   }
 
   implicit class StructExtensionsForStructItem[S <: Struct](s: Rep[S])(implicit eS: Elem[S]) {
-    def getItem(i: Int): Rep[StructItem[_, S]] = struct_getItem(s, i)
-    def getItem(i: Rep[Int]): Rep[StructItem[_, S]] = struct_getItem(s, i)
+    def getItem[A](i: Int): Rep[StructItem[A, S]] = struct_getItem(s, i).asRep[StructItem[A,S]]
+    def getItem[A](i: Rep[Int]): Rep[StructItem[A, S]] = struct_getItem(s, i).asRep[StructItem[A,S]]
+    def getItem[A](k: Rep[StructKey[S]])(implicit o: Overloaded2): Rep[StructItem[A,S]] = struct_getItem(s, k.index).asRep[StructItem[A,S]]
+    def setItem(k: Rep[StructKey[S]], v: Rep[_]): Rep[S] = struct_setItem(s, k.index, v)
   }
 
 }
 
 trait StructItemsDslSeq extends impl.StructItemsSeq {self: StructsDsl with ScalanSeq =>
   def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int])(implicit eS: Elem[S]): Rep[StructItem[_,S]] = struct_getItem(s, i)
+
 }
 trait StructItemsDslExp extends impl.StructItemsExp {self: StructsDsl with ScalanExp =>
 
