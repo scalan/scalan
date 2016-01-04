@@ -42,9 +42,14 @@ trait Base extends LazyLogging { self: Scalan =>
   implicit class RepForSomeExtension(x: Rep[_]) {
     def asRep[T]: Rep[T] = x.asInstanceOf[Rep[T]]
   }
+  implicit class RepExtension[A](x: Rep[A]) {
+    def asValue: A = valueFromRep(x)
+  }
 
   def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for $x with element $eA")
   implicit def liftToRep[A:Elem](x: A): Rep[A] = toRep(x)
+
+  def valueFromRep[A](x: Rep[A]): A
 
   trait Def[+T] extends Product {
     def selfType: Elem[T @uncheckedVariance]

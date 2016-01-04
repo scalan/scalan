@@ -206,6 +206,11 @@ trait BaseExp extends Base { scalan: ScalanExp =>
       }
   }
 
+  def valueFromRep[A](x: Rep[A]): A = x match {
+    case Def(Const(x)) => x
+    case _ => delayInvoke
+  }
+
   def def_unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
 
   override def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T] = x.elem
