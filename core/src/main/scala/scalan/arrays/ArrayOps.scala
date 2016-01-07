@@ -95,6 +95,7 @@ trait ArrayOps { self: Scalan =>
       rangeFrom0(n).map(f)
     def repeat[T: Elem](n: Rep[Int])(f: Rep[Int => T]): Arr[T] = rangeFrom0(n).mapBy(f)
     def replicate[T: Elem](len: Rep[Int], v: Rep[T]) = array_replicate(len, v)
+    def singleton[T: Elem](v: Rep[T]) = array_replicate(1, v)
     def empty[T: Elem] = array_empty[T]
     def fromSyms[T:Elem](syms: Seq[Rep[T]]): Arr[T] = array_fromSyms(syms)
   }
@@ -103,10 +104,10 @@ trait ArrayOps { self: Scalan =>
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Array[T]]
     def lift[T](implicit eT: Elem[T]) = element[Array[T]]
     def unlift[T](implicit eFT: Elem[Array[T]]) = eFT.eItem
-    def getElem[T](fa: Rep[Array[T]]) = !!!("Operation is not supported by Array container " + fa)
+    def getElem[T](fa: Rep[Array[T]]) = rep_getElem(fa)
     def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.mapBy(fun(f))
   }
-  implicit val containerArray: Functor[Array] = new ArrayFunctor {}
+  implicit val arrayContainer: Functor[Array] = new ArrayFunctor {}
 
   abstract class ArrayElem[A](implicit eItem: Elem[A])
     extends EntityElem1[A, Array[A], Array](eItem, container[Array]) {

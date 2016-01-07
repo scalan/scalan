@@ -505,7 +505,7 @@ trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
     def getElem[T](fa: Rep[Collection[T]]) = fa.selfType1
     def map[A:Elem,B:Elem](xs: Rep[Collection[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
-  implicit val containerCollection: Functor[Collection] = new CollectionFunctor {}
+  val collectionContainer: Functor[Collection] = new CollectionFunctor {}
 
   implicit class CollectionExtensions[A](coll: Coll[A]) {
     implicit def eItem: Elem[A] = coll.selfType1.eItem

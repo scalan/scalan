@@ -149,6 +149,7 @@ trait Base extends LazyLogging { self: Scalan =>
     def selfType1: Elem[T] = repDef_getElem(x)
   }
   def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T]
+  def rep_getElem[T](x: Rep[T]): Elem[T]
 
   def reifyObject[A](d: Def[A]): Rep[A]
 
