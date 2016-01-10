@@ -53,6 +53,10 @@ trait ListOps { self: Scalan =>
     def lift[T](implicit eT: Elem[T]) = element[List[T]]
     def unlift[T](implicit eFT: Elem[List[T]]) = eFT.eItem
     def getElem[T](fa: Rep[List[T]]) = !!!("Operation is not supported by List container " + fa)
+    def unapply[T](e: Elem[_]) = e match {
+      case e: ListElem[_] => Some(e.asElem[List[T]])
+      case _ => None
+    }
     def map[A:Elem,B:Elem](xs: Rep[List[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
 

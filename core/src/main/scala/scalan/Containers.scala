@@ -16,6 +16,7 @@ trait Containers { self: Scalan =>
     def unlift[T](implicit eFT: Elem[F[T]]): Elem[T]
     def getElem[T](fa: Rep[F[T]]): Elem[F[T]]
     def getItemElem[T](fa: Rep[F[T]]): Elem[T] = unlift(getElem(fa))
+    def unapply[T](e: Elem[_]): Option[Elem[F[T]]]
 
     protected def getName = {
       // note: will use WeakTypeTag[x], so x type parameter ends up in the result

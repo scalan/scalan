@@ -35,6 +35,10 @@ trait IOsDsl extends ScalanDsl with impl.IOsAbs with IOs
     def lift[T](implicit eT: Elem[T]) = element[IO[T]]
     def unlift[T](implicit eFT: Elem[IO[T]]) = eFT.asInstanceOf[IOElem[T,_]].eA
     def getElem[T](fa: Rep[IO[T]]) = fa.selfType1
+    def unapply[T](e: Elem[_]) = e match {
+      case e: IOElem[_,_] => Some(e.asElem[IO[T]])
+      case _ => None
+    }
   }
 
   class IOs[F[_]:Cont](implicit I: Inject[IO,F]) {

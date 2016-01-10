@@ -460,7 +460,6 @@ trait Collections { self: CollectionsDsl =>
       Collection(SArray.fromSyms(syms))
     }
 
-    //= Collection(arr.mapBy(f))
     def zip[B: Elem](ys: Coll[B]): PairColl[StructItem[Val,Schema], B] = {
       def error = !!!(s"Argument is not StructItemCollection: $ys", self)
       ys.selfType1 match {
@@ -475,12 +474,10 @@ trait Collections { self: CollectionsDsl =>
       }
     }
 
-    // = PairCollectionSOA(self, ys)
     def slice(offset: Rep[Int], length: Rep[Int]) = ???
 
     def reduce(implicit m: RepMonoid[StructItem[Val, Schema]]) = ???
 
-    //= arr.reduce(m)
     def update(idx: Rep[Int], value: Rep[StructItem[Val, Schema]]) = ???
 
     def updateMany(idxs: Coll[Int], vals: Coll[StructItem[Val, Schema]]) = ???
@@ -489,7 +486,6 @@ trait Collections { self: CollectionsDsl =>
 
     def flatMapBy[B: Elem](f: Rep[(StructItem[Val, Schema]) => Collection[B]]) = ???
 
-    // = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[StructItem[Val, Schema]]) = ???
 
     def sortBy[O: Elem](by: Rep[(StructItem[Val, Schema]) => O])(implicit o: Ordering[O]) = ???
@@ -503,9 +499,13 @@ trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
     def lift[A](implicit evA: Elem[A]) = element[Collection[A]]
     def unlift[T](implicit eFT: Elem[Collection[T]]) = eFT.asInstanceOf[CollectionElem[T,_]].eItem
     def getElem[T](fa: Rep[Collection[T]]) = fa.selfType1
+    def unapply[A](e: Elem[_]) = e match {
+      case te: CollectionElem[_, _] => Some(te.asElem[Collection[A]])
+      case _ => None
+    }
     def map[A:Elem,B:Elem](xs: Rep[Collection[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
-  implicit val containerCollection: Functor[Collection] = new CollectionFunctor {}
+  implicit val collectionContainer: Functor[Collection] = new CollectionFunctor {}
 
   implicit class CollectionExtensions[A](coll: Coll[A]) {
     implicit def eItem: Elem[A] = coll.selfType1.eItem

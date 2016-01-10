@@ -47,6 +47,10 @@ trait StatesDsl extends impl.StatesAbs { self: MonadsDsl =>
     def lift[T](implicit eT: Elem[T]) = element[State0[S,T]]
     def unlift[T](implicit eFT: Elem[State0[S, T]]) = eFT.asInstanceOf[State0Elem[S,T,_]].eA
     def getElem[T](fa: Rep[State0[S, T]]) = fa.selfType1
+    def unapply[T](e: Elem[_]) = e match {
+      case te: State0Elem[_, _, _] => Some(te.asElem[State0[S,T]])
+      case _ => None
+    }
   }
 
   implicit def state0Monad[S:Elem]: Monad[({type f[x] = State0[S,x]})#f] = new State0Cont[S] with Monad[({type f[x] = State0[S,x]})#f] {

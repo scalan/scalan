@@ -419,6 +419,90 @@ trait ConvertersAbs extends Converters {
   def mkFunctorConverter[A, B, F[_]](itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]]
   def unmkFunctorConverter[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]): Option[(Rep[Converter[A, B]])]
 
+  abstract class AbsNaturalConverter[A, F[_], G[_]]
+      (convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G])
+    extends NaturalConverter[A, F, G](convFun) with Def[NaturalConverter[A, F, G]] {
+    lazy val selfType = element[NaturalConverter[A, F, G]]
+  }
+  // elem for concrete class
+  class NaturalConverterElem[A, F[_], G[_]](val iso: Iso[NaturalConverterData[A, F, G], NaturalConverter[A, F, G]])(implicit val eA: Elem[A], val cF: Cont[F], val cG: Cont[G])
+    extends ConverterElem[F[A], G[A], NaturalConverter[A, F, G]]
+    with ConcreteElem[NaturalConverterData[A, F, G], NaturalConverter[A, F, G]] {
+    override lazy val parent: Option[Elem[_]] = Some(converterElement(element[F[A]], element[G[A]]))
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA), "F" -> Right(cF.asInstanceOf[SomeCont]), "G" -> Right(cG.asInstanceOf[SomeCont]))
+    }
+
+    override def convertConverter(x: Rep[Converter[F[A], G[A]]]) = NaturalConverter(x.convFun)
+    override def getDefaultRep = NaturalConverter(constFun[F[A], G[A]](element[G[A]].defaultRepValue))
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[NaturalConverter[A, F, G]]
+    }
+  }
+
+  // state representation type
+  type NaturalConverterData[A, F[_], G[_]] = F[A] => G[A]
+
+  // 3) Iso for concrete class
+  class NaturalConverterIso[A, F[_], G[_]](implicit eA: Elem[A], cF: Cont[F], cG: Cont[G])
+    extends EntityIso[NaturalConverterData[A, F, G], NaturalConverter[A, F, G]] with Def[NaturalConverterIso[A, F, G]] {
+    override def from(p: Rep[NaturalConverter[A, F, G]]) =
+      p.convFun
+    override def to(p: Rep[F[A] => G[A]]) = {
+      val convFun = p
+      NaturalConverter(convFun)
+    }
+    lazy val eFrom = element[F[A] => G[A]]
+    lazy val eTo = new NaturalConverterElem[A, F, G](self)
+    lazy val selfType = new NaturalConverterIsoElem[A, F, G](eA, cF, cG)
+    def productArity = 3
+    def productElement(n: Int) = (eA, cF, cG).productElement(n)
+  }
+  case class NaturalConverterIsoElem[A, F[_], G[_]](eA: Elem[A], cF: Cont[F], cG: Cont[G]) extends Elem[NaturalConverterIso[A, F, G]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new NaturalConverterIso[A, F, G]()(eA, cF, cG))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[NaturalConverterIso[A, F, G]]
+    }
+  }
+  // 4) constructor and deconstructor
+  class NaturalConverterCompanionAbs extends CompanionDef[NaturalConverterCompanionAbs] {
+    def selfType = NaturalConverterCompanionElem
+    override def toString = "NaturalConverter"
+
+    def apply[A, F[_], G[_]](convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]): Rep[NaturalConverter[A, F, G]] =
+      mkNaturalConverter(convFun)
+  }
+  object NaturalConverterMatcher {
+    def unapply[A, F[_], G[_]](p: Rep[Converter[F[A], G[A]]]) = unmkNaturalConverter(p)
+  }
+  lazy val NaturalConverter: Rep[NaturalConverterCompanionAbs] = new NaturalConverterCompanionAbs
+  implicit def proxyNaturalConverterCompanion(p: Rep[NaturalConverterCompanionAbs]): NaturalConverterCompanionAbs = {
+    proxyOps[NaturalConverterCompanionAbs](p)
+  }
+
+  implicit case object NaturalConverterCompanionElem extends CompanionElem[NaturalConverterCompanionAbs] {
+    lazy val tag = weakTypeTag[NaturalConverterCompanionAbs]
+    protected def getDefaultRep = NaturalConverter
+  }
+
+  implicit def proxyNaturalConverter[A, F[_], G[_]](p: Rep[NaturalConverter[A, F, G]]): NaturalConverter[A, F, G] =
+    proxyOps[NaturalConverter[A, F, G]](p)
+
+  implicit class ExtendedNaturalConverter[A, F[_], G[_]](p: Rep[NaturalConverter[A, F, G]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]) {
+    def toData: Rep[NaturalConverterData[A, F, G]] = isoNaturalConverter(eA, cF, cG).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoNaturalConverter[A, F[_], G[_]](implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]): Iso[NaturalConverterData[A, F, G], NaturalConverter[A, F, G]] =
+    reifyObject(new NaturalConverterIso[A, F, G]()(eA, cF, cG))
+
+  // 6) smart constructor and deconstructor
+  def mkNaturalConverter[A, F[_], G[_]](convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]): Rep[NaturalConverter[A, F, G]]
+  def unmkNaturalConverter[A, F[_], G[_]](p: Rep[Converter[F[A], G[A]]]): Option[(Rep[F[A] => G[A]])]
+
   registerModule(Converters_Module)
 }
 
@@ -483,6 +567,20 @@ trait ConvertersSeq extends ConvertersDsl {
       Some((p.itemConv))
     case _ => None
   }
+
+  case class SeqNaturalConverter[A, F[_], G[_]]
+      (override val convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G])
+    extends AbsNaturalConverter[A, F, G](convFun) {
+  }
+
+  def mkNaturalConverter[A, F[_], G[_]]
+    (convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]): Rep[NaturalConverter[A, F, G]] =
+    new SeqNaturalConverter[A, F, G](convFun)
+  def unmkNaturalConverter[A, F[_], G[_]](p: Rep[Converter[F[A], G[A]]]) = p match {
+    case p: NaturalConverter[A, F, G] @unchecked =>
+      Some((p.convFun))
+    case _ => None
+  }
 }
 
 // Exp -----------------------------------
@@ -507,8 +605,6 @@ trait ConvertersExp extends ConvertersDsl {
         case _ => None
       }
     }
-
-    // WARNING: Cannot generate matcher for method `toString`: Overrides Object method
 
     // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
   }
@@ -617,8 +713,6 @@ trait ConvertersExp extends ConvertersDsl {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `toString`: Overrides Object method
-
     // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
   }
 
@@ -631,6 +725,36 @@ trait ConvertersExp extends ConvertersDsl {
   def unmkFunctorConverter[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: FunctorConverterElem[A, B, F] @unchecked =>
       Some((p.asRep[FunctorConverter[A, B, F]].itemConv))
+    case _ =>
+      None
+  }
+
+  case class ExpNaturalConverter[A, F[_], G[_]]
+      (override val convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G])
+    extends AbsNaturalConverter[A, F, G](convFun)
+
+  object NaturalConverterMethods {
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[NaturalConverter[A, F, G]], Rep[F[A]]) forSome {type A; type F[_]; type G[_]}] = d match {
+        case MethodCall(receiver, method, Seq(xs, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: NaturalConverterElem[_, _, _] => true; case _ => false }) && method.getName == "apply" =>
+          Some((receiver, xs)).asInstanceOf[Option[(Rep[NaturalConverter[A, F, G]], Rep[F[A]]) forSome {type A; type F[_]; type G[_]}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[NaturalConverter[A, F, G]], Rep[F[A]]) forSome {type A; type F[_]; type G[_]}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
+  }
+
+  def mkNaturalConverter[A, F[_], G[_]]
+    (convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]): Rep[NaturalConverter[A, F, G]] =
+    new ExpNaturalConverter[A, F, G](convFun)
+  def unmkNaturalConverter[A, F[_], G[_]](p: Rep[Converter[F[A], G[A]]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: NaturalConverterElem[A, F, G] @unchecked =>
+      Some((p.asRep[NaturalConverter[A, F, G]].convFun))
     case _ =>
       None
   }
@@ -659,6 +783,8 @@ trait ConvertersExp extends ConvertersDsl {
         case _ => None
       }
     }
+
+    // WARNING: Cannot generate matcher for method `toString`: Overrides Object method
   }
 
   object ConverterCompanionMethods {
@@ -666,7 +792,7 @@ trait ConvertersExp extends ConvertersDsl {
 }
 
 object Converters_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAO1YP2wbVRh/Z8dxbIcmtLTQVm3SyICoiN1YSB0yVL40gSI3iXwZkKkaPZ9f0iv3L3fPkc1QMVUINsTCgEQlFqQuiAkhIRYkxMBUISQmBqZSVHWgYgDxvXd/fHe+OztELKgeTvfuvve97/v9Ob3nuw9QzrbQC7aMVaxXNEJxReL3dZuWpVWdKrR/1eh0VXKZ7DxnfPPJ0menvsygmRaavIHty7baQgXnZrVn+vcS2WugAtZlYlPDsik61+ArVGVDVYlMFUOvKprWpbitkmpDselyA020jU5/D91CQgPNyoYuW4QSaUXFtk1s9/kUYRUp/rjAx/0Nc7CGXmVdVANdbFlYoVA+rDHrxDeJKfV1Q+9rFB1xS9swWVkQk1c007Cot0Qe0t0wOt5wQsfwAB1t3MT7uApL7FYlain6LswsmVh+C++SdQhh4RNQsE3Una2+ycfZBiraZA8AuqKZKn/SMxFCwECNF1EZ4FPx8akwfMoSsRSsKm9j9nLTMnp95PyELEI9E1K8PCKFl4Gs6p3ye9fkNx9LJS3DJvdYKXne4SQkmktQA6cCcPyu+YH96NU7FzOo2EJFxa63bWphmQYpd9EqYV03KK/ZBxBbu8DWQhJbfJU6xEQkUZANzcQ6ZHKhnAaeVEVWKAtmz6ZddhKgz1OTeKFCzxT8fucT+uW6WcGqunn/5OLzv62+kUGZ8BIFSCmB8C0vKUWFFUPfJxYllpufXWcoErYGILNhkw/ZpdAbXPMp5fjAvHj/9863F9C1jA+nu/p4DEKKnP3Tj6V7L13KoKkW1/uaindbgKi9qhJtw4IeaAtNGdCI8ya/j1V2F8tovkN2cFelLs5BgLIAEEXzic40CUNvmbtA8AAoOUJeN3RSXtss/yF9/+FdplMLTTtvHKv+rVz86+cjO5RLmKI8fDL217q6h3AWTO4DcjaJYpPAFPnelY+OzZzZ/oUTPNkxNKxwlZ1uoJwFFuftnHYBPhCZRadiydDI0wuPlOt33qecNqEX/oZstG+CaZf5vLMpDHrfss9v3z7+8NPtY9yDU22FatgsXziAAz3D/IcOQz4qDlLPDsbsMgeknRCxTXzHrATXnwtMDFjplOAphQdRlCFbHg8TTL2xtnNISUrQTEswzC1FT4XK5nl8qZ1Jlhpgc6LZeEZ9cOnrDMq9jnI7YCkbNNY2unrHAx10TEmPit4zIQw6gIwtrPkg8988GkAWludKbEAzikpJCLc99BlLkaRJtrqmSl756s/r777zmsn1PfRlDKfP1JdCDsrUa9GKrkZmiJEZYnDGsPWGdIMitOfY92LJZ571O6JGt4KglmKT1lKT1sZqwwk4z6+L4xhpEyvW4YyUJfUBHMNG8OBIsxKkqKWmGGI5JoWYWkUMCTEpUquIgRwsHQIwaOlEF4UEkhBRGxUhjswhDoE20qxe8+U2tuJZTKEkYeIT/6X577jU1Z7Y79/bbzqI3//DfcJaZFyPcdpQkHg4V00plGi+7OM94BYyYsmDOuAk20jDxvOwu7l6inaGIYxJIKYlEEcmcBmB4LzbUZTWGPnORpsfS8JBIuIDxFEBayPX2E4QVGDiIgq3mIUDxpgaH+sgFFJvREnjC+xomrJCJ+/xwD/QJtm/CpVBjBtYHIBDYUW+M3Z7s9BCwq5Zco9OAPWtxx+vn//hi1/56bPIDmFw8tX9P6AGm//oLnrSyRcoE0TPzmS8xH8AbIcRXNwTAAA="
+  val dump = "H4sIAAAAAAAAAO1YTWwbRRSeteM4tkMTWlpoqzYhMiCqNm4spB5yqOw0CUVuEnlzQKZqNF5P0i37l91xZHOoOFUIbogLByQqcUHqBXFCSIgLEuLAqUKVOHHgVIqqHlpxAPFm9se73h/bDbmg+jDyrN+8ee/7GXn2zgOUsUz0qiVhBWvzKqF4XuTfKxYtissalWn3it5qK+QS2X5J//7zhS9PfJNCUw00fh1blyylgXL2l+WO4X0XyW4N5bAmEYvqpkXRyzW+Q0nSFYVIVNa1kqyqbYqbCinVZIsu1tBYU291d9FNJNTQtKRrkkkoEZcUbFnEcp5PEFaR7M1zfN5dN3p7aCXWRcnXxaaJZQrlwx7TdnydGGJX07WuStEhp7R1g5UFMVlZNXSTultkId11veVOxzQMD9Dh2g28h0uwxU5JpKas7cDKgoGld/EOWYMQFj4GBVtE2d7sGnyerqG8RXYBoMuqofAnHQMhBAyUeRHzPXzmPXzmGT5FkZgyVuT3MPtxw9Q7XWR/hDRCHQNSnB2Qws1AlrVW8cOr0jtPxIKaYos7rJQs73AcEs3EqIFTATj+WP/YerR6+0IK5RsoL1uVpkVNLFE/5Q5aBaxpOuU1ewBicwfYmotji+9SgZg+SeQkXTWwBpkcKCeBJ0WWZMqC2bNJh50Y6LPUIG6o0DEEr9/ZmH65bpawomzcP37ulT+W306hVHCLHKQUQfimm5Si3JKu7RGTEtPJz8YpioTNHshsWudTNuQ6vTGbUI4HzGv3/2z9cB5dTXlwOrsPxyCkyFj3fincff1iCk00uN5XFLzTAEStZYWo6yb0QBtoQodG7F+ye1hh3yIZzbbINm4r1MHZD1AaAKJoNtaZBmHoLXIXCC4ABVvIa7pGiisbxcfiT5/cYTo10aT9i23Vf+QLf/96aJtyCVOUhSNjb6WtuQinweQeIKfjKDYILJHuXv70yNSprd84weMtXcUyV9nJGsqYYHHezkkH4JHIzNsVi7pKnp97JF+7/RHltAmd4Bmy3rwBpl3k604nMOieZV/dunX04RdbR7gHJ5oyVbFRPD+CA13DHKDDkIeKjdSLvTkbZoC0Y1VsEc8xS/79Z3wLfVY6IbhK4UEUpcimy8MYU2+k7WxS4hLUkxKEuaXouUDZPI8ntVPxUgNsjtVrLygPLn6XQpm3UGYbLGWBxpp6W2u5oIOOKenQqvtMCIIOIGMTqx7I/DOLepAF5bkUGVDvR6UgBNsOHWMJkjTIZttQyBvf/nXtg/ffNLi+QydjMH2qshBwUKpS7q/oSt+Kat+Kqn9F2Hoh3aA+2jPsvFjwmGf9DqjRqcCvpcik5cSk5aHasAPO8PHcMEbawLK5PyOlSaUHR9gILhxJVoIU5cQUIZYjUlQTq4ggISJFYhURkIOlAwD6LR3rooBAYiLKgyKqA3NUQ6ANNKvbfLGJzWgWEyiJWfjMf0n+Oyq21Wf2e3r7Tfrx+3+4T1jpm1cinBYKqu7PVRMyJaon+2gPOIUM2HJUBxxnf6Thj+d+/81VErQThjAiQTUpQXVgAocRCM46HfXTGiHf6f7mh5Kwn4jogOqggJWBe2yFyj0AFa8mBD2FihPucmwsHmBxPeIOWKeSpzNmUZogsrgEq0kJVqNUuoZp28TKf63SASKEQTjb3090ptXRMoVUPe4cV0Ew0nBhHlLtQ13sAzr2IkY9MA8nnZSBN0nD0TTSpc8bBTMALwvM98ChsCO/6Tm9mWgu5hYoOq8CAOqbTz5bO/Pz17/ztyl59lJB14jmvVDtXWb7b4Xjdj5fmaBt9o6Bl/gvwhNVKqwWAAA="
 }
 }
 

@@ -2,9 +2,9 @@ package scalan.primitives
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scalan.common.{Default, Lazy}
+import scalan.util.CollectionUtil._
 import scalan.common.OverloadHack._
-import scalan.compilation.{Compiler, GraphVizConfig, GraphVizExport}
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
 
 /**
@@ -362,6 +362,46 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     case _ =>
       !!!(s"Don't know how merge non struct $e")
   }).asInstanceOf[Iso[_,T]]
+
+  def tuplifyStruct[A <: Struct](se: Elem[A]): Elem[_] = {
+    val res = foldRight[(String,Elem[_]), Elem[_]](se.fields)(_._2) { case ((fn,fe), e) => pairElement(fe, e) }
+    res
+  }
+
+  def unzipMany[T](tuple: Rep[_], list: List[T]): List[Rep[_]] = {
+    val pair = tuple.asRep[(Any, Any)]
+    list match {
+      case Nil => List(tuple)
+      case x :: Nil => List(tuple)
+      case x :: y :: Nil => List(pair._1, pair._2)
+      case x :: xs =>
+        pair._1 :: unzipMany(pair._2, xs)
+    }
+  }
+
+  case class PairifyIso[A, AS <: Struct](eTo: Elem[AS]) extends IsoUR[A, AS] {
+    val eFrom: Elem[A] = tuplifyStruct(eTo).asElem[A]
+
+    def from(y: Rep[AS]) =  {
+      val res = foldRight[String, Rep[_]](eTo.fieldNames)(fn => y(fn)) {
+        case (fn, s) => Pair(y(fn), s)
+      }
+      res.asRep[A]
+    }
+
+    override def to(x: Rep[A]) = {
+      val items = unzipMany(x, eTo.fields.toList)
+      val fields = eTo.fieldNames.zip(items.map(_.asRep[Any]))
+      struct(fields).asRep[AS]
+    }
+
+    override def equals(other: Any) = other match {
+      case iso: PairifyIso[_,_] =>
+        (this eq iso) || (eFrom == iso.eFrom && eTo == iso.eTo)
+      case _ => false
+    }
+    lazy val selfType = new ConcreteIsoElem[A, AS, PairifyIso[A, AS]](eFrom, eTo).asElem[IsoUR[A, AS]]
+  }
 
   def structWrapper[A:Elem,B:Elem](f: Rep[A => B]): Rep[Any => Any] = {
     val wrapperFun = (getStructWrapperIso[A], getStructWrapperIso[B]) match {

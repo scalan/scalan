@@ -47,6 +47,10 @@ trait AuthenticationsDsl extends ScalanDsl with impl.AuthenticationsAbs with Aut
     def lift[T](implicit eT: Elem[T]) = element[Auth[T]]
     def unlift[T](implicit eFT: Elem[Auth[T]]) = eFT.asInstanceOf[AuthElem[T,_]].eA
     def getElem[T](fa: Rep[Auth[T]]) = fa.selfType1
+    def unapply[T](e: Elem[_]) = e match {
+      case e: AuthElem[_,_] => Some(e.asElem[Auth[T]])
+      case _ => None
+    }
   }
 
   class Auths[F[_]:Cont](implicit I: Inject[Auth,F]) {

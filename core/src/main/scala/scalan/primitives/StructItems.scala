@@ -42,19 +42,23 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
     def lift[T](implicit eT: Elem[T]) = element[StructItem[T,S]]
     def unlift[T](implicit eFT: Elem[StructItem[T,S]]) = eFT.asInstanceOf[StructItemElem[T,S,_]].eVal
     def getElem[T](fa: Rep[StructItem[T,S]]) = fa.selfType1
+    def unapply[T](e: Elem[_]) = e match {
+      case e: StructItemElem[_, _, _] => Some(e.asElem[StructItem[T,S]])
+      case _ => None
+    }
     def map[A:Elem,B:Elem](xs: Rep[StructItem[A,S]])(f: Rep[A] => Rep[B]) = StructItemBase(xs.key, f(xs.value))
   }
-  implicit def containerStructItem[S <: Struct : Elem]: Functor[({type f[x] = StructItem[x,S]})#f] =
+  implicit def structItemContainer[S <: Struct : Elem]: Functor[({type f[x] = StructItem[x,S]})#f] =
     new StructItemFunctor[S] { def eS = element[S] }
 
-  implicit class StructElemExtensionsForStructItem[S <: Struct](e: Elem[S]) {
+  implicit class StructElemExtensionsForStructItem[S <: Struct](eS: Elem[S]) {
     def getItemElem[V](i: Int): Elem[StructItem[V, S]] = {
-      val eV = e(i).asElem[V]
-      structItemElement(eV, e)
+      val eV = eS(i).asElem[V]
+      structItemElement(eV, eS)
     }
     def getItemElem[V](fieldName: String): Elem[StructItem[V, S]] = {
-      val eV = e(fieldName).asElem[V]
-      structItemElement(eV, e)
+      val eV = eS(fieldName).asElem[V]
+      structItemElement(eV, eS)
     }
   }
 
@@ -62,7 +66,8 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
     def getItem[A](i: Int): Rep[StructItem[A, S]] = struct_getItem(s, i).asRep[StructItem[A,S]]
     def getItem[A](i: Rep[Int]): Rep[StructItem[A, S]] = struct_getItem(s, i).asRep[StructItem[A,S]]
     def getItem[A](k: Rep[StructKey[S]])(implicit o: Overloaded2): Rep[StructItem[A,S]] = struct_getItem(s, k.index).asRep[StructItem[A,S]]
-    def setItem(k: Rep[StructKey[S]], v: Rep[_]): Rep[S] = struct_setItem(s, k.index, v)
+    def setItem(i: Rep[Int], v: Rep[_]): Rep[S] = struct_setItem(s, i, v)
+    def setItem(k: Rep[StructKey[S]], v: Rep[_])(implicit o: Overloaded2): Rep[S] = struct_setItem(s, k.index, v)
   }
 
 }

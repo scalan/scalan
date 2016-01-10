@@ -31,6 +31,10 @@ trait ReadersDsl extends impl.ReadersAbs { self: MonadsDsl =>
     def lift[T](implicit eT: Elem[T]) = element[Reader[R,T]] //.asElem[Reader[R,T]]
     def unlift[T](implicit eFT: Elem[Reader[R, T]]) = eFT.asInstanceOf[ReaderElem[R,T,_]].eA
     def getElem[T](fa: Rep[Reader[R, T]]) = fa.selfType1
+    def unapply[T](e: Elem[_]) = e match {
+      case te: ReaderElem[_, _, _] => Some(te.asElem[Reader[R,T]])
+      case _ => None
+    }
   }
 
   implicit def readerMonad[R:Elem]: Monad[({type f[x] = Reader[R,x]})#f] = new ReaderCont[R] with Monad[({type f[x] = Reader[R,x]})#f] {

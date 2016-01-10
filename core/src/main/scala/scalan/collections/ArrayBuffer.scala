@@ -39,6 +39,10 @@ trait ArrayBuffers extends Base { self: Scalan =>
     def lift[T](implicit eT: Elem[T]) = element[ArrayBuffer[T]]
     def unlift[T](implicit eFT: Elem[ArrayBuffer[T]]) = eFT.eItem
     def getElem[T](fa: Rep[ArrayBuffer[T]]) = !!!("Operation is not supported by ArrayBuffer container " + fa)
+    def unapply[T](e: Elem[_]) = e match {
+      case e: ArrayBufferElem[_] => Some(e.asElem[ArrayBuffer[T]])
+      case _ => None
+    }
     def map[A:Elem,B:Elem](xs: Rep[ArrayBuffer[A]])(f: Rep[A] => Rep[B]) = xs.mapBy(fun(f))
   }
 

@@ -106,6 +106,10 @@ trait FreeStatesDsl extends impl.FreeStatesAbs { self: MonadsDsl =>
     def lift[T](implicit eT: Elem[T]) = element[StateF[S,T]]
     def unlift[T](implicit eFT: Elem[StateF[S, T]]) = eFT.asInstanceOf[StateFElem[S,T,_]].eA
     def getElem[T](fa: Rep[StateF[S, T]]) = fa.selfType1
+    def unapply[T](e: Elem[_]) = e match {
+      case e: StateFElem[_,_,_] => Some(e.asElem[StateF[S,T]])
+      case _ => None
+    }
     def map[A:Elem,B:Elem](m: Rep[StateF[S, A]])(f: Rep[A] => Rep[B]) = patternMatch(m)(
       MkBranch[StateGet[S, A]].make { g => StateGet((s: Rep[S]) => f(g.f.asRep[S=>A](s))) },
       MkBranch[StatePut[S, A]].make { p => StatePut(p.s.asRep[S], f(p.a.asRep[A])) }
