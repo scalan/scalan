@@ -11,13 +11,13 @@ trait Converters extends ViewsDsl { self: Scalan =>
     implicit def eR: Elem[R]
     def convFun: Rep[T => R]
     def apply(x: Rep[T]): Rep[R]
+    override def toString: String = s"${eT.name} --> ${eR.name}"
   }
   trait ConverterCompanion
 
   abstract class BaseConverter[T,R](val convFun: Rep[T => R])(implicit val eT: Elem[T], val eR: Elem[R])
     extends Converter[T,R] {
     def apply(x: Rep[T]): Rep[R] = convFun(x)
-    override def toString: String = s"${eT.name} --> ${eR.name}"
     override def equals(other: Any): Boolean = other match {
       case c: Converters#Converter[_, _] => eT == c.eT && eR == c.eR && convFun == c.convFun
       case _ => false
@@ -29,7 +29,6 @@ trait Converters extends ViewsDsl { self: Scalan =>
     (val conv1: Conv[A1, B1], val conv2: Conv[A2, B2])
     (implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
     extends Converter[(A1, A2), (B1, B2)] {
-
     val eT = pairElement(eA1, eA2)
     val eR = pairElement(eB1, eB2)
     def apply(x: Rep[(A1,A2)]) = { val Pair(a1, a2) = x; Pair(conv1(a1), conv2(a2)) }
@@ -41,7 +40,6 @@ trait Converters extends ViewsDsl { self: Scalan =>
     (val conv1: Conv[A1, B1], val conv2: Conv[A2, B2])
     (implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
     extends Converter[(A1 | A2), (B1 | B2)] {
-
     val eT = sumElement(eA1, eA2)
     val eR = sumElement(eB1, eB2)
     def apply(x: Rep[(A1|A2)]) = { x.mapSumBy(conv1.convFun, conv2.convFun) }
@@ -55,10 +53,8 @@ trait Converters extends ViewsDsl { self: Scalan =>
     extends Converter[F[A], F[B]] {
     def convFun = fun { xs: Rep[F[A]] => apply(xs) }
     def apply(xs: Rep[F[A]]): Rep[F[B]] = F.map(xs){ x => itemConv(x) }
-
     val eT = F.lift(eA)
     val eR = F.lift(eB)
-    override def toString: String = s"${eT.name} --> ${eR.name}"
     override def equals(other: Any): Boolean = other match {
       case c: Converters#FunctorConverter[_, _, _] => eT == c.eT && eR == c.eR && itemConv == c.itemConv
       case _ => false
@@ -66,10 +62,28 @@ trait Converters extends ViewsDsl { self: Scalan =>
   }
   trait FunctorConverterCompanion
 
+  abstract class NaturalConverter[A,F[_],G[_]]
+      (val convFun: Rep[F[A] => G[A]])
+      (implicit val eA: Elem[A], val cF: Cont[F], val cG: Cont[G])
+    extends Converter[F[A], G[A]] {
+    def apply(xs: Rep[F[A]]): Rep[G[A]] = convFun(xs)
+
+    val eT = cF.lift(eA)
+    val eR = cG.lift(eA)
+    override def equals(other: Any): Boolean = other match {
+      case c: Converters#NaturalConverter[_, _, _] => eT == c.eT && eR == c.eR && convFun == c.convFun
+      case _ => false
+    }
+  }
+
 }
 
 trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
   def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Def[_]], conv: Rep[From => To]): Rep[To]
+
+//  def naturalConverter[A, F[_], G[_]](implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]): Conv[F[A], G[A]] = {
+//
+//  }
 
   object HasConv {
     def unapply[A,B](elems: (Elem[A], Elem[B])): Option[Conv[A,B]] = hasConverter(elems._1, elems._2)

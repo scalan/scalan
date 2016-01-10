@@ -42,6 +42,10 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
     def lift[T](implicit eT: Elem[T]) = element[StructItem[T,S]]
     def unlift[T](implicit eFT: Elem[StructItem[T,S]]) = eFT.asInstanceOf[StructItemElem[T,S,_]].eVal
     def getElem[T](fa: Rep[StructItem[T,S]]) = fa.selfType1
+    def unapply[T](e: Elem[_]) = e match {
+      case e: StructItemElem[_, _, _] => Some(e.asElem[StructItem[T,S]])
+      case _ => None
+    }
     def map[A:Elem,B:Elem](xs: Rep[StructItem[A,S]])(f: Rep[A] => Rep[B]) = StructItemBase(xs.key, f(xs.value))
   }
   implicit def structItemContainer[S <: Struct : Elem]: Functor[({type f[x] = StructItem[x,S]})#f] =

@@ -38,6 +38,10 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
         def lift[T](implicit eT: Elem[T]) = element[Coproduct[F,H,T]]
         def unlift[T](implicit eFT: Elem[Coproduct[F, H, T]]) = eFT.asInstanceOf[CoproductElem[F,H,T,_]].eA
         def getElem[T](fa: Rep[Coproduct[F, H, T]]) = fa.selfType1
+        def unapply[T](e: Elem[_]) = e match {
+          case e: CoproductElem[_,_,_,_] => Some(e.asElem[Coproduct[F,H,T]])
+          case _ => None
+        }
       }
 
   trait ~>[F[_],G[_]] { self =>

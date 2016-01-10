@@ -120,6 +120,10 @@ trait ProcessesDsl extends ScalanDsl with impl.ProcessesAbs with Processes with 
     def lift[T](implicit eT: Elem[T]) = element[Process[F,T]].asElem[Process[F,T]]
     def unlift[T](implicit eFT: Elem[Process[F,T]]) = eFT.asInstanceOf[ProcessElem[F,T,_]].eO
     def getElem[T](fa: Rep[Process[F,T]]) = fa.selfType1
+    def unapply[T](e: Elem[_]) = e match {
+      case e: ProcessElem[_,_,_] => Some(e.asElem[Process[F,T]])
+      case _ => None
+    }
   }
 
   /* Special exception indicating normal termination */

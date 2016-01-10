@@ -75,9 +75,10 @@ class ConverterTests extends BaseCtxTests {
       assert(conv.isDefined, s"no converter $eA --> $eB")
       ctx.emit(name, conv.get)
     } else {
+      val fileName = "unexpected_" + name
       if (conv.isDefined)
-        ctx.emit("unexpected_" + name, conv.get)
-      assert(!conv.isDefined, s"unexpected converter $eA --> $eB")
+        ctx.emit(fileName, conv.get)
+      assert(!conv.isDefined, s"unexpected converter $eA --> $eB, see $fileName")
     }
   }
 
@@ -96,5 +97,6 @@ class ConverterTests extends BaseCtxTests {
     testConverter[(Array[Interval],Array[Slice]), (Array[Slice],Array[Interval])](ctx, "convPairOfArrays")
     testConverter[Array[Array[Interval]], Array[Array[Slice]]](ctx, "convNArray")
     testConverter[Array[Array[Interval]], Array[Slice]](ctx, "convNArrayToArray", false)
+
   }
 }

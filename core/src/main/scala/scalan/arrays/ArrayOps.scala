@@ -105,6 +105,10 @@ trait ArrayOps { self: Scalan =>
     def lift[T](implicit eT: Elem[T]) = element[Array[T]]
     def unlift[T](implicit eFT: Elem[Array[T]]) = eFT.eItem
     def getElem[T](fa: Rep[Array[T]]) = rep_getElem(fa)
+    def unapply[A](e: Elem[_]) = e match {
+      case ae: ArrayElem[_] => Some(ae.asElem[Array[A]])
+      case _ => None
+    }
     def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.mapBy(fun(f))
   }
   implicit val arrayContainer: Functor[Array] = new ArrayFunctor {}

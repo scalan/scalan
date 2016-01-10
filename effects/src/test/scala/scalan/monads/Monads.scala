@@ -143,6 +143,7 @@ trait Monads extends Base with ListOps { self: MonadsDsl =>
     def lift[T](implicit eT: Elem[T]) = eT
     def unlift[T](implicit eFT: Elem[Id[T]]) = eFT
     def getElem[T](fa: Rep[Id[T]]) = !!!("Operation is not supported by Id container " + fa)
+    def unapply[T](e: Elem[_]) = Some(e.asElem[Id[T]])
   }
 
   implicit val identityMonad: Monad[Id] = new Monad[Id] with IdCont {
@@ -157,6 +158,10 @@ trait Monads extends Base with ListOps { self: MonadsDsl =>
     def lift[T](implicit eT: Elem[T]) = funcElement(element[Int], element[(Int,T)])
     def unlift[T](implicit eFT: Elem[Oper[T]]) = eFT.eRange.eSnd
     def getElem[T](fa: Rep[Oper[T]]) = !!!("Operation is not supported by Oper container " + fa)
+    def unapply[T](e: Elem[_]) = e match {
+      case te: FuncElem[_, _] => Some(te.asElem[Oper[T]])
+      case _ => None
+    }
   }
 
   implicit val operationMonad: Monad[Oper] = new Monad[Oper] with OperCont {

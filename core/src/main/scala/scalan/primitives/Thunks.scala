@@ -24,6 +24,10 @@ trait Thunks { self: Scalan =>
     def lift[T](implicit eT: Elem[T]) = element[Thunk[T]]
     def unlift[T](implicit eFT: Elem[Thunk[T]]) = eFT.eItem
     def getElem[T](fa: Rep[Thunk[T]]) = !!!("Operation is not supported by Thunk container " + fa)
+    def unapply[T](e: Elem[_]) = e match {
+      case e: ThunkElem[_] => Some(e.asElem[Thunk[T]])
+      case _ => None
+    }
   }
 
   case class ThunkElem[A](override val eItem: Elem[A])

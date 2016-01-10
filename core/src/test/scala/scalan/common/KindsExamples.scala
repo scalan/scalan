@@ -12,6 +12,7 @@ trait KindsExamples extends Scalan with KindsDsl {
     def lift[A](implicit evA: Elem[A]) = evA
     def unlift[T](implicit eFT: Elem[Id[T]]) = eFT
     def getElem[T](fa: Rep[Id[T]]) = !!!("Operation is not supported by Id container " + fa)
+    def unapply[T](e: Elem[_]) = Some(e.asElem[Id[T]])
     def map[A: Elem, B: Elem](a: Rep[Id[A]])(f: (Rep[A]) => Rep[B]) = f(a)
   }
 
