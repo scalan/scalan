@@ -484,19 +484,23 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
             case TypeRef(_, ElementSym, params) =>
               val param = params(0).asSeenFrom(tpe, classSymbol)
               // There should be a method with the same name on the corresponding element class
-              val correspondingElemMethod = elem.getClass.getMethod(member.name.toString)
-              val elem1 = correspondingElemMethod.invoke(elem).asInstanceOf[Elem[_]]
+              val elem1 = getParameterTypeDesc(elem, member.name.toString).asInstanceOf[Elem[_]]
               List(Left[Elem[_], SomeCont](elem1) -> param)
             case TypeRef(_, ContSym, params) =>
               val param = params(0).asSeenFrom(tpe, classSymbol)
               // There should be a method with the same name on the corresponding element class
-              val correspondingElemMethod = elem.getClass.getMethod(member.name.toString)
-              val cont1 = correspondingElemMethod.invoke(elem).asInstanceOf[SomeCont]
+              val cont1 = getParameterTypeDesc(elem, member.name.toString).asInstanceOf[SomeCont]
               List(Right[Elem[_], SomeCont](cont1) -> param)
             case _ => Nil
           }
       }.toList
       res
+  }
+
+  protected def getParameterTypeDesc(elem: Elem[_], paramName: String): AnyRef = {
+    val correspondingElemMethod = elem.getClass.getMethod(paramName)
+    val desc = correspondingElemMethod.invoke(elem)
+    desc
   }
 
   @tailrec
