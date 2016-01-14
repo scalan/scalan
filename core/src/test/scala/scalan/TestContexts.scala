@@ -28,11 +28,17 @@ trait TestContexts extends TestsUtil {
     // workaround for non-existence of by-name repeated parameters
     def emitF(name: String, sfs: (() => Exp[_])*): Unit = stage(this)(testName, name, sfs)
     def emit(name: String, s1: => Exp[_]): Unit = emitF(name, () => s1)
-    def emit(name: String, s1: => Exp[_], s2: => Exp[_]): Unit = emitF(name, () => s1, () => s2)
-    def emit(name: String, s1: => Exp[_], s2: => Exp[_], s3: => Exp[_]): Unit = emitF(name, () => s1, () => s2, () => s3)
+    def emit(name: String, s1: => Exp[_], s2: Exp[_]*): Unit = {
+      emitF(name, () => s1)
+      s2.foreach(s => emitF(name, () => s))
+    }
+//    def emit(name: String, s1: => Exp[_], s2: => Exp[_], s3: => Exp[_]): Unit = emitF(name, () => s1, () => s2, () => s3)
     def emit(s1: => Exp[_]): Unit = emitF(testName, () => s1)
-    def emit(s1: => Exp[_], s2: => Exp[_]): Unit = emitF(testName, () => s1, () => s2)
-    def emit(s1: => Exp[_], s2: => Exp[_], s3: => Exp[_]): Unit = emitF(testName, () => s1, () => s2, () => s3)
+    def emit(s1: => Exp[_], s2: Exp[_]*): Unit = {
+      emitF(testName, () => s1)
+      s2.foreach(s => emitF(testName, () => s))
+    }
+//    def emit(s1: => Exp[_], s2: => Exp[_], s3: => Exp[_]): Unit = emitF(testName, () => s1, () => s2, () => s3)
   }
 
   // TODO change API to use defaultCompilers here! See JNI_MsfItTests and others
