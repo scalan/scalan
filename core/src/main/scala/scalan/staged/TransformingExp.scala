@@ -14,8 +14,9 @@ trait Transforming { self: Scalan =>
     def doFinalization(): Unit = {}
   }
   object Pass {
-    val defaultPassConfig = PassConfig()
-    val defaultPass = DefaultPass
+    val defaultPassName = "default"
+    val defaultPass = DefaultPass(defaultPassName)
+    val defaultPassConfig = defaultPass.config
   }
 
   case class PassConfig(
@@ -24,9 +25,7 @@ trait Transforming { self: Scalan =>
     constantPropagation: Boolean = true
     )
 
-  case object DefaultPass extends Pass {
-    val name = "default"
-  }
+  case class DefaultPass(name: String, override val config: PassConfig = PassConfig()) extends Pass
 
   //TODO parallel execution of Compilers
   // Current design doesn't allow to run through passes i two Compilers in parallel
@@ -37,7 +36,7 @@ trait Transforming { self: Scalan =>
     _currentPass = pass
   }
   def endPass(pass: Pass): Unit = {
-    _currentPass = DefaultPass
+    _currentPass = Pass.defaultPass
   }
 
 }
