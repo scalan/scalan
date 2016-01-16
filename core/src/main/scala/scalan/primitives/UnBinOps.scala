@@ -52,11 +52,16 @@ trait UnBinOpsExp extends BaseExp with UnBinOps { self: ScalanExp =>
 
   def applyBinOp[A, R](op: BinOp[A, R], lhs: Rep[A], rhs: Rep[A]): Rep[R] = ApplyBinOp(op, lhs, rhs)
 
-  override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
-    case ApplyUnOp(op: UnOp[a, T @unchecked], Def(Const(arg))) if op.shouldPropagate(arg) =>
-      toRep(op.applySeq(arg.asInstanceOf[a]))(d.selfType)
-    case ApplyBinOp(op: BinOp[a, T @unchecked], Def(Const(lhs)), Def(Const(rhs))) if op.shouldPropagate(lhs, rhs) =>
-      toRep(op.applySeq(lhs.asInstanceOf[a], rhs.asInstanceOf[a]))(d.selfType)
-    case _ => super.rewriteDef(d)
-  }
+  override def rewriteDef[T](d: Def[T]): Exp[_] =
+    currentPass.config.constantPropagation match {
+      case false => super.rewriteDef(d)
+      case true =>
+        d match {
+          case ApplyUnOp(op: UnOp[a, T @unchecked], Def(Const(arg))) if op.shouldPropagate(arg) =>
+              toRep(op.applySeq(arg.asInstanceOf[a]))(d.selfType)
+          case ApplyBinOp(op: BinOp[a, T @unchecked], Def(Const(lhs)), Def(Const(rhs))) if op.shouldPropagate(lhs, rhs) =>
+            toRep(op.applySeq(lhs.asInstanceOf[a], rhs.asInstanceOf[a]))(d.selfType)
+          case _ => super.rewriteDef(d)
+        }
+    }
 }

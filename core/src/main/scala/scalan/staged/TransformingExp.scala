@@ -18,7 +18,12 @@ trait Transforming { self: Scalan =>
     val defaultPass = DefaultPass
   }
 
-  case class PassConfig(shouldUnpackTuples: Boolean = false, shouldExtractFields: Boolean = true)
+  case class PassConfig(
+    shouldUnpackTuples: Boolean = false,
+    shouldExtractFields: Boolean = true,
+    constantPropagation: Boolean = true
+    )
+
   case object DefaultPass extends Pass {
     val name = "default"
   }
