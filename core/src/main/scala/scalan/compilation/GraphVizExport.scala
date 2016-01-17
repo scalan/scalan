@@ -115,12 +115,12 @@ trait GraphVizExport { self: ScalanExp =>
     def show() = showGraphs(symbol)
   }
 
-  def showGraphs(rootSyms: Exp[_]*) = {
+  def showGraphs(rootSyms: Exp[_]*): Unit = {
     val prefix = rootSyms.mkString("_")
     val file = File.createTempFile(s"graph_${prefix}_", ".dot")
     emitDepGraph(rootSyms, file)(defaultGraphVizConfig)
     val builder = new ProcessBuilder("open", file.getAbsolutePath)
-    builder.start()
+    val _ = builder.start()
   }
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
