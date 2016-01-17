@@ -32,4 +32,12 @@ trait ProgramGraphs extends AstGraphs { self: ScalanExp =>
 
     def withoutContext = ProgramGraph(roots, implicitly[TransformerOps[Ctx]].empty)
   }
+
+  object ProgramGraph {
+    def transform[A](s: Rep[A], rw: Rewriter = NoRewriting, t: MapTransformer = MapTransformer.Empty): Rep[A] = {
+      val g = ProgramGraph(List(s), t)
+      val g1 = g.transform(DefaultMirror, rw, t)
+      g1.roots(0).asRep[A]
+    }
+  }
 }
