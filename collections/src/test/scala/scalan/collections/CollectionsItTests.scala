@@ -79,6 +79,24 @@ trait CollectionsProg extends CollectionsDsl with CollectionExamples {
 
     v1.arr(0) + v2.arr(0)
   }
+
+  lazy val collPairIf = fun { in: Rep[(Array[Int], Int)] =>
+    val (xs, flag0) = (in._1, toRep(0)) // works with val Pair(xs, flag0) = in
+    val cX = CollectionOverArray(xs) // works with val cX = xs
+    val tup0 = Pair(cX, cX.map{x => x + toRep(1)})
+    // works with val tup0 = Pair(xs, cX.map{x => x + toRep(1)})
+    val Pair(tup, flag) = Pair(tup0, flag0)
+    // works with val (tup, flag) = (tup0, flag0)
+    val resNew = {
+      val flagNew = IF (flag <= toRep(3)) THEN { toRep(2)
+      } ELSE { /* works without IF-operator here */ IF (flag <= toRep(5)) THEN { toRep(3)
+      } ELSE { toRep(4)
+      } }
+      Pair(tup, flagNew)
+    }
+    val Pair(_, res) = resNew
+    res
+  }
 }
 
 abstract class CollectionsItTests extends BaseItTests[CollectionsProg](new CollectionsDslSeq with CollectionsProg) {
