@@ -168,6 +168,9 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     // Rule: if (c) t else t  ==> t
     case IfThenElse(c, t, e) if t == e => t
 
+    // Rule: if (!c) t else e ==> if (c) e else t
+    case IfThenElse(Def(ApplyUnOp(not, c: Rep[Boolean @unchecked])), t, e) if not == Not => ifThenElse(c, e, t)
+
     // Rule: if (c) V(a, iso1) else V(b, iso2) when IsConvertible(iso1.eTo, iso2.eTo) ==>
     case IfThenElseHasViewsWithConvertibleBranches(
            cond, thenp, elsep, iso1: Iso[a, c], iso2: Iso[b, d], cTo, cFrom) =>
