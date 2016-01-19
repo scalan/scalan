@@ -59,7 +59,7 @@ trait Vectors { self: VectorsDsl =>
 
     def nonZeroesLength: Rep[Int] = nonZeroItems.length
 
-    def companion: Rep[AbstractVectorCompanion]
+    def companion: Rep[VectorCompanion]
   }
 
   abstract class DenseVector[T](val items: Rep[Collection[T]])(implicit val eT: Elem[T])
@@ -449,13 +449,13 @@ trait Vectors { self: VectorsDsl =>
     def companion = SparseVector
   }
 
-  trait AbstractVectorCompanion extends TypeFamily1[Vector] {
+  trait VectorCompanion extends TypeFamily1[Vector] {
     def zero[T: Elem](len: Rep[Int]): Vec[T] = ??? //DenseVector.zero[T](len)
     def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]],
                                 nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vec[T] = ???
   }
 
-  trait DenseVectorCompanion extends ConcreteClass1[Vector] with AbstractVectorCompanion {
+  trait DenseVectorCompanion extends ConcreteClass1[Vector] with VectorCompanion {
     override def zero[T: Elem](len: Rep[Int]): Vec[T] = {
       val zeroV = element[T].defaultRepValue
       DenseVector(Collection.replicate(len, zeroV))
@@ -464,7 +464,7 @@ trait Vectors { self: VectorsDsl =>
                                 nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vec[T] = ???
   }
 
-  trait ConstVectorCompanion extends ConcreteClass1[Vector] with AbstractVectorCompanion {
+  trait ConstVectorCompanion extends ConcreteClass1[Vector] with VectorCompanion {
     override def zero[T: Elem](len: Rep[Int]): Vec[T] = {
       val zeroV = element[T].defaultRepValue
       ConstVector(zeroV, len)
@@ -472,7 +472,7 @@ trait Vectors { self: VectorsDsl =>
     override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]],
                                          nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vec[T] = ???
   }
-  trait SparseVectorCompanion extends ConcreteClass1[Vector] with AbstractVectorCompanion {
+  trait SparseVectorCompanion extends ConcreteClass1[Vector] with VectorCompanion {
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
       val nonZeroItems =
         (Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero }
@@ -487,7 +487,7 @@ trait Vectors { self: VectorsDsl =>
     override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]],
                                          length: Rep[Int]): Vec[T] = SparseVector(nonZeroIndices, nonZeroValues, length)
   }
-  trait SparseVector1Companion extends ConcreteClass1[Vector] with AbstractVectorCompanion {
+  trait SparseVector1Companion extends ConcreteClass1[Vector] with VectorCompanion {
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector1[T]] = {
       val nonZeroItems =
         (Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero }
@@ -506,7 +506,7 @@ trait Vectors { self: VectorsDsl =>
 
 trait VectorsDsl extends CollectionsDsl with impl.VectorsAbs {
 
-  type VectorCompanion = Rep[AbstractVectorCompanion]
+//  type VecCompanion = Rep[VectorCompanion]
 
   def dotSparse[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): Rep[T]

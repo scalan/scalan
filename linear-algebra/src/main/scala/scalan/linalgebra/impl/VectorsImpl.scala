@@ -54,7 +54,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     protected def getDefaultRep = Vector
   }
 
-  abstract class VectorCompanionAbs extends CompanionDef[VectorCompanionAbs] {
+  abstract class VectorCompanionAbs extends CompanionDef[VectorCompanionAbs] with VectorCompanion {
     def selfType = VectorCompanionElem
     override def toString = "Vector"
   }
@@ -1879,10 +1879,36 @@ trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
       }
     }
   }
+
+  object VectorCompanionMethods {
+    object zero {
+      def unapply(d: Def[_]): Option[Rep[Int] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem == VectorCompanionElem && method.getName == "zero" =>
+          Some(len).asInstanceOf[Option[Rep[Int] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Int] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromSparseData {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(nonZeroIndices, nonZeroValues, length, _*), _) if receiver.elem == VectorCompanionElem && method.getName == "fromSparseData" =>
+          Some((nonZeroIndices, nonZeroValues, length)).asInstanceOf[Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
 }
 
 object Vectors_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAOVXTWwbRRR+6/gnttP0h6YUREQIhooK4gSBesihCk4KQSaJsmmFTFU0Xk+cLbOzm51xZHOoOFUIbogrEpW4IPWCOKFKFRJCQhw4IYTUQ0+cSlHVAxUHEG/Gu+t1bDdJRatI+DDanX3z3pvv+96b8dXbkBI+PC8swgifcqgkU6Z+nhOyYC5wacvWW26tweg8XT/ufvv5zJdPfpOAgxVIbxAxL1gFsu2HhaYXPZt0swxZwi0qpOsLCc+UdYSi5TJGLWm7vGg7TkOSKqPFsi3kbBmSVbfW2oRLYJThkOVyy6eSmiVGhKAimB+mKiM7es/q99ay14nBi2oXxdgu1nxiS0wfYxxq269Sz2xxl7ccCaNBasueSgttMrbjub4MQ2TQ3YZbC1+TnOAEHClfJFukiCHqRVP6Nq/jyrxHrPdInS6hiTJPYsKCsvW1lqffh8qQE3QTAVp0PKZnmh4AIAMv6ySmOvhMRfhMKXwKJvVtwuz3ifq44rvNFrR/xhBA00MXL+7gIvRAF3it8NF56517Zt5JqMVNlUpG7zCNjp4eoAZNBeL4w+on4u7rV04lIFeBnC3mqkL6xJJxygO08oRzV+qcIwCJX0e2JgexpaPMoc02SWQt1/EIR08BlCPIE7MtWypjNTcSsDMA+oz0aGhqND0j2u/EgP1q3ZQIYyu3nnjpud8X3k5AojtEFl2aKHw/dCohfQ7BDwBI6/GgBGNNI6yGbLMzZu4TPILhxK0/at9Pw/lEBF4Qa3d8oYuU+PWX/M8vnE7AcEWr+wwj9QriJxYYdZb9kstlBYbdLeq3v2S2CFNPffnL1Og6aTAZoBqHYwjhkDAxsA49qrCa1Zo3QgDybdkuuZwWzqwU/jR//PSqUqUPI+0v7cL8xz71943RdakFKyFlS+qIEN8hLOhuxHOlqAx2RUWHkFw7quk69PDkXfvClY+lht5odlf9cvUi+p/V6566Dwth9/nq8uWxO1+8+5iumuGqLR3iFab3UDOhxB9iTUA3VqOloAtrJc10fwyEHkMz/PJ42BDaFqV4jpk42Goci2b1MI7cHp2nXNA+i8djy2LJHDdCOWkjCQm6FuaSVBLfUQES8rGY2ktUXeODeNXIHVstH2W3T19PQOpNSK1j0YgypKpug9dCSvAok7QpXwvnjG5KkALiEyeiQP8moLPfbRlrw7zRl4xddp0eAGEbgEldXQOLqzefHg9pRnldbvTx4cOzgxFd8W0Hz/ct+up3187eub6U0i33SNByzhHWoO3TNgCvA6RqCsY0Rlrksv+OT+jx5D7ROIYV/RY/TI3HYsY1rsa5faG7UbyTVajvLvKajU1xD+1dDZV4xP4BDgQBtJL+o+OjXyQ1nO1135PlPlXnmIk96VG34JF40P2pz5FQn/HLR1JpZcfLGDa3tYbH6CvX/rrw4QdvePpO0XN/jMnk/6W4Y3HyZx6V5A50Rd275mIYpPuiOYQXvwdX5A6YpR+0VDrjzY5NYJgJ8pNwOFAyszlhdVr1SSAbHyYHiNwMbpe460v3Pls6+dPXv+kDPKfuqXjB59G/6vjBva31Bgngv+RYysipurrqdP8FTUgLhLUQAAA="
+  val dump = "H4sIAAAAAAAAAOVXTWwbRRSedfwT22nSlqYqiIiQGioqiBME6iGHKjgJBJkkyqYVMlXReD1xpszObnbGkc2h4lQhuCGuSFTigtQL4oQqVUgICXHgVCEkDpw4lVZVD1QcQLyZ/fE6tvNTQYjEHka7M7Pvvfm+7719e+MuSgkPPSsszDCftInEk6a+nxWyYM5zSWXrDafWYGSOrJ9yvv50+vMnvkqgkQpKb2AxJ1gFZf2b+aYb3Ztks4yymFtESMcTEj1d1h6KlsMYsSR1eJHadkPiKiPFMhVypoySVafW2kRXkVFGRy2HWx6RxCwxLAQRwfwgURHR6Dmrn1vLbtsHL6pTFGOnWPMwlRA++Djq718lrtniDm/ZEg0HoS27KizYk6G263gydJEBcxtOLXxMcgwT6Hj5Ct7CRXBRL5rSo7wOb+ZdbL2D62QJtqjtSQhYELa+1nL180AZ5QTZBIAWbZfpmaaLEAIGXtRBTLbxmYzwmVT4FEziUczou1gtrnhOs4X8yxhAqOmCied3MRFaIPO8VvjgkvXWQzNvJ9TLTRVKRp8wDYae6qMGTQXg+N3qR+LBq9fPJVCugnJUzFaF9LAl45QHaOUx547UMUcAYq8ObE30Y0t7mYU92ySRtRzbxRwsBVAOAU+MWlSqzWpuKGCnD/QZ6ZJwq9F0jei8433Oq3VTwoyt3Hn8hWd+m38zgRKdLrJg0gThe6FRidIXAfwAgLQeRyQy1jTCasg222NmB+cRDGfu3Kt9O4UuJSLwAl974wtMpMRPP+ZvP3c+gQYrWt0LDNcrgJ+YZ8Re9koOlxU06GwRz1/JbGGm7nryl6mRddxgMkA1DscAwCHReN88dInCakZr3ggByPuyXXI4KSysFH43v//4hlKlh4b8FT8x/6Ln/vx5eF1qwUqUopLYIsR3ABK6E/FcKUqDPVHRJiTnezUdmxybeEAvX/9QauiNZmfWL1evgP0Z/d6TO7AQVp8vrl0bvf/Z24/prBmsUmljtzC1j5wJJf4v5gTqxGq4FFRhraTpzsVA6DE0w5URf6UUjy0TB1mNo9GsHsaA0xNzhAvS4+Wx2GuxIE4ZoYz0JokSZC2MIamkvSvzEuVjPrWVKKvG+vGpETu5Wj7B7p6/lUCp11FqHZJFlFGq6jR4LaQCPmGSNOUr4ZzRSQVAjz1sR9Draxy1z7stYr0xb/QkYY/VpgtAtA3ApM6qvknVHU+XhTQjvC43etjw0On+iK541Ibv+hZ5+ZubF+7fWkrpUns8KDUXMWsQ/ysbgNcGUhUDYwo8LXLZ+8Rn9Hj2P9Y2uBPygLUd8xnXthpnD4XehqEHqxDPWeQ1CkVwH+VcDZW4x94OjgQOtIL+oc9FL09quNBtvivKQ6bKURNq0EGX3KG408Opy6FQl/EmI6k0smvTBcVsreEy8tLNPy6//95rru4duvrEmDz+H0o7GSd9+qCkdqTD6/61Fjt7uieKA9DYPboS+2C2A2t51bstYJuy1q6U7YGVXmz6QLgdFh8FNTX+0t4TbMwE8Eh0LEggRjlmdVL1cHBuD030yS0zaF4B9KsPP1k6+8OXv+o+IafaYPh/4NFPe7w/2FbpgwDgJzwWMkhKdcY63L8BH0TtqRQRAAA="
 }
 }
 

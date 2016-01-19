@@ -81,7 +81,7 @@ class BoilerplateTool extends StrictLogging {
   )
 
   val laTypeSynonyms = collectTypeSynonyms ++ Map(
-    "Vec" -> "Vector", "Matrix" -> "AbstractMatrix"
+    "Vec" -> "Vector", "Matr" -> "Matrix"
   )
   lazy val laConfig = CodegenConfig(
     name = "la",

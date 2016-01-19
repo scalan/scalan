@@ -9,7 +9,7 @@ trait LinAlgMethodMappingDSL extends CoreMethodMappingDSL {
 
     import scala.reflect.runtime.universe.typeOf
 
-    val tyMatrix = typeOf[Matrices#AbstractMatrix[_]]
+    val tyMatrix = typeOf[Matrices#Matrix[_]]
 
     val scalanCE = new Library() {
 
@@ -23,7 +23,7 @@ trait LinAlgMethodMappingDSL extends CoreMethodMappingDSL {
       }
       val matrixPack = new Pack("scalan.linalgebra") {
         val matrixFam = new Family('Matrices) {
-          val matrix = new ClassType('AbstractMatrix, TyArg('A)) {
+          val matrix = new ClassType('Matrix, TyArg('A)) {
             val invert = Method('invert, tyMatrix)
           }
         }
