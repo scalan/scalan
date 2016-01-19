@@ -39,6 +39,8 @@ object ReflectionUtil {
     tpe1.dealias
   }
 
+  private def isFieldOrGetter(s: TermSymbol) = s.isVal || s.isGetter
+
   def paramFieldMirrors(clazz: Class[_], instanceMirror: InstanceMirror, knownSupertypeFieldSyms: TermSymbol*) = {
     val tpe = classToSymbol(clazz).toType
     val constructor = primaryConstructor(tpe).getOrElse {
@@ -48,12 +50,12 @@ object ReflectionUtil {
     val knownSupertypeFieldsWithTypes = knownSupertypeFieldSyms.map(f => f -> simplifyType(f.typeSignatureIn(tpe)))
     ctorParams.map { sym =>
       val fieldSym = tpe.decl(sym.name).asTerm
-      val fieldType = ReflectionUtil.simplifyType(fieldSym.typeSignature)
+      val fieldType = simplifyType(fieldSym.typeSignature)
       // workaround for http://stackoverflow.com/questions/32118877/compiler-doesnt-generate-a-field-for-implicit-val-when-an-implicit-val-with-the
       // this would be handled by below try-catch as well, but is common
       // enough to handle specially
-      val fieldSym1 = fieldSym.overrides.reverse.collectFirst {
-        case f: TermSymbol if f.isGetter => f.accessed.asTerm
+      val fieldSym1 = (fieldSym :: fieldSym.overrides).collectFirst {
+        case f: TermSymbol if isFieldOrGetter(f) => f
       }.orElse {
         knownSupertypeFieldsWithTypes.collectFirst {
           case (f, t) if t == fieldType => f
@@ -66,8 +68,8 @@ object ReflectionUtil {
         case e: Exception =>
           // this is represented by a real field in a supertype, find it
           val superTypeFieldSyms = tpe.members.flatMap {
-            case f: TermSymbol if f.isGetter && ReflectionUtil.simplifyType(f.typeSignatureIn(tpe)) =:= fieldType =>
-              (f :: f.overrides).map { case f: TermSymbol => if (f.isGetter) f.accessed else NoSymbol }
+            case f: TermSymbol if isFieldOrGetter(f) && simplifyType(f.typeSignatureIn(tpe)) =:= fieldType =>
+              (f :: f.overrides).map { case f: TermSymbol => if (isFieldOrGetter(f)) f else NoSymbol }
             case _ => Nil
           }
 
