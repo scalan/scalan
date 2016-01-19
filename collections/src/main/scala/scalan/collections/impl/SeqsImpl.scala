@@ -35,8 +35,6 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
     def unlift[A](implicit eFT: Elem[Seq[A]]) =
       castSSeqElement(eFT.asInstanceOf[Elem[SSeq[A]]]).eA
     def getElem[A](fa: Rep[Seq[A]]) = !!!("Operation is not supported by Seq container " + fa)
-
-    def unapply[T](e: Elem[_]) = ???
   }
 
   implicit lazy val containerSSeq: Functor[SSeq] = new Functor[SSeq] {
@@ -45,9 +43,6 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
     def unlift[A](implicit eFT: Elem[SSeq[A]]) =
       castSSeqElement(eFT).eA
     def getElem[A](fa: Rep[SSeq[A]]) = fa.selfType1
-
-    def unapply[T](e: Elem[_]) = ???
-
     def map[A:Elem,B:Elem](xs: Rep[SSeq[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))
   }
 

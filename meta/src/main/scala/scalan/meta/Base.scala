@@ -9,7 +9,7 @@ case class CodegenConfig(
   entityFiles: List[String],
   entityTypeSynonyms: Map[String, String],
   baseContextTrait: String = "scalan.ScalanDsl",
-  seqContextTrait: String = "scalan.ScalanDslSeq",
+  seqContextTrait: String = "scalan.ScalanDslStd",
   stagedContextTrait: String = "scalan.ScalanDslExp",
   extraImports: List[String] = List(
     "scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}",

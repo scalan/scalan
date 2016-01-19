@@ -1,5 +1,6 @@
 package scalan.collections
 
+import java.lang.reflect.Method
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.arrays.ArrayOps
@@ -2738,6 +2739,199 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
     extends AbsStructItemCollection[Val, Schema](struct)
 
   object StructItemCollectionMethods {
+    object eItem {
+      def unapply(d: Def[_]): Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "eItem" =>
+          Some(receiver).asInstanceOf[Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    // WARNING: Cannot generate matcher for method `itemSymbols`: Method's return type Seq[Rep[StructItem[Val, Schema]]] is not a Rep
+
+    object length {
+      def unapply(d: Def[_]): Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "length" =>
+          Some(receiver).asInstanceOf[Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object arr {
+      def unapply(d: Def[_]): Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "arr" =>
+          Some(receiver).asInstanceOf[Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object lst {
+      def unapply(d: Def[_]): Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "lst" =>
+          Some(receiver).asInstanceOf[Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[StructItemCollection[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[Int]) forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Rep[Int]) forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[Int]) forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_many {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Coll[Int]) forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Coll[Int]) forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Coll[Int]) forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object mapBy {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => B]) forSome {type Val; type Schema <: Struct; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "mapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => B]) forSome {type Val; type Schema <: Struct; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => B]) forSome {type Val; type Schema <: Struct; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object zip {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Coll[B]) forSome {type Val; type Schema <: Struct; type B}] = d match {
+        case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "zip" =>
+          Some((receiver, ys)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Coll[B]) forSome {type Val; type Schema <: Struct; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Coll[B]) forSome {type Val; type Schema <: Struct; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object slice {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[Int], Rep[Int]) forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "slice" =>
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Rep[Int], Rep[Int]) forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[Int], Rep[Int]) forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object reduce {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], RepMonoid[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "reduce" =>
+          Some((receiver, m)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], RepMonoid[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], RepMonoid[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object update {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[Int], Rep[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "update" =>
+          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Rep[Int], Rep[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[Int], Rep[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object updateMany {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Coll[Int], Coll[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "updateMany" =>
+          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Coll[Int], Coll[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Coll[Int], Coll[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => Boolean]) forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => Boolean]) forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => Boolean]) forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => Collection[B]]) forSome {type Val; type Schema <: Struct; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => Collection[B]]) forSome {type Val; type Schema <: Struct; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => Collection[B]]) forSome {type Val; type Schema <: Struct; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object append {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "append" =>
+          Some((receiver, value)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema]]) forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sortBy {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => O], Ordering[O]) forSome {type Val; type Schema <: Struct; type O}] = d match {
+        case MethodCall(receiver, method, Seq(by, o, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "sortBy" =>
+          Some((receiver, by, o)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => O], Ordering[O]) forSome {type Val; type Schema <: Struct; type O}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => O], Ordering[O]) forSome {type Val; type Schema <: Struct; type O}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   def mkStructItemCollection[Val, Schema <: Struct]
