@@ -116,11 +116,11 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
 
     def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
       mkReturn(a)
-  }
-  object ReturnMatcher {
+
     def unapply[F[_], A](p: Rep[Kind[F, A]]) = unmkReturn(p)
   }
-  lazy val Return: Rep[ReturnCompanionAbs] = new ReturnCompanionAbs
+  lazy val ReturnRep: Rep[ReturnCompanionAbs] = new ReturnCompanionAbs
+  lazy val Return: ReturnCompanionAbs = proxyReturnCompanion(ReturnRep)
   implicit def proxyReturnCompanion(p: Rep[ReturnCompanionAbs]): ReturnCompanionAbs = {
     proxyOps[ReturnCompanionAbs](p)
   }
@@ -204,11 +204,11 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
       isoBind(eS, eA, cF).to(p)
     def apply[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       mkBind(a, f)
-  }
-  object BindMatcher {
+
     def unapply[F[_], S, B](p: Rep[Kind[F, B]]) = unmkBind(p)
   }
-  lazy val Bind: Rep[BindCompanionAbs] = new BindCompanionAbs
+  lazy val BindRep: Rep[BindCompanionAbs] = new BindCompanionAbs
+  lazy val Bind: BindCompanionAbs = proxyBindCompanion(BindRep)
   implicit def proxyBindCompanion(p: Rep[BindCompanionAbs]): BindCompanionAbs = {
     proxyOps[BindCompanionAbs](p)
   }

@@ -193,11 +193,11 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
 
     def apply(length: Rep[Int]): Rep[UnitCollection] =
       mkUnitCollection(length)
-  }
-  object UnitCollectionMatcher {
+
     def unapply(p: Rep[Collection[Unit]]) = unmkUnitCollection(p)
   }
-  lazy val UnitCollection: Rep[UnitCollectionCompanionAbs] = new UnitCollectionCompanionAbs
+  lazy val UnitCollectionRep: Rep[UnitCollectionCompanionAbs] = new UnitCollectionCompanionAbs
+  lazy val UnitCollection: UnitCollectionCompanionAbs = proxyUnitCollectionCompanion(UnitCollectionRep)
   implicit def proxyUnitCollectionCompanion(p: Rep[UnitCollectionCompanionAbs]): UnitCollectionCompanionAbs = {
     proxyOps[UnitCollectionCompanionAbs](p)
   }
@@ -277,11 +277,11 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
 
     def apply[Item](arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]] =
       mkCollectionOverArray(arr)
-  }
-  object CollectionOverArrayMatcher {
+
     def unapply[Item](p: Rep[Collection[Item]]) = unmkCollectionOverArray(p)
   }
-  lazy val CollectionOverArray: Rep[CollectionOverArrayCompanionAbs] = new CollectionOverArrayCompanionAbs
+  lazy val CollectionOverArrayRep: Rep[CollectionOverArrayCompanionAbs] = new CollectionOverArrayCompanionAbs
+  lazy val CollectionOverArray: CollectionOverArrayCompanionAbs = proxyCollectionOverArrayCompanion(CollectionOverArrayRep)
   implicit def proxyCollectionOverArrayCompanion(p: Rep[CollectionOverArrayCompanionAbs]): CollectionOverArrayCompanionAbs = {
     proxyOps[CollectionOverArrayCompanionAbs](p)
   }
@@ -361,11 +361,11 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
 
     def apply[Item](lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]] =
       mkCollectionOverList(lst)
-  }
-  object CollectionOverListMatcher {
+
     def unapply[Item](p: Rep[Collection[Item]]) = unmkCollectionOverList(p)
   }
-  lazy val CollectionOverList: Rep[CollectionOverListCompanionAbs] = new CollectionOverListCompanionAbs
+  lazy val CollectionOverListRep: Rep[CollectionOverListCompanionAbs] = new CollectionOverListCompanionAbs
+  lazy val CollectionOverList: CollectionOverListCompanionAbs = proxyCollectionOverListCompanion(CollectionOverListRep)
   implicit def proxyCollectionOverListCompanion(p: Rep[CollectionOverListCompanionAbs]): CollectionOverListCompanionAbs = {
     proxyOps[CollectionOverListCompanionAbs](p)
   }
@@ -445,11 +445,11 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
 
     def apply[Item](seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]] =
       mkCollectionOverSeq(seq)
-  }
-  object CollectionOverSeqMatcher {
+
     def unapply[Item](p: Rep[Collection[Item]]) = unmkCollectionOverSeq(p)
   }
-  lazy val CollectionOverSeq: Rep[CollectionOverSeqCompanionAbs] = new CollectionOverSeqCompanionAbs
+  lazy val CollectionOverSeqRep: Rep[CollectionOverSeqCompanionAbs] = new CollectionOverSeqCompanionAbs
+  lazy val CollectionOverSeq: CollectionOverSeqCompanionAbs = proxyCollectionOverSeqCompanion(CollectionOverSeqRep)
   implicit def proxyCollectionOverSeqCompanion(p: Rep[CollectionOverSeqCompanionAbs]): CollectionOverSeqCompanionAbs = {
     proxyOps[CollectionOverSeqCompanionAbs](p)
   }
@@ -532,11 +532,11 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       isoPairCollectionSOA(eA, eB).to(p)
     def apply[A, B](as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]] =
       mkPairCollectionSOA(as, bs)
-  }
-  object PairCollectionSOAMatcher {
+
     def unapply[A, B](p: Rep[PairCollection[A, B]]) = unmkPairCollectionSOA(p)
   }
-  lazy val PairCollectionSOA: Rep[PairCollectionSOACompanionAbs] = new PairCollectionSOACompanionAbs
+  lazy val PairCollectionSOARep: Rep[PairCollectionSOACompanionAbs] = new PairCollectionSOACompanionAbs
+  lazy val PairCollectionSOA: PairCollectionSOACompanionAbs = proxyPairCollectionSOACompanion(PairCollectionSOARep)
   implicit def proxyPairCollectionSOACompanion(p: Rep[PairCollectionSOACompanionAbs]): PairCollectionSOACompanionAbs = {
     proxyOps[PairCollectionSOACompanionAbs](p)
   }
@@ -618,11 +618,11 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
 
     def apply[A, B](coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionAOS[A, B]] =
       mkPairCollectionAOS(coll)
-  }
-  object PairCollectionAOSMatcher {
+
     def unapply[A, B](p: Rep[PairCollection[A, B]]) = unmkPairCollectionAOS(p)
   }
-  lazy val PairCollectionAOS: Rep[PairCollectionAOSCompanionAbs] = new PairCollectionAOSCompanionAbs
+  lazy val PairCollectionAOSRep: Rep[PairCollectionAOSCompanionAbs] = new PairCollectionAOSCompanionAbs
+  lazy val PairCollectionAOS: PairCollectionAOSCompanionAbs = proxyPairCollectionAOSCompanion(PairCollectionAOSRep)
   implicit def proxyPairCollectionAOSCompanion(p: Rep[PairCollectionAOSCompanionAbs]): PairCollectionAOSCompanionAbs = {
     proxyOps[PairCollectionAOSCompanionAbs](p)
   }
@@ -703,11 +703,11 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       isoNestedCollectionFlat(eA).to(p)
     def apply[A](values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
       mkNestedCollectionFlat(values, segments)
-  }
-  object NestedCollectionFlatMatcher {
+
     def unapply[A](p: Rep[NestedCollection[A]]) = unmkNestedCollectionFlat(p)
   }
-  lazy val NestedCollectionFlat: Rep[NestedCollectionFlatCompanionAbs] = new NestedCollectionFlatCompanionAbs
+  lazy val NestedCollectionFlatRep: Rep[NestedCollectionFlatCompanionAbs] = new NestedCollectionFlatCompanionAbs
+  lazy val NestedCollectionFlat: NestedCollectionFlatCompanionAbs = proxyNestedCollectionFlatCompanion(NestedCollectionFlatRep)
   implicit def proxyNestedCollectionFlatCompanion(p: Rep[NestedCollectionFlatCompanionAbs]): NestedCollectionFlatCompanionAbs = {
     proxyOps[NestedCollectionFlatCompanionAbs](p)
   }
@@ -793,11 +793,11 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       isoFuncCollection(eA, eB, eEnv).to(p)
     def apply[A, B, Env](env1: Coll[Env], indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Rep[FuncCollection[A, B, Env]] =
       mkFuncCollection(env1, indexedFunc)
-  }
-  object FuncCollectionMatcher {
+
     def unapply[A, B, Env](p: Rep[Collection[A => B]]) = unmkFuncCollection(p)
   }
-  lazy val FuncCollection: Rep[FuncCollectionCompanionAbs] = new FuncCollectionCompanionAbs
+  lazy val FuncCollectionRep: Rep[FuncCollectionCompanionAbs] = new FuncCollectionCompanionAbs
+  lazy val FuncCollection: FuncCollectionCompanionAbs = proxyFuncCollectionCompanion(FuncCollectionRep)
   implicit def proxyFuncCollectionCompanion(p: Rep[FuncCollectionCompanionAbs]): FuncCollectionCompanionAbs = {
     proxyOps[FuncCollectionCompanionAbs](p)
   }
@@ -880,11 +880,11 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
 
     def apply[Val, Schema <: Struct](struct: Rep[Schema])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemCollection[Val, Schema]] =
       mkStructItemCollection(struct)
-  }
-  object StructItemCollectionMatcher {
+
     def unapply[Val, Schema <: Struct](p: Rep[Collection[StructItem[Val, Schema]]]) = unmkStructItemCollection(p)
   }
-  lazy val StructItemCollection: Rep[StructItemCollectionCompanionAbs] = new StructItemCollectionCompanionAbs
+  lazy val StructItemCollectionRep: Rep[StructItemCollectionCompanionAbs] = new StructItemCollectionCompanionAbs
+  lazy val StructItemCollection: StructItemCollectionCompanionAbs = proxyStructItemCollectionCompanion(StructItemCollectionRep)
   implicit def proxyStructItemCollectionCompanion(p: Rep[StructItemCollectionCompanionAbs]): StructItemCollectionCompanionAbs = {
     proxyOps[StructItemCollectionCompanionAbs](p)
   }

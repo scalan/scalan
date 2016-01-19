@@ -117,11 +117,11 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
 
     def apply[T](items: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DenseVector[T]] =
       mkDenseVector(items)
-  }
-  object DenseVectorMatcher {
+
     def unapply[T](p: Rep[AbstractVector[T]]) = unmkDenseVector(p)
   }
-  lazy val DenseVector: Rep[DenseVectorCompanionAbs] = new DenseVectorCompanionAbs
+  lazy val DenseVectorRep: Rep[DenseVectorCompanionAbs] = new DenseVectorCompanionAbs
+  lazy val DenseVector: DenseVectorCompanionAbs = proxyDenseVectorCompanion(DenseVectorRep)
   implicit def proxyDenseVectorCompanion(p: Rep[DenseVectorCompanionAbs]): DenseVectorCompanionAbs = {
     proxyOps[DenseVectorCompanionAbs](p)
   }
@@ -203,11 +203,11 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
       isoConstVector(eT).to(p)
     def apply[T](item: Rep[T], length: Rep[Int])(implicit eT: Elem[T]): Rep[ConstVector[T]] =
       mkConstVector(item, length)
-  }
-  object ConstVectorMatcher {
+
     def unapply[T](p: Rep[AbstractVector[T]]) = unmkConstVector(p)
   }
-  lazy val ConstVector: Rep[ConstVectorCompanionAbs] = new ConstVectorCompanionAbs
+  lazy val ConstVectorRep: Rep[ConstVectorCompanionAbs] = new ConstVectorCompanionAbs
+  lazy val ConstVector: ConstVectorCompanionAbs = proxyConstVectorCompanion(ConstVectorRep)
   implicit def proxyConstVectorCompanion(p: Rep[ConstVectorCompanionAbs]): ConstVectorCompanionAbs = {
     proxyOps[ConstVectorCompanionAbs](p)
   }
@@ -288,11 +288,11 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
       isoSparseVector(eT).to(p)
     def apply[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector[T]] =
       mkSparseVector(nonZeroIndices, nonZeroValues, length)
-  }
-  object SparseVectorMatcher {
+
     def unapply[T](p: Rep[AbstractVector[T]]) = unmkSparseVector(p)
   }
-  lazy val SparseVector: Rep[SparseVectorCompanionAbs] = new SparseVectorCompanionAbs
+  lazy val SparseVectorRep: Rep[SparseVectorCompanionAbs] = new SparseVectorCompanionAbs
+  lazy val SparseVector: SparseVectorCompanionAbs = proxySparseVectorCompanion(SparseVectorRep)
   implicit def proxySparseVectorCompanion(p: Rep[SparseVectorCompanionAbs]): SparseVectorCompanionAbs = {
     proxyOps[SparseVectorCompanionAbs](p)
   }
@@ -373,11 +373,11 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
       isoSparseVector1(eT).to(p)
     def apply[T](nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
       mkSparseVector1(nonZeroItems, length)
-  }
-  object SparseVector1Matcher {
+
     def unapply[T](p: Rep[AbstractVector[T]]) = unmkSparseVector1(p)
   }
-  lazy val SparseVector1: Rep[SparseVector1CompanionAbs] = new SparseVector1CompanionAbs
+  lazy val SparseVector1Rep: Rep[SparseVector1CompanionAbs] = new SparseVector1CompanionAbs
+  lazy val SparseVector1: SparseVector1CompanionAbs = proxySparseVector1Companion(SparseVector1Rep)
   implicit def proxySparseVector1Companion(p: Rep[SparseVector1CompanionAbs]): SparseVector1CompanionAbs = {
     proxyOps[SparseVector1CompanionAbs](p)
   }

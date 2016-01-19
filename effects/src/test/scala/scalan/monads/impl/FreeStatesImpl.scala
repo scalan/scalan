@@ -121,11 +121,11 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
 
     def apply[S, A](f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateGet[S, A]] =
       mkStateGet(f)
-  }
-  object StateGetMatcher {
+
     def unapply[S, A](p: Rep[StateF[S, A]]) = unmkStateGet(p)
   }
-  lazy val StateGet: Rep[StateGetCompanionAbs] = new StateGetCompanionAbs
+  lazy val StateGetRep: Rep[StateGetCompanionAbs] = new StateGetCompanionAbs
+  lazy val StateGet: StateGetCompanionAbs = proxyStateGetCompanion(StateGetRep)
   implicit def proxyStateGetCompanion(p: Rep[StateGetCompanionAbs]): StateGetCompanionAbs = {
     proxyOps[StateGetCompanionAbs](p)
   }
@@ -209,11 +209,11 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
       isoStatePut(eS, eA).to(p)
     def apply[S, A](s: Rep[S], a: Rep[A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]] =
       mkStatePut(s, a)
-  }
-  object StatePutMatcher {
+
     def unapply[S, A](p: Rep[StateF[S, A]]) = unmkStatePut(p)
   }
-  lazy val StatePut: Rep[StatePutCompanionAbs] = new StatePutCompanionAbs
+  lazy val StatePutRep: Rep[StatePutCompanionAbs] = new StatePutCompanionAbs
+  lazy val StatePut: StatePutCompanionAbs = proxyStatePutCompanion(StatePutRep)
   implicit def proxyStatePutCompanion(p: Rep[StatePutCompanionAbs]): StatePutCompanionAbs = {
     proxyOps[StatePutCompanionAbs](p)
   }

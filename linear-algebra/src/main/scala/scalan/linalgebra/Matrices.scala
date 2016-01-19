@@ -118,9 +118,9 @@ trait Matrices extends Vectors { self: MatricesDsl =>
     @OverloadId("matrix")
     def *^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       other match {
-        case DenseFlatMatrixMatcher(rmValues1, _) =>
+        case DenseFlatMatrix(rmValues1, _) =>
           companion((rmValues zip rmValues1).map { case Pair(v1, v2) => v1 * v2 }, numColumns)
-        case CompoundMatrixMatcher(rows1, _) =>
+        case CompoundMatrix(rows1, _) =>
           CompoundMatrix((rows zip rows1).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
         case _ =>
           other *^^ self
@@ -177,7 +177,7 @@ trait Matrices extends Vectors { self: MatricesDsl =>
       //val mT = matrix.companion.fromRows(matrix.columns, matrix.numRows)
       //companion(self.rows.map(row => mT * row), matrix.numColumns)
       matrix match {
-        case CompoundMatrixMatcher(rowsB, numColumnsB) =>
+        case CompoundMatrix(rowsB, numColumnsB) =>
           val rowsNew = rows.map { vA =>
             val (is, vs) = (vA.nonZeroIndices, vA.nonZeroValues)
             val res = CompoundMatrix((vs zip rowsB(is)).map { case Pair(a, vB) => vB *^ a }, numColumnsB).reduceByColumns
@@ -185,7 +185,7 @@ trait Matrices extends Vectors { self: MatricesDsl =>
             res//.convertTo(vA.element)
           }
           CompoundMatrix(rowsNew, numColumnsB)
-        case DenseFlatMatrixMatcher(rmValuesB, numColumnsB) =>
+        case DenseFlatMatrix(rmValuesB, numColumnsB) =>
           val rowsNew = rows.map { vA =>
             val itemsA = vA.items.flatMap(a => Collection.replicate(numColumnsB, a))
             DenseFlatMatrix((itemsA zip rmValuesB).map { case Pair(v1, v2) => v1 * v2 }, numColumnsB).reduceByColumns
@@ -211,9 +211,9 @@ trait Matrices extends Vectors { self: MatricesDsl =>
 
     def +^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       other match {
-        case DenseFlatMatrixMatcher(rmValues1, _) =>
+        case DenseFlatMatrix(rmValues1, _) =>
           other +^^ self
-        case CompoundMatrixMatcher(rows1, _) =>
+        case CompoundMatrix(rows1, _) =>
           companion((rows zip rows1).map { case Pair(v1, v2) => v1 +^ v2 }, numColumns)
         case _ =>
           other +^^ self
@@ -291,9 +291,9 @@ trait Matrices extends Vectors { self: MatricesDsl =>
 
     def +^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       other match {
-        case ConstMatrixMatcher(other_item, _, _) =>
+        case ConstMatrix(other_item, _, _) =>
           ConstMatrix(item + other_item, numColumns, numRows)
-        case DenseFlatMatrixMatcher(rmValues1, _) =>
+        case DenseFlatMatrix(rmValues1, _) =>
           DenseFlatMatrix(rmValues1.map(v => v + item), numColumns)
         case _ =>
           DenseFlatMatrix((rows zip other.rows).flatMap { case Pair(v1, v2) => (v1 +^ v2).items }, numColumns)
@@ -303,11 +303,11 @@ trait Matrices extends Vectors { self: MatricesDsl =>
     @OverloadId("matrix")
     def *^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       other match {
-        case ConstMatrixMatcher(other_item, _, _) =>
+        case ConstMatrix(other_item, _, _) =>
           ConstMatrix(item * other_item, numColumns, numRows)
-        case DenseFlatMatrixMatcher(rmValues1, _) =>
+        case DenseFlatMatrix(rmValues1, _) =>
           DenseFlatMatrix(rmValues1.map(v => v * item), numColumns)
-        case CompoundMatrixMatcher(rows1, _) =>
+        case CompoundMatrix(rows1, _) =>
           CompoundMatrix((rows zip rows1).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
         case _ =>
           other *^^ self
@@ -364,7 +364,7 @@ trait Matrices extends Vectors { self: MatricesDsl =>
     @OverloadId("matrix")
     def *(matrix: Matrix[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T] = {
       matrix match {
-        case DiagonalMatrixMatcher(diagonalValues1) =>
+        case DiagonalMatrix(diagonalValues1) =>
           DiagonalMatrix((DenseVector(diagonalValues) *^ DenseVector(diagonalValues1)).items)
         case _ =>
           DenseFlatMatrix(items, numColumns) * matrix
@@ -373,7 +373,7 @@ trait Matrices extends Vectors { self: MatricesDsl =>
 
     def +^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       other match {
-        case DiagonalMatrixMatcher(diagonalValues1) =>
+        case DiagonalMatrix(diagonalValues1) =>
           DiagonalMatrix((DenseVector(diagonalValues) +^ DenseVector(diagonalValues1)).items)
         case _ =>
           other +^^ DenseFlatMatrix(items, numColumns)
@@ -383,7 +383,7 @@ trait Matrices extends Vectors { self: MatricesDsl =>
     @OverloadId("matrix")
     def *^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       other match {
-        case DiagonalMatrixMatcher(diagonalValues1) =>
+        case DiagonalMatrix(diagonalValues1) =>
           DiagonalMatrix((DenseVector(diagonalValues) *^ DenseVector(diagonalValues1)).items)
         case _ =>
           other *^^ DenseFlatMatrix(items, numColumns)

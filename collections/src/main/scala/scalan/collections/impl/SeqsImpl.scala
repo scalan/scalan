@@ -226,11 +226,11 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
 
     def apply[A](wrappedValue: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
       mkSSeqImpl(wrappedValue)
-  }
-  object SSeqImplMatcher {
+
     def unapply[A](p: Rep[SSeq[A]]) = unmkSSeqImpl(p)
   }
-  lazy val SSeqImpl: Rep[SSeqImplCompanionAbs] = new SSeqImplCompanionAbs
+  lazy val SSeqImplRep: Rep[SSeqImplCompanionAbs] = new SSeqImplCompanionAbs
+  lazy val SSeqImpl: SSeqImplCompanionAbs = proxySSeqImplCompanion(SSeqImplRep)
   implicit def proxySSeqImplCompanion(p: Rep[SSeqImplCompanionAbs]): SSeqImplCompanionAbs = {
     proxyOps[SSeqImplCompanionAbs](p)
   }

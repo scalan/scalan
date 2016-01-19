@@ -111,11 +111,11 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
 
     def apply(size: Rep[Int]): Rep[MT0] =
       mkMT0(size)
-  }
-  object MT0Matcher {
+
     def unapply(p: Rep[MetaTest[Unit]]) = unmkMT0(p)
   }
-  lazy val MT0: Rep[MT0CompanionAbs] = new MT0CompanionAbs
+  lazy val MT0Rep: Rep[MT0CompanionAbs] = new MT0CompanionAbs
+  lazy val MT0: MT0CompanionAbs = proxyMT0Companion(MT0Rep)
   implicit def proxyMT0Companion(p: Rep[MT0CompanionAbs]): MT0CompanionAbs = {
     proxyOps[MT0CompanionAbs](p)
   }
@@ -197,11 +197,11 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
       isoMT1(elem).to(p)
     def apply[T](data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
       mkMT1(data, size)
-  }
-  object MT1Matcher {
+
     def unapply[T](p: Rep[MetaTest[T]]) = unmkMT1(p)
   }
-  lazy val MT1: Rep[MT1CompanionAbs] = new MT1CompanionAbs
+  lazy val MT1Rep: Rep[MT1CompanionAbs] = new MT1CompanionAbs
+  lazy val MT1: MT1CompanionAbs = proxyMT1Companion(MT1Rep)
   implicit def proxyMT1Companion(p: Rep[MT1CompanionAbs]): MT1CompanionAbs = {
     proxyOps[MT1CompanionAbs](p)
   }
@@ -285,11 +285,11 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
       isoMT2(eT, eR).to(p)
     def apply[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
       mkMT2(indices, values, size)
-  }
-  object MT2Matcher {
+
     def unapply[T, R](p: Rep[MetaTest[(T, R)]]) = unmkMT2(p)
   }
-  lazy val MT2: Rep[MT2CompanionAbs] = new MT2CompanionAbs
+  lazy val MT2Rep: Rep[MT2CompanionAbs] = new MT2CompanionAbs
+  lazy val MT2: MT2CompanionAbs = proxyMT2Companion(MT2Rep)
   implicit def proxyMT2Companion(p: Rep[MT2CompanionAbs]): MT2CompanionAbs = {
     proxyOps[MT2CompanionAbs](p)
   }

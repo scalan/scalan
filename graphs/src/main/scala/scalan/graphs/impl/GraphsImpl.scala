@@ -122,11 +122,11 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
       isoAdjacencyGraph(eV, eE).to(p)
     def apply[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
       mkAdjacencyGraph(vertexValues, edgeValues, links)
-  }
-  object AdjacencyGraphMatcher {
+
     def unapply[V, E](p: Rep[Graph[V, E]]) = unmkAdjacencyGraph(p)
   }
-  lazy val AdjacencyGraph: Rep[AdjacencyGraphCompanionAbs] = new AdjacencyGraphCompanionAbs
+  lazy val AdjacencyGraphRep: Rep[AdjacencyGraphCompanionAbs] = new AdjacencyGraphCompanionAbs
+  lazy val AdjacencyGraph: AdjacencyGraphCompanionAbs = proxyAdjacencyGraphCompanion(AdjacencyGraphRep)
   implicit def proxyAdjacencyGraphCompanion(p: Rep[AdjacencyGraphCompanionAbs]): AdjacencyGraphCompanionAbs = {
     proxyOps[AdjacencyGraphCompanionAbs](p)
   }
@@ -209,11 +209,11 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
       isoIncidenceGraph(eV, eE).to(p)
     def apply[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
       mkIncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
-  }
-  object IncidenceGraphMatcher {
+
     def unapply[V, E](p: Rep[Graph[V, E]]) = unmkIncidenceGraph(p)
   }
-  lazy val IncidenceGraph: Rep[IncidenceGraphCompanionAbs] = new IncidenceGraphCompanionAbs
+  lazy val IncidenceGraphRep: Rep[IncidenceGraphCompanionAbs] = new IncidenceGraphCompanionAbs
+  lazy val IncidenceGraph: IncidenceGraphCompanionAbs = proxyIncidenceGraphCompanion(IncidenceGraphRep)
   implicit def proxyIncidenceGraphCompanion(p: Rep[IncidenceGraphCompanionAbs]): IncidenceGraphCompanionAbs = {
     proxyOps[IncidenceGraphCompanionAbs](p)
   }

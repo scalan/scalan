@@ -117,11 +117,11 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
 
     def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
       mkReturn(a)
-  }
-  object ReturnMatcher {
+
     def unapply[F[_], A](p: Rep[Free[F, A]]) = unmkReturn(p)
   }
-  lazy val Return: Rep[ReturnCompanionAbs] = new ReturnCompanionAbs
+  lazy val ReturnRep: Rep[ReturnCompanionAbs] = new ReturnCompanionAbs
+  lazy val Return: ReturnCompanionAbs = proxyReturnCompanion(ReturnRep)
   implicit def proxyReturnCompanion(p: Rep[ReturnCompanionAbs]): ReturnCompanionAbs = {
     proxyOps[ReturnCompanionAbs](p)
   }
@@ -202,11 +202,11 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
 
     def apply[F[_], A](a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F]): Rep[Suspend[F, A]] =
       mkSuspend(a)
-  }
-  object SuspendMatcher {
+
     def unapply[F[_], A](p: Rep[Free[F, A]]) = unmkSuspend(p)
   }
-  lazy val Suspend: Rep[SuspendCompanionAbs] = new SuspendCompanionAbs
+  lazy val SuspendRep: Rep[SuspendCompanionAbs] = new SuspendCompanionAbs
+  lazy val Suspend: SuspendCompanionAbs = proxySuspendCompanion(SuspendRep)
   implicit def proxySuspendCompanion(p: Rep[SuspendCompanionAbs]): SuspendCompanionAbs = {
     proxyOps[SuspendCompanionAbs](p)
   }
@@ -290,11 +290,11 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
       isoBind(eS, eA, cF).to(p)
     def apply[F[_], S, B](a: Rep[Free[F, S]], f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       mkBind(a, f)
-  }
-  object BindMatcher {
+
     def unapply[F[_], S, B](p: Rep[Free[F, B]]) = unmkBind(p)
   }
-  lazy val Bind: Rep[BindCompanionAbs] = new BindCompanionAbs
+  lazy val BindRep: Rep[BindCompanionAbs] = new BindCompanionAbs
+  lazy val Bind: BindCompanionAbs = proxyBindCompanion(BindRep)
   implicit def proxyBindCompanion(p: Rep[BindCompanionAbs]): BindCompanionAbs = {
     proxyOps[BindCompanionAbs](p)
   }

@@ -162,11 +162,11 @@ trait ViewsAbs extends Views {
       isoIdentityIso(eA).to(p)
     def apply[A]()(implicit eA: Elem[A]): Rep[IdentityIso[A]] =
       mkIdentityIso()
-  }
-  object IdentityIsoMatcher {
+
     def unapply[A](p: Rep[IsoUR[A, A]]) = unmkIdentityIso(p)
   }
-  lazy val IdentityIso: Rep[IdentityIsoCompanionAbs] = new IdentityIsoCompanionAbs
+  lazy val IdentityIsoRep: Rep[IdentityIsoCompanionAbs] = new IdentityIsoCompanionAbs
+  lazy val IdentityIso: IdentityIsoCompanionAbs = proxyIdentityIsoCompanion(IdentityIsoRep)
   implicit def proxyIdentityIsoCompanion(p: Rep[IdentityIsoCompanionAbs]): IdentityIsoCompanionAbs = {
     proxyOps[IdentityIsoCompanionAbs](p)
   }
@@ -254,11 +254,11 @@ trait ViewsAbs extends Views {
       isoPairIso(eA1, eA2, eB1, eB2).to(p)
     def apply[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairIso[A1, A2, B1, B2]] =
       mkPairIso(iso1, iso2)
-  }
-  object PairIsoMatcher {
+
     def unapply[A1, A2, B1, B2](p: Rep[IsoUR[(A1, A2), (B1, B2)]]) = unmkPairIso(p)
   }
-  lazy val PairIso: Rep[PairIsoCompanionAbs] = new PairIsoCompanionAbs
+  lazy val PairIsoRep: Rep[PairIsoCompanionAbs] = new PairIsoCompanionAbs
+  lazy val PairIso: PairIsoCompanionAbs = proxyPairIsoCompanion(PairIsoRep)
   implicit def proxyPairIsoCompanion(p: Rep[PairIsoCompanionAbs]): PairIsoCompanionAbs = {
     proxyOps[PairIsoCompanionAbs](p)
   }
@@ -346,11 +346,11 @@ trait ViewsAbs extends Views {
       isoSumIso(eA1, eA2, eB1, eB2).to(p)
     def apply[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumIso[A1, A2, B1, B2]] =
       mkSumIso(iso1, iso2)
-  }
-  object SumIsoMatcher {
+
     def unapply[A1, A2, B1, B2](p: Rep[IsoUR[$bar[A1, A2], $bar[B1, B2]]]) = unmkSumIso(p)
   }
-  lazy val SumIso: Rep[SumIsoCompanionAbs] = new SumIsoCompanionAbs
+  lazy val SumIsoRep: Rep[SumIsoCompanionAbs] = new SumIsoCompanionAbs
+  lazy val SumIso: SumIsoCompanionAbs = proxySumIsoCompanion(SumIsoRep)
   implicit def proxySumIsoCompanion(p: Rep[SumIsoCompanionAbs]): SumIsoCompanionAbs = {
     proxyOps[SumIsoCompanionAbs](p)
   }
@@ -436,11 +436,11 @@ trait ViewsAbs extends Views {
       isoComposeIso(eA, eB, eC).to(p)
     def apply[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeIso[A, B, C]] =
       mkComposeIso(iso2, iso1)
-  }
-  object ComposeIsoMatcher {
+
     def unapply[A, B, C](p: Rep[IsoUR[A, C]]) = unmkComposeIso(p)
   }
-  lazy val ComposeIso: Rep[ComposeIsoCompanionAbs] = new ComposeIsoCompanionAbs
+  lazy val ComposeIsoRep: Rep[ComposeIsoCompanionAbs] = new ComposeIsoCompanionAbs
+  lazy val ComposeIso: ComposeIsoCompanionAbs = proxyComposeIsoCompanion(ComposeIsoRep)
   implicit def proxyComposeIsoCompanion(p: Rep[ComposeIsoCompanionAbs]): ComposeIsoCompanionAbs = {
     proxyOps[ComposeIsoCompanionAbs](p)
   }
@@ -528,11 +528,11 @@ trait ViewsAbs extends Views {
       isoFuncIso(eA, eB, eC, eD).to(p)
     def apply[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]): Rep[FuncIso[A, B, C, D]] =
       mkFuncIso(iso1, iso2)
-  }
-  object FuncIsoMatcher {
+
     def unapply[A, B, C, D](p: Rep[IsoUR[A => C, B => D]]) = unmkFuncIso(p)
   }
-  lazy val FuncIso: Rep[FuncIsoCompanionAbs] = new FuncIsoCompanionAbs
+  lazy val FuncIsoRep: Rep[FuncIsoCompanionAbs] = new FuncIsoCompanionAbs
+  lazy val FuncIso: FuncIsoCompanionAbs = proxyFuncIsoCompanion(FuncIsoRep)
   implicit def proxyFuncIsoCompanion(p: Rep[FuncIsoCompanionAbs]): FuncIsoCompanionAbs = {
     proxyOps[FuncIsoCompanionAbs](p)
   }
@@ -616,11 +616,11 @@ trait ViewsAbs extends Views {
       isoConverterIso(eA, eB).to(p)
     def apply[A, B](convTo: Conv[A, B], convFrom: Conv[B, A])(implicit eA: Elem[A], eB: Elem[B]): Rep[ConverterIso[A, B]] =
       mkConverterIso(convTo, convFrom)
-  }
-  object ConverterIsoMatcher {
+
     def unapply[A, B](p: Rep[IsoUR[A, B]]) = unmkConverterIso(p)
   }
-  lazy val ConverterIso: Rep[ConverterIsoCompanionAbs] = new ConverterIsoCompanionAbs
+  lazy val ConverterIsoRep: Rep[ConverterIsoCompanionAbs] = new ConverterIsoCompanionAbs
+  lazy val ConverterIso: ConverterIsoCompanionAbs = proxyConverterIsoCompanion(ConverterIsoRep)
   implicit def proxyConverterIsoCompanion(p: Rep[ConverterIsoCompanionAbs]): ConverterIsoCompanionAbs = {
     proxyOps[ConverterIsoCompanionAbs](p)
   }
@@ -702,11 +702,11 @@ trait ViewsAbs extends Views {
 
     def apply[A, B](innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ArrayIso[A, B]] =
       mkArrayIso(innerIso)
-  }
-  object ArrayIsoMatcher {
+
     def unapply[A, B](p: Rep[Iso1UR[A, B, Array]]) = unmkArrayIso(p)
   }
-  lazy val ArrayIso: Rep[ArrayIsoCompanionAbs] = new ArrayIsoCompanionAbs
+  lazy val ArrayIsoRep: Rep[ArrayIsoCompanionAbs] = new ArrayIsoCompanionAbs
+  lazy val ArrayIso: ArrayIsoCompanionAbs = proxyArrayIsoCompanion(ArrayIsoRep)
   implicit def proxyArrayIsoCompanion(p: Rep[ArrayIsoCompanionAbs]): ArrayIsoCompanionAbs = {
     proxyOps[ArrayIsoCompanionAbs](p)
   }
@@ -788,11 +788,11 @@ trait ViewsAbs extends Views {
 
     def apply[A, B](innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ListIso[A, B]] =
       mkListIso(innerIso)
-  }
-  object ListIsoMatcher {
+
     def unapply[A, B](p: Rep[Iso1UR[A, B, List]]) = unmkListIso(p)
   }
-  lazy val ListIso: Rep[ListIsoCompanionAbs] = new ListIsoCompanionAbs
+  lazy val ListIsoRep: Rep[ListIsoCompanionAbs] = new ListIsoCompanionAbs
+  lazy val ListIso: ListIsoCompanionAbs = proxyListIsoCompanion(ListIsoRep)
   implicit def proxyListIsoCompanion(p: Rep[ListIsoCompanionAbs]): ListIsoCompanionAbs = {
     proxyOps[ListIsoCompanionAbs](p)
   }
@@ -874,11 +874,11 @@ trait ViewsAbs extends Views {
 
     def apply[A, B](innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ArrayBufferIso[A, B]] =
       mkArrayBufferIso(innerIso)
-  }
-  object ArrayBufferIsoMatcher {
+
     def unapply[A, B](p: Rep[Iso1UR[A, B, ArrayBuffer]]) = unmkArrayBufferIso(p)
   }
-  lazy val ArrayBufferIso: Rep[ArrayBufferIsoCompanionAbs] = new ArrayBufferIsoCompanionAbs
+  lazy val ArrayBufferIsoRep: Rep[ArrayBufferIsoCompanionAbs] = new ArrayBufferIsoCompanionAbs
+  lazy val ArrayBufferIso: ArrayBufferIsoCompanionAbs = proxyArrayBufferIsoCompanion(ArrayBufferIsoRep)
   implicit def proxyArrayBufferIsoCompanion(p: Rep[ArrayBufferIsoCompanionAbs]): ArrayBufferIsoCompanionAbs = {
     proxyOps[ArrayBufferIsoCompanionAbs](p)
   }
@@ -960,11 +960,11 @@ trait ViewsAbs extends Views {
 
     def apply[A, B](innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ThunkIso[A, B]] =
       mkThunkIso(innerIso)
-  }
-  object ThunkIsoMatcher {
+
     def unapply[A, B](p: Rep[Iso1UR[A, B, Thunk]]) = unmkThunkIso(p)
   }
-  lazy val ThunkIso: Rep[ThunkIsoCompanionAbs] = new ThunkIsoCompanionAbs
+  lazy val ThunkIsoRep: Rep[ThunkIsoCompanionAbs] = new ThunkIsoCompanionAbs
+  lazy val ThunkIso: ThunkIsoCompanionAbs = proxyThunkIsoCompanion(ThunkIsoRep)
   implicit def proxyThunkIsoCompanion(p: Rep[ThunkIsoCompanionAbs]): ThunkIsoCompanionAbs = {
     proxyOps[ThunkIsoCompanionAbs](p)
   }
@@ -1052,11 +1052,11 @@ trait ViewsAbs extends Views {
       isoMapIso(eK1, eV1, eK2, eV2).to(p)
     def apply[K1, V1, K2, V2](iso1: Iso[K1, K2], iso2: Iso[V1, V2])(implicit eK1: Elem[K1], eV1: Elem[V1], eK2: Elem[K2], eV2: Elem[V2]): Rep[MapIso[K1, V1, K2, V2]] =
       mkMapIso(iso1, iso2)
-  }
-  object MapIsoMatcher {
+
     def unapply[K1, V1, K2, V2](p: Rep[IsoUR[MMap[K1, V1], MMap[K2, V2]]]) = unmkMapIso(p)
   }
-  lazy val MapIso: Rep[MapIsoCompanionAbs] = new MapIsoCompanionAbs
+  lazy val MapIsoRep: Rep[MapIsoCompanionAbs] = new MapIsoCompanionAbs
+  lazy val MapIso: MapIsoCompanionAbs = proxyMapIsoCompanion(MapIsoRep)
   implicit def proxyMapIsoCompanion(p: Rep[MapIsoCompanionAbs]): MapIsoCompanionAbs = {
     proxyOps[MapIsoCompanionAbs](p)
   }

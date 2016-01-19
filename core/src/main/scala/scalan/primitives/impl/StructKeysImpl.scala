@@ -116,11 +116,11 @@ trait StructKeysAbs extends StructKeys {
 
     def apply[Schema <: Struct](index: Rep[Int])(implicit eSchema: Elem[Schema]): Rep[IndexStructKey[Schema]] =
       mkIndexStructKey(index)
-  }
-  object IndexStructKeyMatcher {
+
     def unapply[Schema <: Struct](p: Rep[StructKey[Schema]]) = unmkIndexStructKey(p)
   }
-  lazy val IndexStructKey: Rep[IndexStructKeyCompanionAbs] = new IndexStructKeyCompanionAbs
+  lazy val IndexStructKeyRep: Rep[IndexStructKeyCompanionAbs] = new IndexStructKeyCompanionAbs
+  lazy val IndexStructKey: IndexStructKeyCompanionAbs = proxyIndexStructKeyCompanion(IndexStructKeyRep)
   implicit def proxyIndexStructKeyCompanion(p: Rep[IndexStructKeyCompanionAbs]): IndexStructKeyCompanionAbs = {
     proxyOps[IndexStructKeyCompanionAbs](p)
   }
@@ -200,11 +200,11 @@ trait StructKeysAbs extends StructKeys {
 
     def apply[Schema <: Struct](name: Rep[String])(implicit eSchema: Elem[Schema]): Rep[NameStructKey[Schema]] =
       mkNameStructKey(name)
-  }
-  object NameStructKeyMatcher {
+
     def unapply[Schema <: Struct](p: Rep[StructKey[Schema]]) = unmkNameStructKey(p)
   }
-  lazy val NameStructKey: Rep[NameStructKeyCompanionAbs] = new NameStructKeyCompanionAbs
+  lazy val NameStructKeyRep: Rep[NameStructKeyCompanionAbs] = new NameStructKeyCompanionAbs
+  lazy val NameStructKey: NameStructKeyCompanionAbs = proxyNameStructKeyCompanion(NameStructKeyRep)
   implicit def proxyNameStructKeyCompanion(p: Rep[NameStructKeyCompanionAbs]): NameStructKeyCompanionAbs = {
     proxyOps[NameStructKeyCompanionAbs](p)
   }

@@ -111,11 +111,11 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
 
     def apply(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
       mkBoolCollBitSet(bits)
-  }
-  object BoolCollBitSetMatcher {
+
     def unapply(p: Rep[BitSet]) = unmkBoolCollBitSet(p)
   }
-  lazy val BoolCollBitSet: Rep[BoolCollBitSetCompanionAbs] = new BoolCollBitSetCompanionAbs
+  lazy val BoolCollBitSetRep: Rep[BoolCollBitSetCompanionAbs] = new BoolCollBitSetCompanionAbs
+  lazy val BoolCollBitSet: BoolCollBitSetCompanionAbs = proxyBoolCollBitSetCompanion(BoolCollBitSetRep)
   implicit def proxyBoolCollBitSetCompanion(p: Rep[BoolCollBitSetCompanionAbs]): BoolCollBitSetCompanionAbs = {
     proxyOps[BoolCollBitSetCompanionAbs](p)
   }

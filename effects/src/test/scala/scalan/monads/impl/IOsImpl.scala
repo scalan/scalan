@@ -115,11 +115,11 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
 
     def apply(fileName: Rep[String]): Rep[ReadFile] =
       mkReadFile(fileName)
-  }
-  object ReadFileMatcher {
+
     def unapply(p: Rep[IO[List[String]]]) = unmkReadFile(p)
   }
-  lazy val ReadFile: Rep[ReadFileCompanionAbs] = new ReadFileCompanionAbs
+  lazy val ReadFileRep: Rep[ReadFileCompanionAbs] = new ReadFileCompanionAbs
+  lazy val ReadFile: ReadFileCompanionAbs = proxyReadFileCompanion(ReadFileRep)
   implicit def proxyReadFileCompanion(p: Rep[ReadFileCompanionAbs]): ReadFileCompanionAbs = {
     proxyOps[ReadFileCompanionAbs](p)
   }
@@ -199,11 +199,11 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
       isoWriteFile.to(p)
     def apply(fileName: Rep[String], lines: Rep[List[String]]): Rep[WriteFile] =
       mkWriteFile(fileName, lines)
-  }
-  object WriteFileMatcher {
+
     def unapply(p: Rep[IO[Unit]]) = unmkWriteFile(p)
   }
-  lazy val WriteFile: Rep[WriteFileCompanionAbs] = new WriteFileCompanionAbs
+  lazy val WriteFileRep: Rep[WriteFileCompanionAbs] = new WriteFileCompanionAbs
+  lazy val WriteFile: WriteFileCompanionAbs = proxyWriteFileCompanion(WriteFileRep)
   implicit def proxyWriteFileCompanion(p: Rep[WriteFileCompanionAbs]): WriteFileCompanionAbs = {
     proxyOps[WriteFileCompanionAbs](p)
   }

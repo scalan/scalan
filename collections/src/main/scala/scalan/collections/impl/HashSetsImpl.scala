@@ -184,11 +184,11 @@ trait HashSetsAbs extends scalan.ScalanDsl with HashSets {
 
     def apply[A](wrappedValue: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
       mkSHashSetImpl(wrappedValue)
-  }
-  object SHashSetImplMatcher {
+
     def unapply[A](p: Rep[SHashSet[A]]) = unmkSHashSetImpl(p)
   }
-  lazy val SHashSetImpl: Rep[SHashSetImplCompanionAbs] = new SHashSetImplCompanionAbs
+  lazy val SHashSetImplRep: Rep[SHashSetImplCompanionAbs] = new SHashSetImplCompanionAbs
+  lazy val SHashSetImpl: SHashSetImplCompanionAbs = proxySHashSetImplCompanion(SHashSetImplRep)
   implicit def proxySHashSetImplCompanion(p: Rep[SHashSetImplCompanionAbs]): SHashSetImplCompanionAbs = {
     proxyOps[SHashSetImplCompanionAbs](p)
   }

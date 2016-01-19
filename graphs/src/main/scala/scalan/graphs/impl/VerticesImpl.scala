@@ -119,11 +119,11 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
       isoSVertex(eV, eE).to(p)
     def apply[V, E](id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       mkSVertex(id, graph)
-  }
-  object SVertexMatcher {
+
     def unapply[V, E](p: Rep[Vertex[V, E]]) = unmkSVertex(p)
   }
-  lazy val SVertex: Rep[SVertexCompanionAbs] = new SVertexCompanionAbs
+  lazy val SVertexRep: Rep[SVertexCompanionAbs] = new SVertexCompanionAbs
+  lazy val SVertex: SVertexCompanionAbs = proxySVertexCompanion(SVertexRep)
   implicit def proxySVertexCompanion(p: Rep[SVertexCompanionAbs]): SVertexCompanionAbs = {
     proxyOps[SVertexCompanionAbs](p)
   }

@@ -116,11 +116,11 @@ trait AuthenticationsAbs extends scalan.ScalanDsl with Authentications {
       isoLogin.to(p)
     def apply(user: Rep[String], password: Rep[String]): Rep[Login] =
       mkLogin(user, password)
-  }
-  object LoginMatcher {
+
     def unapply(p: Rep[Auth[SOption[String]]]) = unmkLogin(p)
   }
-  lazy val Login: Rep[LoginCompanionAbs] = new LoginCompanionAbs
+  lazy val LoginRep: Rep[LoginCompanionAbs] = new LoginCompanionAbs
+  lazy val Login: LoginCompanionAbs = proxyLoginCompanion(LoginRep)
   implicit def proxyLoginCompanion(p: Rep[LoginCompanionAbs]): LoginCompanionAbs = {
     proxyOps[LoginCompanionAbs](p)
   }
@@ -200,11 +200,11 @@ trait AuthenticationsAbs extends scalan.ScalanDsl with Authentications {
       isoHasPermission.to(p)
     def apply(user: Rep[String], password: Rep[String]): Rep[HasPermission] =
       mkHasPermission(user, password)
-  }
-  object HasPermissionMatcher {
+
     def unapply(p: Rep[Auth[Boolean]]) = unmkHasPermission(p)
   }
-  lazy val HasPermission: Rep[HasPermissionCompanionAbs] = new HasPermissionCompanionAbs
+  lazy val HasPermissionRep: Rep[HasPermissionCompanionAbs] = new HasPermissionCompanionAbs
+  lazy val HasPermission: HasPermissionCompanionAbs = proxyHasPermissionCompanion(HasPermissionRep)
   implicit def proxyHasPermissionCompanion(p: Rep[HasPermissionCompanionAbs]): HasPermissionCompanionAbs = {
     proxyOps[HasPermissionCompanionAbs](p)
   }

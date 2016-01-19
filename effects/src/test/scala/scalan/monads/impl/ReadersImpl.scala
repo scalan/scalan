@@ -119,11 +119,11 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
 
     def apply[Env, A](run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]] =
       mkReaderBase(run)
-  }
-  object ReaderBaseMatcher {
+
     def unapply[Env, A](p: Rep[Reader[Env, A]]) = unmkReaderBase(p)
   }
-  lazy val ReaderBase: Rep[ReaderBaseCompanionAbs] = new ReaderBaseCompanionAbs
+  lazy val ReaderBaseRep: Rep[ReaderBaseCompanionAbs] = new ReaderBaseCompanionAbs
+  lazy val ReaderBase: ReaderBaseCompanionAbs = proxyReaderBaseCompanion(ReaderBaseRep)
   implicit def proxyReaderBaseCompanion(p: Rep[ReaderBaseCompanionAbs]): ReaderBaseCompanionAbs = {
     proxyOps[ReaderBaseCompanionAbs](p)
   }

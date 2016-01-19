@@ -121,11 +121,11 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
       isoAwait(eA, eO, cF).to(p)
     def apply[F[_], A, O](req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]] =
       mkAwait(req, recv)
-  }
-  object AwaitMatcher {
+
     def unapply[F[_], A, O](p: Rep[Process[F, O]]) = unmkAwait(p)
   }
-  lazy val Await: Rep[AwaitCompanionAbs] = new AwaitCompanionAbs
+  lazy val AwaitRep: Rep[AwaitCompanionAbs] = new AwaitCompanionAbs
+  lazy val Await: AwaitCompanionAbs = proxyAwaitCompanion(AwaitRep)
   implicit def proxyAwaitCompanion(p: Rep[AwaitCompanionAbs]): AwaitCompanionAbs = {
     proxyOps[AwaitCompanionAbs](p)
   }
@@ -207,11 +207,11 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
       isoEmit(eO, cF).to(p)
     def apply[F[_], O](head: Rep[O], tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]] =
       mkEmit(head, tail)
-  }
-  object EmitMatcher {
+
     def unapply[F[_], O](p: Rep[Process[F, O]]) = unmkEmit(p)
   }
-  lazy val Emit: Rep[EmitCompanionAbs] = new EmitCompanionAbs
+  lazy val EmitRep: Rep[EmitCompanionAbs] = new EmitCompanionAbs
+  lazy val Emit: EmitCompanionAbs = proxyEmitCompanion(EmitRep)
   implicit def proxyEmitCompanion(p: Rep[EmitCompanionAbs]): EmitCompanionAbs = {
     proxyOps[EmitCompanionAbs](p)
   }
@@ -292,11 +292,11 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
 
     def apply[F[_], O](err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]] =
       mkHalt(err)
-  }
-  object HaltMatcher {
+
     def unapply[F[_], O](p: Rep[Process[F, O]]) = unmkHalt(p)
   }
-  lazy val Halt: Rep[HaltCompanionAbs] = new HaltCompanionAbs
+  lazy val HaltRep: Rep[HaltCompanionAbs] = new HaltCompanionAbs
+  lazy val Halt: HaltCompanionAbs = proxyHaltCompanion(HaltRep)
   implicit def proxyHaltCompanion(p: Rep[HaltCompanionAbs]): HaltCompanionAbs = {
     proxyOps[HaltCompanionAbs](p)
   }

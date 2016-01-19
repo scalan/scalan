@@ -113,11 +113,11 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
       isoBaseFront.to(p)
     def apply(set: Rep[CollectionOverArray[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
       mkBaseFront(set, bits)
-  }
-  object BaseFrontMatcher {
+
     def unapply(p: Rep[Front]) = unmkBaseFront(p)
   }
-  lazy val BaseFront: Rep[BaseFrontCompanionAbs] = new BaseFrontCompanionAbs
+  lazy val BaseFrontRep: Rep[BaseFrontCompanionAbs] = new BaseFrontCompanionAbs
+  lazy val BaseFront: BaseFrontCompanionAbs = proxyBaseFrontCompanion(BaseFrontRep)
   implicit def proxyBaseFrontCompanion(p: Rep[BaseFrontCompanionAbs]): BaseFrontCompanionAbs = {
     proxyOps[BaseFrontCompanionAbs](p)
   }
@@ -197,11 +197,11 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
       isoListFront.to(p)
     def apply(set: Rep[CollectionOverList[Int]], bits: Rep[BitSet]): Rep[ListFront] =
       mkListFront(set, bits)
-  }
-  object ListFrontMatcher {
+
     def unapply(p: Rep[Front]) = unmkListFront(p)
   }
-  lazy val ListFront: Rep[ListFrontCompanionAbs] = new ListFrontCompanionAbs
+  lazy val ListFrontRep: Rep[ListFrontCompanionAbs] = new ListFrontCompanionAbs
+  lazy val ListFront: ListFrontCompanionAbs = proxyListFrontCompanion(ListFrontRep)
   implicit def proxyListFrontCompanion(p: Rep[ListFrontCompanionAbs]): ListFrontCompanionAbs = {
     proxyOps[ListFrontCompanionAbs](p)
   }
@@ -281,11 +281,11 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
       isoCollectionFront.to(p)
     def apply(set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =
       mkCollectionFront(set, bits)
-  }
-  object CollectionFrontMatcher {
+
     def unapply(p: Rep[Front]) = unmkCollectionFront(p)
   }
-  lazy val CollectionFront: Rep[CollectionFrontCompanionAbs] = new CollectionFrontCompanionAbs
+  lazy val CollectionFrontRep: Rep[CollectionFrontCompanionAbs] = new CollectionFrontCompanionAbs
+  lazy val CollectionFront: CollectionFrontCompanionAbs = proxyCollectionFrontCompanion(CollectionFrontRep)
   implicit def proxyCollectionFrontCompanion(p: Rep[CollectionFrontCompanionAbs]): CollectionFrontCompanionAbs = {
     proxyOps[CollectionFrontCompanionAbs](p)
   }
@@ -364,11 +364,11 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
 
     def apply(mmap: Rep[MMap[Int, Unit]]): Rep[MapBasedFront] =
       mkMapBasedFront(mmap)
-  }
-  object MapBasedFrontMatcher {
+
     def unapply(p: Rep[Front]) = unmkMapBasedFront(p)
   }
-  lazy val MapBasedFront: Rep[MapBasedFrontCompanionAbs] = new MapBasedFrontCompanionAbs
+  lazy val MapBasedFrontRep: Rep[MapBasedFrontCompanionAbs] = new MapBasedFrontCompanionAbs
+  lazy val MapBasedFront: MapBasedFrontCompanionAbs = proxyMapBasedFrontCompanion(MapBasedFrontRep)
   implicit def proxyMapBasedFrontCompanion(p: Rep[MapBasedFrontCompanionAbs]): MapBasedFrontCompanionAbs = {
     proxyOps[MapBasedFrontCompanionAbs](p)
   }

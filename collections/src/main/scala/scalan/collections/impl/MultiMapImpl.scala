@@ -118,11 +118,11 @@ trait MultiMapsAbs extends scalan.ScalanDsl with MultiMaps {
 
     def apply[K, V](map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
       mkHashMMultiMap(map)
-  }
-  object HashMMultiMapMatcher {
+
     def unapply[K, V](p: Rep[MMultiMap[K, V]]) = unmkHashMMultiMap(p)
   }
-  lazy val HashMMultiMap: Rep[HashMMultiMapCompanionAbs] = new HashMMultiMapCompanionAbs
+  lazy val HashMMultiMapRep: Rep[HashMMultiMapCompanionAbs] = new HashMMultiMapCompanionAbs
+  lazy val HashMMultiMap: HashMMultiMapCompanionAbs = proxyHashMMultiMapCompanion(HashMMultiMapRep)
   implicit def proxyHashMMultiMapCompanion(p: Rep[HashMMultiMapCompanionAbs]): HashMMultiMapCompanionAbs = {
     proxyOps[HashMMultiMapCompanionAbs](p)
   }

@@ -136,11 +136,11 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
 
     def apply(wrappedValue: Rep[Throwable]): Rep[SThrowableImpl] =
       mkSThrowableImpl(wrappedValue)
-  }
-  object SThrowableImplMatcher {
+
     def unapply(p: Rep[SThrowable]) = unmkSThrowableImpl(p)
   }
-  lazy val SThrowableImpl: Rep[SThrowableImplCompanionAbs] = new SThrowableImplCompanionAbs
+  lazy val SThrowableImplRep: Rep[SThrowableImplCompanionAbs] = new SThrowableImplCompanionAbs
+  lazy val SThrowableImpl: SThrowableImplCompanionAbs = proxySThrowableImplCompanion(SThrowableImplRep)
   implicit def proxySThrowableImplCompanion(p: Rep[SThrowableImplCompanionAbs]): SThrowableImplCompanionAbs = {
     proxyOps[SThrowableImplCompanionAbs](p)
   }

@@ -696,11 +696,10 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    def apply${tpeArgsDecl}(${fieldsWithType.rep()})${implicitArgsDecl}: Rep[${c.typeUse}] =
         |      mk$className(${fields.rep()})
         |    ${extractSqlQueries(clazz.body)}
-        |  }
-        |  object ${className}Matcher {
         |    def unapply${tpeArgsDecl}(p: Rep[$parent]) = unmk$className(p)
         |  }
-        |  lazy val ${c.name}: Rep[${c.companionAbsName}] = new ${c.companionAbsName}
+        |  lazy val ${c.name}Rep: Rep[${c.companionAbsName}] = new ${c.companionAbsName}
+        |  lazy val ${c.name}: ${c.companionAbsName} = proxy${className}Companion(${c.name}Rep)
         |  implicit def proxy${className}Companion(p: Rep[${c.companionAbsName}]): ${c.companionAbsName} = {
         |    proxyOps[${c.companionAbsName}](p)
         |  }

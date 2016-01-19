@@ -111,11 +111,11 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
 
     def apply(wrappedValue: Rep[String]): Rep[SString] =
       mkSString(wrappedValue)
-  }
-  object SStringMatcher {
+
     def unapply(p: Rep[AString]) = unmkSString(p)
   }
-  lazy val SString: Rep[SStringCompanionAbs] = new SStringCompanionAbs
+  lazy val SStringRep: Rep[SStringCompanionAbs] = new SStringCompanionAbs
+  lazy val SString: SStringCompanionAbs = proxySStringCompanion(SStringRep)
   implicit def proxySStringCompanion(p: Rep[SStringCompanionAbs]): SStringCompanionAbs = {
     proxyOps[SStringCompanionAbs](p)
   }
@@ -193,11 +193,11 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
 
     def apply(wrappedValue: Rep[String]): Rep[CString] =
       mkCString(wrappedValue)
-  }
-  object CStringMatcher {
+
     def unapply(p: Rep[AString]) = unmkCString(p)
   }
-  lazy val CString: Rep[CStringCompanionAbs] = new CStringCompanionAbs
+  lazy val CStringRep: Rep[CStringCompanionAbs] = new CStringCompanionAbs
+  lazy val CString: CStringCompanionAbs = proxyCStringCompanion(CStringRep)
   implicit def proxyCStringCompanion(p: Rep[CStringCompanionAbs]): CStringCompanionAbs = {
     proxyOps[CStringCompanionAbs](p)
   }

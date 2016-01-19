@@ -116,11 +116,11 @@ trait InteractionsAbs extends scalan.ScalanDsl with Interactions {
 
     def apply(prompt: Rep[String]): Rep[Ask] =
       mkAsk(prompt)
-  }
-  object AskMatcher {
+
     def unapply(p: Rep[Interact[String]]) = unmkAsk(p)
   }
-  lazy val Ask: Rep[AskCompanionAbs] = new AskCompanionAbs
+  lazy val AskRep: Rep[AskCompanionAbs] = new AskCompanionAbs
+  lazy val Ask: AskCompanionAbs = proxyAskCompanion(AskRep)
   implicit def proxyAskCompanion(p: Rep[AskCompanionAbs]): AskCompanionAbs = {
     proxyOps[AskCompanionAbs](p)
   }
@@ -199,11 +199,11 @@ trait InteractionsAbs extends scalan.ScalanDsl with Interactions {
 
     def apply(msg: Rep[String]): Rep[Tell] =
       mkTell(msg)
-  }
-  object TellMatcher {
+
     def unapply(p: Rep[Interact[Unit]]) = unmkTell(p)
   }
-  lazy val Tell: Rep[TellCompanionAbs] = new TellCompanionAbs
+  lazy val TellRep: Rep[TellCompanionAbs] = new TellCompanionAbs
+  lazy val Tell: TellCompanionAbs = proxyTellCompanion(TellRep)
   implicit def proxyTellCompanion(p: Rep[TellCompanionAbs]): TellCompanionAbs = {
     proxyOps[TellCompanionAbs](p)
   }

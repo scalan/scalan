@@ -122,11 +122,11 @@ trait StructItemsAbs extends StructItems {
       isoStructItemBase(eVal, eSchema).to(p)
     def apply[Val, Schema <: Struct](key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
       mkStructItemBase(key, value)
-  }
-  object StructItemBaseMatcher {
+
     def unapply[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]) = unmkStructItemBase(p)
   }
-  lazy val StructItemBase: Rep[StructItemBaseCompanionAbs] = new StructItemBaseCompanionAbs
+  lazy val StructItemBaseRep: Rep[StructItemBaseCompanionAbs] = new StructItemBaseCompanionAbs
+  lazy val StructItemBase: StructItemBaseCompanionAbs = proxyStructItemBaseCompanion(StructItemBaseRep)
   implicit def proxyStructItemBaseCompanion(p: Rep[StructItemBaseCompanionAbs]): StructItemBaseCompanionAbs = {
     proxyOps[StructItemBaseCompanionAbs](p)
   }

@@ -119,11 +119,11 @@ trait StatesAbs extends scalan.ScalanDsl with States {
 
     def apply[S, A](run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]] =
       mkStateBase(run)
-  }
-  object StateBaseMatcher {
+
     def unapply[S, A](p: Rep[State0[S, A]]) = unmkStateBase(p)
   }
-  lazy val StateBase: Rep[StateBaseCompanionAbs] = new StateBaseCompanionAbs
+  lazy val StateBaseRep: Rep[StateBaseCompanionAbs] = new StateBaseCompanionAbs
+  lazy val StateBase: StateBaseCompanionAbs = proxyStateBaseCompanion(StateBaseRep)
   implicit def proxyStateBaseCompanion(p: Rep[StateBaseCompanionAbs]): StateBaseCompanionAbs = {
     proxyOps[StateBaseCompanionAbs](p)
   }

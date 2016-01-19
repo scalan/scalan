@@ -117,11 +117,11 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
 
     def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Done[F, A]] =
       mkDone(a)
-  }
-  object DoneMatcher {
+
     def unapply[F[_], A](p: Rep[FreeM[F, A]]) = unmkDone(p)
   }
-  lazy val Done: Rep[DoneCompanionAbs] = new DoneCompanionAbs
+  lazy val DoneRep: Rep[DoneCompanionAbs] = new DoneCompanionAbs
+  lazy val Done: DoneCompanionAbs = proxyDoneCompanion(DoneRep)
   implicit def proxyDoneCompanion(p: Rep[DoneCompanionAbs]): DoneCompanionAbs = {
     proxyOps[DoneCompanionAbs](p)
   }
@@ -202,11 +202,11 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
 
     def apply[F[_], A](k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F]): Rep[More[F, A]] =
       mkMore(k)
-  }
-  object MoreMatcher {
+
     def unapply[F[_], A](p: Rep[FreeM[F, A]]) = unmkMore(p)
   }
-  lazy val More: Rep[MoreCompanionAbs] = new MoreCompanionAbs
+  lazy val MoreRep: Rep[MoreCompanionAbs] = new MoreCompanionAbs
+  lazy val More: MoreCompanionAbs = proxyMoreCompanion(MoreRep)
   implicit def proxyMoreCompanion(p: Rep[MoreCompanionAbs]): MoreCompanionAbs = {
     proxyOps[MoreCompanionAbs](p)
   }
@@ -290,11 +290,11 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
       isoFlatMap(eS, eA, cF).to(p)
     def apply[F[_], S, B](a: Rep[FreeM[F, S]], f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]] =
       mkFlatMap(a, f)
-  }
-  object FlatMapMatcher {
+
     def unapply[F[_], S, B](p: Rep[FreeM[F, B]]) = unmkFlatMap(p)
   }
-  lazy val FlatMap: Rep[FlatMapCompanionAbs] = new FlatMapCompanionAbs
+  lazy val FlatMapRep: Rep[FlatMapCompanionAbs] = new FlatMapCompanionAbs
+  lazy val FlatMap: FlatMapCompanionAbs = proxyFlatMapCompanion(FlatMapRep)
   implicit def proxyFlatMapCompanion(p: Rep[FlatMapCompanionAbs]): FlatMapCompanionAbs = {
     proxyOps[FlatMapCompanionAbs](p)
   }

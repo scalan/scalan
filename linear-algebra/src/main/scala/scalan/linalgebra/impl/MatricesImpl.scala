@@ -117,11 +117,11 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
       isoDenseFlatMatrix(eT).to(p)
     def apply[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]] =
       mkDenseFlatMatrix(rmValues, numColumns)
-  }
-  object DenseFlatMatrixMatcher {
+
     def unapply[T](p: Rep[AbstractMatrix[T]]) = unmkDenseFlatMatrix(p)
   }
-  lazy val DenseFlatMatrix: Rep[DenseFlatMatrixCompanionAbs] = new DenseFlatMatrixCompanionAbs
+  lazy val DenseFlatMatrixRep: Rep[DenseFlatMatrixCompanionAbs] = new DenseFlatMatrixCompanionAbs
+  lazy val DenseFlatMatrix: DenseFlatMatrixCompanionAbs = proxyDenseFlatMatrixCompanion(DenseFlatMatrixRep)
   implicit def proxyDenseFlatMatrixCompanion(p: Rep[DenseFlatMatrixCompanionAbs]): DenseFlatMatrixCompanionAbs = {
     proxyOps[DenseFlatMatrixCompanionAbs](p)
   }
@@ -202,11 +202,11 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
       isoCompoundMatrix(eT).to(p)
     def apply[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
       mkCompoundMatrix(rows, numColumns)
-  }
-  object CompoundMatrixMatcher {
+
     def unapply[T](p: Rep[AbstractMatrix[T]]) = unmkCompoundMatrix(p)
   }
-  lazy val CompoundMatrix: Rep[CompoundMatrixCompanionAbs] = new CompoundMatrixCompanionAbs
+  lazy val CompoundMatrixRep: Rep[CompoundMatrixCompanionAbs] = new CompoundMatrixCompanionAbs
+  lazy val CompoundMatrix: CompoundMatrixCompanionAbs = proxyCompoundMatrixCompanion(CompoundMatrixRep)
   implicit def proxyCompoundMatrixCompanion(p: Rep[CompoundMatrixCompanionAbs]): CompoundMatrixCompanionAbs = {
     proxyOps[CompoundMatrixCompanionAbs](p)
   }
@@ -288,11 +288,11 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
       isoConstMatrix(eT).to(p)
     def apply[T](item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T]): Rep[ConstMatrix[T]] =
       mkConstMatrix(item, numColumns, numRows)
-  }
-  object ConstMatrixMatcher {
+
     def unapply[T](p: Rep[AbstractMatrix[T]]) = unmkConstMatrix(p)
   }
-  lazy val ConstMatrix: Rep[ConstMatrixCompanionAbs] = new ConstMatrixCompanionAbs
+  lazy val ConstMatrixRep: Rep[ConstMatrixCompanionAbs] = new ConstMatrixCompanionAbs
+  lazy val ConstMatrix: ConstMatrixCompanionAbs = proxyConstMatrixCompanion(ConstMatrixRep)
   implicit def proxyConstMatrixCompanion(p: Rep[ConstMatrixCompanionAbs]): ConstMatrixCompanionAbs = {
     proxyOps[ConstMatrixCompanionAbs](p)
   }
@@ -373,11 +373,11 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
 
     def apply[T](diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]] =
       mkDiagonalMatrix(diagonalValues)
-  }
-  object DiagonalMatrixMatcher {
+
     def unapply[T](p: Rep[AbstractMatrix[T]]) = unmkDiagonalMatrix(p)
   }
-  lazy val DiagonalMatrix: Rep[DiagonalMatrixCompanionAbs] = new DiagonalMatrixCompanionAbs
+  lazy val DiagonalMatrixRep: Rep[DiagonalMatrixCompanionAbs] = new DiagonalMatrixCompanionAbs
+  lazy val DiagonalMatrix: DiagonalMatrixCompanionAbs = proxyDiagonalMatrixCompanion(DiagonalMatrixRep)
   implicit def proxyDiagonalMatrixCompanion(p: Rep[DiagonalMatrixCompanionAbs]): DiagonalMatrixCompanionAbs = {
     proxyOps[DiagonalMatrixCompanionAbs](p)
   }

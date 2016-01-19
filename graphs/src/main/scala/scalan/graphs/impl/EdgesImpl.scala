@@ -120,11 +120,11 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
       isoAdjEdge(eV, eE).to(p)
     def apply[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
       mkAdjEdge(fromId, outIndex, graph)
-  }
-  object AdjEdgeMatcher {
+
     def unapply[V, E](p: Rep[Edge[V, E]]) = unmkAdjEdge(p)
   }
-  lazy val AdjEdge: Rep[AdjEdgeCompanionAbs] = new AdjEdgeCompanionAbs
+  lazy val AdjEdgeRep: Rep[AdjEdgeCompanionAbs] = new AdjEdgeCompanionAbs
+  lazy val AdjEdge: AdjEdgeCompanionAbs = proxyAdjEdgeCompanion(AdjEdgeRep)
   implicit def proxyAdjEdgeCompanion(p: Rep[AdjEdgeCompanionAbs]): AdjEdgeCompanionAbs = {
     proxyOps[AdjEdgeCompanionAbs](p)
   }
@@ -207,11 +207,11 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
       isoIncEdge(eV, eE).to(p)
     def apply[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
       mkIncEdge(fromId, toId, graph)
-  }
-  object IncEdgeMatcher {
+
     def unapply[V, E](p: Rep[Edge[V, E]]) = unmkIncEdge(p)
   }
-  lazy val IncEdge: Rep[IncEdgeCompanionAbs] = new IncEdgeCompanionAbs
+  lazy val IncEdgeRep: Rep[IncEdgeCompanionAbs] = new IncEdgeCompanionAbs
+  lazy val IncEdge: IncEdgeCompanionAbs = proxyIncEdgeCompanion(IncEdgeRep)
   implicit def proxyIncEdgeCompanion(p: Rep[IncEdgeCompanionAbs]): IncEdgeCompanionAbs = {
     proxyOps[IncEdgeCompanionAbs](p)
   }

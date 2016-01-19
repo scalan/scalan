@@ -112,11 +112,11 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
       isoInterval.to(p)
     def apply(start: Rep[Int], end: Rep[Int]): Rep[Interval] =
       mkInterval(start, end)
-  }
-  object IntervalMatcher {
+
     def unapply(p: Rep[Segment]) = unmkInterval(p)
   }
-  lazy val Interval: Rep[IntervalCompanionAbs] = new IntervalCompanionAbs
+  lazy val IntervalRep: Rep[IntervalCompanionAbs] = new IntervalCompanionAbs
+  lazy val Interval: IntervalCompanionAbs = proxyIntervalCompanion(IntervalRep)
   implicit def proxyIntervalCompanion(p: Rep[IntervalCompanionAbs]): IntervalCompanionAbs = {
     proxyOps[IntervalCompanionAbs](p)
   }
@@ -195,11 +195,11 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
       isoSlice.to(p)
     def apply(start: Rep[Int], length: Rep[Int]): Rep[Slice] =
       mkSlice(start, length)
-  }
-  object SliceMatcher {
+
     def unapply(p: Rep[Segment]) = unmkSlice(p)
   }
-  lazy val Slice: Rep[SliceCompanionAbs] = new SliceCompanionAbs
+  lazy val SliceRep: Rep[SliceCompanionAbs] = new SliceCompanionAbs
+  lazy val Slice: SliceCompanionAbs = proxySliceCompanion(SliceRep)
   implicit def proxySliceCompanion(p: Rep[SliceCompanionAbs]): SliceCompanionAbs = {
     proxyOps[SliceCompanionAbs](p)
   }
@@ -279,11 +279,11 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
       isoCentered.to(p)
     def apply(center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
       mkCentered(center, radius)
-  }
-  object CenteredMatcher {
+
     def unapply(p: Rep[Segment]) = unmkCentered(p)
   }
-  lazy val Centered: Rep[CenteredCompanionAbs] = new CenteredCompanionAbs
+  lazy val CenteredRep: Rep[CenteredCompanionAbs] = new CenteredCompanionAbs
+  lazy val Centered: CenteredCompanionAbs = proxyCenteredCompanion(CenteredRep)
   implicit def proxyCenteredCompanion(p: Rep[CenteredCompanionAbs]): CenteredCompanionAbs = {
     proxyOps[CenteredCompanionAbs](p)
   }

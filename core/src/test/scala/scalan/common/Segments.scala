@@ -19,11 +19,11 @@ trait Segments { self: SegmentsDsl =>
     def length = end - start
     def shift(ofs: Rep[Int]) = Interval(start + ofs, end + ofs)
     def attach(seg: Rep[Segment]): Rep[Segment] = seg match {
-      case IntervalMatcher(start, end) =>
+      case Interval(start, end) =>
         seg
-      case SliceMatcher(start, length) =>
+      case Slice(start, length) =>
         self
-      case CenteredMatcher(center, radius) =>
+      case Centered(center, radius) =>
         self
       case _ => seg attach self
     }
