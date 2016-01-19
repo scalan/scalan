@@ -12,22 +12,6 @@ object ReflectionUtil {
 
   def methodToJava(sym: MethodSymbol) = ReflectionUtil0.methodToJava(sym)
 
-  def primaryConstructor(tpe: Type) = {
-    val constructorSymbol = tpe.decl(termNames.CONSTRUCTOR)
-    constructorSymbol match {
-      case ctorTermSymbol: TermSymbol =>
-        if (ctorTermSymbol.isOverloaded) {
-          val constructors = ctorTermSymbol.alternatives
-          constructors.collectFirst {
-            case c: MethodSymbol if c.isPrimaryConstructor => c
-          }
-        } else {
-          Some(ctorTermSymbol.asMethod)
-        }
-      case NoSymbol => None
-    }
-  }
-
   def classToSymbol(clazz: Class[_]) =
     runtimeMirror(clazz.getClassLoader).classSymbol(clazz)
 
@@ -42,11 +26,13 @@ object ReflectionUtil {
   private def isFieldOrGetter(s: TermSymbol) = s.isVal || s.isGetter
 
   def paramFieldMirrors(clazz: Class[_], instanceMirror: InstanceMirror, knownSupertypeFieldSyms: TermSymbol*) = {
-    val tpe = classToSymbol(clazz).toType
-    val constructor = primaryConstructor(tpe).getOrElse {
+    val clazzSym = classToSymbol(clazz)
+    val constructor = clazzSym.primaryConstructor.asMethod
+    if (constructor == NoSymbol) {
       throw new ScalaReflectionException(s"Primary constructor for class $clazz not found")
     }
     val ctorParams = constructor.paramLists.flatten
+    val tpe = clazzSym.toType
     val knownSupertypeFieldsWithTypes = knownSupertypeFieldSyms.map(f => f -> simplifyType(f.typeSignatureIn(tpe)))
     ctorParams.map { sym =>
       val fieldSym = tpe.decl(sym.name).asTerm
