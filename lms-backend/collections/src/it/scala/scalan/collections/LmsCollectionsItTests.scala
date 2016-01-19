@@ -40,4 +40,7 @@ class LmsCollectionsItTests extends CollectionsItTests {
   test("ifSpecialize") {
     compareOutputWithSequential(_.ifSpecialize, progStagedOnly)(Array(1, 2, 3))
   }
+  test("collPairIf") {
+    compareOutputWithSequential(_.collPairIf, progStagedOnly)((Array(1, 2, 3), 2))
+  }
 }
