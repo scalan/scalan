@@ -354,6 +354,14 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
                          s"fa.selfType1"
                        else
                          s"""!!!("Operation is not supported by $name container " + fa)""" }
+             |    def unapply[T](e: Elem[_]) = e match {
+             |      ${if (isWrapper)
+                        s"case e: ${e.name}Elem[_,_] => Some(e.asElem[${e.name}[T]])"
+                      else
+                        s"case e: BaseTypeElem1[_,_,_] if e.wrapperElem.isInstanceOf[${e.name}Elem[_,_]] => Some(e.asElem[$name[T]])"
+                     }
+             |      case _ => None
+             |    }
              |    ${isFunctor.opt(s"def map[A:Elem,B:Elem](xs: Rep[$name[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))")}
              |  }
            """.stripMargin

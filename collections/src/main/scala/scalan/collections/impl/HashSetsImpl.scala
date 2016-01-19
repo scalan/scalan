@@ -34,6 +34,10 @@ trait HashSetsAbs extends scalan.ScalanDsl with HashSets {
     def unlift[A](implicit eFT: Elem[HashSet[A]]) =
       castSHashSetElement(eFT.asInstanceOf[Elem[SHashSet[A]]]).eA
     def getElem[A](fa: Rep[HashSet[A]]) = !!!("Operation is not supported by HashSet container " + fa)
+    def unapply[T](e: Elem[_]) = e match {
+      case e: BaseTypeElem1[_,_,_] if e.wrapperElem.isInstanceOf[SHashSetElem[_,_]] => Some(e.asElem[HashSet[T]])
+      case _ => None
+    }
   }
 
   implicit lazy val containerSHashSet: Cont[SHashSet] = new Cont[SHashSet] {
@@ -42,6 +46,10 @@ trait HashSetsAbs extends scalan.ScalanDsl with HashSets {
     def unlift[A](implicit eFT: Elem[SHashSet[A]]) =
       castSHashSetElement(eFT).eA
     def getElem[A](fa: Rep[SHashSet[A]]) = fa.selfType1
+    def unapply[T](e: Elem[_]) = e match {
+      case e: SHashSetElem[_,_] => Some(e.asElem[SHashSet[T]])
+      case _ => None
+    }
   }
 
   case class SHashSetIso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, SHashSet] {
