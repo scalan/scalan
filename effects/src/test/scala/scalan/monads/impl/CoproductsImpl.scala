@@ -150,7 +150,7 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
 }
 
 // Seq -----------------------------------
-trait CoproductsSeq extends scalan.ScalanDslSeq with CoproductsDsl {
+trait CoproductsSeq extends scalan.ScalanDslStd with CoproductsDsl {
   self: MonadsDslSeq =>
   lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs {
   }

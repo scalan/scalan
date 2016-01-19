@@ -3,9 +3,9 @@ package scalan.graphs
 import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.BaseItTests
-import scalan.{ScalanDslExp, ScalanDslSeq}
+import scalan.{ScalanDslExp, ScalanDslStd}
 
-abstract class LmsMstItTests extends BaseItTests[MST_example](new ScalanDslSeq with MST_example) {
+abstract class LmsMstItTests extends BaseItTests[MST_example](new ScalanDslStd with MST_example) {
 
   class ProgExp extends ScalanDslExp with MST_example
 

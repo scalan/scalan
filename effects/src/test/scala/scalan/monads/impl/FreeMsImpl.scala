@@ -323,7 +323,7 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
 }
 
 // Seq -----------------------------------
-trait FreeMsSeq extends scalan.ScalanDslSeq with FreeMsDsl {
+trait FreeMsSeq extends scalan.ScalanDslStd with FreeMsDsl {
   self: MonadsDslSeq =>
   lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs {
   }

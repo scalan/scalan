@@ -237,7 +237,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
 }
 
 // Seq -----------------------------------
-trait KindsSeq extends scalan.ScalanDslSeq with KindsDsl {
+trait KindsSeq extends scalan.ScalanDslStd with KindsDsl {
   self: KindsDslSeq =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }

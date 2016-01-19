@@ -325,7 +325,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
 }
 
 // Seq -----------------------------------
-trait ProcessesSeq extends scalan.ScalanDslSeq with ProcessesDsl {
+trait ProcessesSeq extends scalan.ScalanDslStd with ProcessesDsl {
   self: ProcessesDslSeq =>
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs {
   }

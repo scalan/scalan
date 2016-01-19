@@ -256,7 +256,7 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
 }
 
 // Seq -----------------------------------
-trait SeqsSeq extends scalan.ScalanDslSeq with SeqsDsl {
+trait SeqsSeq extends scalan.ScalanDslStd with SeqsDsl {
   self: SeqsDslSeq =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs {
     override def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =

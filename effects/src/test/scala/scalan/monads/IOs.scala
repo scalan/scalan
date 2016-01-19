@@ -59,7 +59,7 @@ trait IOsDsl extends ScalanDsl with impl.IOsAbs with IOs
   def writeFileIO(s: Rep[String], lines: Rep[List[String]]): Rep[Oper[Unit]]
 }
 
-trait IOsDslSeq extends ScalanDslSeq with impl.IOsSeq with MonadsDslSeq {
+trait IOsDslSeq extends ScalanDslStd with impl.IOsSeq with MonadsDslSeq {
   def readFileIO(s: Rep[String]): Rep[Oper[List[String]]] = ???
   def writeFileIO(s: Rep[String], lines: Rep[List[String]]): Rep[Oper[Unit]] = ???
 }

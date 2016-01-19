@@ -1,6 +1,6 @@
 package scalan.collections
 
-import scalan.{ScalanDslSeq, Scalan}
+import scalan.{ScalanDslStd, Scalan}
 import scalan.it.BaseItTests
 import scalan.primitives.Functions
 
@@ -68,7 +68,7 @@ trait SimpleMapProg extends Scalan {
 
 }
 
-abstract class MapItTests extends BaseItTests[SimpleMapProg](new ScalanDslSeq with SimpleMapProg) {
+abstract class MapItTests extends BaseItTests[SimpleMapProg](new ScalanDslStd with SimpleMapProg) {
   test("mapPutContains") {
     compareOutputWithSequential(_.mapPutContains)(Tuple2(314,3.14))
   }

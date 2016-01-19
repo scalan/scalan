@@ -912,7 +912,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
 }
 
 // Seq -----------------------------------
-trait CollectionsSeq extends scalan.ScalanDslSeq with CollectionsDsl {
+trait CollectionsSeq extends scalan.ScalanDslStd with CollectionsDsl {
   self: CollectionsDslSeq =>
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs {
   }

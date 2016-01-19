@@ -59,7 +59,7 @@ class ExceptionTests extends BaseCtxTests {
   }
 
   test("throwablesSeq") {
-    val ctx = new ScalanDslSeq with ThrowableExamples {
+    val ctx = new ScalanDslStd with ThrowableExamples {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
 

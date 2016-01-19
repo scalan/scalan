@@ -29,7 +29,7 @@ class CollectionConverterTests extends BaseCtxTests {
 
   class ConvProgStaged extends TestContext with ConvProg with CollectionsDslExp {
   }
-  class ConvProgSeq extends ScalanDslSeq with ConvProg with CollectionsDslSeq {
+  class ConvProgSeq extends ScalanDslStd with ConvProg with CollectionsDslSeq {
   }
 
   test("convert") {

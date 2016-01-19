@@ -87,7 +87,7 @@ abstract class ScalanSeq
   with EffectfulSeq
   with StructsDslSeq
 
-class ScalanDslSeq
+class ScalanDslStd
 extends ScalanSeq
   with ScalanDsl
   with ExceptionsDslSeq

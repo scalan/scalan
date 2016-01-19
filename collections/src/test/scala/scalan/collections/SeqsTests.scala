@@ -81,7 +81,7 @@ class SeqsTests extends BaseCtxTests {
   }
 
   test("simpleHashsetSeq") {
-    val ctx = new ScalanDslSeq with SeqSimple with SeqsDslSeq with SegmentsDslSeq {
+    val ctx = new ScalanDslStd with SeqSimple with SeqsDslSeq with SegmentsDslSeq {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
       }

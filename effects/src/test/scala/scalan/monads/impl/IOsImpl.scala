@@ -232,7 +232,7 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
 }
 
 // Seq -----------------------------------
-trait IOsSeq extends scalan.ScalanDslSeq with IOsDsl {
+trait IOsSeq extends scalan.ScalanDslStd with IOsDsl {
   self: IOsDslSeq =>
   lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs {
   }

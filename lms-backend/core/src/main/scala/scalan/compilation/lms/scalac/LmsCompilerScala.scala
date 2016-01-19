@@ -114,5 +114,5 @@ class LmsCompilerScala[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends
       output
   }).asInstanceOf[A]
 
-  protected[this] lazy val scalanSeq = new ScalanDslSeq
+  protected[this] lazy val scalanSeq = new ScalanDslStd
 }

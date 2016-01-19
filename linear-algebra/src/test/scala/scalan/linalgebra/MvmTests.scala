@@ -37,11 +37,18 @@ class MvmTests extends BaseViewTests {
       with StructsCompiler[ScalanDslExp with LinearAlgebraExamples ]
   }
 
-  test("staging") {
+  test("aamvm") {
     val ctx = new Ctx {
     }
     import ctx.compiler.scalan._
     ctx.test("aamvm", aamvm)
+  }
+
+  test("vvm") {
+    val ctx = new Ctx {
+    }
+    import ctx.compiler.scalan._
+    ctx.test("vvm", vvm)
   }
 
   test("structWrapper") {

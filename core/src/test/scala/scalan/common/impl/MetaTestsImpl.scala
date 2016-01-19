@@ -318,7 +318,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
 }
 
 // Seq -----------------------------------
-trait MetaTestsSeq extends scalan.ScalanDslSeq with MetaTestsDsl {
+trait MetaTestsSeq extends scalan.ScalanDslStd with MetaTestsDsl {
   self: MetaTestsDslSeq =>
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }

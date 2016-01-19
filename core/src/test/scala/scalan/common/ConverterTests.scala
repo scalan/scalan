@@ -12,7 +12,7 @@ class ConverterTests extends BaseCtxTests {
 
   class ConvProgStaged extends TestContext with ConvProg with SegmentsDslExp {
   }
-  class ConvProgSeq extends ScalanDslSeq with ConvProg with SegmentsDslSeq {
+  class ConvProgSeq extends ScalanDslStd with ConvProg with SegmentsDslSeq {
   }
 
   test("simple converter tests") {

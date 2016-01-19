@@ -144,7 +144,7 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
 }
 
 // Seq -----------------------------------
-trait BitSetsSeq extends scalan.ScalanDslSeq with BitSetsDsl {
+trait BitSetsSeq extends scalan.ScalanDslStd with BitSetsDsl {
   self: CollectionsDsl with BitSetsDslSeq =>
   lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs {
   }

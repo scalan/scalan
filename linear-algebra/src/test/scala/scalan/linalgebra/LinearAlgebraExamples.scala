@@ -4,6 +4,13 @@ trait LinearAlgebraExamples extends MatricesDsl {
   def mvm[T](matrix: Matrix[T], vector: Vector[T])(implicit eT: Elem[T], n: Numeric[T]): Vector[T] =
     DenseVector(matrix.rows.mapBy( fun{ r => r dot vector }))
 
+  lazy val vvm = fun { p: Rep[(Collection[Double], Collection[Double])] =>
+    val Pair(items1, items2) = p
+    val v1 = DenseVector(items1)
+    val v2 = DenseVector(items2)
+    v1.dot(v2)
+  }
+
   lazy val aamvm = fun { p: Rep[(AbstractMatrix[Double], AbstractVector[Double])] =>
     val Pair(m, v) = p
     mvm(m, v)

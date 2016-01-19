@@ -240,7 +240,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
 }
 
 // Seq -----------------------------------
-trait EdgesSeq extends scalan.ScalanDslSeq with EdgesDsl {
+trait EdgesSeq extends scalan.ScalanDslStd with EdgesDsl {
   self: GraphsDslSeq =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs {
   }

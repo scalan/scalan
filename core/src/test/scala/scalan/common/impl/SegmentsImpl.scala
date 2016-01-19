@@ -312,7 +312,7 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
 }
 
 // Seq -----------------------------------
-trait SegmentsSeq extends scalan.ScalanDslSeq with SegmentsDsl {
+trait SegmentsSeq extends scalan.ScalanDslStd with SegmentsDsl {
   self: SegmentsDslSeq =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }

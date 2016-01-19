@@ -3,13 +3,13 @@ package scalan.primitives
 import java.io.File
 import java.lang.reflect.Method
 
-import scalan.{ScalanDslExp, ScalanDslSeq}
+import scalan.{ScalanDslExp, ScalanDslStd}
 import scalan.BaseShouldTests
 import scalan.compilation.GraphVizExport
 
 class PrimitivesExamplesSuite extends BaseShouldTests {
 
-  def seq = new ScalanDslSeq with PrimitiveExamples {}
+  def seq = new ScalanDslStd with PrimitiveExamples {}
   def staged = new ScalanDslExp with PrimitiveExamples {}
   "Examples trait" should "be mixable in Seq context" in {
       val ctx = seq

@@ -406,7 +406,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
 }
 
 // Seq -----------------------------------
-trait VectorsSeq extends scalan.ScalanDslSeq with VectorsDsl {
+trait VectorsSeq extends scalan.ScalanDslStd with VectorsDsl {
   self: VectorsDslSeq =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs {
   }

@@ -233,7 +233,7 @@ trait AuthenticationsAbs extends scalan.ScalanDsl with Authentications {
 }
 
 // Seq -----------------------------------
-trait AuthenticationsSeq extends scalan.ScalanDslSeq with AuthenticationsDsl {
+trait AuthenticationsSeq extends scalan.ScalanDslStd with AuthenticationsDsl {
   self: AuthenticationsDslSeq =>
   lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }

@@ -397,7 +397,7 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
 }
 
 // Seq -----------------------------------
-trait FrontsSeq extends scalan.ScalanDslSeq with FrontsDsl {
+trait FrontsSeq extends scalan.ScalanDslStd with FrontsDsl {
   self: FrontsDslSeq =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs {
   }

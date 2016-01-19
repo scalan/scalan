@@ -92,7 +92,7 @@ class EffectsTests extends BaseCtxTests {
   }
 
   test("throwablesSeq") {
-    val ctx = new ScalanDslSeq with MyProg {
+    val ctx = new ScalanDslStd with MyProg {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
       }

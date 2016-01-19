@@ -152,7 +152,7 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
 }
 
 // Seq -----------------------------------
-trait ReadersSeq extends scalan.ScalanDslSeq with ReadersDsl {
+trait ReadersSeq extends scalan.ScalanDslStd with ReadersDsl {
   self: MonadsDslSeq =>
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }

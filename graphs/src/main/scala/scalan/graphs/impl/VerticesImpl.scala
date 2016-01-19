@@ -152,7 +152,7 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
 }
 
 // Seq -----------------------------------
-trait VerticesSeq extends scalan.ScalanDslSeq with VerticesDsl {
+trait VerticesSeq extends scalan.ScalanDslStd with VerticesDsl {
   self: GraphsDslSeq =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs {
   }

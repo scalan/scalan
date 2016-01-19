@@ -11,7 +11,7 @@ trait ArrayOpsProg extends ScalanDsl {
   }
 }
 
-class ArrayOpsItTests extends BaseItTests[ArrayOpsProg](new ScalanDslSeq with ArrayOpsProg) {
+class ArrayOpsItTests extends BaseItTests[ArrayOpsProg](new ScalanDslStd with ArrayOpsProg) {
 
   class ProgExp extends ScalanDslExp with ArrayOpsProg with JNIExtractorOpsExp
 

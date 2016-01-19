@@ -232,7 +232,7 @@ trait InteractionsAbs extends scalan.ScalanDsl with Interactions {
 }
 
 // Seq -----------------------------------
-trait InteractionsSeq extends scalan.ScalanDslSeq with InteractionsDsl {
+trait InteractionsSeq extends scalan.ScalanDslStd with InteractionsDsl {
   self: InteractionsDslSeq =>
   lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs {
   }

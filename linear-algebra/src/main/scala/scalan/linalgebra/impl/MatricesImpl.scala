@@ -406,7 +406,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
 }
 
 // Seq -----------------------------------
-trait MatricesSeq extends scalan.ScalanDslSeq with MatricesDsl {
+trait MatricesSeq extends scalan.ScalanDslStd with MatricesDsl {
   self: MatricesDslSeq =>
   lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs {
   }

@@ -10,7 +10,7 @@ import scalan.compilation.{GraphVizConfig, GraphVizExport}
 class CollectionExamplesSuite extends BaseShouldTests {
 
   "when mixing trait" should "be constructed in Seq context" in {
-    val ctx = new ScalanDslSeq with CollectionsDslSeq with CollectionExamples {}
+    val ctx = new ScalanDslStd with CollectionsDslSeq with CollectionExamples {}
   }
 
   it should "be constructed in Staged context" in {
@@ -18,14 +18,14 @@ class CollectionExamplesSuite extends BaseShouldTests {
   }
 
   "in seq context" should "execute functions" in {
-    val ctx = new ScalanDslSeq with CollectionsDslSeq with CollectionExamples {}
+    val ctx = new ScalanDslStd with CollectionsDslSeq with CollectionExamples {}
     val in = Array((1,2f), (3,4f), (5,6f))
     val res = ctx.fromAndTo(in)
     res should be(in)
   }
 
   "in seq context 1" should "execute functions" in {
-    val ctx = new ScalanDslSeq with CollectionsDslSeq with CollectionExamples {}
+    val ctx = new ScalanDslStd with CollectionsDslSeq with CollectionExamples {}
     val in = List(1,2,3,4,5,6)
     val res = ctx.listCollectionPairZipWith(in)
     res should be(Array(2,4,6,8,10,12))

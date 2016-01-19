@@ -212,7 +212,7 @@ trait HashSetsAbs extends scalan.ScalanDsl with HashSets {
 }
 
 // Seq -----------------------------------
-trait HashSetsSeq extends scalan.ScalanDslSeq with HashSetsDsl {
+trait HashSetsSeq extends scalan.ScalanDslStd with HashSetsDsl {
   self: HashSetsDslSeq =>
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs {
     override def empty[A:Elem]: Rep[SHashSet[A]] =

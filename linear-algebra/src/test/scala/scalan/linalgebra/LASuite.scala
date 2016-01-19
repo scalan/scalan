@@ -8,7 +8,7 @@ import java.io.File
 import java.lang.reflect.Method
 
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.{BaseShouldTests, ScalanDslExp, ScalanDslSeq}
+import scalan.{BaseShouldTests, ScalanDslExp, ScalanDslStd}
 
 class LASuite extends BaseShouldTests {
 

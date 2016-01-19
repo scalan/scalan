@@ -363,7 +363,7 @@ class StructTests extends BaseViewTests {
   }
 }
 
-abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslSeq with SegmentsDslSeq with StructExamples) {
+abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslStd with SegmentsDslSeq with StructExamples) {
   import progSeq._
 
   test("struct out") {

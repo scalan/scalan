@@ -124,7 +124,7 @@ trait FreesDsl extends ScalanDsl with impl.FreesAbs with Frees with Monads { sel
 }
 
 
-trait FreesDslSeq extends ScalanDslSeq with impl.FreesSeq { self: MonadsDslSeq =>
+trait FreesDslSeq extends ScalanDslStd with impl.FreesSeq { self: MonadsDslSeq =>
 
 }
 

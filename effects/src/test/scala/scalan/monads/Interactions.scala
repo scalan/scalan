@@ -66,7 +66,7 @@ trait InteractionsDsl extends ScalanDsl with impl.InteractionsAbs with Interacti
   def readLine: Rep[Oper[String]]
 }
 
-trait InteractionsDslSeq extends ScalanDslSeq with impl.InteractionsSeq with MonadsDslSeq {
+trait InteractionsDslSeq extends ScalanDslStd with impl.InteractionsSeq with MonadsDslSeq {
   def println(s: Rep[String]): Rep[Oper[Unit]] = i => (i + 1, Predef.println(s))
   def readLine: Rep[Oper[String]] = i => (i + 1, StdIn.readLine())
 }
