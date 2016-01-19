@@ -11,9 +11,9 @@ import scala.annotation.unchecked.uncheckedVariance
 
 trait Vectors { self: VectorsDsl =>
 
-  type Vec[T] = Rep[AbstractVector[T]]
+  type Vec[T] = Rep[Vector[T]]
 
-  trait AbstractVector[T] extends Def[AbstractVector[T]] {
+  trait Vector[T] extends Def[Vector[T]] {
 
     def length: Rep[Int]
     def items: Rep[Collection[T]]
@@ -63,7 +63,7 @@ trait Vectors { self: VectorsDsl =>
   }
 
   abstract class DenseVector[T](val items: Rep[Collection[T]])(implicit val eT: Elem[T])
-    extends AbstractVector[T] {
+    extends Vector[T] {
 
     def length = items.length
     def nonZeroIndices: Rep[Collection[Int]] = nonZeroItems.map { case Pair(i, v) => i }
@@ -157,7 +157,7 @@ trait Vectors { self: VectorsDsl =>
 
   abstract class ConstVector[T](val item: Rep[T], val length: Rep[Int])
                                (implicit val eT: Elem[T])
-    extends AbstractVector[T] {
+    extends Vector[T] {
 
     def items: Rep[Collection[T]] = Collection.replicate(length, item)
     def nonZeroIndices: Rep[Collection[Int]] = IF (item !== zeroValue) THEN Collection.indexRange(length) ELSE Collection.empty[Int]
@@ -237,7 +237,7 @@ trait Vectors { self: VectorsDsl =>
   abstract class SparseVector[T](val nonZeroIndices: Rep[Collection[Int]],
                                  val nonZeroValues: Rep[Collection[T]],
                                  val length: Rep[Int])(implicit val eT: Elem[T])
-    extends AbstractVector[T] {
+    extends Vector[T] {
 
     def items: Rep[Collection[T]] = Collection.replicate(length, zeroValue).updateMany(nonZeroIndices, nonZeroValues)
     def nonZeroItems: Rep[Collection[(Int, T)]] = nonZeroIndices zip nonZeroValues
@@ -329,7 +329,7 @@ trait Vectors { self: VectorsDsl =>
       if (m.zero == zeroValue) nonZeroValues.reduce(m) else items.reduce(m)
     }  //TODO: it's inefficient
 
-    def dot(other: Rep[AbstractVector[T]])(implicit n: Numeric[T]): Rep[T] = {
+    def dot(other: Rep[Vector[T]])(implicit n: Numeric[T]): Rep[T] = {
       other match {
         case SparseVector(nonZeroIndices1, nonZeroValues1, _) =>
           // TODO implement innerJoin and uncomment
@@ -348,7 +348,7 @@ trait Vectors { self: VectorsDsl =>
   }
 
   abstract class SparseVector1[T](val nonZeroItems: Coll[(Int, T)], val length: Rep[Int])(implicit val eT: Elem[T])
-    extends AbstractVector[T] {
+    extends Vector[T] {
 
     def items: Rep[Collection[T]] = Collection.replicate(length, zeroValue).updateMany(nonZeroIndices, nonZeroValues)
     def nonZeroIndices: Rep[Collection[Int]] = nonZeroItems.as
@@ -433,7 +433,7 @@ trait Vectors { self: VectorsDsl =>
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)  //TODO: it's inefficient
 
-    def dot(other: Rep[AbstractVector[T]])(implicit n: Numeric[T]): Rep[T] = {
+    def dot(other: Rep[Vector[T]])(implicit n: Numeric[T]): Rep[T] = {
       other match {
         case SparseVector1(nonZeroItemsL, _) =>
           // TODO implement innerJoin and uncomment
@@ -449,13 +449,13 @@ trait Vectors { self: VectorsDsl =>
     def companion = SparseVector
   }
 
-  trait AbstractVectorCompanion extends TypeFamily1[AbstractVector] {
+  trait AbstractVectorCompanion extends TypeFamily1[Vector] {
     def zero[T: Elem](len: Rep[Int]): Vec[T] = ??? //DenseVector.zero[T](len)
     def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]],
                                 nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vec[T] = ???
   }
 
-  trait DenseVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
+  trait DenseVectorCompanion extends ConcreteClass1[Vector] with AbstractVectorCompanion {
     override def zero[T: Elem](len: Rep[Int]): Vec[T] = {
       val zeroV = element[T].defaultRepValue
       DenseVector(Collection.replicate(len, zeroV))
@@ -464,7 +464,7 @@ trait Vectors { self: VectorsDsl =>
                                 nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vec[T] = ???
   }
 
-  trait ConstVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
+  trait ConstVectorCompanion extends ConcreteClass1[Vector] with AbstractVectorCompanion {
     override def zero[T: Elem](len: Rep[Int]): Vec[T] = {
       val zeroV = element[T].defaultRepValue
       ConstVector(zeroV, len)
@@ -472,7 +472,7 @@ trait Vectors { self: VectorsDsl =>
     override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]],
                                          nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vec[T] = ???
   }
-  trait SparseVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
+  trait SparseVectorCompanion extends ConcreteClass1[Vector] with AbstractVectorCompanion {
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
       val nonZeroItems =
         (Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero }
@@ -487,7 +487,7 @@ trait Vectors { self: VectorsDsl =>
     override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]],
                                          length: Rep[Int]): Vec[T] = SparseVector(nonZeroIndices, nonZeroValues, length)
   }
-  trait SparseVector1Companion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
+  trait SparseVector1Companion extends ConcreteClass1[Vector] with AbstractVectorCompanion {
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector1[T]] = {
       val nonZeroItems =
         (Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero }
@@ -527,7 +527,7 @@ trait VectorsDsl extends CollectionsDsl with impl.VectorsAbs {
   def binarySearch(index: IntRep, indices: Coll[Int]): IntRep
 
   implicit class VectorExtensions[T](vector: Vec[T]) {
-    implicit def eItem: Elem[T] = vector.selfType1.asInstanceOf[AbstractVectorElem[T, _]].eT
+    implicit def eItem: Elem[T] = vector.selfType1.asInstanceOf[VectorElem[T, _]].eT
 
     def map[R: Elem](f: Rep[T] => Rep[R]): Vec[R] = vector.mapBy(fun(f))
 

@@ -147,7 +147,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
   def unmkDenseFlatMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[T]], Rep[Int])]
 
   abstract class AbsCompoundMatrix[T]
-      (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T])
+      (rows: Rep[Collection[Vector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T])
     extends CompoundMatrix[T](rows, numColumns) with Def[CompoundMatrix[T]] {
     lazy val selfType = element[CompoundMatrix[T]]
   }
@@ -161,7 +161,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     }
 
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = CompoundMatrix(x.rows, x.numColumns)
-    override def getDefaultRep = CompoundMatrix(element[Collection[AbstractVector[T]]].defaultRepValue, 0)
+    override def getDefaultRep = CompoundMatrix(element[Collection[Vector[T]]].defaultRepValue, 0)
     override lazy val tag = {
       implicit val tagT = eT.tag
       weakTypeTag[CompoundMatrix[T]]
@@ -169,18 +169,18 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
   }
 
   // state representation type
-  type CompoundMatrixData[T] = (Collection[AbstractVector[T]], Int)
+  type CompoundMatrixData[T] = (Collection[Vector[T]], Int)
 
   // 3) Iso for concrete class
   class CompoundMatrixIso[T](implicit eT: Elem[T])
     extends EntityIso[CompoundMatrixData[T], CompoundMatrix[T]] with Def[CompoundMatrixIso[T]] {
     override def from(p: Rep[CompoundMatrix[T]]) =
       (p.rows, p.numColumns)
-    override def to(p: Rep[(Collection[AbstractVector[T]], Int)]) = {
+    override def to(p: Rep[(Collection[Vector[T]], Int)]) = {
       val Pair(rows, numColumns) = p
       CompoundMatrix(rows, numColumns)
     }
-    lazy val eFrom = pairElement(element[Collection[AbstractVector[T]]], element[Int])
+    lazy val eFrom = pairElement(element[Collection[Vector[T]]], element[Int])
     lazy val eTo = new CompoundMatrixElem[T](self)
     lazy val selfType = new CompoundMatrixIsoElem[T](eT)
     def productArity = 1
@@ -200,7 +200,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     override def toString = "CompoundMatrix"
     def apply[T](p: Rep[CompoundMatrixData[T]])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
       isoCompoundMatrix(eT).to(p)
-    def apply[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
+    def apply[T](rows: Rep[Collection[Vector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
       mkCompoundMatrix(rows, numColumns)
 
     def unapply[T](p: Rep[AbstractMatrix[T]]) = unmkCompoundMatrix(p)
@@ -228,8 +228,8 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     reifyObject(new CompoundMatrixIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
-  def mkCompoundMatrix[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]]
-  def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]], Rep[Int])]
+  def mkCompoundMatrix[T](rows: Rep[Collection[Vector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]]
+  def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[Vector[T]]], Rep[Int])]
 
   abstract class AbsConstMatrix[T]
       (item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T])
@@ -426,12 +426,12 @@ trait MatricesSeq extends scalan.ScalanDslStd with MatricesDsl {
   }
 
   case class SeqCompoundMatrix[T]
-      (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
+      (override val rows: Rep[Collection[Vector[T]]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
     extends AbsCompoundMatrix[T](rows, numColumns) {
   }
 
   def mkCompoundMatrix[T]
-    (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
+    (rows: Rep[Collection[Vector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
     new SeqCompoundMatrix[T](rows, numColumns)
   def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]) = p match {
     case p: CompoundMatrix[T] @unchecked =>
@@ -576,12 +576,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[DenseFlatMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[DenseFlatMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[DenseFlatMatrixElem[_]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[DenseFlatMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[DenseFlatMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[DenseFlatMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[DenseFlatMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -710,12 +710,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
 
   object DenseFlatMatrixCompanionMethods {
     object fromColumns {
-      def unapply(d: Def[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[Coll[Vector[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem == DenseFlatMatrixCompanionElem && method.getName == "fromColumns" =>
-          Some(cols).asInstanceOf[Option[Coll[AbstractVector[T]] forSome {type T}]]
+          Some(cols).asInstanceOf[Option[Coll[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Coll[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -746,12 +746,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object fromRows {
-      def unapply(d: Def[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(rows, length, _*), _) if receiver.elem == DenseFlatMatrixCompanionElem && method.getName == "fromRows" =>
-          Some((rows, length)).asInstanceOf[Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}]]
+          Some((rows, length)).asInstanceOf[Option[(Coll[Vector[T]], IntRep) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -769,7 +769,7 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
   }
 
   case class ExpCompoundMatrix[T]
-      (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
+      (override val rows: Rep[Collection[Vector[T]]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
     extends AbsCompoundMatrix[T](rows, numColumns)
 
   object CompoundMatrixMethods {
@@ -858,12 +858,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[CompoundMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CompoundMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CompoundMatrixElem[_]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CompoundMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CompoundMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -956,12 +956,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
 
   object CompoundMatrixCompanionMethods {
     object fromColumns {
-      def unapply(d: Def[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[Coll[Vector[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromColumns" =>
-          Some(cols).asInstanceOf[Option[Coll[AbstractVector[T]] forSome {type T}]]
+          Some(cols).asInstanceOf[Option[Coll[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Coll[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -992,12 +992,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object fromRows {
-      def unapply(d: Def[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(rows, length, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromRows" =>
-          Some((rows, length)).asInstanceOf[Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}]]
+          Some((rows, length)).asInstanceOf[Option[(Coll[Vector[T]], IntRep) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1005,7 +1005,7 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
   }
 
   def mkCompoundMatrix[T]
-    (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
+    (rows: Rep[Collection[Vector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
     new ExpCompoundMatrix[T](rows, numColumns)
   def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: CompoundMatrixElem[T] @unchecked =>
@@ -1128,12 +1128,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[ConstMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[ConstMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[ConstMatrixElem[_]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[ConstMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[ConstMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[ConstMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[ConstMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1274,12 +1274,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
 
   object ConstMatrixCompanionMethods {
     object fromColumns {
-      def unapply(d: Def[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[Coll[Vector[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem == ConstMatrixCompanionElem && method.getName == "fromColumns" =>
-          Some(cols).asInstanceOf[Option[Coll[AbstractVector[T]] forSome {type T}]]
+          Some(cols).asInstanceOf[Option[Coll[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Coll[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1310,12 +1310,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object fromRows {
-      def unapply(d: Def[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(rows, length, _*), _) if receiver.elem == ConstMatrixCompanionElem && method.getName == "fromRows" =>
-          Some((rows, length)).asInstanceOf[Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}]]
+          Some((rows, length)).asInstanceOf[Option[(Coll[Vector[T]], IntRep) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1458,12 +1458,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[DiagonalMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[DiagonalMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[DiagonalMatrixElem[_]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[DiagonalMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[DiagonalMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[DiagonalMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[DiagonalMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1580,12 +1580,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
 
   object DiagonalMatrixCompanionMethods {
     object fromColumns {
-      def unapply(d: Def[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[Coll[Vector[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem == DiagonalMatrixCompanionElem && method.getName == "fromColumns" =>
-          Some(cols).asInstanceOf[Option[Coll[AbstractVector[T]] forSome {type T}]]
+          Some(cols).asInstanceOf[Option[Coll[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Coll[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1616,12 +1616,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object fromRows {
-      def unapply(d: Def[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(rows, length, _*), _) if receiver.elem == DiagonalMatrixCompanionElem && method.getName == "fromRows" =>
-          Some((rows, length)).asInstanceOf[Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}]]
+          Some((rows, length)).asInstanceOf[Option[(Coll[Vector[T]], IntRep) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1748,12 +1748,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[AbstractMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[AbstractMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixElem[_, _]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[AbstractMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[AbstractMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractMatrix[T]], Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1894,12 +1894,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
 
   object AbstractMatrixCompanionMethods {
     object fromColumns {
-      def unapply(d: Def[_]): Option[Rep[Collection[AbstractVector[T]]] forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[Rep[Collection[Vector[T]]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem == AbstractMatrixCompanionElem && method.getName == "fromColumns" =>
-          Some(cols).asInstanceOf[Option[Rep[Collection[AbstractVector[T]]] forSome {type T}]]
+          Some(cols).asInstanceOf[Option[Rep[Collection[Vector[T]]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Collection[AbstractVector[T]]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Collection[Vector[T]]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1930,12 +1930,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object fromRows {
-      def unapply(d: Def[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(rows, length, _*), _) if receiver.elem == AbstractMatrixCompanionElem && method.getName == "fromRows" =>
-          Some((rows, length)).asInstanceOf[Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}]]
+          Some((rows, length)).asInstanceOf[Option[(Coll[Vector[T]], IntRep) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1944,7 +1944,7 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
 }
 
 object Matrices_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAM1YS2wbRRieteP4FTltaWlARIRgQCAapyDUQw5VcBLUyk2ibKiQqUDj9cTdMju72RkHm0OPPcANcUWiEhekXhAnhFQhISTEgRNClThx4FSKqh7oCcQ/sw/vOmuHmCSqD6PdefyP7/v+8W/fuocy3EXPcwNTzOYsIvCcrp4XuSjry0yYonvJbrYpWSJbU/a3n5394smvU2iyjsavYr7EaR3lvYfljhM+62S7hvKYGYQL2+UCPVNTHiqGTSkxhGmzimlZbYEblFRqJhcLNTTWsJvdbXQdaTV0zLCZ4RJB9CrFnBPuz+eIjMgM3/Pqvbvm9HywisyiEsli08WmgPDBxzFv/wZx9C6zWdcSqOSHtubIsGBP1rQc2xWBiyyYu2o3g9cxhmECnahdwzu4Ai5aFV24JmvByaKDjfdwi6zCFrl9DALmhG5tdh31nq6hAifbANAFy6FqpuMghICBV1QQcz185kJ85iQ+ZZ24JqbmB1gurrt2p4u8j5ZGqOOAiZf3MBFYIMusWf7wivH2Q71opeThjgwlqzIcB0NPD1CDogJw/GHjY/7gjZvnUqhQRwWTLza4cLEhopT7aBUxY7ZQMYcAYrcFbM0OYkt5WYQ9fZLIG7blYAaWfCgngCdqGqaQm+XchM/OAOizwiHBVq3jaGG+MwPyVbqpYkrX7z5x5rk/lt9KoVTcRR5M6iB8NzAKcgrQuIRBFh3fiRwnBdI2FdJyyHd6Y3ZIECEcL9z9s/n9PLqSCkH0ff433sBEht/5pfjzi+dTKFdXKl+huFUHHPkyJdaaW7WZqKOcvUNcbyW7g6l8SuQx2yRbuE2Fj24UljTAItDMwHp0iMRsQWlfCwAoevJdtRkpr6yX/9J//OSWVKeLJrwVr0D/Mc/9/WtpSyjhCpRzrcuYtgkPIE5DbcdBL1TDitiTDbU0FYYlh2mwwNoWGGlbLMmNi54dJCCHrLumBRfWDnntu2/evH97NaM0dMLHToXuXR8+dD0YZXbaPHi6wESSYAoeKrptkeOzD8x3bn4klDS0Tvx2Wmtcg+QX1LmnhqgkuCW/vHHj1P3P331MVXeuYQoLO+X5fdR2UIqHWLsoTmSp6n9bKKWfjS9OLhHGCcjYr8gI58GW0/GarUaDzUZRl+OpcNaTB9A01eciZmA6cjQS2ZTWJ7IU2QziGZP1uKdWk1ObDlU5PViVAOXjG7WT9N752ymUuYgyW1DlvIYyDbvNmgFH8B0sSEe8HsxpcY6AE+xiK+REfWZQL+e+qNXGotZH3UjX5S4w+yt2zLXfH+VKCMO5DKu+1PcKZ6RbQw5nkhObV+Or+9F4SSpO0nRoEj8d93BUCk9IbDpy7OKjJTpT+Eklim53XCNLJvl0Fk5vJOr+YNVWhEV+eLfpyYj5o9JZf0qPrshKTRO3bIbpQbY9ByCK0pIf1+FdQXEPR3YF7U5sf+qIoDCeiGsauq7/r50B6A3hsygbrBVsmbTbT2bc/zCtJvA0hGcPoN0/k0ZFVY6/9fb4G3PKqOxW0XG/CaImMNgiDRf7gLhodkB/pPutJ7By/eGnqy/99NXvqmkvyCYWfp2w8K+BaLPeB20QAfzWjwQNqpONrQr4X12CX1l7EQAA"
+  val dump = "H4sIAAAAAAAAAM1YS2wbRRieteP4FTltaWlARIRgQCAapyDUQw5VcBLUyk2ibKiQqUDj9cTdMju72RkHm0OPPcANcUWiEhekXhAnhFQhISTEgRNClThx4FSKqh7oCcQ/sw/vOmuHmCSqD6PdefyP7/v+8W/fuocy3EXPcwNTzOYsIvCcrp4XuSjry0yYonvJbrYpWSJbU/a3n5394smvU2iyjsavYr7EaR3lvYfljhM+62S7hvKYGYQL2+UCPVNTHiqGTSkxhGmzimlZbYEblFRqJhcLNTTWsJvdbXQdaTV0zLCZ4RJB9CrFnBPuz+eIjMgM3/Pqvbvm9HywisyiEsli08WmgPDBxzFv/wZx9C6zWdcSqOSHtubIsGBP1rQc2xWBiyyYu2o3g9cxhmECnahdwzu4Ai5aFV24JmvByaKDjfdwi6zCFrl9DALmhG5tdh31nq6hAifbANAFy6FqpuMghICBV1QQcz185kJ85iQ+ZZ24JqbmB1gurrt2p4u8j5ZGqOOAiZf3MBFYIMusWf7wivH2Q71opeThjgwlqzIcB0NPD1CDogJw/GHjY/7gjZvnUqhQRwWTLza4cLEhopT7aBUxY7ZQMYcAYrcFbM0OYkt5WYQ9fZLIG7blYAaWfCgngCdqGqaQm+XchM/OAOizwiHBVq3jaGG+MwPyVbqpYkrX7z5x5rk/lt9KoVTcRR5M6iB8NzAKcgrQuIRBFh3fiRwnBdI2FdJyyHd6Y3ZIECEcL9z9s/n9PLqSCkH0ff433sBEht/5pfjzi+dTKFdXKl+huFUHHPkyJdaaW7WZqKOcvUNcbyW7g6l8SuQx2yRbuE2Fj24UljTAItDMwHp0iMRsQWlfCwAoevJdtRkpr6yX/9J//OSWVKeLJrwVr0D/Mc/9/WtpSyjhCpRzrcuYtgkPIE5DbcdBL1TDitiTDbU0FYYlh2mwwNoWGGlbLMmNi54dJCCHrLumBRfWDnntu2/evH97NaM0dMLHToXuXR8+dD0YZXbaPHi6wESSYAoeKrptkeOzD8x3bn4klDS0Tvx2Wmtcg+QX1LmnhqgkuCW/vHHj1P3P331MVXeuYQoLO+X5fdR2UIqHWLsoTmSp6n9bKKWfjS9OLhHGCcjYr8gI58GW0/GarUaDzUZRl+OpcNaTB9A01eciZmA6cjQS2ZTWJ7IU2QziGZP1uKdWk1ObDlU5PViVAOXjG7WT9N752ymUuYgyW1DlvIYyDbvNmgFH8B0sSEe8HsxpcY6AE+xiK+REfWZQL+e+qNXGotZH3UjX5S4w+yt2zLXfH+VKGL8Ms77E9wpjpNtCDmeSE5pX46v70XZJKk3Sc2jSPh33cFTKTkhsOnLs4qMlNlP4SSWKbXdcI0sm+XQWTm8k6v1g1VaERX54t+jJiPmj0ll/So+uyEpNE7dshulBtjsHIIrSkh/X4V1BcQ9HdgXtTmx/6oigMJ6Iaxq6rf+vnQHoDeGzKBurFWyZtNtPZtz/MK0m8DSEZw+g3T+PRkVVjr/19vgbc8qo7FLRcb/5oSYw2CINF/uAuGh2QF+k+y0nsHL94aerL/301e+qWS/I5hV+lbDwL4Fok94HbRAB/MaPBA2qkw2tCvhfu4QyOnMRAAA="
 }
 }
 

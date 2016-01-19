@@ -11,7 +11,7 @@ trait LinearAlgebraExamples extends MatricesDsl {
     v1.dot(v2)
   }
 
-  lazy val aamvm = fun { p: Rep[(AbstractMatrix[Double], AbstractVector[Double])] =>
+  lazy val aamvm = fun { p: Rep[(AbstractMatrix[Double], Vector[Double])] =>
     val Pair(m, v) = p
     mvm(m, v)
   }
@@ -240,8 +240,8 @@ trait LinearAlgebraExamples extends MatricesDsl {
     val rowsColl = mP.rows
     val coll = (rowsColl zip rowsColl).map {
       case Tuple(vR, vP) =>
-        val abstractVectorElem = vP.selfType1
-        //assert(abstractVectorElem.getClass == classOf[AbstractVectorElem[_, _]])
+        val vectorElem = vP.selfType1
+        //assert(vectorElem.getClass == classOf[VectorElem[_, _]])
         // dot is implemented with a pattern match, remove or change this test if this changes
         val mQReduced = rowsColl map { row => row dot vP }
         mQReduced

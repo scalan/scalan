@@ -13,12 +13,12 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
   self: VectorsDsl =>
 
   // single proxy for each type family
-  implicit def proxyAbstractVector[T](p: Rep[AbstractVector[T]]): AbstractVector[T] = {
-    proxyOps[AbstractVector[T]](p)(scala.reflect.classTag[AbstractVector[T]])
+  implicit def proxyVector[T](p: Rep[Vector[T]]): Vector[T] = {
+    proxyOps[Vector[T]](p)(scala.reflect.classTag[Vector[T]])
   }
 
   // familyElem
-  class AbstractVectorElem[T, To <: AbstractVector[T]](implicit _eT: Elem[T])
+  class VectorElem[T, To <: Vector[T]](implicit _eT: Elem[T])
     extends EntityElem[To] {
     def eT = _eT
     lazy val parent: Option[Elem[_]] = None
@@ -28,39 +28,39 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagT = eT.tag
-      weakTypeTag[AbstractVector[T]].asInstanceOf[WeakTypeTag[To]]
+      weakTypeTag[Vector[T]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
-      val conv = fun {x: Rep[AbstractVector[T]] => convertAbstractVector(x) }
-      tryConvert(element[AbstractVector[T]], this, x, conv)
+      val conv = fun {x: Rep[Vector[T]] => convertVector(x) }
+      tryConvert(element[Vector[T]], this, x, conv)
     }
 
-    def convertAbstractVector(x: Rep[AbstractVector[T]]): Rep[To] = {
+    def convertVector(x: Rep[Vector[T]]): Rep[To] = {
       x.selfType1 match {
-        case _: AbstractVectorElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have AbstractVectorElem[_, _], but got $e", x)
+        case _: VectorElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have VectorElem[_, _], but got $e", x)
       }
     }
 
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def abstractVectorElement[T](implicit eT: Elem[T]): Elem[AbstractVector[T]] =
-    cachedElem[AbstractVectorElem[T, AbstractVector[T]]](eT)
+  implicit def vectorElement[T](implicit eT: Elem[T]): Elem[Vector[T]] =
+    cachedElem[VectorElem[T, Vector[T]]](eT)
 
-  implicit case object AbstractVectorCompanionElem extends CompanionElem[AbstractVectorCompanionAbs] {
-    lazy val tag = weakTypeTag[AbstractVectorCompanionAbs]
-    protected def getDefaultRep = AbstractVector
+  implicit case object VectorCompanionElem extends CompanionElem[VectorCompanionAbs] {
+    lazy val tag = weakTypeTag[VectorCompanionAbs]
+    protected def getDefaultRep = Vector
   }
 
-  abstract class AbstractVectorCompanionAbs extends CompanionDef[AbstractVectorCompanionAbs] with AbstractVectorCompanion {
-    def selfType = AbstractVectorCompanionElem
-    override def toString = "AbstractVector"
+  abstract class VectorCompanionAbs extends CompanionDef[VectorCompanionAbs] {
+    def selfType = VectorCompanionElem
+    override def toString = "Vector"
   }
-  def AbstractVector: Rep[AbstractVectorCompanionAbs]
-  implicit def proxyAbstractVectorCompanionAbs(p: Rep[AbstractVectorCompanionAbs]): AbstractVectorCompanionAbs =
-    proxyOps[AbstractVectorCompanionAbs](p)
+  def Vector: Rep[VectorCompanionAbs]
+  implicit def proxyVectorCompanionAbs(p: Rep[VectorCompanionAbs]): VectorCompanionAbs =
+    proxyOps[VectorCompanionAbs](p)
 
   abstract class AbsDenseVector[T]
       (items: Rep[Collection[T]])(implicit eT: Elem[T])
@@ -69,14 +69,14 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
   }
   // elem for concrete class
   class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit override val eT: Elem[T])
-    extends AbstractVectorElem[T, DenseVector[T]]
+    extends VectorElem[T, DenseVector[T]]
     with ConcreteElem[DenseVectorData[T], DenseVector[T]] {
-    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(vectorElement(element[T]))
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
 
-    override def convertAbstractVector(x: Rep[AbstractVector[T]]) = DenseVector(x.items)
+    override def convertVector(x: Rep[Vector[T]]) = DenseVector(x.items)
     override def getDefaultRep = DenseVector(element[Collection[T]].defaultRepValue)
     override lazy val tag = {
       implicit val tagT = eT.tag
@@ -118,7 +118,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     def apply[T](items: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DenseVector[T]] =
       mkDenseVector(items)
 
-    def unapply[T](p: Rep[AbstractVector[T]]) = unmkDenseVector(p)
+    def unapply[T](p: Rep[Vector[T]]) = unmkDenseVector(p)
   }
   lazy val DenseVectorRep: Rep[DenseVectorCompanionAbs] = new DenseVectorCompanionAbs
   lazy val DenseVector: DenseVectorCompanionAbs = proxyDenseVectorCompanion(DenseVectorRep)
@@ -144,7 +144,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
 
   // 6) smart constructor and deconstructor
   def mkDenseVector[T](items: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DenseVector[T]]
-  def unmkDenseVector[T](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[T]])]
+  def unmkDenseVector[T](p: Rep[Vector[T]]): Option[(Rep[Collection[T]])]
 
   abstract class AbsConstVector[T]
       (item: Rep[T], length: Rep[Int])(implicit eT: Elem[T])
@@ -153,15 +153,15 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
   }
   // elem for concrete class
   class ConstVectorElem[T](val iso: Iso[ConstVectorData[T], ConstVector[T]])(implicit override val eT: Elem[T])
-    extends AbstractVectorElem[T, ConstVector[T]]
+    extends VectorElem[T, ConstVector[T]]
     with ConcreteElem[ConstVectorData[T], ConstVector[T]] {
-    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(vectorElement(element[T]))
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
 
-    override def convertAbstractVector(x: Rep[AbstractVector[T]]) = // Converter is not generated by meta
-!!!("Cannot convert from AbstractVector to ConstVector: missing fields List(item)")
+    override def convertVector(x: Rep[Vector[T]]) = // Converter is not generated by meta
+!!!("Cannot convert from Vector to ConstVector: missing fields List(item)")
     override def getDefaultRep = ConstVector(element[T].defaultRepValue, 0)
     override lazy val tag = {
       implicit val tagT = eT.tag
@@ -204,7 +204,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     def apply[T](item: Rep[T], length: Rep[Int])(implicit eT: Elem[T]): Rep[ConstVector[T]] =
       mkConstVector(item, length)
 
-    def unapply[T](p: Rep[AbstractVector[T]]) = unmkConstVector(p)
+    def unapply[T](p: Rep[Vector[T]]) = unmkConstVector(p)
   }
   lazy val ConstVectorRep: Rep[ConstVectorCompanionAbs] = new ConstVectorCompanionAbs
   lazy val ConstVector: ConstVectorCompanionAbs = proxyConstVectorCompanion(ConstVectorRep)
@@ -230,7 +230,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
 
   // 6) smart constructor and deconstructor
   def mkConstVector[T](item: Rep[T], length: Rep[Int])(implicit eT: Elem[T]): Rep[ConstVector[T]]
-  def unmkConstVector[T](p: Rep[AbstractVector[T]]): Option[(Rep[T], Rep[Int])]
+  def unmkConstVector[T](p: Rep[Vector[T]]): Option[(Rep[T], Rep[Int])]
 
   abstract class AbsSparseVector[T]
       (nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eT: Elem[T])
@@ -239,14 +239,14 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
   }
   // elem for concrete class
   class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit override val eT: Elem[T])
-    extends AbstractVectorElem[T, SparseVector[T]]
+    extends VectorElem[T, SparseVector[T]]
     with ConcreteElem[SparseVectorData[T], SparseVector[T]] {
-    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(vectorElement(element[T]))
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
 
-    override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
+    override def convertVector(x: Rep[Vector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
     override def getDefaultRep = SparseVector(element[Collection[Int]].defaultRepValue, element[Collection[T]].defaultRepValue, 0)
     override lazy val tag = {
       implicit val tagT = eT.tag
@@ -289,7 +289,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     def apply[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector[T]] =
       mkSparseVector(nonZeroIndices, nonZeroValues, length)
 
-    def unapply[T](p: Rep[AbstractVector[T]]) = unmkSparseVector(p)
+    def unapply[T](p: Rep[Vector[T]]) = unmkSparseVector(p)
   }
   lazy val SparseVectorRep: Rep[SparseVectorCompanionAbs] = new SparseVectorCompanionAbs
   lazy val SparseVector: SparseVectorCompanionAbs = proxySparseVectorCompanion(SparseVectorRep)
@@ -315,7 +315,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
 
   // 6) smart constructor and deconstructor
   def mkSparseVector[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector[T]]
-  def unmkSparseVector[T](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int])]
+  def unmkSparseVector[T](p: Rep[Vector[T]]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int])]
 
   abstract class AbsSparseVector1[T]
       (nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T])
@@ -324,14 +324,14 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
   }
   // elem for concrete class
   class SparseVector1Elem[T](val iso: Iso[SparseVector1Data[T], SparseVector1[T]])(implicit override val eT: Elem[T])
-    extends AbstractVectorElem[T, SparseVector1[T]]
+    extends VectorElem[T, SparseVector1[T]]
     with ConcreteElem[SparseVector1Data[T], SparseVector1[T]] {
-    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(vectorElement(element[T]))
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
 
-    override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector1(x.nonZeroItems, x.length)
+    override def convertVector(x: Rep[Vector[T]]) = SparseVector1(x.nonZeroItems, x.length)
     override def getDefaultRep = SparseVector1(element[Collection[(Int, T)]].defaultRepValue, 0)
     override lazy val tag = {
       implicit val tagT = eT.tag
@@ -374,7 +374,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     def apply[T](nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
       mkSparseVector1(nonZeroItems, length)
 
-    def unapply[T](p: Rep[AbstractVector[T]]) = unmkSparseVector1(p)
+    def unapply[T](p: Rep[Vector[T]]) = unmkSparseVector1(p)
   }
   lazy val SparseVector1Rep: Rep[SparseVector1CompanionAbs] = new SparseVector1CompanionAbs
   lazy val SparseVector1: SparseVector1CompanionAbs = proxySparseVector1Companion(SparseVector1Rep)
@@ -400,7 +400,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
 
   // 6) smart constructor and deconstructor
   def mkSparseVector1[T](nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]]
-  def unmkSparseVector1[T](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[(Int, T)]], Rep[Int])]
+  def unmkSparseVector1[T](p: Rep[Vector[T]]): Option[(Rep[Collection[(Int, T)]], Rep[Int])]
 
   registerModule(Vectors_Module)
 }
@@ -408,7 +408,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
 // Seq -----------------------------------
 trait VectorsSeq extends scalan.ScalanDslStd with VectorsDsl {
   self: VectorsDslSeq =>
-  lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs {
+  lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs {
   }
 
   case class SeqDenseVector[T]
@@ -419,7 +419,7 @@ trait VectorsSeq extends scalan.ScalanDslStd with VectorsDsl {
   def mkDenseVector[T]
     (items: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DenseVector[T]] =
     new SeqDenseVector[T](items)
-  def unmkDenseVector[T](p: Rep[AbstractVector[T]]) = p match {
+  def unmkDenseVector[T](p: Rep[Vector[T]]) = p match {
     case p: DenseVector[T] @unchecked =>
       Some((p.items))
     case _ => None
@@ -433,7 +433,7 @@ trait VectorsSeq extends scalan.ScalanDslStd with VectorsDsl {
   def mkConstVector[T]
     (item: Rep[T], length: Rep[Int])(implicit eT: Elem[T]): Rep[ConstVector[T]] =
     new SeqConstVector[T](item, length)
-  def unmkConstVector[T](p: Rep[AbstractVector[T]]) = p match {
+  def unmkConstVector[T](p: Rep[Vector[T]]) = p match {
     case p: ConstVector[T] @unchecked =>
       Some((p.item, p.length))
     case _ => None
@@ -447,7 +447,7 @@ trait VectorsSeq extends scalan.ScalanDslStd with VectorsDsl {
   def mkSparseVector[T]
     (nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector[T]] =
     new SeqSparseVector[T](nonZeroIndices, nonZeroValues, length)
-  def unmkSparseVector[T](p: Rep[AbstractVector[T]]) = p match {
+  def unmkSparseVector[T](p: Rep[Vector[T]]) = p match {
     case p: SparseVector[T] @unchecked =>
       Some((p.nonZeroIndices, p.nonZeroValues, p.length))
     case _ => None
@@ -461,7 +461,7 @@ trait VectorsSeq extends scalan.ScalanDslStd with VectorsDsl {
   def mkSparseVector1[T]
     (nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
     new SeqSparseVector1[T](nonZeroItems, length)
-  def unmkSparseVector1[T](p: Rep[AbstractVector[T]]) = p match {
+  def unmkSparseVector1[T](p: Rep[Vector[T]]) = p match {
     case p: SparseVector1[T] @unchecked =>
       Some((p.nonZeroItems, p.length))
     case _ => None
@@ -471,7 +471,7 @@ trait VectorsSeq extends scalan.ScalanDslStd with VectorsDsl {
 // Exp -----------------------------------
 trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
   self: VectorsDslExp =>
-  lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs {
+  lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs {
   }
 
   case class ExpDenseVector[T]
@@ -737,7 +737,7 @@ trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
   def mkDenseVector[T]
     (items: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DenseVector[T]] =
     new ExpDenseVector[T](items)
-  def unmkDenseVector[T](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkDenseVector[T](p: Rep[Vector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: DenseVectorElem[T] @unchecked =>
       Some((p.asRep[DenseVector[T]].items))
     case _ =>
@@ -1007,7 +1007,7 @@ trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
   def mkConstVector[T]
     (item: Rep[T], length: Rep[Int])(implicit eT: Elem[T]): Rep[ConstVector[T]] =
     new ExpConstVector[T](item, length)
-  def unmkConstVector[T](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkConstVector[T](p: Rep[Vector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: ConstVectorElem[T] @unchecked =>
       Some((p.asRep[ConstVector[T]].item, p.asRep[ConstVector[T]].length))
     case _ =>
@@ -1188,12 +1188,12 @@ trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
     }
 
     object dot {
-      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[AbstractVector[T]], Numeric[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[Vector[T]], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "dot" =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[AbstractVector[T]], Numeric[T]) forSome {type T}]]
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[Vector[T]], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[AbstractVector[T]], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[Vector[T]], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1277,7 +1277,7 @@ trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
   def mkSparseVector[T]
     (nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector[T]] =
     new ExpSparseVector[T](nonZeroIndices, nonZeroValues, length)
-  def unmkSparseVector[T](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkSparseVector[T](p: Rep[Vector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SparseVectorElem[T] @unchecked =>
       Some((p.asRep[SparseVector[T]].nonZeroIndices, p.asRep[SparseVector[T]].nonZeroValues, p.asRep[SparseVector[T]].length))
     case _ =>
@@ -1470,12 +1470,12 @@ trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
     }
 
     object dot {
-      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[AbstractVector[T]], Numeric[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[Vector[T]], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "dot" =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[AbstractVector[T]], Numeric[T]) forSome {type T}]]
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[Vector[T]], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[AbstractVector[T]], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[Vector[T]], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1559,347 +1559,321 @@ trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
   def mkSparseVector1[T]
     (nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
     new ExpSparseVector1[T](nonZeroItems, length)
-  def unmkSparseVector1[T](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkSparseVector1[T](p: Rep[Vector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SparseVector1Elem[T] @unchecked =>
       Some((p.asRep[SparseVector1[T]].nonZeroItems, p.asRep[SparseVector1[T]].length))
     case _ =>
       None
   }
 
-  object AbstractVectorMethods {
+  object VectorMethods {
     object length {
-      def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "length" =>
-          Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
+      def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "length" =>
+          Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object items {
-      def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "items" =>
-          Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
+      def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "items" =>
+          Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object nonZeroIndices {
-      def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "nonZeroIndices" =>
-          Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
+      def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "nonZeroIndices" =>
+          Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object nonZeroValues {
-      def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "nonZeroValues" =>
-          Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
+      def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "nonZeroValues" =>
+          Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object nonZeroItems {
-      def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "nonZeroItems" =>
-          Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
+      def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "nonZeroItems" =>
+          Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object zeroValue {
-      def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "zeroValue" =>
-          Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
+      def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "zeroValue" =>
+          Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, i)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[Int]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Rep[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[Vector[T]], Rep[Int]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[Int]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Rep[Int]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply_apply_by_collection {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Coll[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(is, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "apply_by_collection" } =>
-          Some((receiver, is)).asInstanceOf[Option[(Rep[AbstractVector[T]], Coll[Int]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Coll[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(is, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "apply_by_collection" } =>
+          Some((receiver, is)).asInstanceOf[Option[(Rep[Vector[T]], Coll[Int]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Coll[Int]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Coll[Int]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T => R @uncheckedVariance]) forSome {type T; type R}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T => R @uncheckedVariance]) forSome {type T; type R}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Rep[T => R @uncheckedVariance]) forSome {type T; type R}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "mapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Vector[T]], Rep[T => R @uncheckedVariance]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[T => R @uncheckedVariance]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Rep[T => R @uncheckedVariance]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object filterBy {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "filterBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Vector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object +^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$plus$up" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "$plus$up" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object elementwise_sum_collection_+^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$plus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_sum_collection" } =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Coll[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "$plus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_sum_collection" } =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Coll[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Coll[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object elementwise_sum_value_+^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$plus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_sum_value" } =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "$plus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_sum_value" } =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Rep[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object -^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$minus$up" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "$minus$up" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object elementwise_diff_collection_-^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$minus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_diff_collection" } =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Coll[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "$minus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_diff_collection" } =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Coll[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Coll[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object elementwise_diff_value_-^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$minus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_diff_value" } =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "$minus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_diff_value" } =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Rep[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object *^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$times$up" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "$times$up" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object elementwise_mult_collection_*^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$times$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_mult_collection" } =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Coll[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "$times$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_mult_collection" } =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Coll[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Coll[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object elementwise_mult_value_*^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$times$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_mult_value" } =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "$times$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_mult_value" } =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Rep[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object /^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T], Fractional[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, f, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$div$up" =>
-          Some((receiver, other, f)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T], Fractional[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Rep[T], Fractional[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, f, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "$div$up" =>
+          Some((receiver, other, f)).asInstanceOf[Option[(Rep[Vector[T]], Rep[T], Fractional[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[T], Fractional[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Rep[T], Fractional[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object pow_^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[Double], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(order, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "pow_$up" =>
-          Some((receiver, order, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[Double], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Rep[Double], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(order, n, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "pow_$up" =>
+          Some((receiver, order, n)).asInstanceOf[Option[(Rep[Vector[T]], Rep[Double], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[Double], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Rep[Double], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object euclideanNorm {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(num, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "euclideanNorm" =>
-          Some((receiver, num)).asInstanceOf[Option[(Rep[AbstractVector[T]], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(num, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "euclideanNorm" =>
+          Some((receiver, num)).asInstanceOf[Option[(Rep[Vector[T]], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object reduce {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], RepMonoid[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "reduce" =>
-          Some((receiver, m)).asInstanceOf[Option[(Rep[AbstractVector[T]], RepMonoid[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], RepMonoid[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "reduce" =>
+          Some((receiver, m)).asInstanceOf[Option[(Rep[Vector[T]], RepMonoid[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], RepMonoid[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], RepMonoid[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object dot {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "dot" =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "dot" =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object nonZeroesLength {
-      def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "nonZeroesLength" =>
-          Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
+      def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "nonZeroesLength" =>
+          Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object companion {
-      def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "companion" =>
-          Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
+      def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[VectorElem[_, _]] && method.getName == "companion" =>
+          Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-  }
-
-  object AbstractVectorCompanionMethods {
-    object zero {
-      def unapply(d: Def[_]): Option[Rep[Int] forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem == AbstractVectorCompanionElem && method.getName == "zero" =>
-          Some(len).asInstanceOf[Option[Rep[Int] forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Rep[Int] forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object fromSparseData {
-      def unapply(d: Def[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(nonZeroIndices, nonZeroValues, length, _*), _) if receiver.elem == AbstractVectorCompanionElem && method.getName == "fromSparseData" =>
-          Some((nonZeroIndices, nonZeroValues, length)).asInstanceOf[Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1908,7 +1882,7 @@ trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
 }
 
 object Vectors_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAOVYTWwbRRSedew4ttP0h6YUREQIhooK7ASBesihCo4DQSaJsm6FTFU0Xo+dKbOzm51xZHOoOFUIbogrEpW4IPWCOKFKFRJCQhw4IYTUQ0+cSlHVAxUHEG/Gu+t1bOcHaBUJH0a7s2/ee/N935t962t3UEJ46FlhYYZ5ziYS50x9vSBk1ixySWX7DafWZGSR1E86X3869/njX8XQ4Qoa3cBiUbAKSnUuii03vDbJZgmlMLeIkI4nJHqqpCPkLYcxYknq8Dy17abEVUbyJSrkfAnFq06tvYkuI6OEjlgOtzwiiVlgWAgi/PkxojKi4X1K37dX3W4Mnle7yEd2UfYwlZA+xDjSsV8nrtnmDm/bEk34qa26Ki2wSVLbdTwZhEiCuw2nFtzGOYYJdKx0CW/hPIRo5E3pUd6AlRkXW+/gBlkBE2Ueh4QFYfVy29X3IyWUFmQTAFq2XaZnWi5CCBh4USeR6+KTC/HJKXyyJvEoZvRdrB6ueU6rjTo/YwShlgsunt/FReCBFHkt+8EF6637ZsaOqcUtlUpS73AUHD05RA2aCsDxu/WPxL1Xr56JoXQFpalYqArpYUtGKffRymDOHalzDgHEXgPYmhnGlo6yADbbJJGyHNvFHDz5UI4DT4xaVCpjNTfuszME+qR0SWBqtFwj3O/0kP1q3RQwY2u3H3vhmV+Lb8ZQrDdEClyaIHwvcApyCtA4DyT4QIzq8bBERlkjrYZUqzsmd0gihOPU7d9q386iC7EQRD/m3ngDFwnx80+ZH587G0NjFa3yJYYbFcBRFBmxV72Cw2UFjTlbxOs8SW5hpq4G8piskTpuMumjG4VlBGCRaHpoPbpEYTavtW8EAGQ68l1xOMkurWV/N7//+JpSp4fGO086BfoXPfPnzYm61MKVKEElsUWA7wgUdi/i6UJYDnuioktIuhPVdGxydOYevXj1Q6mhN1q91b9avQT+5/W6J3ZgITiFvrhyZfLuZ28/oqtnrEqljd3s7D5qJ5D6A6wN1IvVRME/jbWS5rY97BV8BNXA4tFei0I012QUdDVOhrN6mAKOjy8SLsiAxVORZZGkThqBrLSRRDFSDnKJK6nvqgSJMpGY2ktYZVPD+NUInlgvHWd3zt6IocTrKFGH4hEllKg6TV4LqIFXmyQt+UowZ/RSA1RgD9shFfo3jbr73ZaxNswYO5Kyx1OoD0i0Dci4rrahxdafV5+HUUZ4Q24M8OGhp4cju+ZRG977W+Tlb66fu3tjJaGP4mP+EXQesybpvIV9ELuAqkPCmIVIy1wO3vEpPZ4+YJqH8GLQ4gep+UjMqObVuHCgdDgBvVuFeM4yr1E4NPdx/KuhEo04OMAhP4BW1n/0ehkUSQ3n+t33ZXnA1Tppwpn1sI/o8WjQg63X8UCv0WYlrrSza/MGh1+56TLy0vU/Lr7/3muu7kH6+s6IbP6fCjwRFcPcw5LgoZ6o+9dgBIPRgaiOQMP47xU6BLsd2Myo3nAJ25S190zlHljaieUOQP1fUP8UVTXe6tr4hkkfNomO+gXHKMesQaoe9vHw0MyQWjT9phlIuXz/k5XTP3z5i+5D0qr9hu8WHv5pEO0/tr0x/AQWBYukDJJTHblO92/EwF9YlBEAAA=="
+  val dump = "H4sIAAAAAAAAAOVXTWwbRRR+6/gnttP0h6YUREQIhooK4gSBesihCk4KQSaJsmmFTFU0Xk+cLbOzm51xZHOoOFUIbogrEpW4IPWCOKFKFRJCQhw4IYTUQ0+cSlHVAxUHEG/Gu+t1bDdJRatI+DDanX3z3pvv+96b8dXbkBI+PC8swgifcqgkU6Z+nhOyYC5wacvWW26tweg8XT/ufvv5zJdPfpOAgxVIbxAxL1gFsu2HhaYXPZt0swxZwi0qpOsLCc+UdYSi5TJGLWm7vGg7TkOSKqPFsi3kbBmSVbfW2oRLYJThkOVyy6eSmiVGhKAimB+mKiM7es/q99ay14nBi2oXxdgu1nxiS0wfYxxq269Sz2xxl7ccCaNBasueSgttMrbjub4MQ2TQ3YZbC1+TnOAEHClfJFukiCHqRVP6Nq/jyrxHrPdInS6hiTJPYsKCsvW1lqffh8qQE3QTAVp0PKZnmh4AIAMv6ySmOvhMRfhMKXwKJvVtwuz3ifq44rvNFrR/xhBA00MXL+7gIvRAF3it8NF56517Zt5JqMVNlUpG7zCNjp4eoAZNBeL4w+on4u7rV04lIFeBnC3mqkL6xJJxygO08oRzV+qcIwCJX0e2JgexpaPMoc02SWQt1/EIR08BlCPIE7MtWypjNTcSsDMA+oz0aGhqND0j2u/EgP1q3ZQIYyu3nnjpud8X3k5AojtEFl2aKHw/dCohfQ7BDwBI6/GgBGNNI6yGbLMzZu4TPILhxK0/at9Pw/lEBF4Qa3d8oYuU+PWX/M8vnE7AcEWr+wwj9QriJxYYdZb9kstlBYbdLeq3v2S2CFNPffnL1Og6aTAZoBqHYwjhkDAxsA49qrCa1Zo3QgDybdkuuZwWzqwU/jR//PSqUqUPI+0v7cL8xz71943RdakFKyFlS+qIEN8hLOhuxHOlqAx2RUWHkFw7quk69PDkXfvClY+lht5odlf9cvUi+p/V6566Dwth9/nq8uWxO1+8+5iumuGqLR3iFab3UDOhxB9iTUA3VqOloAtrJc10fwyEHkMz/PJ42BDaFqV4jpk42Goci2b1MI7cHp2nXNA+i8djy2LJHDdCOWkjCQm6FuaSVBLfUQES8rGY2ktUXeODeNXIHVstH2W3T19PQOpNSK1j0YgypKpug9dCSvAok7QpXwvnjG5KkALiEyeiQP8moLPfbRlrw7zRl4xddp0eAGEbgEldXQOLqzefHg9pRnldbvTx4cOzgxFd8W0Hz/ct+up3187eub6U0i33SNByzhHWoO3TNgCvA6RqCsY0Rlrksv+OT+jx5D7ROIYV/RY/TI3HYsY1rsa5faG7UbyTVajvLvKajU1xD+1dDZV4xP4BDgQBtJL+o+OjXyQ1nO1135PlPlXnmIk96VG34JF40P2pz5FQn/HLR1JpZcfLGDa3tYbH6CvX/rrw4QdvePpO0XN/jMnk/6W4Y3HyZx6V5A50Rd275mIYpPuiOYQXvwdX5A6YpR+0VDrjzY5NYJgJ8pNwOFAyszlhdVr1SSAbHyYHiNwMbpe460v3Pls6+dPXv+kDPKfuqXjB59G/6vjBva31Bgngv+RYysipurrqdP8FTUgLhLUQAAA="
 }
 }
 
