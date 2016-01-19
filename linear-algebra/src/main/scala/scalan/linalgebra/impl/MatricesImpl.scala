@@ -1200,12 +1200,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object * {
-      def unapply(d: Def[_]): Option[(Rep[ConstMatrix[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[ConstMatrix[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(vector, n, _*), _) if receiver.elem.isInstanceOf[ConstMatrixElem[_]] && method.getName == "$times" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, vector, n)).asInstanceOf[Option[(Rep[ConstMatrix[T]], Vector[T], Numeric[T]) forSome {type T}]]
+          Some((receiver, vector, n)).asInstanceOf[Option[(Rep[ConstMatrix[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[ConstMatrix[T]], Vector[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[ConstMatrix[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1700,12 +1700,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object apply_rowsByVector {
-      def unapply(d: Def[_]): Option[(Rep[AbstractMatrix[T]], Vector[Int]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[AbstractMatrix[T]], Vec[Int]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(vector, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixElem[_, _]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "rowsByVector" } =>
-          Some((receiver, vector)).asInstanceOf[Option[(Rep[AbstractMatrix[T]], Vector[Int]) forSome {type T}]]
+          Some((receiver, vector)).asInstanceOf[Option[(Rep[AbstractMatrix[T]], Vec[Int]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractMatrix[T]], Vector[Int]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractMatrix[T]], Vec[Int]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1808,12 +1808,12 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
     }
 
     object * {
-      def unapply(d: Def[_]): Option[(Rep[AbstractMatrix[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[AbstractMatrix[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(vector, n, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixElem[_, _]] && method.getName == "$times" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, vector, n)).asInstanceOf[Option[(Rep[AbstractMatrix[T]], Vector[T], Numeric[T]) forSome {type T}]]
+          Some((receiver, vector, n)).asInstanceOf[Option[(Rep[AbstractMatrix[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractMatrix[T]], Vector[T], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractMatrix[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

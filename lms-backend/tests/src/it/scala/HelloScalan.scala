@@ -12,7 +12,7 @@ trait HelloScalan extends MatricesDsl {
     val Pair(m, v) = p
     val width = m(0).length
     val matrix: Matrix[Double] = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r))}), width)
-    val vector: Vector[Double] = DenseVector(Collection(v))
+    val vector: Vec[Double] = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
   // example input

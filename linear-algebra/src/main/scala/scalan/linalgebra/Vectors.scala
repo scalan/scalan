@@ -11,7 +11,7 @@ import scala.annotation.unchecked.uncheckedVariance
 
 trait Vectors { self: VectorsDsl =>
 
-  type Vector[T] = Rep[AbstractVector[T]]
+  type Vec[T] = Rep[AbstractVector[T]]
 
   trait AbstractVector[T] extends Def[AbstractVector[T]] {
 
@@ -25,37 +25,37 @@ trait Vectors { self: VectorsDsl =>
 
     def apply(i: Rep[Int]): Rep[T]
     @OverloadId("apply_by_collection")
-    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T]
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vec[T]
 
-    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R]
-    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vector[T]
+    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vec[R]
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vec[T]
 
-    def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T]
+    def +^(other: Vec[T])(implicit n: Numeric[T]): Vec[T]
     @OverloadId("elementwise_sum_collection")
-    def +^(other: Coll[T])(implicit n: Numeric[T], o: Overloaded1): Vector[T] = +^ (DenseVector(other))
+    def +^(other: Coll[T])(implicit n: Numeric[T], o: Overloaded1): Vec[T] = +^ (DenseVector(other))
     @OverloadId("elementwise_sum_value")
-    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T]
+    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T]
 
-    def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T]
+    def -^(other: Vec[T])(implicit n: Numeric[T]): Vec[T]
     @OverloadId("elementwise_diff_collection")
-    def -^(other: Coll[T])(implicit n: Numeric[T], o: Overloaded1): Vector[T] = -^ (DenseVector(other))
+    def -^(other: Coll[T])(implicit n: Numeric[T], o: Overloaded1): Vec[T] = -^ (DenseVector(other))
     @OverloadId("elementwise_diff_value")
-    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T]
+    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T]
 
-    def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T]
+    def *^(other: Vec[T])(implicit n: Numeric[T]): Vec[T]
     @OverloadId("elementwise_mult_collection")
-    def *^(other: Coll[T])(implicit n: Numeric[T], o: Overloaded1): Vector[T] = *^ (DenseVector(other))
+    def *^(other: Coll[T])(implicit n: Numeric[T], o: Overloaded1): Vec[T] = *^ (DenseVector(other))
     @OverloadId("elementwise_mult_value")
-    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T]
+    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T]
 
-    def /^(other: Rep[T])(implicit f: Fractional[T]): Vector[T] = *^ (toRep(f.one) / other)
+    def /^(other: Rep[T])(implicit f: Fractional[T]): Vec[T] = *^ (toRep(f.one) / other)
 
-    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T]
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vec[T]
 
     def euclideanNorm(implicit num: Numeric[T]): Rep[Double]
 
     def reduce(implicit m: RepMonoid[T]): Rep[T]
-    def dot(other: Vector[T])(implicit n: Numeric[T]): Rep[T]
+    def dot(other: Vec[T])(implicit n: Numeric[T]): Rep[T]
 
     def nonZeroesLength: Rep[Int] = nonZeroItems.length
 
@@ -74,12 +74,12 @@ trait Vectors { self: VectorsDsl =>
 
     def apply(i: Rep[Int]): Rep[T] = items(i)
     @OverloadId("apply_by_collection")
-    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = DenseVector(items(is))
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vec[T] = DenseVector(items(is))
 
-    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R] = DenseVector(items.mapBy(f))
-    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vector[T] = DenseVector(items.map(v => IF (f(v)) THEN v ELSE zeroValue))
+    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vec[R] = DenseVector(items.mapBy(f))
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vec[T] = DenseVector(items.map(v => IF (f(v)) THEN v ELSE zeroValue))
 
-    def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def +^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       other match {
         case SparseVector(nonZeroIndices, nonZeroValues, _) =>
           val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 + v2 }
@@ -94,11 +94,11 @@ trait Vectors { self: VectorsDsl =>
     }
 
     @OverloadId("elementwise_sum_value")
-    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       DenseVector(items.map(v => v + other))
     }
 
-    def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def -^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       other match {
         case SparseVector(nonZeroIndicesL, nonZeroValuesL, _) =>
           val nonZeroValuesNew = (nonZeroValuesL zip items(nonZeroIndicesL)).map { case Pair(v1, v2) => v1 - v2 }
@@ -112,11 +112,11 @@ trait Vectors { self: VectorsDsl =>
       }
     }
     @OverloadId("elementwise_diff_value")
-    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       DenseVector(items.map(v => v - other))
     }
 
-    def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def *^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       other match {
         case SparseVector(nonZeroIndicesL, nonZeroValuesL, lengthL) =>
           val nonZeroValuesNew = (nonZeroValuesL zip items(nonZeroIndicesL)).map { case Pair(v1, v2) => v1 * v2 }
@@ -130,16 +130,16 @@ trait Vectors { self: VectorsDsl =>
       }
     }
     @OverloadId("elementwise_mult_value")
-    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       DenseVector(items.map(v => v * other))
     }
 
-    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       DenseVector(items.map(v => Math.pow(v.toDouble, order).asRep[T]))
     }
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
-    def dot(other: Vector[T])(implicit n: Numeric[T]): Rep[T] = {
+    def dot(other: Vec[T])(implicit n: Numeric[T]): Rep[T] = {
       other match {
         case SparseVector(nonZeroIndicesL, nonZeroValuesL, _) =>
           (items(nonZeroIndicesL) zip nonZeroValuesL).map { case Pair(v1, v2) => v1 * v2 }.reduce
@@ -166,12 +166,12 @@ trait Vectors { self: VectorsDsl =>
 
     def apply(i: Rep[Int]): Rep[T] = item
     @OverloadId("apply_by_collection")
-    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = ConstVector(item, is.length)
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vec[T] = ConstVector(item, is.length)
 
-    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R] = ConstVector(f(item), length)
-    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vector[T] = IF (f(item)) THEN ConstVector(item, length) ELSE ConstVector(item, 0)
+    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vec[R] = ConstVector(f(item), length)
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vec[T] = IF (f(item)) THEN ConstVector(item, length) ELSE ConstVector(item, 0)
 
-    def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def +^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       other match {
         case ConstVector(otherItem, _) =>
           ConstVector(item + otherItem, length)
@@ -184,11 +184,11 @@ trait Vectors { self: VectorsDsl =>
     }
 
     @OverloadId("elementwise_sum_value")
-    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       ConstVector(item + other, length)
     }
 
-    def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def -^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       other match {
         case ConstVector(otherItem, _) =>
           ConstVector(item - otherItem, length)
@@ -200,11 +200,11 @@ trait Vectors { self: VectorsDsl =>
       }
     }
     @OverloadId("elementwise_diff_value")
-    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       ConstVector(item - other, length)
     }
 
-    def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def *^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       other match {
         case ConstVector(otherItem, _) =>
           ConstVector(item * otherItem, length)
@@ -216,16 +216,16 @@ trait Vectors { self: VectorsDsl =>
       }
     }
     @OverloadId("elementwise_mult_value")
-    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       ConstVector(item * other, length)
     }
 
-    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       ConstVector(Math.pow(item.toDouble, order).asRep[T], length)
     }
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
-    def dot(other: Vector[T])(implicit n: Numeric[T]): Rep[T] = {
+    def dot(other: Vec[T])(implicit n: Numeric[T]): Rep[T] = {
       (other *^ item).reduce
     }
 
@@ -251,21 +251,21 @@ trait Vectors { self: VectorsDsl =>
     }
 
     @OverloadId("apply_by_collection")
-    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = ??? // TODO: need efficient way to get value by index
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vec[T] = ??? // TODO: need efficient way to get value by index
 
-    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R] = {
+    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vec[R] = {
       IF (f(zeroValue) === element[R].defaultRepValue) THEN {
         SparseVector(nonZeroIndices, nonZeroValues.mapBy(f), length)
       } ELSE {
         ???
       }
     }
-    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vector[T] = {
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vec[T] = {
       val filteredItems = nonZeroItems.filter { v => f(v._2) }
       SparseVector(filteredItems.as, filteredItems.bs, length)
     }
 
-    def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def +^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       other match {
         case SparseVector(nonZeroIndicesL, nonZeroValuesL, _) =>
           val newItems = (nonZeroIndices zip nonZeroValues) outerSum (nonZeroIndicesL zip nonZeroValuesL)
@@ -279,11 +279,11 @@ trait Vectors { self: VectorsDsl =>
     }
 
     @OverloadId("elementwise_sum_value")
-    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       DenseVector(items.map(v => v + other))
     }
 
-    def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def -^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       // TODO: I don't like constructing items in this method
       other match {
         case SparseVector(nonZeroIndicesL, nonZeroValuesL, _) =>
@@ -300,11 +300,11 @@ trait Vectors { self: VectorsDsl =>
       }
     }
     @OverloadId("elementwise_diff_value")
-    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       DenseVector(items.map(v => v - other))
     }
 
-    def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def *^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       other match {
         case SparseVector(nonZeroIndicesL, nonZeroValuesL, _) =>
           val newItems = (nonZeroIndices zip nonZeroValues) innerMult (nonZeroIndicesL zip nonZeroValuesL)
@@ -317,11 +317,11 @@ trait Vectors { self: VectorsDsl =>
       }
     }
     @OverloadId("elementwise_mult_value")
-    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       SparseVector(nonZeroIndices, nonZeroValues.map(v => v * other), length)
     }
 
-    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       SparseVector(nonZeroIndices, nonZeroValues.map(v => Math.pow(v.toDouble, order).asRep[T]), length)
     }
 
@@ -363,21 +363,21 @@ trait Vectors { self: VectorsDsl =>
     }
 
     @OverloadId("apply_by_collection")
-    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = ??? // TODO: need efficient way to get value by index
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vec[T] = ??? // TODO: need efficient way to get value by index
 
-    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R] = {
+    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vec[R] = {
       IF (f(zeroValue) === element[R].defaultRepValue) THEN {
         SparseVector(nonZeroIndices, nonZeroValues.mapBy(f), length)
       } ELSE {
         ???
       }
     }
-    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vector[T] = {
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vec[T] = {
       val filteredItems = nonZeroItems.filter { v => f(v._2) }
       SparseVector1(filteredItems, length)
     }
 
-    def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def +^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       other match {
         case SparseVector1(nonZeroItemsL, _) =>
           val newItems = (nonZeroIndices zip nonZeroValues) outerSum (nonZeroItemsL.as zip nonZeroItemsL.bs)
@@ -388,11 +388,11 @@ trait Vectors { self: VectorsDsl =>
     }
 
     @OverloadId("elementwise_sum_value")
-    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       DenseVector(items.map(v => v + other))
     }
 
-    def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def -^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       // TODO: I don't like constructing items in this method
       other match {
         case SparseVector1(nonZeroItemsL, _) =>
@@ -409,11 +409,11 @@ trait Vectors { self: VectorsDsl =>
       }
     }
     @OverloadId("elementwise_diff_value")
-    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       DenseVector(items.map(v => v - other))
     }
 
-    def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+    def *^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       other match {
         case SparseVector1(nonZeroItems1, _) =>
           val newItems = (nonZeroIndices zip nonZeroValues) innerMult (nonZeroItems1.as zip nonZeroItems1.bs)
@@ -423,11 +423,11 @@ trait Vectors { self: VectorsDsl =>
       }
     }
     @OverloadId("elementwise_mult_value")
-    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       SparseVector1(nonZeroIndices zip nonZeroValues.map(v => v * other), length)
     }
 
-    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
       SparseVector1(nonZeroIndices zip nonZeroValues.map(v => Math.pow(v.toDouble, order).asRep[T]), length)
     }
 
@@ -450,27 +450,27 @@ trait Vectors { self: VectorsDsl =>
   }
 
   trait AbstractVectorCompanion extends TypeFamily1[AbstractVector] {
-    def zero[T: Elem](len: Rep[Int]): Vector[T] = ??? //DenseVector.zero[T](len)
+    def zero[T: Elem](len: Rep[Int]): Vec[T] = ??? //DenseVector.zero[T](len)
     def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]],
-                                nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vector[T] = ???
+                                nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vec[T] = ???
   }
 
   trait DenseVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
-    override def zero[T: Elem](len: Rep[Int]): Vector[T] = {
+    override def zero[T: Elem](len: Rep[Int]): Vec[T] = {
       val zeroV = element[T].defaultRepValue
       DenseVector(Collection.replicate(len, zeroV))
     }
     override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]],
-                                nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vector[T] = ???
+                                nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vec[T] = ???
   }
 
   trait ConstVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
-    override def zero[T: Elem](len: Rep[Int]): Vector[T] = {
+    override def zero[T: Elem](len: Rep[Int]): Vec[T] = {
       val zeroV = element[T].defaultRepValue
       ConstVector(zeroV, len)
     }
     override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]],
-                                         nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vector[T] = ???
+                                         nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vec[T] = ???
   }
   trait SparseVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
@@ -485,7 +485,7 @@ trait Vectors { self: VectorsDsl =>
     }
     override def zero[T: Elem](len: Rep[Int]) = SparseVector(emptyColl[Int], emptyColl[T], len)
     override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]],
-                                         length: Rep[Int]): Vector[T] = SparseVector(nonZeroIndices, nonZeroValues, length)
+                                         length: Rep[Int]): Vec[T] = SparseVector(nonZeroIndices, nonZeroValues, length)
   }
   trait SparseVector1Companion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector1[T]] = {
@@ -500,7 +500,7 @@ trait Vectors { self: VectorsDsl =>
     }
     override def zero[T: Elem](len: Rep[Int]) = SparseVector(emptyColl[Int], emptyColl[T], len)
     override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]],
-                                         length: Rep[Int]): Vector[T] = SparseVector1(nonZeroIndices zip nonZeroValues, length)
+                                         length: Rep[Int]): Vec[T] = SparseVector1(nonZeroIndices zip nonZeroValues, length)
   }
 }
 
@@ -526,12 +526,12 @@ trait VectorsDsl extends CollectionsDsl with impl.VectorsAbs {
 
   def binarySearch(index: IntRep, indices: Coll[Int]): IntRep
 
-  implicit class VectorExtensions[T](vector: Vector[T]) {
+  implicit class VectorExtensions[T](vector: Vec[T]) {
     implicit def eItem: Elem[T] = vector.selfType1.asInstanceOf[AbstractVectorElem[T, _]].eT
 
-    def map[R: Elem](f: Rep[T] => Rep[R]): Vector[R] = vector.mapBy(fun(f))
+    def map[R: Elem](f: Rep[T] => Rep[R]): Vec[R] = vector.mapBy(fun(f))
 
-    def filter(f: Rep[T] => Rep[Boolean]): Vector[T] = vector.filterBy(fun(f))
+    def filter(f: Rep[T] => Rep[Boolean]): Vec[T] = vector.filterBy(fun(f))
   }
 }
 
