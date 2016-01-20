@@ -6,7 +6,7 @@ import scalan.compilation.{GraphVizConfig, Compiler}
 import scalan.util.FileUtil
 
 trait TestContexts extends TestsUtil {
-  private[this] def stage(scalan: ScalanExp)(testName: String, name: String, sfs: Seq[() => scalan.Exp[_]]): Unit = {
+  protected[this] def stage(scalan: ScalanExp)(testName: String, name: String, sfs: Seq[() => scalan.Exp[_]]): Unit = {
     val dotFile = FileUtil.file(prefix, testName, s"$name.dot")
     implicit val graphVizConfig = scalan.defaultGraphVizConfig
     try {
@@ -22,7 +22,8 @@ trait TestContexts extends TestsUtil {
   abstract class TestContext(testName: String) extends ScalanDslExp {
     def this() = this(currentTestNameAsFileName)
 
-    override def isInvokeEnabled(d: Def[_], m: Method) = true
+    override val invokeAll = true
+    override def isInvokeEnabled(d: Def[_], m: Method) = invokeAll
     override def shouldUnpack(e: Elem[_]) = true
 
     // workaround for non-existence of by-name repeated parameters
