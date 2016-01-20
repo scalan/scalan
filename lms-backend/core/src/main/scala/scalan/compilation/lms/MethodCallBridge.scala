@@ -25,7 +25,7 @@ trait MethodCallBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep
 
   val languageId: LanguageId
 
-  lazy val methodReplaceConf = mappingDSLs(languageId).asInstanceOf[Seq[Mapping[LibraryT, TypeT, MethodT]]]
+  lazy val methodReplaceConf = mappingDSLs.getOrElse(languageId, Nil).asInstanceOf[Seq[Mapping[LibraryT, TypeT, MethodT]]]
 
   def adjustArgs(m: LmsMirror, args: Seq[Any], shuffle: Seq[Adjusted[Int]]) = shuffle.map { adjIndex =>
     val arg = args(adjIndex.value)
@@ -75,7 +75,8 @@ trait MethodCallOpsExp extends BaseExp with EffectExp with TransformingExt {
   def adjust(adjustment: Adjustment, value: Any): Any = adjustment(value)
 }
 
-trait GenMethodCallOps[BackendType <: Expressions with Effects with MethodCallOpsExp] extends BaseCodegen[BackendType] {
+trait GenMethodCallOps[BackendType <: Expressions with Effects with MethodCallOpsExp, LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep] extends BaseCodegen[BackendType] {
+  def mappings: MethodCallBridge[LibraryT, TypeT, MethodT]
 
   def adjust(adjustment: Adjustment, value: Any): Any = IR.adjust(adjustment, value)
 

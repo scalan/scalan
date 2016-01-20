@@ -7,9 +7,10 @@ package sharedptr
 import java.util.HashMap
 
 import scala.lms.common._
+import scalan.compilation.language.MethodMappingDSL
 import scalan.compilation.lms.common._
 
-class CxxCoreCodegen[BackendCake <: LmsBackendFacade with JNILmsOpsExp with CxxMethodCallOpsExp](backend: BackendCake) extends BaseCodegen[BackendCake]
+abstract class CxxCoreCodegen[BackendCake <: LmsBackendFacade with JNILmsOpsExp with CxxMethodCallOpsExp](backend: BackendCake) extends BaseCodegen[BackendCake]
   with CxxShptrCodegen
   with CLikeGenEqual
   with CLikeGenPrimitiveOps
@@ -48,8 +49,11 @@ class CxxCoreCodegen[BackendCake <: LmsBackendFacade with JNILmsOpsExp with CxxM
   override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
 }
 
-class CoreCxxShptrLmsBackend extends CoreLmsBackend with JNILmsOpsExp with CxxMethodCallOpsExp { self =>
-  override val codegen = new CxxCoreCodegen[self.type](self)
+abstract class CoreCxxShptrLmsBackend extends CoreLmsBackend with JNILmsOpsExp with CxxMethodCallOpsExp { self =>
+  def mappings: CoreBridgeCxx
+  override val codegen = new CxxCoreCodegen[self.type](self) {
+    def mappings = self.mappings
+  }
 
   override def map_keys[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]]): Exp[Array[K]] = {
     hashmap_keys_array(map)

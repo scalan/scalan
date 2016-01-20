@@ -4,6 +4,7 @@ import java.io.File
 import java.net.URL
 
 import scalan.compilation.GraphVizConfig
+import scalan.compilation.language.CxxMapping.{CxxMethod, CxxType, CxxLibrary}
 import scalan.compilation.lms._
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.cxx.sharedptr.{CxxMethodCallOpsExp, CxxCoreCodegen}
@@ -11,9 +12,13 @@ import scalan.compilation.lms.scalac.{LmsCompilerScala}
 import scalan.compilation.lms.source2bin.Gcc
 import scalan.{ScalanDslExp, Base, JNIExtractorOpsExp}
 
-class LmsBackendUni extends ScalaCoreLmsBackend with JNILmsOpsExp with CxxMethodCallOpsExp { self =>
-  val nativeCodegen: CxxCoreCodegen[self.type] = new CxxCoreCodegen(self)
-  val jniCallCodegen: JniCallCodegen[self.type] = new JniCallCodegen(self, nativeCodegen, "")
+abstract class LmsBackendUni extends ScalaCoreLmsBackend with JNILmsOpsExp with CxxMethodCallOpsExp { self =>
+  val nativeCodegen: CxxCoreCodegen[self.type] = new CxxCoreCodegen[self.type](self) {
+    def mappings = self.mappings.asInstanceOf[MethodCallBridge[CxxLibrary, CxxType, CxxMethod]] // FIXME
+  }
+  val jniCallCodegen: JniCallCodegen[self.type] = new JniCallCodegen[self.type](self, nativeCodegen, "") {
+    def mappings = self.mappings
+  }
   // todo cppFunctionName and cppLibraryName should be moved from jniCallCodegen for use base codegen below (in doBuildExecutable), without information about subtype of codegen (native or jniCall)
 }
 
@@ -23,7 +28,9 @@ class LmsBackendUni extends ScalaCoreLmsBackend with JNILmsOpsExp with CxxMethod
 class LmsCompilerUni[+ScalanCake <: ScalanDslExp with JNIExtractorOpsExp](_scalan: ScalanCake) extends LmsCompilerScala[ScalanCake](_scalan) with JNIBridge {
   import scalan._
 
-  override val lms = new LmsBackendUni
+  override val lms = new LmsBackendUni {
+    def mappings = LmsCompilerUni.this
+  }
 
   lazy val marker = new SymbolsMarkerForSelectCodegen[scalan.type](scalan)
 

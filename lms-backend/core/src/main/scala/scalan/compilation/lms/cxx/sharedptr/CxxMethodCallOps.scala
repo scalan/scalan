@@ -3,6 +3,7 @@ package scalan.compilation.lms.cxx.sharedptr
 import scala.lms.common._
 import scala.lms.internal.{Expressions, Effects}
 import scala.reflect.SourceContext
+import scalan.compilation.language.CxxMapping.{CxxMethod, CxxType, CxxLibrary}
 import scalan.compilation.lms.{GenMethodCallOps, MethodCallOpsExp}
 
 trait CxxMethodCallOps extends Base with Effects {
@@ -70,7 +71,7 @@ trait CxxMethodCallOpsExp extends CxxMethodCallOps with MethodCallOpsExp {
   }
 }
 
-trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxMethodCallOpsExp] extends CxxShptrCodegen with GenMethodCallOps[BackendType] {
+trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxMethodCallOpsExp] extends CxxShptrCodegen with GenMethodCallOps[BackendType, CxxLibrary, CxxType, CxxMethod] {
   import IR._
 
   def quoteTemplateArg(x: TemplateArg) = x match {
@@ -96,5 +97,12 @@ trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxM
       val rhs1 = src"new ${remapWithoutTemplateArgs(m)}$templateArgString$argString"
       emitValDef(sym, rhs1)
     case _ => super.emitNode(sym, rhs)
+  }
+
+  override def remap[A](m: Manifest[A]) = mappings.mappedType(m) match {
+    case Some((lib, tpe)) =>
+      lib.headerName.foreach(headerFiles += _)
+      lib.namespace.fold("")(_ + "::") + tpe.mappedName
+    case None => super.remap(m)
   }
 }

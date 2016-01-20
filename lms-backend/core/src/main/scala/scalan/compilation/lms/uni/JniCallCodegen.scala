@@ -2,13 +2,14 @@ package scalan.compilation.lms.uni
 
 import java.io.PrintWriter
 
+import scalan.compilation.language.MethodMappingDSL
 import scalan.compilation.lms.{ScalaCoreLmsBackend, BaseCodegen, LmsBackendFacade}
 import scalan.compilation.lms.scalac.ScalaCoreCodegen
 
 /**
  * Created by adel on 5/14/15.
  */
-class JniCallCodegen[BackendCake <: ScalaCoreLmsBackend](backend: BackendCake, nativeCodegen: BaseCodegen[BackendCake], packageName:String) extends ScalaCoreCodegen(backend){
+abstract class JniCallCodegen[BackendCake <: ScalaCoreLmsBackend](backend: BackendCake, nativeCodegen: BaseCodegen[BackendCake], packageName:String) extends ScalaCoreCodegen(backend){
   import IR._
 
   def cppLibraryName(className:String) = "scalan_"+className.toLowerCase

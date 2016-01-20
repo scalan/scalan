@@ -5,7 +5,7 @@ import java.io.File
 import scala.collection.mutable
 import scala.lms.common._
 import scala.lms.internal.{Expressions, GenericNestedCodegen, Effects}
-import scalan.compilation.language.Adjusted
+import scalan.compilation.language.{MethodMappingDSL, Adjusted}
 import scalan.compilation.lms.arrays.{ArrayMutationExp, ArrayLoopsFatExp}
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.graph.GraphCodegen
@@ -357,6 +357,9 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
 
 abstract class CoreLmsBackend extends LmsBackend
 
-class ScalaCoreLmsBackend extends CoreLmsBackend with ScalaMethodCallOpsExp { self =>
-  override val codegen = new ScalaCoreCodegen[self.type](self)
+abstract class ScalaCoreLmsBackend extends CoreLmsBackend with ScalaMethodCallOpsExp { self =>
+  def mappings: CoreBridgeScala
+  override val codegen = new ScalaCoreCodegen[self.type](self) {
+    def mappings = self.mappings
+  }
 }

@@ -11,7 +11,9 @@ import scalan.util.{ProcessUtil, FileUtil}
 
 class LmsCompilerCxx[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreBridgeCxx {
   import scalan._
-  val lms = new CoreCxxShptrLmsBackend
+  val lms = new CoreCxxShptrLmsBackend {
+    def mappings = LmsCompilerCxx.this
+  }
 
   type CustomCompilerOutput = Unit
 

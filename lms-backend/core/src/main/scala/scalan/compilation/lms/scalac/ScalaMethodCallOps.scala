@@ -3,6 +3,7 @@ package scalan.compilation.lms.scalac
 import scala.lms.common._
 import scala.lms.internal.{Expressions, Effects}
 import scala.reflect.SourceContext
+import scalan.compilation.language.ScalaMapping.{ScalaMethod, ScalaType, ScalaLibrary}
 import scalan.compilation.lms.{GenMethodCallOps, MethodCallOpsExp}
 
 trait ScalaMethodCallOps extends Base with Effects {
@@ -61,7 +62,7 @@ trait ScalaMethodCallOpsExp extends ScalaMethodCallOps with MethodCallOpsExp {
   }
 }
 
-trait ScalaGenMethodCallOps[BackendType <: Expressions with Effects with ScalaMethodCallOpsExp] extends ScalaGenBase with GenMethodCallOps[BackendType] {
+trait ScalaGenMethodCallOps[BackendType <: Expressions with Effects with ScalaMethodCallOpsExp] extends ScalaGenBase with GenMethodCallOps[BackendType, ScalaLibrary, ScalaType, ScalaMethod] {
   import IR._
 
   override def quoteOrRemap(arg: Any) = arg match {
@@ -81,4 +82,11 @@ trait ScalaGenMethodCallOps[BackendType <: Expressions with Effects with ScalaMe
       emitTypedValDef(sym, rhs1)
     case _ => super.emitNode(sym, rhs)
   }
+
+  override def remap[A](m: Manifest[A]) = mappings.mappedType(m) match {
+    case Some((lib, tpe)) =>
+      lib.packageName.fold("")(_ + ".") + tpe.mappedName
+    case None => super.remap(m)
+  }
+
 }

@@ -29,7 +29,7 @@ class JNILinAlgItTests extends BaseItTests[JNILinAlgProg](???) {
   class ProgExp extends MatricesDslExp with JNILinAlgProg with JNIExtractorOpsExp
 
   val prog = new LmsCompilerCxx(new ProgExp) with JNIBridge with LinAlgBridge {
-    override val lms = new LinAlgCxxShptrLmsBackend
+    override val lms = new LinAlgCxxShptrLmsBackend(this)
   }
   implicit val cfg = prog.defaultCompilerConfig
 

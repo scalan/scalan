@@ -19,7 +19,9 @@ case class LmsCompilerScalaConfig(extraCompilerOptions: Seq[String] = Seq.empty,
 }
 
 class LmsCompilerScala[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreBridgeScala {
-  val lms = new ScalaCoreLmsBackend
+  val lms = new ScalaCoreLmsBackend {
+    def mappings = LmsCompilerScala.this
+  }
 
   import scalan._
 
