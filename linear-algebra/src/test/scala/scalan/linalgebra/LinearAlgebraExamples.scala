@@ -348,7 +348,7 @@ trait LinearAlgebraExamples extends MatricesDsl {
     val vA = vX +^ vX
     val vB = vA.convertTo[SparseVector[Double]]
     val vC = vA +^ vB
-    vC.length
+    vC.reduce
   }
 
   lazy val denseVector = fun { p: Rep[Array[Double]] =>
