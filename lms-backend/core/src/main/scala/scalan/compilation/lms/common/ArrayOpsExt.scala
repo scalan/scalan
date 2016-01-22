@@ -253,6 +253,7 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
       case a @ ArraySortBy(arr, by) => ArraySortBy(f(arr), f(by))(a.mA, a.mB)
       case e @ ArrayReverse(x) => ArrayReverse(f(x))(e.m)
       case ArrayInsert(l,i,r) => ArrayInsert(f(l),f(i),f(r))(mtype(manifest[A]))
+      case ArrayMutable(arr) => ArrayMutable(f(arr))
       case bs @ ArrayBinarySearch(i, is) => ArrayBinarySearch(f(i), f(is))(bs.ordA, mtype(bs.mA))
       case _ =>
         super.mirrorDef(e,f)
