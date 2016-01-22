@@ -276,4 +276,8 @@ class VectorMethodsItTests extends LmsLinAlgItTests {
     compareOutputWithSequential(_.collReplicateFilter, progStagedOnly)(Array(1, 2, 4))
   }
 
+  test("sumConvertSum") {
+    // error: don't know how to mirror ArrayMutable(Sym(80)) // lms produce incorrect code gen
+    compareOutputWithSequential(_.sumConvertSum, progStagedOnly)(Array(1.0, 2.0, 4.0))
+  }
 }
