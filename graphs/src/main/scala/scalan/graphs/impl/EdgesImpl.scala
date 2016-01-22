@@ -116,8 +116,10 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
   class AdjEdgeCompanionAbs extends CompanionDef[AdjEdgeCompanionAbs] with AdjEdgeCompanion {
     def selfType = AdjEdgeCompanionElem
     override def toString = "AdjEdge"
+    @scalan.OverloadId("fromData")
     def apply[V, E](p: Rep[AdjEdgeData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
       isoAdjEdge(eV, eE).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
       mkAdjEdge(fromId, outIndex, graph)
 
@@ -203,8 +205,10 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
   class IncEdgeCompanionAbs extends CompanionDef[IncEdgeCompanionAbs] with IncEdgeCompanion {
     def selfType = IncEdgeCompanionElem
     override def toString = "IncEdge"
+    @scalan.OverloadId("fromData")
     def apply[V, E](p: Rep[IncEdgeData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
       isoIncEdge(eV, eE).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
       mkIncEdge(fromId, toId, graph)
 
@@ -239,34 +243,34 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
   registerModule(Edges_Module)
 }
 
-// Seq -----------------------------------
-trait EdgesSeq extends scalan.ScalanDslStd with EdgesDsl {
-  self: GraphsDslSeq =>
+// Std -----------------------------------
+trait EdgesStd extends scalan.ScalanDslStd with EdgesDsl {
+  self: GraphsDslStd =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs {
   }
 
-  case class SeqAdjEdge[V, E]
+  case class StdAdjEdge[V, E]
       (override val fromId: Rep[Int], override val outIndex: Rep[Int], override val graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends AbsAdjEdge[V, E](fromId, outIndex, graph) {
   }
 
   def mkAdjEdge[V, E]
     (fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
-    new SeqAdjEdge[V, E](fromId, outIndex, graph)
+    new StdAdjEdge[V, E](fromId, outIndex, graph)
   def unmkAdjEdge[V, E](p: Rep[Edge[V, E]]) = p match {
     case p: AdjEdge[V, E] @unchecked =>
       Some((p.fromId, p.outIndex, p.graph))
     case _ => None
   }
 
-  case class SeqIncEdge[V, E]
+  case class StdIncEdge[V, E]
       (override val fromId: Rep[Int], override val toId: Rep[Int], override val graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends AbsIncEdge[V, E](fromId, toId, graph) {
   }
 
   def mkIncEdge[V, E]
     (fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
-    new SeqIncEdge[V, E](fromId, toId, graph)
+    new StdIncEdge[V, E](fromId, toId, graph)
   def unmkIncEdge[V, E](p: Rep[Edge[V, E]]) = p match {
     case p: IncEdge[V, E] @unchecked =>
       Some((p.fromId, p.toId, p.graph))
@@ -540,10 +544,10 @@ trait EdgesExp extends scalan.ScalanDslExp with EdgesDsl {
 }
 
 object Edges_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXS2wbRRie9SOO7ZCG8o4ECcEFgcAOlVCFglQF16mMTBJlS1SZCjTeHTsbZmc2u+NozaHHHuCGuCKoxAWpF8QJIVVICAlx4IQQEmdOpajqgZ5A/DP78DrxuqSQAz6Mdl7/4/v+79/1tZso77noac/AFLOqTQSu6up51RMVvcGEJQavc7NPyTnSfZR//cmLn81/mUEn2mhqB3vnPNpGxeCh4Tvxs072WqiImUE8wV1PoCdbykPN4JQSQ1ic1Szb7gvcoaTWsjyx0kK5DjcHe+gy0lpozuDMcIkgep1izyNeuD5NZERWPC+q+WDDGfpgNZlFLZHFBRdbAsIHH3PB+S3i6APG2cAWaDYMbcORYcGZgmU73BWRiwKY2+FmNM0xDAvoZGsX7+MauOjVdOFarAc3yw423sE9sg5H5PEcBOwR2r0wcNQ820Ilj+wBQE3boWrFdxBCwMBpFUR1iE81xqcq8anoxLUwtd7FcnPT5f4ABT8ti5DvgInn72IiskAazKy8d8l4845etjPysi9DKagMp8DQQko1KCoAx++2PvBun796JoNKbVSyvNWOJ1xsiCTlIVplzBgXKuYYQOz2gK2lNLaUl1U4c6Akiga3HczAUgjlDPBELcMS8rBcmwnZSYG+IBwSHdV8R4vzXUzJV9VNHVO6eeOxF0791riYQZlRF0UwqUPhu5FRgXINs0dC03I8IZC2PcRXThtqKoeiPxwLEyKJMXnmxu/mt8voUiZGMnT8z8gDE3nv55/KPz57NoOm26rU1yjutQFMr0GJveHWORNtNM33iRvsFPYxlU9jySyYpIv7VIQQJ7HJAjYCLaaK0iESuBUlAC0CoBzU8DpnpLK2WflD//7Da7JEXTQT7AQq/cs68+cvs12hqlegqa7L7aYZAZwFecd4PJVGrkM2XcuGZrJPXvrmqzduXV/PK35PhiltY9ongbTDjIbZSafaMnhqMhEwqPzNx6nIYUEAjH3RZCbxD4cmh1OT7uZ7LnZ2xuQUruTPx/tHrLRhvZUCUHVuk/uXbltvXX1fqMrS/NEOt9HZhZayou49MaHIok77+ZUrD9369O0HVIeY7ljCxk5l+Qj9IZLzMeofjUI3Ww/fOEoop0c3lahTVCvHR+K9gD0oj7lVc1feqiejXkhcSXiY1w5wnyHbQ9cgy7EsJ4vnsIHGJAOH60KgQhiwshDL5/F0+QCWD2+1HqQ3z17PoPxrKN+FLuG1UL7D+8yMSIIXuSC+eDVa00ZJAlKwi+2YFPVbREOwRov64tgDjYN4lLUx/N1bUz7E1UGdpjafuyo8J/g93Tv+ziDHl9X4ynHLpMmM/5dMwoCTMkmvzCOVbiLSqbHgZ6G1/keFnULLBObLspWuYduig39P+30pnDsJa8eCrhw/Hp4JD+YVjBBW2O0CgYVguGgppQnq4QsGaLl856P153744lf1CVGSryr4hGHxn4jkp8MoeMVArPCfIBEroCBfXirOvwFrys6Sow0AAA=="
+  val dump = "H4sIAAAAAAAAANVXS2wbRRie9SOO7ZCG8hKVICG4RUVgR5VQQUGqgutURiaJsiWqTEU13h07G2Znl51xtObQYw9wQ1wRqoTEpRfUAwdQLwgJceCEUCVOHDiVoqoHegL1n9mH14nXJYUc8GG08/of3/d//66v3UZ57qET3MAUs6pNBK7q6nmFi4reYMISg7ccs0/JWdL99YtXry9mv/omg4600dQ25mc5baNi8NDw3fhZF2YLFTEzCBeOxwV6rqU81AyHUmIIy2E1y7b7AncoqbUsLpZbKNdxzMH76DLSWmjOcJjhEUH0OsWcEx6uTxMZkRXPi2o+WHeHPlhNZlFLZHHew5aA8MHHXHB+k7j6gDlsYAs0G4a27sqw4EzBsl3HE5GLApjbdsxommMYFtDR1g7exTVw0avpwrNYD26WXWy8h3tkDY7I4zkImBPaPT9w1TzbQiUuTACoabtUrfguQggYOKWCqA7xqcb4VCU+FZ14FqbWB1hubniOP0DBT8si5Ltg4qUHmIgskAYzKx9eNN65p5ftjLzsy1AKKsMpMDSfUg2KCsDx+82P+d1zV09nUKmNShZf6XDhYUMkKQ/RKmPGHKFijgHEXg/YWkxjS3lZgTN7SqJoOLaLGVgKoZwBnqhlWEIelmszITsp0BeES6Kjmu9qcb4LKfmquqljSjduPf3y8d8bFzIoM+qiCCZ1KHwvMipQrmH2SGhajkcE0raG+MppQ03lUPSHY2FCJDEmL9z6w/xuCV3MxEiGjv8ZeWAiz2/+XP7p5JkMmm6rUl+luNcGMHmDEnvdqztMtNG0s0u8YKewi6l8GktmwSRd3KcihDiJTRawEWghVZQukcAtKwFoEQDloIbXHEYqqxuVP/UfPrkmS9RDM8FOoNK/rdN//TLbFap6BZrqeo7dNCOAsyDvGI/n08h1yYZn2dBMdskr33799p0ba3nF79EwpS1M+ySQdpjRMDvpVFsCT00mAgaVv2NxKnKYFwBjXzSZSfz9ocnh+KS7+Z6H3e0xOYUr+XPx/gErbVhvpQBU3bHJo4t3rXevfiRUZWn+aIdb7+xAS1lW956dUGRRp/3yypUn7nx+6THVIaY7lrCxW1k6QH+I5HyI+kej0M3WwzeOEsqp0U0l6hTVyvGpeC9gD8pjbsXckbfqyajnE1cSHo5pe7jPkK2ha5DlWJaTxbPfQGOSgf11IVAhDFhZiOXzTLp8AMsnN1uP09tnbmRQ/k2U70KX4C2U7zh9ZkYkwYtcEF+8Ea1poyQBKdjDdkyK+i2gIVijRX1h7IHGXjzK2hj+Hq4p7+Nqr05Tm88DFZ4TzkPdO/zOIMfX1Pj6YcukyYz/l0zCgJMySa/MA5VuItKpseBnobX+R4WdQssE5suyla5i26KDf0/7Iymcuwlrh4KuHD8bngkP5hWMEFbY7QKBhWB4aDGlCerhCwZouXzv07UXf7z+m/qEKMlXFXzCsPhPRPLTYRS8YiBW+E+QiBVQkC8vFed9quv/W6MNAAA="
 }
 }
 
 trait EdgesDsl extends impl.EdgesAbs {self: GraphsDsl =>}
-trait EdgesDslSeq extends impl.EdgesSeq {self: GraphsDslSeq =>}
+trait EdgesDslStd extends impl.EdgesStd {self: GraphsDslStd =>}
 trait EdgesDslExp extends impl.EdgesExp {self: GraphsDslExp =>}

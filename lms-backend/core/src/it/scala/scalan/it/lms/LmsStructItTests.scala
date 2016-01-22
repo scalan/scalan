@@ -20,7 +20,7 @@ class LmsStructItTests extends StructItTests {
 
   val cxxOnly = compilers(progStagedCxx)
 
-  import progSeq._
+  import progStd._
 
   test("Generate CPP source") {
     compileSource(s => s.t1.asInstanceOf[s.Rep[Int => Struct]], cxxOnly)

@@ -1,5 +1,5 @@
 package scalan.graphs
-import scalan.collections.{BitSetsDsl, BitSetsDslExp, BitSetsDslSeq, CollectionsDsl}
+import scalan.collections.{BitSetsDsl, BitSetsDslExp, BitSetsDslStd, CollectionsDsl}
 import scalan._
 
 /**
@@ -93,5 +93,5 @@ trait Fronts extends CollectionsDsl with BitSetsDsl { self: FrontsDsl =>
   trait MapBasedFrontCompanion extends ConcreteClass0[Front]
 }
 
-trait FrontsDslSeq extends impl.FrontsSeq with BitSetsDslSeq
+trait FrontsDslStd extends impl.FrontsStd with BitSetsDslStd
 trait FrontsDslExp extends impl.FrontsExp with BitSetsDslExp

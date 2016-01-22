@@ -11,7 +11,7 @@ import scalan.staged.BaseExp
 trait ListViews extends ListOps with Views { self: Scalan =>
 }
 
-trait ListViewsSeq extends ListViews with ListOpsSeq with ViewsDslSeq { self: ScalanSeq =>
+trait ListViewsStd extends ListViews with ListOpsStd with ViewsDslStd { self: ScalanStd =>
 }
 
 trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseExp { self: ScalanExp =>

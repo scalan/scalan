@@ -129,7 +129,7 @@ trait FreeStatesDsl extends impl.FreeStatesAbs { self: MonadsDsl =>
   }
 }
 
-trait FreeStatesDslSeq extends impl.FreeStatesSeq { self: MonadsDslSeq =>
+trait FreeStatesDslStd extends impl.FreeStatesStd { self: MonadsDslStd =>
 }
 
 trait FreeStatesDslExp extends impl.FreeStatesExp with CollectionsDslExp { self: MonadsDslExp =>

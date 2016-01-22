@@ -47,7 +47,7 @@ trait Proxy { self: Scalan =>
   def delayInvoke = throw new DelayInvokeException
 }
 
-trait ProxySeq extends Proxy { self: ScalanSeq =>
+trait ProxyStd extends Proxy { self: ScalanStd =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = x
   def proxyOpsEx[OpsBase <: AnyRef, Ops <: AnyRef, Wrapper <: Ops]
                 (x: Rep[OpsBase], wrapper: OpsBase => Wrapper)

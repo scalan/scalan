@@ -115,6 +115,7 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
     def selfType = ReturnCompanionElem
     override def toString = "Return"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
       mkReturn(a)
 
@@ -200,6 +201,7 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
     def selfType = SuspendCompanionElem
     override def toString = "Suspend"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], A](a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F]): Rep[Suspend[F, A]] =
       mkSuspend(a)
 
@@ -286,8 +288,10 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
   class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {
     def selfType = BindCompanionElem
     override def toString = "Bind"
+    @scalan.OverloadId("fromData")
     def apply[F[_], S, B](p: Rep[BindData[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       isoBind(eS, eA, cF).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[F[_], S, B](a: Rep[Free[F, S]], f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       mkBind(a, f)
 
@@ -322,48 +326,48 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
   registerModule(Frees_Module)
 }
 
-// Seq -----------------------------------
-trait FreesSeq extends scalan.ScalanDslStd with FreesDsl {
-  self: MonadsDslSeq =>
+// Std -----------------------------------
+trait FreesStd extends scalan.ScalanDslStd with FreesDsl {
+  self: MonadsDslStd =>
   lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs {
   }
 
-  case class SeqReturn[F[_], A]
+  case class StdReturn[F[_], A]
       (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
     extends AbsReturn[F, A](a) {
   }
 
   def mkReturn[F[_], A]
     (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
-    new SeqReturn[F, A](a)
+    new StdReturn[F, A](a)
   def unmkReturn[F[_], A](p: Rep[Free[F, A]]) = p match {
     case p: Return[F, A] @unchecked =>
       Some((p.a))
     case _ => None
   }
 
-  case class SeqSuspend[F[_], A]
+  case class StdSuspend[F[_], A]
       (override val a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F])
     extends AbsSuspend[F, A](a) {
   }
 
   def mkSuspend[F[_], A]
     (a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F]): Rep[Suspend[F, A]] =
-    new SeqSuspend[F, A](a)
+    new StdSuspend[F, A](a)
   def unmkSuspend[F[_], A](p: Rep[Free[F, A]]) = p match {
     case p: Suspend[F, A] @unchecked =>
       Some((p.a))
     case _ => None
   }
 
-  case class SeqBind[F[_], S, B]
+  case class StdBind[F[_], S, B]
       (override val a: Rep[Free[F, S]], override val f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends AbsBind[F, S, B](a, f) {
   }
 
   def mkBind[F[_], S, B]
     (a: Rep[Free[F, S]], f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
-    new SeqBind[F, S, B](a, f)
+    new StdBind[F, S, B](a, f)
   def unmkBind[F[_], S, B](p: Rep[Free[F, B]]) = p match {
     case p: Bind[F, S, B] @unchecked =>
       Some((p.a, p.f))
@@ -617,7 +621,7 @@ trait FreesExp extends scalan.ScalanDslExp with FreesDsl {
 }
 
 object Frees_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXS2wbRRj+/YpjOzSB8mxVEiJTFAR24dJDDpGT2KjITaJsD8hUROPdsbtld3YzM47WHHrsAW6ICwckKnFB6gVx4oK4VEIcOFUIiRMHTqUI9UBPIGZmH147XudRGgkfRju7//7/P99jZn37PuQYhfNMRxYiFRtzVNHUdY3xslYn3OT9y47Rs/A67jzvfPf5G1+e+SYNsy2YuobYOrNaUPAv6p4bXWt4twkFRHTMuEMZh5eaqkJVdywL69x0SNW07R5HbQtXmybjy03Ith2jvws3INWEOd0hOsUca2sWYgyz4P40lh2Z0byg5v1Nd1CDVOUqqrFVXKHI5KJ9UWPOj9/GrtYnDunbHE4FrW26si0Rkzdt16E8LJEX6a45RjjNEiRuwFPN62gPVUWJblXj1CRd8WbJRfr7qIs3RIgMz4qGGbY6V/qummeaUGR4VwB0yXYtdcdzAUAw8KZqojLApxLhU5H4lDVMTWSZHyD5cIs6Xh/8XyoD4LkixWsHpAgz4Doxyh9e1d99qJXstHzZk63k1QqnRKL5BDUoKgSO329/zB68detiGootKJqs1macIp3HKQ/QKiFCHK56jgBEtCvYWkxiS1WpiZgRSRR0x3YREZkCKGcET5apm1wGy3szATsJ0Oe5i8PQlOemovUuJKxX6WYNWdbWvRdef/n3+jtpSA+XKIiUmhA+DZNyyDYoxkFqOc5ySDUG+MppTU3lUPAGY35CJxEmr9z7w7hzAa6mIySDwocjT6TIsZ9/Kt1dWknDdEtJvWGhbkuAyeoWtjfpmkN4C6adPUz9J/k9ZMmrsWTmDdxBPYsHEMexyQhsOCwkmtLFErhlZYBUCEDJ1/CGQ3C5sVX+S/vhk9tSohRm/Ce+S/8xL/79y6kOV+oViKIQ24xw9gj4yWgX/ZSaY+MnFx+Y7936iCtcU96wvzfb14WhltV7L06AONxnvrp585k/v9g5rfwx3Ta5jdzyhSO4IxTzY1Q/RKj4unxuMJfDvEB1dhvzHiVr8cLzsTdiOJ9JhRyqIA5pXAsJyEpdTeAkIYHeiBJISY51VJxUDlN+vypBZIdzSVwpNJ7dbj5t3V/5Ng25tyHXESpnTci1nR4xQpjFQcSxx1fDe6lhmAWsiCI7glX9FmCAlWw21vzK2IidUTzGh+2DrZQaxuURNp99lMIIIxNN1phA8Pha59W4dAgdzmk95mJi/G+EmA8ajisxmdQD1CGH9ZOTx+rjkMch6mr76iaU6YwpQ8W2nGjzRo/ody99enr23M6v6gCfMhwbmUpFZ4XbqdjilZvPBqfooJ1Hxu14gn9i1Ty22rVJao+DfCy7rB6c4Oh2ycrlnrRXYgSPD9hPaKz2EgyvKyNO/f9oJx4y3IhWjiAhWX6MhMIP1JOGe/xa7wznEoE5BZvoP/SzQ5DBgsVTWEywuRZ86wgabjz8bOPVH7/+TVm9KL+axLckif7NDc5ub2STKlxWtcSfs1ivAi75HaX6/BeWGjW3LA8AAA=="
+  val dump = "H4sIAAAAAAAAANVXO4wbRRj+14/z2T5yB+EhiMIdJxN0COyIJkhXnO5hoyDn7nSbApmI03h37GzYnV1mxqc1RcoU0CEaCopISDRpUAoaRBcJUVBFCIkqBVUIQilIBWJm9uG1z+t7hJyEi9HO7r///8/3mFnfegB5RuEcM5CNSNXBHFV1db3KeEWvE27x/iXX7Nl4A3fuff327cXst99lYLYFU1cR22B2C4rBRd334mudm00oImJgxl3KOLzSVBVqhmvb2OCWS2qW4/Q4atu41rQYX25Cru2a/Y/gOmhNmDNcYlDMsb5uI8YwC+9PY9mRFc+Lat7f8gY1SE2uopZYxWWKLC7aFzXmgvgd7Ol94pK+w+FU2NqWJ9sSMQXL8VzKoxIFke6qa0bTHEHiBjzTvIb2UE2U6NZ0Ti3SFW+WPWR8iLp4U4TI8JxomGG7c7nvqXm2CSXGTQHQRcez1R3fAwDBwFuqieoAn2qMT1XiU9ExtZBtfYzkw23q+n0IfloWwPdEijcOSBFlwHViVj65Yrz/SC87GfmyL1spqBVOiUTzKWpQVAgcf9j5jD185+aFDJRaULLYaptxigyepDxEq4wIcbnqOQYQ0a5gazGNLVVlVcSMSKJouI6HiMgUQjkjeLItw+IyWN6bCdlJgb7APRyFar6nxetdSFmv0s06su3t+y+++erv9fcykBkuURQpdSF8GiXlkGtQjMPUcpzloDUG+MrpqprKoegPxsKETmJMXrv/h3nnPFzJxEiGhQ9HnkiRZ7/8XL67tJKB6ZaSesNG3ZYAk9Vt7GzRdZfwFky7e5gGTwp7yJZXY8ksmLiDejYPIU5ikxXYcFhINaWHJXDLygBaBEA50PCmS3ClsV35S//x81tSohRmgieBS/+xLvz966kOV+oViKII26xw9gj46WiXgpS66+CnFx9aH9z8lCtcNX/Y31vta8JQy+q9lydAHO0z39y48dyfX+2eVv6YblvcQV7l/BHcEYn5CaofYlQCXb4wmMthXqA6u4N5j5L1ZOH5xBsJnF/SIg5VEIcMXo0IyEldTeAkJYHRiBNISY51VJJUDlNBvypBbIezaVwpNJ7faT5rP1j5PgP5dyHfESpnTci33R4xI5jFQcSxz9eie9owzAJWRJETw6p+CzDASjabaH5lbMTuKB7jw/bBVtaGcXmMzWcfpTDCyESTNSYQPL7WOTUuHUKHc3qPeZiY/xshFsKGk0pMJ/UAdchh4+TksfYk5HGIuvq+uillOmPKULEtp9q80SPG3YtfnJ49u3tPHeBTpusgS6nojHA7FVu8cvOZ8BQdtPPYuB1P8E+tWcdWuz5J7UmQj2WXtYMTHN0uObnck/ZKguDxAfsJTdReguF1ZcWp/x/txEOGG9HKESQky4+RUPSBetJwj1/rneFcIjCvYBP9R352CTJZuHgKiyk218NvHUHD9Udfbr7+0+3flNVL8qtJfEuS+N/c4Oz2Rzap4iVVS/w5S/Qq4JLfUarPfwGv9iVuLA8AAA=="
 }
 }
 

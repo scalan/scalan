@@ -34,6 +34,6 @@ trait Monoids { self: Scalan =>
     RepMonoid[Boolean]("&&", true, isCommutative = true) { (a, b) => a && b }
 }
 
-trait MonoidsSeq extends Monoids { self: ScalanSeq =>
+trait MonoidsStd extends Monoids { self: ScalanStd =>
   override def repMonoid_toString[A](m: RepMonoid[A]) = s"Monoid[${m.eA.name}](${m.opName}, ${m.zero})"
 }

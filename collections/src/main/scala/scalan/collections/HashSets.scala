@@ -22,8 +22,8 @@ trait HashSets extends Base with TypeWrappers { self: HashSetsDsl =>
   def DefaultOfHashSet[A:Elem]: Default[HashSet[A]] = Default.defaultVal(HashSet.empty[A]) //SHashSet.defaultVal
 }
 
-trait HashSetsDslSeq extends impl.HashSetsSeq {
-  trait SeqSHashSet[A] extends SHashSetImpl[A] {
+trait HashSetsDslStd extends impl.HashSetsStd {
+  trait StdSHashSet[A] extends SHashSetImpl[A] {
     override def map[B:Elem](f: Rep[A => B]): Rep[SHashSet[B]] = SHashSetImpl(wrappedValue.map(f))
     //override def +(elem: Rep[A]): Rep[HashSet[A]] = value + elem
   }

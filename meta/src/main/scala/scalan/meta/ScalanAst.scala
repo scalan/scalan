@@ -423,7 +423,7 @@ object ScalanAst {
     }
   }
 
-  case class SSeqImplementation(explicitMethods: List[SMethodDef]) {
+  case class SStdImplementation(explicitMethods: List[SMethodDef]) {
     def containsMethodDef(m: SMethodDef) =
       explicitMethods.exists { em =>
         em.name == m.name && em.allArgs == m.allArgs &&
@@ -443,9 +443,9 @@ object ScalanAst {
                                methods: List[SMethodDef],
                                selfType: Option[SSelfTypeDef],
                                body: List[SBodyItem] = Nil,
-                               seqDslImpl: Option[SSeqImplementation] = None,
+                               stdDslImpl: Option[SStdImplementation] = None,
                                hasDsl: Boolean = false,
-                               hasDslSeq: Boolean = false,
+                               hasDslStd: Boolean = false,
                                hasDslExp: Boolean = false,
                                ancestors: List[STraitCall] = List())
   {
@@ -479,7 +479,7 @@ object ScalanAst {
         methods = Nil,
         body = Nil,
         hasDsl = false,
-        hasDslSeq = false,
+        hasDslStd = false,
         hasDslExp = false,
         ancestors = Nil
       )

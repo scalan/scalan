@@ -4,9 +4,9 @@ import scalan.compilation.GraphVizExport
 import scalan.primitives._
 import scalan.collections._
 import scalan.arrays._
-import scalan.seq.BaseSeq
+import scalan.seq.BaseStd
 import scalan.staged.{Transforming, BaseExp, Expressions, TransformingExp}
-import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl/*, Exceptions*/}
+import scalan.util.{ExceptionsDslExp, ExceptionsDslStd, ExceptionsDsl/*, Exceptions*/}
 
 abstract class Scalan
   extends Base
@@ -53,45 +53,45 @@ extends Scalan
   with ExceptionsDsl
   with AbstractStringsDsl
 
-abstract class ScalanSeq
+abstract class ScalanStd
   extends Scalan
-  with BaseSeq
-  with ElemsSeq
-  with ContainersSeq
-  with TypeWrappersSeq
-  with ViewsDslSeq
-  with ProxySeq
-  with TuplesSeq
-  with LoopsSeq
-  with TypeSumSeq
-  with UnBinOpsSeq
-  with NumericOpsSeq
-  with FunctionsSeq
-  with IfThenElseSeq
-  with BlocksSeq
-  with PatternMatchingSeq
-  with MapOpsSeq
-  with MapViewsSeq
-  with MonoidsSeq
-  with ArrayOpsSeq
-  with ArrayBuffersSeq
-  with ExceptionsSeq
-  with ArrayViewsSeq
-  with StringOpsSeq
-  with ThunksSeq
-  with EffectsSeq
-  with MetadataSeq
-  with ListOpsSeq
-  with ListViewsSeq
-  with ConvertersDslSeq
-  with EffectfulSeq
-  with StructsDslSeq
+  with BaseStd
+  with ElemsStd
+  with ContainersStd
+  with TypeWrappersStd
+  with ViewsDslStd
+  with ProxyStd
+  with TuplesStd
+  with LoopsStd
+  with TypeSumStd
+  with UnBinOpsStd
+  with NumericOpsStd
+  with FunctionsStd
+  with IfThenElseStd
+  with BlocksStd
+  with PatternMatchingStd
+  with MapOpsStd
+  with MapViewsStd
+  with MonoidsStd
+  with ArrayOpsStd
+  with ArrayBuffersStd
+  with ExceptionsStd
+  with ArrayViewsStd
+  with StringOpsStd
+  with ThunksStd
+  with EffectsStd
+  with MetadataStd
+  with ListOpsStd
+  with ListViewsStd
+  with ConvertersDslStd
+  with EffectfulStd
+  with StructsDslStd
 
 class ScalanDslStd
-extends ScalanSeq
+extends ScalanStd
   with ScalanDsl
-  with ExceptionsDslSeq
-  with AbstractStringsDslSeq
+  with ExceptionsDslStd
+  with AbstractStringsDslStd
 
 abstract class ScalanExp
   extends Scalan

@@ -517,6 +517,6 @@ trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanDsl =>
   }
 }
 
-trait MatricesDslSeq extends impl.MatricesSeq with VectorsDslSeq
+trait MatricesDslStd extends impl.MatricesStd with VectorsDslStd
 
 trait MatricesDslExp extends impl.MatricesExp with VectorsDslExp

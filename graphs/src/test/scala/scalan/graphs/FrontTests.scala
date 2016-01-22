@@ -29,7 +29,7 @@ class FrontTests extends BaseCtxTests {
 
   class FrontProgStaged extends TestContext with FrontProg with GraphsDslExp {
   }
-  class FrontProgSeq extends ScalanDslStd with FrontProg with GraphsDslSeq {
+  class FrontProgStd extends ScalanDslStd with FrontProg with GraphsDslStd {
   }
 
   test("deepSpec") {

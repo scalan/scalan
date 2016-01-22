@@ -55,7 +55,7 @@ class LmsSmokeItTests extends SmokeItTests {
     // Wrong type is generated in SBT/TeamCity, right in IDEA
     pending
     val in = 3
-    val seqOut = progSeq.emptyNestedUnitArray(in)
+    val seqOut = progStd.emptyNestedUnitArray(in)
     println(seqOut)
 
     val Seq(Seq(stgOut)) = getStagedOutput(_.emptyNestedUnitArray, progStagedOnly)(in)

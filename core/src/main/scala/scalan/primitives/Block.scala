@@ -1,6 +1,6 @@
 package scalan.primitives
 
-import scalan.{ScalanExp, ScalanSeq, Scalan}
+import scalan.{ScalanExp, ScalanStd, Scalan}
 import scalan.common.Lazy
 
 trait Blocks { self: Scalan =>
@@ -11,7 +11,7 @@ trait Blocks { self: Scalan =>
   }
 }
 
-trait BlocksSeq extends Blocks { self: ScalanSeq =>
+trait BlocksStd extends Blocks { self: ScalanStd =>
   def semicolon[A,B](left: Rep[A], right: Rep[B]): Rep[B] = right
 }
 

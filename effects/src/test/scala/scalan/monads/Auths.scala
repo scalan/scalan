@@ -68,7 +68,7 @@ trait AuthenticationsDsl extends ScalanDsl with impl.AuthenticationsAbs with Aut
   }
 }
 
-trait AuthenticationsDslSeq extends ScalanDslStd with impl.AuthenticationsSeq with MonadsDslSeq {
+trait AuthenticationsDslStd extends ScalanDslStd with impl.AuthenticationsStd with MonadsDslStd {
 }
 
 trait AuthenticationsDslExp extends ScalanDslExp with impl.AuthenticationsExp with MonadsDslExp {

@@ -114,6 +114,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     def selfType = ReturnCompanionElem
     override def toString = "Return"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
       mkReturn(a)
 
@@ -200,8 +201,10 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
   class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {
     def selfType = BindCompanionElem
     override def toString = "Bind"
+    @scalan.OverloadId("fromData")
     def apply[F[_], S, B](p: Rep[BindData[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       isoBind(eS, eA, cF).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       mkBind(a, f)
 
@@ -236,34 +239,34 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
   registerModule(Kinds_Module)
 }
 
-// Seq -----------------------------------
-trait KindsSeq extends scalan.ScalanDslStd with KindsDsl {
-  self: KindsDslSeq =>
+// Std -----------------------------------
+trait KindsStd extends scalan.ScalanDslStd with KindsDsl {
+  self: KindsDslStd =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }
 
-  case class SeqReturn[F[_], A]
+  case class StdReturn[F[_], A]
       (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
     extends AbsReturn[F, A](a) {
   }
 
   def mkReturn[F[_], A]
     (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
-    new SeqReturn[F, A](a)
+    new StdReturn[F, A](a)
   def unmkReturn[F[_], A](p: Rep[Kind[F, A]]) = p match {
     case p: Return[F, A] @unchecked =>
       Some((p.a))
     case _ => None
   }
 
-  case class SeqBind[F[_], S, B]
+  case class StdBind[F[_], S, B]
       (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends AbsBind[F, S, B](a, f) {
   }
 
   def mkBind[F[_], S, B]
     (a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
-    new SeqBind[F, S, B](a, f)
+    new StdBind[F, S, B](a, f)
   def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]) = p match {
     case p: Bind[F, S, B] @unchecked =>
       Some((p.a, p.f))
@@ -340,10 +343,10 @@ trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
 }
 
 object Kinds_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAL1WPWwcRRR+ez++PxMHwm+iYGMdRkZwF2hSuLDO9h0KOWzLmwIdEdbc3txlw+7senfO2qNImQI6lIYCiUg0SGkQFQ2iQUIUVBFCoqKgCkEoBalAvJn9ub3z7fkcBFuMdnbfvvfm+5nZO/ch6zqw4mrEIKxiUk4qqryvubys1hnX+eAtq9M36BbtPmt98+lrn5/9KgULLZi7Rtwt12hBwb+pe3Z0r9KDJhQI06jLLcfl8EJTVqhqlmFQjesWq+qm2eekbdBqU3f5WhMybaszOIAboDThtGYxzaGcqpsGcV3qBs/zVHSkR/OCnA927GENVhWrqMZWccUhOsf2scZpP36P2uqAWWxgcjgVtLZji7YwJqebtuXwsEQO012zOuE0wwg+gCea18khqWKJXlXljs56+GXJJtp7pEe3MUSEZ7BhlxrdKwNbztNNKLr0AAG6ZNqGfOLZAIAMvC6bqAzxqUT4VAQ+ZZU6OjH094l4uetY3gD8S0kDeDameOWYFGEGWmed8gdXtXceqiUzJT72RCs5ucI5TLSYoAZJBeL43d5H7oM3bl9MQbEFRd2ttV3uEI3HKQ/QKhHGLC57jgAkTg/ZWk5iS1apYcyYJAqaZdqEYaYAynnkydA1nYtg8Ww+YCcB+hy3aRiqeLYSrXcpYb1SN5vEMHbvPffqi7/V305BarREAVOqKHwnTMohc1lnnSC1GBc4KI0hvmJak1MxFLzhmJvSSYTJS/d+73x7Aa6mIiSDwrORhymy7k8/lu6urqcg35JSbxik10Iw3bpBzR1n02K8BXnrkDr+m9whMcTdRDJzHdolfYMHEMexSSM2HJYSTWlTAdyaNIASAlDyNbxtMVpu7Jb/VL+/dUdI1IF5/43v0r/1i3/9fKrLpXoRURJim0Znj4GfjHbRT6laJn18+YH+7u0PucRV8Ub9vdO+joZak989PwXicJ/54ubNp/74bP+M9Ee+rXOT2OULJ3BHKOb/UP0QoeLr8pnhXAyLiOrCHuV9h23GCy/GvojhfFYJOZRBHFK0FhKQEbqawklCAq0RJRCSnOioOKkc5vx+ZYLIDueTuJJoPL3XfNK4v/51CrJvQraLKnebkG1bfdYJYcaDiFOPb4TPlFGYEVbiEDOCVV5LMMRKNBtrfn1ixP44HpPDjsBWUkZxmWHz2UiwwxFKYYyRaSaboa56pG5Cme6EMg76LpHHRp9pdy99fGbh/P4vcoee61gm0aUQziGdDnpY0nUu2CaH7fxr3OLorchxdQZnPbaB5R7RV+o0X8VBfiRjbhyf4OTGzIjlxm2ZrPBjrCKGrdm8EiN4csBRQmO1V2F0XWnc1k8s+cknz4jhxrRyAgldniyh8A/k/4Z78lpvjebCwKyEDfsP/IzHmhmcfito8+UEm6vBYYY03Hj4yfbLP3z5q7R6URyL+LPAot/14ebsjW1SeVkaf75jrSJa4pyUbf4DRfOBQgwNAAA="
+  val dump = "H4sIAAAAAAAAAL1WPWwcRRR+ez++PxMHwo8gCjbWYWQEdxFNkFxYZ/sOhRy25U2BjghrbnfusmF3dtmds/YoUqaADqWhoIiERJMGpaBBdEiIgipCSFQpqEIQSkEqEG9mf27vfHu2g2CL0c7u2/fefD8ze/sB5D0XVjyNmITVLMpJTZX3DY9X1SbjBh++Y+sDk27R3r0v37yznP36mwwsdGDuKvG2PLMDpeCm6Tvxvcr1NpQI06jHbdfj8FJbVqhrtmlSjRs2qxuWNeCka9J62/D4WhtyXVsffgjXQWnDac1mmks5VTdN4nnUC58XqejIiOclOR/uOKMarC5WUU+s4rJLDI7tY43TQfweddQhs9nQ4nAqbG3HEW1hTMGwHNvlUYkCprtq69E0xwg+gKfa18gBqWOJfl3lrsH6+GXFIdoHpE+3MUSE57Bhj5q9y0NHzrNtKHtcR4AuWo4pn/gOACADb8gmaiN8ajE+NYFPVaWuQUzjIyJe7rq2P4TgUrIAvoMpXjsiRZSBNple/fiK9t4jtWJlxMe+aKUgVziHiRZT1CCpQBy/3/vUe/jWrQsZKHegbHiNrsddovEk5SFaFcKYzWXPMYDE7SNby2lsySoNjJmQREmzLYcwzBRCOY88mYZmcBEsns2H7KRAX+AOjUIV31Hi9S6lrFfqZpOY5u79519/+bfmuxnIjJcoYUoVhe9GSTnkLhlMD1OLcYGD0hrhK6YNORVDyR+NhRmdxJi8cv93/bvzcCUTIxkWPh55mCLv/fxT5e7qegaKHSn1lkn6HQTTa5rU2nE3bcY7ULQPqBu8KRwQU9xNJbOg0x4ZmDyEOIlNFrHhsJRqSocK4NakAZQIgEqg4W2b0Wprt/qn+sPN20KiLswHbwKX/m1c+OuXUz0u1YuIkgjbLDp7Avx0tMtBStW26JPLD433b33CJa6KP+7vne41NNSa/O7FGRBH+8xXN24888cX+2ekP4pdg1vEqZ4/gTsiMf+H6ocYlUCXz43mYlhEVBf2KB+4bDNZeDHxRQLnF5SIQxnEIUMbEQE5oasZnKQk0FpxAiHJqY5KksphLuhXJojtcC6NK4nGs3vtp80H699mIP825Huocq8N+a49YHoEMx5EnPp8I3qmjMOMsBKXWDGs8lqCEVai2UTz61Mj9ifxmB52CLaKMo7LMTafjRQ7HKIUJhiZZbJj1FUP1U0p05tSxkXfpfLYGjDt7sXPziyc278nd+g53baIIYVwFul00cOSrrPhNjlq51/jlkRvRY6rx3DWExtY7jF9pc7yVRLkxzLmxtEJTm7MnFhu0pbpCj/CKmLYOp5XEgRPDzhMaKL2KoyvK4vb+oklP/3kGTPchFZOIKFL0yUU/YH833BPX+vN8VwYmJewYf+hn/FYs8LTbwVtvpxiczU8zJCG648+3371xzu/SquXxbGIPwss/l0fbc7+xCZVlKXx5zvRKqIlzknZ5j8to5YGDA0AAA=="
 }
 }
 
 trait KindsDsl extends impl.KindsAbs
-trait KindsDslSeq extends impl.KindsSeq
+trait KindsDslStd extends impl.KindsStd
 trait KindsDslExp extends impl.KindsExp

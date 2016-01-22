@@ -119,6 +119,7 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
     def selfType = StateGetCompanionElem
     override def toString = "StateGet"
 
+    @scalan.OverloadId("fromFields")
     def apply[S, A](f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateGet[S, A]] =
       mkStateGet(f)
 
@@ -205,8 +206,10 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
   class StatePutCompanionAbs extends CompanionDef[StatePutCompanionAbs] with StatePutCompanion {
     def selfType = StatePutCompanionElem
     override def toString = "StatePut"
+    @scalan.OverloadId("fromData")
     def apply[S, A](p: Rep[StatePutData[S, A]])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]] =
       isoStatePut(eS, eA).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[S, A](s: Rep[S], a: Rep[A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]] =
       mkStatePut(s, a)
 
@@ -241,34 +244,34 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
   registerModule(FreeStates_Module)
 }
 
-// Seq -----------------------------------
-trait FreeStatesSeq extends scalan.ScalanDslStd with FreeStatesDsl {
-  self: MonadsDslSeq =>
+// Std -----------------------------------
+trait FreeStatesStd extends scalan.ScalanDslStd with FreeStatesDsl {
+  self: MonadsDslStd =>
   lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs {
   }
 
-  case class SeqStateGet[S, A]
+  case class StdStateGet[S, A]
       (override val f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A])
     extends AbsStateGet[S, A](f) {
   }
 
   def mkStateGet[S, A]
     (f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateGet[S, A]] =
-    new SeqStateGet[S, A](f)
+    new StdStateGet[S, A](f)
   def unmkStateGet[S, A](p: Rep[StateF[S, A]]) = p match {
     case p: StateGet[S, A] @unchecked =>
       Some((p.f))
     case _ => None
   }
 
-  case class SeqStatePut[S, A]
+  case class StdStatePut[S, A]
       (override val s: Rep[S], override val a: Rep[A])(implicit eS: Elem[S], eA: Elem[A])
     extends AbsStatePut[S, A](s, a) {
   }
 
   def mkStatePut[S, A]
     (s: Rep[S], a: Rep[A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]] =
-    new SeqStatePut[S, A](s, a)
+    new StdStatePut[S, A](s, a)
   def unmkStatePut[S, A](p: Rep[StateF[S, A]]) = p match {
     case p: StatePut[S, A] @unchecked =>
       Some((p.s, p.a))
@@ -377,7 +380,7 @@ trait FreeStatesExp extends scalan.ScalanDslExp with FreeStatesDsl {
 }
 
 object FreeStates_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVWO4wbRRj+1z6/j1xCeCZK7jgZEBGxA02KKyJzOUdBzt3pNgUyEdF4PXY27M7s7YxPa4oUFCmgQzQUSESiQUqDqGgQDRKioIoQEhUFVQhCKUgF4p/Zhx/nNZxICrYY7cz+8z++7/tn9vY9yAkfXhAWcQiruVSSmqnfG0JWzQ0mbTm8xLsDh56nvWf415+88tmxLzOw1Ib8NSLOC6cNpfBlI/CSd5PutqBEmEWF5L6Q8FxLR6hb3HGoJW3O6rbrDiTpOLTesoVca8FCh3eHu3ADjBYctjizfCqpue4QIaiI1otUZWQn85KeD7e8UQxWV1XUx6q47BNbYvoY43Bov0M9c8g4G7oSDkWpbXkqLbQp2K7HfRmHKKC7a7wbTxcYwQV4vHWd7JE6hujXTenbrI87Kx6x3iZ9uokmynwBExbU6V0eenqebUFZ0F0E6KLrOXol8AAAGXhVJ1Eb4VNL8KkpfKom9W3i2O8Q9XHb58EQwsfIAgQeunj5H1zEHugG61bfu2K9+cCsuBm1OVCpFHSFeXS0nKIGTQXi+O3OB+L+hVtnM1BuQ9kWjY6QPrHkOOURWhXCGJc65wRA4veRrdU0tnSUBtpMSaJkcdcjDD1FUC4iT45t2VIZq7XFiJ0U6AvSo7GpEXhGUu9KSr1aN+vEcbbvPnv6+V833shAZjJECV2aKHw/diohb2K5tBk5V+OSBMMcIaymDT1VQykYjYU5uSSovHj3t+43Z+BKJsEyCv3v6EMXOfHjD5U7L53LQLGtxd50SL+NcIoNh7pb/jpnsg1Fvkf98EthjzjqbSadhS7tkYEjI5DH0ckiOhJWUtvSowq6Nd0CRgxAJVTxJme02tyu/mF+9+FtJVIfFsMvYZ/+ZZ/986dDPan1i4j2Ymyz2NsJFCfTmPVoc8CsOxc/Orp04urPmtd8l7vE1uI63oKcj52tCzkeQXsgGsthriZ36ZHV+/Zbt96XmjAjmDw6tjrXsVfX9L6Tc7iLj7DPb9588vdPrx7VrVfs2NIlXvXMARov7pNH2Fgwqf2lsCHWx4MUxtFS49PJqh6WkdIjet8FKid2Lo/tGYtzzIglpI0kZKgZJ7CgZD2zH8Ms0hw05jnYT72EYpyxdpGI8ES6CBG1p3ZaTzj3zn2VgdzrkOthmwlUX4cPWDemA+9CSQP5WrxmTNKB8BOfuAn8+lmBEVqTwm3ONGhMA1IxJiv+T+faPrpgCm1DzOjfdLL2bSdzts9L6pQeTz9UyW4P/m+SxYzHJZuukgPJaCzV/EyYs3igPTSRpVAzwfLU8gwGZzEfFje62h8ZVGp8d2QTGZabPqU6Mv41PRafJZyRroiK82E15Ygxo4Magb7x4OPNU99/8Yu+68rqyMcbliV/uaMDJZjqn9IlHQt/WscSRoWpS0An+zcgeoj9RAwAAA=="
+  val dump = "H4sIAAAAAAAAANVWPYwbRRR+a5//j1xC+BFEyR0nAyIidkQTpCsic7GjIOfudJsCmYhovDt2NuzOLjvj05oiBUUK6BANBUUkJJo0KAUNokNCFFQRQqJKQRWCUApSgXgz++O1z2s4kRRsMdqZffN+vu97M3vrPhS4Dy9xg9iENRwqSENX7y0u6nqbCUuML7rmyKbn6ODuF6/fXs9/9XUOVnpQvEr4OW73oBK+tAMvedeF2YUKYQblwvW5gBe6KkLTcG2bGsJyWdNynJEgfZs2uxYXG11Y6rvm+D24DloXDhsuM3wqqL5pE84pj9bLVGZkJfOKmo+3vUkM1pRVNFNVXPKJJTB9jHE4tN+lnj5mLhs7Ag5FqW17Mi20KVmO5/oiDlFCd1ddM54uMYIL8GT3GtkjTQwxbOrCt9gQd9Y8YrxLhnQLTaT5EibMqT24NPbUPN+FKhcmAnTB8Wy1EngAgAy8ppJoTPBpJPg0JD51nfoWsa33ify447vBGMJHywMEHrp49R9cxB5om5n1Dy8bbz/Ua05Obg5kKiVVYREdrWaoQVGBOH63+zF/cP7mmRxUe1C1eKvPhU8MkaY8QqtGGHOFyjkBkPhDZGs9iy0VpYU2M5KoGK7jEYaeIiiXkSfbMiwhjeXacsROBvQl4dHYVAs8Lal3LaNepZtNYts795479eKv7bdykJsOUUGXOgrfj50KKOpYLu1EzuW4IkDTJwjLaUtN5VAJJmNpQS4JKi/f+8389jRcziVYRqH/HX3oosB/+rF255WzOSj3lNg7Nhn2EE7etqmz7W+6TPSg7O5RP/xS2iO2fJtLZ8mkAzKyRQRyGp08oiNgLbMtPSqh21AtoMUA1EIVb7mM1js79T/07z+5JUXqw3L4JezTv6wzf/58aCCUfhHRQYxtHns7geJEFrMe7YyYcefCp0dXjl+5q3gtmq5DLCWuY10o+NjZqpBjEbQHorEa5qq7Dj2y/sB65+ZHQhGmBdNHx3b/Gvbqhtp3YgF38RH25Y0bT//++ZWjqvXKfUs4xKufPkDjxX3yGBsLprW/EjbEZjpIKY2WHJ9NVtWwipQeUfvOUzG1czW1JxXneS2WkDISkKN6nMCSlPXcfgyzyHLQWuRgP/UCynHGykUiwuPZIkTUntntPmXfP/tNDgpvQmGAbcZRfX13xMyYDrwLBQ3EG/GaNk0Hwk984iTwq2cNJmhNC7cz16A1C0hNm674P51r++iCGbQ1Pqd/s8nat50s2L4oqZNqPPVIJbsz+r9JFjNOSzZbJQeSUSrV4lyY83igPTKRZVAzxfLM8hwG5zEfFje52h8bVHL8YGITGVY7PqUqMv41PRGfJS4jJo+K82E944jRo4Magb7+8LOtkz/c/kXddVV55OMNy5K/3MmBEsz0T+WiioU/ramEUWHyElDJ/g0n3yXXRAwAAA=="
 }
 }
 

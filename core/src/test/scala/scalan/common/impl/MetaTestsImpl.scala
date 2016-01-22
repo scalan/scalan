@@ -109,6 +109,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     def selfType = MT0CompanionElem
     override def toString = "MT0"
 
+    @scalan.OverloadId("fromFields")
     def apply(size: Rep[Int]): Rep[MT0] =
       mkMT0(size)
 
@@ -193,8 +194,10 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
   class MT1CompanionAbs extends CompanionDef[MT1CompanionAbs] {
     def selfType = MT1CompanionElem
     override def toString = "MT1"
+    @scalan.OverloadId("fromData")
     def apply[T](p: Rep[MT1Data[T]])(implicit elem: Elem[T]): Rep[MT1[T]] =
       isoMT1(elem).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[T](data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
       mkMT1(data, size)
 
@@ -281,8 +284,10 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
   class MT2CompanionAbs extends CompanionDef[MT2CompanionAbs] {
     def selfType = MT2CompanionElem
     override def toString = "MT2"
+    @scalan.OverloadId("fromData")
     def apply[T, R](p: Rep[MT2Data[T, R]])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
       isoMT2(eT, eR).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
       mkMT2(indices, values, size)
 
@@ -317,48 +322,48 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
   registerModule(MetaTests_Module)
 }
 
-// Seq -----------------------------------
-trait MetaTestsSeq extends scalan.ScalanDslStd with MetaTestsDsl {
-  self: MetaTestsDslSeq =>
+// Std -----------------------------------
+trait MetaTestsStd extends scalan.ScalanDslStd with MetaTestsDsl {
+  self: MetaTestsDslStd =>
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }
 
-  case class SeqMT0
+  case class StdMT0
       (override val size: Rep[Int])
     extends AbsMT0(size) {
   }
 
   def mkMT0
     (size: Rep[Int]): Rep[MT0] =
-    new SeqMT0(size)
+    new StdMT0(size)
   def unmkMT0(p: Rep[MetaTest[Unit]]) = p match {
     case p: MT0 @unchecked =>
       Some((p.size))
     case _ => None
   }
 
-  case class SeqMT1[T]
+  case class StdMT1[T]
       (override val data: Rep[T], override val size: Rep[Int])(implicit elem: Elem[T])
     extends AbsMT1[T](data, size) {
   }
 
   def mkMT1[T]
     (data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
-    new SeqMT1[T](data, size)
+    new StdMT1[T](data, size)
   def unmkMT1[T](p: Rep[MetaTest[T]]) = p match {
     case p: MT1[T] @unchecked =>
       Some((p.data, p.size))
     case _ => None
   }
 
-  case class SeqMT2[T, R]
+  case class StdMT2[T, R]
       (override val indices: Rep[T], override val values: Rep[R], override val size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R])
     extends AbsMT2[T, R](indices, values, size) {
   }
 
   def mkMT2[T, R]
     (indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
-    new SeqMT2[T, R](indices, values, size)
+    new StdMT2[T, R](indices, values, size)
   def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]) = p match {
     case p: MT2[T, R] @unchecked =>
       Some((p.indices, p.values, p.size))
@@ -550,9 +555,9 @@ trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
 }
 
 object MetaTests_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWS4gcRRiu7pnZeZrNw2dAd11H1wSd2QQlhz2EdTPRyOzuMD0RGUOkpqdm0rG6ure7ZpjxEDwFMTfxKhjwIuQiniQQBBHEgycRwbOnGAk5GDwo/lX9mJ5Hz24I6UPTVf339//1/d9X1TfuoJTroJdcHVPMSibhuKTJ5w2XF7UK4wYfblntHiVnSOdp67svTnx19FsVLTbRwiXsnnFpE2W9h8rADp81sltFWcx04nLLcTl6viozlHWLUqJzw2JlwzR7HLcoKVcNl69XUbJltYe76ApSquigbjHdIZxomxS7LnH9+QwRFRnhOCvHwx17lIOVxSrKkVU0HGxwKB9yHPTi68TWhsxiQ5OjA35pO7YoC2LShmlbDg9SpAHuktUOhkmGYQIdrl7GfVyGFN2yxh2DdeHLvI31D3CXbEOICE9CwS6hncbQluNEFeVcsgsEnTNtKmcGNkIIOnBSFlEa8VMK+SkJfooacQxMjQ+xeFlzrMEQeZeSQGhgA8Qre0AECKTC2sVPLujv3dfypio+HohS0nKFCwC0FKMG2Qrg8cf6p+69N6+fUlGuiXKGu9FyuYN1Hm25z1YeM2ZxWXNIIHa60K2VuG7JLBsQMyGJrG6ZNmaA5FNZgD5RQze4CBZzBb87MdSnuU2CUGVgK+F6l2PWK3WziSmt3X7m1Rf/rLyrInU8RRYgNRC+E4BylNkClAaQEMK/EAdvk5pjmCDnPnn9+5vn797aTskMh9ukg3uUv4Npj3ji8vONcotU6svHOEqeZwYXU9nB6J6es6qQ39Xbf7V/WEMX1LAr/iL2JwSASLm//Zr/5dhpFWWa0jZnKe42oTFuhRJzx9m0GG+ijNUnjvcm3cdUPM0URtpftt+uKM8J4Jmj5ViD20Q0YV2aSQkIyHt+2LYYKZ6tFf/WfvrshpC7gwreG8/x/xmn/v39QIdLJwCfLjhElrTIUQI2Cp8NcT/CkbIGs+fYTMZzHqxmmeTQyj3j4vVrXHKrDMb3i53WZTDouvzuuTk0B/vW11evPnH3y/ePSL9lWgY3sV1cewC3BeZ4hG5CkoTRPvLUaCxuS8BsYauxthnNujQZDtRCzMSrvBLpwOK0wfxppREmG++LhI/EHg01IhNBx9uY45iOTwLHIMzWjLgVpwqS30xXpUxiErBQgJmsBIN565X0nRjhCws/G7/5QPeerFcfp3dO31JR6m2U6oAz3SpKtaweaweygIOYkwF/I5hTxmUBMsAONkMZyGsZjXo4i8C9WjrHEjZp9GxKXrv5z8WPP3rLlv6a2oVnMhUO6zOFsm+5pA3WNsB3D6WYhb7Y2+dh1PfEeBSqU0ljv5qLA6jPA5jmXor2ZFS04l6bI6Q5AdPwEczjaLyYBGytD7O1jCkmjPDGq37GiekZu+KhIOeMrTH6O/EgDE3WeG0U4wdmw5Vy9JjvNTgRTP/gWAULrsRYUPPPAWDvyv3Pt4///M0f8q8lJ04UOGtZ+Occ/VsZZ7QQpod/4UjJQtQAL8v9H2D08DSbDAAA"
+  val dump = "H4sIAAAAAAAAALVWS4zbRBgeO8nmtXT74CGQYJclsLSCZKlARdpDtWxTKMruRnGKUKiKJvYkdbHHxjOJEg4VpwrRG+LKoRISl15QDxyKekFIiAMnhJA4ceBUiqoeqDiA+Gf8iPNwdquqPlie8e/v/+f7v2/G126jDPPQC0zHFqZlm3Bc1uTzJuMlrUq5yYfbjtGzyCnS+f2r16+vpr75VkVLLbRwAbNTzGqhvP9QHbjRs8aNGspjqhPGHY9x9GxNZqjojmURnZsOrZi23eO4bZFKzWR8o4bSbccYfoguIaWGDuoO1T3CibZlYcYIC+ZzRFRkRuO8HA933VEOWhGrqMRW0fSwyaF8yHHQj28QVxtShw5tjg4Epe26oiyIyZq263g8TJEFuAuOEQ7TFMMEOly7iPu4Aim6FY17Ju3Cl0UX6x/gLtmBEBGehoIZsTrNoSvHqRoqMG4AQWds15IzAxchBB04Losoj/gpR/yUBT8ljXgmtsyPsHhZ95zBEPmXkkJo4ALES3tAhAikSo3Sp+f09+5pRVsVHw9EKVm5wgUAWk5Qg2wF8PhD4zN2982rJ1RUaKGCyTbbjHtY5/GWB2wVMaUOlzVHBGKvC91aTeqWzLIJMROSyOuO7WIKSAGVi9Any9RNLoLF3GLQnQTqs9wlYagycJVovSsJ65W62cKWVb/15MvP/1l9V0XqeIo8QGogfC8E5Si3DShNICGCfy4J3iV1z7RBzn3y2nc3zt65uZORGQ4bpIN7Fn8HWz3iiyvIN8otUqkvHuUofZaaXEzlB6N7ds6qIn7Xbv1lfL+OzqlRV4JF7E8IAJFhv/5S/PnoSRXlWtI2py3cbUFjWNUi9q635VDeQjmnTzz/TbaPLfE0UxjZYNlBu+I8p4BnjlYSDe4S0YQNaSYlJKDo+2HHoaR0ul76W/vx82tC7h5a9N/4jv/PPPHvbwc6XDoB+GTgEFnSEkcp2CgCNsT9CEfKOsyeoTMZL/iwmmOTQ6t3zfNXr3DJrTIY3y922xfBoBvyu2fm0BzuW19fvvzYnS/fPyL9lmub3MZuaf0+3Baa4yG6CUkSRvvIE6OxuC0Ds4vbzfWteNblyXCgFmImXhWVWAeWpg0WTCvNKNl4XyR8LPapSCMyEXTcwBwndHwSOAFhtmbErTRVkPxmuiplEpOAhULMdDUczFuvpO+VEb6w8NPJmw907/FG7VHr9smbKsq8jTIdcCaroUzb6VEjlAUcxJwM+BvhnDIuC5AB9rAdyUBeK2jUw1kE7tXSOZZwSbPnWuTVG/+c/+Tjt1zpr6ldeCZT0bAxUyj7lkvWpIYJvnsgxSz0xd4+D6OxJ8bDUJ1KmvvVXBJAYx7ANPdStMfjohX3+hwhzQmYho9hHkPjxaRga32QrWVMMVGEP14LMk5Mz9gVD4U5Z2yN8d+J+2FossYro5ggMB+tlKNHAq/BiWAHB8caWHA1wYJacA4Ae5fufbFz7Kfrf8i/loI4UeCspdGfc/xvZZzRxSg9/AvHShaiBnhZ7v82MCkMmwwAAA=="
 }
 }
 
-trait MetaTestsDslSeq extends impl.MetaTestsSeq
+trait MetaTestsDslStd extends impl.MetaTestsStd
 trait MetaTestsDslExp extends impl.MetaTestsExp

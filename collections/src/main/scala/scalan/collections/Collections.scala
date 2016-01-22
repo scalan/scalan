@@ -538,7 +538,7 @@ trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
                                      eK: Elem[K], eR: Elem[R], eB: Elem[B], eC: Elem[C]): Rep[Array[(K, R)]]
 }
 
-trait CollectionsDslSeq extends impl.CollectionsSeq with SeqsDslSeq {
+trait CollectionsDslStd extends impl.CollectionsStd with SeqsDslStd {
 
   def pairColl_innerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R])
                                     (implicit ordK: Ordering[K], selfType: Elem[Array[(K, R)]],

@@ -109,6 +109,7 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
     def selfType = BoolCollBitSetCompanionElem
     override def toString = "BoolCollBitSet"
 
+    @scalan.OverloadId("fromFields")
     def apply(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
       mkBoolCollBitSet(bits)
 
@@ -143,20 +144,20 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
   registerModule(BitSets_Module)
 }
 
-// Seq -----------------------------------
-trait BitSetsSeq extends scalan.ScalanDslStd with BitSetsDsl {
-  self: CollectionsDsl with BitSetsDslSeq =>
+// Std -----------------------------------
+trait BitSetsStd extends scalan.ScalanDslStd with BitSetsDsl {
+  self: CollectionsDsl with BitSetsDslStd =>
   lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs {
   }
 
-  case class SeqBoolCollBitSet
+  case class StdBoolCollBitSet
       (override val bits: Rep[Collection[Boolean]])
     extends AbsBoolCollBitSet(bits) {
   }
 
   def mkBoolCollBitSet
     (bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
-    new SeqBoolCollBitSet(bits)
+    new StdBoolCollBitSet(bits)
   def unmkBoolCollBitSet(p: Rep[BitSet]) = p match {
     case p: BoolCollBitSet @unchecked =>
       Some((p.bits))
@@ -304,10 +305,10 @@ trait BitSetsExp extends scalan.ScalanDslExp with BitSetsDsl {
 }
 
 object BitSets_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVVT4hTRxj/kuxuNsmyqyuldS+121RRbLIVioc9lDXGUoi7i89KiaLMvkzi6LyZt29ml8SDRw/2VnotVOil4KX0JEIRSkE89FSK4Lkn2yIe6knxm3nzXpJln38OzeHxZt433/f9/nyT2//ApIrgoPIJJ6IWUE1qnn1fUbrqNYVmenBadrY4PUm778l733/y48KdPMy1YeoyUScVb0Mpfmn2w/Tdo5stKBHhU6VlpDR80LIV6r7knPqaSVFnQbClyQan9RZTerkFExuyM9iE65BrwR5fCj+imnoNTpSiyu1PU9MRS9clux6shcMaom5Q1EdQnI0I09g+1tgTx5+hoTcQUgwCDbOutbXQtIUxRRaEMtJJiSKmuyw7yXJCENyA+dYVsk3qWKJX93TERA9PVkLiXyU9uoohJnwCG1aUd88OQrsutKCs6CYS9EUQcrvTDwEAFThmm6gN+aml/NQMP1WPRoxwdo2Yj+uR7A8g/uUKAP0QUxx9TYokA22KTvXmBf/8M68S5M3hvmmlaBFOYaL3M9xgpUAe75/5Rj39/NbxPJTbUGZqZUPpiPh6VHLHVoUIIbXtOSWQRD1UazFLLVtlBWN2WKLkyyAkAjM5KmdQJ858pk2w2Ztx6mRQX9QhTUJz/TCX4j2Qgdf6pkE4X3+8/+OP/m5+lYf8eIkSpvTQ+FGSVMPUCYZMa8uoeZQcudllUsCHHv/b+W0JLuRTmlzWN1MGU0yqh39W/jj8WR6m29bHpzjptZEp1eQ0WIsaUug2TMttGsVfituEm7ddlSp2aJdsce34GwVeQOAaDmROXEgNK8vW3bmEgEps0FUpaPXUevU/78G3t43/IpiJv8Qj+IIdf/5otqutNTV6gGllW5rTUMDJdWy4nXIj9XtK04dZgoZ0PWIBXiDb9NNf73755JfVSavpvEN6jvAtGo+zAzoEbXqZ7BKuEHjxhJScEjEUePRpsJZjRJ4M6N7Fp+zira+1lTXXH7871jauYPPL9tz+Vyic3GE/3bjxzpMfLu2zszeN1AQkrC69xeQlg/I/Thak5o/vlPnh2jwWkMh3DYFGuXhaGqMNLOw8iXf0ePgwKiZ9xBGHYdweBeRsfGf3AS31d+3Xrg+6zK+HNZcJZ/xmWNhRfWl8s2gcZoPxopx3jhje68p1FcFihls8pw+Cv/7su9Ujv//8l/V52SiN4yfSf7dRf4/zNDsyWPiPNcRths51l+zHSHBWjTEslpd9fg8eWQgAAA=="
+  val dump = "H4sIAAAAAAAAALVVPYwTRxR+tu/OZ/t0B4dQxDUhF4cIBPYJCRHpiugwJork3J1YQMgg0Nx6bAZmZzY7cyc7BSVF6FBaCiSkNDQRRYpEaaJIUYpUURQpFQUVASEKqIh4Mzu7tk+3/BS4WO3MvnnvfT9vfO8xTKoIDiifcCJqAdWk5tn3FaWrXlNopgdfyc4mpydp98H3n91fLPz4cx7m2jB1haiTirehFL80+2H67ulOC0pE+FRpGSkNH7VshbovOae+ZlLUWRBsarLBab3FlF5uwcSG7Ay+huuQa8EuXwo/opp6DU6UosrtT1PTEUvXJbserIXDGqJuUNRHUJyJCNPYPtbYFcefpqE3EFIMAg2zrrW10LSFMUUWhDLSSYkiprsiO8lyQhDcgPnWVbJF6liiV/d0xEQPT1ZC4l8jPbqKISZ8AhtWlHfPDEK7LrSgrHQHCfoyCLnd6YcAgAoctU3UhvzUUn5qhp+qRyNGOPuGmI/rkewPIP7lCgD9EFMcfkOKJANtik7124v+hRdeJcibw33TStEinMJEH2a4wUqBPP5++pZ69sWd43kot6HM1MqG0hHx9ajkjq0KEUJq23NKIIl6qNZillq2ygrGbLNEyZdBSARmclTOoE6c+UybYLM349TJoL6oQ5qE5vphLsW7PwOv9U2DcL7+aN+RT/5rns9DfrxECVN6aPwoSaph6gRDprVl1DxKjtzsMingTx896fy2BBfzKU0u69spgykm1T9/V/46+HkeptvWx6c46bWRKdXkNFiLGlLoNkzLLRrFX4pbhJu3HZUqdmiXbHLt+BsFXkDgGvZnTlxIDSvL1t25hIBKbNBVKWj11Hr1uffHd/eM/yKYib/EI/g/O/7y39muttbU6AGmlW1pTkMBJ9ex4XbKjdTvKU0fZwka0vWIBXiBbNFjv/509ukvq5NW03mH9BzhmzQeZwd0CNr0MtklXCHw4gkpOSViKPDo02Atx4g8GdDdi8/YpTs3tZU11x+/O9Y2rmLzy/bcvtconNxhP9y4sffp3ct77OxNIzUBCatL7zB5yaC8x8mC1PzxnTI/XJvHAhL5gSHQKBdPS2O0gYXtJ/GOHg8fRsWkjzjiIIzbo4Ccje/sPKCl/o792vUBl/nNsOYy4YzfDAvbqi+NbxaNw2wwXpTzzhHDe125riJYzHCL5/RB8Ndf3F499Of9h9bnZaM0jp9I/91G/T3O0+zIYOE/1hC3GTrXXbIfI8FZNcawWF4BlsPzSFkIAAA="
 }
 }
 
 trait BitSetsDsl extends impl.BitSetsAbs {self: CollectionsDsl with BitSetsDsl =>}
-trait BitSetsDslSeq extends impl.BitSetsSeq {self: CollectionsDsl with BitSetsDslSeq =>}
+trait BitSetsDslStd extends impl.BitSetsStd {self: CollectionsDsl with BitSetsDslStd =>}
 trait BitSetsDslExp extends impl.BitSetsExp {self: CollectionsDsl with BitSetsDslExp =>}

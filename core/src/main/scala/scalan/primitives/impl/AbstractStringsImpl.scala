@@ -109,6 +109,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
     def selfType = SStringCompanionElem
     override def toString = "SString"
 
+    @scalan.OverloadId("fromFields")
     def apply(wrappedValue: Rep[String]): Rep[SString] =
       mkSString(wrappedValue)
 
@@ -191,6 +192,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
     def selfType = CStringCompanionElem
     override def toString = "CString"
 
+    @scalan.OverloadId("fromFields")
     def apply(wrappedValue: Rep[String]): Rep[CString] =
       mkCString(wrappedValue)
 
@@ -225,34 +227,34 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
   registerModule(AbstractStrings_Module)
 }
 
-// Seq -----------------------------------
-trait AbstractStringsSeq extends scalan.ScalanSeq with AbstractStringsDsl {
-  self: AbstractStringsDslSeq =>
+// Std -----------------------------------
+trait AbstractStringsStd extends scalan.ScalanStd with AbstractStringsDsl {
+  self: AbstractStringsDslStd =>
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs {
   }
 
-  case class SeqSString
+  case class StdSString
       (override val wrappedValue: Rep[String])
     extends AbsSString(wrappedValue) {
   }
 
   def mkSString
     (wrappedValue: Rep[String]): Rep[SString] =
-    new SeqSString(wrappedValue)
+    new StdSString(wrappedValue)
   def unmkSString(p: Rep[AString]) = p match {
     case p: SString @unchecked =>
       Some((p.wrappedValue))
     case _ => None
   }
 
-  case class SeqCString
+  case class StdCString
       (override val wrappedValue: Rep[String])
     extends AbsCString(wrappedValue) {
   }
 
   def mkCString
     (wrappedValue: Rep[String]): Rep[CString] =
-    new SeqCString(wrappedValue)
+    new StdCString(wrappedValue)
   def unmkCString(p: Rep[AString]) = p match {
     case p: CString @unchecked =>
       Some((p.wrappedValue))
@@ -336,10 +338,10 @@ trait AbstractStringsExp extends scalan.ScalanExp with AbstractStringsDsl {
 }
 
 object AbstractStrings_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVVTWhcRRz/70ey2Q+aNFKwuRg3a0TR3ShIDwFl2W5FWJPQV0XW0jL7drKdOm9mMjOJux567EFv4lWw4EXoRTyJIIII4sGTiODZU1VKD/akODPvY9+ueSYefIfhzcx//h+/3/83c/c3WFASNpWPKGLNAGvU9Nx/W+mG12Wa6MmrfHhI8UW8/yj/6qPnPln7PA/LfVi8gdRFRftQDn+6Y5H8e/igB2XEfKw0l0rD4z0XoeVzSrGvCWctEgSHGg0obvWI0ts9KA74cHIAtyDXgxWfM19ijb0ORUphFa0vYZsRSeZlN5/simkM1rJVtFJVXJGIaJO+ibES2l/GwpswziaBhjNRarvCpmVsSiQQXOo4RMm4u8GH8bTIkFmA1d5NdIRaJsSo5WlJ2MicrArkv4VGeMeYWPOiSVhhun9lIty80IOKwgcGoFcCQd3KWACAYeB5l0Rzik8zwadp8Wl4WBJEyTvIbu5JPp5A+OUKAGNhXDxzgovYA+6yYePdq/6bD71qkLeHxzaVkqtw0Th6LKMbHBUGx28vv68evHznQh4qfagQ1R4oLZGv05RHaFURY1y7nBMAkRwZtupZbLkobWMz1xJlnwcCMeMpgrJmeKLEJ9oa27VaxE4G9CUtcGyaG4tcUu96Rr2ubzqI0r1755994tfuG3nIz4YoG5eeaXwZO9VQaoft4CC1QzlCNztOUvGT934ffrMFV/MJTpHb01FjXCyon36s/vDUS3lY6rtGvkTRqG+gUl2Kg13Z4Uz3YYkfYRnulI4QtX/HUlUa4n10SHUEYLrygqlcw3qm5AS2sGy79s7FAFTDDt3hDDcu7TX+8L774K5tQAm1cCfU4F/kwp8/n9nXrjc11N6WSAg8fB3Rw1D4yxoKRsIJKhtZBAq8J0lgLowj/MLXX7x2/8udBcfhalSYcznlq5iu0YbO1+saFqcGIZdTRith2h4P8Nn6A3LtznvacZcbz94Qu4ObRpLb7tz5f6Exvqk+vX373P2Prz/iFLY0IDpAorH1H/QVy+F/1A8kHR7eHKvTuR3WDHwrXghdJx15bf6I0Yw3hTi1XY0lGnGeKS3nK2V7Lmk65/HEFrLD+j/5teOGGzdPU2znlMV25osNY6by34TZwgumJU4FxQwgcylvHOu61h0nCW+diMZxZbczy567Ddfmkn1xdtFAsxy/JOEh80qcjYQiYhmrqBYJ9QwNeVHXGsxuPfxw5+nvP/vFab5i+9/cPCx52dNan0VldS4R82KnktdQtNJw6f8NR9KtDkEJAAA="
+  val dump = "H4sIAAAAAAAAALVVO2wcRRj+72Gf76HYMUoRN5jzYUSU3FmRUJAsgU6XC4p02FY2IHRERHO748sks7OTmbG5o0iZAjqUNkUkJJo0UQoKEA1CQhRUCCFRUVAFUJQiqYKYmX3c3uHFpmCL0c7MP//j+/5v5v4fMCcFrEsXUcSaPlao6dj/tlQNp8sUUeO3A2+P4vN499fPX39YL3zxVR4W+zB/DcnzkvahHP50Rzz5d5TXgzJiLpYqEFLBSz0boeUGlGJXkYC1iO/vKTSguNUjUm32oDgIvPFNuAW5Hiy5AXMFVtjpUCQlltH6AjYZkWRetvPxNp/EYC1TRStVxWWBiNLp6xhLof0lzJ0xC9jYV3AsSm2bm7S0TYn4PBAqDlHS7q4FXjwtMqQXYLl3He2jlg4xbDlKEDbUJ6scuTfQEG9pE2Ne1AlLTHcvj7mdF3pQkcrTAF30ObUrIw4AmoGzNonmBJ9mgk/T4NNwsCCIko+Q2dwRwWgM4ZcrAIy4dnH6EBexB9xlXuPjK+77z5yqnzeHRyaVkq1wXjt6MaMbLBUax+8ufSqfvHXvXB4qfagQ2R5IJZCr0pRHaFURY4GyOScAIjHUbNWz2LJR2tpmpiXKbuBzxLSnCMqa5okSlyhjbNZqETsZ0JcUx7FpbsRzSb2rGfXavukgSncenTzz8u/d9/KQnw5R1i4d3fgidqqg1A7bwUJqhnKEbnacpOJXHv3pfbsBV/IJTpHbo1GjXczJn3+q/vjqm3lY6NtGvkDRsK+hkl2K/W3RCZjqw0Kwj0W4U9pH1PwdSFXJw7toj6oIwHTlBV25gtVMyXFsYNm07Z2LAaiGHboVMNy4sNN46nx/575pQAG1cCfU4F/k3PNfju0q25sKah8KxDn23kV0LxT+ooKClnCCyloWgRzvCOLrC2Mfv/bNl+88/nprznK4HBVmXU74KqZrNKHz9bqC+YlByOWE0UqYthP4+Hj9Cfng3ifKcpcbTd8Q24PrWpKb9tzJf6Exvqke3L594vFnV1+wClsYEOUj3tj4D/qK5fA/6geSDg9vjuXJ3AwrGr4lJ4Suk468MntEa8aZQJzarsYSjTjPlJb1lbI9kTSd9XhoC5lh9Z/8mnHNjutHKbZzxGI7s8WGMVP5r8N04QXdEkeCYgqQmZTXDnRd646ShDcOReOgstuZZc/chiszyb4xvaihWYxfkvCQfiWOR0LhsYxlVIuAeoaGnKhrNWa3nt3dOvXDw9+s5ium//XNw5KXPa31aVSWZxLRL3YqeQVFIw2b/t+CHJ9vQQkAAA=="
 }
 }
 
 trait AbstractStringsDsl extends impl.AbstractStringsAbs
-trait AbstractStringsDslSeq extends impl.AbstractStringsSeq
+trait AbstractStringsDslStd extends impl.AbstractStringsStd
 trait AbstractStringsDslExp extends impl.AbstractStringsExp

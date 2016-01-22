@@ -61,7 +61,7 @@ trait MapOps extends  Base  { self: Scalan =>
   def makeMap[K: Elem, V: Elem](name: Rep[String]): MM[K, V]
 }
 
-trait MapOpsSeq extends MapOps { self: ScalanSeq =>
+trait MapOpsStd extends MapOps { self: ScalanStd =>
   case class SeqMMap[K, V](val impl: Map[K, V])(implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MMap[K, V] {
     private def implOf[A,B](that: MMap[A, B]) = that match {
       case m: SeqMMap[A, B] => m.impl

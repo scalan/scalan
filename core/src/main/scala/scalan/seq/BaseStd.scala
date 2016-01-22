@@ -1,9 +1,9 @@
 package scalan.seq
 
 import scala.language.implicitConversions
-import scalan.{Base, ScalanSeq}
+import scalan.{Base, ScalanStd}
 
-trait BaseSeq extends Base { self: ScalanSeq =>
+trait BaseStd extends Base { self: ScalanStd =>
   type Rep[+A] = A
 
   override protected def stagingExceptionMessage(message: String, syms: Seq[Rep[_]]) = message

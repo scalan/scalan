@@ -115,6 +115,7 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
     def selfType = CoproductImplCompanionElem
     override def toString = "CoproductImpl"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], G[_], A](run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
       mkCoproductImpl(run)
 
@@ -149,20 +150,20 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
   registerModule(Coproducts_Module)
 }
 
-// Seq -----------------------------------
-trait CoproductsSeq extends scalan.ScalanDslStd with CoproductsDsl {
-  self: MonadsDslSeq =>
+// Std -----------------------------------
+trait CoproductsStd extends scalan.ScalanDslStd with CoproductsDsl {
+  self: MonadsDslStd =>
   lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs {
   }
 
-  case class SeqCoproductImpl[F[_], G[_], A]
+  case class StdCoproductImpl[F[_], G[_], A]
       (override val run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
     extends AbsCoproductImpl[F, G, A](run) {
   }
 
   def mkCoproductImpl[F[_], G[_], A]
     (run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
-    new SeqCoproductImpl[F, G, A](run)
+    new StdCoproductImpl[F, G, A](run)
   def unmkCoproductImpl[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]) = p match {
     case p: CoproductImpl[F, G, A] @unchecked =>
       Some((p.run))
@@ -215,7 +216,7 @@ trait CoproductsExp extends scalan.ScalanDslExp with CoproductsDsl {
 }
 
 object Coproducts_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWPYwbRRR+tu/OZ/tIQoCIIBB3JxMEAjuARIorIuP4LJBzd7pNEZkoYbwe+zbszuzNjE9ripQpoEO0SESiQUqDqGgQDRKioEIIiZoqBKEUpALxZry73jX+SSTiYrRv9u03b77vfTO+fReWpYAz0iYuYRWPKlKxzHNNqrLVYMpRw4u8O3DpBdp7mn/72WtfPPN1Fo63YeWAyAvSbUNh9NAI/PjZooctKBBmU6m4kAo2WmaFqs1dl9rK4azqeN5AkY5Lqy1Hqq0WLHV4d3gINyDTghM2Z7agilp1l0hJZTi/SnVFThwXTDzc9cdrsKreRTWxi0uCOArLxzVOjPL3qW8NGWdDT8GxsLRdX5eFOXnH87lQ0RJ5hDvg3ShcYgQn4GTrOjkiVVyiX7WUcFgfvyz5xH6f9OkOpuj0JSxYUrd3aeibONeCoqSHSNDbnu+amcAHAFTgdVNEZcxPJeanovkpW1Q4xHU+IPrlnuDBEEa/TA4g8BHilQUQEQJtsG75wyv2u/etkpfVHwe6lLzZ4QoCPT+jG4wUyOP3+x/Le81b57JQbEPRkbWOVILYKil5yFaJMMaVqTkmkIg+qrU5Sy2zSg1zJlqiYHPPJwyRQirXUCfXsR2lk/XcWqjODOrzyqdRaibwM/F+12fs1/RNnbju3p3Tr77we+NyFrLpJQoIaWHjiwhUQaHOfYGGsVWIr8fjCjLbY5J12EyHNRPqoRCMx/yc6mKeXrzzR/e7s3AlG7MbFvNggiLEsvzl59JPL53PwmrbtP+2S/ptJFg2XOrtijpnqg2r/IiK0Zv8EXH101SB813aIwNXhbQn+cohXwrWZxrVp5rMLWOKTERAadTXO5zR8vZe+S/rh09u67YVsDZ6M3LuP865v3891lOmoxXkxIBF7ObQ72k1VhqOOqBiUqKJOCnKWLg5SdNHvYniqFSLe/TxzXvO1VsfKaNXJkifJbud62jeLfPd+hzpojPty5s3n/rz82tPGC+udhzlEb989iGcGBnnEToNYoZG/X56HOthA9U6FbtGn4z15PobiQ8T1D+biVrEJCnI2tuRJku6YafaL6HlFIDmPIDmYgBaiwG0cRY2ioLHUvs2OLFrn5slvSH31H7rSffu+W+ysPwOLPfQjLIFyx0+YN1INbxDFQ3UW9FcJq0aqkQE8WKVzG8dxpxPOMKamnFtkpbpac35QHq4/GBI/6UxAf0mpEnPoUXSM//r+VxI3JyJrjbxG2FBi5v/ZFzSlMZPXSnJBpnN0ALRHoLrR6maHt9LY2FicSwPuiNyAGekK0NWBWzOMIYVnkKo+Y37n+68/ONXv5kbu6jPM7w9WPyfbmyDYOJiKFw0a+FftETB6Gd9wpli/wWIAnrrMgsAAA=="
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+ts/nW/tIQoBIkUDcnQwRCOwIJIJ0RWQcnwXa3J1uU0RORBjvjn0bdmeWmfFpTZEyBXSIliISEk0alIIG0SEhCiqEkKgoqEIQSkEqEDOzP941/kkk4mK0b/btN2++730zvn0PypzBi9xGHiINHwvUsPRzi4u61SHCFeOL1Bl5+AIe/PrFm3e2Sl99XYTjPVg9RPwC93pgRA+dMEifLeGYYCBiYy4o4wI2Tb1C06aeh23hUtJ0fX8kUN/DTdPlYtuElT51xh/ADSiYcMKmxGZYYKvtIc4xj+fXsKrITWNDx+O9YLIGaapdNDO7uMSQK2T5co0TUf4BDqwxoWTsCzgWl7YXqLJkTsX1A8pEskRFwh1SJwlXCJITcNK8jo5QUy4xbFqCuWQov6wFyH4fDfGuTFHpK7Jgjr3BpXGg45IJVS4cSdDbfuDpmTAAAKnAa7qIxoSfRspPQ/FTtzBzked+iNTLfUbDMUS/QgkgDCTEK0sgEgTcIU79o6v2lQdWzS+qj0NVSkXvcFUCPT+nG7QUksfvDj7h97u3zhWh2oOqy1t9LhiyRVbymK0aIoQKXXNKIGJDqdbWPLX0Ki2ZM9UShk39ABGJFFO5LnXyXNsVKlnNrcfqzKG+IgKcpBbCoJDud2POfnXftJHn7d89/eoLv3cuF6GYX8KQkJZsfJaACjDaNGDSMLaI8dV4XEBhZ0KyCrv5sKVDNRjhZKwsqC7l6czdP5xvz8LVYspuXMzDCSohyvznn2o/vnS+CGs93f47Hhr2JMG842F/j7UpET1Yo0eYRW8qR8hTTzMFrjh4gEaeiGnP8lWSfAnYmGvUACsyt7UpCgkBtaivdynB9Z39+l/W95/eVm3LYD16Ezn3H/fc378cGwjd0QJKbEQSdkvS73k1VjuuOMRsWqKpOCvKRLgFSbNHtYlqVKpFffzk1n333VsfC61XIcyfJXv969K82/q7jQXSJWfalzdvPvPn59ee0l5c67vCR0H97CM4MTHOY3QapAxF/X56EqthU6p1KnWNOhnb2fU3Mx9mqH+2kLSIThJQtHcSTVZUw860X0bLGQDdRQDd5QC4lQIo4yxtFAFP5PatcVLXPjdPek3uqQPzae/e+W+KUH4HygNpRm5CuU9HxElUk3eowKF4K5kr5FWTKiGG/FQl/duACedTjrBmZlybpmV2WncxkBouPxzSf2nMQL8BedJL0iL5mf/1fDYyN2emq3X8elzQ8uY/mZY0o/FzV0q2QeYztES0R+D6caqmxvfyWDKxOpFHuiNxACXI4TGrDLbmGMOKTyGp+Y0Hn+2+/MOd3/SNXVXnmbw9SPqfbmKDcOpiMC7qteRftEzB0s/qhNPF/gs+GD9BMgsAAA=="
 }
 }
 

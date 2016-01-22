@@ -26,7 +26,7 @@ trait MultiMapExamples extends MultiMapsDsl {
   }
 }
 
-abstract class MultiMapItTests extends BaseItTests[MultiMapExamples](new MultiMapsDslSeq with MultiMapExamples) {
+abstract class MultiMapItTests extends BaseItTests[MultiMapExamples](new MultiMapsDslStd with MultiMapExamples) {
 
   class MultiMapExamplesExp extends MultiMapsDslExp with JNIExtractorOpsExp with MultiMapExamples
 

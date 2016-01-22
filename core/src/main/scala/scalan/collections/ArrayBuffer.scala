@@ -71,7 +71,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
   def createArrayBuffer[T: Elem](count: Rep[Int], f:Rep[Int=>T]): Rep[ArrayBuffer[T]]
 }
 
-trait ArrayBuffersSeq extends ArrayBuffers { self: ScalanSeq =>
+trait ArrayBuffersStd extends ArrayBuffers { self: ScalanStd =>
   implicit class SeqArrayBuffer[T](val impl: scala.collection.mutable.ArrayBuffer[T])(implicit val eItem: Elem[T]) extends ArrayBuffer[T] {
     def apply(i: Rep[Int]): Rep[T] = impl.apply(i)
     def length : Rep[Int] = impl.length

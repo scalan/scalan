@@ -13,7 +13,7 @@ import scalan.primitives.EffectfulCompiler
 
 trait EffectsProg extends MonadsDsl with InteractionsDsl with InteractExample
 
-class EffectsItTests extends BaseItTests[EffectsProg](new MonadsDslSeq with EffectsProg with InteractionsDslSeq) {
+class EffectsItTests extends BaseItTests[EffectsProg](new MonadsDslStd with EffectsProg with InteractionsDslStd) {
 
   class EffectsExp extends MonadsDslExp with EffectsProg with InteractionsDslExp with JNIExtractorOpsExp
 
@@ -104,7 +104,7 @@ trait IfBranchesProg extends MonadsDsl {
   }
 }
 
-class IfBranchesItTests extends BaseItTests[IfBranchesProg](new MonadsDslSeq with IfBranchesProg) {
+class IfBranchesItTests extends BaseItTests[IfBranchesProg](new MonadsDslStd with IfBranchesProg) {
 
   val progStaged = new LmsCompilerScala(new MonadsDslExp with IfBranchesProg) with EffectfulCompiler[MonadsDslExp with IfBranchesProg]
   val defaultCompilers = compilers(progStaged)
@@ -119,7 +119,7 @@ class IfBranchesItTests extends BaseItTests[IfBranchesProg](new MonadsDslSeq wit
 
 trait CrossDomainProg extends MonadsDsl with CrossDomainExample
 
-class CrossDomainItTests extends BaseItTests[CrossDomainProg](new MonadsDslSeq with CrossDomainProg with InteractionsDslSeq with AuthenticationsDslSeq) {
+class CrossDomainItTests extends BaseItTests[CrossDomainProg](new MonadsDslStd with CrossDomainProg with InteractionsDslStd with AuthenticationsDslStd) {
 
   class EffectsExp extends MonadsDslExp with CrossDomainProg with InteractionsDslExp with AuthenticationsDslExp with JNIExtractorOpsExp
 

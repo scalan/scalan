@@ -224,6 +224,7 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
     def selfType = SSeqImplCompanionElem
     override def toString = "SSeqImpl"
 
+    @scalan.OverloadId("fromFields")
     def apply[A](wrappedValue: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
       mkSSeqImpl(wrappedValue)
 
@@ -258,9 +259,9 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
   registerModule(Seqs_Module)
 }
 
-// Seq -----------------------------------
-trait SeqsSeq extends scalan.ScalanDslStd with SeqsDsl {
-  self: SeqsDslSeq =>
+// Std -----------------------------------
+trait SeqsStd extends scalan.ScalanDslStd with SeqsDsl {
+  self: SeqsDslStd =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs {
     override def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
       SSeqImpl(Seq.apply[A](arr: _*))
@@ -277,11 +278,11 @@ trait SeqsSeq extends scalan.ScalanDslStd with SeqsDsl {
 
   // override proxy if we deal with TypeWrapper
   //override def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
-  //  proxyOpsEx[Seq[A], SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
+  //  proxyOpsEx[Seq[A], SSeq[A], StdSSeqImpl[A]](p, bt => StdSSeqImpl(bt))
 
-  case class SeqSSeqImpl[A]
+  case class StdSSeqImpl[A]
       (override val wrappedValue: Rep[Seq[A]])(implicit eA: Elem[A])
-    extends SSeqImpl[A](wrappedValue) with SeqSSeq[A] {
+    extends SSeqImpl[A](wrappedValue) with StdSSeq[A] {
     override def size: Rep[Int] =
       wrappedValue.size
 
@@ -312,7 +313,7 @@ trait SeqsSeq extends scalan.ScalanDslStd with SeqsDsl {
 
   def mkSSeqImpl[A]
     (wrappedValue: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
-    new SeqSSeqImpl[A](wrappedValue)
+    new StdSSeqImpl[A](wrappedValue)
   def unmkSSeqImpl[A](p: Rep[SSeq[A]]) = p match {
     case p: SSeqImpl[A] @unchecked =>
       Some((p.wrappedValue))
@@ -620,7 +621,7 @@ trait SeqsExp extends scalan.ScalanDslExp with SeqsDsl {
 }
 
 object Seqs_Module extends scalan.ModuleInfo {
-  val dump = "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"
+  val dump = "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"
 }
 }
 

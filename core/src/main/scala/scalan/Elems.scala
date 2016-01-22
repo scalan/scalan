@@ -170,7 +170,7 @@ trait Elems extends Base { self: Scalan =>
   import ScalanAst._
 }
 
-trait ElemsSeq extends Elems { self: ScalanSeq =>
+trait ElemsStd extends Elems { self: ScalanStd =>
 
 }
 

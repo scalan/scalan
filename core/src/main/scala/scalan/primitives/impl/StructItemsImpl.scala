@@ -118,8 +118,10 @@ trait StructItemsAbs extends StructItems {
   class StructItemBaseCompanionAbs extends CompanionDef[StructItemBaseCompanionAbs] {
     def selfType = StructItemBaseCompanionElem
     override def toString = "StructItemBase"
+    @scalan.OverloadId("fromData")
     def apply[Val, Schema <: Struct](p: Rep[StructItemBaseData[Val, Schema]])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
       isoStructItemBase(eVal, eSchema).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[Val, Schema <: Struct](key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
       mkStructItemBase(key, value)
 
@@ -154,20 +156,20 @@ trait StructItemsAbs extends StructItems {
   registerModule(StructItems_Module)
 }
 
-// Seq -----------------------------------
-trait StructItemsSeq extends StructItemsDsl {
-  self: StructsDsl with ScalanSeq =>
+// Std -----------------------------------
+trait StructItemsStd extends StructItemsDsl {
+  self: StructsDsl with ScalanStd =>
   lazy val StructItem: Rep[StructItemCompanionAbs] = new StructItemCompanionAbs {
   }
 
-  case class SeqStructItemBase[Val, Schema <: Struct]
+  case class StdStructItemBase[Val, Schema <: Struct]
       (override val key: Rep[StructKey[Schema]], override val value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
     extends AbsStructItemBase[Val, Schema](key, value) {
   }
 
   def mkStructItemBase[Val, Schema <: Struct]
     (key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
-    new SeqStructItemBase[Val, Schema](key, value)
+    new StdStructItemBase[Val, Schema](key, value)
   def unmkStructItemBase[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]) = p match {
     case p: StructItemBase[Val, Schema] @unchecked =>
       Some((p.key, p.value))
@@ -226,7 +228,7 @@ trait StructItemsExp extends StructItemsDsl {
 }
 
 object StructItems_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRR+69jZ2I76w18hCJqmhgpU7MKlhwhVSeqggkmibFUhU4HG67GzzezsZmccrTlU4tIDiAviikQlLki9oJ64IC5IiAMnhJB65lRSoR7oqRVvZv9sN3baSvgwmpl9+36+73tvfWMPCiKAV4VNGOFVl0pStfR+SciKVefSkf33vXaP0fO087z30zdvfjf3Qw4ON2F6i4jzgjWhGG3qoZ/uLbrTgCLhNhXSC4SEEw0doWZ7jFFbOh6vOa7bk6TFaK3hCLnYgHzLa/d34CoYDThie9wOqKTWCiNCUBHfz1CVkZOei/rcX/ezGLymqqgNVHExII7E9DHGkch+k/pWn3u870o4FKe27qu00MZ0XN8LZBLCRHdbXjs55jnBC3iqcYXskhqG6NYsGTi8i2+WfWJvky5dQxNlnseEBWWdi31fn6caUBJ0BwG64PpM34Q+ACADb+kkqhk+1RSfqsKnYtHAIcz5hKiHG4EX9iH6GVMAoY8uTh/gIvFA67xd+eyy/eE9q+zm1MuhSsXUFU6jo+Nj1KCpQBx/2fxS3H3n+tkclJpQcsRSS8iA2HKQ8hitMuHckzrnFEASdJGthXFs6ShLaDMiiaLtuT7h6CmGchZ5Yo7tSGWs7mZjdsZAb0qfJqZG6BtpvfNj6tW6WSGMbdx+4Y1X/q5/kIPccIgiurRQ+EHiVEIJ1dCz5QVJ3TiAWg9LmLpEWIYzXkxb9hZ1ib5TSzHMVnNCWilAp27faf98Bi7nUljjLB6NSXRREH/+Uf79tXM5mGlq3a8y0m0isqLOqLserHhcNmHG26VB9MTcJUzt9mXWbNMO6TEZ4z0I1BQCJWF+bIf6VKG4qLvBSAAoR4Je8zitrG5U/rV+/eqG0msAs9GTqGUfOGfv3zrUkVrKiPM27aeYY6MPs1CM6Hkvtpk+iAz9fC7NSi3HJRQQhh4dHyXl+iFetQNtdmzglTljJECeoofEW16RMTHA/k5MGhU1wc+4snEsZjpeJoJmeStdvTSuY3SHPbfZeIbtnfsxB4V3odBBuYgGFFpej7eT1sXxLmkol5M7Y1gu2KokIG6i52jQzYNOQuc62k7LiQkmV4rEYXkuPbpw1/no+udSd4gRDo/t9dYVnJOLuuKXM0B02Skg5gHSmNRlyXfn+2vXnv3n24+f1vNypuVIl/iVM48xLZPh9j9OQxjRF6Y9fPPwXAvg5AQZRJXQ9smbn+693Tr9hZ6dBV1gNhP09kXVtUd7HFG2t2n7EsHPlALmSeZmceBTdiwjUQtneDgPCjpTkPFoIlOn1SeQjFrXsgCxdXkAWkQiBtUPHBf/6uxSEYcLYGEM3lZMLZJ29d7Xa6//dvMvDXdJiQSnJ0//zGSKCP19+VX/3kbRVnEGSsFBorSky/gP5qL860AKAAA="
+  val dump = "H4sIAAAAAAAAALVWTWwbRRR+/svGdtRfoKIIGlIDalXsikuRIlQlqYMKJomyVYVMBRrvjp1tZmeXnXG05lCJSw8gLogrh0pIXHpBOXBB3JAQB04IIXHi0FMJQj3QUyvezP7ZbuyUSvgwmpl9+36+73tvfXsPSiKAl4VFGOF1l0pSN/V+Scia2eTSkYN3PLvP6CXa/ePr13cXCt9+l4fDbZjZIuKSYG0oR5tm6Kd7U9otKBNuUSG9QEh4saUjNCyPMWpJx+MNx3X7knQYbbQcIRdbUOx49uBDuAG5FhyxPG4FVFJzhREhqIjvZ6nKyEnPZX0erPtZDN5QVTSGqrgSEEdi+hjjSGS/SX1zwD0+cCUcilNb91VaaGM4ru8FMglhoLstz06ORU7wAo61rpMd0sAQvYYpA4f38M2qT6xt0qNraKLMi5iwoKx7ZeDrc6EFFSFtBOiy6zN9E/oAgAy8ppOoZ/jUU3zqCp+aSQOHMOcjoh5uBF44gOiXKwCEPro4d4CLxANtcrv2yTXrvftm1c2rl0OViqErnEFHpyaoQVOBOP64+bm49+atC3motKHiiKWOkAGx5DDlMVpVwrkndc4pgCToIVsLk9jSUZbQZkwSZctzfcLRUwzlHPLEHMuRyljdzcXsTIDekD5NTHOhn0vrnZ9Qr9bNCmFs4+6zr770Z/PdPORHQ5TRpYnCDxKnEiqohr4lL0vqxgHUelhC4SphGc54MWNaW9Ql+k4t5TBbjSlppQC9cvcv+4fzcC2fwhpn8XhMoouS+O3X6i9nLuZhtq11v8pIr43Iiiaj7nqw4nHZhllvhwbRE2OHMLXbl1nDpl3SZzLGexioAgIlYX5ih/pUobiouyGXAFCNBL3mcVpb3aj9Y/70xW2l1wDmoidRyz50Ljz4/VBXaikjztt0kGKOjT7KQjmi5+3YZuYgMvTzk2lWajkloYQw9OnkKCnXj/CqHWizE0OvnMyNBShS9JB4KyoypgbY34lBo6Km+JlUNo7FTMfLRNAsb6Wr5yd1jO6wZzZbT7G9i9/nofQWlLooF9GCUsfrcztpXRzvkoZyObnLjcoFW5UExE30HA26edBJ6FzH22k5McHkKpE4TM+lRxfuOe/f+lTqDsmFo2N7vXMd5+SirviFDBBddgqIcYA0pnVZ8t355ubNp//+6oPjel7OdhzpEr92/j9My2S4/Y/TEMb0hWmP3jw61wI4PUUGUSXUPr378d4bnXOf6dlZ0gVmM0Fvn1Nde7TPEWVrm9pXCX6mFDBPMjfLQ5+yExmJWjijw3lY0JmCco8nMnVafQLJqHUtCxBbV4egRSRiUP3AcfGvzg4VcbgAFibgbcbUImk37n+5dvbn3Tsa7ooSCU5Pnv6ZyRQR+vvyq/69jaOt4gyVgoNEaUmX8S//ly7WQAoAAA=="
 }
 }
 

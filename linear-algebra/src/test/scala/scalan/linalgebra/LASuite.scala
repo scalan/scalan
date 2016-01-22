@@ -17,7 +17,7 @@ class LASuite extends BaseShouldTests {
   lazy val len = 5
 
   "in seq context1" should "execute functions" in {
-    val ctx = new MatricesDslSeq with LinearAlgebraExamples {}
+    val ctx = new MatricesDslStd with LinearAlgebraExamples {}
     val i = 3
     val in = (vector1, (len, i))
     val res = ctx.applySparseVector(in)
@@ -26,7 +26,7 @@ class LASuite extends BaseShouldTests {
   }
 
   "ConstVector" should "return same results as DenseVector" in {
-    val ctx = new MatricesDslSeq with LinearAlgebraExamples {}
+    val ctx = new MatricesDslStd with LinearAlgebraExamples {}
     val cv = ctx.constVector((2.0, 3))
     val dv = ctx.denseVector(Array(2.0, 2.0, 2.0))
     val sv = ctx.sparseVector((Array(0, 1, 2), (Array(2.0, 2.0, 2.0), 3)))
@@ -55,7 +55,7 @@ class LASuite extends BaseShouldTests {
   }
 
   "ConstMatrix" should "return same results as DenseFlatMatrix" in {
-    val ctx = new MatricesDslSeq with LinearAlgebraExamples {}
+    val ctx = new MatricesDslStd with LinearAlgebraExamples {}
     val cm = ctx.constMatrix((2.0, (3, 2)))
     val fm = ctx.flatMatrix((Array(2.0, 2.0, 2.0, 2.0, 2.0, 2.0), 3))
     val dv = ctx.denseVector(Array(2.0, 2.0, 2.0))
@@ -74,7 +74,7 @@ class LASuite extends BaseShouldTests {
   }
 
   "DiagonalMatrix" should "return same results as DenseFlatMatrix" in {
-    val ctx = new MatricesDslSeq with LinearAlgebraExamples {}
+    val ctx = new MatricesDslStd with LinearAlgebraExamples {}
     val dm = ctx.diagonalMatrix(Array(1.0, 2.0, 3.0, 4.0))
     val fm = ctx.flatMatrix((Array(1.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 4.0), 4))
     val dv = ctx.denseVector(Array(2.0, 3.0, 4.0, 5.0))

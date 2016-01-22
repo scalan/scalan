@@ -5,7 +5,7 @@ package scalan.linalgebra
  */
 
 import scalan._
-import scalan.collections.{CollectionsDsl, CollectionsDslSeq, CollectionsDslExp}
+import scalan.collections.{CollectionsDsl, CollectionsDslStd, CollectionsDslExp}
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.unchecked.uncheckedVariance
 
@@ -535,7 +535,7 @@ trait VectorsDsl extends CollectionsDsl with impl.VectorsAbs {
   }
 }
 
-trait VectorsDslSeq extends CollectionsDslSeq with impl.VectorsSeq {
+trait VectorsDslStd extends CollectionsDslStd with impl.VectorsStd {
 
   def dotSparse[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): Rep[T] = {

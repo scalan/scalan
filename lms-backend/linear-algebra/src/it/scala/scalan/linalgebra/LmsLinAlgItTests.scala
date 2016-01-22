@@ -7,7 +7,7 @@ import scalan.compilation.lms.source2bin.SbtConfig
 import scalan.compilation.lms.uni._
 import scalan.it.BaseItTests
 
-abstract class LmsLinAlgItTests extends BaseItTests[LinearAlgebraExamples](new MatricesDslSeq with LinearAlgebraExamples) {
+abstract class LmsLinAlgItTests extends BaseItTests[LinearAlgebraExamples](new MatricesDslStd with LinearAlgebraExamples) {
   class ProgExp extends MatricesDslExp with JNIExtractorOpsExp with LinearAlgebraExamples
 
   val progStaged = new LinAlgLmsCompilerScala(new ProgExp)
@@ -23,7 +23,7 @@ abstract class LmsLinAlgItTests extends BaseItTests[LinearAlgebraExamples](new M
 }
 
 class LmsMvmItTests extends LmsLinAlgItTests {
-  import progSeq._
+  import progStd._
 
   test("ddmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
@@ -148,7 +148,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
 }
 
 class LmsMmmItTests extends LmsLinAlgItTests {
-  import progSeq._
+  import progStd._
 
   test("ddmmm") {
     val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0))
@@ -196,7 +196,7 @@ class LmsMmmItTests extends LmsLinAlgItTests {
 }
 
 class AbstractElemItTests extends LmsLinAlgItTests {
-  import progSeq._
+  import progStd._
 
   lazy val jArrTrain2x2 = Array(Array((0, 5.0), (1, 3.0)), Array((1, 4.0)))
   lazy val jArrTest2x2 = Array(Array((0, 5.0), (1, 3.0)), Array((0, 3.0), (1, 4.0)))
@@ -226,7 +226,7 @@ class AbstractElemItTests extends LmsLinAlgItTests {
 
 class VectorMethodsItTests extends LmsLinAlgItTests {
 
-  import progSeq._
+  import progStd._
 
   lazy val vector1 = Array(Pair(0, 1.0), Pair(1, 2.0), Pair(2, 3.0), Pair(3, 4.0), Pair(4, 5.0))
   lazy val vector2 = Array(Pair(0, 1.0), Pair(7, 3.0), Pair(12, 5.0))
@@ -245,7 +245,7 @@ class VectorMethodsItTests extends LmsLinAlgItTests {
 
   test("transpose") {
     val nItems = 2
-    val (arrTrain, segsTrain) = progSeq.getNArrayWithSegmentsFromJaggedArray(progSeq.jArrTrain2x2)
+    val (arrTrain, segsTrain) = progStd.getNArrayWithSegmentsFromJaggedArray(progStd.jArrTrain2x2)
 
     compareOutputWithSequential(_.transpose, progStagedOnly)(Tuple(arrTrain, segsTrain, nItems))
   }

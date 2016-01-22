@@ -114,6 +114,7 @@ trait InteractionsAbs extends scalan.ScalanDsl with Interactions {
     def selfType = AskCompanionElem
     override def toString = "Ask"
 
+    @scalan.OverloadId("fromFields")
     def apply(prompt: Rep[String]): Rep[Ask] =
       mkAsk(prompt)
 
@@ -197,6 +198,7 @@ trait InteractionsAbs extends scalan.ScalanDsl with Interactions {
     def selfType = TellCompanionElem
     override def toString = "Tell"
 
+    @scalan.OverloadId("fromFields")
     def apply(msg: Rep[String]): Rep[Tell] =
       mkTell(msg)
 
@@ -231,34 +233,34 @@ trait InteractionsAbs extends scalan.ScalanDsl with Interactions {
   registerModule(Interactions_Module)
 }
 
-// Seq -----------------------------------
-trait InteractionsSeq extends scalan.ScalanDslStd with InteractionsDsl {
-  self: InteractionsDslSeq =>
+// Std -----------------------------------
+trait InteractionsStd extends scalan.ScalanDslStd with InteractionsDsl {
+  self: InteractionsDslStd =>
   lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs {
   }
 
-  case class SeqAsk
+  case class StdAsk
       (override val prompt: Rep[String])
     extends AbsAsk(prompt) {
   }
 
   def mkAsk
     (prompt: Rep[String]): Rep[Ask] =
-    new SeqAsk(prompt)
+    new StdAsk(prompt)
   def unmkAsk(p: Rep[Interact[String]]) = p match {
     case p: Ask @unchecked =>
       Some((p.prompt))
     case _ => None
   }
 
-  case class SeqTell
+  case class StdTell
       (override val msg: Rep[String])
     extends AbsTell(msg) {
   }
 
   def mkTell
     (msg: Rep[String]): Rep[Tell] =
-    new SeqTell(msg)
+    new StdTell(msg)
   def unmkTell(p: Rep[Interact[Unit]]) = p match {
     case p: Tell @unchecked =>
       Some((p.msg))
@@ -353,7 +355,7 @@ trait InteractionsExp extends scalan.ScalanDslExp with InteractionsDsl {
 }
 
 object Interactions_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWS4gcRRj+57XzNJuXr4DuZjK6RnQmCpLDHsI4mUhk3F22NyJjSKjpqZl0Ul3d21WzzHjIMQe9iVfBgBchF/EkQhBEEA+eRAKePSWRkIM5Rfyr+jE943Z2PdiHoqvq7//xff/307fuQ0548LIwCSO8blNJ6oZ+bwpZM9pcWnLyntMfMXqWDp5zvv/ija+OfZuGxS4sXCHirGBdKPov7bEbvRt0uwNFwk0qpOMJCcc7OkLDdBijprQc3rBseyRJj9FGxxJytQPZntOfbMN1SHXgoOlw06OSGi1GhKAiOC9QlZEV7Yt6P1l3pzF4Q1XRiFWx5RFLYvoY46Bvv0ldY8IdPrElHAhSW3dVWmiTt2zX8WQYIo/urjj9cJvlBA/gcOcq2SENDDFsGNKz+BC/LLvEvEaGdA1NlHkWExaUDbYmrt5nOlASdBsBOm+7TJ+MXQBABt7USdSn+NQjfOoKn5pBPYsw6yOiLjc8ZzwB/0llAMYuunhtDxehB9rm/drHF80PHxllO60+HqtU8rrCBXS0lNANmgrE8afNT8XDd26eTkOpCyVLNHtCesSUccoDtMqEc0fqnCMAiTdEtqpJbOkoTbSZa4mi6dgu4egpgLKCPDHLtKQyVmeVgJ0E6PPSpaFpauymonqXE+rVfdMijG3cff71l+61P0hDejZEEV0a2Phe6FRC4TyXVKERuT+R5N6lG55lYzvv0Ld++O7Cg9trOR3hcJ8OyIjJ9wkbUb+5gnjT2CpUulqVsDA1KI6na/4JdUUIr9z9s//jKbiYjngJythfK6CLnLjzW/nXk2fSUOhq4ZxjZNhFakSbUXvdazlcdqHg7FDPv8nvEKbedm2NfFB4QFgc6QwiLWE5UeIuVTSsajmlQgDKviLWHE5r5zZqfxk/f3ZLNbwHFf/G1/zf1unHvx8YSK0FRNT1sNN8/hYlZHBY+Hio5ehuQJd8b4Zj00PVh9alm59IDWlqPDso1ntXUZmr+rsXn4BuOLC+vnHj6QdfXj6ihVboWdImbu3Uf5BZqIr/UUagQZgOkGene7UsIaCVprjWikddmjdHlNFm7qocKjQgYl5Zaj2CKnjlpITsBW7Jf1OjI8TMj0XdoWNhWFsM9020Wmt6XdlH1U9tUcb2KjurjKZ3frRYwiswi0EGu2JvVPA41Yw5TABmrob9l3YojLlLefERqE+jWfJC8hzEfnpms3OU3T9zOw25dyE3wBEhOpDrOSPeDxsV/wkkHcu3w7PUbKNiYxKP2FFj6mcZpqklotKaZQANK2EJSlHIZZi6w0lfBGh5UE2oyAgUg2Rdf/T52qu/fPOHHuwlpT0cRjz6uYgP9FkCF+MZ4B9DLHFsG6VJnfQ/lsx9hcEJAAA="
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+/jv/kssfIJDgDmM4gsCOkFCQroiM46Agc3e6vSBkItB4d+xsMju77IxPNkXKFNAhWopISDRpUAoKUBqEhCioEEKiSkEVgqIUpCLKm9kfr81t7ijYYrQz8/b9fN/7nvb6HSgIH14UJmGENx0qSdPQ720hG0aXS1tO33GtMaNn6PDWV2/cqOe++S4Ly31YukjEGcH6UA5euhMvfjek1YMy4SYV0vWFhOd6OkLLdBmjprRd3rIdZyzJgNFWzxZyvQf5gWtNP4IrkOnBYdPlpk8lNTqMCEFFeF6iKiM73pf1frrpzWLwlqqilahixye2xPQxxuHAfpt6xpS7fOpIOBSmtumptNCmaDue68soRBHdXXStaJvnBA/gaO8S2SUtDDFqGdK3+Qi/rHrEvExGdANNlHkeExaUDXemnt7nelAR0kKAzjke0ycTDwCQgdd0Es0ZPs0Yn6bCp2FQ3ybM/pioyy3fnUwheDI5gImHLl7Zx0XkgXa51fjkgvn+faPqZNXHE5VKUVe4hI5WUrpBU4E4/rj9mbj31rVTWaj0oWKL9kBIn5gySXmIVpVw7kqdcwwg8UfIVj2NLR2ljTYLLVE2XccjHD2FUNaQJ2abtlTG6qwWspMCfVF6NDLNTLxMXO9qSr26bzqEsa3bT736wp/d97KQnQ9RRpcGNr4fOZVQOsclVWjE7p9Pc+/RLd92sJ136evff3v+7s2Ngo5w1KJDMmbyXcLGNGiuMN4stgqVrdclLM0MypPZWnxEXTHCa7f/sn44CReyMS9hGQdrBXRREL/9Wv3lxOkslPpaOGcZGfWRGtFl1Nn0Oy6XfSi5u9QPboq7hKm3PVujGBYeEpZEOodIS1hNlbhHFQ3rWk6ZCIBqoIgNl9PG2a3G38ZPn19XDe9DLbgJNP/APvXP74eGUmsBEfV87LSAv2UJORwWAR5qOb4X0JXAm+E69Ej9nv3BtU+lhjQzmR8Um4NLqMx1/d2zj0A3GlhfX736+N0vPzymhVYa2NIhXuPkf5BZpIr/UUagQZgNkCdne7WsIKC1trjcSUZdWTRHlNFm4aoaKTQkYlFZaj2GKnjphIT8eW7Lf1OjIyTMn467Q8fCsI4YHZhotTb0unaAqh/boYztV3ZeGc3ugmiJhNdgHoMcdsX+qOBxpp1wmALMQg0HL+1IFHOP8pIjUJ/Gs+SZ9DmI/fTEdu84u3P6ZhYKb0NhiCNC9KAwcMfcihoV/wkkncg3o7PMfKNiYxKfOHFj6mcVZqmlotKZZwANa1EJSlHIZZS6y4klQrR8qKdUZISKQbKu3P9i4+Wfb/yhB3tFaQ+HEY9/LpIDfZ7A5WQG+MeQSBzbRmlSJ/0QTyPsq8EJAAA="
 }
 }
 

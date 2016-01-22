@@ -4,7 +4,7 @@ import org.objectweb.asm.{Type => TypeDescriptors}
 
 import scala.reflect.runtime.universe._
 import scalan.common.Default
-import scalan.primitives.{AbstractStringsDsl, AbstractStringsDslExp, AbstractStringsDslSeq}
+import scalan.primitives.{AbstractStringsDsl, AbstractStringsDslExp, AbstractStringsDslStd}
 
 /**
  * Created by zotov on 12/9/14.
@@ -76,7 +76,7 @@ trait JNIExtractorOps extends Base { self: Scalan with AbstractStringsDsl =>
   def JNI_Wrap[A, B](f: Rep[A => B]): Rep[JNIType[A] => JNIType[B]]
 }
 
-trait JNIExtractorOpsSeq extends JNIExtractorOps { self: ScalanSeq with AbstractStringsDslSeq =>
+trait JNIExtractorOpsStd extends JNIExtractorOps { self: ScalanStd with AbstractStringsDslStd =>
   def JNI_Extract[I](x: Rep[JNIType[I]]): Rep[I] = ???
   def JNI_Pack[T](x: Rep[T]): Rep[JNIType[T]] = ???
   def JNI_Wrap[A, B](f: Rep[A => B]) =

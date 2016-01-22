@@ -47,7 +47,7 @@ trait Containers { self: Scalan =>
   }
 }
 
-trait ContainersSeq extends Containers { self: ScalanSeq =>
+trait ContainersStd extends Containers { self: ScalanStd =>
 
 }
 trait ContainersExp extends Containers { self: ScalanExp =>

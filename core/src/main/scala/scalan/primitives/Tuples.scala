@@ -6,7 +6,7 @@ package scalan.primitives
 
 import scalan.common.OverloadHack._
 import scalan.staged.BaseExp
-import scalan.{ScalanExp, Scalan, ScalanSeq}
+import scalan.{ScalanExp, Scalan, ScalanStd}
 
 trait Tuples { self: Scalan =>
   object Pair {
@@ -188,7 +188,7 @@ trait Tuples { self: Scalan =>
   }
 }
 
-trait TuplesSeq extends Tuples  { self: ScalanSeq =>
+trait TuplesStd extends Tuples  { self: ScalanStd =>
   def unzipPair[A, B](p: Rep[(A, B)]): (Rep[A], Rep[B]) = p
   implicit def zipPair[A, B](p: (Rep[A], Rep[B])): Rep[(A, B)] = p
 }

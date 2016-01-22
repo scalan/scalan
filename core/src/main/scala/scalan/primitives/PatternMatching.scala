@@ -30,7 +30,7 @@ trait PatternMatching { _: Scalan =>
   }
 }
 
-trait PatternMatchingSeq { _: ScalanSeq =>
+trait PatternMatchingStd { _: ScalanStd =>
 
   def patternMatchError(obj: Any) = throw new MatchError(obj)
 

@@ -72,7 +72,7 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
 
 }
 
-trait StructItemsDslSeq extends impl.StructItemsSeq {self: StructsDsl with ScalanSeq =>
+trait StructItemsDslStd extends impl.StructItemsStd {self: StructsDsl with ScalanStd =>
   def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int])(implicit eS: Elem[S]): Rep[StructItem[_,S]] = struct_getItem(s, i)
 
 }

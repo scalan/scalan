@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{Scalan, ScalanExp, ScalanSeq}
+import scalan.{Scalan, ScalanExp, ScalanStd}
 
 trait TypeSum { self: Scalan =>
 
@@ -69,7 +69,7 @@ trait TypeSum { self: Scalan =>
   def sOptionElement[A: Elem] = element[SOption[A]]
 }
 
-trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
+trait TypeSumStd extends TypeSum { self: ScalanStd =>
 
   def mkLeft[A, B: Elem](a: Rep[A]): Rep[A | B] = Left[A, B](a)
 

@@ -4,7 +4,7 @@ import org.scalatest.BeforeAndAfterAll
 
 import scala.language.reflectiveCalls
 import scala.reflect.runtime.universe.typeOf
-import scalan.collections.{CollectionsDsl, CollectionsDslExp, CollectionsDslSeq}
+import scalan.collections.{CollectionsDsl, CollectionsDslExp, CollectionsDslStd}
 import scalan.compilation.lms.collections.CollectionsBridgeScala
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.source2bin.SbtConfig
@@ -84,7 +84,7 @@ trait MethodCallTestProg extends CollectionsDsl {
   lazy val message = fun { (t: Rep[String]) => SThrowable(t).getMessage}
 }
 
-class MethodCallItTests extends BaseItTests[MethodCallTestProg](new CollectionsDslSeq with MethodCallTestProg) with BeforeAndAfterAll {
+class MethodCallItTests extends BaseItTests[MethodCallTestProg](new CollectionsDslStd with MethodCallTestProg) with BeforeAndAfterAll {
 
   override def beforeAll() = {
     FileUtil.deleteIfExist(prefix)

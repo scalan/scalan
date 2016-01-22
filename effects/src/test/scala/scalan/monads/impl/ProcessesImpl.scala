@@ -117,8 +117,10 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
   class AwaitCompanionAbs extends CompanionDef[AwaitCompanionAbs] with AwaitCompanion {
     def selfType = AwaitCompanionElem
     override def toString = "Await"
+    @scalan.OverloadId("fromData")
     def apply[F[_], A, O](p: Rep[AwaitData[F, A, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]] =
       isoAwait(eA, eO, cF).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[F[_], A, O](req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]] =
       mkAwait(req, recv)
 
@@ -203,8 +205,10 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
   class EmitCompanionAbs extends CompanionDef[EmitCompanionAbs] with EmitCompanion {
     def selfType = EmitCompanionElem
     override def toString = "Emit"
+    @scalan.OverloadId("fromData")
     def apply[F[_], O](p: Rep[EmitData[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]] =
       isoEmit(eO, cF).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[F[_], O](head: Rep[O], tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]] =
       mkEmit(head, tail)
 
@@ -290,6 +294,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     def selfType = HaltCompanionElem
     override def toString = "Halt"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], O](err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]] =
       mkHalt(err)
 
@@ -324,48 +329,48 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
   registerModule(Processes_Module)
 }
 
-// Seq -----------------------------------
-trait ProcessesSeq extends scalan.ScalanDslStd with ProcessesDsl {
-  self: ProcessesDslSeq =>
+// Std -----------------------------------
+trait ProcessesStd extends scalan.ScalanDslStd with ProcessesDsl {
+  self: ProcessesDslStd =>
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs {
   }
 
-  case class SeqAwait[F[_], A, O]
+  case class StdAwait[F[_], A, O]
       (override val req: Rep[F[A]], override val recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
     extends AbsAwait[F, A, O](req, recv) {
   }
 
   def mkAwait[F[_], A, O]
     (req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]] =
-    new SeqAwait[F, A, O](req, recv)
+    new StdAwait[F, A, O](req, recv)
   def unmkAwait[F[_], A, O](p: Rep[Process[F, O]]) = p match {
     case p: Await[F, A, O] @unchecked =>
       Some((p.req, p.recv))
     case _ => None
   }
 
-  case class SeqEmit[F[_], O]
+  case class StdEmit[F[_], O]
       (override val head: Rep[O], override val tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F])
     extends AbsEmit[F, O](head, tail) {
   }
 
   def mkEmit[F[_], O]
     (head: Rep[O], tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]] =
-    new SeqEmit[F, O](head, tail)
+    new StdEmit[F, O](head, tail)
   def unmkEmit[F[_], O](p: Rep[Process[F, O]]) = p match {
     case p: Emit[F, O] @unchecked =>
       Some((p.head, p.tail))
     case _ => None
   }
 
-  case class SeqHalt[F[_], O]
+  case class StdHalt[F[_], O]
       (override val err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F])
     extends AbsHalt[F, O](err) {
   }
 
   def mkHalt[F[_], O]
     (err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]] =
-    new SeqHalt[F, O](err)
+    new StdHalt[F, O](err)
   def unmkHalt[F[_], O](p: Rep[Process[F, O]]) = p match {
     case p: Halt[F, O] @unchecked =>
       Some((p.err))
@@ -520,7 +525,7 @@ trait ProcessesExp extends scalan.ScalanDslExp with ProcessesDsl {
 }
 
 object Processes_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXTWwbRRSe9U8c22kSKL+p2oTIgEBgF4TUQ6RWJrWhyMRRNgdkqkbj9cTZMruzmR2naw499gA3xIUDEpW4IPWCOHFBXJAQB8ShQpU4ceBUilAP9ATizXh3vf5ZJ6GUiD2MdmbfvHnzfd97M3vjDkq7HD3jGphiu2gRgYu6ei+7oqBXbGGK7pus1aHkPNl+gn39yUufLXyZQHMNNLWD3fMubaBs76XiOeG7TnZrKIttg7iCcVegp2pqhZLBKCWGMJldMi2rI3CTklLNdMVKDaWarNXdRVeRVkPzBrMNTgTRVyl2XeL649NERmSG/azqd+tOfw27JHdRiuxik2NTQPiwxnzPfoM4etdmdtcSaNYPre7IsMAmY1oO4yJYIgPudlgr6KZsDAPo4dplvIdLsES7pAtu2m2YmXew8Q5ukzUwkeYpCNgldHuz66h+soZyLtkFgC5YDlUjnoMQAgZeVkEU+/gUQ3yKEp+CTriJqfkulh/XOfO6qPdoSYQ8B1y8sI+LwAOp2K3CexeNt+/peSshJ3sylIza4RQ4WoxRg6ICcPx24wP37mvXzyRQroFypltuuoJjQ0Qp99HKY9tmQsUcAoh5G9hajmNLrVIGmyFJZA1mOdgGTz6UM8ATNQ1TSGM5NuOzEwN9RjgkMNU8Rwv3uxSzX6WbVUzp+u0nX3z618pbCZQYXCILLnUQPg+cCpQBbgAD1/cu2zmBtGofYtmtq65ssl6/zUwIJoTl2du/tb45jS4mQjD9tQ/GH7hIu7d+zN987lwCTTeU2qsUtxuAp1uhxKrzVWaLBppme4T3vmT2MJVvY/nMtMg27lDhoxyFJwnwCLQUm5cOkditqBzQAgDyPRmvMZsUquuFP/TvPrwhVcrRTO9LL1H/Ms/8+dPstlACFijJyW6AbhLSexj+oX55BH/1aSEMRDaLAqU4MfbG+OXoVJxoHFLt2MbNCx8dnzu59bOSzFSLWdhUuj1RQ2kORUNBdMInDXynCk3MB4PMbu5wdkWm76B2orEHg/ejur72cj2AdWaRh5bvmpeuvy+UyjRvsODVm5ehwqyoeacmCC4ovJ9fu/bo759uHVcFY7ppCgs7hdOHKBdBdj/AcoBCbHp4Pd7vKy2AxmbLV2RBiK67GJkQwX5BG9JRgpRDpmWSTZBjnIP6JAf1/R0Y1dCBTPCxSomKQqC02q+aH8r+ZLzsAczHNmqP0Dvnvkqg9BsovQ0lwwW9N1nHbgUswcEuiCdeDca0QZaAFcyxFbKiniXUx3oomS+NtdgahmO8WbnP3niDEVjz2iBu91ftR2QzUn52CG5NKGujtI94ENik8R7+jboh27OqLR8giY5VrH+cQ/99CqRktNEMiNfKPqqUjXEwWR616pKE8zjJyOaVCY4PIYTXMf0fCUFGe5RCiBhP+RgPhp2Eg/bBJHeEvENyPO9HMIbmyFX56GGV7Q+DvsAw68cHVxR0zD/34E+H+MfTWTgOl2OOQ92/awAnV+99vPb891/8om6COXlrgZutHf5e9g8/b6g2z4TLww9jJGQQo7zKqHD/BkqbovXADwAA"
+  val dump = "H4sIAAAAAAAAANVXTWwbRRQe/8WxnSaB8iNatQmRAYHArhBSkSK1MqkNRSaOsjkgUzUa746dLbM/nRmnaw499gA3xIUDh0pIXHpBPXBB3JAQB8ShQkiceuipFKEe6AnEm/Huev2zTkIpEXsY7cy+efPm+773ZvbGPZThDD3PdUyxXbKIwCVNvVe4KGpVW5ii945jdCk5R9q3v3j95krqq6+TaKGJZnYwP8dpE+X6L1XPDd81YdRRDts64cJhXKBn62qFsu5QSnRhOnbZtKyuwC1KynWTi9U6Srcco3cZXUWJOlrUHVtnRBBtjWLOCffHZ4mMyAz7OdXvNdzBGnZZ7qIc2cUWw6aA8GGNxb79JnG1nu3YPUugeT+0hivDApusabkOE8ESWXC34xhBN21jGECP1y/hXVyGJTplTTDT7sDMgov193GHrIOJNE9DwJzQ9lbPVf1UHeW5MACg85ZL1YjnIoSAgVdVEKUBPqUQn5LEp6gRZmJqfoDlxw3meD3UfxIphDwXXLy8h4vAA6naRvHDC/p7D7SClZSTPRlKVu1wBhwtxahBUQE4frf5Mb//5vXTSZRvorzJKy0uGNZFlHIfrQK2bUeomEMAMesAWytxbKlVKmAzIomc7lgutsGTD+Uc8ERN3RTSWI7N+ezEQJ8VLglME56bCPe7HLNfpZs1TOnG3Wdeee7X6rtJlBxeIgcuNRA+C5wKlAVuAAPue5ftgkCJ2gBi2W2ormxy3qDNTgkmhOWFu78Z355CF5IhmP7a++MPXGT4zz8Vbr14Nolmm0rtNYo7TcCTVymxGmzNsUUTzTq7hPW/ZHcxlW8T+cwapI27VPgoR+FJATwCLcfmpUskdqsqBxIBAIW+jNcdmxRrG8U/tO8/uSFVytBc/0s/Uf8yT//5y3xbKAELlGLkcoBuCtJ7FP6RfmUMf/XpWBiIbJYESjOi707wy9DJONG4pNa19VvnPz26cGL7tpLMjOFY2FS6PV5HGQZFQ0F03CcNfKeLLcyGg8xt7TDnikzfYe1EYw8GH0Z1A+3l+wBrjkUeW7lvXrz+kVAqS3jDBa/RugQVZlXNOzlFcEHh/fLatSd//3z7qCoYsy1TWNgtnjpAuQiy+xGWAxRi08fr6UFfaQE0Nl+5IgtCdN2lyIQI9scSIzpKkkrItEyyKXKMc9CY5qCxtwO9FjqQCT5RKVFRCJRR+1XzQ9mfiJc9gPnUZv0Jeu/sN0mUeRtl2lAyOOi95XRtI2AJDnZBPPFGMJYYZglYwQxbISvqWUYDrEeS+eJEi+1ROCabVQbsTTYYg7WQGMbt4ar9mGzGys8OwcaUsjZO+5gHgU0a7+HfqBuyPaPayj6S6EjV+sc59N+nQFpGG82AeK3soUrZ6PuT5WGrLkUYi5OMbF6b4vgAQngL0/+REGS0hymEiPGMj/Fw2Ck4aB9NckfIOyDHi34EE2iOXJUPH1bZ/jjsCwxzfnxwRUFH/HMP/nSIfzydgeNwJeY41Py7BnBy9cFn6y/9cPOOugnm5a0FbrZ2+Hs5OPy8kdo8Fy4PP4yRkEGM8iqjwv0bCRrEVcAPAAA="
 }
 }
 

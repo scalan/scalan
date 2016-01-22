@@ -191,6 +191,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = UnitCollectionCompanionElem
     override def toString = "UnitCollection"
 
+    @scalan.OverloadId("fromFields")
     def apply(length: Rep[Int]): Rep[UnitCollection] =
       mkUnitCollection(length)
 
@@ -275,6 +276,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = CollectionOverArrayCompanionElem
     override def toString = "CollectionOverArray"
 
+    @scalan.OverloadId("fromFields")
     def apply[Item](arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]] =
       mkCollectionOverArray(arr)
 
@@ -359,6 +361,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = CollectionOverListCompanionElem
     override def toString = "CollectionOverList"
 
+    @scalan.OverloadId("fromFields")
     def apply[Item](lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]] =
       mkCollectionOverList(lst)
 
@@ -443,6 +446,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = CollectionOverSeqCompanionElem
     override def toString = "CollectionOverSeq"
 
+    @scalan.OverloadId("fromFields")
     def apply[Item](seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]] =
       mkCollectionOverSeq(seq)
 
@@ -528,8 +532,10 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   class PairCollectionSOACompanionAbs extends CompanionDef[PairCollectionSOACompanionAbs] with PairCollectionSOACompanion {
     def selfType = PairCollectionSOACompanionElem
     override def toString = "PairCollectionSOA"
+    @scalan.OverloadId("fromData")
     def apply[A, B](p: Rep[PairCollectionSOAData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]] =
       isoPairCollectionSOA(eA, eB).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A, B](as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]] =
       mkPairCollectionSOA(as, bs)
 
@@ -616,6 +622,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = PairCollectionAOSCompanionElem
     override def toString = "PairCollectionAOS"
 
+    @scalan.OverloadId("fromFields")
     def apply[A, B](coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionAOS[A, B]] =
       mkPairCollectionAOS(coll)
 
@@ -699,8 +706,10 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   class NestedCollectionFlatCompanionAbs extends CompanionDef[NestedCollectionFlatCompanionAbs] with NestedCollectionFlatCompanion {
     def selfType = NestedCollectionFlatCompanionElem
     override def toString = "NestedCollectionFlat"
+    @scalan.OverloadId("fromData")
     def apply[A](p: Rep[NestedCollectionFlatData[A]])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
       isoNestedCollectionFlat(eA).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A](values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
       mkNestedCollectionFlat(values, segments)
 
@@ -789,8 +798,10 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   class FuncCollectionCompanionAbs extends CompanionDef[FuncCollectionCompanionAbs] {
     def selfType = FuncCollectionCompanionElem
     override def toString = "FuncCollection"
+    @scalan.OverloadId("fromData")
     def apply[A, B, Env](p: Rep[FuncCollectionData[A, B, Env]])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Rep[FuncCollection[A, B, Env]] =
       isoFuncCollection(eA, eB, eEnv).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A, B, Env](env1: Coll[Env], indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Rep[FuncCollection[A, B, Env]] =
       mkFuncCollection(env1, indexedFunc)
 
@@ -878,6 +889,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = StructItemCollectionCompanionElem
     override def toString = "StructItemCollection"
 
+    @scalan.OverloadId("fromFields")
     def apply[Val, Schema <: Struct](struct: Rep[Schema])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemCollection[Val, Schema]] =
       mkStructItemCollection(struct)
 
@@ -912,132 +924,132 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   registerModule(Collections_Module)
 }
 
-// Seq -----------------------------------
-trait CollectionsSeq extends scalan.ScalanDslStd with CollectionsDsl {
-  self: CollectionsDslSeq =>
+// Std -----------------------------------
+trait CollectionsStd extends scalan.ScalanDslStd with CollectionsDsl {
+  self: CollectionsDslStd =>
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs {
   }
 
-  case class SeqUnitCollection
+  case class StdUnitCollection
       (override val length: Rep[Int])
     extends AbsUnitCollection(length) {
   }
 
   def mkUnitCollection
     (length: Rep[Int]): Rep[UnitCollection] =
-    new SeqUnitCollection(length)
+    new StdUnitCollection(length)
   def unmkUnitCollection(p: Rep[Collection[Unit]]) = p match {
     case p: UnitCollection @unchecked =>
       Some((p.length))
     case _ => None
   }
 
-  case class SeqCollectionOverArray[Item]
+  case class StdCollectionOverArray[Item]
       (override val arr: Rep[Array[Item]])(implicit eItem: Elem[Item])
     extends AbsCollectionOverArray[Item](arr) {
   }
 
   def mkCollectionOverArray[Item]
     (arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]] =
-    new SeqCollectionOverArray[Item](arr)
+    new StdCollectionOverArray[Item](arr)
   def unmkCollectionOverArray[Item](p: Rep[Collection[Item]]) = p match {
     case p: CollectionOverArray[Item] @unchecked =>
       Some((p.arr))
     case _ => None
   }
 
-  case class SeqCollectionOverList[Item]
+  case class StdCollectionOverList[Item]
       (override val lst: Rep[List[Item]])(implicit eItem: Elem[Item])
     extends AbsCollectionOverList[Item](lst) {
   }
 
   def mkCollectionOverList[Item]
     (lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]] =
-    new SeqCollectionOverList[Item](lst)
+    new StdCollectionOverList[Item](lst)
   def unmkCollectionOverList[Item](p: Rep[Collection[Item]]) = p match {
     case p: CollectionOverList[Item] @unchecked =>
       Some((p.lst))
     case _ => None
   }
 
-  case class SeqCollectionOverSeq[Item]
+  case class StdCollectionOverSeq[Item]
       (override val seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item])
     extends AbsCollectionOverSeq[Item](seq) {
   }
 
   def mkCollectionOverSeq[Item]
     (seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]] =
-    new SeqCollectionOverSeq[Item](seq)
+    new StdCollectionOverSeq[Item](seq)
   def unmkCollectionOverSeq[Item](p: Rep[Collection[Item]]) = p match {
     case p: CollectionOverSeq[Item] @unchecked =>
       Some((p.seq))
     case _ => None
   }
 
-  case class SeqPairCollectionSOA[A, B]
+  case class StdPairCollectionSOA[A, B]
       (override val as: Rep[Collection[A]], override val bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B])
     extends AbsPairCollectionSOA[A, B](as, bs) {
   }
 
   def mkPairCollectionSOA[A, B]
     (as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]] =
-    new SeqPairCollectionSOA[A, B](as, bs)
+    new StdPairCollectionSOA[A, B](as, bs)
   def unmkPairCollectionSOA[A, B](p: Rep[PairCollection[A, B]]) = p match {
     case p: PairCollectionSOA[A, B] @unchecked =>
       Some((p.as, p.bs))
     case _ => None
   }
 
-  case class SeqPairCollectionAOS[A, B]
+  case class StdPairCollectionAOS[A, B]
       (override val coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B])
     extends AbsPairCollectionAOS[A, B](coll) {
   }
 
   def mkPairCollectionAOS[A, B]
     (coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionAOS[A, B]] =
-    new SeqPairCollectionAOS[A, B](coll)
+    new StdPairCollectionAOS[A, B](coll)
   def unmkPairCollectionAOS[A, B](p: Rep[PairCollection[A, B]]) = p match {
     case p: PairCollectionAOS[A, B] @unchecked =>
       Some((p.coll))
     case _ => None
   }
 
-  case class SeqNestedCollectionFlat[A]
+  case class StdNestedCollectionFlat[A]
       (override val values: Coll[A], override val segments: PairColl[Int, Int])(implicit eA: Elem[A])
     extends AbsNestedCollectionFlat[A](values, segments) {
   }
 
   def mkNestedCollectionFlat[A]
     (values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
-    new SeqNestedCollectionFlat[A](values, segments)
+    new StdNestedCollectionFlat[A](values, segments)
   def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]) = p match {
     case p: NestedCollectionFlat[A] @unchecked =>
       Some((p.values, p.segments))
     case _ => None
   }
 
-  case class SeqFuncCollection[A, B, Env]
+  case class StdFuncCollection[A, B, Env]
       (override val env1: Coll[Env], override val indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env])
     extends AbsFuncCollection[A, B, Env](env1, indexedFunc) {
   }
 
   def mkFuncCollection[A, B, Env]
     (env1: Coll[Env], indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Rep[FuncCollection[A, B, Env]] =
-    new SeqFuncCollection[A, B, Env](env1, indexedFunc)
+    new StdFuncCollection[A, B, Env](env1, indexedFunc)
   def unmkFuncCollection[A, B, Env](p: Rep[Collection[A => B]]) = p match {
     case p: FuncCollection[A, B, Env] @unchecked =>
       Some((p.env1, p.indexedFunc))
     case _ => None
   }
 
-  case class SeqStructItemCollection[Val, Schema <: Struct]
+  case class StdStructItemCollection[Val, Schema <: Struct]
       (override val struct: Rep[Schema])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
     extends AbsStructItemCollection[Val, Schema](struct) {
   }
 
   def mkStructItemCollection[Val, Schema <: Struct]
     (struct: Rep[Schema])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemCollection[Val, Schema]] =
-    new SeqStructItemCollection[Val, Schema](struct)
+    new StdStructItemCollection[Val, Schema](struct)
   def unmkStructItemCollection[Val, Schema <: Struct](p: Rep[Collection[StructItem[Val, Schema]]]) = p match {
     case p: StructItemCollection[Val, Schema] @unchecked =>
       Some((p.struct))
@@ -3252,7 +3264,7 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
 }
 
 object Collections_Module extends scalan.ModuleInfo {
-  val dump = "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"
+  val dump = "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"
 }
 }
 

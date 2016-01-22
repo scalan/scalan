@@ -59,7 +59,7 @@ trait TypeWrappers extends Base { self: Scalan =>
   }
 }
 
-trait TypeWrappersSeq extends TypeWrappers { scalan: ScalanSeq =>
+trait TypeWrappersStd extends TypeWrappers { scalan: ScalanStd =>
   protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase] =
     x.wrappedValue
  }
