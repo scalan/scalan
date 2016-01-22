@@ -134,6 +134,7 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
     def selfType = SThrowableImplCompanionElem
     override def toString = "SThrowableImpl"
 
+    @scalan.OverloadId("fromFields")
     def apply(wrappedValue: Rep[Throwable]): Rep[SThrowableImpl] =
       mkSThrowableImpl(wrappedValue)
 

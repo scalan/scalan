@@ -112,8 +112,10 @@ trait AuthenticationsAbs extends scalan.ScalanDsl with Authentications {
   class LoginCompanionAbs extends CompanionDef[LoginCompanionAbs] with LoginCompanion {
     def selfType = LoginCompanionElem
     override def toString = "Login"
+    @scalan.OverloadId("fromData")
     def apply(p: Rep[LoginData]): Rep[Login] =
       isoLogin.to(p)
+    @scalan.OverloadId("fromFields")
     def apply(user: Rep[String], password: Rep[String]): Rep[Login] =
       mkLogin(user, password)
 
@@ -196,8 +198,10 @@ trait AuthenticationsAbs extends scalan.ScalanDsl with Authentications {
   class HasPermissionCompanionAbs extends CompanionDef[HasPermissionCompanionAbs] with HasPermissionCompanion {
     def selfType = HasPermissionCompanionElem
     override def toString = "HasPermission"
+    @scalan.OverloadId("fromData")
     def apply(p: Rep[HasPermissionData]): Rep[HasPermission] =
       isoHasPermission.to(p)
+    @scalan.OverloadId("fromFields")
     def apply(user: Rep[String], password: Rep[String]): Rep[HasPermission] =
       mkHasPermission(user, password)
 

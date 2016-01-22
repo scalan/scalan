@@ -114,6 +114,7 @@ trait StructKeysAbs extends StructKeys {
     def selfType = IndexStructKeyCompanionElem
     override def toString = "IndexStructKey"
 
+    @scalan.OverloadId("fromFields")
     def apply[Schema <: Struct](index: Rep[Int])(implicit eSchema: Elem[Schema]): Rep[IndexStructKey[Schema]] =
       mkIndexStructKey(index)
 
@@ -198,6 +199,7 @@ trait StructKeysAbs extends StructKeys {
     def selfType = NameStructKeyCompanionElem
     override def toString = "NameStructKey"
 
+    @scalan.OverloadId("fromFields")
     def apply[Schema <: Struct](name: Rep[String])(implicit eSchema: Elem[Schema]): Rep[NameStructKey[Schema]] =
       mkNameStructKey(name)
 

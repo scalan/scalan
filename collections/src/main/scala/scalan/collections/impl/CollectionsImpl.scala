@@ -191,6 +191,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = UnitCollectionCompanionElem
     override def toString = "UnitCollection"
 
+    @scalan.OverloadId("fromFields")
     def apply(length: Rep[Int]): Rep[UnitCollection] =
       mkUnitCollection(length)
 
@@ -275,6 +276,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = CollectionOverArrayCompanionElem
     override def toString = "CollectionOverArray"
 
+    @scalan.OverloadId("fromFields")
     def apply[Item](arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]] =
       mkCollectionOverArray(arr)
 
@@ -359,6 +361,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = CollectionOverListCompanionElem
     override def toString = "CollectionOverList"
 
+    @scalan.OverloadId("fromFields")
     def apply[Item](lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]] =
       mkCollectionOverList(lst)
 
@@ -443,6 +446,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = CollectionOverSeqCompanionElem
     override def toString = "CollectionOverSeq"
 
+    @scalan.OverloadId("fromFields")
     def apply[Item](seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]] =
       mkCollectionOverSeq(seq)
 
@@ -528,8 +532,10 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   class PairCollectionSOACompanionAbs extends CompanionDef[PairCollectionSOACompanionAbs] with PairCollectionSOACompanion {
     def selfType = PairCollectionSOACompanionElem
     override def toString = "PairCollectionSOA"
+    @scalan.OverloadId("fromData")
     def apply[A, B](p: Rep[PairCollectionSOAData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]] =
       isoPairCollectionSOA(eA, eB).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A, B](as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]] =
       mkPairCollectionSOA(as, bs)
 
@@ -616,6 +622,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = PairCollectionAOSCompanionElem
     override def toString = "PairCollectionAOS"
 
+    @scalan.OverloadId("fromFields")
     def apply[A, B](coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionAOS[A, B]] =
       mkPairCollectionAOS(coll)
 
@@ -699,8 +706,10 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   class NestedCollectionFlatCompanionAbs extends CompanionDef[NestedCollectionFlatCompanionAbs] with NestedCollectionFlatCompanion {
     def selfType = NestedCollectionFlatCompanionElem
     override def toString = "NestedCollectionFlat"
+    @scalan.OverloadId("fromData")
     def apply[A](p: Rep[NestedCollectionFlatData[A]])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
       isoNestedCollectionFlat(eA).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A](values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
       mkNestedCollectionFlat(values, segments)
 
@@ -789,8 +798,10 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   class FuncCollectionCompanionAbs extends CompanionDef[FuncCollectionCompanionAbs] {
     def selfType = FuncCollectionCompanionElem
     override def toString = "FuncCollection"
+    @scalan.OverloadId("fromData")
     def apply[A, B, Env](p: Rep[FuncCollectionData[A, B, Env]])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Rep[FuncCollection[A, B, Env]] =
       isoFuncCollection(eA, eB, eEnv).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A, B, Env](env1: Coll[Env], indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]): Rep[FuncCollection[A, B, Env]] =
       mkFuncCollection(env1, indexedFunc)
 
@@ -878,6 +889,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def selfType = StructItemCollectionCompanionElem
     override def toString = "StructItemCollection"
 
+    @scalan.OverloadId("fromFields")
     def apply[Val, Schema <: Struct](struct: Rep[Schema])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemCollection[Val, Schema]] =
       mkStructItemCollection(struct)
 

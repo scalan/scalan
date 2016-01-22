@@ -117,8 +117,10 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
   class AwaitCompanionAbs extends CompanionDef[AwaitCompanionAbs] with AwaitCompanion {
     def selfType = AwaitCompanionElem
     override def toString = "Await"
+    @scalan.OverloadId("fromData")
     def apply[F[_], A, O](p: Rep[AwaitData[F, A, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]] =
       isoAwait(eA, eO, cF).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[F[_], A, O](req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]] =
       mkAwait(req, recv)
 
@@ -203,8 +205,10 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
   class EmitCompanionAbs extends CompanionDef[EmitCompanionAbs] with EmitCompanion {
     def selfType = EmitCompanionElem
     override def toString = "Emit"
+    @scalan.OverloadId("fromData")
     def apply[F[_], O](p: Rep[EmitData[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]] =
       isoEmit(eO, cF).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[F[_], O](head: Rep[O], tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]] =
       mkEmit(head, tail)
 
@@ -290,6 +294,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     def selfType = HaltCompanionElem
     override def toString = "Halt"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], O](err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]] =
       mkHalt(err)
 

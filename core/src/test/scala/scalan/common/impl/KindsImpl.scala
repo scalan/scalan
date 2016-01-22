@@ -114,6 +114,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     def selfType = ReturnCompanionElem
     override def toString = "Return"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
       mkReturn(a)
 
@@ -200,8 +201,10 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
   class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {
     def selfType = BindCompanionElem
     override def toString = "Bind"
+    @scalan.OverloadId("fromData")
     def apply[F[_], S, B](p: Rep[BindData[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       isoBind(eS, eA, cF).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       mkBind(a, f)
 

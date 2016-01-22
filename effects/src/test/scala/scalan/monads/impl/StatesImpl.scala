@@ -117,6 +117,7 @@ trait StatesAbs extends scalan.ScalanDsl with States {
     def selfType = StateBaseCompanionElem
     override def toString = "StateBase"
 
+    @scalan.OverloadId("fromFields")
     def apply[S, A](run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]] =
       mkStateBase(run)
 

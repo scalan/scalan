@@ -115,6 +115,7 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
     def selfType = CoproductImplCompanionElem
     override def toString = "CoproductImpl"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], G[_], A](run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
       mkCoproductImpl(run)
 

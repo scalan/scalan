@@ -114,6 +114,7 @@ trait InteractionsAbs extends scalan.ScalanDsl with Interactions {
     def selfType = AskCompanionElem
     override def toString = "Ask"
 
+    @scalan.OverloadId("fromFields")
     def apply(prompt: Rep[String]): Rep[Ask] =
       mkAsk(prompt)
 
@@ -197,6 +198,7 @@ trait InteractionsAbs extends scalan.ScalanDsl with Interactions {
     def selfType = TellCompanionElem
     override def toString = "Tell"
 
+    @scalan.OverloadId("fromFields")
     def apply(msg: Rep[String]): Rep[Tell] =
       mkTell(msg)
 

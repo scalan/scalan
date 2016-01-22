@@ -115,6 +115,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     def selfType = DenseVectorCompanionElem
     override def toString = "DenseVector"
 
+    @scalan.OverloadId("fromFields")
     def apply[T](items: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DenseVector[T]] =
       mkDenseVector(items)
 
@@ -199,8 +200,10 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
   class ConstVectorCompanionAbs extends CompanionDef[ConstVectorCompanionAbs] with ConstVectorCompanion {
     def selfType = ConstVectorCompanionElem
     override def toString = "ConstVector"
+    @scalan.OverloadId("fromData")
     def apply[T](p: Rep[ConstVectorData[T]])(implicit eT: Elem[T]): Rep[ConstVector[T]] =
       isoConstVector(eT).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[T](item: Rep[T], length: Rep[Int])(implicit eT: Elem[T]): Rep[ConstVector[T]] =
       mkConstVector(item, length)
 
@@ -284,8 +287,10 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
   class SparseVectorCompanionAbs extends CompanionDef[SparseVectorCompanionAbs] with SparseVectorCompanion {
     def selfType = SparseVectorCompanionElem
     override def toString = "SparseVector"
+    @scalan.OverloadId("fromData")
     def apply[T](p: Rep[SparseVectorData[T]])(implicit eT: Elem[T]): Rep[SparseVector[T]] =
       isoSparseVector(eT).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector[T]] =
       mkSparseVector(nonZeroIndices, nonZeroValues, length)
 
@@ -369,8 +374,10 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
   class SparseVector1CompanionAbs extends CompanionDef[SparseVector1CompanionAbs] with SparseVector1Companion {
     def selfType = SparseVector1CompanionElem
     override def toString = "SparseVector1"
+    @scalan.OverloadId("fromData")
     def apply[T](p: Rep[SparseVector1Data[T]])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
       isoSparseVector1(eT).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[T](nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
       mkSparseVector1(nonZeroItems, length)
 

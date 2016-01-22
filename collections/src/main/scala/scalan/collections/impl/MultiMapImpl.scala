@@ -116,6 +116,7 @@ trait MultiMapsAbs extends scalan.ScalanDsl with MultiMaps {
     def selfType = HashMMultiMapCompanionElem
     override def toString = "HashMMultiMap"
 
+    @scalan.OverloadId("fromFields")
     def apply[K, V](map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
       mkHashMMultiMap(map)
 

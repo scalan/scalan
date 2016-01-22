@@ -113,6 +113,7 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
     def selfType = ReadFileCompanionElem
     override def toString = "ReadFile"
 
+    @scalan.OverloadId("fromFields")
     def apply(fileName: Rep[String]): Rep[ReadFile] =
       mkReadFile(fileName)
 
@@ -195,8 +196,10 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
   class WriteFileCompanionAbs extends CompanionDef[WriteFileCompanionAbs] with WriteFileCompanion {
     def selfType = WriteFileCompanionElem
     override def toString = "WriteFile"
+    @scalan.OverloadId("fromData")
     def apply(p: Rep[WriteFileData]): Rep[WriteFile] =
       isoWriteFile.to(p)
+    @scalan.OverloadId("fromFields")
     def apply(fileName: Rep[String], lines: Rep[List[String]]): Rep[WriteFile] =
       mkWriteFile(fileName, lines)
 

@@ -118,8 +118,10 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
   class AdjacencyGraphCompanionAbs extends CompanionDef[AdjacencyGraphCompanionAbs] with AdjacencyGraphCompanion {
     def selfType = AdjacencyGraphCompanionElem
     override def toString = "AdjacencyGraph"
+    @scalan.OverloadId("fromData")
     def apply[V, E](p: Rep[AdjacencyGraphData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
       isoAdjacencyGraph(eV, eE).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
       mkAdjacencyGraph(vertexValues, edgeValues, links)
 
@@ -205,8 +207,10 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
   class IncidenceGraphCompanionAbs extends CompanionDef[IncidenceGraphCompanionAbs] with IncidenceGraphCompanion {
     def selfType = IncidenceGraphCompanionElem
     override def toString = "IncidenceGraph"
+    @scalan.OverloadId("fromData")
     def apply[V, E](p: Rep[IncidenceGraphData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
       isoIncidenceGraph(eV, eE).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
       mkIncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
 

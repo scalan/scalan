@@ -115,8 +115,10 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
   class SVertexCompanionAbs extends CompanionDef[SVertexCompanionAbs] with SVertexCompanion {
     def selfType = SVertexCompanionElem
     override def toString = "SVertex"
+    @scalan.OverloadId("fromData")
     def apply[V, E](p: Rep[SVertexData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       isoSVertex(eV, eE).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[V, E](id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       mkSVertex(id, graph)
 

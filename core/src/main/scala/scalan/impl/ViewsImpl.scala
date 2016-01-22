@@ -158,8 +158,10 @@ trait ViewsAbs extends Views {
   class IdentityIsoCompanionAbs extends CompanionDef[IdentityIsoCompanionAbs] {
     def selfType = IdentityIsoCompanionElem
     override def toString = "IdentityIso"
+    @scalan.OverloadId("fromData")
     def apply[A](p: Rep[IdentityIsoData[A]])(implicit eA: Elem[A]): Rep[IdentityIso[A]] =
       isoIdentityIso(eA).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A]()(implicit eA: Elem[A]): Rep[IdentityIso[A]] =
       mkIdentityIso()
 
@@ -250,8 +252,10 @@ trait ViewsAbs extends Views {
   class PairIsoCompanionAbs extends CompanionDef[PairIsoCompanionAbs] with PairIsoCompanion {
     def selfType = PairIsoCompanionElem
     override def toString = "PairIso"
+    @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[PairIsoData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairIso[A1, A2, B1, B2]] =
       isoPairIso(eA1, eA2, eB1, eB2).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairIso[A1, A2, B1, B2]] =
       mkPairIso(iso1, iso2)
 
@@ -342,8 +346,10 @@ trait ViewsAbs extends Views {
   class SumIsoCompanionAbs extends CompanionDef[SumIsoCompanionAbs] {
     def selfType = SumIsoCompanionElem
     override def toString = "SumIso"
+    @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[SumIsoData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumIso[A1, A2, B1, B2]] =
       isoSumIso(eA1, eA2, eB1, eB2).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumIso[A1, A2, B1, B2]] =
       mkSumIso(iso1, iso2)
 
@@ -432,8 +438,10 @@ trait ViewsAbs extends Views {
   class ComposeIsoCompanionAbs extends CompanionDef[ComposeIsoCompanionAbs] {
     def selfType = ComposeIsoCompanionElem
     override def toString = "ComposeIso"
+    @scalan.OverloadId("fromData")
     def apply[A, B, C](p: Rep[ComposeIsoData[A, B, C]])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeIso[A, B, C]] =
       isoComposeIso(eA, eB, eC).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeIso[A, B, C]] =
       mkComposeIso(iso2, iso1)
 
@@ -524,8 +532,10 @@ trait ViewsAbs extends Views {
   class FuncIsoCompanionAbs extends CompanionDef[FuncIsoCompanionAbs] {
     def selfType = FuncIsoCompanionElem
     override def toString = "FuncIso"
+    @scalan.OverloadId("fromData")
     def apply[A, B, C, D](p: Rep[FuncIsoData[A, B, C, D]])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]): Rep[FuncIso[A, B, C, D]] =
       isoFuncIso(eA, eB, eC, eD).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]): Rep[FuncIso[A, B, C, D]] =
       mkFuncIso(iso1, iso2)
 
@@ -612,8 +622,10 @@ trait ViewsAbs extends Views {
   class ConverterIsoCompanionAbs extends CompanionDef[ConverterIsoCompanionAbs] {
     def selfType = ConverterIsoCompanionElem
     override def toString = "ConverterIso"
+    @scalan.OverloadId("fromData")
     def apply[A, B](p: Rep[ConverterIsoData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[ConverterIso[A, B]] =
       isoConverterIso(eA, eB).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A, B](convTo: Conv[A, B], convFrom: Conv[B, A])(implicit eA: Elem[A], eB: Elem[B]): Rep[ConverterIso[A, B]] =
       mkConverterIso(convTo, convFrom)
 
@@ -700,6 +712,7 @@ trait ViewsAbs extends Views {
     def selfType = ArrayIsoCompanionElem
     override def toString = "ArrayIso"
 
+    @scalan.OverloadId("fromFields")
     def apply[A, B](innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ArrayIso[A, B]] =
       mkArrayIso(innerIso)
 
@@ -786,6 +799,7 @@ trait ViewsAbs extends Views {
     def selfType = ListIsoCompanionElem
     override def toString = "ListIso"
 
+    @scalan.OverloadId("fromFields")
     def apply[A, B](innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ListIso[A, B]] =
       mkListIso(innerIso)
 
@@ -872,6 +886,7 @@ trait ViewsAbs extends Views {
     def selfType = ArrayBufferIsoCompanionElem
     override def toString = "ArrayBufferIso"
 
+    @scalan.OverloadId("fromFields")
     def apply[A, B](innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ArrayBufferIso[A, B]] =
       mkArrayBufferIso(innerIso)
 
@@ -958,6 +973,7 @@ trait ViewsAbs extends Views {
     def selfType = ThunkIsoCompanionElem
     override def toString = "ThunkIso"
 
+    @scalan.OverloadId("fromFields")
     def apply[A, B](innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ThunkIso[A, B]] =
       mkThunkIso(innerIso)
 
@@ -1048,8 +1064,10 @@ trait ViewsAbs extends Views {
   class MapIsoCompanionAbs extends CompanionDef[MapIsoCompanionAbs] {
     def selfType = MapIsoCompanionElem
     override def toString = "MapIso"
+    @scalan.OverloadId("fromData")
     def apply[K1, V1, K2, V2](p: Rep[MapIsoData[K1, V1, K2, V2]])(implicit eK1: Elem[K1], eV1: Elem[V1], eK2: Elem[K2], eV2: Elem[V2]): Rep[MapIso[K1, V1, K2, V2]] =
       isoMapIso(eK1, eV1, eK2, eV2).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[K1, V1, K2, V2](iso1: Iso[K1, K2], iso2: Iso[V1, V2])(implicit eK1: Elem[K1], eV1: Elem[V1], eK2: Elem[K2], eV2: Elem[V2]): Rep[MapIso[K1, V1, K2, V2]] =
       mkMapIso(iso1, iso2)
 

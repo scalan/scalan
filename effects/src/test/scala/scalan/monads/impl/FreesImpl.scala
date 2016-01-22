@@ -115,6 +115,7 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
     def selfType = ReturnCompanionElem
     override def toString = "Return"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
       mkReturn(a)
 
@@ -200,6 +201,7 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
     def selfType = SuspendCompanionElem
     override def toString = "Suspend"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], A](a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F]): Rep[Suspend[F, A]] =
       mkSuspend(a)
 
@@ -286,8 +288,10 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
   class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {
     def selfType = BindCompanionElem
     override def toString = "Bind"
+    @scalan.OverloadId("fromData")
     def apply[F[_], S, B](p: Rep[BindData[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       isoBind(eS, eA, cF).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[F[_], S, B](a: Rep[Free[F, S]], f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       mkBind(a, f)
 

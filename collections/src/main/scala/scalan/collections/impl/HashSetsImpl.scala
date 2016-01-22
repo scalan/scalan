@@ -182,6 +182,7 @@ trait HashSetsAbs extends scalan.ScalanDsl with HashSets {
     def selfType = SHashSetImplCompanionElem
     override def toString = "SHashSetImpl"
 
+    @scalan.OverloadId("fromFields")
     def apply[A](wrappedValue: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
       mkSHashSetImpl(wrappedValue)
 

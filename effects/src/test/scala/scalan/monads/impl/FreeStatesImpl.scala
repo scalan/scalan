@@ -119,6 +119,7 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
     def selfType = StateGetCompanionElem
     override def toString = "StateGet"
 
+    @scalan.OverloadId("fromFields")
     def apply[S, A](f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateGet[S, A]] =
       mkStateGet(f)
 
@@ -205,8 +206,10 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
   class StatePutCompanionAbs extends CompanionDef[StatePutCompanionAbs] with StatePutCompanion {
     def selfType = StatePutCompanionElem
     override def toString = "StatePut"
+    @scalan.OverloadId("fromData")
     def apply[S, A](p: Rep[StatePutData[S, A]])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]] =
       isoStatePut(eS, eA).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[S, A](s: Rep[S], a: Rep[A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]] =
       mkStatePut(s, a)
 

@@ -109,6 +109,7 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
     def selfType = BoolCollBitSetCompanionElem
     override def toString = "BoolCollBitSet"
 
+    @scalan.OverloadId("fromFields")
     def apply(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
       mkBoolCollBitSet(bits)
 

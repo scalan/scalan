@@ -108,8 +108,10 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   class IntervalCompanionAbs extends CompanionDef[IntervalCompanionAbs] with IntervalCompanion {
     def selfType = IntervalCompanionElem
     override def toString = "Interval"
+    @scalan.OverloadId("fromData")
     def apply(p: Rep[IntervalData]): Rep[Interval] =
       isoInterval.to(p)
+    @scalan.OverloadId("fromFields")
     def apply(start: Rep[Int], end: Rep[Int]): Rep[Interval] =
       mkInterval(start, end)
 
@@ -191,8 +193,10 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   class SliceCompanionAbs extends CompanionDef[SliceCompanionAbs] with SliceCompanion {
     def selfType = SliceCompanionElem
     override def toString = "Slice"
+    @scalan.OverloadId("fromData")
     def apply(p: Rep[SliceData]): Rep[Slice] =
       isoSlice.to(p)
+    @scalan.OverloadId("fromFields")
     def apply(start: Rep[Int], length: Rep[Int]): Rep[Slice] =
       mkSlice(start, length)
 
@@ -275,8 +279,10 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   class CenteredCompanionAbs extends CompanionDef[CenteredCompanionAbs] with CenteredCompanion {
     def selfType = CenteredCompanionElem
     override def toString = "Centered"
+    @scalan.OverloadId("fromData")
     def apply(p: Rep[CenteredData]): Rep[Centered] =
       isoCentered.to(p)
+    @scalan.OverloadId("fromFields")
     def apply(center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
       mkCentered(center, radius)
 

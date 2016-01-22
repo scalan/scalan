@@ -109,8 +109,10 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
   class BaseFrontCompanionAbs extends CompanionDef[BaseFrontCompanionAbs] with BaseFrontCompanion {
     def selfType = BaseFrontCompanionElem
     override def toString = "BaseFront"
+    @scalan.OverloadId("fromData")
     def apply(p: Rep[BaseFrontData]): Rep[BaseFront] =
       isoBaseFront.to(p)
+    @scalan.OverloadId("fromFields")
     def apply(set: Rep[CollectionOverArray[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
       mkBaseFront(set, bits)
 
@@ -193,8 +195,10 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
   class ListFrontCompanionAbs extends CompanionDef[ListFrontCompanionAbs] with ListFrontCompanion {
     def selfType = ListFrontCompanionElem
     override def toString = "ListFront"
+    @scalan.OverloadId("fromData")
     def apply(p: Rep[ListFrontData]): Rep[ListFront] =
       isoListFront.to(p)
+    @scalan.OverloadId("fromFields")
     def apply(set: Rep[CollectionOverList[Int]], bits: Rep[BitSet]): Rep[ListFront] =
       mkListFront(set, bits)
 
@@ -277,8 +281,10 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
   class CollectionFrontCompanionAbs extends CompanionDef[CollectionFrontCompanionAbs] with CollectionFrontCompanion {
     def selfType = CollectionFrontCompanionElem
     override def toString = "CollectionFront"
+    @scalan.OverloadId("fromData")
     def apply(p: Rep[CollectionFrontData]): Rep[CollectionFront] =
       isoCollectionFront.to(p)
+    @scalan.OverloadId("fromFields")
     def apply(set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =
       mkCollectionFront(set, bits)
 
@@ -362,6 +368,7 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
     def selfType = MapBasedFrontCompanionElem
     override def toString = "MapBasedFront"
 
+    @scalan.OverloadId("fromFields")
     def apply(mmap: Rep[MMap[Int, Unit]]): Rep[MapBasedFront] =
       mkMapBasedFront(mmap)
 

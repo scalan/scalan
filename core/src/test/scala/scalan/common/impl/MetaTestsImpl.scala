@@ -109,6 +109,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     def selfType = MT0CompanionElem
     override def toString = "MT0"
 
+    @scalan.OverloadId("fromFields")
     def apply(size: Rep[Int]): Rep[MT0] =
       mkMT0(size)
 
@@ -193,8 +194,10 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
   class MT1CompanionAbs extends CompanionDef[MT1CompanionAbs] {
     def selfType = MT1CompanionElem
     override def toString = "MT1"
+    @scalan.OverloadId("fromData")
     def apply[T](p: Rep[MT1Data[T]])(implicit elem: Elem[T]): Rep[MT1[T]] =
       isoMT1(elem).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[T](data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
       mkMT1(data, size)
 
@@ -281,8 +284,10 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
   class MT2CompanionAbs extends CompanionDef[MT2CompanionAbs] {
     def selfType = MT2CompanionElem
     override def toString = "MT2"
+    @scalan.OverloadId("fromData")
     def apply[T, R](p: Rep[MT2Data[T, R]])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
       isoMT2(eT, eR).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
       mkMT2(indices, values, size)
 

@@ -116,8 +116,10 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
   class AdjEdgeCompanionAbs extends CompanionDef[AdjEdgeCompanionAbs] with AdjEdgeCompanion {
     def selfType = AdjEdgeCompanionElem
     override def toString = "AdjEdge"
+    @scalan.OverloadId("fromData")
     def apply[V, E](p: Rep[AdjEdgeData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
       isoAdjEdge(eV, eE).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
       mkAdjEdge(fromId, outIndex, graph)
 
@@ -203,8 +205,10 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
   class IncEdgeCompanionAbs extends CompanionDef[IncEdgeCompanionAbs] with IncEdgeCompanion {
     def selfType = IncEdgeCompanionElem
     override def toString = "IncEdge"
+    @scalan.OverloadId("fromData")
     def apply[V, E](p: Rep[IncEdgeData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
       isoIncEdge(eV, eE).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
       mkIncEdge(fromId, toId, graph)
 

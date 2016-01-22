@@ -691,8 +691,10 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    def selfType = ${className}CompanionElem
         |    override def toString = "$className"
         |${(fields.length != 1).opt(s"""
+        |    @scalan.OverloadId("fromData")
         |    def apply${tpeArgsDecl}(p: Rep[$dataTpe])${implicitArgsDecl}: Rep[${c.typeUse}] =
         |      iso$className${implicitArgsUse}.to(p)""".stripAndTrim)}
+        |    @scalan.OverloadId("fromFields")
         |    def apply${tpeArgsDecl}(${fieldsWithType.rep()})${implicitArgsDecl}: Rep[${c.typeUse}] =
         |      mk$className(${fields.rep()})
         |    ${extractSqlQueries(clazz.body)}

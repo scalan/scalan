@@ -109,6 +109,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
     def selfType = SStringCompanionElem
     override def toString = "SString"
 
+    @scalan.OverloadId("fromFields")
     def apply(wrappedValue: Rep[String]): Rep[SString] =
       mkSString(wrappedValue)
 
@@ -191,6 +192,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
     def selfType = CStringCompanionElem
     override def toString = "CString"
 
+    @scalan.OverloadId("fromFields")
     def apply(wrappedValue: Rep[String]): Rep[CString] =
       mkCString(wrappedValue)
 

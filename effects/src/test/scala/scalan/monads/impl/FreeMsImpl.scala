@@ -115,6 +115,7 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     def selfType = DoneCompanionElem
     override def toString = "Done"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Done[F, A]] =
       mkDone(a)
 
@@ -200,6 +201,7 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     def selfType = MoreCompanionElem
     override def toString = "More"
 
+    @scalan.OverloadId("fromFields")
     def apply[F[_], A](k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F]): Rep[More[F, A]] =
       mkMore(k)
 
@@ -286,8 +288,10 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
   class FlatMapCompanionAbs extends CompanionDef[FlatMapCompanionAbs] with FlatMapCompanion {
     def selfType = FlatMapCompanionElem
     override def toString = "FlatMap"
+    @scalan.OverloadId("fromData")
     def apply[F[_], S, B](p: Rep[FlatMapData[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]] =
       isoFlatMap(eS, eA, cF).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[F[_], S, B](a: Rep[FreeM[F, S]], f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]] =
       mkFlatMap(a, f)
 

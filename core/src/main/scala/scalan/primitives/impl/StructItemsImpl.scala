@@ -118,8 +118,10 @@ trait StructItemsAbs extends StructItems {
   class StructItemBaseCompanionAbs extends CompanionDef[StructItemBaseCompanionAbs] {
     def selfType = StructItemBaseCompanionElem
     override def toString = "StructItemBase"
+    @scalan.OverloadId("fromData")
     def apply[Val, Schema <: Struct](p: Rep[StructItemBaseData[Val, Schema]])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
       isoStructItemBase(eVal, eSchema).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[Val, Schema <: Struct](key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
       mkStructItemBase(key, value)
 

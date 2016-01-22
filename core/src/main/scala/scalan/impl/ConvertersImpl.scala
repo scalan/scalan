@@ -117,6 +117,7 @@ trait ConvertersAbs extends Converters {
     def selfType = BaseConverterCompanionElem
     override def toString = "BaseConverter"
 
+    @scalan.OverloadId("fromFields")
     def apply[T, R](convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]] =
       mkBaseConverter(convFun)
 
@@ -207,8 +208,10 @@ trait ConvertersAbs extends Converters {
   class PairConverterCompanionAbs extends CompanionDef[PairConverterCompanionAbs] with PairConverterCompanion {
     def selfType = PairConverterCompanionElem
     override def toString = "PairConverter"
+    @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[PairConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
       isoPairConverter(eA1, eA2, eB1, eB2).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
       mkPairConverter(conv1, conv2)
 
@@ -299,8 +302,10 @@ trait ConvertersAbs extends Converters {
   class SumConverterCompanionAbs extends CompanionDef[SumConverterCompanionAbs] with SumConverterCompanion {
     def selfType = SumConverterCompanionElem
     override def toString = "SumConverter"
+    @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[SumConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
       isoSumConverter(eA1, eA2, eB1, eB2).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
       mkSumConverter(conv1, conv2)
 
@@ -388,6 +393,7 @@ trait ConvertersAbs extends Converters {
     def selfType = FunctorConverterCompanionElem
     override def toString = "FunctorConverter"
 
+    @scalan.OverloadId("fromFields")
     def apply[A, B, F[_]](itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]] =
       mkFunctorConverter(itemConv)
 
@@ -472,6 +478,7 @@ trait ConvertersAbs extends Converters {
     def selfType = NaturalConverterCompanionElem
     override def toString = "NaturalConverter"
 
+    @scalan.OverloadId("fromFields")
     def apply[A, F[_], G[_]](convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]): Rep[NaturalConverter[A, F, G]] =
       mkNaturalConverter(convFun)
 

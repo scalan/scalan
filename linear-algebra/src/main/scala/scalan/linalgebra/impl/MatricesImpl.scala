@@ -113,8 +113,10 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
   class DenseFlatMatrixCompanionAbs extends CompanionDef[DenseFlatMatrixCompanionAbs] with DenseFlatMatrixCompanion {
     def selfType = DenseFlatMatrixCompanionElem
     override def toString = "DenseFlatMatrix"
+    @scalan.OverloadId("fromData")
     def apply[T](p: Rep[DenseFlatMatrixData[T]])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]] =
       isoDenseFlatMatrix(eT).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]] =
       mkDenseFlatMatrix(rmValues, numColumns)
 
@@ -198,8 +200,10 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
   class CompoundMatrixCompanionAbs extends CompanionDef[CompoundMatrixCompanionAbs] with CompoundMatrixCompanion {
     def selfType = CompoundMatrixCompanionElem
     override def toString = "CompoundMatrix"
+    @scalan.OverloadId("fromData")
     def apply[T](p: Rep[CompoundMatrixData[T]])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
       isoCompoundMatrix(eT).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[T](rows: Rep[Collection[Vector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
       mkCompoundMatrix(rows, numColumns)
 
@@ -284,8 +288,10 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
   class ConstMatrixCompanionAbs extends CompanionDef[ConstMatrixCompanionAbs] with ConstMatrixCompanion {
     def selfType = ConstMatrixCompanionElem
     override def toString = "ConstMatrix"
+    @scalan.OverloadId("fromData")
     def apply[T](p: Rep[ConstMatrixData[T]])(implicit eT: Elem[T]): Rep[ConstMatrix[T]] =
       isoConstMatrix(eT).to(p)
+    @scalan.OverloadId("fromFields")
     def apply[T](item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T]): Rep[ConstMatrix[T]] =
       mkConstMatrix(item, numColumns, numRows)
 
@@ -371,6 +377,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     def selfType = DiagonalMatrixCompanionElem
     override def toString = "DiagonalMatrix"
 
+    @scalan.OverloadId("fromFields")
     def apply[T](diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]] =
       mkDiagonalMatrix(diagonalValues)
 

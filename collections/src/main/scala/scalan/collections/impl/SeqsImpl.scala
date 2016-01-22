@@ -224,6 +224,7 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
     def selfType = SSeqImplCompanionElem
     override def toString = "SSeqImpl"
 
+    @scalan.OverloadId("fromFields")
     def apply[A](wrappedValue: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
       mkSSeqImpl(wrappedValue)
 

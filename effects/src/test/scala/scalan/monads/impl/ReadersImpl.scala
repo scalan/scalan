@@ -117,6 +117,7 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
     def selfType = ReaderBaseCompanionElem
     override def toString = "ReaderBase"
 
+    @scalan.OverloadId("fromFields")
     def apply[Env, A](run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]] =
       mkReaderBase(run)
 
