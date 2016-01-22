@@ -3,7 +3,7 @@ package scalan.arrays
 import scala.reflect.ClassTag
 import scalan.common.OverloadHack.Overloaded1
 import scalan.staged.BaseExp
-import scalan.{Scalan, ScalanExp, ScalanSeq}
+import scalan.{Scalan, ScalanExp, ScalanStd}
 import scala.reflect.runtime.universe._
 
 trait ArrayOps { self: Scalan =>
@@ -213,8 +213,8 @@ trait ArrayOps { self: Scalan =>
   }
 }
 
-trait ArrayOpsSeq extends ArrayOps {
-  self: ScalanSeq =>
+trait ArrayOpsStd extends ArrayOps {
+  self: ScalanStd =>
 
   import TagImplicits.elemToClassTag
 

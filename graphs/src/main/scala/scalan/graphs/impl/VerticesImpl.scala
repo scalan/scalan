@@ -151,20 +151,20 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
   registerModule(Vertices_Module)
 }
 
-// Seq -----------------------------------
-trait VerticesSeq extends scalan.ScalanDslStd with VerticesDsl {
-  self: GraphsDslSeq =>
+// Std -----------------------------------
+trait VerticesStd extends scalan.ScalanDslStd with VerticesDsl {
+  self: GraphsDslStd =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs {
   }
 
-  case class SeqSVertex[V, E]
+  case class StdSVertex[V, E]
       (override val id: Rep[Int], override val graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E])
     extends AbsSVertex[V, E](id, graph) {
   }
 
   def mkSVertex[V, E]
     (id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
-    new SeqSVertex[V, E](id, graph)
+    new StdSVertex[V, E](id, graph)
   def unmkSVertex[V, E](p: Rep[Vertex[V, E]]) = p match {
     case p: SVertex[V, E] @unchecked =>
       Some((p.id, p.graph))
@@ -325,10 +325,10 @@ trait VerticesExp extends scalan.ScalanDslExp with VerticesDsl {
 }
 
 object Vertices_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWS2wbRRj+dx3Hr5CE8o4EDsFQgcBOI1APOVTBdaIik1jZYiFTtRqvx86U2Udmx5HNocce4Ia4IlGJC1IviBNCqpAQEuLACaFKnDmVoqoHegIxM/vwbuJNaRF7GO3M/PM/vu/7Z/f6bch6DF7yTESRXbUwR1VDvW94vGI0bE74+G2nN6T4LO4/7Xz72akvlr7WYaEDs3vIO+vRDhT8l8bIjd4NvN+EArJN7HGHeRyeb6oINdOhFJucOHaNWNaQoy7FtSbx+HoTZrpOb7wPV0BrwqLp2CbDHBt1ijwPe8F6HsuMSDQvqPl4x53EsGuyilqsivMMES7SFzEWfftd7Bpj27HHFof5ILUdV6YlbHLEch3GwxA54W7P6YXTGRuJBTjRvIwOUE2EGNQMzog9ECdLLjLfRwO8LUyk+YxI2MO0f37sqnmmCUUP7wuAzlkuVSsjFwAEA2sqieoEn2qET1XiUzEwI4iSD5DcbDFnNAb/0TIAI1e4ePU+LkIPuGH3Kh9eMN+7Z5QsXR4eyVRyqsJZ4aicogZFhcDxh92Pvbtb107rUOxAkXgbXY8zZPI45QFaJWTbDlc5RwAiNhBsraSxpaJsCJtDkiiYjuUiW3gKoJwTPFFiEi6N5dpcwE4K9Dnu4tBUG7laVO9ySr1KN3VEaevWM6+9+HvjXR30ZIiCcGkI4bPQKYfZNmYcjwLnclzgoLUnCMtpQ03lUBhNxtwxuUSonLz1R+/7VbigR1gGof8dfcJF1rv5S+nnl8/okO8osW9SNOgIOL0GxdYOqzs270DeOcDM38kdICrfptKZ6+E+GlIegBxHJyPQ4bCc2pYultCtqxbQQgBKvoq3HRtXNluVP40fP7kuRcpgzt/x+/RvcvqvX+f7XOmXg056IbgZ0dwRFi+kUeviFiOWuEoO8BvfffPOnRvbWcXuiaCcNqJD7Dd2UM2kMhlQWxWRztncZ0/FW4rKkEOZQ3bAkLsX5qW3th5WFEW/csOx8KMrd8nFax9xRb82Sl5EO93LovPX1bnnjlFCeCF+efXqE3c+v/SYauR8l3ALuZXVB2jjsOv+xzaFJGjz9eDDoNS8ltzMGX7zpQApx6eiPZ8lQeVicKoeT7wcOxILsqQd4ljH7TD6jGyfqRTHRXLUQeM4B0dFkSyzHEn92XSpCzif3G0+Tm+fuaFD9i3I9kU3e03Idp2h3Qt5Ep9c4ZS/Ga5pSZ4EL4ghK+JFPcswASup6NZUg6PlxOp9/RDXGSHR5Mp/uFxTRKDmp6aGL0lRbiKL0PHa1DQeTGYLqSpzEx7LsVjTQXwIlOXYntgEhnkZlchWh0cC9fhXVoAKg5UUURlBzwqGrtz7dPuVn776TV2fRdn94uq2o9+n+LWZRLGwpWKJv6FYuqIL5H2gUv0HHHzmVZ0KAAA="
+  val dump = "H4sIAAAAAAAAALVWS2wbRRj+dx3Hr5CE8hKVwCEYEAjsEIGKlEMVXCcqMomVLRYyFWi8O3amzD6YHUc2hx57gBviyqESEpdeUA8cQL0gJMSBE0JInDhwKkVVD+2piJnZh3cTb6BF7GG0M/PP//i+75/dKzcg7zN41jcRRU7dxhzVDfW+6fOa0XI44ZM3XWtE8Rk8+O2L166u5r76RoelHszvI/+MT3tQCl5aYy9+N7jVhhJyTOxzl/kcnmqrCA3TpRSbnLhOg9j2iKM+xY028flGG+b6rjX5AC6C1oZl03VMhjk2mhT5PvbD9SKWGZF4XlLzya43jeE0ZBWNRBXnGCJcpC9iLAf2e9gzJo7rTGwOi2Fqu55MS9gUiO25jEchCsLdvmtF0zkHiQU40b6ADlBDhBg2DM6IMxQnKx4y30dDvCNMpPmcSNjHdHBu4ql5rg1ln1sCoLO2R9XK2AMAwcC6SqI+xace41OX+NQMzAii5EMkNzvMHU8geLQcwNgTLl78BxeRB9xyrNpH58137hgVW5eHxzKVgqpwXjiqZqhBUSFw/H7vE//W9uVTOpR7UCb+Zt/nDJk8SXmIVgU5jstVzjGAiA0FW6tZbKkom8LmkCRKpmt7yBGeQigXBE+UmIRLY7m2ELKTAX2Bezgy1caeFte7klGv0k0TUdq5/vhLz/zRelsHPR2iJFwaQvgscsphvosZx+PQuRyXOGjdKcJy2lJTOZTG07FwTC4xKs9d/9P6bg3O6zGWYeh/R59wkfd/+bny0/OndSj2lNi3KBr2BJx+i2J7lzVdh/eg6B5gFuwUDhCVbzPpLFh4gEaUhyAn0ckJdDisZLalhyV0G6oFtAiASqDiHdfBta1O7bbxw6dXpEgZLAQ7QZ/+RU7d/XVxwJV+OejEisDNieaOsXg6i1oPdxixxVVygF/99uu3bl7bySt2T4TldBEd4aCxw2qmlcmA2pqIdNbhAXsq3sm4DDlUOeSHDHn7UV56Z/t+RVEOKjdcGz+4eou8e/ljrujXxumLaLd/QXT+hjr35DFKiC7ELy9deuTm5+89pBq52CfcRl5t7R7aOOq6/7FNIQ3aYjP8MCg1r6c3C0bQfBlAyvGxeC9gSVC5HJ5qJhOvJo4kgpzUDnGs424UfU62z0yKkyI56qB1nIOjokiXWY2l/kS21AWcj+61H6Y3Tl/TIf8G5Aeim/025PvuyLEinsQnVzjlr0drWponwQtiyI55Uc8KTMFKK7oz0+BoOYl6XznEdU5INL3yHy7XDBGo+cszw1ekKLeQTehkfWYa9yazpUyVeSmP1USs2SDeB8py7E5tQsOijEpkq8MDoXqCKytEhcFqhqiMsGcFQxfvfLbzwo9Xf1fXZ1l2v7i6nfj3KXltplEsbatY4m8oka7oAnkfqFT/BkQzo4OdCgAA"
 }
 }
 
 trait VerticesDsl extends impl.VerticesAbs {self: GraphsDsl =>}
-trait VerticesDslSeq extends impl.VerticesSeq {self: GraphsDslSeq =>}
+trait VerticesDslStd extends impl.VerticesStd {self: GraphsDslStd =>}
 trait VerticesDslExp extends impl.VerticesExp {self: GraphsDslExp =>}

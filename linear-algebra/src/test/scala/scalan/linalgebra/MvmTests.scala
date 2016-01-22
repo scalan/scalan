@@ -2,7 +2,7 @@ package scalan.linalgebra
 
 import scala.language.reflectiveCalls
 import scalan._
-import scalan.common.{SegmentsDslSeq, SegmentsDsl, SegmentsDslExp, Lazy}
+import scalan.common.{SegmentsDslStd, SegmentsDsl, SegmentsDslExp, Lazy}
 import scalan.compilation.{StructsCompiler, DummyCompiler}
 import scalan.it.BaseItTests
 

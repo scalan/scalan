@@ -56,10 +56,10 @@ trait ScalanParsers {
 
   def config: CodegenConfig
 
-  def seqImplementation(traitTree: ClassDef) = {
+  def stdImplementation(traitTree: ClassDef) = {
     val methods = traitTree.impl.body.collect { case item: DefDef => item }
 
-    SSeqImplementation(methods.map(methodDef(_)))
+    SStdImplementation(methods.map(methodDef(_)))
   }
 
   def entityModule(fileTree: PackageDef) = {
@@ -85,8 +85,8 @@ trait ScalanParsers {
     val hasDsl =
       findClassDefByName(fileTree.stats, moduleName + "Dsl").isDefined
     
-    val dslSeqOpt = findClassDefByName(fileTree.stats, moduleName + "DslSeq")
-    val hasDslSeq = dslSeqOpt.isDefined
+    val dslStdOpt = findClassDefByName(fileTree.stats, moduleName + "DslStd")
+    val hasDslStd = dslStdOpt.isDefined
 
     val hasDslExp =
       findClassDefByName(fileTree.stats, moduleName + "DslExp").isDefined
@@ -130,17 +130,17 @@ trait ScalanParsers {
     }
     val methods = defs.collect { case md: SMethodDef => md }
 
-    val seqImplementation = for {
-      dslSeq <- dslSeqOpt
-      seqOpsTrait <- findClassDefByName(dslSeq.impl.body, "Seq" + entity.name)
+    val stdImplementation = for {
+      dslStd <- dslStdOpt
+      stdOpsTrait <- findClassDefByName(dslStd.impl.body, "Std" + entity.name)
     } yield {
-      this.seqImplementation(seqOpsTrait)
+      this.stdImplementation(stdOpsTrait)
     }
 
     SEntityModuleDef(packageName, imports, moduleName,
       entityRepSynonym, entity, traits, classes, methods,
-      moduleTrait.selfType, Nil, seqImplementation,
-      hasDsl, hasDslSeq, hasDslExp, moduleTrait.ancestors)
+      moduleTrait.selfType, Nil, stdImplementation,
+      hasDsl, hasDslStd, hasDslExp, moduleTrait.ancestors)
   }
 
   def importStat(i: Import): SImportStat = {

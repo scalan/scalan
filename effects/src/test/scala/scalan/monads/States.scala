@@ -77,7 +77,7 @@ trait StatesDsl extends impl.StatesAbs { self: MonadsDsl =>
   }
 }
 
-trait StatesDslSeq extends impl.StatesSeq { self: MonadsDslSeq =>
+trait StatesDslStd extends impl.StatesStd { self: MonadsDslStd =>
 }
 
 trait StatesDslExp extends impl.StatesExp { self: MonadsDslExp =>

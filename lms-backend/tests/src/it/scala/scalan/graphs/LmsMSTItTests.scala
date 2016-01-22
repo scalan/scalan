@@ -24,14 +24,14 @@ abstract class LmsMstItTests extends BaseItTests[MST_example](new ScalanDslStd w
 class LmsMstPrimeItTests extends LmsMstItTests with GraphTestInputs {
 
   test("MST_adjList") {
-    val res = progSeq.MST_adjlist(listInput)
+    val res = progStd.MST_adjlist(listInput)
     println(res.mkString(", "))
     compareOutputWithSequential(_.MST_adjlist)(listInput)
     compileSource(_.MST_adjlist, progStagedCxxOnly)
   }
 
   test("MSF_adjList") {
-    val res = progSeq.MSF_adjlist(listInput)
+    val res = progStd.MSF_adjlist(listInput)
     println(res.mkString(", "))
     //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.scalan.MST, "MST_adjList", input)
     compileSource(_.MSF_adjlist, progStagedCxxOnly)
@@ -42,14 +42,14 @@ class LmsMstPrimeItTests extends LmsMstItTests with GraphTestInputs {
     compileSource(_.MST_adjmatrix, progStagedCxxOnly)
   }
   test("MSF_adjMatrix") {
-    val res = progSeq.MSF_adjmatrix(matrixInput)
+    val res = progStd.MSF_adjmatrix(matrixInput)
     println(res.mkString(", "))
     //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.scalan.MST, "MST_adjMatrix", input)
     compileSource(_.MSF_adjmatrix, progStagedCxxOnly)
   }
 
   test("MSF_adjListMap") {
-    val resSeq = progSeq.MSF_adjlistMap(listInput)
+    val resSeq = progStd.MSF_adjlistMap(listInput)
     println(resSeq.mkString(", "))
     val Seq(Seq(resStaged)) = getStagedOutput(_.MSF_adjlistMap)(listInput)
     println("Staged: " + resStaged.mkString(", "))
@@ -57,27 +57,27 @@ class LmsMstPrimeItTests extends LmsMstItTests with GraphTestInputs {
   }
 
   test("MSF_adjMatrixMap") {
-    val resSeq = progSeq.MSF_adjmatrixMap(matrixInput)
+    val resSeq = progStd.MSF_adjmatrixMap(matrixInput)
     println(resSeq.mkString(", "))
     val Seq(Seq(resStaged)) = getStagedOutput(_.MSF_adjmatrixMap)(matrixInput)
     println("Staged: " + resStaged.mkString(", "))
   }
   test("MST_adjListMap") {
-    val resSeq = progSeq.MST_adjlistMap(listInput)
+    val resSeq = progStd.MST_adjlistMap(listInput)
     println(resSeq.mkString(", "))
     val Seq(Seq(resStaged)) = getStagedOutput(_.MST_adjlistMap)(listInput)
     println("Staged: " + resStaged.mkString(", "))
 //    compileSource(_.MST_adjlistMap, progStagedCxxOnly)
   }
   test("MST_adjMatrixMap") {
-    val resSeq = progSeq.MST_adjmatrixMap(matrixInput)
+    val resSeq = progStd.MST_adjmatrixMap(matrixInput)
     println(resSeq.mkString(", "))
     val Seq(Seq(resStaged)) = getStagedOutput(_.MST_adjmatrixMap)(matrixInput)
     println("Staged: " + resStaged.mkString(", "))
   }
 
   test("MSF_adjListList") {
-    val resSeq = progSeq.MSF_adjlistList(listInput)
+    val resSeq = progStd.MSF_adjlistList(listInput)
     println(resSeq.mkString(", "))
     val Seq(Seq(resStaged)) = getStagedOutput(_.MSF_adjlistList)(listInput)
     println("Staged: " + resStaged.mkString(", "))
@@ -85,7 +85,7 @@ class LmsMstPrimeItTests extends LmsMstItTests with GraphTestInputs {
   }
 
   test("MSF_adjMatrixList") {
-    val resSeq = progSeq.MSF_adjmatrixList(matrixInput)
+    val resSeq = progStd.MSF_adjmatrixList(matrixInput)
     println(resSeq.mkString(", "))
     val Seq(Seq(resStaged)) = getStagedOutput(_.MSF_adjmatrixList)(matrixInput)
     println("Staged: " + resStaged.mkString(", "))
@@ -93,7 +93,7 @@ class LmsMstPrimeItTests extends LmsMstItTests with GraphTestInputs {
   }
 
   test("MST_adjMatrixList") {
-    val resSeq = progSeq.MST_adjmatrixList(matrixInput)
+    val resSeq = progStd.MST_adjmatrixList(matrixInput)
     println(resSeq.mkString(", "))
     val Seq(Seq(resStaged)) = getStagedOutput(_.MST_adjmatrixList)(matrixInput)
     println("Staged: " + resStaged.mkString(", "))

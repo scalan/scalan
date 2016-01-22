@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{Scalan, ScalanSeq, ScalanExp}
+import scalan.{Scalan, ScalanStd, ScalanExp}
 import scala.reflect.runtime.universe._
 
 trait RewriteRules { self: Scalan =>
@@ -32,7 +32,7 @@ trait RewriteRules { self: Scalan =>
   }
 }
 
-trait RewriteRulesSeq extends RewriteRules { self: ScalanSeq =>
+trait RewriteRulesStd extends RewriteRules { self: ScalanStd =>
 }
 
 trait RewriteRulesExp extends RewriteRules with BaseExp { self: ScalanExp =>

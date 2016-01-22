@@ -28,7 +28,7 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
     CompilerWithConfig(compiler)(compilerConfig)
 
   def defaultCompilers: Seq[CompilerWithConfig]
-  val progSeq: Prog with ScalanSeq
+  val progStd: Prog with ScalanStd
 
   /** Utility method to be used when defining [[defaultCompilers]]. */
   def compilers(cs: CompilerWithConfig*) = cs
@@ -94,7 +94,7 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
                                         compilers: Seq[CompilerWithConfig] = defaultCompilers,
                                         graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
                                         functionName: String = currentTestNameAsFileName)(inputs: A*) = {
-    val fSeq = f(progSeq).asInstanceOf[A => B]
+    val fSeq = f(progStd).asInstanceOf[A => B]
     val inputsOutputs = inputs.map { x => (x, fSeq(x)) }
     compareOutputWithExpected(f, compilers, graphVizConfig, functionName)(inputsOutputs: _*)
   }

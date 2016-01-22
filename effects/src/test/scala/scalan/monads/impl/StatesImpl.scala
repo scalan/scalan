@@ -151,20 +151,20 @@ trait StatesAbs extends scalan.ScalanDsl with States {
   registerModule(States_Module)
 }
 
-// Seq -----------------------------------
-trait StatesSeq extends scalan.ScalanDslStd with StatesDsl {
-  self: MonadsDslSeq =>
+// Std -----------------------------------
+trait StatesStd extends scalan.ScalanDslStd with StatesDsl {
+  self: MonadsDslStd =>
   lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs {
   }
 
-  case class SeqStateBase[S, A]
+  case class StdStateBase[S, A]
       (override val run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A])
     extends AbsStateBase[S, A](run) {
   }
 
   def mkStateBase[S, A]
     (run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]] =
-    new SeqStateBase[S, A](run)
+    new StdStateBase[S, A](run)
   def unmkStateBase[S, A](p: Rep[State0[S, A]]) = p match {
     case p: StateBase[S, A] @unchecked =>
       Some((p.run))
@@ -276,7 +276,7 @@ trait StatesExp extends scalan.ScalanDslExp with StatesDsl {
 }
 
 object States_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRR+tuM4dkJTWn5btQmRAYHADhVSDzlUbupAwU3SbA7IVK3G67G7ZXZmszOObA4VpwrBDXHhgEQlLki9IE4ICXFBQhw4VRUSJw6cSivUAxUHEG9mf7x2vOFP+DDamX3zfr7ve2994w7kpQ9PSZswwisuVaRimeeaVGWrzpWjBudEu8foGdp5THz10QufHPk8C/NNmL5M5BnJmlAMHup9L3626E4DioTbVCrhSwVPNEyEqi0Yo7ZyBK86rttTpMVoteFItdKAqZZoD3bgKmQacNAW3PapotYqI1JSGZ7PUJ2RE++LZj/Y8IYxeFVXUU1Use0TR2H6GONgYL9FPWvABR+4Cg6EqW14Oi20KTiuJ3wVhSigu8uiHW2nOMEDONS4QnZJFUN0q5byHd7Fm7Mesd8gXbqOJtp8ChOWlHW2B57Z5xpQknQHATrresyc9D0AQAZOmCQqQ3wqMT4VjU/Zor5DmPMm0S83fdEfQPDL5AD6Hrp47i9cRB5onbfL71ywX79vzbpZfbmvUymYCqfR0UKKGgwViOM3W+/Jey9dP5mFUhNKjqy1pPKJrZKUh2jNEs6FMjnHABK/i2wtpbFlotTQZkwSRVu4HuHoKYRyDnliju0obazP5kJ2UqAvKI9Gppm+l4nrXUyp1+hmlTC2efvx55/8uf5aFrKjIYro0kLh+5FTBdMWlkuXQ+d6nVeQsYYI623NbPVS7A/Xwj65xKg8fftu++tluJCNsQxD/z360EVefn9r9uYzp7Iw0zRiX2Ok20Q4ZZ1Rd8NfFVw1YUbsUj94U9glTD9NpLPQph3SYyoEOYlODtFRsJjalh7V0K2YFshEAMwGKl4XnJbXNsu/Wt++f0OL1Ie54E3Qp384J3//4UBHGf0qyPk9HqGbw+6OwTiexq1H13rcvnn2g8Pzxy79aJidbguXOEZeRxuQ97G3TSlHQ3ATRKajjI63ex6jL37x28W333rZMzzt0cmYPGqj8rAmymMoklKAhCVc+uDSPefi9XeVCZPpjw6mjdYVnAQr5t7x/XIOB+Sn1649/MvHlw6bxp5pOcolXnn5H7R11IX/Y9vCKHTzQbutJoMUkmjp9dH41CwLKJhD5t5pIunI1YXEpUSgI5lIocZIQZZaUQZTumsmtnuQRpqD2n4O9g4IBcU4ZeMjlvixdCUibo9sNR5id059mYX8K5DvYBtL1HZL9Hg7IgS/tYr21enoLDNKCBJAfOLGBJjfIgzhGp1vr0402FtQouITY6TmUIujJ/9hqqYIweyrYfix4wl6maSzoLjhzE/Sko7Ev4BKr+eHNqFhEBU/pQ9EAhCctGVYmA9LKbqwwv5CkK/e/3D92e8++8mMv5LuVBy7PP7rM1TB+MQqnjOx8J9MIlmUsu5dk+if6SYzcVkKAAA="
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+ts/ns33kQsKPIEruOBkQCOxThBSkKyLn4oOAc3fcXoFMlGi8O3Y27M4sO+OTTRFRRQg6RENBEQmJJg1KQQGiQ0IUVBGKRJWCKgRFKRJRgHgz+2uf9/gTLkY7s2/ez/d9762v3YGi8OEZYRKHsLpLJakb+rkpZM1oMWnL0VluDRx6mvZuff7y9eXCl1/nYaEDsxeJOC2cDpSDh9bQi58NabWhTJhJheS+kPBUW0domNxxqCltzhq26w4k6Tq00baFXG3DTJdbo3fgMuTacNDkzPSppMaaQ4SgIjyfoyojO96X9X606SUxWENV0UhVseMTW2L6GONgYL9NPWPEOBu5Eg6EqW16Ki20Kdmux30ZhSihu4vcirYzjOABHGpfIrukgSH6DUP6NuvjzapHzLdJn26giTKfwYQFdXo7I0/vC22oCGkhQGdcz9EnQw8AkIHjOol6gk89xqeu8KkZ1LeJY79L1Mstnw9HEPxyBYChhy5e+AsXkQfaYlbtg3PmWw+MqptXl4cqlZKucBYdLWaoQVOBOH63/ZG498rVE3modKBii2ZXSJ+YMk15iFaVMMalzjkGkPh9ZGs5iy0dpYk2E5Iom9z1CENPIZTzyJNjm7ZUxupsPmQnA/qS9Ghkmht6ubjepYx6tW7WiONs3X7ixad/ab2Zh/x4iDK6NFD4fuRUwqyB5dKV0LlaFyTkjARhtW3qrVrKw2Qt7ZNLjMqzt3+1vl2Bc/kYyzD036MPXRTFzR+rN547mYe5jhb7ukP6HYRTtBzqbvprnMkOzPFd6gdvSrvEUU9T6SxZtEcGjgxBTqNTQHQkLGW2pUcVdKu6BXIRANVAxRuc0dr6Vu2+8f3H15RIfZgP3gR9+od94vefDvSk1q+Egj9gEboF7O4YjGNZ3Hp0fcDMG2c+Obxw9MItzeysxV1ia3kdaUPRx97WpRwJwU0RmY0yOt4ZeA596avfzr//3que5mmPTibk0RyXhzFVHolIKgESBnfpw8v37PNXP5Q6TG44Ppg2u5dwEqzqe8f2yzkckF9cufLo3c8uHNaNPde1pUu82so/aOuoC//HtoVx6BaCdltLByml0VLr4/GpXhZRMIf0vVNE0LGri6lLqUBP5iKFaiMJeWpEGcyorpna7kEaWQ6a+znYOyAklOOUtY9Y4kezlYi4PbbdfsS5c/KbPBRfg2IP21igtrt8wKyIEPzWSjqUp6Kz3DghSADxiRsToH9LkMA1Pt9en2qwt6BUxccnSC2gFsdP/sNUzRCC3jfC8BPHU/QyTWdBccnMT9OSjcS/gEqtbyQ2oWEQFT+lD0UC4IxYIizMh+UMXRhhfyHIlx98uvH8D9d/1uOvojoVxy6L//okKpicWOWzOhb+k0kli1JWvasT/RO2DyL4WQoAAA=="
 }
 }
 

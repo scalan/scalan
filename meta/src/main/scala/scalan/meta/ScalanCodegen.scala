@@ -176,7 +176,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     }
 
     def filterByExplicitDeclaration(ms: List[SMethodDef]): List[SMethodDef] =
-      module.seqDslImpl match {
+      module.stdDslImpl match {
         case Some(impl) =>
           ms.filterNot(impl.containsMethodDef(_))
         case None => ms
@@ -228,7 +228,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |""".stripMargin
     }
 
-    def externalSeqMethod(md: SMethodDef, isInstance: Boolean) = {
+    def externalStdMethod(md: SMethodDef, isInstance: Boolean) = {
       val msgExplicitRetType = "External methods should be declared with explicit type of returning value (result type)"
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
       val methodNameAndArgs = md.name + md.tpeArgs.useString + methodArgsUse(md)
@@ -251,7 +251,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        """.stripMargin
     }
 
-    def externalSeqConstructor(md: SMethodDef) = {
+    def externalStdConstructor(md: SMethodDef) = {
       s"""
         |    ${md.declaration(config, true)} =
         |      ${e.name}Impl(new $baseTypeUse${methodArgsUse(md)})
@@ -755,27 +755,27 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |""".stripAndTrim
     }
 
-    def getSClassSeq(clazz: SClassDef) = {
+    def getSClassStd(clazz: SClassDef) = {
       val c = ConcreteClassTemplateData(module, clazz)
       val fields = clazz.args.argNames
       val fieldsWithType = clazz.args.argNamesAndTypes(config)
       val implicitArgsDecl = c.implicitArgsDecl()
 
       val externalMethods = entity.getMethodsWithAnnotation(ExternalAnnotation)
-      val externalMethodsStr = filterByExplicitDeclaration(externalMethods).rep(md => externalSeqMethod(md, true), "\n")
+      val externalMethodsStr = filterByExplicitDeclaration(externalMethods).rep(md => externalStdMethod(md, true), "\n")
 
       val parent     = clazz.ancestors.head
 
       s"""
-       |  case class Seq${c.typeDecl}
+       |  case class Std${c.typeDecl}
        |      (${fieldsWithType.rep(f => s"override val $f")})${implicitArgsDecl}
-       |    extends ${e.optBaseType.isEmpty.opt("Abs")}${c.typeUse}(${fields.rep()})${module.seqDslImpl.ifDefined(s" with Seq$typeUse")} {
+       |    extends ${e.optBaseType.isEmpty.opt("Abs")}${c.typeUse}(${fields.rep()})${module.stdDslImpl.ifDefined(s" with Std$typeUse")} {
        |$externalMethodsStr
        |  }
        |
        |  def mk${c.typeDecl}
        |    (${fieldsWithType.rep()})$implicitArgsDecl: Rep[${c.typeUse}] =
-       |    new Seq${c.typeUse}(${fields.rep()})
+       |    new Std${c.typeUse}(${fields.rep()})
        |  def unmk${c.typeDecl}(p: Rep[$parent]) = p match {
        |    case p: ${c.typeUse} @unchecked =>
        |      Some((${fields.rep(f => s"p.$f")}))
@@ -810,39 +810,39 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |""".stripAndTrim
     }
 
-    def getTraitSeq = {
-      val classesSeq = classes.map(getSClassSeq)
-      val proxyBTSeq = optBaseType.opt(bt =>
+    def getTraitStd = {
+      val classesStd = classes.map(getSClassStd)
+      val proxyBTStd = optBaseType.opt(bt =>
         s"""
          |  // override proxy if we deal with TypeWrapper
          |  //override def proxy$baseTypeName${typesWithElems}(p: Rep[$baseTypeUse]): $typeUse =
-         |  //  proxyOpsEx[$baseTypeUse, $typeUse, Seq${e.name}Impl${e.tpeArgsUse}](p, bt => Seq${e.name}Impl(bt))
+         |  //  proxyOpsEx[$baseTypeUse, $typeUse, Std${e.name}Impl${e.tpeArgsUse}](p, bt => Std${e.name}Impl(bt))
          |""".stripAndTrim
       )
-      val baseTypeToWrapperConvertionSeq = optBaseType.opt(bt =>
+      val baseTypeToWrapperConvertionStd = optBaseType.opt(bt =>
         s"""
          |  implicit def wrap${baseTypeName}To${e.name}${typesWithElems}(v: $baseTypeUse): $typeUse = ${e.name}Impl(v)
          |""".stripAndTrim
       )
 
       val companionMethods = getCompanionMethods.opt { case (constrs, methods) =>
-        filterByExplicitDeclaration(constrs).rep(md => externalSeqConstructor(md), "\n") +
-        filterByExplicitDeclaration(methods).filter(_.body.isEmpty).rep(md => externalSeqMethod(md, false), "\n")
+        filterByExplicitDeclaration(constrs).rep(md => externalStdConstructor(md), "\n") +
+        filterByExplicitDeclaration(methods).filter(_.body.isEmpty).rep(md => externalStdMethod(md, false), "\n")
       }
 
       s"""
-       |// Seq -----------------------------------
-       |trait ${module.name}Seq extends ${config.seqContextTrait.opt(t => s"$t with ")}${module.name}Dsl {
-       |  ${selfTypeString("Seq")}
+       |// Std -----------------------------------
+       |trait ${module.name}Std extends ${config.seqContextTrait.opt(t => s"$t with ")}${module.name}Dsl {
+       |  ${selfTypeString("Std")}
        |  lazy val ${e.name}: Rep[$companionAbsName] = new $companionAbsName {
        |    $companionMethods
        |  }
        |
-       |$proxyBTSeq
+       |$proxyBTStd
        |
-       |${classesSeq.mkString("\n\n")}
+       |${classesStd.mkString("\n\n")}
        |
-       |$baseTypeToWrapperConvertionSeq
+       |$baseTypeToWrapperConvertionStd
        |}
        |""".stripAndTrim
     }
@@ -1125,7 +1125,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     def getDslTraits = {
       Seq(
         (module.hasDsl, "", "Abs"),
-        (module.hasDslSeq, "Seq", "Seq"),
+        (module.hasDslStd, "Std", "Std"),
         (module.hasDslExp, "Exp", "Exp")).collect {
         case (hasDslTrait, dslTraitSuffix, traitSuffix) if !hasDslTrait =>
           val DslName = s"${module.name}Dsl"
@@ -1149,7 +1149,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val topLevel = List(
         getFileHeader,
         getTraitAbs,
-        getTraitSeq,
+        getTraitStd,
         getTraitExp,
         emitModuleSerialization,
         "}", // closing brace for `package impl {`

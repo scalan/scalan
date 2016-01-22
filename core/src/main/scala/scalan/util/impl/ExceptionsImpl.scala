@@ -168,9 +168,9 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
   registerModule(Exceptions_Module)
 }
 
-// Seq -----------------------------------
-trait ExceptionsSeq extends scalan.ScalanSeq with ExceptionsDsl {
-  self: ExceptionsDslSeq =>
+// Std -----------------------------------
+trait ExceptionsStd extends scalan.ScalanStd with ExceptionsDsl {
+  self: ExceptionsDslStd =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs {
     override def apply(msg: Rep[String]): Rep[SThrowable] =
       SThrowableImpl(new Throwable(msg))
@@ -178,11 +178,11 @@ trait ExceptionsSeq extends scalan.ScalanSeq with ExceptionsDsl {
 
   // override proxy if we deal with TypeWrapper
   //override def proxyThrowable(p: Rep[Throwable]): SThrowable =
-  //  proxyOpsEx[Throwable, SThrowable, SeqSThrowableImpl](p, bt => SeqSThrowableImpl(bt))
+  //  proxyOpsEx[Throwable, SThrowable, StdSThrowableImpl](p, bt => StdSThrowableImpl(bt))
 
-  case class SeqSThrowableImpl
+  case class StdSThrowableImpl
       (override val wrappedValue: Rep[Throwable])
-    extends SThrowableImpl(wrappedValue) with SeqSThrowable {
+    extends SThrowableImpl(wrappedValue) with StdSThrowable {
     override def getMessage: Rep[String] =
       wrappedValue.getMessage
 
@@ -192,7 +192,7 @@ trait ExceptionsSeq extends scalan.ScalanSeq with ExceptionsDsl {
 
   def mkSThrowableImpl
     (wrappedValue: Rep[Throwable]): Rep[SThrowableImpl] =
-    new SeqSThrowableImpl(wrappedValue)
+    new StdSThrowableImpl(wrappedValue)
   def unmkSThrowableImpl(p: Rep[SThrowable]) = p match {
     case p: SThrowableImpl @unchecked =>
       Some((p.wrappedValue))
@@ -269,7 +269,7 @@ trait ExceptionsExp extends scalan.ScalanExp with ExceptionsDsl {
 }
 
 object Exceptions_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVVO2wcRRj+7+z4fA/ixFEk4ibGuvASuXPSpHCBrPMFIV1sK2sFdESgub3xecLszHhnztlLkSJFCugQLVIi0SC5QVR0NEiIggohJGqqAEIpSBXEP7OPW1usEgq2GM3jn//xfd8/e/g7nNAhvKx9woloBdSQlufm69o0va4wzEyuyeGY0w26+6L85sGlL5a+LsNCH+b2iN7QvA/VeNKNVDb36H4PqkT4VBsZagMv9VyEti85p75hUrRZEIwNGXDa7jFt1nowO5DDyT7chVIPTvlS+CE11OtwojXVyf48tRmxbF1168mWmsYQbVtFO1fFTkiYwfQxxqnY/jpV3kRIMQkMnExS21I2LbSpsEDJ0KQhKuhuTw7T5awguAGLvVvkgLQxxKjtmZCJEd6sK+J/SEZ0E02s+SwmrCnf3Zkot57pQU3TfQTo7UBxtxMpAEAGLrskWlN8Whk+LYtP06MhI5zdIfZwO5TRBOKvNAMQKXTxxjNcpB5oVwybH93033vi1YOyvRzZVCquwjl0dL5ADY4KxPG765/ox289vFKGWh9qTK8PtAmJb/KUJ2jViRDSuJwzAEk4QrZWithyUdbR5pgkqr4MFBHoKYGygTxx5jNjje1eI2GnAPqKUTQ1LUWqlNW7XFCv002HcL796NzFC7913y1D+WiIKrr0UPhh6tRAzdvZC+Vti7pD1Q7VBODiUFnRrzz6Y/jtKtwsZ1Alnp+PHXRxQv/8U/3H194sw3zfafkqJ6M+oqW7nAZbYUcK04d5eUDD+KRyQLid/StblSHdJWNuEgzzxc9g8QaWC7tOUYvMmlN4KQWgHot0UwravLrd/Mv7/tNDq8EQGvFJ3IZ/sytPfzm5a5w8DTRuh0QpOrxB+Dju/QUDM9jFCSrJTrUI+oQAOyw540W3xuafspW25FLu7jNBT5+WL+/fP/vn5x+ccS0xP2AmIKq5+h8aItXv/yh4OApW3Vq+43CNs5uzw/n0uFjH1dxzsZidWXJrMYWeDOjplcfs/YcfG6fjUnT0wdwa3MIXas35Oef8NI8l1+hGnbT61fyRHZafLyFHJornzLSSTh7RmGhlx9PHibfjhaObqJZaN/Kp0yc+YPVEEmPDuAt9ERFYKdCJlzCDUrn75LPN13/46lf3mNQsx9gLIvvdTAmNjqn7hWl0/IPkkjUwa5nPkni1MIl9K3IaYDinwHtw43Dj8oPAkbRAo1hd13L/u8jBU/kHnJbXHycIAAA="
+  val dump = "H4sIAAAAAAAAALVVPWwcRRSeu3N8vh/ixBFF0sRYFwKI3Fk0QXKBrMsFIV1sK2sBOiLQ3O74PGF2Zth55+xRpEwBHaKliIRAgjQoEjS0SIiCCiEkKgqqAEIRIhWIN7M/t7ZYJRRsMZqfN+/n+743e+dXcsxE5EnjU0FlN2RAu56bbxroeAMJHGZXVDAV7BLb++nj5++u1b74skqWR2Rxn5pLRoxII5kMYp3PPQiGpEGlzwyoyAB5Yugi9HwlBPOBK9njYTgFOhasN+QGNoZkYayC2VvkJqkMyQlfST9iwLy+oMYwk+4vMZsRz9cNt55t63kM2bNV9ApV7EaUA6aPMU4k9leZ9mZSyVkI5Hia2ra2aaFNnYdaRZCFqKO7fRVkywVJcYOsDK/TA9rDEJOeBxGXE7zZ0tR/k07YFppY8wVM2DCxtzvTbl0bkqaBAAF6KdTC7cSaEIIMPOeS6M7x6eb4dC0+HY9FnAr+NrWHO5GKZyT5KjVCYo0unn2Ii8wDG8ig8841/7UHXius2suxTaXuKlxER2dL1OCoQBy/vvqeuf/i7YtV0hyRJjebYwMR9aFIeYpWi0qpwOWcA0ijCbK1VsaWi7KJNkck0fBVqKlETymUbeRJcJ+DNbZ77ZSdEujroFlmWol1Ja93taRep5s+FWLn3ukL534ZvFol1cMhGujSQ+FHmVMgTW93P1I3LOoOVTs0UoDLQ+VFn7/3W/DVOrlWzaFKPT8aO+jimPnh+9Z3T79QJUsjp+XLgk5GiJYZCBZuR30lYUSW1AGLkpP6ARV29q9s1QO2R6cCUgyLxdeweCCrpV2nmUVmwym8kgHQSkS6pSTrXN7p/Ol98/4dq8GItJOTpA3/5hf/+vH4Hjh5AmnfiKjWLHiZimnS+8tAatjFKSrpTqMM+pQAO5xxxitujc0/ZytryTOFuw8FPXtaPrt16/HfP3zjlGuJpTGHkOrO+n9oiEy//6PgyWGwWtbyFYdrkt2iHc5mx+U6bhSei5X8zJLbTCj0VMhOrt3nr99+F5yOK/HhB3N7fB1fqA3n57Tz0zmSXHsQ97Pq14tHdlh9tIQcmSieU/NK+kVEE6K1HU8eJd6O5w5volqag9hnTp/4gLVSSUyBCxf6AiKwVqITL2UGpXLzwQdbz3x792f3mDQtx9gLMv/dzAmNj6j7sXl0/IMUkgWyYJnPk3iqLAkIrMhZiOGcAj+afrL1x/nPP3UkLbM4UdeVwv8udvDU/wGXHp8OJwgAAA=="
 }
 }
 

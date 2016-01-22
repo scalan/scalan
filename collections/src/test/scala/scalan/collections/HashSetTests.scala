@@ -47,7 +47,7 @@ class HashSetTests extends BaseCtxTests {
   }
 
   test("simpleHashsetSeq") {
-    val ctx = new ScalanDslStd with HashSetSimple with HashSetsDslSeq {
+    val ctx = new ScalanDslStd with HashSetSimple with HashSetsDslStd {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
 

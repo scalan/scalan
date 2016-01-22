@@ -9,7 +9,7 @@ import scalan.staged.BaseExp
 
 trait ArrayViews extends ArrayOps with Views { self: Scalan => }
 
-trait ArrayViewsSeq extends ArrayViews with ArrayOpsSeq with ViewsDslSeq { self: ScalanSeq => }
+trait ArrayViewsStd extends ArrayViews with ArrayOpsStd with ViewsDslStd { self: ScalanStd => }
 
 trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsDslExp with BaseExp { self: ScalanExp =>
   

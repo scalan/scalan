@@ -100,7 +100,7 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
                            (ret: Rep[CoproductImpl[F,G,T]] => Rep[R]): Rep[R]
 }
 
-trait CoproductsDslSeq extends ScalanDslStd with impl.CoproductsSeq { self: MonadsDslSeq =>
+trait CoproductsDslStd extends ScalanDslStd with impl.CoproductsStd { self: MonadsDslStd =>
   def matchCoproduct[F[_], G[_], T, R](ft: RCoproduct[F,G,T])
                                       (ret: Rep[CoproductImpl[F,G,T]] => Rep[R]): Rep[R] =
     ft match {

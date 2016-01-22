@@ -31,7 +31,7 @@ trait Metadata { self: Scalan =>
   }
 }
 
-trait MetadataSeq extends Metadata { self: ScalanSeq =>
+trait MetadataStd extends Metadata { self: ScalanStd =>
   def setMetadata[A, B](target: Rep[A], key: MetaKey[B])(value: B): Rep[A] = target
 }
 

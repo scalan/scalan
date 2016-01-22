@@ -423,11 +423,11 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
 
 }
 
-trait StructsDslSeq extends StructsDsl with StructItemsDslSeq with StructKeysDslSeq { self: StructsDslSeq with ScalanSeq =>
+trait StructsDslStd extends StructsDsl with StructItemsDslStd with StructKeysDslStd { self: StructsDslStd with ScalanStd =>
 
   case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[StructField]) extends Struct {
     override def equals(other: Any) = other match {
-      case ss: StructsDslSeq#StructSeq[_] =>
+      case ss: StructsDslStd#StructSeq[_] =>
         tag == ss.tag && fields.sameElements(ss.fields)
       case _ => false
     }

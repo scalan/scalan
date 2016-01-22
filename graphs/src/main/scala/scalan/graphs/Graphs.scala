@@ -1,8 +1,8 @@
 package scalan.graphs
 
 import scalan._
-import scalan.collections.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
-import scalan.{ScalanSeq, ScalanExp, Scalan}
+import scalan.collections.{CollectionsDslExp, CollectionsDslStd, CollectionsDsl}
+import scalan.{ScalanStd, ScalanExp, Scalan}
 import scalan.common.OverloadHack.Overloaded1
 
 
@@ -201,11 +201,11 @@ trait GraphsDsl extends CollectionsDsl
   with VerticesDsl
   with FrontsDsl
 
-trait GraphsDslSeq extends CollectionsDslSeq
-  with impl.GraphsSeq
-  with EdgesDslSeq
-  with VerticesDslSeq
-  with FrontsDslSeq
+trait GraphsDslStd extends CollectionsDslStd
+                           with impl.GraphsStd
+                           with EdgesDslStd
+                           with VerticesDslStd
+                           with FrontsDslStd
 
 trait GraphsDslExp extends CollectionsDslExp
   with impl.GraphsExp

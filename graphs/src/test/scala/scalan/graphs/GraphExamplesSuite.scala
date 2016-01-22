@@ -42,7 +42,7 @@ class GraphExamplesSuite extends BaseShouldTests{
 
 
   /*"when mixing trait" should "be constructed in Seq context" in {
-    val ctx = new ScalanDslSeq with GraphsDslSeq with GraphExamples {}
+    val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
   }
 
   it should "be constructed in Staged context" in {
@@ -51,7 +51,7 @@ class GraphExamplesSuite extends BaseShouldTests{
   */
 
   "in seq context1" should "execute functions" in {
-    val ctx = new ScalanDslStd with GraphsDslSeq with GraphExamples {}
+    val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
     val in1 = ctx.NestedCollectionFlat.fromJuggedArray(Array(Array(1,2), Array(3,4), Array(5,6)))(ctx.IntElement)
     val in2 = ctx.NestedCollectionFlat.fromJuggedArray(Array(Array(1.0,2.0), Array(3.0,4.0), Array(5.0,6.0)))(ctx.DoubleElement)
     val res = ctx.fromAndToAdj((in1,in2))
@@ -59,7 +59,7 @@ class GraphExamplesSuite extends BaseShouldTests{
     res should be(in1.length)
   }
   "in seq context2" should "execute functions" in {
-    val ctx = new ScalanDslStd with GraphsDslSeq with GraphExamples {}
+    val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
     val in1 = ctx.Collection.fromArray(Array(1.0,2.0, 3.0,4.0, 5.0,6.0))(ctx.DoubleElement)
     val in2 = 2
     val res = ctx.fromAndToInc((in1,in2))
@@ -68,7 +68,7 @@ class GraphExamplesSuite extends BaseShouldTests{
   }
 
   "in seq context3" should "execute functions" in {
-    val ctx = new ScalanDslStd with GraphsDslSeq with GraphExamples {}
+    val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
 
     val in1 = ctx.NestedCollectionFlat.fromJuggedArray(graph)(ctx.IntElement)
     val in2 = ctx.NestedCollectionFlat.fromJuggedArray(graphValues)(ctx.DoubleElement)
@@ -78,7 +78,7 @@ class GraphExamplesSuite extends BaseShouldTests{
   }
 
   "in seq context4" should "execute functions" in {
-    val ctx = new ScalanDslStd with GraphsDslSeq with GraphExamples {}
+    val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
 
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>
@@ -96,7 +96,7 @@ class GraphExamplesSuite extends BaseShouldTests{
   }
 
   "in seq context5" should "execute functions" in {
-    val ctx = new ScalanDslStd with GraphsDslSeq with GraphExamples {}
+    val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
 
     val in1 = ctx.NestedCollectionFlat.fromJuggedArray(graph)(ctx.IntElement)
     val in2 = ctx.NestedCollectionFlat.fromJuggedArray(graphValues)(ctx.DoubleElement)
@@ -107,7 +107,7 @@ class GraphExamplesSuite extends BaseShouldTests{
   }
 
   "in seq context6" should "execute functions" in {
-    val ctx = new ScalanDslStd with GraphsDslSeq with GraphExamples {}
+    val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
 
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>
@@ -123,7 +123,7 @@ class GraphExamplesSuite extends BaseShouldTests{
     //res should be(in1.length)
   }
   "in seq context7" should "execute functions" in {
-    val ctx = new ScalanDslStd with GraphsDslSeq with GraphExamples {}
+    val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
 
     val in1 = ctx.NestedCollectionFlat.fromJuggedArray(graph)(ctx.IntElement)
     val in2 = ctx.NestedCollectionFlat.fromJuggedArray(graphValues)(ctx.DoubleElement)
@@ -132,7 +132,7 @@ class GraphExamplesSuite extends BaseShouldTests{
     //res should be(in1.length)
   }
   "in seq context8" should "execute functions" in {
-    val ctx = new ScalanDslStd with GraphsDslSeq with GraphExamples {}
+    val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
 
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>
@@ -150,7 +150,7 @@ class GraphExamplesSuite extends BaseShouldTests{
   }
 
   "in seq context9" should "execute functions" in {
-    val ctx = new ScalanDslStd with GraphsDslSeq with GraphExamples {}
+    val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
 
     val in1 = ctx.NestedCollectionFlat.fromJuggedArray(graph)(ctx.IntElement)
     val in2 = ctx.NestedCollectionFlat.fromJuggedArray(graphValues)(ctx.DoubleElement)
@@ -161,7 +161,7 @@ class GraphExamplesSuite extends BaseShouldTests{
   }
 
   "in seq context10" should "execute functions" in {
-    val ctx = new ScalanDslStd with GraphsDslSeq with GraphExamples {}
+    val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
 
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>

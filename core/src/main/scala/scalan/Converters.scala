@@ -141,7 +141,7 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
   }
 }
 
-trait ConvertersDslSeq extends impl.ConvertersSeq { self: ScalanSeq =>
+trait ConvertersDslStd extends impl.ConvertersStd { self: ScalanStd =>
   def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Def[_]], conv: Rep[From => To]): Rep[To] = conv(x.asRep[From])
 }
 

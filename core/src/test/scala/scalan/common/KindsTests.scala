@@ -7,7 +7,7 @@ class KindsTests extends BaseCtxTests {
 
   class ConvProgStaged extends TestContext with KindsExamples with KindsDslExp {
   }
-  class ConvProgSeq extends ScalanDslStd with KindsExamples with KindsDslSeq {
+  class ConvProgStd extends ScalanDslStd with KindsExamples with KindsDslStd {
   }
 
   test("simple kinds tests") {

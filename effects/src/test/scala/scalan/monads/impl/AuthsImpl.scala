@@ -232,34 +232,34 @@ trait AuthenticationsAbs extends scalan.ScalanDsl with Authentications {
   registerModule(Authentications_Module)
 }
 
-// Seq -----------------------------------
-trait AuthenticationsSeq extends scalan.ScalanDslStd with AuthenticationsDsl {
-  self: AuthenticationsDslSeq =>
+// Std -----------------------------------
+trait AuthenticationsStd extends scalan.ScalanDslStd with AuthenticationsDsl {
+  self: AuthenticationsDslStd =>
   lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }
 
-  case class SeqLogin
+  case class StdLogin
       (override val user: Rep[String], override val password: Rep[String])
     extends AbsLogin(user, password) {
   }
 
   def mkLogin
     (user: Rep[String], password: Rep[String]): Rep[Login] =
-    new SeqLogin(user, password)
+    new StdLogin(user, password)
   def unmkLogin(p: Rep[Auth[SOption[String]]]) = p match {
     case p: Login @unchecked =>
       Some((p.user, p.password))
     case _ => None
   }
 
-  case class SeqHasPermission
+  case class StdHasPermission
       (override val user: Rep[String], override val password: Rep[String])
     extends AbsHasPermission(user, password) {
   }
 
   def mkHasPermission
     (user: Rep[String], password: Rep[String]): Rep[HasPermission] =
-    new SeqHasPermission(user, password)
+    new StdHasPermission(user, password)
   def unmkHasPermission(p: Rep[Auth[Boolean]]) = p match {
     case p: HasPermission @unchecked =>
       Some((p.user, p.password))
@@ -366,7 +366,7 @@ trait AuthenticationsExp extends scalan.ScalanDslExp with AuthenticationsDsl {
 }
 
 object Authentications_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAL1WS2wbRRieteP4lTYlQIBKFakxIFCxCxLqIYfKTV0eMomVLQiZCjRej50pszObmXFYc+ixB7ghrkhU4oLUC+KEkCokhIQ4cEIIiTOnUlT1QE8g/pl9+NE4DQfwYbQz+8//+L7v/73Xb6Gckugp5WGGec0nGtdc+9xQuuo2uaZ69JroDRk5T/qPim8+ff7z419l0HIHLe5gdV6xDipGD80wSJ9dsttCRcw9orSQSqOTLRuh7gnGiKep4HXq+0ONu4zUW1Tp9RZa6IreaBddQU4LHfME9yTRxN1gWCmi4vMCMRnRdF+0+9FWMI7B66aK+kQVFyWmGtKHGMci+20SuCMu+MjX6Gic2lZg0gKbPPUDIXUSIg/udkQv2S5wDAdopXUZ7+E6hBjUXS0pH8DNcoC9d/GAbIKJMV+AhBVh/YujwO6zLVRSZBcAesUPmD0JA4QQMPCCTaI2xqeW4lMz+FRdIilm9H1sXralCEco+jlZhMIAXJy6j4vEA2nyXvWDS95bd92ynzGXQ5NK3la4CI4en6MGSwXg+P32R+rOS9fOZFCpg0pUNbpKS+zpScpjtMqYc6FtzimAWA6Arco8tmyUBtjMSKLoCT/AHDzFUC4BT4x6VBtjc7YUszMH+rwOSGLqhIGT1rs2p16rmw3MWPvmY889+XvzzQzKTIcogksXhC8TpxotNIZ6J3Zt1mWN8m6krTTgE/MCBqQtqQ8C3yMvfvv167dvbOZszJUe6eMh029gNiSR3OIMxtmY4JlKRaPFsUExnF3zB9SbIv/0zT96351GlzIpX3F5h5MIuMipX34u//TM2QwqdGxDXWB40AHKVJMRf0tuCK47qCD2iIze5PcwM0/7SiYflx8TOclAFhjQaG1u6wfE0LNu28xJAChHnbIpOKleaFf/dH/4+LppBImWojcRX3/TM3/9erSvbY8As0NFZMJpFkZIhIZZHokAtgcn0khmAT4KAWDynpC9A+9OU1SK8nCFTx6o3KFvX/tQWzKccHr0bHUvQ6+v23snD+AlGYFfXL368O3P3nnQtm6hS7WPg+rpf9G4SZ/9h42JUvCikXR8vLeIBmZmiwHlG5NxK7MXNMpZq5mXZWe6OWf7dRXu9TFToKr8OSEYwfxegmyUiUv3cP7/acWsp+xaPwRwqy9j1SbSp0oBbvcD8MiU9dhoooLFOPQ0qFmQ2sEww5HTmHA2B+OZig5f6BETb5/6kgltT9JxdmL+QAZhrm63HmK3zt7IoNyrIA6YUqqFcl0x5L1E8fC5okmozyVnzrTiQeFYYj9VuP2toXFac9FoT6MOhssmffMZ40XdCbUm2QuOeyoGSkJ5+xflxt0HHF25+8nmsz9++Zv9kymZPoaRyNNPn8k/l2nuVmaSgE+aifQBY9PiNvV/ANYxCxdiCgAA"
+  val dump = "H4sIAAAAAAAAAL1WO4wbRRge2+dbPy655IBDIEVcjAEFBTtCQkG6InIuDg+ZO+s2IGQi0Hh37JswO7PMjA+bImUK6BAtRSQkmjQoBQUoDUJCFFQIIVFRUIWgKAWpQPwz+/Aj58tRJC5GO7P//I/v+/7fe+0WyiuJnlUeZpjXAqJxzbXPDaWrbpNrqkdvCH/AyDnS+/3Ll69Xcl9/m0XLHbS4g9U5xTqoGD00h2H67Gq/hYqYe0RpIZVGx1s2Qt0TjBFPU8HrNAgGGncZqbeo0usttNAV/ugDdBllWuiIJ7gniSbuBsNKERWfF4jJiKb7ot2PtsJxDF43VdQnqrggMdWQPsQ4Etlvk9AdccFHgUaH49S2QpMW2Dg0CIXUSQgH3O0IP9kucAwHaKV1Ce/iOoTo110tKe/DzXKIvfdxn2yCiTFfgIQVYb0Lo9Ducy1UUtoHgF4LQmZPhiFCCBh40SZRG+NTS/GpGXyqLpEUM/oRNi/bUgxHKPplcggNQ3Bx8j4uEg+kyf3qxxe9d+665SBrLg9NKo6tcBEcPTVHDZYKwPGH7U/VnVeuns6iUgeVqGp0lZbY05OUx2iVMedC25xTALHsA1uVeWzZKA2wmZFE0RNBiDl4iqFcAp4Y9ag2xuZsKWZnDvSODklimhmGmbTetTn1Wt1sYMbaN5944Zk/m29nUXY6RBFcuiB8mTjVaKEx0Duxa7Mua+S4kbbSgE/PCxiStqQBCHyXvPTdN2/evrGZtzFXfNLDA6bfwmxAIrnFGYyzMcGzlYpGi2OD4nB2dfapN0X+uZt/+d+fQhezKV9xeQeTCLjIq19/Kf984kwWFTq2oc4z3O8AZarJSLAlNwTXHVQQu0RGb5xdzMzTnpJx4vJjIicZyAEDGq3Nbf2QGHrWbZtlEgDKUadsCk6q59vVv90fP7tmGkGipehNxNe/9PQ/vx3uadsjwOxAEZlwmoMREqFhlscjgO3BsTSSWYCPQgiYfCikv+/daYpKUR6uCMjRyh367tVPtCUjM5wePVvdS9Dr6/be8X14SUbgV1euPHb7i/cesa1b6FId4LB66n80btJnD7AxUQpeNJKeHO8toqGZ2aJP+cZk3MrsBY3y1mrmZTkz3Zyz/boK93qYKVCVc1YIRjC/lyAbZeLSPZw/PK2Y9aRd6wcAbvVVrNpEBlQpwO1+AB6ash4bTVSwGIeeBjUHUtsfZjjKNCaczcF4pqKDF3rIxNujvmRC25N0nB2bP5BBmKvbrUfZrTM3sij/OogDppRqoXxXDLifKB4+VzQZ6rPJWWZa8aBwLHGQKtz+1tA4rblotKdRB8Nlk775jPGi7oRak+wFx76KgZJQ3t5FuXH3AUeX736++fxP1/+wfzIl08cwEnn66TP55zLN3cpMEvBJM5E+YGxa3Kb+H2YUz6RiCgAA"
 }
 }
 

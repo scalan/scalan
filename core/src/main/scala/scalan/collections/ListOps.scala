@@ -3,7 +3,7 @@ package scalan.collections
 import scala.reflect.ClassTag
 import scalan.common.OverloadHack.Overloaded1
 import scalan.staged.BaseExp
-import scalan.{Scalan, ScalanExp, ScalanSeq}
+import scalan.{Scalan, ScalanExp, ScalanStd}
 import scala.reflect.runtime.universe._
 
 trait ListOps { self: Scalan =>
@@ -139,7 +139,7 @@ trait ListOps { self: Scalan =>
 //  def list_updateMany[T](xs: Lst[T], indexes: Lst[Int], values: Lst[T]): Lst[T] = ???
 }
 
-trait ListOpsSeq extends ListOps { self: ScalanSeq =>
+trait ListOpsStd extends ListOps { self: ScalanStd =>
 
   def list_head[T](xs: Lst[T]): Rep[T] = xs.head
   def list_tail[T: Elem](xs: Lst[T]): Lst[T] = xs.tail

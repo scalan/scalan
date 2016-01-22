@@ -232,34 +232,34 @@ trait StructKeysAbs extends StructKeys {
   registerModule(StructKeys_Module)
 }
 
-// Seq -----------------------------------
-trait StructKeysSeq extends StructKeysDsl {
-  self: StructsDsl with ScalanSeq =>
+// Std -----------------------------------
+trait StructKeysStd extends StructKeysDsl {
+  self: StructsDsl with ScalanStd =>
   lazy val StructKey: Rep[StructKeyCompanionAbs] = new StructKeyCompanionAbs {
   }
 
-  case class SeqIndexStructKey[Schema <: Struct]
+  case class StdIndexStructKey[Schema <: Struct]
       (override val index: Rep[Int])(implicit eSchema: Elem[Schema])
     extends AbsIndexStructKey[Schema](index) {
   }
 
   def mkIndexStructKey[Schema <: Struct]
     (index: Rep[Int])(implicit eSchema: Elem[Schema]): Rep[IndexStructKey[Schema]] =
-    new SeqIndexStructKey[Schema](index)
+    new StdIndexStructKey[Schema](index)
   def unmkIndexStructKey[Schema <: Struct](p: Rep[StructKey[Schema]]) = p match {
     case p: IndexStructKey[Schema] @unchecked =>
       Some((p.index))
     case _ => None
   }
 
-  case class SeqNameStructKey[Schema <: Struct]
+  case class StdNameStructKey[Schema <: Struct]
       (override val name: Rep[String])(implicit eSchema: Elem[Schema])
     extends AbsNameStructKey[Schema](name) {
   }
 
   def mkNameStructKey[Schema <: Struct]
     (name: Rep[String])(implicit eSchema: Elem[Schema]): Rep[NameStructKey[Schema]] =
-    new SeqNameStructKey[Schema](name)
+    new StdNameStructKey[Schema](name)
   def unmkNameStructKey[Schema <: Struct](p: Rep[StructKey[Schema]]) = p match {
     case p: NameStructKey[Schema] @unchecked =>
       Some((p.name))
@@ -361,7 +361,7 @@ trait StructKeysExp extends StructKeysDsl {
 }
 
 object StructKeys_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAL1WTWwbRRR+u46zsR36B0UFURGMSwUCOwWhHnKoQuqiwJJE2VIhNwKN12Nny+zsZmccrTn02APcEFckKnFB6gVxQkgVEkJCHDghhMSZUymqeqAnEG9m/+w2Li1/Pox2Zmffe9/PvPGV61AWETwlXMIIb/pUkqajn5eFbDhtLj05ei3oDRk9TftHgi8/OvHJo5+bsL8Ds9tEnBasA5XkoR2H+bNDd2yoEO5SIYNISHjC1hlabsAYdaUX8Jbn+0NJuoy2bE/IJRtmukFvtAMXwbDhgBtwN6KSOiuMCEFFuj5HVUVePq/o+Wg9LHLwlkLRGkNxNiKexPIxx4Fk/yYNnREP+MiXsC8tbT1UZeEey/PDIJJZCgvDbQe9bDrDCS7AIfsC2SUtTDFoOTLy+AC/rIXEfZsM6BpuUdtnsGBBWf/sKNTzkg1VQXeQoFU/ZHolDgEAFXheF9Es+Gnm/DQVPw2HRh5h3jtEvdyIgngEyc8oAcQhhnj2L0JkEWib9xrvbrnnbzk131Qfx6oUSyOcxUCPT3GDlgJ5/GbzfXHz5csnTah2oOqJ5a6QEXHluOQpWzXCeSB1zTmBJBqgWvVpauksy7jnNktU3MAPCcdIKZXzqBPzXE+qzWptPlVnCvWWDGm21YhDI8e7MAWv9s0KYWzj2iPPHful/YYJ5mSKCoZ00PhRFlRCBd0wdOWrdJTGV+N+CbOOu019oplWQyUuRusuReR0HL/2a+/rRdgycxLTnPemG4Yoix9/qH3/9CkT5jra5WcYGXSQR9Fm1F+PVgIuOzAX7NIoeWPtEqae9tTR6tE+GTKZsjtOSwlpkbAw9TyGVHG2pL1vZATUEvuuBZw2zmw0fnO+/eCKcmcE88mb5ID+4Z38/ad9famNK6Hs8R6NM5JLeLBzOp6cJmtINyLPxzayS1/86ovXb1xdK2tlD6WIzhE2pMmhTgEV4FROYxEzrXJ5h4xqOKrzHx4T/4iRodTvJVg08UJW9Yyi/97cgu1qVQHOTVakVJCPToeM+j+8aT/Erp+6akL5FSj3UVhhQ7kbDHkvO1LYdiWN5UvZmjEpLB4hEhE/c17SgBZU/6omGjmBTw/Wb3pvXn5PaqMa8WSvXO9ewOa0pOE8VqDVcHK01l4E6M01Y5Knv3fa7lAIblNIY97DVGqsSzDr9aTo1CH/uwkeUDfMnh5Q44lcFzV74b5YHuP6bi0lu1I/vXTp8I2P33pQXwVzXU/6JGws3sdFkPXt/7DRwySrJSz7n5towkoFpVqKiVvg3xdHjVs67PjuagFCwsFUtjDrcyLNFkF9iqJOyiGyc/HWh2vPfPfZz7opVpUa2JN5/odovBlOEpbWoP4BFuwkRKo8Y0jQ70o0jeJPqmOzroQKAAA="
+  val dump = "H4sIAAAAAAAAAL1WPYwbRRR+a5/PZ/vIHwSBRMRhDAgE9gFCQboiOi4OOjB3p9uAkDmBxrtj34bZ2WXn+bSmSJkCOkRLEQmJJg1KQQFKg5AQBRVCSFQUVCEoSkEqEG9mf2wn55Dw52K0Mzv73vt+5o0vXIGSiuBR5TDBZNPnyJq2eV5V2LDbEj0cvRK4Q8FP8v5Pnzx/sV787IsCHOzC/C5TJ5XoQiV5aMdh/myj24EKkw5XGEQK4aGOydByAiG4g14gW57vD5H1BG91PIUrHZjrBe7oHTgLVgcOOYF0Io7cXhNMKa7S9QWuK/LyecXMR5vhOIdsaRStCRSnI+YhlU85DiX7t3loj2QgRz7CgbS0zVCXRXvKnh8GEWYpyhRuN3Cz6ZxktABHOmfYHmtRikHLxsiTA/qyFjLnbTbgG7RFb5+jghUX/dOj0MyLHagqdImgdT8UZiUOAYAUeMYU0Rzz08z5aWp+GjaPPCa8d5l+uRUF8QiSn1UEiEMK8eRfhMgi8LZ0G+/tOG9ct2t+QX8c61LKBuE8BXpwhhuMFMTj19sfqGsvnj9egGoXqp5a7SmMmIOTkqds1ZiUAZqacwJZNCC16rPUMllWac8Nlqg4gR8ySZFSKhdJJ+E5HurNem0xVWcG9WUMebbVikMrx7s0A6/xzRoTYuvy/U898kv79QIUplNUKKRNxo+yoAgVcsPQwZf5KI2vx4MI87azy31mmNZDJR6P5VsUkdPx2OVf3a+WYaeQk5jmvD3dKERJ/fB97bvHTxRgoWtcfkqwQZd4VG3B/c1oLZDYhYVgj0fJm/IeE/ppXx3LLu+zocCU3UlaikQLwtLM8xhyzdmK8b6VEVBL7LsRSN44tdX4zf7mwwvanREsJm+SA/qHd/z3Hw/00RgXoeRJl8cZyUU62DkdD8+SNeRbkedTG9njz335+atXL22UjLJHUkSvMTHkyaFOAY3B6ZzWMmVal3iTjHo4ZvIfnRD/PitDad4jlHnihazqOU3/7bmF2tW6BpybbJxSQz42GzLpf+925x5x5cSlApReglKfhFUdKPWCoXSzI0VtF3mML2Rr1rSwdIRYxPzMeUkDWtL9q5poZAc+P1y/5r15/n00RrXi6V652TtDzWnFwHlgjNbAydGW9yPAbK5Z0zz9vdN2k0Jwg0IG8z6m0mMdoVCvJ0WnDvnfTXCXvmH29YAen8510bNn74jlCa5v1VKyK/XTc+eOXv34rbvNVbDQ89BnYWP5Di6CrG//h40eplktUtn/3ERTVhpTaqSYugX+fXH0uGPCTu6ujkEgHE5lC7M+p9JsEdRnKGqnHBI7Z69/tPHEtxd/Nk2xqtWgnizzP0STzXCasLQG/Q9wzE5CpM4zgYT8rkUzKP4ETF+5uYQKAAA="
 }
 }
 

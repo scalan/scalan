@@ -1,12 +1,12 @@
 //package scalan.it
 //
-//import scalan.{ScalanDslSeq, ScalanDsl}
+//import scalan.{ScalanDslStd, ScalanDsl}
 //
 ///**
 // * Checks that data serialization/deserialization works correctly
 // */
 //class DataMarshalingTests extends ItTests {
-//  class ProgSeq extends ScalanDslSeq {
+//  class ProgSeq extends ScalanDslStd {
 //    lazy val intRep: Rep[Int] = 1
 //    lazy val intPair: Rep[(Int, Int)] = (1, 2)
 //    lazy val nestedIntPair: Rep[((Int, Int), (Int, Int))] = ((1, 2), (3, 4))

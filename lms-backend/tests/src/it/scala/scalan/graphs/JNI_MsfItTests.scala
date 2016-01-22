@@ -12,7 +12,7 @@ trait JNIMsfProg extends MsfFuncs with JNIExtractorOps {
   lazy val MSF_JNI_adjmatrix = JNI_Wrap(msfFunIncBase)
 }
 
-class JNI_MsfItTests extends BaseCtxItTests[JNIMsfProg](new GraphsDslSeq with JNIExtractorOpsSeq with JNIMsfProg) {
+class JNI_MsfItTests extends BaseCtxItTests[JNIMsfProg](new GraphsDslStd with JNIExtractorOpsStd with JNIMsfProg) {
 
   class ProgExp extends GraphsDslExp with JNIExtractorOpsExp with JNIMsfProg
 

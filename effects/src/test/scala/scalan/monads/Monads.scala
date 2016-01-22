@@ -201,14 +201,14 @@ trait MonadsDsl extends ScalanDsl with Monads
   def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun {i => console_eval(i,v)}
 }
 
-trait MonadsDslSeq extends ScalanDslStd
-  with MonadsDsl
-  with FreesDslSeq
-  with CoproductsDslSeq
-  with ReadersDslSeq
-  with StatesDslSeq
-  with FreeStatesDslSeq
-  with FreeMsDslSeq
+trait MonadsDslStd extends ScalanDslStd
+                           with MonadsDsl
+                           with FreesDslStd
+                           with CoproductsDslStd
+                           with ReadersDslStd
+                           with StatesDslStd
+                           with FreeStatesDslStd
+                           with FreeMsDslStd
 {
 }
 

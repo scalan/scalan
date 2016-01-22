@@ -1084,160 +1084,160 @@ trait ViewsAbs extends Views {
   registerModule(Views_Module)
 }
 
-// Seq -----------------------------------
-trait ViewsSeq extends ViewsDsl {
-  self: ViewsDsl with ScalanSeq =>
+// Std -----------------------------------
+trait ViewsStd extends ViewsDsl {
+  self: ViewsDsl with ScalanStd =>
   lazy val IsoUR: Rep[IsoURCompanionAbs] = new IsoURCompanionAbs {
   }
 
-  case class SeqIdentityIso[A]
+  case class StdIdentityIso[A]
       ()(implicit eA: Elem[A])
     extends AbsIdentityIso[A]() {
   }
 
   def mkIdentityIso[A]
     ()(implicit eA: Elem[A]): Rep[IdentityIso[A]] =
-    new SeqIdentityIso[A]()
+    new StdIdentityIso[A]()
   def unmkIdentityIso[A](p: Rep[IsoUR[A, A]]) = p match {
     case p: IdentityIso[A] @unchecked =>
       Some(())
     case _ => None
   }
 
-  case class SeqPairIso[A1, A2, B1, B2]
+  case class StdPairIso[A1, A2, B1, B2]
       (override val iso1: Iso[A1, B1], override val iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends AbsPairIso[A1, A2, B1, B2](iso1, iso2) {
   }
 
   def mkPairIso[A1, A2, B1, B2]
     (iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairIso[A1, A2, B1, B2]] =
-    new SeqPairIso[A1, A2, B1, B2](iso1, iso2)
+    new StdPairIso[A1, A2, B1, B2](iso1, iso2)
   def unmkPairIso[A1, A2, B1, B2](p: Rep[IsoUR[(A1, A2), (B1, B2)]]) = p match {
     case p: PairIso[A1, A2, B1, B2] @unchecked =>
       Some((p.iso1, p.iso2))
     case _ => None
   }
 
-  case class SeqSumIso[A1, A2, B1, B2]
+  case class StdSumIso[A1, A2, B1, B2]
       (override val iso1: Iso[A1, B1], override val iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends AbsSumIso[A1, A2, B1, B2](iso1, iso2) {
   }
 
   def mkSumIso[A1, A2, B1, B2]
     (iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumIso[A1, A2, B1, B2]] =
-    new SeqSumIso[A1, A2, B1, B2](iso1, iso2)
+    new StdSumIso[A1, A2, B1, B2](iso1, iso2)
   def unmkSumIso[A1, A2, B1, B2](p: Rep[IsoUR[$bar[A1, A2], $bar[B1, B2]]]) = p match {
     case p: SumIso[A1, A2, B1, B2] @unchecked =>
       Some((p.iso1, p.iso2))
     case _ => None
   }
 
-  case class SeqComposeIso[A, B, C]
+  case class StdComposeIso[A, B, C]
       (override val iso2: Iso[B, C], override val iso1: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
     extends AbsComposeIso[A, B, C](iso2, iso1) {
   }
 
   def mkComposeIso[A, B, C]
     (iso2: Iso[B, C], iso1: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeIso[A, B, C]] =
-    new SeqComposeIso[A, B, C](iso2, iso1)
+    new StdComposeIso[A, B, C](iso2, iso1)
   def unmkComposeIso[A, B, C](p: Rep[IsoUR[A, C]]) = p match {
     case p: ComposeIso[A, B, C] @unchecked =>
       Some((p.iso2, p.iso1))
     case _ => None
   }
 
-  case class SeqFuncIso[A, B, C, D]
+  case class StdFuncIso[A, B, C, D]
       (override val iso1: Iso[A, B], override val iso2: Iso[C, D])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D])
     extends AbsFuncIso[A, B, C, D](iso1, iso2) {
   }
 
   def mkFuncIso[A, B, C, D]
     (iso1: Iso[A, B], iso2: Iso[C, D])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]): Rep[FuncIso[A, B, C, D]] =
-    new SeqFuncIso[A, B, C, D](iso1, iso2)
+    new StdFuncIso[A, B, C, D](iso1, iso2)
   def unmkFuncIso[A, B, C, D](p: Rep[IsoUR[A => C, B => D]]) = p match {
     case p: FuncIso[A, B, C, D] @unchecked =>
       Some((p.iso1, p.iso2))
     case _ => None
   }
 
-  case class SeqConverterIso[A, B]
+  case class StdConverterIso[A, B]
       (override val convTo: Conv[A, B], override val convFrom: Conv[B, A])(implicit eA: Elem[A], eB: Elem[B])
     extends AbsConverterIso[A, B](convTo, convFrom) {
   }
 
   def mkConverterIso[A, B]
     (convTo: Conv[A, B], convFrom: Conv[B, A])(implicit eA: Elem[A], eB: Elem[B]): Rep[ConverterIso[A, B]] =
-    new SeqConverterIso[A, B](convTo, convFrom)
+    new StdConverterIso[A, B](convTo, convFrom)
   def unmkConverterIso[A, B](p: Rep[IsoUR[A, B]]) = p match {
     case p: ConverterIso[A, B] @unchecked =>
       Some((p.convTo, p.convFrom))
     case _ => None
   }
 
-  case class SeqArrayIso[A, B]
+  case class StdArrayIso[A, B]
       (override val innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B])
     extends AbsArrayIso[A, B](innerIso) {
   }
 
   def mkArrayIso[A, B]
     (innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ArrayIso[A, B]] =
-    new SeqArrayIso[A, B](innerIso)
+    new StdArrayIso[A, B](innerIso)
   def unmkArrayIso[A, B](p: Rep[Iso1UR[A, B, Array]]) = p match {
     case p: ArrayIso[A, B] @unchecked =>
       Some((p.innerIso))
     case _ => None
   }
 
-  case class SeqListIso[A, B]
+  case class StdListIso[A, B]
       (override val innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B])
     extends AbsListIso[A, B](innerIso) {
   }
 
   def mkListIso[A, B]
     (innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ListIso[A, B]] =
-    new SeqListIso[A, B](innerIso)
+    new StdListIso[A, B](innerIso)
   def unmkListIso[A, B](p: Rep[Iso1UR[A, B, List]]) = p match {
     case p: ListIso[A, B] @unchecked =>
       Some((p.innerIso))
     case _ => None
   }
 
-  case class SeqArrayBufferIso[A, B]
+  case class StdArrayBufferIso[A, B]
       (override val innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B])
     extends AbsArrayBufferIso[A, B](innerIso) {
   }
 
   def mkArrayBufferIso[A, B]
     (innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ArrayBufferIso[A, B]] =
-    new SeqArrayBufferIso[A, B](innerIso)
+    new StdArrayBufferIso[A, B](innerIso)
   def unmkArrayBufferIso[A, B](p: Rep[Iso1UR[A, B, ArrayBuffer]]) = p match {
     case p: ArrayBufferIso[A, B] @unchecked =>
       Some((p.innerIso))
     case _ => None
   }
 
-  case class SeqThunkIso[A, B]
+  case class StdThunkIso[A, B]
       (override val innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B])
     extends AbsThunkIso[A, B](innerIso) {
   }
 
   def mkThunkIso[A, B]
     (innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ThunkIso[A, B]] =
-    new SeqThunkIso[A, B](innerIso)
+    new StdThunkIso[A, B](innerIso)
   def unmkThunkIso[A, B](p: Rep[Iso1UR[A, B, Thunk]]) = p match {
     case p: ThunkIso[A, B] @unchecked =>
       Some((p.innerIso))
     case _ => None
   }
 
-  case class SeqMapIso[K1, V1, K2, V2]
+  case class StdMapIso[K1, V1, K2, V2]
       (override val iso1: Iso[K1, K2], override val iso2: Iso[V1, V2])(implicit eK1: Elem[K1], eV1: Elem[V1], eK2: Elem[K2], eV2: Elem[V2])
     extends AbsMapIso[K1, V1, K2, V2](iso1, iso2) {
   }
 
   def mkMapIso[K1, V1, K2, V2]
     (iso1: Iso[K1, K2], iso2: Iso[V1, V2])(implicit eK1: Elem[K1], eV1: Elem[V1], eK2: Elem[K2], eV2: Elem[V2]): Rep[MapIso[K1, V1, K2, V2]] =
-    new SeqMapIso[K1, V1, K2, V2](iso1, iso2)
+    new StdMapIso[K1, V1, K2, V2](iso1, iso2)
   def unmkMapIso[K1, V1, K2, V2](p: Rep[IsoUR[MMap[K1, V1], MMap[K2, V2]]]) = p match {
     case p: MapIso[K1, V1, K2, V2] @unchecked =>
       Some((p.iso1, p.iso2))
@@ -1860,7 +1860,7 @@ trait ViewsExp extends ViewsDsl {
 }
 
 object Views_Module extends scalan.ModuleInfo {
-  val dump = "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"
+  val dump = "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"
 }
 }
 

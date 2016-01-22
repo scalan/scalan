@@ -151,20 +151,20 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
   registerModule(Readers_Module)
 }
 
-// Seq -----------------------------------
-trait ReadersSeq extends scalan.ScalanDslStd with ReadersDsl {
-  self: MonadsDslSeq =>
+// Std -----------------------------------
+trait ReadersStd extends scalan.ScalanDslStd with ReadersDsl {
+  self: MonadsDslStd =>
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
 
-  case class SeqReaderBase[Env, A]
+  case class StdReaderBase[Env, A]
       (override val run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A])
     extends AbsReaderBase[Env, A](run) {
   }
 
   def mkReaderBase[Env, A]
     (run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]] =
-    new SeqReaderBase[Env, A](run)
+    new StdReaderBase[Env, A](run)
   def unmkReaderBase[Env, A](p: Rep[Reader[Env, A]]) = p match {
     case p: ReaderBase[Env, A] @unchecked =>
       Some((p.run))
@@ -228,9 +228,9 @@ trait ReadersExp extends scalan.ScalanDslExp with ReadersDsl {
 }
 
 object Readers_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWPYwbRRR+67PPZ/vIBY7fRMkdJwMiInagSXFF5Dg+dMi5O92mQCYiGu+OnQ27M3s7Y8umSJkCOkRDgUQkGqQ0iIoG0SAhCqoIIVFRUIUglIJURHkz+3sn74WA2GI0M/vm/Xzf92b31l0oiQBeFhZxCWt4VJKGqectIetmh0lHTi9ye+TSC3TwPP/2s9e/OPZ1AZZ6MH+ViAvC7UElnHQmfjI36V4XKoRZVEgeCAkvdnWEpsVdl1rS4azpeN5Ikr5Lm11HyPUuFPvcnu7BdTC6cNTizAqopGbbJUJQEe0vUJWRk6wrej3d9tMYrKmqaGaquBQQR2L6GONoaL9LfXPKOJt6Eo5EqW37Ki20KTuezwMZhyiju6vcjpdFRnADnupeI2PSxBDDpikDhw3xZM0n1ntkSLfQRJkXMWFB3cGlqa/Xc12oCrqHAG16vqt3Jj4AIANv6CQaKT6NBJ+Gwqdu0sAhrvM+US93Aj6ZQvgYcwATH1289ggXsQfaYXb9g8vWO/fNmldQhycqlbKucB4dreSoQVOBOH6/+5G49+bNswWo9qDqiFZfyIBYMkt5hFaNMMalzjkBkARDZGstjy0dpYU2ByRRsbjnE4aeIigXkSfXsRypjNXeYsRODvRl6dPY1Jj4RlLvak69Wjdt4ro7d144/dLvnbcLUNgfooIuTRR+EDuVML9LiU2DyLkalyTMddg4xRg3jJZeqqEyScfyIdkkuLxy5w/7uzNwuZCgGQX/ZwSii5L4+afa7VfPFWChp+W+4ZJhDwEVHZd620GbM9mDBT6mQfimPCaums0ktGzTARm5MoI5i88c4iNhNbcxfarAW9dNYMQA1EIdb3FG6xs79b/MHz6+pWQawGL4JuzUB87Zv385MpBawQhxMGIJ3NjfCRgn89j16caIWbc3P1leOnHlV83tvM094miBHe9CKcDu1qUcj8B9TCqrYb4m9+iTa/ecd29+KDVpxmT/BbLdv4Ydu67PnTyEv/gi+/LGjWf+/PzKsm7Ahb4jPeLXzzxG+8Xd8j+2FySohEg9l67VsIKULYetcp4I2s4GX8mcyvTRMSMWiTaSUMSbbBzTUFTSzem6kJXZTgq0dYiLGeRKqKZ5ayeJ1E7kSw2ReXa3+7R799w3BSi9BaUBtpNAjfX5iNkx5PjVk3Qiz8d7xn7IEWISEC+BWD+rkGJ2UJ7tWSYzasoUfRoOgIh627/zn264SuZbk5GEXp+KEni0cpbCFGaoJr2Bs9TkYvHv4FLjZmoTGZYjXCQ8EeuAM2KLqLYA1nLkYUaNhEhfv//p1qkfv/pN30ZV1ZJ4C7LkXyQVQ3LbR3BXLupY+GuRyRYlrZpUZ/oQWB0WUOoJAAA="
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+Xtvns33kAsePIEruOBkQEbEjmiBdETmODx1y7k63KSITEY13x86G3dllZmzZFClTQIdoKCgiIdGkQSloEB0SoqCKEBJVCqoQhFKQCpQ3s7938l4IiC1GM7Nv3s/3fW92b92HsuDwqrCIS1jTo5I0TT1vC9kwu0w6cnbBt8cuPU+Hd7986/Z68etvDFjuw8JVIs4Ltw/VcNKdBsnclHYPqoRZVEifCwkv93SEluW7LrWk47OW43ljSQYubfUcITd6UBr49uwDuA6FHhy1fGZxKqnZcYkQVET7i1Rl5CTrql7PdoI0BmupKlqZKi5y4khMH2McDe33aGDOmM9mnoQjUWo7gUoLbSqOF/hcxiEq6O6qb8fLEiO4Ac/0rpEJaWGIUcuU3GEjPFkPiPU+GdFtNFHmJUxYUHd4cRbodbEHNSFtBGjLC1y9Mw0AABl4UyfRTPFpJvg0FT4Nk3KHuM6HRL3c5f50BuFTKAJMA3TxxmNcxB5ol9mNjy5b7z40656hDk9VKhVd4QI6Ws1Rg6YCcfx+7xPx4O2bZwyo9aHmiPZASE4smaU8QqtOGPOlzjkBkPARsrWex5aO0kabA5KoWr4XEIaeIiiXkCfXsRypjNXeUsRODvQVGdDYtDANCkm9azn1at10iOvu3nvx1Cu/dS8ZYOwPUUWXJgqfx04lLOxRYlMeOVfjsoRil01SjHGj0NZLNVSn6Vg5JJsEl9fu/W5/dxouGwmaUfB/RiC6KIuff6rfef2sAYt9LfdNl4z6CKjoutTb4R2fyT4s+hPKwzeVCXHVbC6hFZsOydiVEcxZfIqIj4S13MYMqAJvQzdBIQagHup422e0sbnb+NP84dNbSqYclsI3Yaf+7Zz565cjQ6kVjBDzMUvgxv5OwDiRx25AN8fMurP12cry8St3NbcLtu8RRwvsWA/KHLtbl3IsAvcJqayF+Zq+R59ef+C8d/NjqUkrTPdfIDuDa9ixG/rciUP4iy+yr27ceO6PL66s6AZcHDjSI0Hj9BO0X9wt/2N7QYJKiNQL6VoNq0jZStgq54ignWzw1cypTB+9VIhFoo0klPAmm8Q0lJR0c7ouZGW+E4O2D3Exh1wJtTRv7SSR2vF8qSEyz+/1nnXvn/3WgPI7UB5iOwnU2MAfMzuGHL96kk7luXivsB9yhJhw4iUQ62cNUswOyrMzz2ROTZmiT8EBEFFv+3f+0w1XzXxrMpLQ65NRAo9XznKYwhzVpDdwlppcLP4dXGrcSm0iw0qEi4SnYh34jNgiqo3Deo48zKiREOnrDz/fPvnj7V/1bVRTLYm3IEv+RVIxJLd9BHf1go6FvxaZbFHSqkl1po8A2bMKf+oJAAA="
 }
 }
 
-trait ReadersDslSeq extends impl.ReadersSeq {self: MonadsDslSeq =>}
+trait ReadersDslStd extends impl.ReadersStd {self: MonadsDslStd =>}
 trait ReadersDslExp extends impl.ReadersExp {self: MonadsDslExp =>}

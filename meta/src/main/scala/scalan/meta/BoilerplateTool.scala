@@ -45,7 +45,7 @@ class BoilerplateTool extends StrictLogging {
     ),
     coreTypeSynonyms,
     baseContextTrait = "scalan.Scalan",
-    seqContextTrait = "scalan.ScalanSeq",
+    seqContextTrait = "scalan.ScalanStd",
     stagedContextTrait = "scalan.ScalanExp"
   )
 
@@ -110,7 +110,7 @@ class BoilerplateTool extends StrictLogging {
     ),
     eeTypeSynonyms,
     baseContextTrait = "scalan.ScalanEnterprise",
-    seqContextTrait = "scalan.ScalanEnterpriseSeq",
+    seqContextTrait = "scalan.ScalanEnterpriseStd",
     stagedContextTrait = "scalan.ScalanEnterpriseExp"
   )
 
@@ -181,7 +181,7 @@ class BoilerplateTool extends StrictLogging {
     "graphs" -> List(graphConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "lib-all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig),
+    "lib-all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig, structsConfig),
     "all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig, structsConfig)
   )
 

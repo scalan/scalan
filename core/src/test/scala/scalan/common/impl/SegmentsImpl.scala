@@ -311,48 +311,48 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   registerModule(Segments_Module)
 }
 
-// Seq -----------------------------------
-trait SegmentsSeq extends scalan.ScalanDslStd with SegmentsDsl {
-  self: SegmentsDslSeq =>
+// Std -----------------------------------
+trait SegmentsStd extends scalan.ScalanDslStd with SegmentsDsl {
+  self: SegmentsDslStd =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }
 
-  case class SeqInterval
+  case class StdInterval
       (override val start: Rep[Int], override val end: Rep[Int])
     extends AbsInterval(start, end) {
   }
 
   def mkInterval
     (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
-    new SeqInterval(start, end)
+    new StdInterval(start, end)
   def unmkInterval(p: Rep[Segment]) = p match {
     case p: Interval @unchecked =>
       Some((p.start, p.end))
     case _ => None
   }
 
-  case class SeqSlice
+  case class StdSlice
       (override val start: Rep[Int], override val length: Rep[Int])
     extends AbsSlice(start, length) {
   }
 
   def mkSlice
     (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
-    new SeqSlice(start, length)
+    new StdSlice(start, length)
   def unmkSlice(p: Rep[Segment]) = p match {
     case p: Slice @unchecked =>
       Some((p.start, p.length))
     case _ => None
   }
 
-  case class SeqCentered
+  case class StdCentered
       (override val center: Rep[Int], override val radius: Rep[Int])
     extends AbsCentered(center, radius) {
   }
 
   def mkCentered
     (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
-    new SeqCentered(center, radius)
+    new StdCentered(center, radius)
   def unmkCentered(p: Rep[Segment]) = p match {
     case p: Centered @unchecked =>
       Some((p.center, p.radius))
@@ -622,10 +622,10 @@ trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
 }
 
 object Segments_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRQe24l/Q5oEVaK5EIKh5c8OSKiHHFDkuqiSSaJuQcitisa7E2fK7MxmZxzZHHrsAW6IKxKVuCD1gjghJISEkBAHTgghceZUqKoe6AnEm9nZ9drNEoMUH0Y7O2/ee9/3vffWd/5A8zJEz0oXM8wbPlG44ZjnLanqTpsrqkZvCG/AyAWy94T45pOXP1v9Mo9OdVFxH8sLknVRJXpoD4Pk2SEHHVTB3CVSiVAq9FTHRGi6gjHiKip4k/r+QOEeI80OlWqzg+Z6whsdoJso10FLruBuSBRxWgxLSaR9XyY6I5rsK2Y/2gnGMXhTo2imUFwJMVWQPsRYiuwvk8AZccFHvkKLNrWdQKcFNiXqByJUcYgSuNsXXryd4xheoJXODXyImxCi33RUSHkfbtYC7L6L+2QbTLT5HCQsCdu7MgrMvtBBVUkOgKBLfsDMm2GAEAIFXjFJNMb8NBJ+GpqfukNCihl9D+vD3VAMRyj65QoIDQNw8eIxLmIPpM29+vvX3KsPnZqf15eHOpWSQVgER09mVIORAnj8/vKH8sHrt8/nUbWLqlRu9aQKsavSklu2aphzoUzOCYE47INa61lqmShbYDNVEhVX+AHm4MlSuQA6MepSpY31uwWrTgb1JRWQ2DQ3DHIJ3rUMvKZuWpix3btnXnrm9/bbeZSfDFEBlw4Ufhg7VajkkL4PVWYo1UvFspsdJ0F89u4977sNdC2f8GTdziYNuJiXv/xc++m51/Ko3DWFfJHhfheokm1G/J2wJbjqorI4JGF0UjrETD8dKVXJI3t4wJQlMI28AMgVWstsuYBoWjZNeediAmpRhW4LTuoXd+t/Oj98dEcXYIgWopOoB/+m5//6dXFPmdpUMKAUtu14SqEC9G5Cx9NZygVkN6Q+TIpD8uq3X715/+vteSPeikX0FmYDEvWtBTQGp2PmNiDSpUjFytDEO50g0csqnBPuPZqVXtbGuo/Vr0YQHeGT5fUH9PrtD5TROTecnCY7vRvQvpvm3pl/kTyeap/funX6/qfvPG66sdyjysdBfeM/9GLcOifYayjhLZoyK+O9IRMYXwa2SQjV2EqHXp2+o1A5Npw6r8UNbSXJbETjLGX7iLBZBZeS9uiLRUZ4X+3PXBR6PWfWF2ZgaNEBBchx9MwbqxPjpugSTf//ISfEHh3IEyJnuWXyIt6x5RMbjs9TWRdtwEm6CtBmMxE4QeNU0rNjWbLOj4Ay9YFZnYp/ffKlhmut4Yv7mB0k0Nu+HQHnYL6sZ8wXx3Y0YL/58OPt53/84jczQqt6NsAE58k/pPTonKSpFkeHvzypVBWa0/PCJPsPSoQ8SYIKAAA="
+  val dump = "H4sIAAAAAAAAALVWPYwbRRQe23f+PS53h1LkGo7DQALEPiGhIF2BTo6DIpm7UzYgZKJE49053ySzs8vM+GRTpEwBHaKliIREkwaloADRICREQYUQEhUFVQBFKUgVxJvZ2fXaueVMpHMx2tl58977vu+9t77zJ5qXAr0gXcwwb/hE4YZjnrekqjttrqgavRV4A0bOk73fPn/97nrhy6/z6EQXFfexPC9ZF1Wih/YwTJ4d5XVQBXOXSBUIqdCzHROh6QaMEVfRgDep7w8U7jHS7FCpNjtorhd4o/fRTZTroCU34K4gijgthqUk0r4vE50RTfYVsx/thOMYvKlRNFMoLgtMFaQPMZYi+0skdEY84CNfoUWb2k6o0wKbEvXDQKg4RAnc7QdevJ3jGF6glc51fICbEKLfdJSgvA83ayF2b+A+2QYTbT4HCUvC9i6PQrMvdFBVKg8IuuiHzLwZhgghUOBVk0RjzE8j4aeh+ak7RFDM6AdYH+6KYDhC0S9XQGgYgotXjnAReyBt7tU/vOK+99Cp+Xl9eahTKRmERXD0TEY1GCmAx+8vfSwfvHn7XB5Vu6hK5VZPKoFdlZbcslXDnAfK5JwQiEUf1FrPUstE2QKbqZKouIEfYg6eLJULoBOjLlXaWL9bsOpkUF9SIYlNc8Mwl+Bdy8Br6qaFGdu9d+rs83+0382j/GSICrh0oPBF7FShkkP6PlSZoVQvFctudpwE8Yv3/vK+20BX8glP1u1s0oCLefnLz7WfzryRR+WuKeQLDPe7QJVsM+LviFbAVReVgwMiopPSAWb66VCpSh7ZwwOmLIFp5AVArtBaZsuFRNOyaco7FxNQiyp0O+CkfmG3/rfzwyd3dAEKtBCdRD34Dz336NfFPWVqU8GAUti24wmFCtC7CR3PZSkXkl1BfZgUB+S1b796+/432/NGvBWL6B3MBiTqWwtoDE7HzG1ApIuRipWhiXcyQaKXVTgn3Hs8K72sjXUfq1+NIDqBT5bXH9Crtz9SRufccHKa7PSuQ/tumnun/kPyeKp9cevWyfufXXvadGO5R5WPw/rG/+jFuHWOsddQwls0ZVbGe0MmML4MbBMB1dhKh16dvqNQOTacOq/FDW0lyWxE4yxl+5iwWQWXkvbwi0VGeF/tz1wUej1t1pdnYGjRAQXIUfTMG6tj46boEk3/k5AjsEcH8pjIWW6ZvIh3ZPnEhuPzVNZFG3CSrgK02UwETtA4lfTsWJas80OgTH1gVqfiX518qeFaa/jiPmUHCfS2b0fAaZgv6xnzxbEdDdhvPvx0+6Uf7/5uRmhVzwaY4Dz5h5QenZM01eLo8JcnlapCc3pemGT/BboGa3aCCgAA"
 }
 }
 
 trait SegmentsDsl extends impl.SegmentsAbs
-trait SegmentsDslSeq extends impl.SegmentsSeq
+trait SegmentsDslStd extends impl.SegmentsStd
 trait SegmentsDslExp extends impl.SegmentsExp

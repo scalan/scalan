@@ -5,7 +5,7 @@ import java.io.File
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.linalgebra.LinAlgLmsCompilerScala
 import scalan.it.BaseItTests
-import scalan.linalgebra.{MatricesDsl, MatricesDslExp, MatricesDslSeq}
+import scalan.linalgebra.{MatricesDsl, MatricesDslExp, MatricesDslStd}
 
 trait HelloScalan extends MatricesDsl {
   lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
@@ -21,8 +21,8 @@ trait HelloScalan extends MatricesDsl {
   val input = (matrix, vector)
 }
 
-// to run: scalan-lms-backend/test:runMain HelloScalanSeq
-object HelloScalanSeq extends MatricesDslSeq with HelloScalan {
+// to run: scalan-lms-backend/test:runMain HelloScalanStd
+object HelloScalanStd extends MatricesDslStd with HelloScalan {
   def result = run(input)
 
   def main(args: Array[String]) = {
@@ -62,10 +62,10 @@ object HelloScalanExp {
   }
 }
 
-class ReadmeExampleItTests extends BaseItTests[HelloScalan](HelloScalanSeq) {
+class ReadmeExampleItTests extends BaseItTests[HelloScalan](HelloScalanStd) {
   val defaultCompilers = compilers(HelloScalanExp.compiler)
 
   test("Examples from README run") {
-    HelloScalanExp.result shouldEqual HelloScalanSeq.result
+    HelloScalanExp.result shouldEqual HelloScalanStd.result
   }
 }

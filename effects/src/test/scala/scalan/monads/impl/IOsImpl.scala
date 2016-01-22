@@ -231,34 +231,34 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
   registerModule(IOs_Module)
 }
 
-// Seq -----------------------------------
-trait IOsSeq extends scalan.ScalanDslStd with IOsDsl {
-  self: IOsDslSeq =>
+// Std -----------------------------------
+trait IOsStd extends scalan.ScalanDslStd with IOsDsl {
+  self: IOsDslStd =>
   lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs {
   }
 
-  case class SeqReadFile
+  case class StdReadFile
       (override val fileName: Rep[String])
     extends AbsReadFile(fileName) {
   }
 
   def mkReadFile
     (fileName: Rep[String]): Rep[ReadFile] =
-    new SeqReadFile(fileName)
+    new StdReadFile(fileName)
   def unmkReadFile(p: Rep[IO[List[String]]]) = p match {
     case p: ReadFile @unchecked =>
       Some((p.fileName))
     case _ => None
   }
 
-  case class SeqWriteFile
+  case class StdWriteFile
       (override val fileName: Rep[String], override val lines: Rep[List[String]])
     extends AbsWriteFile(fileName, lines) {
   }
 
   def mkWriteFile
     (fileName: Rep[String], lines: Rep[List[String]]): Rep[WriteFile] =
-    new SeqWriteFile(fileName, lines)
+    new StdWriteFile(fileName, lines)
   def unmkWriteFile(p: Rep[IO[Unit]]) = p match {
     case p: WriteFile @unchecked =>
       Some((p.fileName, p.lines))
@@ -353,7 +353,7 @@ trait IOsExp extends scalan.ScalanDslExp with IOsDsl {
 }
 
 object IOs_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWPYwbRRR+ts//R34OCBAp4mIMIRHYAQmluCI6Lj50yNin2wSQiUDj9diZMDuztzM+2RQpU0CHaJGIRIOUBlEhpAgJISEKKoQiUVOFoCgFqUC8nf3x+mIfpsDFaGf2zfv53vc97827kFUePKdswomoOVSTmmWe15WuWg2hmR6/IXtDTi/Q/pPy289e+uL412k43IHcFaIuKN6BYvDQGLnxs0V3m1AkwqZKS09pONk0Eeq25JzamklRZ44z1KTLab3JlF5rwlJX9sa7cA1STThiS2F7VFNrgxOlqArPC9TPiMX7otmP2+4khqj7VdQTVVz0CNOYPsY4EtjvUNcaCynGjoZDYWpt108LbfLMcaWnoxB5dHdF9qLtkiB4ACvNq2SP1DHEoG5pj4kB3iy7xH6fDGgLTXzzJUxYUd6/OHbNPtOEkqK7CNCW43JzMnIBADvwskmiNsGnFuNT8/GpWtRjhLMPiP9y25OjMQS/VAZg5KKLF/7FReSBNkSv+uFl+50HVtlJ+5dHfip5U2EOHT09hw2mFYjjDzsfq/uv3TiXhlIHSkytd5X2iK2TLQ/RKhMhpDY5xwASb4Ddqszrlomyjjb7KFG0peMSgZ5CKJexT5zZTPvG/tly2J050Oe1SyPT1MhNxfWuzqnX8GaDcL5956kXn/298XYa0tMhiujSQuJ7kVMN6a126NhfD2s0Q+zjWM/Mi+XSbY85yO09+sp331y6d6uVNeFWerRPhly/SfiQBkwLg08SMXErFQ25iUFxtH/NH1BqDPqpO3/0vj8Ll9Nxq8LKFmMHusiq27+Ufz59Pg2FjtHSJieDDnZLNTh12t6GFLoDBblHveBNfo9w/2kmW/Jh+WEPk+BnEHwNq3NV71K/M2tGYakIgHIgkpYUtLq5Xf3T+vGTm74GPFgO3gRj4G927q9fD/W1kYeGQp9xo+qoqRmcIAEi/vLELKhLgT9LOvRo5T5798ZH2oCaGk1Pj3b3Ksp1zdw7eQC+0RT78vr1x+99/t6jRn2FLtMOcatn/4P2Iqn8j9oCA8Jkqhyf7P2lgpAe3aGkt4mwbiRDV/bfQewjw33vy6lpnU0L7xgePH8a1XdJMP1we0yAhPmJmCMmyqIdn303y5mg6uGLMybCTPYkkzxl1jMLALrylsc0XQTRYmw5MUjUkwtDTiedQeodBDgepNYTruZgvq+Oxcsrb7Vn1BUMXLOPB9SJ+SMWKXpsp/kYv3v+Vhqyr0O2j3NHNSHblUPRi7iP3x6ajvSr0VlqmvvIdeIRJ+a6+a3CJKm5SLSm8UbDDGKo4ZEoYylIT4XAeFjS7EKsUHvYkWsPPm2d+emr38xfRclXMQ42EX+7JP8ipnuVw8D4HZJIE3npi9qk+A/J/n9JFwoAAA=="
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+ts//R34OCAIp4mIMIRHYERIK0hXRcfGhQ8Y+3SaATAQa746dCbOzy874ZFOkTAEdoqWIhESTBqWgAKVBSIiCCiEkqhRUIShKQSoQb2d/vHa8hylwMdqZffN+vvd9z3vjLuSlB89Jk3AiGjZVpGHo502p6kZLKKYmbzjWiNPzdHD7i1du1nJffZOFwz0oXCbyvOQ9KAcPrbEbPxvKakOZCJNK5XhSwYm2jtA0Hc6pqZgjmsy2R4r0OW22mVQbbVjpO9bkA7gKmTYcMR1helRRY4sTKakMz0vUz4jF+7LeT7ruNIZo+lU0E1Vc8AhTmD7GOBLY71HXmAhHTGwFh8LUuq6fFtoUme06nopCFNHdZceKtiuC4AGsta+QfdLEEMOmoTwmhniz6hLzfTKkHTTxzVcwYUn54MLE1ftcGypSWQjQju1yfTJ2AQA78JJOojHFpxHj0/DxqRvUY4SzD4n/ctdzxhMIfpkcwNhFFy/8i4vIA20Jq/7RJfOdB0bVzvqXx34qRV1hAR09ncIG3QrE8fu9T+T9166fzUKlBxUmN/tSecRUyZaHaFWJEI7SOccAEm+I3aqldUtH2USbOUqUTcd2iUBPIZSr2CfOTKZ8Y/9sNexOCvRF5dLINDN2M3G96yn1at5sEc537zz54rO/t97OQnY2RBldGkh8L3KqILvTDR3762GFZoh9HOuZtFgu3fWYjdzepy9/+/XFe7c6eR1uzaIDMuLqTcJHNGBaGHyaiI5bqykoTA3K4/m1eECpMegn7/xhfXcGLmXjVoWVLccOdJGXv/xc/enUuSyUelpL25wMe9gt2eLU7npbjlA9KDn71AveFPcJ958WsqUYlh/2MAl+DsFXsJ6qepf6ndnQCstEAFQDkXQcQevbu/U/jR8+veFrwIPV4E0wBv5mZ//69dBAaXkoKA0Y16qOmprDCRIg4i9PLIK6EvgzHJserd1n717/WGlQM+PZ6dHtX0G5buh7Jw7AN5piX1679vi9z997VKuv1GfKJm79zH/QXiSV/1FboEGYTpWnpnt/qSGkR/cosbYR1q1k6Nr8HcQ+Mpx7X83M6mxWeMfw4PlTqL6LgqmH26MDJMyPxxzRUZbt+OK7ec4ElQ9fXDARFrInmeRJvZ5eAtC1tzym6DKIlmPLqUGinkIYcjbpHFLvIMDxILOZcJWC+Vwdy5dX3ekuqCsYuHofD6jj6SMWKXpsr/0Yv3vuVhbyr0N+gHNHtiHfd0bCiriP3x6KjtWr0VlmlvvIdeIRO+a6/q3DNKlUJDqzeKNhDjFU8EiUsSOIJUNgPCxpcSFGqD3syNUHn3VO/3jzN/1XUfFVjINNxN8uyb+I2V4VMDB+hyTSRF76otYp/gOQl87EFwoAAA=="
 }
 }
 

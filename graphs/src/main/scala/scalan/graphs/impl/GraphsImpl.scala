@@ -1,8 +1,8 @@
 package scalan.graphs
 
 import scalan._
-import scalan.collections.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
-import scalan.{ScalanSeq, ScalanExp, Scalan}
+import scalan.collections.{CollectionsDslExp, CollectionsDslStd, CollectionsDsl}
+import scalan.{ScalanStd, ScalanExp, Scalan}
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
@@ -241,34 +241,34 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
   registerModule(Graphs_Module)
 }
 
-// Seq -----------------------------------
-trait GraphsSeq extends scalan.ScalanDslStd with GraphsDsl {
-  self: GraphsDslSeq =>
+// Std -----------------------------------
+trait GraphsStd extends scalan.ScalanDslStd with GraphsDsl {
+  self: GraphsDslStd =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs {
   }
 
-  case class SeqAdjacencyGraph[V, E]
+  case class StdAdjacencyGraph[V, E]
       (override val vertexValues: Coll[V], override val edgeValues: NColl[E], override val links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E])
     extends AbsAdjacencyGraph[V, E](vertexValues, edgeValues, links) {
   }
 
   def mkAdjacencyGraph[V, E]
     (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
-    new SeqAdjacencyGraph[V, E](vertexValues, edgeValues, links)
+    new StdAdjacencyGraph[V, E](vertexValues, edgeValues, links)
   def unmkAdjacencyGraph[V, E](p: Rep[Graph[V, E]]) = p match {
     case p: AdjacencyGraph[V, E] @unchecked =>
       Some((p.vertexValues, p.edgeValues, p.links))
     case _ => None
   }
 
-  case class SeqIncidenceGraph[V, E]
+  case class StdIncidenceGraph[V, E]
       (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E])
     extends AbsIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum) {
   }
 
   def mkIncidenceGraph[V, E]
     (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
-    new SeqIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
+    new StdIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
   def unmkIncidenceGraph[V, E](p: Rep[Graph[V, E]]) = p match {
     case p: IncidenceGraph[V, E] @unchecked =>
       Some((p.vertexValues, p.incMatrixWithVals, p.vertexNum))
@@ -1189,7 +1189,7 @@ trait GraphsExp extends scalan.ScalanDslExp with GraphsDsl {
 }
 
 object Graphs_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXS2wbRRieteM4tkP64FGIBAnBBYHADkFQoRyq4DpVkOtE2TZFpgKN12Nn0tnZze44sjn02APcEBcOSFTigtQL4oSQKiSEhHrghBASZ06lqOqBnkD8M/vwOt51CLQHfBjtzM78j+/7/n/W12+jjOugZ10DM8xLJhG4pKvnFVcU9SoXVPTPWa0uI2dI+3Hrm09f/nz2qxQ60kCT29g947IGynkP1Z4dPutkt4ZymBvEFZbjCvR0TXkoGxZjxBDU4mVqml2Bm4yUa9QVyzU00bRa/V10BWk1dNSwuOEQQfQKw65LXH99isiIaDjPqXl/3R744GWZRTmSxXkHUwHhg4+j3v5NYut9bvG+KdCMH9q6LcOCPVlq2pYjAhdZMLdttYLpBMewgI7XdvAeLoOLTlkXDuUdOFmwsXEZd0gdtsjtExCwS1j7fN9W83QN5V2yCwCtmTZTKz0bIQQMLKkgSgN8SiE+JYlPUScOxYy+h+XLDcfq9ZH309II9Www8eIBJgILpMpbxfcvGW/f0wtmSh7uyVCyKsNJMDSXoAZFBeD4/eaH7t2z106lUL6B8tRdabrCwYaIUu6jVcCcW0LFHAKInQ6wtZDElvKyAnv2SSJnWKaNOVjyoZwGnhg1qJCb5dq0z04C9Flhk2Cr1rO1MN/5hHyVbiqYsY1bT7x08rfqWymUGnaRA5M6CN8JjAqUOetge9u3LccjAmlbA4DltKqmcsj1BmN2TCghKM/d+r313SK6lAqh9D3/M/bARMb9+afCj8+fTqGphtL6KsOdBqDpVhkx152KxUUDTVl7xPHeZPcwk0+xbGZbpI27TPgYR8FJAzgCzSdWpU0kcsuqArQAgIIn4rrFSXF1o/iHfvOj61KjDpr23nhl+hc99ecvM22h5CvQNAQrSG8Lsy5xA5gnKlAJsUR4mKvF2dC5HOYEypNWhwwbytRjLFUPtJRhlF+ON+KgZ5I0Z5MNh5rQ4/bIq99+feHOjXpGye64D7QKzes4Ps4DzCUU2qJA6TUu4tSV9yDULZMcW7hL37n2gVA60nrDDW29uQMdZFmde2qMpILG+sXVq4/e+ezdh1VDmGpSYWK7uHiIdhBU7wMsdzTM30zFv2BUWSzte7nS2sEG4UZfFXNCtcrxRPjOYx0IODF8uBJNYy5yMuJyVtsnnRTZClUsq/JAFY8aqI4zMNqAYpOeC+X6ZLJcAePHNmuPsNunb6RQ5k2UaUOvcGso07S6vBWQB/c5FKh4I1jThskDsrCDzZAs9ZtHA8yGm+iF2A0jJVnQhvP+L715hLP95X4fe9Axyo1zGGq8d5GKbbA41t7BnSjnhVbvmsGhNHwBeWbk8Ep8uq+p8fVDVc4aN2gLRET+TeUMH/7/VM5o0nORY/FiPZSaIwFPxpKShi58v7SewNIYSRRk213FJmX9pbgoDieDmST27ai9B4KwHD8e7PE3TnpQCvSQ3wU7au4D4qCFhOao+xcScHPl3if1F3748ld1lefl1QYfODz8jxG9wocBzHm+4S9DJFiQprzsVKB/A44V2GHCDQAA"
+  val dump = "H4sIAAAAAAAAANVXS2wbRRieteM4tkP64FFRCRyCAYHAjoKgoByq4DpVkOtE2TYgU4HGu2Nn0tnZZXcc2Rx67AFuiAsHDpWQuPSCeuAA6gUhIQ6cEELixIFTKap6oCcQ/8w+vE52HQLtAR9GO7Mz/+P7vv+f9bVbKOe56GnPwAzzqkUErurqecUTFb3BBRXDc7bZZ+QM6f7y2SvXF7JffJVBR9poeht7ZzzWRgX/oTFwomddmE1UwNwgnrBdT6AnmspDzbAZI4agNq9Ry+oL3GGk1qSeWG6iqY5tDt9Fl5HWREcNmxsuEUSvM+x5xAvWZ4iMiEbzgpoP152RD16TWdRiWZx3MRUQPvg46u/fJI4+5DYfWgLNBaGtOzIs2JOnlmO7InSRB3PbthlOpziGBXS8uYN3cQ1c9Gq6cCnvwcmSg41LuEdasEVun4KAPcK654eOmmebqOgJEwBasxymVgYOQggYWFJBVEf4VCN8qhKfik5cihl9D8uXG649GCL/p2URGjhg4vkDTIQWSIOblfcvGm/d1UtWRh4eyFDyKsNpMFROUYOiAnD8dvND787Zq6cyqNhGReqtdDzhYkPEKQ/QKmHObaFijgDEbg/YWkhjS3lZgT17JFEwbMvBHCwFUM4CT4waVMjNcm02YCcF+rxwSLhVGzhalO98Sr5KN3XM2MbNR1946rfGmxmUGXdRAJM6CN8NjQqUO+tiZzuwLccjAmlbI4DltKGmcigMRmN+QigRKM/c/N38ZhFdzERQBp7/GXtgIuf99GPph2dPZ9BMW2l9leFeG9D0GoxY627d5qKNZuxd4vpv8ruYyadENvMm6eI+EwHGcXCyAI5A86lV6RCJ3LKqAC0EoOSLuGVzUlndqPyhf/fRNalRF836b/wy/Yue+vPnua5Q8hVoFoIVZLCFWZ94IcxTdaiERCJ8zNXiyci5HMoCFYnZI+OGcq0ES40DLeUY5ZeSjbjoyTTNOWTDpRb0uF3y0tdfXrh9o5VTsjseAK1C8ztOgPMIcwmFtihQdo2LJHUVfQh12yLHFu7Qt69+IJSOtMF4Q1vv7EAHWVbnHp8gqbCxfn7lysO3P33nQdUQZjpUWNipLB6iHYTVex/LHY3zN1cPLhhVFkt7Xq6YO9gg3BiqYk6pVjmeiN75rAMBJ8YP1+NplGMnYy5PanukkyFbkYplVR6o4v0GGpMM7G9AiUmXI7k+li5XwPiRzeZD7NbpGxmUex3lutArvCbKdew+N0Py4D6HAhWvhWvaOHlAFnaxFZGlfvNohNl4E72QuGFfSZa08bz/S2/ex9necr+HPegY5cY5DDU+eIOKbbA40d7Bnajgh9bqW+GhLHwB+Wbk8GJyui+r8dVDVc4aN6gJIiL/pnLGD/9/Kmd/0uXYsWSxHkrNsYCnE0nJQhe+V1pPYWmCJEqy7a5ii7LhUlIUh5PBXBr7TtzefUFYjh+P9gQbp30oBXog6II9NQ8AcdFCSnPUgwsJuLl895PWc99f/1Vd5UV5tcEHDo/+Y8Sv8HEAC75v+MsQCxakKS87FejfSrsbK8INAAA="
 }
 }
 

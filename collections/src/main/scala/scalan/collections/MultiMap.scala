@@ -85,7 +85,7 @@ trait MultiMapsDsl extends ScalanDsl with impl.MultiMapsAbs {
   }
 }
 
-trait MultiMapsDslSeq extends ScalanDslStd with impl.MultiMapsSeq {
+trait MultiMapsDslStd extends ScalanDslStd with impl.MultiMapsStd {
   def appendMultiMap[K: Elem, V: Elem](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[MMap[K, ArrayBuffer[V]]] = {
     if (map.contains(key)) {
       map(key) += value

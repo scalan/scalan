@@ -3,7 +3,7 @@ package scalan.primitives
 import scala.util.Random
 import scalan.common.IdSupply
 import scalan.staged.BaseExp
-import scalan.{ ScalanExp, Scalan, ScalanSeq }
+import scalan.{ ScalanExp, Scalan, ScalanStd }
 
 trait NumericOps { self: Scalan =>
   implicit class NumericOpsCls[T](x: Rep[T])(implicit val n: Numeric[T], et: Elem[T]) {
@@ -64,7 +64,7 @@ trait NumericOps { self: Scalan =>
   def random[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T]
 }
 
-trait NumericOpsSeq extends NumericOps { self: ScalanSeq =>
+trait NumericOpsStd extends NumericOps { self: ScalanStd =>
   def random[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = {
     (et match {
       case IntElement => Random.nextInt(bound.asInstanceOf[Int])

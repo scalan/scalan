@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.{ProgramGraphs, BaseExp}
-import scalan.{ScalanExp, ScalanSeq, Scalan}
+import scalan.{ScalanExp, ScalanStd, Scalan}
 import collection.mutable
 import scala.language.{implicitConversions}
 import scalan.common.Lazy
@@ -29,7 +29,7 @@ trait Functions { self: Scalan =>
   def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C]
 }
 
-trait FunctionsSeq extends Functions { self: ScalanSeq =>
+trait FunctionsStd extends Functions { self: ScalanStd =>
   def par[B](nJobs: Rep[Int], f: Rep[Int=>B])(implicit elem:Elem[B]): Arr[B] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     implicit val tag = elem.classTag

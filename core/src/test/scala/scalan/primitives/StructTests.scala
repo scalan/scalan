@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scala.language.reflectiveCalls
 import scalan._
-import scalan.common.{SegmentsDslSeq, SegmentsDsl, SegmentsDslExp, Lazy}
+import scalan.common.{SegmentsDslStd, SegmentsDsl, SegmentsDslExp, Lazy}
 import scalan.compilation.{StructsCompiler, DummyCompiler}
 import scalan.it.BaseItTests
 
@@ -363,8 +363,8 @@ class StructTests extends BaseViewTests {
   }
 }
 
-abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslStd with SegmentsDslSeq with StructExamples) {
-  import progSeq._
+abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslStd with SegmentsDslStd with StructExamples) {
+  import progStd._
 
   test("struct out") {
     compareOutputWithSequential(s => s.t1.asInstanceOf[s.Rep[Int => Struct]])(100)

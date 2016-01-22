@@ -152,14 +152,14 @@ trait GraphTestInputs {
   val matrixInput = (incMatrix, vertexNum)
 }
 
-class LmsMsfPrimeItTests extends BaseItTests[MsfFuncs](new GraphsDslSeq with MsfFuncs) with GraphTestInputs {
+class LmsMsfPrimeItTests extends BaseItTests[MsfFuncs](new GraphsDslStd with MsfFuncs) with GraphTestInputs {
   class ProgExp extends GraphsDslExp with MsfFuncs
 
   val progStaged = new LmsCompilerScala(new ProgExp)
   val defaultCompilers = compilers(progStaged)
 
   def commonTestScenario[A, B](f: MsfFuncs => MsfFuncs#Rep[A => Array[B]])(input: A) = {
-    val resSeq = f(progSeq).asInstanceOf[A => Array[B]](input)
+    val resSeq = f(progStd).asInstanceOf[A => Array[B]](input)
     println("Seq: " + resSeq.mkString(", "))
     val Seq(Seq(resStaged)) = getStagedOutput(f)(input)
     println("Staged: " + resStaged.mkString(", "))

@@ -1,12 +1,12 @@
 package scalan.primitives
 
-import scalan.{ScalanExp, ScalanSeq, Scalan}
+import scalan.{ScalanExp, ScalanStd, Scalan}
 
 trait Exceptions { self: Scalan =>
   def THROW(msg: Rep[String]): Rep[Unit]
 }
 
-trait ExceptionsSeq extends Exceptions { self: ScalanSeq =>
+trait ExceptionsStd extends Exceptions { self: ScalanStd =>
   def THROW(msg: Rep[String]): Rep[Unit] = throw new Exception(msg)
 }
 

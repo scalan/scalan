@@ -99,7 +99,7 @@ trait CollectionsProg extends CollectionsDsl with CollectionExamples {
   }
 }
 
-abstract class CollectionsItTests extends BaseItTests[CollectionsProg](new CollectionsDslSeq with CollectionsProg) {
+abstract class CollectionsItTests extends BaseItTests[CollectionsProg](new CollectionsDslStd with CollectionsProg) {
 
   class CollectionsProgExp extends CollectionsDslExp with JNIExtractorOpsExp with CollectionsProg
 
@@ -298,5 +298,5 @@ abstract class CollectionsItTests extends BaseItTests[CollectionsProg](new Colle
 ////    checkRun(progSeq, progStaged)(expandScaledRangesFun, progStaged.expandScaledRangesFun)("simple26_expandScaledRanges", in, progSeq.fromArray(out))
 ////  }
 
-  // override val progSeq: ProgCommunitySeq = new ProgCommunitySeq
+  // override val progSeq: ProgCommunityStd = new ProgCommunityStd
 }

@@ -3,7 +3,7 @@ package scalan.primitives
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.{ViewsDslExp, ScalanExp, ScalanSeq, Scalan}
+import scalan.{ViewsDslExp, ScalanExp, ScalanStd, Scalan}
 import scala.reflect.runtime.universe._
 
 trait Thunks { self: Scalan =>
@@ -52,7 +52,7 @@ trait Thunks { self: Scalan =>
   def thunk_force[A](t: Th[A]): Rep[A]
 }
 
-trait ThunksSeq extends Thunks { self: ScalanSeq =>
+trait ThunksStd extends Thunks { self: ScalanStd =>
   def thunk_create[A:Elem](block: => Rep[A]): Rep[Thunk[A]] = new Thunk[A] { def value = block }
   def thunk_force[A](t: Th[A]): Rep[A] = t.value
 }

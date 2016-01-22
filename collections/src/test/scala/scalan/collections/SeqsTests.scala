@@ -2,7 +2,7 @@ package scalan.collections
 
 import scala.language.reflectiveCalls
 import scalan._
-import scalan.common.{SegmentsDslSeq, SegmentsDslExp, SegmentsDsl}
+import scalan.common.{SegmentsDslStd, SegmentsDslExp, SegmentsDsl}
 
 class SeqsTests extends BaseCtxTests {
   trait SeqSimple extends SeqsDsl { self: ScalanDsl with SegmentsDsl =>
@@ -81,7 +81,7 @@ class SeqsTests extends BaseCtxTests {
   }
 
   test("simpleHashsetSeq") {
-    val ctx = new ScalanDslStd with SeqSimple with SeqsDslSeq with SegmentsDslSeq {
+    val ctx = new ScalanDslStd with SeqSimple with SeqsDslStd with SegmentsDslStd {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
       }

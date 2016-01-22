@@ -67,8 +67,8 @@ trait Seqs { self: SeqsDsl =>
   def DefaultOfSeq[A: Elem]: Default[Seq[A]] = Default.defaultVal(Seq.empty[A])
 }
 
-trait SeqsDslSeq extends impl.SeqsSeq {
-  trait SeqSSeq[A] extends SSeqImpl[A] {
+trait SeqsDslStd extends impl.SeqsStd {
+  trait StdSSeq[A] extends SSeqImpl[A] {
     override def map[B:Elem](f: Rep[A => B]): Rep[SSeq[B]] = SSeqImpl(wrappedValue.map(f))
     override def toArray = wrappedValue.toArray[A](eA.classTag)
   }

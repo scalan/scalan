@@ -1,6 +1,6 @@
 package scalan.graphs
 
-import scalan.collections.{BitSetsDsl, BitSetsDslExp, BitSetsDslSeq, CollectionsDsl}
+import scalan.collections.{BitSetsDsl, BitSetsDslExp, BitSetsDslStd, CollectionsDsl}
 import scalan._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
@@ -396,62 +396,62 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
   registerModule(Fronts_Module)
 }
 
-// Seq -----------------------------------
-trait FrontsSeq extends scalan.ScalanDslStd with FrontsDsl {
-  self: FrontsDslSeq =>
+// Std -----------------------------------
+trait FrontsStd extends scalan.ScalanDslStd with FrontsDsl {
+  self: FrontsDslStd =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs {
   }
 
-  case class SeqBaseFront
+  case class StdBaseFront
       (override val set: Rep[CollectionOverArray[Int]], override val bits: Rep[BitSet])
     extends AbsBaseFront(set, bits) {
   }
 
   def mkBaseFront
     (set: Rep[CollectionOverArray[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
-    new SeqBaseFront(set, bits)
+    new StdBaseFront(set, bits)
   def unmkBaseFront(p: Rep[Front]) = p match {
     case p: BaseFront @unchecked =>
       Some((p.set, p.bits))
     case _ => None
   }
 
-  case class SeqListFront
+  case class StdListFront
       (override val set: Rep[CollectionOverList[Int]], override val bits: Rep[BitSet])
     extends AbsListFront(set, bits) {
   }
 
   def mkListFront
     (set: Rep[CollectionOverList[Int]], bits: Rep[BitSet]): Rep[ListFront] =
-    new SeqListFront(set, bits)
+    new StdListFront(set, bits)
   def unmkListFront(p: Rep[Front]) = p match {
     case p: ListFront @unchecked =>
       Some((p.set, p.bits))
     case _ => None
   }
 
-  case class SeqCollectionFront
+  case class StdCollectionFront
       (override val set: Rep[Collection[Int]], override val bits: Rep[BitSet])
     extends AbsCollectionFront(set, bits) {
   }
 
   def mkCollectionFront
     (set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =
-    new SeqCollectionFront(set, bits)
+    new StdCollectionFront(set, bits)
   def unmkCollectionFront(p: Rep[Front]) = p match {
     case p: CollectionFront @unchecked =>
       Some((p.set, p.bits))
     case _ => None
   }
 
-  case class SeqMapBasedFront
+  case class StdMapBasedFront
       (override val mmap: Rep[MMap[Int, Unit]])
     extends AbsMapBasedFront(mmap) {
   }
 
   def mkMapBasedFront
     (mmap: Rep[MMap[Int, Unit]]): Rep[MapBasedFront] =
-    new SeqMapBasedFront(mmap)
+    new StdMapBasedFront(mmap)
   def unmkMapBasedFront(p: Rep[Front]) = p match {
     case p: MapBasedFront @unchecked =>
       Some((p.mmap))
@@ -763,7 +763,7 @@ trait FrontsExp extends scalan.ScalanDslExp with FrontsDsl {
 }
 
 object Fronts_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAN1WTYgcRRSu+dmZ7ZnNbpwQSfZi3Ew0ETMzCpLDHmQzmZXA7M6STkTGEKntqZ2tWF3dW1W7zHjIMQe9iUcFA16EXMSTCCKIIB48iQiePSVKyCE5GfKquqene9yOo7AE7ENTXfXq/Xzf96r69h9oRgr0gnQww7zmEoVrthmvSFW1W1xRNVzzeruMXCBbx7xvP33l88WvsmihiwrbWF6QrIusYNAa+NHYJjttZGHuEKk8IRV6vm0i1B2PMeIo6vE6dd1dhTcZqbepVMttlN/0esMddANl2uiw43FHEEXsJsNSEhnOzxKdEY2+LfM97PjjGLyuq6jHqrgsMFWQPsQ4HNhfIr495B4fugrNh6l1fJ0W2BSp63tCjUIUwd221xt95jmGCVRpX8d7uA4h+nVbCcr7sLPsY+dd3CfrYKLN85CwJGzr8tA337k2KkmyAwBddH1mZgY+QggYeNUkURvjU4vwqWl8qjYRFDP6HtaLG8IbDFHwZHIIDXxw8fI/uBh5IC3eq75/1Xn7oV12s3rzQKdSNBUWwNFzKWowVACOP1z6UN5/49a5LCp1UYnKlU2pBHZUnPIQrTLm3FMm5whALPrA1lIaWybKCthMSMJyPNfHHDyFUM4BT4w6VGljPTcXspMCfVH5ZGSaGfiZqN4TKfUa3TQxYxt3jp89dbf1VhZlkyEscGmD8MXIqUIzq8LjygCqX1aIbXqUqN4X7/zZ+76BrmYjlEKn0xEDLmbkr7+Ufz7zehbNdo2MVxnudwEo2WLE7YgmZNZFs94eEcFKcQ8zPdqXqGKPbOFdpkL44nXnoG6FTqQ2nE80KMtG3JkRAOVAn+seJ9XVjeoD+8ePbmv5CTQXrAQd+Iie++u3+S1llKlQTpKgFRdgDH0bghHOHGlGau9AVStC4GEE18k0Xn2yIagL58geee27r6/c+2Z9xlBbCSt+E7NdEnR1WPC4eJ1TpgG5XAxYDgi2Bibq0ahe/VpUIGCqZHr6hfMU2nJSLWPNlAJgbM8lzyzdp9dufaCMOjKD5AnU2bwOICybfcefIJTRSfjFzZtH7332zhHTwbOQo4v9auNf9O+o3Q6wP1ESqvlmeCMYsTeSi/s2nRU71irRWsAMkFg5jyUx+5rxxBcnNylkRZYTBuXMFGmEvmKWf1PJkzVeSWpcH+WBgX6dPGAN6vdZ824cOCG6sukIiSyfCiGlMSH/SyKOjeubio6FCfsDIiXvwimVDl9+bS1cDvgwwyWFsqfPwOIVTtUkAE8B2mchR32a9KYC9lDCemwUE1lh37xzcMb/92QTgExM71PTfFotib+hxYnYHycnodqCsYVfw0Ph7dUX2N+WYTYCLaVcanZ4jUDNNx5+sv7ST1/+bm7zkr6Q4GeDR7/y8Vs8CY8VxIY/81iaIBt9RZlEHwMKfI/8KQ0AAA=="
+  val dump = "H4sIAAAAAAAAAN1WPYwbRRQe/5x9a1/ugqMgcg3BMSFBxLaQUJCuQBfHhyL5zqdsEiETEc2t53wTZmeXmbmTTZEyBXSIEopISDRpUAoKEA1CQhRUCCFRUVAFUJQiqYh4M7te75rbYJBOkdhiNTvz5v183/dm9vbvaE4KdFI6mGFed4nCdduMV6Wq2W2uqBqte/1dRs6T7V8+ffVONff5l1m01EOFHSzPS9ZDVjBoD/1obKt+B1mYO0QqT0iFnuuYCA3HY4w4inq8QV13V+EtRhodKtVKB+W3vP7oHXQDZTrosONxRxBF7BbDUhIZzs8TnRGNvi3zPer6kxi8oatoxKq4JDBVkD7EOBzYXyS+PeIeH7kKLYapdX2dFtgUqet7Qo1DFMHdjtcff+Y5hglU6VzHe7gBIQYNWwnKB7Cz7GPnbTwgG2CizfOQsCRs+9LIN9+5DipJ1QeALrg+MzNDHyEEDLxskqhP8KlH+NQ1PjWbCIoZfRfrxU3hDUcoeDI5hIY+uHjpH1yMPZA279feu+q8+dAuu1m9eahTKZoKC+Do2RQ1GCoAx28vfiDvv37rbBaVeqhE5eqWVAI7Kk55iFYZc+4pk3MEIBYDYKuaxpaJsgo2U5KwHM/1MQdPIZQLwBOjDlXaWM8thOykQF9UPhmbZoZ+Jqr3eEq9RjctzNjm3WNnnv+t/UYWZZMhLHBpg/DF2KlCc2vC48oAql9WiG16lKjeF+7+0f+mia5mI5RCp7MRAy7m5E8/ln84/VoWzfeMjNcYHvQAKNlmxO2KFmTWQ/PeHhHBSnEPMz3al6hin2zjXaZC+OJ156BuhY6nNpxPNCgrRtyZMQDlQJ8bHie1tc3aA/u7D29r+Qm0EKwEHfiInv3z58VtZZSpUE6SoBWXYAx9G4IRzhxpRWrvQlWrQuBRBNeJNF59simoC+fIHnnl6y8u3/tqY85QWwkrvoLZLgm6Oix4UrzOKdOEXC4ELAcEW0MT9WhUr34tKxAwVTI9/cI5Cm05rZaJZkoBMLbnkqeq9+lbt95XRh2ZYfIE6m5dBxBWzL5jjxHK+CT87ObNo/c+uXbEdPA85Ohiv9b8F/07brcD7E+UhGqxFd4IRuzN5OK+TWfFjrVKtBYwAyRWzmFJzL5WPPHl6U0KWZHllEE5M0Maoa+Y5d9U8niNV5Ia10d5YKBfJw5Yg/p9xrybB06Irmw2QiLLJ0JIaULI/5KIZyb1zUTH0pT9AZGSd+GUSocvv74eLgd8mGFVoeyp07B4mVM1DcATgPZpyFGfJv2ZgD2UsJ4YxURW2DfvHJzx/z3ZBCBT0/vUtJhWS+JvaHkq9kfJSai2YGzh1/BQeHsNBPZ3ZJiNQNWUS80OrxGo+cbDjzde/P7Or+Y2L+kLCX42ePQrH7/Fk/BYQWz4M4+lCbLRV5RJ9C+KEc3mKQ0AAA=="
 }
 }
 

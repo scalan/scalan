@@ -12,7 +12,7 @@ class ConverterTests extends BaseCtxTests {
 
   class ConvProgStaged extends TestContext with ConvProg with SegmentsDslExp {
   }
-  class ConvProgSeq extends ScalanDslStd with ConvProg with SegmentsDslSeq {
+  class ConvProgStd extends ScalanDslStd with ConvProg with SegmentsDslStd {
   }
 
   test("simple converter tests") {
@@ -31,7 +31,7 @@ class ConverterTests extends BaseCtxTests {
   }
 
   test("convertSeq") {
-    val ctx = new ConvProgSeq
+    val ctx = new ConvProgStd
     val res = ctx.t4((10,20))
     assertResult((10,30))(res)
   }

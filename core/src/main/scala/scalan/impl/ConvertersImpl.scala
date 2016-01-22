@@ -506,76 +506,76 @@ trait ConvertersAbs extends Converters {
   registerModule(Converters_Module)
 }
 
-// Seq -----------------------------------
-trait ConvertersSeq extends ConvertersDsl {
-  self: ScalanSeq =>
+// Std -----------------------------------
+trait ConvertersStd extends ConvertersDsl {
+  self: ScalanStd =>
   lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs {
   }
 
-  case class SeqBaseConverter[T, R]
+  case class StdBaseConverter[T, R]
       (override val convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R])
     extends AbsBaseConverter[T, R](convFun) {
   }
 
   def mkBaseConverter[T, R]
     (convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]] =
-    new SeqBaseConverter[T, R](convFun)
+    new StdBaseConverter[T, R](convFun)
   def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]) = p match {
     case p: BaseConverter[T, R] @unchecked =>
       Some((p.convFun))
     case _ => None
   }
 
-  case class SeqPairConverter[A1, A2, B1, B2]
+  case class StdPairConverter[A1, A2, B1, B2]
       (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends AbsPairConverter[A1, A2, B1, B2](conv1, conv2) {
   }
 
   def mkPairConverter[A1, A2, B1, B2]
     (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
-    new SeqPairConverter[A1, A2, B1, B2](conv1, conv2)
+    new StdPairConverter[A1, A2, B1, B2](conv1, conv2)
   def unmkPairConverter[A1, A2, B1, B2](p: Rep[Converter[(A1, A2), (B1, B2)]]) = p match {
     case p: PairConverter[A1, A2, B1, B2] @unchecked =>
       Some((p.conv1, p.conv2))
     case _ => None
   }
 
-  case class SeqSumConverter[A1, A2, B1, B2]
+  case class StdSumConverter[A1, A2, B1, B2]
       (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends AbsSumConverter[A1, A2, B1, B2](conv1, conv2) {
   }
 
   def mkSumConverter[A1, A2, B1, B2]
     (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
-    new SeqSumConverter[A1, A2, B1, B2](conv1, conv2)
+    new StdSumConverter[A1, A2, B1, B2](conv1, conv2)
   def unmkSumConverter[A1, A2, B1, B2](p: Rep[Converter[$bar[A1, A2], $bar[B1, B2]]]) = p match {
     case p: SumConverter[A1, A2, B1, B2] @unchecked =>
       Some((p.conv1, p.conv2))
     case _ => None
   }
 
-  case class SeqFunctorConverter[A, B, F[_]]
+  case class StdFunctorConverter[A, B, F[_]]
       (override val itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
     extends AbsFunctorConverter[A, B, F](itemConv) {
   }
 
   def mkFunctorConverter[A, B, F[_]]
     (itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]] =
-    new SeqFunctorConverter[A, B, F](itemConv)
+    new StdFunctorConverter[A, B, F](itemConv)
   def unmkFunctorConverter[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]) = p match {
     case p: FunctorConverter[A, B, F] @unchecked =>
       Some((p.itemConv))
     case _ => None
   }
 
-  case class SeqNaturalConverter[A, F[_], G[_]]
+  case class StdNaturalConverter[A, F[_], G[_]]
       (override val convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G])
     extends AbsNaturalConverter[A, F, G](convFun) {
   }
 
   def mkNaturalConverter[A, F[_], G[_]]
     (convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]): Rep[NaturalConverter[A, F, G]] =
-    new SeqNaturalConverter[A, F, G](convFun)
+    new StdNaturalConverter[A, F, G](convFun)
   def unmkNaturalConverter[A, F[_], G[_]](p: Rep[Converter[F[A], G[A]]]) = p match {
     case p: NaturalConverter[A, F, G] @unchecked =>
       Some((p.convFun))
@@ -792,7 +792,7 @@ trait ConvertersExp extends ConvertersDsl {
 }
 
 object Converters_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAO1YTWwbRRSeteM4tkMTWlpoqzYhMiCqNm4spB5yqOw0CUVuEnlzQKZqNF5P0i37l91xZHOoOFUIbogLByQqcUHqBXFCSIgLEuLAqUKVOHHgVIqqHlpxAPFm9se73h/bDbmg+jDyrN+8ee/7GXn2zgOUsUz0qiVhBWvzKqF4XuTfKxYtissalWn3it5qK+QS2X5J//7zhS9PfJNCUw00fh1blyylgXL2l+WO4X0XyW4N5bAmEYvqpkXRyzW+Q0nSFYVIVNa1kqyqbYqbCinVZIsu1tBYU291d9FNJNTQtKRrkkkoEZcUbFnEcp5PEFaR7M1zfN5dN3p7aCXWRcnXxaaJZQrlwx7TdnydGGJX07WuStEhp7R1g5UFMVlZNXSTultkId11veVOxzQMD9Dh2g28h0uwxU5JpKas7cDKgoGld/EOWYMQFj4GBVtE2d7sGnyerqG8RXYBoMuqofAnHQMhBAyUeRHzPXzmPXzmGT5FkZgyVuT3MPtxw9Q7XWR/hDRCHQNSnB2Qws1AlrVW8cOr0jtPxIKaYos7rJQs73AcEs3EqIFTATj+WP/YerR6+0IK5RsoL1uVpkVNLFE/5Q5aBaxpOuU1ewBicwfYmotji+9SgZg+SeQkXTWwBpkcKCeBJ0WWZMqC2bNJh50Y6LPUIG6o0DEEr9/ZmH65bpawomzcP37ulT+W306hVHCLHKQUQfimm5Si3JKu7RGTEtPJz8YpioTNHshsWudTNuQ6vTGbUI4HzGv3/2z9cB5dTXlwOrsPxyCkyFj3fincff1iCk00uN5XFLzTAEStZYWo6yb0QBtoQodG7F+ye1hh3yIZzbbINm4r1MHZD1AaAKJoNtaZBmHoLXIXCC4ABVvIa7pGiisbxcfiT5/cYTo10aT9i23Vf+QLf/96aJtyCVOUhSNjb6WtuQinweQeIKfjKDYILJHuXv70yNSprd84weMtXcUyV9nJGsqYYHHezkkH4JHIzNsVi7pKnp97JF+7/RHltAmd4Bmy3rwBpl3k604nMOieZV/dunX04RdbR7gHJ5oyVbFRPD+CA13DHKDDkIeKjdSLvTkbZoC0Y1VsEc8xS/79Z3wLfVY6IbhK4UEUpcimy8MYU2+k7WxS4hLUkxKEuaXouUDZPI8ntVPxUgNsjtVrLygPLn6XQpm3UGYbLGWBxpp6W2u5oIOOKenQqvtMCIIOIGMTqx7I/DOLepAF5bkUGVDvR6UgBNsOHWMJkjTIZttQyBvf/nXtg/ffNLi+QydjMH2qshBwUKpS7q/oSt+Kat+Kqn9F2Hoh3aA+2jPsvFjwmGf9DqjRqcCvpcik5cSk5aHasAPO8PHcMEbawLK5PyOlSaUHR9gILhxJVoIU5cQUIZYjUlQTq4ggISJFYhURkIOlAwD6LR3rooBAYiLKgyKqA3NUQ6ANNKvbfLGJzWgWEyiJWfjMf0n+Oyq21Wf2e3r7Tfrx+3+4T1jpm1cinBYKqu7PVRMyJaon+2gPOIUM2HJUBxxnf6Thj+d+/81VErQThjAiQTUpQXVgAocRCM46HfXTGiHf6f7mh5Kwn4jogOqggJWBe2yFyj0AFa8mBD2FihPucmwsHmBxPeIOWKeSpzNmUZogsrgEq0kJVqNUuoZp28TKf63SASKEQTjb3090ptXRMoVUPe4cV0Ew0nBhHlLtQ13sAzr2IkY9MA8nnZSBN0nD0TTSpc8bBTMALwvM98ChsCO/6Tm9mWgu5hYoOq8CAOqbTz5bO/Pz17/ztyl59lJB14jmvVDtXWb7b4Xjdj5fmaBt9o6Bl/gvwhNVKqwWAAA="
+  val dump = "H4sIAAAAAAAAAO1YTWwbRRSeXcdxbIcmtLSoVG1CZEBUbdxaSEXKobLTJBS5SeTNAZmq0Xg9SbfsH7vjyOZQcaoQ3BAXDhwqIXHpBfXAAcQNCXHgVCEkTj1wKkWoByoOIN7M/njX+2O7IRdUH0ae9Zs3730/I8/eeYiytoVetmWsYn1RIxQvSvx71aYlaUWnCu1dMdodlVwiO/e/eP3uQuarb0Q000ST17F9yVabKO98Wema/neJtusoj3WZ2NSwbIperPMdyrKhqkSmiqGXFU3rUNxSSbmu2HSpjiZaRrv3LrqJhDqalQ1dtggl0rKKbZvY7vMpwipS/Hmez3sbZn8Pvcy6KAe62LKwQqF82GPWiW8QU+rpht7TKDrklrZhsrIgJqdopmFRb4scpLtutL3phI7hATpcv4H3cBm22C1L1FL0XVhZNLH8Dt4l6xDCwiegYJuoO1s9k88zdVSwaRsAuqyZKn/SNRFCwECFF7HYx2fRx2eR4VOSiKVgVXkPsx83LaPbQ85HyCDUNSHFmSEpvAxkRW+XPrwqv/1YKmoiW9xlpeR4h5OQaC5BDZwKwPH7xsf2o7XbF0RUaKKCYldbNrWwTIOUu2gVsa4blNfsA4itXWBrIYktvksVYgYkkZcNzcQ6ZHKhnAaeVEVWKAtmz6ZddhKgz1GTeKFC1xT8fucT+uW6Wcaquvng+NmXflt5S0RieIs8pJRA+JaXlKL8sqHvEYsSy83PxhmKhK0+yGza4FM25Lv9MZdSjg/MKw9+b393Dl0VfTjd3UdjEFJk7Z9/Kt579aKIpppc76sq3m0CovaKSrQNC3qgTTRlQCPOL7k9rLJvsYzm2mQHd1Tq4hwEKAMAUTSf6EyTMPSWuAsED4CiI+R1Qyel1c3Sn9IPn9xhOrXQtPOLY9V/lAt//3Joh3IJU5SDI2NvtaN7CGfA5D4gp5IoNgkske9d/vTIzMnt+5zgybahYYWr7EQdZS2wOG/nhAvwWGQWnIolQyPPLjxSrt3+iHLahG74DNlo3QDTLvF1p1IY9M6yL2/dOvrH59tHuAenWgrVsFk6N4YDPcMcoMOQj4qD1PP9ORvmgLRjNWwT3zHLwf3nAgsDVnpB8JTCgygSyZbHwwRTb6ztHFKSEjTSEkS5peiZUNk8jy+1k8lSA2yONerPqQ8vfiui7JsouwOWskFjLaOjtz3QQceUdGnNeyaEQQeQsYU1H2T+mUd9yMLyXI4NaAyiUhTCbUeOsRRJmmSrY6rkta//uvbB+2+YXN+RkzGcXqyeDzlIrFYGK7oysKI2sKIWXBG1XkQ3aID2LDsvzvvMs36H1OhWENRSbNJKatLKSG04Aaf5eHYUI21ixdqfkTKk2ocjagQPjjQrQYpKaooIyzEpaqlVxJAQkyK1ihjIwdIhAIOWTnRRSCAJEZVhEbWhOWoR0Iaa1Wu+1MJWPIsplCQsfOq/NP8dlTraU/s9uf2mg/j9P9wnrA7MqzFOiwTV9ueqKYUSzZd9vAfcQoZsOa4DjrM/0vDHc7//5qop2olCGJOglpagNjSBywgE59yOBmmNke/sYPMjSThIRHxAbVjA6tA9tiPlHoCK11KCnkDFKXc5NpYOsLg+cQesU9nXGbMoTRFZUoK1tARrcSpdx7RjYfW/VukQEcIgnBnsJz7T2niZIqqedI+rMBgZuDCPqPaRLvYhHfsR4x6Yh9NOytCbpNFoGuvS54+CFYKXBRb64FDYkd/03N4stJBwC5TcVwEA9c3Hn62f/vHur/xtSoG9VDB0ovsvVPuX2cFb4aSTL1AmaJu9Y+Al/guf2AmprBYAAA=="
 }
 }
 

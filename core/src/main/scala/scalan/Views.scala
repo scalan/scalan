@@ -444,7 +444,7 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
   }
 }
 
-trait ViewsDslSeq extends impl.ViewsSeq { self: ScalanSeq =>
+trait ViewsDslStd extends impl.ViewsStd { self: ScalanStd =>
   def shouldUnpack(e: Elem[_]) = true
 }
 

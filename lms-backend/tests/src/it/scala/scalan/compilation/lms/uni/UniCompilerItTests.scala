@@ -4,9 +4,9 @@ import java.io.File
 
 import scalan._
 import scalan.compilation.lms.linalgebra.{LinAlgBridge, LinAlgLmsCompilerUni}
-import scalan.graphs.{GraphsDslExp, GraphsDslSeq, GraphTestInputs, MsfFuncs}
+import scalan.graphs.{GraphsDslExp, GraphsDslStd, GraphTestInputs, MsfFuncs}
 import scalan.it.BaseItTests
-import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslExp, MatricesDslSeq}
+import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslExp, MatricesDslStd}
 
 /**
  * Created by adel on 5/15/15.
@@ -80,7 +80,7 @@ trait UniCompilerTestProg extends MsfFuncs with LinearAlgebraExamples {
 
 }
 
-class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new GraphsDslSeq with MatricesDslSeq with UniCompilerTestProg) with GraphTestInputs {
+class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new GraphsDslStd with MatricesDslStd with UniCompilerTestProg) with GraphTestInputs {
 
   val in3Arrays = (Array(2, 3), (Array(1, 4), Array(1, -1)))
 

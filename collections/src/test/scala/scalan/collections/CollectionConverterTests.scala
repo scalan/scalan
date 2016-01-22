@@ -29,7 +29,7 @@ class CollectionConverterTests extends BaseCtxTests {
 
   class ConvProgStaged extends TestContext with ConvProg with CollectionsDslExp {
   }
-  class ConvProgSeq extends ScalanDslStd with ConvProg with CollectionsDslSeq {
+  class ConvProgStd extends ScalanDslStd with ConvProg with CollectionsDslStd {
   }
 
   test("convert") {
@@ -44,7 +44,7 @@ class CollectionConverterTests extends BaseCtxTests {
 
 
   test("convertSeq") {
-    val ctx = new ConvProgSeq
+    val ctx = new ConvProgStd
     import ctx._
     {
       val res = ctx.t2((Array(10, 20), Array(10, 20)))

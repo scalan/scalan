@@ -8,7 +8,7 @@ import scalan._
 trait MapViews extends MapOps with Views { self: Scalan =>
 }
 
-trait MapViewsSeq extends MapViews with MapOpsSeq with ViewsDslSeq { self: ScalanSeq =>
+trait MapViewsStd extends MapViews with MapOpsStd with ViewsDslStd { self: ScalanStd =>
 }
 
 trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: ScalanExp =>

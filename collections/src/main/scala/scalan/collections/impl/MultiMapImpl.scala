@@ -150,20 +150,20 @@ trait MultiMapsAbs extends scalan.ScalanDsl with MultiMaps {
   registerModule(MultiMaps_Module)
 }
 
-// Seq -----------------------------------
-trait MultiMapsSeq extends scalan.ScalanDslStd with MultiMapsDsl {
-  self: MultiMapsDslSeq =>
+// Std -----------------------------------
+trait MultiMapsStd extends scalan.ScalanDslStd with MultiMapsDsl {
+  self: MultiMapsDslStd =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs {
   }
 
-  case class SeqHashMMultiMap[K, V]
+  case class StdHashMMultiMap[K, V]
       (override val map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V])
     extends AbsHashMMultiMap[K, V](map) {
   }
 
   def mkHashMMultiMap[K, V]
     (map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
-    new SeqHashMMultiMap[K, V](map)
+    new StdHashMMultiMap[K, V](map)
   def unmkHashMMultiMap[K, V](p: Rep[MMultiMap[K, V]]) = p match {
     case p: HashMMultiMap[K, V] @unchecked =>
       Some((p.map))
@@ -597,7 +597,7 @@ trait MultiMapsExp extends scalan.ScalanDslExp with MultiMapsDsl {
 }
 
 object MultiMaps_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWPYwbRRR+ts/x2T4uIUCASODjZEAgsJNrUlwRXRwfP/GdT7chQiYCjddj34bZn5sZn3YpUqaADtEiEYkGKQ2iokE0SIiCCiEkaqokCKUgFYg34931rs974UdsMdqZefPmm+/73uzeugtFweE5YRJGnIZNJWkY+n1DyLrRdqQlgy13MGb0Ih0+4X79ydnPTn+Zh+M9OLZHxEXBelCevLR9L3436H4HysQxqZAuFxKe6egdmqbLGDWl5TpNy7bHkvQZbXYsIdc7sNB3B8E+XIdcB06YrmNyKqnRYkQIKsLxRaoQWXG/rPtB15vu4TTVKZqJU1zmxJIIH/c4MYnfpZ4ROK4T2BKWQ2hdT8HCmJJley6X0RYlTLfnDqLugkNwAE52rpED0sQtRk1DcssZ4cqqR8x3yYhuY4gKX0DAgrLh5cDT/UIHKoLuI0Gv2R7TI74HAKjAmgbRmPLTiPlpKH7qBuUWYdZ7RE3ucNcPYPLkCgC+hyleekCKKANtO4P6+1fNt+4bVTuvFvsKSkmf8BgmqmW4QUuBPH67+6G498rNc3mo9KBiiY2+kJyYMil5yFaVOI4rNeaYQMJHqNZqllp6lw2MmbFE2XRtjziYKaRyCXVilmlJFazGlkJ1MqgvSY9GoTnfy8XnXck4r/ZNizC2c/vJl5+9034zD/n0FmVMaaDxeZRUQnlra8yktUW8ML9qj0vIXZqSrLpXdFc1ZX/alo6AExPz/O1fB9+cgav5mM5w97+nIKYoip9+rP7wwvk8LPa03zcZGfWQUdFm1O7yluvIHiy6B5RPZkoHhKm3uYqWBnRI8NAhz0mCCkiQhJXMyvSoYm9dV0EuIqA6MfK269D65k79d+O7j24pn3JYmsxMSvVP69wfPy8PpbawhIIdUo7sFrDA0/QvbD1IkeoG5yS4MB4OKZ8JnK/VrG6VCTjDtenDq/est29+ILVCOT99XXT717A+1/W6p48QK7q2Pr9x47HfPn3nEV1ui31L4kHrZ/5BsUW18T8WE6QZW26F17c23Fp68qFXidiLqyRBbRRwMp5sJVGWknSr9vF4VDc1NMGpVO7U8lpiYQLQ6VzkPB0koUSxBC7RIHaOKom5zkmgPpSlrLJcIWxMj8pz2Fjz6KnFdf1UllW0GKd2O4+yu+e/ykPxdSgOsVxFB4p9d+wMIpXxsyqpLy9EY7m0yqgq4cSOVdXPCkzpS1dNd27A4UMlTn12xikFNHh65L9doBn+0P3GXARV5epNYlssWMtCknFXZ5gww78TgrzZvLXEpvMJ/ReMq/aNaUwYWI6ZRZChlaa/CyIkicNqhs2M8A5Aza7f/3j7xe+/+EV/EivqNsHb2ol/mqam8mdkXIox4G9QAjcWiLpiNOa/AAOkZ7mWCgAA"
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+ts/x2T4uIUAQSODjZEAgsMM1Qboiujg+fmKfT7chQiYCjddj34bZH2bGp12KlCmgQ7QUkZBo0qAUNIgOCVFQIYRERUGVBKEUpALxZry73vV5L/yILUY7M2/efPN935vdG3egKDg8I0zCiNOwqSQNQ79vCVk32o60ZNB1hxNGz9PRz5+9fHO98MWXeTjeh2P7RJwXrA/l6Uvb9+J3Qw47UCaOSYV0uZDwVEfv0DRdxqgpLddpWrY9kWTAaLNjCbnZgaWBOwzeg6uQ68AJ03VMTiU1WowIQUU4vkwVIivul3U/6HmzPZymOkUzcYqLnFgS4eMeJ6bxe9QzAsd1AlvCagit5ylYGFOybM/lMtqihOn23WHUXXIIDsDJzhVyQJq4xbhpSG45Y1xZ9Yj5LhnTHQxR4UsIWFA2uhh4ul/oQEXIIRL0mu0xPeJ7AIAKbGgQjRk/jZifhuKnblBuEWa9T9TkLnf9AKZPrgDge5jihfukiDLQtjOsf3DZfOueUbXzarGvoJT0CY9holqGG7QUyOM3ex+Ju69cP5OHSh8qltgaCMmJKZOSh2xVieO4UmOOCSR8jGqtZ6mld9nCmDlLlE3X9oiDmUIqV1AnZpmWVMFqbCVUJ4P6kvRoFJrzvVx83rWM82rftAhju7cee/Hp2+0385BPb1HGlAYan0dJJZS73QmTVpd4YX7VHpeQuzAjWXUv6a5qyv6sLR0BJybm2Vu/Dr8+DZfzMZ3h7n9PQUxRFD/+UP3+ubN5WO5rv28zMu4jo6LNqN3jLdeRfVh2DyifzpQOCFNvCxUtDemI4KFDnpMEFZAgCWuZlelRxd6mroJcREB1auQd16H17d3678a3H99QPuWwMp2Zluqf1pk/flodSW1hCQU7pBzZLWCBp+lf6t5PkeoW5yQ4NxmNKJ8LXKzVvG6VKTjDtemD63ett69/KLVCOT99XfQGV7A+N/W6J48QK7q2Pr927ZHfPn3nIV1uywNL4kHrp/9BsUW18T8WE6QZW22F17c23EZ68oFXidiPqyRBbRRwMp5sJVGWknSr9tF4VDc1NMGpVO7U8lpiYQLQ47nIeTpIQoliCVygQewcVRILnZNAfShLWWW5RNiEHpXnsLEW0VOL6/qJLKtoMU7tdR5md85+lYfi61AcYbmKDhQH7sQZRirjZ1VSX56LxnJplVFVwokdq6qfNZjRl66a3sKAw4dKnPqlOacU0ODpkf92gWb4Q/cbCxFUlau3iW2xYCMLScZdnWHCDP9OCfLm89YSmy4m9F8wrto3ZjFhYDlmFkGGVpr9LoiQJA7rGTYzwjsANbt675Od57+7+Yv+JFbUbYK3tRP/NM1M5c/JuBJjwN+gBG4sEHXFaMx/AfjfgXmWCgAA"
 }
 }
 

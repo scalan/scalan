@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{ ScalanExp, Scalan, ScalanSeq }
+import scalan.{ ScalanExp, Scalan, ScalanStd }
 import scalan.Scalan
 
 trait StringOps extends UnBinOps { self: Scalan =>
@@ -37,7 +37,7 @@ trait StringOps extends UnBinOps { self: Scalan =>
 }
 
 
-trait StringOpsSeq extends StringOps { self: ScalanSeq =>
+trait StringOpsStd extends StringOps { self: ScalanStd =>
   def string_length(str: Rep[String]): Rep[Int] = str.length
   def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String] = str.substring(start, end)
   def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char] = str.charAt(index)
