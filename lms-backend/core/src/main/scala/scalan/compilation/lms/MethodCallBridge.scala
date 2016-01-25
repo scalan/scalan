@@ -79,6 +79,10 @@ trait GenMethodCallOps[BackendType <: Expressions with Effects with MethodCallOp
   def mappings: MethodCallBridge[LibraryT, TypeT, MethodT]
 
   def adjust(adjustment: Adjustment, value: Any): Any = IR.adjust(adjustment, value)
+  def adjust(adjustmentOpt: Option[Adjustment], value: Any): Any = adjustmentOpt match {
+    case None => value
+    case Some(adjustment) => adjust(adjustment, value)
+  }
 
   override def quoteOrRemap(arg: Any) = arg match {
     case Adjusted(value, None) => quoteOrRemap(value)

@@ -101,7 +101,7 @@ object VoidInOut extends Adjustment
 object EnumIndex extends Adjustment
 
 // maybe adjustments: Seq[Adjustment] instead?
-case class Adjusted[A](value: A, adjustment: Option[Adjustment]) {
+case class Adjusted[+A](value: A, adjustment: Option[Adjustment]) {
   def adjust(adjustment: Adjustment) = copy(adjustment = Some(adjustment))
   def map[B](f: A => B) = copy(value = f(value))
 }
@@ -185,16 +185,19 @@ object CxxMapping {
     type TypeBuilderT = MapTypeCxx
   }
 
-  case class MapTypeCxx(scalanName: String, fieldSyms: Seq[Symbol], mappedName: String, templateArgs: Seq[Adjusted[Symbol]]) extends TypeBuilder[CxxLibrary, CxxType, CxxMethod, MapTypeCxx] {
+  case class MapTypeCxx(scalanName: String, fieldSyms: Seq[Symbol], mappedName: String, templateArgs: Option[Seq[Adjusted[Symbol]]]) extends TypeBuilder[CxxLibrary, CxxType, CxxMethod, MapTypeCxx] {
     def to(mappedName: String) = copy(mappedName = mappedName)
-    def methods(methodBuilders: MethodBuilderT*) =
-      CxxType(scalanName, mappedName, Nil /* TODO use templateArgs */, methodBuilders.map(_.apply()))
+    def templateArgs(templateArgs: Adjusted[Symbol]*): MapTypeCxx = copy(templateArgs = Some(templateArgs))
+    def methods(methodBuilders: MethodBuilderT*) = {
+      val templateArgOrder = symbolOrder(fieldSyms, templateArgs, scalanName, true)
+      CxxType(scalanName, mappedName, templateArgOrder, methodBuilders.map(_.apply()))
+    }
 
     type MethodBuilderT = MapMethodCxx
   }
 
   object MapTypeCxx {
-    def apply(scalanName: String, fieldSyms: Symbol*): MapTypeCxx = new MapTypeCxx(scalanName, fieldSyms, scalanName, Nil)
+    def apply(scalanName: String, fieldSyms: Symbol*): MapTypeCxx = new MapTypeCxx(scalanName, fieldSyms, scalanName, None)
   }
 
   case class MapMethodCxx(scalanName: String, overloadId: Option[String], scalanArgs: Seq[Symbol], mappedName: String, templateArgs: Option[Seq[Adjusted[Symbol]]], args: Option[Seq[Adjusted[Symbol]]], implicitArgs: Option[Seq[Adjusted[Symbol]]]) extends MethodBuilder[CxxLibrary, CxxType, CxxMethod, MapMethodCxx] {
