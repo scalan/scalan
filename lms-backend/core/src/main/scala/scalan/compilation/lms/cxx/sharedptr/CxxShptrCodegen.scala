@@ -2,6 +2,8 @@ package scalan.compilation.lms.cxx.sharedptr
 
 import java.io.PrintWriter
 
+import scala.collection.immutable.ListSet
+import scala.lms.common.FunctionsExp
 import scala.lms.internal.{CLikeCodegen, Expressions, GenerationFailedException}
 import scalan.compilation.lms.ManifestUtil
 import scalan.compilation.lms.common.JNILmsOps
@@ -15,6 +17,7 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
   trait auto_t
 
   var headerFiles: collection.mutable.HashSet[String] = collection.mutable.HashSet.empty
+  var globals = ListSet.empty[IR.Exp[_]]
 
   headerFiles ++= Seq("memory", "scalan/common.hpp")
 
@@ -97,11 +100,11 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
 
   override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
     val resultM = manifest[A]
-    val sA = remap(toShptrManifest(resultM))
 
     //      val staticData = getFreeDataBlock(body)
-
     withStream(out) {
+      preprocess(args, body, className)(resultM)
+
       stream.println(
         "#if __cplusplus < 201103L\n" +
         "#error C++11 support required\n" +
@@ -115,16 +118,20 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
           "*******************************************/")
       //emitFileHeader()
 
-      val hasJNI = args.map(_.tp.runtimeClass).contains(classOf[JNILmsOps#JNIType[_]]) || resultM.runtimeClass == classOf[JNILmsOps#JNIType[_]]
-      val jniEnv = if (hasJNI) "JNIEnv* env, jobject, " else ""
-      val retType = if (hasJNI) s"""extern "C" JNIEXPORT $sA JNICALL""" else sA
+      globals.foreach {
+        // assume e is a function and e.tp is Manifest[(...) => ...]
+        // nasty tricks because we can't reasonably add FunctionsExp to IR type
+        case e @ IR.Def(l) =>
+          l.asInstanceOf[Any] match {
+            case lam: FunctionsExp#Lambda[a, b] =>
+              emitFunctionDef(List(lam.x.asInstanceOf[IR.Sym[a]]), lam.y.asInstanceOf[Block[b]], quote(e), lam.y.tp)
+            case _ =>
+              throw new GenerationFailedException(s"Expected global $e's definition to be a lambda, got $l")
+          }
+      }
 
-      stream.println(s"${retType} $className(${jniEnv}${args.map(arg => src"${toShptrManifest(arg.tp)} $arg").mkString(", ")} ) {")
+      emitFunctionDef(args, body, className, resultM)
 
-      emitBlock(body)
-      stream.println(src"return ${getBlockResult(body)};")
-
-      stream.println("}")
       stream.println("/*****************************************\n" +
         "  End of Generated Code                  \n" +
         "*******************************************/")
@@ -132,4 +139,21 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
 
     Nil
   }
+
+  def emitFunctionDef[A](args: List[Sym[_]], body: Block[A], functionName: String, resultM: Manifest[A]): Unit = {
+    val sA = remap(toShptrManifest(resultM))
+    val hasJNI = args.map(_.tp.runtimeClass).contains(classOf[JNILmsOps#JNIType[_]]) || resultM.runtimeClass == classOf[JNILmsOps#JNIType[_]]
+    val jniEnv = if (hasJNI) "JNIEnv* env, jobject, " else ""
+    val retType = if (hasJNI) s"""extern "C" JNIEXPORT $sA JNICALL""" else sA
+
+    stream.println(s"${retType} $functionName(${jniEnv}${args.map(arg => src"${toShptrManifest(arg.tp)} $arg").mkString(", ")} ) {")
+
+    emitBlock(body)
+    stream.println(src"return ${getBlockResult(body)};")
+
+    stream.println("}")
+  }
+
+  // override to initialize headerFiles, globals, etc.
+  def preprocess[A: Manifest](args: List[Sym[_]], body: Block[A], className: String): Unit = {}
 }

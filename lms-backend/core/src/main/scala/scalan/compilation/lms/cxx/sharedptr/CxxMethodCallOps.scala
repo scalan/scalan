@@ -1,7 +1,7 @@
 package scalan.compilation.lms.cxx.sharedptr
 
 import scala.lms.common._
-import scala.lms.internal.{Expressions, Effects}
+import scala.lms.internal.{NestedBlockTraversal, Expressions, Effects}
 import scala.reflect.SourceContext
 import scalan.compilation.language.Adjusted
 import scalan.compilation.language.CxxMapping.{CxxMethod, CxxType, CxxLibrary}
@@ -75,7 +75,7 @@ trait CxxMethodCallOpsExp extends CxxMethodCallOps with MethodCallOpsExp {
   }
 }
 
-trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxMethodCallOpsExp] extends CxxShptrCodegen with GenMethodCallOps[BackendType, CxxLibrary, CxxType, CxxMethod] {
+trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxMethodCallOpsExp] extends CxxShptrCodegen with GenMethodCallOps[BackendType, CxxLibrary, CxxType, CxxMethod] { self =>
   import IR._
 
   def quoteTemplateArg(x: TemplateArg): String = x match {
@@ -88,6 +88,40 @@ trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxM
   }
   def quoteTemplateArg(x: Adjusted[TemplateArg]): String = x match {
     case Adjusted(value, _) => quoteTemplateArg(value)
+  }
+
+  private def addTemplateArgsToGlobals(templateArgs: List[Adjusted[IR.TemplateArg]]) = templateArgs.foreach {
+    case Adjusted(IR.PointerArg(target), _) => globals += target
+    case _ =>
+  }
+
+  override def preprocess[A: Manifest](args: List[Sym[_]], body: Block[A], className: String): Unit = {
+    super.preprocess(args, body, className)
+    val traversal = new NestedBlockTraversal {
+      override val IR: self.IR.type = self.IR
+      import IR._
+
+      override def traverseStm(stm: Stm) = stm match {
+        case TP(lhs, rhs) =>
+          // TODO what other types need to be tested? Ideally, this should happen on call to remap,
+          // but that happens too late
+          mappings.mappedType(lhs.tp) match {
+            case Some((lib, _)) =>
+              lib.headerName.foreach(headerFiles += _)
+            case _ =>
+          }
+          rhs match {
+            case mc: CxxMethodCall[_] =>
+              addTemplateArgsToGlobals(mc.templateArgs)
+            case no: CxxNewObj[_] =>
+              addTemplateArgsToGlobals(no.templateArgs)
+            case _ =>
+          }
+        case _ =>
+      }
+    }
+
+    traversal.traverseBlock(body)
   }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
@@ -106,12 +140,16 @@ trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxM
 
   override def remap[A](m: Manifest[A]) = mappings.mappedType(m) match {
     case Some((lib, tpe)) =>
-      lib.headerName.foreach(headerFiles += _)
+      // FIXME this is too late but we don't know what types will need to be remapped in preprocess
+      // see the comment there
+      // lib.headerName.foreach(headerFiles += _)
       val templateArgs = tpe.templateArgOrder.map { case Adjusted(i, adjOpt) =>
         val typeArg = m.typeArguments(i)
         adjust(adjOpt, typeArg)
       }
-      src"${lib.namespace.fold("")(_ + "::")}${tpe.mappedName}<$templateArgs>"
+      // pointer or reference?
+      src"${lib.namespace.fold("")(_ + "::")}${tpe.mappedName}<$templateArgs>*"
     case None => super.remap(m)
   }
 }
+

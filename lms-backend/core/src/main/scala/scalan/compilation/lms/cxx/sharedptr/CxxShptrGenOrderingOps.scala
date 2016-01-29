@@ -1,6 +1,6 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.lms.common.{CLikeGenOrderingOps}
+import scala.lms.common.CLikeGenOrderingOps
 
 trait CxxShptrGenOrderingOps extends CxxShptrCodegen with CLikeGenOrderingOps {
   import IR._

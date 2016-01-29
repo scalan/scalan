@@ -34,7 +34,10 @@ trait CxxShptrGenFunctions extends CLikeGenEffect with BaseGenFunctions with Cxx
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case Lambda(fun, x, y) =>
-      emitLambdaDef(sym, x, y)
+      if (!globals.contains(sym))
+        emitLambdaDef(sym, x, y)
+      else
+        {} // already generated
     case Apply(fun, arg) =>
       emitValDef(sym, src"$fun($arg)")
     case _ => super.emitNode(sym, rhs)
