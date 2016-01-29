@@ -15,6 +15,9 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
   trait size_t
   trait SharedPtr[T]
   trait auto_t
+  trait Ptr[T]
+  trait Ref[T]
+  trait ConstQual[T]
 
   var headerFiles: collection.mutable.HashSet[String] = collection.mutable.HashSet.empty
   var globals = ListSet.empty[IR.Exp[_]]
@@ -58,6 +61,13 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
         "auto"
       case _ if m.runtimeClass == classOf[size_t] =>
         "size_t"
+      // TODO the rules are more complex, but this should work for now
+      case _ if m.runtimeClass == classOf[Ptr[_]] =>
+        src"${m.typeArguments(0)}*"
+      case _ if m.runtimeClass == classOf[Ref[_]] =>
+        src"${m.typeArguments(0)}&"
+      case _ if m.runtimeClass == classOf[Ref[_]] =>
+        src"const ${m.typeArguments(0)}"
       case _ if m.runtimeClass == classOf[Unit] =>
         "boost::blank"
       case _ if m.isPrimitive =>

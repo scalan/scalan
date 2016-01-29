@@ -3,7 +3,7 @@ package scalan.compilation.lms.cxx.sharedptr
 import scala.lms.common._
 import scala.lms.internal.{NestedBlockTraversal, Expressions, Effects}
 import scala.reflect.SourceContext
-import scalan.compilation.language.Adjusted
+import scalan.compilation.language.{VoidInOut, Adjustment, Adjusted}
 import scalan.compilation.language.CxxMapping.{CxxMethod, CxxType, CxxLibrary}
 import scalan.compilation.lms.{GenMethodCallOps, MethodCallOpsExp}
 
@@ -75,7 +75,7 @@ trait CxxMethodCallOpsExp extends CxxMethodCallOps with MethodCallOpsExp {
   }
 }
 
-trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxMethodCallOpsExp] extends CxxShptrCodegen with GenMethodCallOps[BackendType, CxxLibrary, CxxType, CxxMethod] { self =>
+trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxMethodCallOpsExp with TupledFunctionsExp] extends CxxShptrCodegen with GenMethodCallOps[BackendType, CxxLibrary, CxxType, CxxMethod] { self =>
   import IR._
 
   def quoteTemplateArg(x: TemplateArg): String = x match {
@@ -93,6 +93,33 @@ trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxM
   private def addTemplateArgsToGlobals(templateArgs: List[Adjusted[IR.TemplateArg]]) = templateArgs.foreach {
     case Adjusted(IR.PointerArg(target), _) => globals += target
     case _ =>
+  }
+
+  override def adjust(adjustment: Adjustment, value: Any): Any = adjustment match {
+    case VoidInOut =>
+      value match {
+        case f @ Def(lam: Lambda[a, b] @unchecked) =>
+          implicit val mA: Manifest[a] = lam.mA
+          implicit val mB: Manifest[b] = lam.mB
+          // FIXME
+          // use UnboxedTuple?
+          // need to manipulate lam's body, there is no simple method like schedule in Scalan
+          val traversal = new NestedBlockTraversal {
+            override val IR: self.IR.type = self.IR
+
+            override def traverseStm(stm: Stm) = stm match {
+              case TP(lhs, rhs) =>
+                ???
+              case _ =>
+            }
+
+          }
+          fun { (in: Exp[ConstQual[Ref[a]]], out: Exp[Ref[b]]) =>
+            ()
+          }
+          f
+      }
+    case _ => super.adjust(adjustment, value)
   }
 
   override def preprocess[A: Manifest](args: List[Sym[_]], body: Block[A], className: String): Unit = {
@@ -147,7 +174,7 @@ trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxM
         val typeArg = m.typeArguments(i)
         adjust(adjOpt, typeArg)
       }
-      // pointer or reference?
+      // pointer or reference? Should use Ptr/Ref types?
       src"${lib.namespace.fold("")(_ + "::")}${tpe.mappedName}<$templateArgs>*"
     case None => super.remap(m)
   }

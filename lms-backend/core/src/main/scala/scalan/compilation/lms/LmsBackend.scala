@@ -69,7 +69,7 @@ abstract class LmsBackend extends LmsBackendFacade { self =>
 }
 
 abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimitives with LiftNumeric with ArrayOpsExtExp with ListOpsExp
-  with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExpExt
+  with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with TupledFunctionsExp with HashMapOpsExpExt
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with ArrayMutationExp with OrderingOpsExp
   with IfThenElseFatExp with VariablesExpOpt
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with ExtNumOpsExp
