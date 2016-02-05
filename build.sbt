@@ -26,7 +26,7 @@ publishTo := {
 
 lazy val testSettings = Seq(
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "2.2.5" % Test,
+    "org.scalatest" %% "scalatest" % "2.2.6" % Test,
     // TODO separate benchmark configuration, see https://github.com/scalameter/scalameter-examples/blob/master/basic-with-separate-config/build.sbt
     "com.storm-enroute" %% "scalameter" % "0.6" % Test),
   parallelExecution in Test := false,
@@ -52,7 +52,7 @@ lazy val commonBackendSettings = commonSettings ++ Defaults.itSettings ++
   scalaVirtualizedSettings ++ Seq(
     libraryDependencies ++= Seq(
       "org.scala-lang.lms" %% "lms-core" % "0.9.1-SNAPSHOT",
-      "org.scalatest" %% "scalatest" % "2.2.5" % "it"),
+      "org.scalatest" %% "scalatest" % "2.2.6" % "it"),
     // we know we use LMS snapshot here, ignore it
     releaseSnapshotDependencies := Seq.empty,
     javaOptions in IntegrationTest ++=
@@ -84,7 +84,7 @@ lazy val core = Project("scalan-core", file("core"))
   .settings(commonSettings,
     libraryDependencies ++= Seq(
       "com.chuusai" %% "shapeless" % "2.2.5",
-      "cglib" % "cglib" % "3.1",
+      "cglib" % "cglib" % "3.2.0",
       "org.objenesis" % "objenesis" % "2.2"))
 
 lazy val collections = Project("scalan-collections", file("collections"))
