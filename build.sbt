@@ -132,5 +132,5 @@ lazy val backendIT = Project("scalan-lms-backend-tests", file("lms-backend") / "
 lazy val root = Project("scalan", file("."))
   .aggregate(common, meta, core,
     collections, linalg, graphs, pointers, effects,
-    backendCore, backendLinAlg, backendPointers, backendIT)
+    backendCore, backendCollections, backendLinAlg, backendPointers, backendIT)
   .settings(buildSettings, publishArtifact := false)
