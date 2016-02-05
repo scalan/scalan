@@ -425,10 +425,14 @@ trait Expressions extends BaseExp { scalan: ScalanExp =>
   /**
    * A Sym is a symbolic reference used internally to refer to expressions.
    */
-  object Sym { private var currId = 0 }
-  case class Sym[+T](id: Int = {Sym.currId += 1; Sym.currId})
-                    (implicit et: LElem[T]) extends Exp[T]
-  {
+  object Sym {
+    private var currId = 0
+    def fresh[T: LElem]: Exp[T] = {
+      currId += 1
+      Sym(currId)
+    }
+  }
+  case class Sym[+T](id: Int)(implicit et: LElem[T]) extends Exp[T] {
     override def elem: Elem[T @uncheckedVariance] = this match {
       case Def(d) => d.selfType
       case _ => et.value
@@ -440,7 +444,7 @@ trait Expressions extends BaseExp { scalan: ScalanExp =>
     def toStringWithDefinition = toStringWithType + definition.map(d => s" = $d").getOrElse("")
   }
 
-  def fresh[T](implicit et: LElem[T]): Exp[T] = new Sym[T]()
+  def fresh[T: LElem]: Exp[T] = Sym.fresh[T]
 
   case class TableEntrySingle[T](sym: Exp[T], rhs: Def[T], lambda: Option[Exp[_]]) extends TableEntry[T]
 
