@@ -552,7 +552,7 @@ trait StructsDslExp extends StructsDsl with Expressions with EffectsExp with Vie
   }
 
   override def containSyms(e: Any): List[Exp[Any]] = e match {
-    case SimpleStruct(tag,fields) => fields.collect { case (k, v: Sym[_]) => v }.toList
+    case SimpleStruct(tag,fields) => fields.collect { case (k, v: Exp[_]) => v }.toList
     case FieldUpdate(s, fn, v) => List(v)
     case FieldApply(s,x) => Nil
     case _ => super.containSyms(e)
