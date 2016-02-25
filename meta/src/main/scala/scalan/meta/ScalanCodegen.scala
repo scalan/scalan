@@ -272,11 +272,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     def extractSqlQueries(body: List[SBodyItem]): String = {
       body.collect { case m: SMethodDef =>
         m.body match {
-          case Some(call: SApply) =>
-            call.fun match {
-              case SLiteral(value) if value == "sql" => generateQuery(m)
-              case _ => ""
-            }
+          case Some(SqlExpr(op, _)) =>
+            generateQuery(m)
           case _ => ""
         }
       }.mkString("\n\n")
@@ -289,28 +286,19 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
     def getTraitAbs = {
       val sqlDDL = module.methods.map(m =>
-        if (!m.tpeRes.isDefined) {
           m.body match {
-            case Some(call: SApply) =>
-              call.fun match {
-                case SLiteral(value) if value == "sql" => call.argss(0)(0).asInstanceOf[SLiteral].value
-                case _ => ""
-              }
+            case Some(SqlExpr(op, sql)) if op == "ddl" => sql
             case _ => ""
           }
-        } else "").mkString
+      ).mkString
       val sqlSchema = if (sqlDDL.isEmpty) "" else generateSchema(sqlDDL)
+
       val sqlQueries = module.methods.filter(m =>
-        if (m.tpeRes.isDefined) {
           m.body match {
-            case Some(call: SApply) =>
-              call.fun match {
-                case SLiteral(value) if value == "sql" => true
-                case _ => false
-              }
+            case Some(SqlExpr(op, sql)) if op == "sql" => true
             case _ => false
           }
-        } else false).map(m => generateQuery(m)).mkString("\n\n")
+        ).map(m => generateQuery(m)).mkString("\n\n")
 
       val entityCompOpt = entity.companion
       val hasCompanion = entityCompOpt.isDefined

@@ -345,8 +345,8 @@ trait ScalanParsers {
     //      case _ => None
     //    }
     val optBody:Option[SExpr] = md.rhs match {
-      case Apply(ident:Ident, args) if ident.name.intern() == "sql" =>
-        Some(SApply(SLiteral("sql"), List(), List(List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue)))))
+      case Apply(ident:Ident, args) if ident.name.intern() == "sql" || ident.name.intern() == "ddl" =>
+        Some(SApply(SLiteral(ident.name.intern()), List(), List(List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue)))))
       case _ => optExpr(md.rhs)
     }
     val isElemOrCont = md.tpt match {

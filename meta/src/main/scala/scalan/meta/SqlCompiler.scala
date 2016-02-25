@@ -48,13 +48,19 @@ trait SqlCompiler extends SqlParser {
 
   def generateQuery(m: SMethodDef): String = {
     val args = m.allArgs.map(arg => arg.name + ": " + arg.tpe).mkString(", ")
-    val sql = m.body.get.asInstanceOf[SApply].argss(0)(0).asInstanceOf[SLiteral].value
-    val select = parseSelect(sql)
-    val op = select.operator
-    currMethod = m
-    s"""type ${m.name}_Result = ${resultType(select)}
-      |
-      | override def ${m.name}(${args}) = ${generateOperator(op)}${tableToArray(op)}""".stripMargin
+    val apply = m.body.get.asInstanceOf[SApply]
+    val sql = apply.argss(0)(0).asInstanceOf[SLiteral].value
+    apply.fun match {
+      case SLiteral("sql") =>
+        val select = parseSelect(sql)
+        val op = select.operator
+        currMethod = m
+        s"""type ${m.name}_Result = ${resultType(select)}
+          |
+          | override def ${m.name}(${args}) = ${generateOperator(op)}${tableToArray(op)}""".stripMargin
+      case SLiteral("ddl") =>
+        generateSchema(sql)
+    }
   }
 
   def tablesInNestedSelects(e: Expression): Set[Table] = {

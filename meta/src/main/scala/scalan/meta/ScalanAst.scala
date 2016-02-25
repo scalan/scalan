@@ -155,6 +155,18 @@ object ScalanAst {
   case class SCase(pat: SPattern, guard: SExpr, body: SExpr) extends SExpr
   case class SMatch(selector: SExpr, cases: List[SCase]) extends SExpr
 
+  object SqlExpr {
+    def unapply(expr: SExpr): Option[(String, String)] = expr match {
+      case call: SApply =>
+        call.fun match {
+          case SLiteral(value) if value == "sql" || value == "ddl" =>
+            Some((value, call.argss(0)(0).asInstanceOf[SLiteral].value))
+          case _ => None
+        }
+      case _ => None
+    }
+  }
+
   trait SPattern
   case class SWildcardPattern() extends SPattern
   case class SLiteralPattern(const: SConst) extends SPattern
