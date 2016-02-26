@@ -3,10 +3,15 @@ package scalan.compilation.lms.cxx.sharedptr
 import java.io.PrintWriter
 
 import scala.collection.immutable.ListSet
-import scala.lms.common.FunctionsExp
+import scala.lms.common.{TupledFunctionsExp, FunctionsExp}
 import scala.lms.internal.{CLikeCodegen, Expressions, GenerationFailedException}
+import scalan.compilation.language.{Adjustment, Adjusted}
 import scalan.compilation.lms.ManifestUtil
 import scalan.compilation.lms.common.JNILmsOps
+
+trait Ptr[T]
+trait Ref[T]
+trait ConstQual[T]
 
 trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
   val IR: Expressions
@@ -15,12 +20,12 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
   trait size_t
   trait SharedPtr[T]
   trait auto_t
-  trait Ptr[T]
-  trait Ref[T]
-  trait ConstQual[T]
+//  trait Ptr[T]
+//  trait Ref[T]
+//  trait ConstQual[T]
 
   var headerFiles: collection.mutable.HashSet[String] = collection.mutable.HashSet.empty
-  var globals = ListSet.empty[IR.Exp[_]]
+  var globals = ListSet.empty[Adjusted[Exp[_]]]
 
   headerFiles ++= Seq("memory", "scalan/common.hpp")
 
@@ -66,7 +71,7 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
         src"${m.typeArguments(0)}*"
       case _ if m.runtimeClass == classOf[Ref[_]] =>
         src"${m.typeArguments(0)}&"
-      case _ if m.runtimeClass == classOf[Ref[_]] =>
+      case _ if m.runtimeClass == classOf[ConstQual[_]] =>
         src"const ${m.typeArguments(0)}"
       case _ if m.runtimeClass == classOf[Unit] =>
         "boost::blank"
@@ -128,19 +133,27 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
           "*******************************************/")
       //emitFileHeader()
 
+      stream.println("namespace scalan {")
+
       globals.foreach {
         // assume e is a function and e.tp is Manifest[(...) => ...]
         // nasty tricks because we can't reasonably add FunctionsExp to IR type
-        case e @ IR.Def(l) =>
+        case Adjusted(e @ IR.Def(l), adj) =>
           l.asInstanceOf[Any] match {
             case lam: FunctionsExp#Lambda[a, b] =>
-              emitFunctionDef(List(lam.x.asInstanceOf[IR.Sym[a]]), lam.y.asInstanceOf[Block[b]], quote(e), lam.y.tp)
+              val args = lam.x.asInstanceOf[Any] match {
+                case x: Sym[_] => List(x)
+                case xs: TupledFunctionsExp#UnboxedTuple[_] => xs.vars.asInstanceOf[List[Sym[_]]]
+              }
+              emitFunctionDef(args, lam.y.asInstanceOf[Block[b]], quote(e), lam.y.tp, adj)
             case _ =>
               throw new GenerationFailedException(s"Expected global $e's definition to be a lambda, got $l")
           }
       }
 
-      emitFunctionDef(args, body, className, resultM)
+      emitFunctionDef(args, body, className, resultM, None)
+
+      stream.println("}") // namespace scalan
 
       stream.println("/*****************************************\n" +
         "  End of Generated Code                  \n" +
@@ -150,19 +163,29 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
     Nil
   }
 
-  def emitFunctionDef[A](args: List[Sym[_]], body: Block[A], functionName: String, resultM: Manifest[A]): Unit = {
-    val sA = remap(toShptrManifest(resultM))
+  def emitFunctionDef[A](args: List[Sym[_]], body: Block[A], functionName: String, resultM: Manifest[A], adj: Option[Adjustment]): Unit = {
     val hasJNI = args.map(_.tp.runtimeClass).contains(classOf[JNILmsOps#JNIType[_]]) || resultM.runtimeClass == classOf[JNILmsOps#JNIType[_]]
-    val jniEnv = if (hasJNI) "JNIEnv* env, jobject, " else ""
-    val retType = if (hasJNI) s"""extern "C" JNIEXPORT $sA JNICALL""" else sA
-
-    stream.println(s"${retType} $functionName(${jniEnv}${args.map(arg => src"${toShptrManifest(arg.tp)} $arg").mkString(", ")} ) {")
+    val returnType = returnTyp(resultM, adj)
+    val extraArgs = if (hasJNI) "JNIEnv* env, jobject, " else ""
+    val argsString = this.mainArgs(args, adj)
+    val linkage = if (hasJNI) """extern "C" JNIEXPORT""" else ""
+    val callConvention = if (hasJNI) "JNICALL " else ""
+    stream.println(s"$linkage $returnType $callConvention$functionName($extraArgs$argsString) {")
 
     emitBlock(body)
-    stream.println(src"return ${getBlockResult(body)};")
+    stream.println(functionResult(args, body, adj))
 
     stream.println("}")
   }
+
+  def functionResult[A](args: List[Sym[_]], body: Block[A], adj: Option[Adjustment]) =
+    src"return ${getBlockResult(body)};"
+
+  protected def returnTyp(resultM: Manifest[_], adj: Option[Adjustment]) =
+    remap(toShptrManifest(resultM))
+
+  protected def mainArgs(args: List[Sym[_]], adj: Option[Adjustment]) =
+    args.map(arg => src"${toShptrManifest(arg.tp)} $arg").mkString(", ")
 
   // override to initialize headerFiles, globals, etc.
   def preprocess[A: Manifest](args: List[Sym[_]], body: Block[A], className: String): Unit = {}

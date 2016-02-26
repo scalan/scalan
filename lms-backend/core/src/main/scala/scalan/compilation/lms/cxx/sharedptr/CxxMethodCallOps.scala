@@ -16,21 +16,21 @@ trait CxxMethodCallOps extends Base with Effects {
   case class PointerArg[A](target: Rep[A]) extends TemplateArg
   // LValueRefArg, MemberPointerArg, EnumerationArg not needed yet
 
-  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: Seq[Adjusted[TemplateArg]], args: Any*): Rep[A]
+  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: Seq[TemplateArg], args: Any*): Rep[A]
 
-  def cxxNewObj[A: Manifest](templateArgs: Seq[Adjusted[TemplateArg]], args: Any*): Rep[A]
+  def cxxNewObj[A: Manifest](templateArgs: Seq[TemplateArg], args: Any*): Rep[A]
 }
 
 trait CxxMethodCallOpsExp extends CxxMethodCallOps with MethodCallOpsExp {
-  case class CxxMethodCall[A](caller: Rep[_], methodName: String, templateArgs: List[Adjusted[TemplateArg]], args: List[Any])(implicit val m: Manifest[A]) extends Def[A]
+  case class CxxMethodCall[A](caller: Rep[_], methodName: String, templateArgs: List[TemplateArg], args: List[Any])(implicit val m: Manifest[A]) extends Def[A]
 
-  case class CxxNewObj[A](m: Manifest[A], templateArgs: List[Adjusted[TemplateArg]], args: List[Any]) extends Def[A]
+  case class CxxNewObj[A](m: Manifest[A], templateArgs: List[TemplateArg], args: List[Any]) extends Def[A]
 
-  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: Seq[Adjusted[TemplateArg]], args: Any*): Exp[A] = {
+  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: Seq[TemplateArg], args: Any*): Exp[A] = {
     reflectEffect(CxxMethodCall[A](caller, methodName, templateArgs.toList, args.toList), effects)
   }
 
-  def cxxNewObj[A: Manifest](templateArgs: Seq[Adjusted[TemplateArg]], args: Any*): Rep[A] =
+  def cxxNewObj[A: Manifest](templateArgs: Seq[TemplateArg], args: Any*): Rep[A] =
     reflectEffect(CxxNewObj(manifest[A], templateArgs.toList, args.toList), Alloc)
 
   override def mirror[A: Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
@@ -47,11 +47,8 @@ trait CxxMethodCallOpsExp extends CxxMethodCallOps with MethodCallOpsExp {
     case PointerArg(target) => PointerArg(f(target))
     case _ => a
   }
-  def transformTemplateArg(f: Transformer, a: Adjusted[TemplateArg]): Adjusted[TemplateArg] =
-    a.map(transformTemplateArg(f, _))
 
   def transformTemplateArgs(f: Transformer, as: List[TemplateArg]): List[TemplateArg] = as.map(transformTemplateArg(f, _))
-  def transformTemplateArgs(f: Transformer, as: List[Adjusted[TemplateArg]])(implicit d: DummyImplicit): List[Adjusted[TemplateArg]] = as.map(transformTemplateArg(f, _))
 
   override def transformAny(f: Transformer, x: Any) = x match {
     case ta: TemplateArg => transformTemplateArg(f, ta)
@@ -82,45 +79,40 @@ trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxM
     case NullPtrArg => "nullptr"
     case TypeArg(m) => remap(m)
     case IntegralArg(value) => value.toString
-    // TODO need to make sure target is generated as a global or member. Do it in emitDataStructures?
-    // But forward declaration is needed as well.
     case PointerArg(target) => src"&$target"
   }
-  def quoteTemplateArg(x: Adjusted[TemplateArg]): String = x match {
-    case Adjusted(value, _) => quoteTemplateArg(value)
-  }
 
-  private def addTemplateArgsToGlobals(templateArgs: List[Adjusted[IR.TemplateArg]]) = templateArgs.foreach {
-    case Adjusted(IR.PointerArg(target), _) => globals += target
+  private def addTemplateArgsToGlobals(templateArgs: List[IR.TemplateArg]) = templateArgs.foreach {
+    case IR.PointerArg(target) => globals += target
     case _ =>
   }
 
-  override def adjust(adjustment: Adjustment, value: Any): Any = adjustment match {
-    case VoidInOut =>
-      value match {
-        case f @ Def(lam: Lambda[a, b] @unchecked) =>
-          implicit val mA: Manifest[a] = lam.mA
-          implicit val mB: Manifest[b] = lam.mB
-          // FIXME
-          // use UnboxedTuple?
-          // need to manipulate lam's body, there is no simple method like schedule in Scalan
-          val traversal = new NestedBlockTraversal {
-            override val IR: self.IR.type = self.IR
-
-            override def traverseStm(stm: Stm) = stm match {
-              case TP(lhs, rhs) =>
-                ???
-              case _ =>
-            }
-
-          }
-          fun { (in: Exp[ConstQual[Ref[a]]], out: Exp[Ref[b]]) =>
-            ()
-          }
-          f
-      }
-    case _ => super.adjust(adjustment, value)
-  }
+//  override def adjust(adjustment: Adjustment, value: Any): Any = adjustment match {
+//    case VoidInOut =>
+//      value match {
+//        case f @ Def(lam: Lambda[a, b] @unchecked) =>
+//          implicit val mA: Manifest[a] = lam.mA
+//          implicit val mB: Manifest[b] = lam.mB
+//          // FIXME
+//          // use UnboxedTuple?
+//          // need to manipulate lam's body, there is no simple method like schedule in Scalan
+//          val traversal = new NestedBlockTraversal {
+//            override val IR: self.IR.type = self.IR
+//
+//            override def traverseStm(stm: Stm) = stm match {
+//              case TP(lhs, rhs) =>
+//                ???
+//              case _ =>
+//            }
+//
+//          }
+//          fun { (in: Exp[ConstQual[Ref[a]]], out: Exp[Ref[b]]) =>
+//            ()
+//          }
+//          f
+//      }
+//    case _ => super.adjust(adjustment, value)
+//  }
 
   override def preprocess[A: Manifest](args: List[Sym[_]], body: Block[A], className: String): Unit = {
     super.preprocess(args, body, className)

@@ -91,11 +91,17 @@ trait Adjustment {
   def apply[A](x: A) = Adjusted(x, Some(this))
 }
 
-/** Converts a function to an Ordering object */
+/** Converts a (T, T) => Int function to an Ordering object */
 object MkOrdering extends Adjustment
 
 /** Converts a function A => B to (&A, &B) => void (for C++) */
 object VoidInOut extends Adjustment
+
+/** Indicates that a function takes its arguments by const reference (for C++) */
+object ConstRefArgs extends Adjustment
+
+/** Indicates that a function takes its arguments by reference (for C++) */
+object RefArgs extends Adjustment
 
 /** Converts a enum to its index */
 object EnumIndex extends Adjustment
