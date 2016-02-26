@@ -658,19 +658,16 @@ trait SqlCompiler extends SqlParser {
     val columns = table.schema
     val n_columns = columns.length
     val typeName = table.name.capitalize
-    val typeDef = buildTree(columns.map(c => c.ctype.scalaName))
+//    val typeDef = buildTree(columns.map(c => c.ctype.scalaName))
     val classDef = Array.tabulate(n_columns)(i => "  def " + columns(i).name + " = self" + indexToPath(i, n_columns)).mkString("\n")
     val parse = buildTree(Array.tabulate(n_columns)(i => "c(" + i + ")" + parseType(columns(i).ctype)), "Pair(")
     val pairTableDef = buildTree(columns.map(c => "Table.create[" + c.ctype.scalaName + "](tableName + \"." + c.name + "\")"), "PairTable.create(")
-    s"""type $typeName = $typeDef
+    s"""
+       |    def create$typeName(tableName: Rep[String]) =
+       |      $pairTableDef
        |
-       |def create$typeName(tableName: Rep[String]) = $pairTableDef
-       |
-       |def parse$typeName(c: Arr[String]): Rep[$typeName] = $parse
-       |
-       |implicit class ${typeName}_class(self: Rep[$typeName]) {
-       |$classDef
-       |}
+       |    def parse$typeName(c: Arr[String]): Rep[${typeName}Data] =
+       |      $parse
        |
        |""".stripMargin
   }

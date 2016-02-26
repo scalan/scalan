@@ -13,7 +13,7 @@ class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx with L
 
   case class EntityManager(name: String, file: File, entityDef: SEntityModuleDef, config: CodegenConfig)
 
-  private val entities = config.entityFiles.flatMap { f =>
+  protected val entities = config.entityFiles.flatMap { f =>
     val file = FileUtil.file(config.srcPath, f)
     try {
       val d = parseEntityModule(file)
@@ -25,12 +25,17 @@ class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx with L
     }
   }
 
+  def getCodegen: MetaCodegen = ScalanCodegen
+
+  def createFileGenerator(codegen: MetaCodegen, module: SEntityModuleDef, config: CodegenConfig) =
+    new EntityFileGenerator(codegen, module, config)
+
   def generateAll() = {
-    entities.foreach { m =>
-      println(s"  generating ${m.file}")
-      val g = new ScalanCodegen.EntityFileGenerator(m.entityDef, m.config)
+    entities.foreach { man =>
+      println(s"  generating ${man.file}")
+      val g = createFileGenerator(getCodegen, man.entityDef, man.config)
       val implCode = g.getImplFile
-      saveEntity(m.file, implCode)
+      saveEntity(man.file, implCode)
     }
   }
 
