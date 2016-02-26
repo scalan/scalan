@@ -55,9 +55,9 @@ trait SqlCompiler extends SqlParser {
         val select = parseSelect(sql)
         val op = select.operator
         currMethod = m
-        s"""type ${m.name}_Result = ${resultType(select)}
-          |
-          | override def ${m.name}(${args}) = ${generateOperator(op)}${tableToArray(op)}""".stripMargin
+        s"""    type ${m.name}_Result = ${resultType(select)}
+           |
+           |    override def ${m.name}(${args}) = ${generateOperator(op)}${tableToArray(op)}""".stripMargin
       case SLiteral("ddl") =>
         generateSchema(sql)
     }
