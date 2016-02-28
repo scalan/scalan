@@ -204,12 +204,16 @@ trait Views extends Elems { self: ViewsDsl with Scalan =>
   abstract class MapIso[K1, V1, K2, V2](val iso1: Iso[K1, K2], val iso2: Iso[V1, V2])(
     implicit val eK1: Elem[K1], val eV1: Elem[V1], val eK2: Elem[K2], val eV2: Elem[V2])
     extends IsoUR[MMap[K1, V1], MMap[K2, V2]] {
-//    def cC = container[MMap]
     lazy val eFrom: Elem[MMap[K1, V1]] = element[MMap[K1, V1]]
     lazy val eTo: Elem[MMap[K2, V2]] = element[MMap[K2, V2]]
     def from(b: MM[K2, V2]) = MMap.fromArray[K1, V1](b.keys.map(iso1.from) zip b.values.map(iso2.from))
     def to(a: MM[K1, V1]) = MMap.fromArray[K2, V2](a.keys.map(iso1.to) zip a.values.map(iso2.to))
     lazy val defaultRepTo = emptyMap[K2, V2](eK2, eV2)
+    override def isIdentity = iso1.isIdentity && iso2.isIdentity
+    override def equals(other: Any) = other match {
+      case i: Views#MapIso[_, _, _, _] => (this eq i) || (iso1 == i.iso1 && iso2 == i.iso2)
+      case _ => false
+    }
   }
 }
 
