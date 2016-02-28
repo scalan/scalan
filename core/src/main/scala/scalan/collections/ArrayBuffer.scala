@@ -216,6 +216,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
       case Some(s) => s
       case _ => super.rewriteDef(d)
     }
+    case ArrayBufferMap(xs, Def(IdentityLambda())) => xs
     case ArrayBufferMap(xs: Rep[ArrayBuffer[a]] @unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
       val f1 = f.asRep[a => b]
       val xs1 = xs.asRep[ArrayBuffer[a]]
