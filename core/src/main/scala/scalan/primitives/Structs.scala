@@ -412,12 +412,12 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
   }
   def structWrapperIn[A:Elem,B:Elem](f: Rep[A => B]): Rep[Any => B] = {
     val inIso = getStructWrapperIso[A]
-    val wrapperFun = f << inIso.toFun
+    val wrapperFun = inIso.toFun >> f
     wrapperFun.asRep[Any => B]
   }
   def structWrapperOut[A:Elem,B:Elem](f: Rep[A => B]): Rep[A => Any] = {
     val outIso = getStructWrapperIso[B]
-    val wrapperFun = outIso.fromFun << f
+    val wrapperFun = f >> outIso.fromFun
     wrapperFun.asRep[A => Any]
   }
 
@@ -457,7 +457,7 @@ trait StructsDslStd extends StructsDsl with StructItemsDslStd with StructKeysDsl
   }
 }
 
-trait StructsDslExp extends StructsDsl with Expressions with EffectsExp with ViewsDslExp with StructItemsDslExp
+trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with EffectsExp with ViewsDslExp with StructItemsDslExp
     with StructKeysDslExp with GraphVizExport { self: StructsDslExp with ScalanExp =>
 
   abstract class AbstractStruct[T <: Struct] extends Def[T] {
@@ -604,6 +604,23 @@ trait StructsDslExp extends StructsDsl with Expressions with EffectsExp with Vie
         optItem.map(_._2.asRep[T])
       case _ => None
     }
+  }
+
+  object IdentityStructMapping {
+    def unapply[A,B](lam: Lambda[A, B]): Boolean = lam.y match {
+      case Def(Struct(_, fields)) =>
+        fields.forall { case (fn, s) =>
+          s match {
+            case Def(Field(struct, name)) if struct == lam.x && name == fn => true
+            case _ => false
+          }
+        }
+      case _ => false
+    }
+  }
+
+  override def isIdentityLambda[A,B](lam: Lambda[A, B]): Boolean = {
+    super.isIdentityLambda(lam) || IdentityStructMapping.unapply(lam)
   }
 
   def shouldUnpackTuples = currentPass.config.shouldUnpackTuples

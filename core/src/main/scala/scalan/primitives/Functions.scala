@@ -137,8 +137,10 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   // matcher version of Lambda.isIdentity
   object IdentityLambda {
-    def unapply[A,B](lam: Lambda[A, B]): Boolean = lam.isIdentity
+    def unapply[A,B](lam: Lambda[A, B]): Boolean = isIdentityLambda(lam)
   }
+
+  def isIdentityLambda[A,B](lam: Lambda[A, B]): Boolean = lam.isIdentity
 
   case class ParallelExecute[B:Elem](nJobs: Exp[Int], f: Exp[Int => B])  extends Def[Array[B]] {
     def selfType = element[Array[B]]
