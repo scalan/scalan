@@ -97,6 +97,11 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
     right
   }
 
+  def semicolon_multi[B: Manifest](left: Seq[Exp[_]], right: Exp[B]) = {
+    val l = left
+    right
+  }
+
   def loop_until[A: Manifest](init: Exp[A], step: Rep[A] => Rep[A], cond: Rep[A] => Rep[Boolean]): Exp[A] = {
     // TODO check correctness
     var state = init
