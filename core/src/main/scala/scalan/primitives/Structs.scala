@@ -607,6 +607,26 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
   }
 
   object IdentityStructMapping {
+    def unapply(d: Def[Struct] @unchecked): Option[Rep[Struct]] = d match {
+      case Struct(_, fields) =>
+        val inputStructs = scala.collection.mutable.HashSet[Rep[Struct]]()
+        val okNames = fields.forall { case (fn, s) =>
+          s match {
+            case Def(Field(struct, name)) if name == fn =>
+              inputStructs += struct
+              true
+            case _ => false
+          }
+        }
+        if (okNames && inputStructs.size == 1)
+          Some(inputStructs.head)
+        else
+          None
+      case _ => None
+    }
+  }
+
+  object IdentityStructLambda {
     def unapply[A,B](lam: Lambda[A, B]): Boolean = lam.y match {
       case Def(Struct(_, fields)) =>
         fields.forall { case (fn, s) =>
@@ -620,7 +640,7 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
   }
 
   override def isIdentityLambda[A,B](lam: Lambda[A, B]): Boolean = {
-    super.isIdentityLambda(lam) || IdentityStructMapping.unapply(lam)
+    super.isIdentityLambda(lam) || IdentityStructLambda.unapply(lam)
   }
 
   def shouldUnpackTuples = currentPass.config.shouldUnpackTuples
