@@ -295,7 +295,13 @@ trait LmsBridge extends Passes {
       val ReflectedElement(lmsClass, fieldMirrors) = elements.getOrElseUpdate(clazz, reflectElement(clazz, elem))
 
       val elemParams = extractParamsByReflection(elem, fieldMirrors)
-      val manifestParams = elemParams.map(e => elemToManifest(e.asInstanceOf[Elem[_]]))
+
+      val manifestParams = try {
+        elemParams.map(e => elemToManifest(e.asInstanceOf[Elem[_]]))
+      } catch {
+        case e: Exception =>
+          !!!(s"Error in elemToManifest: clazz: $clazz, lmsClass: $lmsClass, elem: $elem, elemParams: ${elemParams}", e)
+      }
 
       manifestParams match {
         case Nil => Manifest.classType(lmsClass)
