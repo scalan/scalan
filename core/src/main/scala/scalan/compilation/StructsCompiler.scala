@@ -9,10 +9,12 @@ import scalan.primitives.StructsDslExp
 trait StructsCompiler[ScalanCake <: ScalanDslExp with StructsDslExp] extends Compiler[ScalanCake] {
   import scalan._
 
-  override def graphPasses(compilerConfig: CompilerConfig) =
-    super.graphPasses(compilerConfig) ++
+  override def graphPasses(compilerConfig: CompilerConfig) = {
+    val passes = super.graphPasses(compilerConfig) ++
       Seq(AllInvokeEnabler,
-          constantPass(StructsPass(DefaultMirror, StructsRewriter)))
+        constantPass(StructsPass(DefaultMirror, StructsRewriter)))
+    passes.distinct
+  }
 
   case class StructsPass(mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
     def name = "structs"
