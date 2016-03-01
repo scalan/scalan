@@ -88,6 +88,8 @@ trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL
       List(mapElem.eKey, mapElem.eValue)
     case ab@MakeArrayBuffer(_) =>
       List(ab.selfType.eItem)
+    case SemicolonMulti(as, b) =>
+      List(as, b, b.elem)
     case _ =>
       super.extractParams(d, fieldMirrors)
   }
