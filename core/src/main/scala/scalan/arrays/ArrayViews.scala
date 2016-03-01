@@ -100,10 +100,12 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsDslExp with Ba
       val s = ArrayReplicate(len, source2.asRep[a])
       val res = ViewArray(s, iso2)
       res
-    case ArrayUpdate(HasViews(source, Def(iso: ArrayIso[a, b])), i, HasViews(value, iso2: Iso[c, d])) if iso.innerIso == iso2 =>
+
+    case ArrayUpdate(HasViews(xs, Def(iso: ArrayIso[a, c])), index, value@HasViews(_, _)) =>
       implicit val eA = iso.innerIso.eFrom
-      implicit val eB = iso.innerIso.eTo
-      ViewArray(source.asRep[Array[a]].update(i, value.asRep[a]), iso.innerIso)
+      val xs1 = xs.asRep[Array[a]]
+      val value1 = iso.innerIso.from(value.asRep[c]).asRep[a]
+      ViewArray(xs1.update(index, value1), iso.innerIso)
 
     case ArrayUpdateMany(HasViews(xs, Def(iso: ArrayIso[a, b])), is, HasViews(vs, Def(iso2: ArrayIso[c, d]))) if iso.innerIso == iso2.innerIso =>
       implicit val eA = iso.innerIso.eFrom
@@ -168,15 +170,6 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsDslExp with Ba
       val pairIso1 = pairIso(iso2, v2.innerIso)
       val zipped = arr1 zip v2.source
       ViewArray(zipped, pairIso1)
-
-    // Rule: ???
-//    case ArrayUpdate(arr, i, HasViews(srcValue, iso: Iso[a,b]))  =>
-//      val value = srcValue.asRep[a]
-//      implicit val eA = iso.eFrom
-//      implicit val eB = iso.eTo
-//      val arrIso = arrayIso[a,b](iso)
-//      val srcBuf = arrIso.from(arr.asRep[Array[b]])
-//      ViewArray(srcBuf.update(i, value))(arrIso)
 
     case ArrayMap(xs: Arr[a] @unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
       val f1 = f.asRep[a => b]
