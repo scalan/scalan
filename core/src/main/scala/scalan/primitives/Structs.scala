@@ -607,13 +607,13 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
   }
 
   object IdentityStructMapping {
-    def unapply(d: Def[Struct] @unchecked): Option[Rep[Struct]] = d match {
+    def unapply[A](d: Def[A]): Option[Rep[A]] = d match {
       case Struct(_, fields) =>
-        val inputStructs = scala.collection.mutable.HashSet[Rep[Struct]]()
+        val inputStructs = scala.collection.mutable.HashSet[Rep[A]]()
         val okNames = fields.forall { case (fn, s) =>
           s match {
             case Def(Field(struct, name)) if name == fn =>
-              inputStructs += struct
+              inputStructs += struct.asRep[A]
               true
             case _ => false
           }
@@ -648,6 +648,7 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
 
   override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
     case FieldGet(v) if shouldExtractFields => v
+    case IdentityStructMapping(s) => s
     case _ => super.rewriteDef(d)
   }
 
