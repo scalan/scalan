@@ -276,4 +276,7 @@ class VectorMethodsItTests extends LmsLinAlgItTests {
     compareOutputWithSequential(_.collReplicateFilter, progStagedOnly)(Array(1, 2, 4))
   }
 
+  test("sumConvertSum") {
+    compareOutputWithSequential(_.sumConvertSum, progStagedOnly)(Array(1.0, 2.0, 4.0))
+  }
 }

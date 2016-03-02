@@ -343,6 +343,14 @@ trait LinearAlgebraExamples extends MatricesDsl {
     csFilt.map(coll => coll.arr)
   }
 
+  lazy val sumConvertSum = fun { xs: Rep[Array[Double]] =>
+    val vX = denseVector(xs)
+    val vA = vX +^ vX
+    val vB = vA.convertTo[SparseVector[Double]]
+    val vC = vA +^ vB
+    vC.reduce
+  }
+
   lazy val denseVector = fun { p: Rep[Array[Double]] =>
     DenseVector(Collection(p))
   }
