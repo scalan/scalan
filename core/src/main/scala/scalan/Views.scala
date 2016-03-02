@@ -254,10 +254,15 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
   object UnpackableElem {
     def unapply(e: Elem[_]) = {
       val iso = getIsoByElem(e)
-      if (iso.isIdentity)
-        None
-      else
-        Some(iso)
+      iso match {
+        case Def(i: IsoUR[_,_]) =>
+          if (i.isIdentity)
+            None
+          else
+            Some(iso)
+        case _ => None
+      }
+
     }
   }
 
