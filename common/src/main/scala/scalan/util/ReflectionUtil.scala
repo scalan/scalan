@@ -96,4 +96,15 @@ object ReflectionUtil {
   // Implemented in internal/Symbols.scala, but not exposed
   /** True if the symbol represents an anonymous class */
   def isAnonymousClass(symbol: Symbol) = symbol.isClass && symbol.name.toString.contains("$anon")
+
+  /** A string describing the argument which allows to distinguish between overloads and overrides, unlike MethodSymbol.toString */
+  def showMethod(m: MethodSymbol) = {
+    val typeParams = m.typeParams match {
+      case Nil => ""
+      case typeParams => typeParams.map(_.name).mkString("[", ", ", "]")
+    }
+    val params =
+      m.paramLists.map(_.map(sym => s"${sym.name}: ${sym.typeSignature}").mkString("(", ", ", ")"))
+    s"${m.owner.name}.${m.name}$typeParams$params"
+  }
 }
