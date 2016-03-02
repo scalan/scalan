@@ -1,10 +1,12 @@
 package scalan.compilation.lms
 
+import java.lang.reflect.InvocationTargetException
+
 import scala.reflect.{classTag, ClassTag, SourceContext}
 import scala.reflect.runtime.universe._
 
 import scalan.compilation.Passes
-import scalan.util.{ReflectionUtil, StringUtil}
+import scalan.util.{ParamMirror, ReflectionUtil, StringUtil}
 
 trait LmsBridge extends Passes {
   val lms: LmsBackend
@@ -113,7 +115,7 @@ trait LmsBridge extends Passes {
     parts.map(StringUtil.lowerCaseFirst).mkString("_")
   }
 
-  case class ReflectedPrimitive(lmsMethodMirror: MethodMirror, paramFieldMirrors: List[FieldMirror], areParamsFunctions: List[Boolean], needsSourceContext: Boolean)
+  case class ReflectedPrimitive(lmsMethodMirror: MethodMirror, paramMirrors: List[ParamMirror], areParamsFunctions: List[Boolean], needsSourceContext: Boolean)
 
   private[this] lazy val lmsTpe =
     ReflectionUtil.classToSymbol(lms.getClass).toType
@@ -131,13 +133,21 @@ trait LmsBridge extends Passes {
     // assert(clazz.isInstance(d.asInstanceOf[AnyRef]))
     val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(d)
 
-    val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, selfTypeSym)
-    val paramsLength = fieldMirrors.length
+    val paramMirrors = ReflectionUtil.paramMirrors(clazz, instanceMirror, selfTypeSym)
+    // assumes length only depends on d.getClass
+    val paramsLength = extractParams(d, paramMirrors).length
 
     val lmsMethodName = this.lmsMethodName(d, clazz.getSimpleName)
+
+    def methodNotFoundErrorMessage =
+      s"""LMS method corresponding to the Scalan primitive ${clazz.getSimpleName} should have name $lmsMethodName
+          |and $paramsLength parameters, no such method found.
+          |To use a different name, override `lmsMethodName`; otherwise implement this method in a
+          |trait mixed into the LMS backend cake.""".stripMargin
+
     val lmsMethod = lmsMemberByName(lmsMethodName) match {
       case NoSymbol =>
-        !!!(s"LMS method $lmsMethodName not found")
+        !!!(methodNotFoundErrorMessage)
       case t: TermSymbol if t.isOverloaded =>
         // check for anonymous class below is required because otherwise alternatives can include classes with
         // mixed-in traits
@@ -146,10 +156,15 @@ trait LmsBridge extends Passes {
         }
         alternatives match {
           case List(method) => method
-          case Nil => !!!(s"No LMS methods with name $lmsMethodName and $paramsLength total parameters found")
-          case _ => !!!(s"More than one LMS method with name $lmsMethodName and $paramsLength total parameters found:\n  ${alternatives.mkString("\n  ")}")
+          case Nil =>
+            !!!(methodNotFoundErrorMessage)
+          case _ =>
+            val alternativesStr = alternatives.map(m => "  " + ReflectionUtil.showMethod(m)).mkString("\n")
+            !!!(s"More than one LMS method with name $lmsMethodName and $paramsLength total parameters found:\n$alternativesStr")
         }
       case m: MethodSymbol => m
+      case sym =>
+        !!!(s"Member with name $lmsMethodName found in LMS backend class, but it isn't a method: $sym")
     }
 
     val lmsMethodMirror = lmsMirror.reflectMethod(lmsMethod)
@@ -175,7 +190,7 @@ trait LmsBridge extends Passes {
       }
     }
 
-    ReflectedPrimitive(lmsMethodMirror, fieldMirrors, areParamsFunctions, needsSourceContext)
+    ReflectedPrimitive(lmsMethodMirror, paramMirrors, areParamsFunctions, needsSourceContext)
   }
 
   private[this] val primitives = collection.mutable.Map.empty[Class[_], ReflectedPrimitive]
@@ -189,16 +204,16 @@ trait LmsBridge extends Passes {
   }
 
   /**
-   * Extracts the arguments from d. Default implementation returns the list of constructor parameters,
-   * including implicit ones. Can be overridden if the LMS method expects the arguments in a different
-   * amount or order (Scalan [[Exp]] will be translated to LMS and [[Elem]] will be translated to
+   * Extracts the parameters from d. Default implementation returns the list of constructor parameters,
+   * including implicit ones. Can be overridden if the LMS method expects different number or order of
+   * parameters (Scalan [[Exp]] will be translated to LMS and [[Elem]] will be translated to
    * [[Manifest]] automatically).
    */
-  protected def extractParams(d: Def[_], fieldMirrors: List[FieldMirror]): List[Any] =
-    extractParamsByReflection(d, fieldMirrors)
+  protected def extractParams(d: Def[_], paramMirrors: List[ParamMirror]): List[Any] =
+    extractParamsByReflection(d, paramMirrors)
 
-  private[this] def extractParamsByReflection(d: Any, fieldMirrors: List[FieldMirror]): List[Any] =
-    fieldMirrors.map(_.bind(d).get)
+  private[this] def extractParamsByReflection(d: Any, paramMirrors: List[ParamMirror]): List[Any] =
+    paramMirrors.map(_.bind(d).get)
 
   /**
    * Inserts a Scalan [[Def]] into an [[LmsMirror]].
@@ -212,19 +227,48 @@ trait LmsBridge extends Passes {
   protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]): LmsMirror = {
     val clazz = d.getClass
 
-    val ReflectedPrimitive(lmsMethodMirror, paramFieldMirrors, areParamsFunctions, needsSourceContext) =
+    val ReflectedPrimitive(lmsMethodMirror, paramMirrors, areParamsFunctions, needsSourceContext) =
       primitives.getOrElseUpdate(clazz, reflectPrimitive(clazz, d))
 
-    val scalanParams = extractParams(d, paramFieldMirrors)
+    val scalanParams = extractParams(d, paramMirrors)
 
     val lmsParams = scalanParams.zip(areParamsFunctions).map { case (param, isFunction) =>
       mapParam(m, param, isFunction)
     } ++ (if (needsSourceContext) List(implicitly[SourceContext]) else Nil)
 
-    val lmsExp = lmsMethodMirror.apply(lmsParams: _*).
-      asInstanceOf[lms.Exp[_]]
+    val lmsRes = try {
+      lmsMethodMirror.apply(lmsParams: _*)
+    } catch {
+      case e: Throwable =>
+        val (msg, useParentCause) = e match {
+          case _: IndexOutOfBoundsException | _: IllegalArgumentException =>
+            val mismatchType = if (e.isInstanceOf[IndexOutOfBoundsException]) "number" else "type"
 
-    m.addSym(sym, lmsExp)
+            (s"""Parameter $mismatchType mismatch with ${ReflectionUtil.showMethod(lmsMethodMirror.symbol)}.
+                 |Parameters: ${lmsParams.mkString(", ")}
+                 |You need to override extractParams (or transformDef) to handle class ${d.getClass.getSimpleName} (see documentation)
+               """.stripMargin, true)
+
+          case _: InvocationTargetException =>
+            (s"""${ReflectionUtil.showMethod(lmsMethodMirror.symbol)} threw an exception.
+                 |Parameters: ${lmsParams.mkString(", ")}
+              """.stripMargin, true)
+
+          case _ =>
+            ("Unexpected reflection error", false)
+        }
+
+        val cause = if (useParentCause) e.getCause else e
+
+        !!!(msg, cause, sym)
+    }
+
+    lmsRes match {
+      case lmsExp: lms.Exp[_] =>
+        m.addSym(sym, lmsExp)
+      case _ =>
+        !!!(s"Method ${ReflectionUtil.showMethod(lmsMethodMirror.symbol)} returned $lmsRes, expected an LMS Exp[_]")
+    }
   }
 
   // can't just return lmsFunc: lms.Exp[A] => lms.Exp[B], since mirrorDefs needs to be called in LMS context
@@ -234,7 +278,7 @@ trait LmsBridge extends Passes {
     lmsFunc(x)
   }
 
-  case class ReflectedElement(clazz: Class[_], fieldMirrors: List[FieldMirror])
+  case class ReflectedElement(clazz: Class[_], paramMirrors: List[ParamMirror])
   private[this] val elements = collection.mutable.Map.empty[Class[_], ReflectedElement]
   private[this] val elementClassTranslations = collection.mutable.Map.empty[Class[_], Class[_]]
 
@@ -247,11 +291,11 @@ trait LmsBridge extends Passes {
   private[this] def reflectElement(clazz: Class[_], elem: Elem[_]) = {
     val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(elem)
 
-    val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, eItemSym)
+    val paramMirrors = ReflectionUtil.paramMirrors(clazz, instanceMirror, eItemSym)
 
     val lmsClass = elementClassTranslations.getOrElse(clazz, elem.runtimeClass)
 
-    ReflectedElement(lmsClass, fieldMirrors)
+    ReflectedElement(lmsClass, paramMirrors)
   }
 
   registerElemClass[ArrayBufferElem[_], scala.collection.mutable.ArrayBuilder[_]]
@@ -290,18 +334,26 @@ trait LmsBridge extends Passes {
     case DoubleElement => Manifest.Double
     case StringElement => manifest[String]
 
+    // TODO Can ViewElem be translated to its source type? Alternately, generate code for it
+    case el: ViewElem[_, _] =>
+      !!!(s"Specialization failure: view with elem $el wasn't eliminated")
+
+    // TODO Currently ArrayElem/ListElem/etc. extend EntityElem1
+    // Need some way to test if we have an abstract entity type
+//    case el: EntityElem[_] =>
+//      !!!(s"Specialization failure: abstract entity with elem $el wasn't eliminated")
+
     case _ =>
       val clazz = elem.getClass
-      val ReflectedElement(lmsClass, fieldMirrors) = elements.getOrElseUpdate(clazz, reflectElement(clazz, elem))
+      val ReflectedElement(lmsClass, paramMirrors) = elements.getOrElseUpdate(clazz, reflectElement(clazz, elem))
 
-      val elemParams = extractParamsByReflection(elem, fieldMirrors)
+      val elemParams = extractParamsByReflection(elem, paramMirrors)
 
-      val manifestParams = try {
-        elemParams.map(e => elemToManifest(e.asInstanceOf[Elem[_]]))
-      } catch {
-        case e: Exception =>
-          !!!(s"Error in elemToManifest: clazz: $clazz, lmsClass: $lmsClass, elem: $elem, elemParams: ${elemParams}", e)
-      }
+      val manifestParams =
+        elemParams.map {
+          case e: Elem[_] => elemToManifest(e)
+          case e => !!!(s"Bug: $e is a constructor parameter of $elem but not an Elem")
+        }
 
       manifestParams match {
         case Nil => Manifest.classType(lmsClass)

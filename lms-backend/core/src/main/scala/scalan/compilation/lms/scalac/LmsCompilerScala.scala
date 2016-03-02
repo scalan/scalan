@@ -106,8 +106,8 @@ class LmsCompilerScala[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends
       val tag = se.asInstanceOf[scalanSeq.StructElem[a with scalanSeq.Struct]].structTag
       val clazz = output.getClass
       val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(output)
-      val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror)
-      val fieldValues = fieldMirrors.map(_.get)
+      val paramMirrors = ReflectionUtil.paramMirrors(clazz, instanceMirror)
+      val fieldValues = paramMirrors.map(_.get)
       val fields = se.fieldNames.zip(fieldValues)
       scalanSeq.struct(tag, fields)
     case _ =>
