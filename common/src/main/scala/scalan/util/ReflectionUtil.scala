@@ -48,7 +48,7 @@ object ReflectionUtil {
         }
       }.getOrElse(fieldSym)
 
-      val res = try {
+      try {
         instanceMirror.reflectField(fieldSym1)
       } catch {
         case e: Exception =>
@@ -69,16 +69,14 @@ object ReflectionUtil {
                 case e: Exception => Nil
               }
             }
-            val filtered = fieldMirrorsIterator.filter(fm => fm.symbol.name.toString.trim == fieldSym1.name.toString)
-            if (filtered.hasNext) {
-              filtered.next()
+            if (fieldMirrorsIterator.hasNext) {
+              fieldMirrorsIterator.next()
             } else {
               throw new ScalaReflectionException(s"No fields in supertypes corresponding to ${tpe}.${sym.name} correspond to Java fields")
             }
           }
 
       }
-      res
     }
   }
 

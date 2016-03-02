@@ -18,7 +18,7 @@ class ReflectionTests extends BaseCtxTests {
     val selfTypeSym = ReflectionUtil.classToSymbol(classOf[ctx.BaseDef[_]]).toType.decl(TermName("selfType")).asTerm
     val instanceMirror = javaMirror.reflect(ctx.interval)
     val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, selfTypeSym)
-    assert(fieldMirrors.distinct.length == 2)
+    assert(fieldMirrors.map(m => m.symbol.fullName).distinct.length == 2)
   }
 
 }
