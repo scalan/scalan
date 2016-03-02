@@ -2,6 +2,7 @@ package scalan.compilation.lms
 
 import scala.reflect.RefinedManifest
 import scala.reflect.runtime.universe._
+import scalan.util.ParamMirror
 
 trait StructBridge extends LmsBridge {
   import scalan._
@@ -11,11 +12,11 @@ trait StructBridge extends LmsBridge {
     case _ => super.lmsMethodName(d, primitiveName)
   }
 
-  override protected def extractParams(d: Def[_], fieldMirrors: List[FieldMirror]) = d match {
+  override protected def extractParams(d: Def[_], paramMirrors: List[ParamMirror]) = d match {
     case fa: FieldApply[_] =>
       List(fa.struct, fa.field, fa.selfType)
     case _ =>
-      super.extractParams(d, fieldMirrors)
+      super.extractParams(d, paramMirrors)
   }
 
   private def refinedManifestForStruct[A <: Struct](se: StructElem[A]) = {

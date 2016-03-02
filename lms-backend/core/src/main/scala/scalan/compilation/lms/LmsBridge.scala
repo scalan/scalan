@@ -6,7 +6,7 @@ import scala.reflect.{classTag, ClassTag, SourceContext}
 import scala.reflect.runtime.universe._
 
 import scalan.compilation.Passes
-import scalan.util.{ReflectionUtil, StringUtil}
+import scalan.util.{ParamMirror, ReflectionUtil, StringUtil}
 
 trait LmsBridge extends Passes {
   val lms: LmsBackend
@@ -115,7 +115,7 @@ trait LmsBridge extends Passes {
     parts.map(StringUtil.lowerCaseFirst).mkString("_")
   }
 
-  case class ReflectedPrimitive(lmsMethodMirror: MethodMirror, paramFieldMirrors: List[FieldMirror], areParamsFunctions: List[Boolean], needsSourceContext: Boolean)
+  case class ReflectedPrimitive(lmsMethodMirror: MethodMirror, paramMirrors: List[ParamMirror], areParamsFunctions: List[Boolean], needsSourceContext: Boolean)
 
   private[this] lazy val lmsTpe =
     ReflectionUtil.classToSymbol(lms.getClass).toType
@@ -133,9 +133,9 @@ trait LmsBridge extends Passes {
     // assert(clazz.isInstance(d.asInstanceOf[AnyRef]))
     val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(d)
 
-    val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, selfTypeSym)
+    val paramMirrors = ReflectionUtil.paramMirrors(clazz, instanceMirror, selfTypeSym)
     // assumes length only depends on d.getClass
-    val paramsLength = extractParams(d, fieldMirrors).length
+    val paramsLength = extractParams(d, paramMirrors).length
 
     val lmsMethodName = this.lmsMethodName(d, clazz.getSimpleName)
 
@@ -190,7 +190,7 @@ trait LmsBridge extends Passes {
       }
     }
 
-    ReflectedPrimitive(lmsMethodMirror, fieldMirrors, areParamsFunctions, needsSourceContext)
+    ReflectedPrimitive(lmsMethodMirror, paramMirrors, areParamsFunctions, needsSourceContext)
   }
 
   private[this] val primitives = collection.mutable.Map.empty[Class[_], ReflectedPrimitive]
@@ -209,11 +209,11 @@ trait LmsBridge extends Passes {
    * parameters (Scalan [[Exp]] will be translated to LMS and [[Elem]] will be translated to
    * [[Manifest]] automatically).
    */
-  protected def extractParams(d: Def[_], fieldMirrors: List[FieldMirror]): List[Any] =
-    extractParamsByReflection(d, fieldMirrors)
+  protected def extractParams(d: Def[_], paramMirrors: List[ParamMirror]): List[Any] =
+    extractParamsByReflection(d, paramMirrors)
 
-  private[this] def extractParamsByReflection(d: Any, fieldMirrors: List[FieldMirror]): List[Any] =
-    fieldMirrors.map(_.bind(d).get)
+  private[this] def extractParamsByReflection(d: Any, paramMirrors: List[ParamMirror]): List[Any] =
+    paramMirrors.map(_.bind(d).get)
 
   /**
    * Inserts a Scalan [[Def]] into an [[LmsMirror]].
@@ -227,10 +227,10 @@ trait LmsBridge extends Passes {
   protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]): LmsMirror = {
     val clazz = d.getClass
 
-    val ReflectedPrimitive(lmsMethodMirror, paramFieldMirrors, areParamsFunctions, needsSourceContext) =
+    val ReflectedPrimitive(lmsMethodMirror, paramMirrors, areParamsFunctions, needsSourceContext) =
       primitives.getOrElseUpdate(clazz, reflectPrimitive(clazz, d))
 
-    val scalanParams = extractParams(d, paramFieldMirrors)
+    val scalanParams = extractParams(d, paramMirrors)
 
     val lmsParams = scalanParams.zip(areParamsFunctions).map { case (param, isFunction) =>
       mapParam(m, param, isFunction)
@@ -278,7 +278,7 @@ trait LmsBridge extends Passes {
     lmsFunc(x)
   }
 
-  case class ReflectedElement(clazz: Class[_], fieldMirrors: List[FieldMirror])
+  case class ReflectedElement(clazz: Class[_], paramMirrors: List[ParamMirror])
   private[this] val elements = collection.mutable.Map.empty[Class[_], ReflectedElement]
   private[this] val elementClassTranslations = collection.mutable.Map.empty[Class[_], Class[_]]
 
@@ -291,11 +291,11 @@ trait LmsBridge extends Passes {
   private[this] def reflectElement(clazz: Class[_], elem: Elem[_]) = {
     val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(elem)
 
-    val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, eItemSym)
+    val paramMirrors = ReflectionUtil.paramMirrors(clazz, instanceMirror, eItemSym)
 
     val lmsClass = elementClassTranslations.getOrElse(clazz, elem.runtimeClass)
 
-    ReflectedElement(lmsClass, fieldMirrors)
+    ReflectedElement(lmsClass, paramMirrors)
   }
 
   registerElemClass[ArrayBufferElem[_], scala.collection.mutable.ArrayBuilder[_]]
@@ -345,9 +345,9 @@ trait LmsBridge extends Passes {
 
     case _ =>
       val clazz = elem.getClass
-      val ReflectedElement(lmsClass, fieldMirrors) = elements.getOrElseUpdate(clazz, reflectElement(clazz, elem))
+      val ReflectedElement(lmsClass, paramMirrors) = elements.getOrElseUpdate(clazz, reflectElement(clazz, elem))
 
-      val elemParams = extractParamsByReflection(elem, fieldMirrors)
+      val elemParams = extractParamsByReflection(elem, paramMirrors)
 
       val manifestParams =
         elemParams.map {
