@@ -6,7 +6,7 @@ import scala.reflect.SourceContext
 import scala.reflect.runtime.universe._
 
 import scalan.compilation.language.{CoreMethodMappingDSL, Interpreter}
-import scalan.util.StringUtil
+import scalan.util.{ParamMirror, StringUtil}
 
 trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL {
   import scalan._
@@ -42,7 +42,7 @@ trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL
     case _ => super.lmsMethodName(d, primitiveName)
   }
 
-  override protected def extractParams(d: Def[_], fieldMirrors: List[FieldMirror]) = d match {
+  override protected def extractParams(d: Def[_], paramMirrors: List[ParamMirror]) = d match {
     case Apply(f, x) =>
       List(f, x, x.elem, f.elem.eRange)
     case d@SLeft(l) =>
@@ -89,7 +89,7 @@ trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL
     case ab@MakeArrayBuffer(_) =>
       List(ab.selfType.eItem)
     case _ =>
-      super.extractParams(d, fieldMirrors)
+      super.extractParams(d, paramMirrors)
   }
 
   override protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {

@@ -7,7 +7,7 @@ import scala.collection.{TraversableOnce, mutable}
 import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
-import scalan.util.ReflectionUtil
+import scalan.util.{ParamMirror, ReflectionUtil}
 import scalan.{Base, ScalanExp, Scalan}
 import scalan.common.Lazy
 
@@ -91,7 +91,7 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     }
   }
 
-  private[this] case class ReflectedProductClass(constructor: Constructor[_], paramFieldMirrors: List[FieldMirror], hasScalanParameter: Boolean)
+  private[this] case class ReflectedProductClass(constructor: Constructor[_], paramMirrors: List[ParamMirror], hasScalanParameter: Boolean)
 
   private[this] val selfTypeSym =
     ReflectionUtil.classToSymbol(classOf[BaseDef[_]]).toType.decl(TermName("selfType")).asTerm
@@ -105,7 +105,7 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     val constructor = constructors(0)
 
     val instanceMirror = javaMirror.reflect(d)
-    val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, selfTypeSym)
+    val paramMirrors = ReflectionUtil.paramMirrors(clazz, instanceMirror, selfTypeSym)
 
     val hasScalanParam = constructor.getParameterTypes.headOption match {
       case None => false
@@ -116,7 +116,7 @@ trait BaseExp extends Base { scalan: ScalanExp =>
         firstParamTpe <:< baseType
     }
 
-    ReflectedProductClass(constructor, fieldMirrors, hasScalanParam)
+    ReflectedProductClass(constructor, paramMirrors, hasScalanParam)
   }
 
   private[this] val defClasses = collection.mutable.Map.empty[Class[_], ReflectedProductClass]
@@ -140,10 +140,10 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     }
 
     val clazz = p.getClass
-    val ReflectedProductClass(constructor, fieldMirrors, hasScalanParameter) =
+    val ReflectedProductClass(constructor, paramMirrors, hasScalanParameter) =
       defClasses.getOrElseUpdate(clazz, reflectProductClass(clazz, p))
 
-    val pParams = fieldMirrors.map(_.bind(p).get)
+    val pParams = paramMirrors.map(_.bind(p).get)
     val transformedParams = pParams.map(transformParam)
     val finalParams =
       (if (hasScalanParameter)
