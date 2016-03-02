@@ -66,7 +66,7 @@ trait Entities extends Elems { self: Scalan =>
     val moduleName = elemClassSymbol.owner.name.toString.stripSuffix("Abs")
     val module = modules.getOrElse(moduleName, !!!(s"Module $moduleName not found"))
     val entityName = elemClassSymbol.name.toString.stripSuffix("Elem")
-    module.entities.find(_.name == entityName).getOrElse {
+    module.allEntities.find(_.name == entityName).getOrElse {
       !!!(s"Entity $entityName not found in module $moduleName")
     }
   }

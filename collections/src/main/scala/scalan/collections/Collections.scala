@@ -678,6 +678,15 @@ trait CollectionsDslExp extends impl.CollectionsExp with SeqsDslExp {
       case "apply" => e.eItem
       case _ => super.getResultElem(receiver, m, args)
     }
+    case e: CollectionElem[t, _] => e.eItem match {
+      case pe: PairElem[a,b] => m.getName match {
+        case "as" => collectionElement(pe.eFst)
+        case "bs" => collectionElement(pe.eSnd)
+        case _ => super.getResultElem(receiver, m, args)
+      }
+      case _ => super.getResultElem(receiver, m, args)
+    }
+
     case e: StructItemElem[v,s,_] => m.getName match {
       case "value" => e.eVal
       case _ => super.getResultElem(receiver, m, args)
