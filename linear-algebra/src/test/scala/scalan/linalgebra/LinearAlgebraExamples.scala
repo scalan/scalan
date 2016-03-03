@@ -377,4 +377,13 @@ trait LinearAlgebraExamples extends MatricesDsl {
     DiagonalMatrix(Collection(p))
   }
 
+  def dmUpdate = fun { in: Rep[(Array[Array[Double]], (Array[Double], Boolean))] =>
+    val Tuple(m, v, cond) = in
+    val width = m(0).length
+    val matrix: Matr[Double] = CompoundMatrix(Collection(m).map{r => DenseVector(Collection(r))}, width)
+    val vector: Vec[Double] = DenseVector(Collection(v))
+    val matrixUpd = matrix.rows.update(toRep(1), vector)
+    val res = IF (cond) THEN { Pair(matrixUpd, toRep(1)) } ELSE { Pair(matrixUpd, toRep(2)) }
+    res._2
+  }
 }

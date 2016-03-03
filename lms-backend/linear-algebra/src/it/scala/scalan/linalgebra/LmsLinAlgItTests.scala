@@ -280,3 +280,15 @@ class VectorMethodsItTests extends LmsLinAlgItTests {
     compareOutputWithSequential(_.sumConvertSum, progStagedOnly)(Array(1.0, 2.0, 4.0))
   }
 }
+
+class MatrixMethodsItTests extends LmsLinAlgItTests {
+  import progStd._
+
+  val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
+  val inV = Array(2.0, 3.0)
+
+  test("dmUpdate") {
+    val in = (inM, (inV, true))
+    compareOutputWithSequential(_.dmUpdate, progStagedOnly)(in)
+  }
+}
