@@ -15,32 +15,32 @@ class LmsCollectionsItTests extends CollectionsItTests {
   val progStagedOnly = compilers(progStaged)
 
   test("seqsEmpty") {
-    compareOutputWithSequential(_.seqsEmpty, progStagedOnly)(-11)
+    compareOutputWithStd(_.seqsEmpty, progStagedOnly)(-11)
   }
 
   test("seqsSingle") {
-    compareOutputWithSequential(_.seqsSingle, progStagedOnly)(-11)
+    compareOutputWithStd(_.seqsSingle, progStagedOnly)(-11)
   }
 
   test("seqsSimpleMap") {
-    compareOutputWithSequential(_.seqsSimpleMap, progStagedOnly)(Seq(2, 3))
+    compareOutputWithStd(_.seqsSimpleMap, progStagedOnly)(Seq(2, 3))
   }
 
   test("seqsArrayMap") {
-    compareOutputWithSequential(_.seqsArrayMap, progStagedOnly)(Array(Array(2, 3)))
+    compareOutputWithStd(_.seqsArrayMap, progStagedOnly)(Array(Array(2, 3)))
   }
 
   test("seqsFromArray") {
-    compareOutputWithSequential(_.seqsFromArray, progStagedOnly)(Array(2, 3))
+    compareOutputWithStd(_.seqsFromArray, progStagedOnly)(Array(2, 3))
   }
   test("makeMap") {
     val in = Array((1, 1.1), (2, 2.2), (1, 3.3), (1, 4.4), (2, 5.5))
-    compareOutputWithSequential(_.makeMap, progStagedOnly)(in)
+    compareOutputWithStd(_.makeMap, progStagedOnly)(in)
   }
   test("ifSpecialize") {
-    compareOutputWithSequential(_.ifSpecialize, progStagedOnly)(Array(1, 2, 3))
+    compareOutputWithStd(_.ifSpecialize, progStagedOnly)(Array(1, 2, 3))
   }
   test("collPairIf") {
-    compareOutputWithSequential(_.collPairIf, progStagedOnly)((Array(1, 2, 3), 2))
+    compareOutputWithStd(_.collPairIf, progStagedOnly)((Array(1, 2, 3), 2))
   }
 }

@@ -367,27 +367,27 @@ abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslSt
   import progStd._
 
   test("struct out") {
-    compareOutputWithSequential(s => s.t1.asInstanceOf[s.Rep[Int => Struct]])(100)
+    compareOutputWithStd(s => s.t1.asInstanceOf[s.Rep[Int => Struct]])(100)
   }
 
   test("struct with one field in") {
-    compareOutputWithSequential(s => s.singleFieldStructIn.asInstanceOf[s.Rep[Struct => Int]])(struct("in" -> 100))
+    compareOutputWithStd(s => s.singleFieldStructIn.asInstanceOf[s.Rep[Struct => Int]])(struct("in" -> 100))
   }
 
   test("struct with many fields in") {
-    compareOutputWithSequential(s => s.manyFieldsStructIn.asInstanceOf[s.Rep[Struct => Int]])(struct("in1" -> 200, "in2" -> 50))
+    compareOutputWithStd(s => s.manyFieldsStructIn.asInstanceOf[s.Rep[Struct => Int]])(struct("in1" -> 200, "in2" -> 50))
   }
 
   test("struct in and out") {
-    compareOutputWithSequential(s => s.structInOut.asInstanceOf[s.Rep[Struct => Struct]])(struct("in" -> 100))
+    compareOutputWithStd(s => s.structInOut.asInstanceOf[s.Rep[Struct => Struct]])(struct("in" -> 100))
   }
 
   test("struct with many fields in and out") {
-    compareOutputWithSequential(s => s.crossFields.asInstanceOf[s.Rep[Struct => Struct]])(struct("in1" -> 200, "in2" -> 50))
+    compareOutputWithStd(s => s.crossFields.asInstanceOf[s.Rep[Struct => Struct]])(struct("in1" -> 200, "in2" -> 50))
   }
 
 
   test("struct used inside") {
-    compareOutputWithSequential(_.structInside)(100)
+    compareOutputWithStd(_.structInside)(100)
   }
 }

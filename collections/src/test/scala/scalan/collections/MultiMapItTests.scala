@@ -32,11 +32,11 @@ abstract class MultiMapItTests extends BaseItTests[MultiMapExamples](new MultiMa
 
   test("unionMultiMaps") {
     val in = (Array((1, 1.1), (2, 2.2), (1, 3.3), (1, 4.4), (2, 5.5)), Array((0, 0.0), (2, 2.0), (1, 4.0), (1, 6.0)))
-    compareOutputWithSequential(_.unionMultiMaps)(in)
+    compareOutputWithStd(_.unionMultiMaps)(in)
   }
   test("appendMultiMap") {
     val in = Array((1, 1.1), (2, 2.2), (1, 3.3), (1, 4.4), (2, 5.5))
-    compareOutputWithSequential(_.appendMultiMap)(in)
+    compareOutputWithStd(_.appendMultiMap)(in)
   }
 
 }

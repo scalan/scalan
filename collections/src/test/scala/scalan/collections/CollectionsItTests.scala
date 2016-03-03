@@ -105,12 +105,12 @@ abstract class CollectionsItTests extends BaseItTests[CollectionsProg](new Colle
 
   test("convertPairCollectionSOA")  {
     val in = Array(Array((1,2.0),(2,3.0)), Array((3,4.0), (5,6.0)))
-    compareOutputWithSequential(_.convertPairCollectionSOA)(in)
+    compareOutputWithStd(_.convertPairCollectionSOA)(in)
   }
 
   test("expBaseArrays") {
     val in = Array(Array(2, 3), Array(4, 5))
-    compareOutputWithSequential(_.expBaseArrays)(in)
+    compareOutputWithStd(_.expBaseArrays)(in)
   }
 
   // TODO

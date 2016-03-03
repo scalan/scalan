@@ -90,10 +90,10 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
     }
   }
 
-  def compareOutputWithSequential[A, B](f: Prog => Prog#Rep[A => B],
-                                        compilers: Seq[CompilerWithConfig] = defaultCompilers,
-                                        graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
-                                        functionName: String = currentTestNameAsFileName)(inputs: A*) = {
+  def compareOutputWithStd[A, B](f: Prog => Prog#Rep[A => B],
+                                 compilers: Seq[CompilerWithConfig] = defaultCompilers,
+                                 graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
+                                 functionName: String = currentTestNameAsFileName)(inputs: A*) = {
     val fSeq = f(progStd).asInstanceOf[A => B]
     val inputsOutputs = inputs.map { x => (x, fSeq(x)) }
     compareOutputWithExpected(f, compilers, graphVizConfig, functionName)(inputsOutputs: _*)
@@ -105,8 +105,7 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
                                       functionName: String = currentTestNameAsFileName)(inputsOutputs: (A, B)*) = {
     val compiled = compilersWithSourceDirs(compilers, functionName).map { case (cwc, dir) =>
       val out = cwc.compiler.buildExecutable(dir, functionName,
-        f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]],
-        graphVizConfig)(cwc.config)
+        f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]], graphVizConfig)(cwc.config)
       (cwc.compiler, out)
     }
 
@@ -167,12 +166,12 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
     }
   }
   @deprecated("Use overload taking compilers instead", "0.2.11")
-  def compareOutputWithSequential[S <: Scalan](back: Compiler[S with ScalanDslExp], forth: S with ScalanDslStd) = new CompareOutputWithSequential[S, back.type](back, forth)
+  def compareOutputWithStd[S <: Scalan](back: Compiler[S with ScalanDslExp], forth: S with ScalanDslStd) = new CompareOutputWithSequential[S, back.type](back, forth)
 
   @deprecated("Use the overload taking f: S => S#Rep[A => B] instead", "0.2.10")
-  def compareOutputWithSequential[A, B](back: Compiler[_ <: ScalanDslExp])
-                                       (fSeq: A => B, f: back.scalan.Exp[A => B], functionName: String, input: A)
-                                       (implicit comparator: (B, B) => Unit) {
+  def compareOutputWithStd[A, B](back: Compiler[_ <: ScalanDslExp])
+                                (fSeq: A => B, f: back.scalan.Exp[A => B], functionName: String, input: A)
+                                (implicit comparator: (B, B) => Unit) {
     compareOutputWithSequentialConfig(back)(fSeq, f, functionName, input, back.defaultCompilerConfig)
   }
 

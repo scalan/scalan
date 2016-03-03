@@ -311,56 +311,56 @@ trait SmokeProg extends ScalanDsl {
  */
 abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanDslStd with SmokeProg) {
   test("simpleArith") {
-    compareOutputWithSequential(_.simpleArith)(2)
+    compareOutputWithStd(_.simpleArith)(2)
   }
   test("simpleArrGet") {
     val in = (Array(2,3), 1)
-    compareOutputWithSequential(_.simpleArrGet)(in)
+    compareOutputWithStd(_.simpleArrGet)(in)
   }
   test("simpleMap") {
-    compareOutputWithSequential(_.simpleMap)(Array(2,3))
+    compareOutputWithStd(_.simpleMap)(Array(2,3))
   }
   test("simpleMapNested") {
     val in = (Array(Array(2.0,3.0), Array(3.0,4.0)), 1)
-    compareOutputWithSequential(_.simpleMapNested)(in)
+    compareOutputWithStd(_.simpleMapNested)(in)
   }
   test("simpleZip") {
-    compareOutputWithSequential(_.simpleZip)(Array(2,3))
+    compareOutputWithStd(_.simpleZip)(Array(2,3))
   }
   test("simpleZipWith") {
-    compareOutputWithSequential(_.simpleZipWith)(Array(2,3))
+    compareOutputWithStd(_.simpleZipWith)(Array(2,3))
   }
   test("simpleReduce") {
-    compareOutputWithSequential(_.simpleReduce)(Array(2,3))
+    compareOutputWithStd(_.simpleReduce)(Array(2,3))
   }
   test("mvMul") {
     val in = (Array(Array(2,3), Array(4,5)), Array(6,7))
-    compareOutputWithSequential(_.mvMul)(in)
+    compareOutputWithStd(_.mvMul)(in)
   }
   test("simpleIf") {
     val in = (Array(2.0,3.0), 4.0)
-    compareOutputWithSequential(_.simpleIf)(in)
+    compareOutputWithStd(_.simpleIf)(in)
   }
   test("optionOps") {
-    compareOutputWithSequential(_.optionOps)(7)
+    compareOutputWithStd(_.optionOps)(7)
   }
   test("logicalOps") {
     val in = (true, false)
-    compareOutputWithSequential(_.logicalOps)(in)
+    compareOutputWithStd(_.logicalOps)(in)
   }
   test("filterCompound") {
     val in = Array((11, (12, 13)), (21, (22, 23)), (31, (32, 33)))
-    compareOutputWithSequential(_.filterCompound)(in)
+    compareOutputWithStd(_.filterCompound)(in)
   }
   test("reuseTest") {
-    compareOutputWithSequential(_.reuseTest)(5)
+    compareOutputWithStd(_.reuseTest)(5)
   }
   test("arrayEmpty") {
-    compareOutputWithSequential(_.arrayEmpty)(0)
+    compareOutputWithStd(_.arrayEmpty)(0)
   }
   test("arrayReplicate") {
     val in = (3, 3.14)
-    compareOutputWithSequential(_.arrayReplicate)(in)
+    compareOutputWithStd(_.arrayReplicate)(in)
   }
 
 //  val progStaged: Prog with ScalanDslExp

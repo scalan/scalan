@@ -25,7 +25,7 @@ class ArrayOpsItTests extends BaseItTests[ArrayOpsProg](new ScalanDslStd with Ar
 
     val vals: Array[Int] = Array(1, 4, 9, 1024, 0, -1024)
     val ins = vals map {v => (arr,v)}
-    compareOutputWithSequential(_.arrayBinarySearch)(ins: _*)
+    compareOutputWithStd(_.arrayBinarySearch)(ins: _*)
   }
 
 }

@@ -26,7 +26,7 @@ class LmsMstPrimeItTests extends LmsMstItTests with GraphTestInputs {
   test("MST_adjList") {
     val res = progStd.MST_adjlist(listInput)
     println(res.mkString(", "))
-    compareOutputWithSequential(_.MST_adjlist)(listInput)
+    compareOutputWithStd(_.MST_adjlist)(listInput)
     compileSource(_.MST_adjlist, progStagedCxxOnly)
   }
 
@@ -38,7 +38,7 @@ class LmsMstPrimeItTests extends LmsMstItTests with GraphTestInputs {
   }
 
   test("MST_adjMatrix") {
-    compareOutputWithSequential(_.MST_adjmatrix)(matrixInput)
+    compareOutputWithStd(_.MST_adjmatrix)(matrixInput)
     compileSource(_.MST_adjmatrix, progStagedCxxOnly)
   }
   test("MSF_adjMatrix") {

@@ -97,12 +97,12 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new CollectionsD
 
   test("emptyIfTrue") {
     val in = (true, (5.0, 7.7))
-    compareOutputWithSequential(_.emptyIf)(in)
+    compareOutputWithStd(_.emptyIf)(in)
   }
 
   test("emptyIfFalse") {
     val in = (false, (5.0, 7.7))
-    compareOutputWithSequential(_.emptyIf)(in)
+    compareOutputWithStd(_.emptyIf)(in)
   }
 
 //  ignore("exceptionWithIfTrue") {

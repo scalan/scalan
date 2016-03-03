@@ -96,7 +96,7 @@ class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new GraphsDslS
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = Array(2.0, 3.0)
     val in = Tuple2(inM, inV)
-    compareOutputWithSequential(_.ddmvm)(in)
+    compareOutputWithStd(_.ddmvm)(in)
   }
 
   ignore("msfFunAdjBase") {
@@ -107,46 +107,46 @@ class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new GraphsDslS
     val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
     val in = (links, (edgeVals, (offs, lens)))
 
-    compareOutputWithSequential(_.msfFunAdjBase)(in)
+    compareOutputWithStd(_.msfFunAdjBase)(in)
   }
 
   test("nop") {
     val in = 5.0
-    compareOutputWithSequential(_.nop)(in)
+    compareOutputWithStd(_.nop)(in)
   }
 
   test("oneOp") {
     val in = 5.0
-    compareOutputWithSequential(_.oneOp)(in)
+    compareOutputWithStd(_.oneOp)(in)
   }
 
   test("mapArray") {
     val in = Array(2.0, 3.0)
-    compareOutputWithSequential(_.mapArray)(in)
+    compareOutputWithStd(_.mapArray)(in)
   }
 
   test("zipArray") {
     val in = Array(2, 3)
-    compareOutputWithSequential(_.zipArray)(in)
+    compareOutputWithStd(_.zipArray)(in)
   }
 
   test("zip2Arrays") {
     val in = (Array(2, 3), Array(1, 4))
-    compareOutputWithSequential(_.zip2Arrays)(in)
+    compareOutputWithStd(_.zip2Arrays)(in)
   }
 
   test("zip3Arrays") {
     val in = (Array(2, 3), (Array(1, 4), Array(0, 5)))
-    compareOutputWithSequential(_.zip3Arrays)(in)
+    compareOutputWithStd(_.zip3Arrays)(in)
   }
 
   test("simpleReduce") {
     val in = Array(2, 3)
-    compareOutputWithSequential(_.simpleReduce)(in)
+    compareOutputWithStd(_.simpleReduce)(in)
   }
 
   test("reduceFromTuple") {
-    compareOutputWithSequential(_.reduceFromTuple)(in3Arrays)
+    compareOutputWithStd(_.reduceFromTuple)(in3Arrays)
   }
 
   // ===========================
@@ -162,7 +162,7 @@ class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new GraphsDslS
     val config = progStaged.defaultCompilerConfig.copy(nativeMethods = new NativeMethodsConfig(rootIsNative = false, Nil))
     val file = compileSource(progStaged)(_.reduceFromTuple, "config_OnlyScala", config).custom.sources.head
     assert(linesWithNativeDef(file).size == 0)
-    compareOutputWithSequential(_.reduceFromTuple, progStagedWC(config))(in)
+    compareOutputWithStd(_.reduceFromTuple, progStagedWC(config))(in)
   }
 
   test("config_Root") {
@@ -194,7 +194,7 @@ class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new GraphsDslS
     // todo check, that main method is not native
     assert(linesWithNativeDef(fileC).size-100 == 1)
 
-    compareOutputWithSequential(_.ddmvm, progStagedWC(nativeMul))(in)
+    compareOutputWithStd(_.ddmvm, progStagedWC(nativeMul))(in)
   }
 
   test("config_MarkedAsNativeLambda") {
@@ -206,7 +206,7 @@ class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new GraphsDslS
 
     //check sources for two variants
 
-    compareOutputWithSequential(_.test_config, progStagedWC(config))(in3Arrays)
+    compareOutputWithStd(_.test_config, progStagedWC(config))(in3Arrays)
   }
 
   test("config_NamedLambda") {
