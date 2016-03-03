@@ -26,13 +26,12 @@ trait ArrayBuffers extends Base { self: Scalan =>
     def create[T: Elem](count: Rep[Int], f:Rep[Int]=>Rep[T]) = createArrayBuffer(count, f)
     def make[T](name: Rep[String])(implicit e:Elem[T]) = makeArrayBuffer[T](name)(e)
     def empty[T: Elem] = emptyArrayBuffer[T]
-    def fromArray[T: Elem](arr: Arr[T]) = { 
-      val buf = empty[T]
-      buf ++= arr
-    }
+    def fromArray[T: Elem](arr: Arr[T]) = createArrayBufferFromArray(arr)
+//    {
+//      val buf = empty[T]
+//      buf ++= arr
+//    }
   }
-
-  implicit def arrayBufferToArray[T:Elem](buf: Rep[ArrayBuffer[T]]): Arr[T] = buf.toArray
 
   implicit val arrayBufferFunctor = new Functor[ArrayBuffer] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[ArrayBuffer[T]]
@@ -69,6 +68,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
   def initArrayBuffer[T: Elem](v: Rep[T]): Rep[ArrayBuffer[T]]
   def makeArrayBuffer[T](name: Rep[String])(implicit e:Elem[T]): Rep[ArrayBuffer[T]]
   def createArrayBuffer[T: Elem](count: Rep[Int], f:Rep[Int=>T]): Rep[ArrayBuffer[T]]
+  def createArrayBufferFromArray[T: Elem](arr: Arr[T]): Rep[ArrayBuffer[T]]
 }
 
 trait ArrayBuffersStd extends ArrayBuffers { self: ScalanStd =>
@@ -95,6 +95,11 @@ trait ArrayBuffersStd extends ArrayBuffers { self: ScalanStd =>
     for (i <- 0 until count) {
       buf += f(i)
     }
+    buf
+  }
+  def createArrayBufferFromArray[T: Elem](arr: Arr[T]): Rep[ArrayBuffer[T]] = {
+    val buf = scala.collection.mutable.ArrayBuffer.empty[T]
+    buf ++= arr
     buf
   }
 }
@@ -141,11 +146,11 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
 
   val HasArrayBufferViewArg = HasArg(hasArrayBufferViewArg)
 
-  def mapUnderlyingArrayBuffer[A,B,C](view: ViewArrayBuffer[A,B], f: Rep[B=>C]): Arr[C] = {
+  def mapUnderlyingArrayBuffer[A,B,C](view: ViewArrayBuffer[A,B], f: Rep[B=>C]): Rep[ArrayBuffer[C]] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
     implicit val eC: Elem[C] = f.elem.eRange
-    view.source.mapBy(iso.toFun >> f)
+    ArrayBuffer.fromArray(view.source.toArray.mapBy(iso.toFun >> f))
   }
 
   def liftArrayBufferViewFromArgs[T](d: Def[T])/*(implicit eT: Elem[T])*/: Option[Exp[_]] = d match {
@@ -251,6 +256,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
   def initArrayBuffer[T: Elem](v: Rep[T]): Rep[ArrayBuffer[T]] = ArrayBufferFromElem(v)
   def makeArrayBuffer[T](name: Rep[String])(implicit e:Elem[T]): Rep[ArrayBuffer[T]] = MakeArrayBuffer(name)(e)
   def createArrayBuffer[T: Elem](count: Rep[Int], f:Rep[Int=>T]): Rep[ArrayBuffer[T]] = ArrayBufferUsingFunc(count, f)
+  def createArrayBufferFromArray[T: Elem](arr: Arr[T]): Rep[ArrayBuffer[T]] = ArrayBufferFromArray(arr)
 
   case class ArrayBufferEmpty[T: Elem]() extends ArrayBufferDef[T] { 
     override def equals(other:Any) = {
@@ -287,6 +293,8 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
 
   case class ArrayBufferToArray[T: Elem](buf: Rep[ArrayBuffer[T]]) extends ArrayDef[T]
 
+  case class ArrayBufferFromArray[T: Elem](arr: Rep[Array[T]]) extends ArrayBufferDef[T]
+
   case class ArrayBufferRep[T: Elem](buf: Rep[ArrayBuffer[T]]) extends ArrayBufferDef[T]
 
   implicit def resolveArrayBuffer[T: Elem](sym: Rep[ArrayBuffer[T]]): ArrayBuffer[T] = sym match  {
@@ -295,6 +303,8 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
       val elem = s.elem
       elem match { 
         case ae: ArrayBufferElem[_] => ArrayBufferRep(sym)(ae.asInstanceOf[ArrayBufferElem[T]].eItem)
+        case _ =>
+          !!!(s"Type mismatch: expected ArrayBufferElem but was $elem", sym)
       }
     }
     case _ => ???("cannot resolve ArrayBuffer", sym)

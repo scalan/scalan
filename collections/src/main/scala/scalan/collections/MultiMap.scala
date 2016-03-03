@@ -56,7 +56,7 @@ trait MultiMaps { self: MultiMapsDsl =>
     }
       
     def reduceBy[T:Elem](f: Rep[Array[V] => T]): MM[K, T] = {
-      map.mapValues(v => f(v))
+      map.mapValues(v => f(v.toArray))
     }
 
     def keys: Arr[K] = map.keys
