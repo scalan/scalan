@@ -284,7 +284,7 @@ class MatrixMethodsItTests extends LmsLinAlgItTests {
   val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
   val inV = Array(2.0, 3.0)
 
-  test("DmUpdate") {
+  test("dmUpdate") {
     val in = (inM, (inV, true))
     compareOutputWithSequential(_.dmUpdate, progStagedOnly)(in)
   }
