@@ -52,10 +52,10 @@ trait Passes {
   def invokeEnabler(name: String)(pred: InvokeTester) =
     constantPass(new EnableInvokePass(name)(NamedInvokeTester(name, pred)))
 
-  val AllInvokeEnabler = invokeEnabler("all") { (_, _) => true }
+  lazy val AllInvokeEnabler = invokeEnabler("all") { (_, _) => true }
 
   def unpackEnabler(name: String)(pred: UnpackTester) =
     constantPass(new EnableUnpackPass(name)(NamedUnpackTester(name, pred)))
 
-  val AllUnpackEnabler = unpackEnabler("all") { _ => true }
+  lazy val AllUnpackEnabler = unpackEnabler("all") { _ => true }
 }
