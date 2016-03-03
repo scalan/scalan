@@ -112,13 +112,21 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
 
     for {
       (input, expected) <- expectedOutputs
-      (compiler, out) <- compiled
+      (compiler, out_) <- compiled
     } {
-      val output = compiler.execute(out.asInstanceOf[compiler.CompilerOutput[A, B]], input)
-      assert(output === expected, s"Compiler: $compiler,\n input: $input,\n expected: $expected,\n got: $output")
+      val out = out_.asInstanceOf[compiler.CompilerOutput[A, B]]
+      val output = compiler.execute(out, input)
+      assert(areEqual(compiler.scalan)(output, expected)(out.common.eOutput), s"Compiler: $compiler,\n input: $input,\n expected: $expected,\n got: $output")
     }
   }
-
+  def areEqual[A](ctx: Prog)(v: A, expected: A)(implicit eA: ctx.Elem[A]) = eA match {
+    case se: ctx.StructElem[_] =>
+      val p = v.asInstanceOf[Product]
+      val s = expected.asInstanceOf[ctx.Struct]
+      true
+    case _ =>
+      v === expected
+  }
   // Note: deprecated API will be removed before next release (0.2.11 or 0.3.0)
 
   final class GetStagedOutput[S <: Scalan, Back <: Compiler[S with ScalanDslExp]](val back: Back) {
