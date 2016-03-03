@@ -289,6 +289,6 @@ class MatrixMethodsItTests extends LmsLinAlgItTests {
 
   test("dmUpdate") {
     val in = (inM, (inV, true))
-    compareOutputWithSequential(_.dmUpdate, progStagedOnly)(in)
+    compareOutputWithStd(_.dmUpdate, progStagedOnly)(in)
   }
 }
