@@ -94,15 +94,16 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
                                  compilers: Seq[CompilerWithConfig] = defaultCompilers,
                                  graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
                                  functionName: String = currentTestNameAsFileName)(inputs: A*) = {
-    val fSeq = f(progStd).asInstanceOf[A => B]
-    val inputsOutputs = inputs.map { x => (x, fSeq(x)) }
-    compareOutputWithExpected(f, compilers, graphVizConfig, functionName)(inputsOutputs: _*)
+    val fStd = f(progStd).asInstanceOf[A => B]
+    val expectedOutputs = inputs.map { x => (x, fStd(x)) }
+    compareOutputWithExpected(f, compilers, graphVizConfig, functionName)(expectedOutputs: _*)
   }
 
   def compareOutputWithExpected[A, B](f: Prog => Prog#Rep[A => B],
                                       compilers: Seq[CompilerWithConfig] = defaultCompilers,
                                       graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
-                                      functionName: String = currentTestNameAsFileName)(inputsOutputs: (A, B)*) = {
+                                      functionName: String = currentTestNameAsFileName)
+                                     (expectedOutputs: (A, B)*) = {
     val compiled = compilersWithSourceDirs(compilers, functionName).map { case (cwc, dir) =>
       val out = cwc.compiler.buildExecutable(dir, functionName,
         f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]], graphVizConfig)(cwc.config)
@@ -110,11 +111,11 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
     }
 
     for {
-      (input, expected) <- inputsOutputs
+      (input, expected) <- expectedOutputs
       (compiler, out) <- compiled
     } {
       val output = compiler.execute(out.asInstanceOf[compiler.CompilerOutput[A, B]], input)
-      assert(output === expected, s"Compiler: $compiler, input: $input, expected: $expected, got: $output")
+      assert(output === expected, s"Compiler: $compiler,\n input: $input,\n expected: $expected,\n got: $output")
     }
   }
 
