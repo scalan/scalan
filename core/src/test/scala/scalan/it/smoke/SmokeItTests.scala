@@ -109,6 +109,11 @@ trait SmokeProg extends ScalanDsl {
     SArray.replicate(in._1, in._2)
   }
 
+  lazy val randoms = fun { in: Rep[(Int, Double)] =>
+    val Pair(i, d) = in
+    Pair(random(i), random(d))
+  }
+
   lazy val emptyNestedUnitArray = fun {_ : Rep[Int] => array_empty[Array[Unit]]}
 
 

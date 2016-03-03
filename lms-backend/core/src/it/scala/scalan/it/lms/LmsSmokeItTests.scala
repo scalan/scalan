@@ -90,4 +90,12 @@ class LmsSmokeItTests extends SmokeItTests {
     val in = ("abc", "abc")
     compareOutputWithSequential(_.stringMax, progStagedOnly)(in)
   }
+
+  test("randoms") {
+    val (i, d) = (3, 3.14)
+    val in = (i, d)
+    val Seq(Seq((ri, rd))) = getStagedOutput(_.randoms, progStagedOnly)(in)
+    assert(ri >= 0 && ri < i)
+    assert(rd >= 0.0 && rd <= d)
+  }
 }
