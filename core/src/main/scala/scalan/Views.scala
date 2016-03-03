@@ -419,13 +419,13 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
   def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] =
     FuncIso[A, B, C, D](iso1, iso2)(iso1.eFrom, iso1.eTo, iso2.eFrom, iso2.eTo)
 
-  def arrayIso[A,B](iso: Iso[A, B]) = reifyObject(ArrayIso[A, B](iso)(iso.eFrom, iso.eTo)).asInstanceOf[Iso1[A, B, Array]]
+  def arrayIso[A,B](iso: Iso[A, B]) = ArrayIso[A, B](iso)(iso.eFrom, iso.eTo).asInstanceOf[Iso1[A, B, Array]]
 
-  def listIso[A,B](iso: Iso[A, B]) = reifyObject(ListIso[A, B](iso)(iso.eFrom, iso.eTo)).asInstanceOf[Iso1[A, B, List]]
+  def listIso[A,B](iso: Iso[A, B]) = ListIso[A, B](iso)(iso.eFrom, iso.eTo).asInstanceOf[Iso1[A, B, List]]
 
-  def arrayBufferIso[A,B](iso: Iso[A, B]) = reifyObject(ArrayBufferIso[A, B](iso)(iso.eFrom, iso.eTo)).asInstanceOf[Iso1[A, B, ArrayBuffer]]
+  def arrayBufferIso[A,B](iso: Iso[A, B]) = ArrayBufferIso[A, B](iso)(iso.eFrom, iso.eTo).asInstanceOf[Iso1[A, B, ArrayBuffer]]
 
-  def thunkIso[A,B](iso: Iso[A, B]) = reifyObject(ThunkIso[A, B](iso)(iso.eFrom, iso.eTo)).asInstanceOf[Iso1[A, B, Thunk]]
+  def thunkIso[A,B](iso: Iso[A, B]) = ThunkIso[A, B](iso)(iso.eFrom, iso.eTo).asInstanceOf[Iso1[A, B, Thunk]]
 
   def mapIso[K1, V1, K2, V2](iso1: Iso[K1, K2], iso2: Iso[V1, V2]): Iso[MMap[K1, V1], MMap[K2, V2]] =
     MapIso[K1, V1, K2, V2](iso1, iso2)(iso1.eFrom, iso2.eFrom, iso1.eTo, iso2.eTo)
