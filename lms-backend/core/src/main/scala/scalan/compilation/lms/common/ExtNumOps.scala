@@ -6,23 +6,18 @@ import scala.lms.internal.ScalaNestedCodegen
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait ExtNumOps extends Base {
-
-  def numeric_Random(bound: Rep[Double]): Rep[Double]
+  def numeric_Random[A: Manifest](bound: Rep[A]): Rep[A]
 }
-
 
 trait ExtNumOpsExp extends ExtNumOps with BaseExp with EffectExp {
 
-  case class NumericRand(bound: Exp[Double]) extends Def[Double] {
-    val m = manifest[Double]
-  }
+  case class NumericRand[A: Manifest](bound: Exp[A]) extends Def[A]
 
   //case class NumericRand(a: Exp[Double]) extends Def[Unit]
 
-  def numeric_Random(bound: Rep[Double]): Rep[Double] =
-  {
+  def numeric_Random[A: Manifest](bound: Rep[A]): Rep[A] = {
     //NumericRand(bound, i)
-    val x = fresh[Double]
+    val x = fresh[A]
     val b = reifyEffects(bound)
     reflectEffect(NumericRand(bound), summarizeEffects(b).star)
   }
@@ -53,8 +48,12 @@ trait ScalaGenExtNumOps extends ScalaGenBase {
   import IR._
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case ds @ NumericRand(n) =>
-      stream.println(src"val $sym = util.Random.nextDouble() * $n.asInstanceOf[Double]")
+    case NumericRand(bound) =>
+      bound.tp.asInstanceOf[Manifest[_]] match {
+        case Manifest.Int => stream.println(src"val $sym = util.Random.nextInt($bound.asInstanceOf[Int])")
+        case Manifest.Double => stream.println(src"val $sym = util.Random.nextDouble() * $bound.asInstanceOf[Double]")
+        case _ => throw new Exception(s"random not implemented for ${bound.tp}")
+      }
     case _ => super.emitNode(sym, rhs)
   }
 
