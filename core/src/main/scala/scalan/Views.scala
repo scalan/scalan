@@ -252,7 +252,8 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
   class ConcreteIsoElem[From, To, IsoType <: IsoUR[From, To]](_eFrom: => Elem[From], _eTo: => Elem[To]) extends IsoURElem[From, To, IsoType]()(_eFrom, _eTo)
 
   object UnpackableElem {
-    def unapply(e: Elem[_]) = {
+    private val elems = MutMap.empty[(String, Elem[_]), Option[Iso[_, _]]]
+    def unapply(e: Elem[_]) = elems.getOrElseUpdate((currentPass.name, e), {
       val iso = getIsoByElem(e)
       iso match {
         case Def(i: IsoUR[_,_]) =>
@@ -263,7 +264,7 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
         case _ => None
       }
 
-    }
+    })
   }
 
   def shouldUnpack(e: Elem[_]): Boolean
