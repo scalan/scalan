@@ -17,7 +17,7 @@ trait Passes {
     def apply[A](s: Exp[A]): Exp[_]
   }
 
-  case class GraphTransformPass(name: String, mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
+  class GraphTransformPass(val name: String, mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
     def apply(graph: PGraph): PGraph = graph.transform(mirror, rewriter, MapTransformer.Empty)
   }
 

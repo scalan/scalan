@@ -60,5 +60,5 @@ trait EffectfulCompiler[ScalanCake <: ScalanDslExp with EffectfulExp] extends Co
 
   override def graphPasses(compilerConfig: CompilerConfig) =
     super.graphPasses(compilerConfig) :+
-    constantPass(GraphTransformPass("effects", DefaultMirror, EffectfulRewriter))
+    constantPass(new GraphTransformPass("effects", DefaultMirror, EffectfulRewriter))
 }

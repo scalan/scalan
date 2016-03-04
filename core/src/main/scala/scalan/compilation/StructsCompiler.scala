@@ -12,11 +12,11 @@ trait StructsCompiler[ScalanCake <: ScalanDslExp with StructsDslExp] extends Com
   override def graphPasses(compilerConfig: CompilerConfig) = {
     val passes = super.graphPasses(compilerConfig) ++
       Seq(AllInvokeEnabler,
-        constantPass(StructsPass(DefaultMirror, StructsRewriter)))
+        constantPass(new StructsPass(DefaultMirror, StructsRewriter)))
     passes.distinct
   }
 
-  case class StructsPass(mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
+  class StructsPass(mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
     def name = "structs"
     override val config = PassConfig(shouldUnpackTuples = true)
     def apply(graph: PGraph): PGraph = {

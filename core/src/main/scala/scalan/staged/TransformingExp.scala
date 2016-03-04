@@ -15,7 +15,7 @@ trait Transforming { self: Scalan =>
   }
   object Pass {
     val defaultPassName = "default"
-    val defaultPass = DefaultPass(defaultPassName)
+    val defaultPass = new DefaultPass(defaultPassName)
     val defaultPassConfig = defaultPass.config
   }
 
@@ -25,7 +25,7 @@ trait Transforming { self: Scalan =>
     constantPropagation: Boolean = true
     )
 
-  case class DefaultPass(name: String, override val config: PassConfig = PassConfig()) extends Pass
+  class DefaultPass(val name: String, override val config: PassConfig = PassConfig()) extends Pass
 
   //TODO parallel execution of Compilers
   // Current design doesn't allow to run through passes i two Compilers in parallel

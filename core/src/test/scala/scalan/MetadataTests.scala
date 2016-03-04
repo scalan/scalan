@@ -41,7 +41,7 @@ class MetadataTests extends BaseNestedTests {
         }
 
         override def graphPasses(compilerConfig: CompilerConfig) =
-          super.graphPasses(compilerConfig) :+ constantPass(GraphTransformPass("functionNameMirror", functionNameMirror, NoRewriting))
+          super.graphPasses(compilerConfig) :+ constantPass(new GraphTransformPass("functionNameMirror", functionNameMirror, NoRewriting))
       }
 
       import compiler._
