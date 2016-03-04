@@ -116,16 +116,8 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
     } {
       val out = out_.asInstanceOf[compiler.CompilerOutput[A, B]]
       val output = compiler.execute(out, input)
-      assert(areEqual(compiler.scalan)(output, expected)(out.common.eOutput), s"Compiler: $compiler,\n input: $input,\n expected: $expected,\n got: $output")
+      assert(expected === output, s"Compiler: $compiler,\n input: $input,\n expected: $expected,\n got: $output")
     }
-  }
-  def areEqual[A](ctx: Prog)(v: A, expected: A)(implicit eA: ctx.Elem[A]) = eA match {
-    case se: ctx.StructElem[_] =>
-      val p = v.asInstanceOf[Product]
-      val s = expected.asInstanceOf[ctx.Struct]
-      true
-    case _ =>
-      v === expected
   }
   // Note: deprecated API will be removed before next release (0.2.11 or 0.3.0)
 

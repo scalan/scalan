@@ -131,7 +131,15 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
   // TODO optimize
   def arrayBufferLength[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]]): Exp[Int] = buf.result.length
 
-  def arrayBufferMap[A: Manifest, B: Manifest](buf: Exp[mutable.ArrayBuilder[A]], f: Rep[A] => Rep[B]): Exp[mutable.ArrayBuilder[B]] = ???
+  def arrayBufferMap[A: Manifest, B: Manifest](buf: Exp[mutable.ArrayBuilder[A]], f: Rep[A] => Rep[B]): Exp[mutable.ArrayBuilder[B]] = {
+    val res = ArrayBuilder.make[B]
+    val arr = buf.result
+    val count = arr.length
+    for (i <- 0 until count) {
+      res += f(arr(i))
+    }
+    res
+  }
 
   def arrayBufferUpdate[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]], i: Exp[Int], v: Exp[T]): Exp[mutable.ArrayBuilder[T]] = ???
 
