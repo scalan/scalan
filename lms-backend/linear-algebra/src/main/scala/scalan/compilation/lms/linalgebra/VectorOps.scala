@@ -4,14 +4,15 @@ import scala.lms.common._
 import scala.lms.internal.Transforming
 import scala.reflect.SourceContext
 import scalan.compilation.lms.LmsBackendFacade
+import scalan.compilation.lms.common.{ArrayJoins, ArrayJoinsExp}
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
-trait VectorOps extends Variables {
+trait VectorOps extends ArrayJoins with Variables {
 
   def array_dotProductSparse[A: Numeric: Manifest](idxs1: Rep[Array[Int]], vals1: Rep[Array[A]], idxs2: Rep[Array[Int]], vals2: Rep[Array[A]]): Rep[A]
 }
 
-trait VectorOpsExp extends VectorOps with EffectExp with VariablesExp with Transforming { self: LmsBackendFacade =>
+trait VectorOpsExp extends VectorOps with EffectExp with VariablesExp with ArrayJoinsExp with Transforming { self: LmsBackendFacade =>
 
   case class ArrayDotProdSparse[A](idxs1: Exp[Array[Int]], vals1: Exp[Array[A]], idxs2: Exp[Array[Int]], vals2: Exp[Array[A]])
                                   (implicit val num: Numeric[A], val m: Manifest[A]) extends Def[A]
