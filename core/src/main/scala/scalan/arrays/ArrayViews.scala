@@ -141,6 +141,36 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsDslExp with Ba
         case _ => super.rewriteDef(d)
       }
 
+    case ArrayMapReduce(
+        xs: Arr[a] @unchecked,
+        _map@Def(Lambda(_, _, _, UnpackableExp(_, Def(pairIso: PairIso[k1,v1,k2,v2])))), _reduce) =>
+      val map = _map.asRep[a => (k2, v2)]
+      val reduce = _reduce.asRep[((v2, v2)) => v2]
+      val keyIso = pairIso.iso1
+      val valIso = pairIso.iso2
+      implicit val ea = xs.elem.eItem
+      val res = xs.mapReduce[k1, v1](
+        x => pairIso.from(map(x)),
+        (x: Rep[v1], y: Rep[v1]) =>
+          valIso.from(reduce(Pair(valIso.to(x), valIso.to(y))))
+      )(pairIso.eA1, pairIso.eA2)
+      ViewMap[k1,v1, k2, v2](res)(keyIso, valIso)
+
+    case MapToArray(HasViews(_map, Def(mapIso: MapIso[k1,v1,k2,v2]))) =>
+      val map = _map.asRep[MMap[k1, v1]]
+      implicit val ek1 = mapIso.eK1
+      implicit val ev1 = mapIso.eV1
+      implicit val ek2 = mapIso.eK2
+      implicit val ev2 = mapIso.eV2
+      map.toArray.map({ case Pair(k,v) => Pair(mapIso.iso1.to(k), mapIso.iso2.to(v)) })
+    case sort @ ArraySortBy(HasViews(_xs, Def(iso: ArrayIso[a,b])), _by, _o: Ordering[o]) =>
+      val xs = _xs.asRep[Array[a]]
+      val by = _by.asRep[b => o]
+      implicit val ea = xs.elem.eItem
+      implicit val eo = sort.eO
+      implicit val o = _o
+      val sorted = xs.sortBy((x: Rep[a]) => by(iso.innerIso.to(x)))
+      ViewArray(sorted, iso.innerIso)
     case ArrayFold(Def(view: ViewArray[_,_]), init, f) =>
       foldUnderlyingArray(view, init, f)
     case ArrayApplyMany(Def(view: ViewArray[a, b]), is) =>
