@@ -523,106 +523,106 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
 
   def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T] = ArrayCons(value, xs)
 
-  def accessOnlyFirst(x: Exp[_], exp: Exp[_]): Boolean = {
-    exp match {
-      case Def(Tup(l, r)) => accessOnlyFirst(x, l) && accessOnlyFirst(x, r)
-      case Def(Second(t)) => accessOnlyFirst(x, t)
-      case Def(First(t)) => (t == x || accessOnlyFirst(x, t))
-      case Def(ApplyBinOp(op, l, r)) => accessOnlyFirst(x, l) && accessOnlyFirst(x, r)
-      case Def(ApplyUnOp(opr, opd)) => accessOnlyFirst(x, opd)
-      case Def(Const(_)) => true
-      case _ => false
-    }
-  }
+//  def accessOnlyFirst(x: Exp[_], exp: Exp[_]): Boolean = {
+//    exp match {
+//      case Def(Tup(l, r)) => accessOnlyFirst(x, l) && accessOnlyFirst(x, r)
+//      case Def(Second(t)) => accessOnlyFirst(x, t)
+//      case Def(First(t)) => (t == x || accessOnlyFirst(x, t))
+//      case Def(ApplyBinOp(op, l, r)) => accessOnlyFirst(x, l) && accessOnlyFirst(x, r)
+//      case Def(ApplyUnOp(opr, opd)) => accessOnlyFirst(x, opd)
+//      case Def(Const(_)) => true
+//      case _ => false
+//    }
+//  }
+//
+//  def accessOnlySecond(x: Exp[_], exp: Exp[_]): Boolean = {
+//    exp match {
+//      case Def(Tup(l, r)) => accessOnlySecond(x, l) && accessOnlySecond(x, r)
+//      case Def(First(t)) => accessOnlySecond(x, t)
+//      case Def(Second(t)) => (t == x || accessOnlySecond(x, t))
+//      case Def(ApplyBinOp(op, l, r)) => accessOnlySecond(x, l) && accessOnlySecond(x, r)
+//      case Def(ApplyUnOp(opr, opd)) => accessOnlySecond(x, opd)
+//      case Def(Const(_)) => true
+//      case _ => false
+//    }
+//  }
+//
+//   def firstOnlyExp(oldX: Exp[_], newX: Exp[_], exp: Exp[_]): Exp[_] = {
+//    exp match {
+//      case Def(t: Tup[a, b]) => {
+//        implicit val eA = t.a.elem
+//        implicit val eB = t.b.elem
+//        Tup[a,b](firstOnlyExp(oldX, newX, t.a).asRep[a], firstOnlyExp(oldX, newX, t.b).asRep[b])
+//      }
+//      case Def(s: Second[a,b]) => {
+//        val pair = s.pair
+//        implicit val eA = pair.elem.eFst
+//        implicit val eB = pair.elem.eSnd
+//        Second[a,b](firstOnlyExp(oldX, newX, pair).asRep[(a,b)])
+//      }
+//      case Def(f: First[a, b]) => {
+//        val pair = f.pair
+//        if (pair == oldX) {
+//          newX
+//        } else {
+//          implicit val eA = pair.elem.eFst
+//          implicit val eB = pair.elem.eSnd
+//          First[a, b](firstOnlyExp(oldX, newX, pair).asRep[(a, b)])
+//        }
+//      }
+//      case Def(bin: ApplyBinOp[a,r]) =>
+//        ApplyBinOp[a,r](bin.op, firstOnlyExp(oldX, newX, bin.lhs).asRep[a], firstOnlyExp(oldX, newX, bin.rhs).asRep[a])
+//      case Def(un: ApplyUnOp[a, r]) =>
+//         ApplyUnOp[a,r](un.op, firstOnlyExp(oldX, newX, un.arg).asRep[a])
+//      case _ => exp
+//    }
+//  }
+//  def firstOnly[A:Elem,B:Elem](l: Lambda[_, _]): Exp[A => B] = {
+//    val newSym = fresh[A => B]
+//    val newX = fresh[A]
+//    val first = firstOnlyExp(l.x, newX, l.y)
+//    val newLam = new Lambda[A, B](None, newX, first.asRep[B], newSym, l.mayInline)
+//    toExp(newLam, newSym)
+//  }
+//
+//  def secondOnlyExp(oldX: Exp[_], newX: Exp[_], exp: Exp[_]): Exp[_] = {
+//    exp match {
+//      case Def(t: Tup[a, b]) => {
+//        implicit val eA = t.a.elem
+//        implicit val eB = t.b.elem
+//        Tup[a, b](secondOnlyExp(oldX, newX, t.a).asRep[a], secondOnlyExp(oldX, newX, t.b).asRep[b])
+//      }
+//      case Def(f: First[a, b]) => {
+//        val pair = f.pair
+//        implicit val eA = pair.elem.eFst
+//        implicit val eB = pair.elem.eSnd
+//        First[a, b](secondOnlyExp(oldX, newX, pair).asRep[(a, b)])
+//      }
+//      case Def(s: Second[a, b]) => {
+//        val pair = s.pair
+//        if (pair == oldX) {
+//          newX
+//        } else {
+//          implicit val eA = pair.elem.eFst
+//          implicit val eB = pair.elem.eSnd
+//          Second[a, b](secondOnlyExp(oldX, newX, pair).asRep[(a, b)])
+//        }
+//      }
+//      case Def(bin: ApplyBinOp[a,r]) =>
+//        ApplyBinOp[a,r](bin.op, secondOnlyExp(oldX, newX, bin.lhs).asRep[a], secondOnlyExp(oldX, newX, bin.rhs).asRep[a])
+//      case Def(un: ApplyUnOp[a, r]) =>
+//         ApplyUnOp[a,r](un.op, secondOnlyExp(oldX, newX, un.arg).asRep[a])
+//      case _ => exp
+//    }
+//  }
 
-  def accessOnlySecond(x: Exp[_], exp: Exp[_]): Boolean = {
-    exp match {
-      case Def(Tup(l, r)) => accessOnlySecond(x, l) && accessOnlySecond(x, r)
-      case Def(First(t)) => accessOnlySecond(x, t)
-      case Def(Second(t)) => (t == x || accessOnlySecond(x, t))
-      case Def(ApplyBinOp(op, l, r)) => accessOnlySecond(x, l) && accessOnlySecond(x, r)
-      case Def(ApplyUnOp(opr, opd)) => accessOnlySecond(x, opd)
-      case Def(Const(_)) => true
-      case _ => false
-    }
-  }
-
-   def firstOnlyExp(oldX: Exp[_], newX: Exp[_], exp: Exp[_]): Exp[_] = {
-    exp match {
-      case Def(t: Tup[a, b]) => {
-        implicit val eA = t.a.elem
-        implicit val eB = t.b.elem
-        Tup[a,b](firstOnlyExp(oldX, newX, t.a).asRep[a], firstOnlyExp(oldX, newX, t.b).asRep[b])
-      }
-      case Def(s: Second[a,b]) => {
-        val pair = s.pair
-        implicit val eA = pair.elem.eFst
-        implicit val eB = pair.elem.eSnd
-        Second[a,b](firstOnlyExp(oldX, newX, pair).asRep[(a,b)])
-      }
-      case Def(f: First[a, b]) => {
-        val pair = f.pair
-        if (pair == oldX) {
-          newX
-        } else {
-          implicit val eA = pair.elem.eFst
-          implicit val eB = pair.elem.eSnd
-          First[a, b](firstOnlyExp(oldX, newX, pair).asRep[(a, b)])
-        }
-      }
-      case Def(bin: ApplyBinOp[a,r]) =>
-        ApplyBinOp[a,r](bin.op, firstOnlyExp(oldX, newX, bin.lhs).asRep[a], firstOnlyExp(oldX, newX, bin.rhs).asRep[a])
-      case Def(un: ApplyUnOp[a, r]) =>
-         ApplyUnOp[a,r](un.op, firstOnlyExp(oldX, newX, un.arg).asRep[a])
-      case _ => exp
-    }
-  }
-  def firstOnly[A:Elem,B:Elem](l: Lambda[_, _]): Exp[A => B] = {
-    val newSym = fresh[A => B]
-    val newX = fresh[A]
-    val first = firstOnlyExp(l.x, newX, l.y)
-    val newLam = new Lambda[A, B](None, newX, first.asRep[B], newSym, l.mayInline)
-    toExp(newLam, newSym)
-  }
-
-  def secondOnlyExp(oldX: Exp[_], newX: Exp[_], exp: Exp[_]): Exp[_] = {
-    exp match {
-      case Def(t: Tup[a, b]) => {
-        implicit val eA = t.a.elem
-        implicit val eB = t.b.elem
-        Tup[a, b](secondOnlyExp(oldX, newX, t.a).asRep[a], secondOnlyExp(oldX, newX, t.b).asRep[b])
-      }
-      case Def(f: First[a, b]) => {
-        val pair = f.pair
-        implicit val eA = pair.elem.eFst
-        implicit val eB = pair.elem.eSnd
-        First[a, b](secondOnlyExp(oldX, newX, pair).asRep[(a, b)])
-      }
-      case Def(s: Second[a, b]) => {
-        val pair = s.pair
-        if (pair == oldX) {
-          newX
-        } else {
-          implicit val eA = pair.elem.eFst
-          implicit val eB = pair.elem.eSnd
-          Second[a, b](secondOnlyExp(oldX, newX, pair).asRep[(a, b)])
-        }
-      }
-      case Def(bin: ApplyBinOp[a,r]) =>
-        ApplyBinOp[a,r](bin.op, secondOnlyExp(oldX, newX, bin.lhs).asRep[a], secondOnlyExp(oldX, newX, bin.rhs).asRep[a])
-      case Def(un: ApplyUnOp[a, r]) =>
-         ApplyUnOp[a,r](un.op, secondOnlyExp(oldX, newX, un.arg).asRep[a])
-      case _ => exp
-    }
-  }
-
-  def secondOnly[A:Elem,B:Elem](l: Lambda[_, _]): Exp[A => B] = {
-    val newSym = fresh[A => B]
-    val newX = fresh[A]
-    val second = secondOnlyExp(l.x, newX, l.y)
-    val newLam = new Lambda[A, B](None, newX, second.asRep[B], newSym, l.mayInline)
-    toExp(newLam, newSym)
-  }
+//  def secondOnly[A:Elem,B:Elem](l: Lambda[_, _]): Exp[A => B] = {
+//    val newSym = fresh[A => B]
+//    val newX = fresh[A]
+//    val second = secondOnlyExp(l.x, newX, l.y)
+//    val newLam = new Lambda[A, B](None, newX, second.asRep[B], newSym, l.mayInline)
+//    toExp(newLam, newSym)
+//  }
 
   def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[Int] = {
     ArrayBinarySearch(i, is, o)
@@ -636,31 +636,76 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     SymsArray(syms)
   }
 
-  type UnpackedSeq[T] = (Seq[Rep[Source]], Iso[Source, T]) forSome { type Source }
+  object ArgAccess extends Enumeration {
+    type ArgAccess = Value
+    val Non, First, Second, Both = Value
 
-  object HasEqualViews {
-    def unapply[T](syms: Seq[Exp[T]]): Option[UnpackedSeq[T]] = {
-      val sourceIsos = syms.map { l => l match {
-        case HasViews(source, iso) => (source, iso)
-        case s:Exp[a] => (s, identityIso[a](s.elem))
-      }}
-      val sources = sourceIsos.map(_._1)
-      val isos = sourceIsos.map(_._2)
-      isos.filterNot(_.asInstanceOf[Iso[_,_]].isIdentity).distinct.length == 1 match {
-        case true => isos.head match {
-          case iso: Iso[a,_] => Some((sources.map(_.asRep[a]), iso.asInstanceOf[Iso[a,T]]))
+    implicit class ArgAccessOps(acc: ArgAccess) {
+      def &&(other: ArgAccess): ArgAccess = acc match {
+        case Non => other match {
+          case Non => Non
+          case o => o
         }
-        case _ => None
+        case First => other match {
+          case _ if other <= First => First
+          case _ => Both
+        }
+        case Second => other match {
+          case Non => Second
+          case First => Both
+          case Second => Second
+          case Both => Both
+        }
+        case _ => Both
       }
     }
   }
-  override def rewriteDef[T](d: Def[T]) = d match {
-    case SymsArray(HasEqualViews(sources: Seq[Rep[a]], iso: Iso[_,b])) => {
-      val iso1 = iso.asInstanceOf[Iso[a,b]]
-      implicit val eA = iso1.eFrom
-      implicit val eB = iso1.eTo
-      ArrayIso(iso1).to(SArray.fromSyms[a](sources)(iso1.eFrom))
+  import ArgAccess._
+
+  def getArgAccess[A,B](l: Lambda[(A,B),_]): ArgAccess = {
+    val sch = l.scheduleAll
+    val first  = l.x._1
+    val second = l.x._2
+    val accFirst  = if (sch.exists(te => te.sym == first)) ArgAccess.First else Non
+    val accSecond = if (sch.exists(te => te.sym == second)) ArgAccess.Second else Non
+    accFirst && accSecond
+  }
+
+  object LambdaWithAccess {
+    def unapply[T](s: Exp[T]): Option[(Def[T], ArgAccess)] = s match {
+      case Def(l: Lambda[(a,b),_]@unchecked) => Some((l, getArgAccess(l)))
+      case _ => None
     }
+  }
+
+  def sliceFirst[A,B,C](f: Exp[((A,B)) => C]): Exp[A => C] = {
+    val elem = f.elem.eDom
+    implicit val eA = elem.eFst
+    implicit val eB = elem.eSnd
+    implicit val eC = f.elem.eRange
+    fun { x: Exp[A] => f(Pair(x, fresh[B])) }
+  }
+
+  def sliceSecond[A,B,C](f: Exp[((A,B)) => C]): Exp[B => C] = {
+    val elem = f.elem.eDom
+    implicit val eA = elem.eFst
+    implicit val eB = elem.eSnd
+    implicit val eC = f.elem.eRange
+    fun { x: Exp[B] => f(Pair(fresh[A], x)) }
+  }
+
+  case class ArrayStruct[Val <: Struct, ValSchema <: Struct]
+      (val arrays: Rep[ValSchema])
+      (implicit val eVal: Elem[Val], val eValSchema: Elem[ValSchema])
+    extends ArrayDef[Val]
+
+  def arrayStruct[Val <: Struct, ValSchema <: Struct]
+      (arrays: Rep[ValSchema])
+      (implicit eVal: Elem[Val], eValSchema: Elem[ValSchema]): Arr[Val] =
+    reifyObject(ArrayStruct(arrays)(eVal, eValSchema))
+
+  override def rewriteDef[T](d: Def[T]) = d match {
+
     case ArrayApply(Def(d2), i) => d2 match {
       case ArrayApplyMany(xs, is) =>
         implicit val eT = xs.elem.eItem
@@ -729,48 +774,69 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
         case _ =>
           super.rewriteDef(d)
       }
-    case ArrayMap(xs, Def(IdentityLambda())) => xs
-    case ArrayMap(xs: Rep[Array[a]], Def(ConstantLambda(v))) =>
-      val xs1 = xs.asRep[Array[a]]
-      implicit val eA = xs1.elem.eItem
-      SArray.replicate(xs1.length, v)(v.elem)
 
-    case ArrayFilter(Def(zip: ArrayZip[x, y]), Def(l: Lambda[a, b])) if accessOnlyFirst(l.x, l.y) =>
+    case ArrayFilter(Def(zip: ArrayZip[x, y]), p_ @ LambdaWithAccess(_, acc)) if acc == ArgAccess.First =>
+      val pred = p_.asRep[((x,y)) => Boolean]
       val xs1 = zip.xs
       val ys1 = zip.ys
       implicit val eX = xs1.elem.eItem
       implicit val eY = ys1.elem.eItem
-      implicit val eB = l.eB
-      val positions = ArrayFind(xs1, firstOnly[x,b](l))
-      ArrayZip(ArrayApplyMany(xs1, positions), ArrayApplyMany(ys1, positions))
-    case ArrayFilter(Def(zip: ArrayZip[x, y]), Def(l: Lambda[a, b])) if accessOnlySecond(l.x, l.y) =>
+      val positions = ArrayFind(xs1, sliceFirst(pred))
+      val res = ArrayZip(ArrayApplyMany(xs1, positions), ArrayApplyMany(ys1, positions))
+      res
+
+    case ArrayFilter(Def(zip: ArrayZip[x, y]), p_ @ LambdaWithAccess(_, acc)) if acc == ArgAccess.Second =>
+      val pred = p_.asRep[((x,y)) => Boolean]
       val xs1 = zip.xs
       val ys1 = zip.ys
       implicit val eX = xs1.elem.eItem
       implicit val eY = ys1.elem.eItem
-      implicit val eB = l.eB
-      val positions = ArrayFind(ys1, secondOnly[y,b](l))
-      ArrayZip(ArrayApplyMany(xs1, positions), ArrayApplyMany(ys1, positions))
-    case ArrayCount(Def(zip: ArrayZip[x, y]), Def(l: Lambda[a, b])) if accessOnlyFirst(l.x, l.y) =>
+      val positions = ArrayFind(ys1, sliceSecond(pred))
+      val res = ArrayZip(ArrayApplyMany(xs1, positions), ArrayApplyMany(ys1, positions))
+      res
+
+    //    case ArrayFind(Def(zip: ArrayZip[x, y]), p_ @ LambdaWithAccess(_, acc)) if acc == ArgAccess.First =>
+    //      val pred = p_.asRep[((x,y)) => Boolean]
+    //      val xs1 = zip.xs
+    //      ArrayFind(xs1, sliceFirst(pred))
+    //
+    //    case ArrayFind(Def(zip: ArrayZip[x, y]), p_ @ LambdaWithAccess(_, acc)) if acc == ArgAccess.Second =>
+    //      val pred = p_.asRep[((x,y)) => Boolean]
+    //      val ys1 = zip.ys
+    //      ArrayFind(ys1, sliceSecond(pred))
+
+    case ArrayCount(Def(zip: ArrayZip[x, y]), p_ @ LambdaWithAccess(_, acc)) if acc == ArgAccess.First =>
+      val pred = p_.asRep[((x,y)) => Boolean]
+      val xs1 = zip.xs
+      implicit val eX = xs1.elem.eItem
+      ArrayCount(xs1, sliceFirst(pred))
+    case ArrayCount(Def(zip: ArrayZip[x, y]), p_ @ LambdaWithAccess(_, acc)) if acc == ArgAccess.Second =>
+      val pred = p_.asRep[((x,y)) => Boolean]
+      val ys1 = zip.ys
+      implicit val eY = ys1.elem.eItem
+      ArrayCount(ys1, sliceSecond(pred))
+    case ArrayMap(Def(zip: ArrayZip[x, y]), f_ @ LambdaWithAccess(l: Lambda[_,b], acc)) if acc == ArgAccess.First =>
+      val f = f_.asRep[((x,y)) => b]
       val xs1 = zip.xs
       implicit val eX = xs1.elem.eItem
       implicit val eB = l.eB
-      ArrayCount(xs1, firstOnly[x,b](l))
-    case ArrayCount(Def(zip: ArrayZip[x, y]), Def(l: Lambda[a, b])) if accessOnlySecond(l.x, l.y) =>
+      val res = ArrayMap(xs1, sliceFirst(f))
+      res
+    case ArrayMap(Def(zip: ArrayZip[x, y]), f_ @ LambdaWithAccess(l: Lambda[_,b], acc)) if acc == ArgAccess.Second =>
+      val f = f_.asRep[((x,y)) => b]
       val ys1 = zip.ys
       implicit val eY = ys1.elem.eItem
       implicit val eB = l.eB
-      ArrayCount(ys1, secondOnly[y,b](l))
-    case ArrayMap(Def(zip: ArrayZip[x, y]), Def(l: Lambda[a, b])) if accessOnlyFirst(l.x, l.y) =>
-      val xs1 = zip.xs
-      implicit val eX = xs1.elem.eItem
-      implicit val eB = l.eB
-      ArrayMap(xs1, firstOnly[x,b](l))
-    case ArrayMap(Def(zip: ArrayZip[x, y]), Def(l: Lambda[a, b])) if accessOnlySecond(l.x, l.y) =>
-      val ys1 = zip.ys
-      implicit val eY = ys1.elem.eItem
-      implicit val eB = l.eB
-      ArrayMap(ys1, secondOnly[y,b](l))
+      val res = ArrayMap(ys1, sliceSecond(f))
+      res
+
+    case ArrayMap(xs, Def(IdentityLambda())) => xs
+    //    case ArrayMap(xs: Rep[Array[a]], Def(ConstantLambda(v))) =>
+    //      val xs1 = xs.asRep[Array[a]]
+    //      implicit val eA = xs1.elem.eItem
+    //      SArray.replicate(xs1.length, v)(v.elem)
+
+    // should be the last rule in this rewriteDef (with ArrayMap on top)
     case ArrayMap(Def(d2), f: Rep[Function1[a, b]]@unchecked) =>
       d2.asDef[Array[a]] match {
         case ArrayMap(xs: Rep[Array[c]]@unchecked, g) =>
@@ -778,23 +844,27 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
           val g1 = g.asRep[c => a]
           implicit val eB = f.elem.eRange
           implicit val eC = xs.elem.eItem
-          xs1.map { x => f(g1(x))}
+          val res = xs1.map { x => f(g1(x))}
+          res
         case ArrayReplicate(length, x) =>
           implicit val eB = f.elem.eRange
           SArray.replicate(length, f(x))
         case _ =>
           super.rewriteDef(d)
       }
-    case ArraySumBy(Def(zip: ArrayZip[x, y]), Def(l: Lambda[a, b]), n) if accessOnlyFirst(l.x, l.y) =>
-      val xs1 = zip.xs.asRep[Array[x]]
+    case ArraySumBy(Def(zip: ArrayZip[x, y]), f_ @ LambdaWithAccess(l: Lambda[a,b], acc), n) if acc == ArgAccess.Second  =>
+      val f = f_.asRep[((x,y)) => b]
+      val xs1 = zip.xs
       implicit val eX = xs1.elem.eItem
       implicit val eB = l.eB
-      ArraySumBy(xs1, firstOnly[x, b](l), n.asInstanceOf[Numeric[b]])
-    case ArraySumBy(Def(zip: ArrayZip[x, y]), Def(l: Lambda[a, b]), n) if accessOnlySecond(l.x, l.y) =>
-      val ys1 = zip.ys.asRep[Array[y]]
+      ArraySumBy(xs1, sliceFirst(f), n.asInstanceOf[Numeric[b]])
+    case ArraySumBy(Def(zip: ArrayZip[x, y]), f_ @ LambdaWithAccess(l: Lambda[a,b], acc), n) if acc == ArgAccess.Second =>
+      val f = f_.asRep[((x,y)) => b]
+      val ys1 = zip.ys
       implicit val eY = ys1.elem.eItem
       implicit val eB = l.eB
-      ArraySumBy(ys1, secondOnly[y,b](l), n.asInstanceOf[Numeric[b]])
+      ArraySumBy(ys1, sliceSecond(f), n.asInstanceOf[Numeric[b]])
+
     case ArraySumBy(Def(ArrayApplyMany(xs, Def(find: ArrayFind[c]))), by: Rep[Function1[a, b]] @unchecked, n) =>
       val a1 = xs.asRep[Array[a]]
       val a2 = find.xs
@@ -821,7 +891,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
           val sum = p._1
           val x = p._2
           IF (filter.f(x)) THEN sum + by(x) ELSE sum
-      }})
+        }})
     case ArrayFilter(Def(d2: Def[Array[a]]@unchecked), f) =>
       d2.asDef[Array[a]] match {
         case ArrayFilter(xs, g) =>
@@ -834,27 +904,36 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       implicit val e1 = l.elem.eItem
       implicit val e2 = r.selfType.eItem.eFst
       implicit val e3 = r.selfType.eItem.eSnd
-      SArray.tabulate(l.length)(i => Pair(l(i), Pair(r.xs(i), r.ys(i))))
+      val res = SArray.tabulate(l.length)(i => Pair(l(i), Pair(r.xs(i), r.ys(i))))
+      res
+    case ArrayZip(Def(ArrayReplicate(len, v1: Rep[a])), Def(ArrayReplicate(_, v2: Rep[b]))) =>
+      implicit val eA = v1.elem
+      implicit val eB = v2.elem
+      SArray.replicate(len, (v1, v2))
+
+    // Rule: fuse ArrayZip into SArray.tabulate
+    // should be the last with ArrayZip on top
     case ArrayZip(l, Def(map: ArrayMap[x, y]@unchecked)) =>
       map.xs match {
         case Def(range: ArrayRangeFrom0) =>
           implicit val eL = l.elem.eItem
-          val f = map.f.asInstanceOf[Rep[Function1[Int,y]]]
-          SArray.tabulate(range.n)(i => Pair(l(i), f(i)))
+          val f = map.f.asInstanceOf[Rep[Int =>y]]
+          val res = SArray.tabulate(range.n)(i => Pair(l(i), f(i)))
+          res
         case _ =>
           super.rewriteDef(d)
       }
+
+    // Rule: fuse ArrayMap into ArrayMapReduce
     case mr@ArrayMapReduce(Def(map1: ArrayMap[x, y]@unchecked), map2: Rep[Function1[_, (k, v)]], reduce) =>
       val xs = map1.xs.asRep[Array[x]]
       implicit val eX = xs.elem.eItem
       implicit val eY = map1.elem.eItem
       implicit val eK = mr.elemKey.asElem[k]
       implicit val eV = mr.elemValue.asElem[v]
-      xs.mapReduceBy[k, v](fun { e => map2.asRep[y => (k, v)](map1.f(e)) }, reduce.asRep[((v, v)) => v])
-    case ArrayZip(Def(ArrayReplicate(len, v1: Rep[a])), Def(ArrayReplicate(_, v2: Rep[b]))) =>
-      implicit val eA = v1.elem
-      implicit val eB = v2.elem
-      SArray.replicate(len, (v1, v2))
+      val res = xs.mapReduceBy[k, v](fun { e => map2.asRep[y => (k, v)](map1.f(e)) }, reduce.asRep[((v, v)) => v])
+      res
+
     case _ => super.rewriteDef(d)
   }
 }

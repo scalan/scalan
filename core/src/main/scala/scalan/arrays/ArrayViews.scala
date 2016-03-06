@@ -32,6 +32,18 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsDslExp with Ba
   }
 
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
+    case Def(zip: ArrayZip[a, b]) if shouldUnpackTuples =>
+      val xs1 = zip.xs
+      val ys1 = zip.ys
+      implicit val eA = xs1.elem.eItem
+      implicit val eB = ys1.elem.eItem
+      val eAB = element[(a,b)]
+      val eVal = tuple2StructElement[a,b]
+      val eValSchema = tupleStructElement(xs1.elem, ys1.elem)
+      val arr = arrayStruct(tupleStruct(xs1, ys1))(eVal, eValSchema)
+      val innerIso = structToPairIso(eAB)
+      val iso = arrayIso(innerIso)
+      Some((arr, iso))
     case Def(view: ViewArray[a, b]) =>
       Some((view.source, view.iso))
     case UserTypeArray(iso: Iso[a, b]) =>

@@ -153,12 +153,9 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
     ArrayBuffer.fromArray(view.source.toArray.mapBy(iso.toFun >> f))
   }
 
-  def liftArrayBufferViewFromArgs[T](d: Def[T])/*(implicit eT: Elem[T])*/: Option[Exp[_]] = d match {
-
-    case _ => None
-  }
-
   override def rewriteDef[T](d: Def[T]) = d match {
+    //------------------------------------------------------------
+    // Iso lifting rules
     case ArrayBufferAppend(buf, HasViews(srcValue, iso: Iso[a,b]))  =>
       val value = srcValue.asRep[a]
       implicit val eA = iso.eFrom
@@ -186,8 +183,6 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
       val xs1 = xs.asRep[ArrBuf[a]]
       implicit val eA = xs.elem.eItem
       xs.length
-
-    case ArrayBufferMap(xs, Def(IdentityLambda())) => xs
 
     case ArrayBufferMap(xs: Rep[ArrayBuffer[a]] @unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
       val f1 = f.asRep[a => b]
@@ -226,6 +221,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
       val res = view.innerIso.to(view.source(i))
       res
 
+    case ArrayBufferMap(xs, Def(IdentityLambda())) => xs
     case ArrayBufferRep(buf) => buf
     case ArrayBufferToArray(Def(ArrayBufferFromArray(arr))) => arr
     case ArrayBufferFromArray(Def(ArrayBufferToArray(buf))) => buf
