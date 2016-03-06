@@ -89,7 +89,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
   /**
     * Get tuple field name by index
     */
-  private def tupleFN(fieldIndex: Int) = s"_$fieldIndex"
+  def tupleFN(fieldIndex: Int) = s"_$fieldIndex"
 
   def tupleStructElement(fieldElems: Elem[_]*)(implicit o: Overloaded1): StructElem[Struct] = {
     val fields = fieldElems.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f }
