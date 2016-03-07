@@ -3,10 +3,7 @@ package scalan.compilation
 import scalan.ScalanDslExp
 import scalan.primitives.StructsDslExp
 
-/**
-  * Created by slesarenko on 30/12/15.
-  */
-trait StructsCompiler[ScalanCake <: ScalanDslExp with StructsDslExp] extends Compiler[ScalanCake] {
+trait StructsCompiler[+ScalanCake <: ScalanDslExp with StructsDslExp] extends Compiler[ScalanCake] {
   import scalan._
 
   override def graphPasses(compilerConfig: CompilerConfig) = {
