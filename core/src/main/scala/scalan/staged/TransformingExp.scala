@@ -22,7 +22,8 @@ trait Transforming { self: Scalan =>
   case class PassConfig(
     shouldUnpackTuples: Boolean = false,
     shouldExtractFields: Boolean = true,
-    constantPropagation: Boolean = true
+    constantPropagation: Boolean = true,
+    shouldSlice: Boolean = false
     )
 
   class DefaultPass(val name: String, override val config: PassConfig = PassConfig()) extends Pass

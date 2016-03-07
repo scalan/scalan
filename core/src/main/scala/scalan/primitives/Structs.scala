@@ -648,6 +648,7 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
 
   def shouldUnpackTuples = currentPass.config.shouldUnpackTuples
   def shouldExtractFields = currentPass.config.shouldExtractFields
+  def shouldSlice = currentPass.config.shouldSlice
 
   override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
     case FieldGet(v) if shouldExtractFields => v
