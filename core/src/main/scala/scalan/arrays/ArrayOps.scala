@@ -694,7 +694,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     fun { x: Exp[B] => f(Pair(fresh[A], x)) }
   }
 
-  case class ArrayStruct[Val <: Struct, ValSchema <: Struct]
+  case class ArrayStruct[Val, ValSchema]
       (val arrays: Rep[ValSchema])
       (implicit val eVal: Elem[Val], val eValSchema: Elem[ValSchema])
     extends ArrayDef[Val]
