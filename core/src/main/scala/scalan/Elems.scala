@@ -89,6 +89,7 @@ trait Elems extends Base { self: Scalan =>
       implicit val tB = eSnd.tag
       weakTypeTag[(A, B)]
     }
+    override protected def getName = s"(${eFst.name},${eSnd.name})"
     protected def getDefaultRep = Pair(eFst.defaultRepValue, eSnd.defaultRepValue)
   }
 
@@ -99,6 +100,7 @@ trait Elems extends Base { self: Scalan =>
       implicit val tB = eRight.tag
       weakTypeTag[A | B]
     }
+    override protected def getName = s"(${eLeft.name}|${eRight.name})"
     protected def getDefaultRep = mkLeft[A, B](eLeft.defaultRepValue)(eRight)
   }
 
@@ -109,6 +111,7 @@ trait Elems extends Base { self: Scalan =>
       implicit val tB = eRange.tag
       weakTypeTag[A => B]
     }
+    override protected def getName = s"${eDom.name}=>${eRange.name}"
     protected def getDefaultRep = {
       val defaultB = eRange.defaultRepValue
       fun[A, B](_ => defaultB)(Lazy(eDom), eRange)

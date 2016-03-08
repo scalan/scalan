@@ -20,11 +20,21 @@ trait Entities extends Elems { self: Scalan =>
     }
     override def hashCode = tag.tpe.hashCode
   }
+
   abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
     extends EntityElem[To] {
     override def getName = {
       s"${cont.name}[${eItem.name}]"
     }
+    override def canEqual(other: Any) = other match {
+      case _: EntityElem1[_, _, _] => true
+      case _ => false
+    }
+    override def equals(other: Any) = other match {
+      case other: EntityElem1[_,_,_] => other.canEqual(this) && cont == other.cont && eItem == other.eItem
+      case _ => false
+    }
+    override def hashCode = eItem.hashCode * 21 + cont.hashCode
   }
   trait ConcreteElem[TData, TClass] extends EntityElem[TClass] with ViewElem[TData, TClass] { eClass =>
     def getConverterFrom[E](eEntity: EntityElem[E]): Option[Conv[E, TClass]] = {
