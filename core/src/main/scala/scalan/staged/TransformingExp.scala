@@ -140,14 +140,16 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
 
     protected def mirrorDef[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = {
       val (t1, mirrored) = apply(t, rewriter, node, d)
+      val (t2, mirroredMetadata) = mirrorMetadata(t1, node, mirrored)
       var res = mirrored
       var curr = res
       do {
         curr = res
+        setAllMetadata(curr, mirroredMetadata)
         res = rewriter(curr)
       } while (res != curr)
 
-      (t1 + (node -> res), res)
+      (t2 + (node -> res), res)
     }
 
     protected def getMirroredLambdaSym[A, B](node: Exp[A => B]): Exp[_] = fresh(Lazy(node.elem))
@@ -239,30 +241,42 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
 
     protected def isMirrored(t: Ctx, node: Exp[_]): Boolean = t.isDefinedAt(node)
 
+    private def setMirroredMetadata(t1: Ctx, node: Exp[_], mirrored: Exp[_]): (Ctx, Exp[_]) = {
+      val (t2, mirroredMetadata) = mirrorMetadata(t1, node, mirrored)
+      setAllMetadata(mirrored, mirroredMetadata)
+      (t2, mirrored)
+    }
+
     // TODO make protected
     def mirrorNode[A](t: Ctx, rewriter: Rewriter, g: AstGraph, node: Exp[A]): (Ctx, Exp[_]) = {
       isMirrored(t, node) match {         // cannot use 'if' because it becomes staged
         case true => (t, t(node))
         case _ =>
-          (node match {
+//          (
+          node match {
             case Def(d) => d match {
               case lam: Lambda[a, b] =>
-                mirrorLambda(t, rewriter, node.asRep[a => b], lam)
+                val (t1, mirrored) = mirrorLambda(t, rewriter, node.asRep[a => b], lam)
+                setMirroredMetadata(t1, node, mirrored)
               case th: ThunkDef[a] =>
-                mirrorThunk(t, rewriter, node.asRep[Thunk[a]], th)
+                val (t1, mirrored) = mirrorThunk(t, rewriter, node.asRep[Thunk[a]], th)
+                setMirroredMetadata(t1, node, mirrored)
               case ite: IfThenElse[a] =>
-                mirrorIfThenElse(t, rewriter, g, node.asRep[a], ite)
+                val (t1, mirrored) = mirrorIfThenElse(t, rewriter, g, node.asRep[a], ite)
+                setMirroredMetadata(t1, node, mirrored)
               case _ =>
                 mirrorDef(t, rewriter, node, d)
             }
             case _ =>
-              mirrorVar(t, rewriter, node)
-          }) match {
-            case (t1, mirrored: Exp[b]) =>
-              val (t2, mirroredMetadata) = mirrorMetadata(t1, node, mirrored)
-              setAllMetadata(mirrored, mirroredMetadata)
-              (t2, mirrored)
+              val (t1, mirrored) = mirrorVar(t, rewriter, node)
+              setMirroredMetadata(t1, node, mirrored)
           }
+//          ) match {
+//            case (t1, mirrored: Exp[b]) =>
+//              val (t2, mirroredMetadata) = mirrorMetadata(t1, node, mirrored)
+//              setAllMetadata(mirrored, mirroredMetadata)
+//              (t2, mirrored)
+//          }
       }
     }
 
