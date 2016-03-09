@@ -72,17 +72,22 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
         case _ => d
       }
     }
-    case MapContains(HasViews(sourceMap: Rep[MMap[k,v]] @unchecked, Def(mapIso: MapIso[_, _, _, _])), key: Rep[k1]) => {
+
+    // clean k2
+    case MapContains(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key@HasViews(_, _)) =>
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
       implicit val eV = mapIso.iso2.eFrom.asElem[v]
-      (mapIso.iso1.isIdentity) match {
-        case (false) =>
-          val iso = mapIso.iso1.asInstanceOf[Iso[k,k1]]
-          val value = MapContains[k,v](sourceMap, iso.from(key))
-          value
-        case _ => sourceMap.contains(key.asRep[k])
-      }
-    }
+      val map1 = map.asRep[MMap[k,v]]
+      val key1 = mapIso.iso1.from(key.asRep[k2]).asRep[k]
+      map1.contains(key1)
+    // clean v2 after k2 is cleaned
+    case MapContains(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key) if mapIso.iso1.isIdentity =>
+      implicit val eK = mapIso.iso1.eFrom.asElem[k]
+      implicit val eV = mapIso.iso2.eFrom.asElem[v]
+      val map1 = map.asRep[MMap[k,v]]
+      val key1 = key.asRep[k]
+      map1.contains(key1)
+
     case MapUnion(HasViews(sourceMap1: Rep[MMap[k,v]] @unchecked, Def(mapIso1: MapIso[_,_,k2,v2])), HasViews(sourceMap2, mapIso2)) if(mapIso1 == mapIso2)=> {
       implicit val eK = mapIso1.iso1.eFrom.asElem[k]
       implicit val eV = mapIso1.iso2.eFrom.asElem[v]
