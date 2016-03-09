@@ -44,6 +44,12 @@ trait CollectionsProg extends CollectionsDsl with CollectionExamples {
     emptyMap.join(map1).toArray
   }
 
+  lazy val mapContains = fun { in: Rep[Array[(Int, Array[Double])]] =>
+    val arrColl = in.map{ p => (p._1, Collection(p._2))}
+    val map = MMap.fromArray(arrColl)
+    map.contains(toRep(1))
+  }
+
   lazy val convertPairCollectionSOA = fun { in: Rep[Array[Array[(Int, Double)]]] =>
     val items = NestedCollectionFlat.fromJuggedArray(in)
     items.map { coll =>
