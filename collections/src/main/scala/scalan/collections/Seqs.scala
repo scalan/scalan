@@ -99,6 +99,18 @@ trait SeqsDslExp extends impl.SeqsExp {
       ViewSSeq(filtered, iso)
     }
 
+    case SSeqMethods.+:(HasViews(seq, Def(iso: SSeqIso[a, b])), elem@HasViews(_, _)) =>
+      implicit val eA = iso.innerIso.eFrom
+      val seq1 = seq.asRep[SSeq[a]]
+      val elem1 = iso.innerIso.from(elem.asRep[b]).asRep[a]
+      ViewSSeq(seq1.+:(elem1), iso.innerIso)
+
+    case SSeqMethods.diff(HasViews(seq, Def(iso: SSeqIso[a, b])), that@HasViews(_, Def(_: SSeqIso[_, _]))) =>
+      implicit val eA = iso.innerIso.eFrom
+      val seq1 = seq.asRep[SSeq[a]]
+      val that1 = iso.from(that.asRep[SSeq[b]]).asRep[SSeq[a]]
+      ViewSSeq(seq1.diff(that1), iso.innerIso)
+
     case _ => super.rewriteDef(d)
   }
 

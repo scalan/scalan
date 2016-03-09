@@ -156,22 +156,30 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
   override def rewriteDef[T](d: Def[T]) = d match {
     //------------------------------------------------------------
     // Iso lifting rules
-    case ArrayBufferAppend(buf, HasViews(srcValue, iso: Iso[a,b]))  =>
-      val value = srcValue.asRep[a]
-      implicit val eA = iso.eFrom
-      implicit val eB = iso.eTo
-      val bufIso = arrayBufferIso[a,b](iso)
-      val srcBuf = bufIso.from(buf.asRep[ArrayBuffer[b]])
-      ViewArrayBuffer(srcBuf += value, iso)
-
-    case ArrayBufferAppendArray(HasViews(xs, Def(iso: ArrayBufferIso[a, b])), ys_) =>
+    case ArrayBufferUpdate(HasViews(buf, Def(iso: ArrayBufferIso[a, b])), i, v@HasViews(_, _)) =>
       implicit val eA = iso.innerIso.eFrom
-      implicit val eB = iso.innerIso.eTo
-      val xs1 = xs.asRep[ArrayBuffer[a]]
-      val ys = ys_.asRep[Array[b]]
-      val ys1 = ys.mapBy(iso.innerIso.fromFun)
-      val res = ViewArrayBuffer(xs1 ++= ys1, iso.innerIso)
-      res
+      val buf1 = buf.asRep[ArrayBuffer[a]]
+      val v1 = iso.innerIso.from(v.asRep[b]).asRep[a]
+      ViewArrayBuffer(buf1.update(i, v1), iso.innerIso)
+
+    case ArrayBufferInsert(HasViews(buf, Def(iso: ArrayBufferIso[a, b])), i, v@HasViews(_, _)) =>
+      implicit val eA = iso.innerIso.eFrom
+      val buf1 = buf.asRep[ArrayBuffer[a]]
+      val v1 = iso.innerIso.from(v.asRep[b]).asRep[a]
+      ViewArrayBuffer(buf1.insert(i, v1), iso.innerIso)
+
+    case ArrayBufferAppend(HasViews(buf, Def(iso: ArrayBufferIso[a, b])), v@HasViews(_, _)) =>
+      implicit val eA = iso.innerIso.eFrom
+      val buf1 = buf.asRep[ArrayBuffer[a]]
+      val v1 = iso.innerIso.from(v.asRep[b]).asRep[a]
+      ViewArrayBuffer(buf1 += v1, iso.innerIso)
+
+    case ArrayBufferAppendArray(HasViews(buf, Def(iso: ArrayBufferIso[a, b])), a@HasViews(_, Def(_: ArrayIso[_, _]))) =>
+      implicit val eA = iso.innerIso.eFrom
+      val buf1 = buf.asRep[ArrayBuffer[a]]
+      val arrIso = arrayIso(iso.innerIso)
+      val a1 = arrIso.from(a.asRep[Array[b]]).asRep[Array[a]]
+      ViewArrayBuffer(buf1 ++= a1, iso.innerIso)
 
     case mk@MakeArrayBuffer(ctx) if UnpackableElem.unapply(mk.eItem).isDefined =>
        mk.eItem match {
