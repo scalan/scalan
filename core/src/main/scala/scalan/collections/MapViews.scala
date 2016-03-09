@@ -48,39 +48,29 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
           ViewMap(mNew)(iso1, iso2)
       }
 
-    case MapApply(HasViews(sourceMap: Rep[MMap[k, v]] @unchecked, Def(mapIso: MapIso[_, _, _, v1])), key: Rep[k1]) => {
+    // clean k2 (and clean v2 if needed)
+    case MapApply(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key@HasViews(_, _)) =>
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
       implicit val eV = mapIso.iso2.eFrom.asElem[v]
-      (mapIso.iso1.isIdentity, mapIso.iso2.isIdentity) match {
-        case (true, false) =>
-          // View for values
-          val key1 = key.asRep[k]
-          val isoV = mapIso.iso2.asInstanceOf[Iso[v, v1]]
-          val value = MapApply[k, v](sourceMap, key1) //sourceMap.apply(key1)
-          isoV.to(value)
-        case (false, true) =>
-          // View for key
-          val isoK = mapIso.iso1.asInstanceOf[Iso[k, k1]]
-          val value = MapApply[k, v](sourceMap, isoK.from(key))// sourceMap.apply(iso.from(key))
-          value
-        case (false, false) =>
-          // Views for both
-          val isoK = mapIso.iso1.asInstanceOf[Iso[k, k1]]
-          val isoV = mapIso.iso2.asInstanceOf[Iso[v, v1]]
-          val value = MapApply[k, v](sourceMap, isoK.from(key)) // sourceMap.apply(iso.from(key))
-          isoV.to(value)
-        case _ => d
-      }
-    }
+      val map1 = map.asRep[MMap[k,v]]
+      val key1 = mapIso.iso1.from(key.asRep[k2]).asRep[k]
+      mapIso.iso2.to(map1.apply(key1))
+    // clean v2 if still needed after k2 is cleaned
+    case MapApply(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key) if mapIso.iso1.isIdentity =>
+      implicit val eK = mapIso.iso1.eFrom.asElem[k]
+      implicit val eV = mapIso.iso2.eFrom.asElem[v]
+      val map1 = map.asRep[MMap[k,v]]
+      val key1 = key.asRep[k]
+      mapIso.iso2.to(map1.apply(key1))
 
-    // clean k2
+    // clean k2 (and clean v2 if needed)
     case MapContains(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key@HasViews(_, _)) =>
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
       implicit val eV = mapIso.iso2.eFrom.asElem[v]
       val map1 = map.asRep[MMap[k,v]]
       val key1 = mapIso.iso1.from(key.asRep[k2]).asRep[k]
       map1.contains(key1)
-    // clean v2 after k2 is cleaned
+    // clean v2 if still needed after k2 is cleaned
     case MapContains(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key) if mapIso.iso1.isIdentity =>
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
       implicit val eV = mapIso.iso2.eFrom.asElem[v]
