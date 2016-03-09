@@ -158,7 +158,7 @@ trait MapOpsExp extends MapOps { self: ScalanExp =>
   def makeMap[K: Elem, V: Elem](name: Rep[String]): MM[K, V] = MakeMap[K,V](name)
 
 
-  case class AppendMultiMap[K, V](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V])(implicit eK: Elem[K], val eV: Elem[V])
+  case class AppendMultiMap[K, V](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V])(implicit elemKey: Elem[K], val eV: Elem[V])
     extends MMapDef[K,ArrayBuffer[V]]
 
   case class EmptyMap[K, V]()(implicit eK: Elem[K], eV: Elem[V]) extends MMapDef[K, V] {
@@ -170,25 +170,25 @@ trait MapOpsExp extends MapOps { self: ScalanExp =>
     }
   }
 
-  case class MapFromArray[K: Elem, V: Elem](arr: Arr[(K, V)]) extends MMapDef[K, V]
+  case class MapFromArray[K, V](arr: Arr[(K, V)])(implicit elemKey: Elem[K], elemValue: Elem[V]) extends MMapDef[K, V]
 
-  case class MapUsingFunc[K: Elem, V: Elem](count:Rep[Int], f:Rep[Int=>(K,V)]) extends MMapDef[K, V]
+  case class MapUsingFunc[K, V](count: Rep[Int], f:Rep[Int => (K,V)])(implicit elemKey: Elem[K], elemValue: Elem[V]) extends MMapDef[K, V]
 
-  case class MakeMap[K: Elem, V: Elem](ctx: Rep[String]) extends MMapDef[K, V]
+  case class MakeMap[K, V](ctx: Rep[String])(implicit elemKey: Elem[K], elemValue: Elem[V]) extends MMapDef[K, V]
 
-  case class MapUnion[K: Elem, V: Elem](left: MM[K, V], right: MM[K, V]) extends MMapDef[K, V]
+  case class MapUnion[K, V](left: MM[K, V], right: MM[K, V])(implicit elemKey: Elem[K], elemValue: Elem[V]) extends MMapDef[K, V]
 
-  case class MapDifference[K: Elem, V: Elem](left: MM[K, V], right: MM[K, V]) extends MMapDef[K, V]
+  case class MapDifference[K, V](left: MM[K, V], right: MM[K, V])(implicit elemKey: Elem[K], elemValue: Elem[V]) extends MMapDef[K, V]
 
-  case class MapJoin[K, V1, V2](left: MM[K, V1], right: MM[K, V2])(implicit eK: Elem[K], val eV1: Elem[V1], val eV2: Elem[V2]) extends MMapDef[K, (V1, V2)]
+  case class MapJoin[K, V1, V2](left: MM[K, V1], right: MM[K, V2])(implicit elemKey: Elem[K], val elemV1: Elem[V1], val elemV2: Elem[V2]) extends MMapDef[K, (V1, V2)]
 
-  case class MapReduce[K: Elem, V: Elem](left: MM[K, V], right: MM[K, V], f:Rep[((V, V))=>V]) extends MMapDef[K, V]
+  case class MapReduce[K, V](left: MM[K, V], right: MM[K, V], f:Rep[((V, V)) => V])(implicit elemKey: Elem[K], elemValue: Elem[V]) extends MMapDef[K, V]
 
   case class MapContains[K, V](map: MM[K, V], key: Rep[K])(implicit val eK: Elem[K], val eV: Elem[V]) extends BaseDef[Boolean]
 
-  case class MapApply[K, V](map: MM[K, V], key: Rep[K])(implicit val eK: Elem[K], eV: Elem[V]) extends BaseDef[V]
+  case class MapApply[K, V](map: MM[K, V], key: Rep[K])(implicit val eK: Elem[K], val eV: Elem[V]) extends BaseDef[V]
 
-  case class MapApplyIf[K, V, T](map: MM[K, V], key: Rep[K], exists:Rep[V=>T], otherwise: Rep[Unit=>T])(implicit val eK: Elem[K], val eV: Elem[V], selfType: Elem[T]) extends BaseDef[T]
+  case class MapApplyIf[K, V, T](map: MM[K, V], key: Rep[K], exists: Rep[V => T], otherwise: Rep[Unit=>T])(implicit val eK: Elem[K], val eV: Elem[V], selfType: Elem[T]) extends BaseDef[T]
 
   case class MapUpdate[K, V](map: MM[K, V], key: Rep[K], value: Rep[V])(implicit val eK: Elem[K], val eV: Elem[V]) extends BaseDef[Unit]
 
@@ -200,9 +200,9 @@ trait MapOpsExp extends MapOps { self: ScalanExp =>
 
   case class MapValues[K, V](map: MM[K, V])(implicit val eK: Elem[K], val eV: Elem[V]) extends ArrayDef[V]
 
-  case class MapTransformValues[K, V, T](map: MM[K, V], f: Rep[V => T])(implicit eK: Elem[K], val eV: Elem[V], eT: Elem[T]) extends MMapDef[K, T]
+  case class MapTransformValues[K, V, T](map: MM[K, V], f: Rep[V => T])(implicit elemKey: Elem[K], val eV: Elem[V], val eT: Elem[T]) extends MMapDef[K, T]
 
-  case class VarMM[K: Elem, V: Elem](map: MM[K, V]) extends MMapDef[K, V]
+  case class VarMM[K, V](map: MM[K, V])(implicit elemKey: Elem[K], elemValue: Elem[V]) extends MMapDef[K, V]
 
   implicit def resolveMMap[K: Elem, V: Elem](sym: MM[K, V]): MMap[K, V] = sym match  {
     case Def(d: MMapDef[_, _]) => d.asInstanceOf[MMap[K, V]]

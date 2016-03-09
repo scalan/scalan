@@ -75,7 +75,7 @@ trait NumericOpsStd extends NumericOps { self: ScalanStd =>
 }
 
 trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanExp =>
-  case class NumericRand[T](bound: Exp[T], id: Int = IdSupply.nextId)(implicit eT: Elem[T]) extends BaseDef[T]
+  case class NumericRand[T](bound: Exp[T], id: Int = IdSupply.nextId)(implicit val eT: Elem[T]) extends BaseDef[T]
 
   override def transformDef[A](d: Def[A], t: Transformer) = d match {
     case NumericRand(bound, _) => NumericRand(t(bound))(d.selfType)

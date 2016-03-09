@@ -396,7 +396,6 @@ trait HashSetsExp extends scalan.ScalanDslExp with HashSetsDsl {
       case _ =>
         super.rewriteDef(d)
     }
-
     case _ => super.rewriteDef(d)
   }
 }

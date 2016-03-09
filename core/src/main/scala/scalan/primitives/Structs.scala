@@ -29,7 +29,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     override def equals(other: Any): Boolean =
       !!!("StructTag.equals must be overridden so that the outer instances aren't compared")
   }
-  case class SimpleTag[T <: Struct : TypeTag](name: String) extends StructTag[T] {
+  case class SimpleTag[T <: Struct](name: String)(implicit typeTag: TypeTag[T]) extends StructTag[T] {
     override def equals(other: Any) = other match {
       case tag: StructsDsl#SimpleTag[_] => name == tag.name && typeTag == tag.typeTag
       case _ => false

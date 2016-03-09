@@ -13,7 +13,7 @@ class LmsSmokeItTests extends SmokeItTests {
 
   val progStagedU = new LmsCompilerUni(new ProgExp)
 
-  val defaultCompilers = compilers(progStaged, progStagedU)
+  val defaultCompilers = compilers(progStaged/*, progStagedU*/)
   val progStagedOnly = compilers(progStaged)
 
   test("simpleSum") {

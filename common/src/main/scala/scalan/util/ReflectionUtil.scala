@@ -1,6 +1,6 @@
 package scalan.util
 
-import scala.reflect.{ReflectionUtil0, runtime}
+import scala.reflect.ReflectionUtil0
 import scala.reflect.runtime.universe._
 
 sealed trait ParamMirror {
@@ -31,71 +31,69 @@ object ReflectionUtil {
   def classToSymbol(clazz: Class[_]) =
     runtimeMirror(clazz.getClassLoader).classSymbol(clazz)
 
-  def simplifyType(tpe: Type) = {
-    val tpe1 = tpe match {
-      case NullaryMethodType(returnTpe) => returnTpe
-      case _ => tpe
-    }
-    tpe1.dealias
-  }
-
-  private def isFieldOrGetter(s: TermSymbol) = s.isVal || s.isGetter
-
-  def paramMirrors(clazz: Class[_], instanceMirror: InstanceMirror, knownSupertypeFieldSyms: TermSymbol*): List[ParamMirror] = {
-    val clazzSym = classToSymbol(clazz)
+  private def constructorParams(clazzSym: ClassSymbol) = {
     val constructor = clazzSym.primaryConstructor.asMethod
     if (constructor == NoSymbol) {
-      throw new ScalaReflectionException(s"Primary constructor for class $clazz not found")
+      throw new ScalaReflectionException(s"Primary constructor for class ${clazzSym.name.toString} not found")
     }
-    val ctorParams = constructor.paramLists.flatten
+    constructor.paramLists.flatten
+  }
+
+  def paramMirrors(instance: Any): List[ParamMirror] = {
+    val clazz = instance.getClass
+    val javaMirror = runtimeMirror(clazz.getClassLoader)
+    val instanceMirror = javaMirror.reflect(instance)
+    val clazzSym = javaMirror.classSymbol(clazz)
+
+    val ctorParams = constructorParams(clazzSym)
     val tpe = clazzSym.toType
-    val knownSupertypeFieldsWithTypes = knownSupertypeFieldSyms.map(f => f -> simplifyType(f.typeSignatureIn(tpe)))
+
     ctorParams.map { sym =>
-      tpe.decl(sym.name) match {
-        case methodSym: MethodSymbol =>
-          GMirror(instanceMirror.reflectMethod(methodSym))
-        case fieldSym: TermSymbol =>
-          val fieldType = simplifyType(fieldSym.typeSignature)
-          // workaround for http://stackoverflow.com/questions/32118877/compiler-doesnt-generate-a-field-for-implicit-val-when-an-implicit-val-with-the
-          // this would be handled by below try-catch as well, but is common
-          // enough to handle specially
-          val fieldSym1 = (fieldSym :: fieldSym.overrides).collectFirst {
-            case f: TermSymbol if isFieldOrGetter(f) => f
-          }.orElse {
-            knownSupertypeFieldsWithTypes.collectFirst {
-              case (f, t) if t == fieldType => f
-            }
-          }.getOrElse(fieldSym)
-
+      val overloads = tpe.members.filter(_.name == sym.name).toList
+      val methods = overloads.collect {
+        case methodSym: MethodSymbol if methodSym.paramLists.isEmpty =>
+          methodSym
+        case fieldSym: TermSymbol if fieldSym.getter != NoSymbol =>
+          fieldSym.getter.asMethod
+      }.toSet
+      methods.size match {
+        case 0 =>
           try {
-            FMirror(instanceMirror.reflectField(fieldSym1))
+            // overloads should only include fields, because methods is empty
+            // If this fails (overloads is empty or Java field isn't found),
+            // produce a message saying how to fix this
+            overloads match {
+              case List(field) =>
+                FMirror(instanceMirror.reflectField(field.asTerm))
+            }
           } catch {
-            case e: Exception =>
-              // this is represented by a real field in a supertype, find it
-              val superTypeFieldSyms = tpe.members.flatMap {
-                case f: TermSymbol if isFieldOrGetter(f) && simplifyType(f.typeSignatureIn(tpe)) =:= fieldType =>
-                  (f :: f.overrides).map { case f: TermSymbol => if (isFieldOrGetter(f)) f else NoSymbol }
-                case _ => Nil
-              }
-
-              if (superTypeFieldSyms.isEmpty) {
-                throw new ScalaReflectionException(s"Failed to find the field corresponding to ${tpe}.${sym.name}")
+            case _: Throwable =>
+              val tpe = sym.typeSignature
+              val typeArgs = tpe.typeArgs
+              val errorMessage = if (sym.name.toString.startsWith("evidence$") && typeArgs.length == 1) {
+                val typeArg = typeArgs.head.typeSymbol.name.toString
+                val bound = tpe.typeConstructor.typeSymbol.name.toString
+                val paramName = bound match {
+                  case "Elem" => s"e$typeArg"
+                  case "Cont" => s"c$typeArg"
+                  case _ => StringUtil.lowerCaseFirst(bound) + typeArg
+                }
+                val decl = s"val $paramName: $bound[$typeArg]"
+                s"""Declaration of $clazz appears to use a context bound `$typeArg: $bound`.
+                   |It must be changed to an `implicit val` parameter: if the class has no implicit parameters,
+                   |add a new parameter list `(implicit $decl)`. If it already has an implicit parameter list, add `$decl` to it.
+                   |See also http://docs.scala-lang.org/tutorials/FAQ/context-and-view-bounds.html#what-is-a-context-bound
+                   |
+                   |If there is no such bound and ${sym.name} is a parameter name, declare it as a `val`.""".stripMargin
               } else {
-                val fieldMirrorsIterator = superTypeFieldSyms.iterator.flatMap { fieldSym =>
-                  try {
-                    List(instanceMirror.reflectField(fieldSym.asTerm))
-                  } catch {
-                    case e: Exception => Nil
-                  }
-                }
-                if (fieldMirrorsIterator.hasNext) {
-                  FMirror(fieldMirrorsIterator.next())
-                } else {
-                  throw new ScalaReflectionException(s"No fields in supertypes corresponding to ${tpe}.${sym.name} correspond to Java fields")
-                }
+                s"Declaration of class $clazz has a non-`val` parameter ${sym.name}. Declare it as a `val`."
               }
-
+              throw new ScalaReflectionException(errorMessage)
           }
+        case 1 =>
+          GMirror(instanceMirror.reflectMethod(methods.head))
+        case n =>
+          throw new ScalaReflectionException(s"$n parameterless methods called ${sym.name} found in class $clazz. This should never happen.")
       }
     }
   }

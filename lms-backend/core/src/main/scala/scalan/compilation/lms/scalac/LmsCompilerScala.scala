@@ -104,9 +104,7 @@ class LmsCompilerScala[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends
   protected def fixUpOutput[A](output: AnyRef)(compilerOutput: CompilerOutput[_, A]): A = (compilerOutput.common.eOutput match {
     case se: StructElem[a] =>
       val tag = se.asInstanceOf[scalanSeq.StructElem[a with scalanSeq.Struct]].structTag
-      val clazz = output.getClass
-      val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(output)
-      val paramMirrors = ReflectionUtil.paramMirrors(clazz, instanceMirror)
+      val paramMirrors = ReflectionUtil.paramMirrors(output)
       val fieldValues = paramMirrors.map(_.get)
       val fields = se.fieldNames.zip(fieldValues)
       scalanSeq.struct(tag, fields)

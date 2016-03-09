@@ -615,7 +615,6 @@ trait SeqsExp extends scalan.ScalanDslExp with SeqsDsl {
       case _ =>
         super.rewriteDef(d)
     }
-
     case _ => super.rewriteDef(d)
   }
 }
