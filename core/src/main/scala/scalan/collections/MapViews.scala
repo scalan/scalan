@@ -33,7 +33,9 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
   }).asInstanceOf[Option[Unpacked[T]]]
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case Def(MapFromArray(HasViews(source: Arr[(a1, a2)] @unchecked, Def(arrIso: ArrayIso[_,_])))) => {
+    case VarMM(map) => map
+
+    case MapFromArray(HasViews(source: Arr[(a1, a2)] @unchecked, Def(arrIso: ArrayIso[_,_]))) =>
       arrIso.innerIso match {
         case Def(pairIso: PairIso[_, _, b1, b2]) =>
           val iso1 = pairIso.iso1.asInstanceOf[Iso[a1, b1]]
@@ -45,7 +47,6 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
           val mNew = MMap.fromArray(source)
           ViewMap(mNew)(iso1, iso2)
       }
-    }
 
     case s@Def(MapApply(HasViews(sourceMap: Rep[MMap[k, v]] @unchecked, Def(mapIso: MapIso[_, _, _, v1])), key: Rep[k1])) => {
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
