@@ -33,7 +33,9 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
   }).asInstanceOf[Option[Unpacked[T]]]
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case Def(MapFromArray(HasViews(source: Arr[(a1, a2)] @unchecked, Def(arrIso: ArrayIso[_,_])))) => {
+    case VarMM(map) => map
+
+    case MapFromArray(HasViews(source: Arr[(a1, a2)] @unchecked, Def(arrIso: ArrayIso[_,_]))) =>
       arrIso.innerIso match {
         case Def(pairIso: PairIso[_, _, b1, b2]) =>
           val iso1 = pairIso.iso1.asInstanceOf[Iso[a1, b1]]
@@ -45,51 +47,45 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
           val mNew = MMap.fromArray(source)
           ViewMap(mNew)(iso1, iso2)
       }
-    }
 
-    case s@Def(MapApply(HasViews(sourceMap: Rep[MMap[k, v]] @unchecked, Def(mapIso: MapIso[_, _, _, v1])), key: Rep[k1])) => {
+    // clean k2 (and clean v2 if needed)
+    case MapApply(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key@HasViews(_, _)) =>
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
       implicit val eV = mapIso.iso2.eFrom.asElem[v]
-      (mapIso.iso1.isIdentity, mapIso.iso2.isIdentity) match {
-        case (true, false) =>
-          // View for values
-          val key1 = key.asRep[k]
-          val isoV = mapIso.iso2.asInstanceOf[Iso[v, v1]]
-          val value = MapApply[k, v](sourceMap, key1) //sourceMap.apply(key1)
-          isoV.to(value)
-        case (false, true) =>
-          // View for key
-          val isoK = mapIso.iso1.asInstanceOf[Iso[k, k1]]
-          val value = MapApply[k, v](sourceMap, isoK.from(key))// sourceMap.apply(iso.from(key))
-          value
-        case (false, false) =>
-          // Views for both
-          val isoK = mapIso.iso1.asInstanceOf[Iso[k, k1]]
-          val isoV = mapIso.iso2.asInstanceOf[Iso[v, v1]]
-          val value = MapApply[k, v](sourceMap, isoK.from(key)) // sourceMap.apply(iso.from(key))
-          isoV.to(value)
-        case _ => s
-      }
-    }
-    case s@Def(MapContains(HasViews(sourceMap: Rep[MMap[k,v]] @unchecked, Def(mapIso: MapIso[_, _, _, _])), key: Rep[k1])) => {
+      val map1 = map.asRep[MMap[k,v]]
+      val key1 = mapIso.iso1.from(key.asRep[k2]).asRep[k]
+      mapIso.iso2.to(map1.apply(key1))
+    // clean v2 if still needed after k2 is cleaned
+    case MapApply(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key) if mapIso.iso1.isIdentity =>
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
       implicit val eV = mapIso.iso2.eFrom.asElem[v]
-      (mapIso.iso1.isIdentity) match {
-        case (false) =>
-          val iso = mapIso.iso1.asInstanceOf[Iso[k,k1]]
-          val value = MapContains[k,v](sourceMap, iso.from(key))
-          value
-        case _ => sourceMap.contains(key.asRep[k])
-      }
-    }
-    case Def(MapUnion(HasViews(sourceMap1: Rep[MMap[k,v]] @unchecked, Def(mapIso1: MapIso[_,_,k2,v2])), HasViews(sourceMap2, mapIso2))) if(mapIso1 == mapIso2)=> {
-      implicit val eK = mapIso1.iso1.eFrom.asElem[k]
-      implicit val eV = mapIso1.iso2.eFrom.asElem[v]
-      val union = sourceMap1.union(sourceMap2.asRep[MMap[k,v]])
-      mapIso1.asInstanceOf[MapIso[k,v,k2,v2]].to(union)
-    }
+      val map1 = map.asRep[MMap[k,v]]
+      val key1 = key.asRep[k]
+      mapIso.iso2.to(map1.apply(key1))
 
-    case Def(MapUsingFunc(count, LambdaResultHasViews(f, Def(iso: PairIso[a1, a2, b1, b2])))) => {
+    // clean k2 (and clean v2 if needed)
+    case MapContains(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key@HasViews(_, _)) =>
+      implicit val eK = mapIso.iso1.eFrom.asElem[k]
+      implicit val eV = mapIso.iso2.eFrom.asElem[v]
+      val map1 = map.asRep[MMap[k,v]]
+      val key1 = mapIso.iso1.from(key.asRep[k2]).asRep[k]
+      map1.contains(key1)
+    // clean v2 if still needed after k2 is cleaned
+    case MapContains(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key) if mapIso.iso1.isIdentity =>
+      implicit val eK = mapIso.iso1.eFrom.asElem[k]
+      implicit val eV = mapIso.iso2.eFrom.asElem[v]
+      val map1 = map.asRep[MMap[k,v]]
+      val key1 = key.asRep[k]
+      map1.contains(key1)
+
+    case MapUnion(HasViews(left, Def(mapIso: MapIso[k,v,k2,v2])), right@HasViews(_, Def(_: MapIso[_,_,_,_]))) =>
+      implicit val eK = mapIso.iso1.eFrom.asElem[k]
+      implicit val eV = mapIso.iso2.eFrom.asElem[v]
+      val left1 = left.asRep[MMap[k,v]]
+      val right1 = mapIso.from(right.asRep[MMap[k2,v2]]).asRep[MMap[k,v]]
+      ViewMap(left1 union right1)(mapIso.iso1, mapIso.iso2)
+
+    case MapUsingFunc(count, LambdaResultHasViews(f, Def(iso: PairIso[a1, a2, b1, b2]))) => {
       val f1 = f.asRep[Int=>(b1,b2)]
       implicit val eA1 = iso.iso1.eFrom
       implicit val eA2 = iso.iso2.eFrom
@@ -103,7 +99,7 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
       MapIso(iso.iso1, iso.iso2).to(mmap)
     }
 
-    case s@Def(MapValues(HasViews(sourceMap: Rep[MMap[k,v]] @unchecked, Def(mapIso: MapIso[_, _, _, v1])))) => {
+    case MapValues(HasViews(sourceMap: Rep[MMap[k,v]] @unchecked, Def(mapIso: MapIso[_, _, _, v1]))) => {
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
       implicit val eV = mapIso.iso2.eFrom.asElem[v]
       implicit val eV1 = mapIso.iso2.eFrom.asElem[v1]
@@ -116,7 +112,7 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
       }
     }
 
-    case s@Def(MapKeys(HasViews(sourceMap: Rep[MMap[k,v]] @unchecked, Def(mapIso: MapIso[_, _, k1, _])))) => {
+    case MapKeys(HasViews(sourceMap: Rep[MMap[k,v]] @unchecked, Def(mapIso: MapIso[_, _, k1, _]))) => {
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
       implicit val eV = mapIso.iso2.eFrom.asElem[v]
       implicit val eK1 = mapIso.iso1.eFrom.asElem[k1]

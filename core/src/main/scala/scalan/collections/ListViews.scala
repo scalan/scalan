@@ -150,6 +150,19 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseE
       implicit val eB = iso.eTo
       ViewList(SList.replicate(len, v), iso)
     }
+
+    case ListCons(x@HasViews(_, _), HasViews(xs, Def(iso: ListIso[a, b]))) =>
+      implicit val eA = iso.innerIso.eFrom
+      val xs1 = xs.asRep[List[a]]
+      val x1 = iso.innerIso.from(x.asRep[b]).asRep[a]
+      ViewList(RepListOps(xs1).::(x1), iso.innerIso)
+
+    case ListConcat(HasViews(xs, Def(iso: ListIso[a, b])), ys@HasViews(_, Def(_: ListIso[_, _]))) =>
+      implicit val eA = iso.innerIso.eFrom
+      val xs1 = xs.asRep[List[a]]
+      val ys1 = iso.from(ys.asRep[List[b]]).asRep[List[a]]
+      ViewList(xs1 ::: ys1, iso.innerIso)
+
     case _ =>
       super.rewriteDef(d)
   }

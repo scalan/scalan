@@ -37,6 +37,10 @@ class LmsCollectionsItTests extends CollectionsItTests {
     val in = Array((1, 1.1), (2, 2.2), (1, 3.3), (1, 4.4), (2, 5.5))
     compareOutputWithStd(_.makeMap, progStagedOnly)(in)
   }
+  test("mapContains") {
+    val in = Array((1, Array(1.1, 2.2)), (2, Array(3.3, 4.4, 5.5)))
+    compareOutputWithStd(_.mapContains, progStagedOnly)(in)
+  }
   test("ifSpecialize") {
     compareOutputWithStd(_.ifSpecialize, progStagedOnly)(Array(1, 2, 3))
   }
