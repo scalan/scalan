@@ -78,12 +78,12 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
       val key1 = key.asRep[k]
       map1.contains(key1)
 
-    case MapUnion(HasViews(sourceMap1: Rep[MMap[k,v]] @unchecked, Def(mapIso1: MapIso[_,_,k2,v2])), HasViews(sourceMap2, mapIso2)) if(mapIso1 == mapIso2)=> {
-      implicit val eK = mapIso1.iso1.eFrom.asElem[k]
-      implicit val eV = mapIso1.iso2.eFrom.asElem[v]
-      val union = sourceMap1.union(sourceMap2.asRep[MMap[k,v]])
-      mapIso1.asInstanceOf[MapIso[k,v,k2,v2]].to(union)
-    }
+    case MapUnion(HasViews(left, Def(mapIso: MapIso[k,v,k2,v2])), right@HasViews(_, Def(_: MapIso[_,_,_,_]))) =>
+      implicit val eK = mapIso.iso1.eFrom.asElem[k]
+      implicit val eV = mapIso.iso2.eFrom.asElem[v]
+      val left1 = left.asRep[MMap[k,v]]
+      val right1 = mapIso.from(right.asRep[MMap[k2,v2]]).asRep[MMap[k,v]]
+      ViewMap(left1 union right1)(mapIso.iso1, mapIso.iso2)
 
     case MapUsingFunc(count, LambdaResultHasViews(f, Def(iso: PairIso[a1, a2, b1, b2]))) => {
       val f1 = f.asRep[Int=>(b1,b2)]
