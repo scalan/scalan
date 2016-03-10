@@ -122,7 +122,7 @@ object ReflectionUtil {
       case typeParams => typeParams.map(_.name).mkString("[", ", ", "]")
     }
     val params =
-      m.paramLists.map(_.map(sym => s"${sym.name}: ${sym.typeSignature}").mkString("(", ", ", ")"))
+      m.paramLists.map(_.map(sym => s"${sym.name}: ${sym.typeSignature}").mkString("(", ", ", ")")).mkString("")
     s"${m.owner.name}.${m.name}$typeParams$params"
   }
 }
