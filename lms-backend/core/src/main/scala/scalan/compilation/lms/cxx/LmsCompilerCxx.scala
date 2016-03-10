@@ -7,7 +7,7 @@ import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.LmsCompiler
 import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
 
-class LmsCompilerCxx[ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) {
+class LmsCompilerCxx[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) {
   import scalan._
   val lms = new CoreCxxShptrLmsBackend
 

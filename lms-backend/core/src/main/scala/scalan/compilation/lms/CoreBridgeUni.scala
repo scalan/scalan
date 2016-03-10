@@ -30,3 +30,5 @@ trait JNIBridge extends CoreBridge {
     case _ => super.transformDef(m, g, sym, d)
   }
 }
+
+trait CoreBridgeUni extends CoreBridge with JNIBridge
