@@ -66,7 +66,7 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
 // Not clear whether this is due to our or LMS error
 // Replace StructExpOptCommon with StructExp if needed to verify codegen works correctly;
 // otherwise they can get optimized out
-  with MiscOpsExtExp with StructExpOptCommon with Effects {
+  with MiscOpsExtExp with StructExp with Effects {
   def toStringWithDefinition(x: Exp[_]) = s"$x: ${x.tp}" + (x match {
     case sym: Sym[_] =>
       findDefinition(sym) match {
