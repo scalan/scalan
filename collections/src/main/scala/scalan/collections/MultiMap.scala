@@ -41,7 +41,9 @@ trait MultiMaps { self: MultiMapsDsl =>
 
     def contains(key: Rep[K]): Rep[Boolean] = map.contains(key)
 
-    def apply(key: Rep[K]): Rep[ArrayBuffer[V]] = IF (map.contains(key)) THEN map(key) ELSE ArrayBuffer.empty[V]
+    def apply(key: Rep[K]): Rep[ArrayBuffer[V]] =
+      map.applyIfBy[ArrayBuffer[V]](key, fun { x => x }, fun { _: Rep[Unit] => ArrayBuffer.empty[V] })
+//      IF (map.contains(key)) THEN map(key) ELSE ArrayBuffer.empty[V]
 
     def applyIfBy[T](key: Rep[K], exists: Rep[ArrayBuffer[V] => T], otherwise: Rep[Unit => T]): Rep[T] =
       map.applyIfBy[T](key, exists, otherwise)
