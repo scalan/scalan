@@ -359,7 +359,14 @@ trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
            |std::copy($xs->begin() + $i, $xs->end(), $sym->begin() + $i + 1);"""
     case ds @ ArrayBinarySearch(i, is) =>
       emitValDef(sym, src"scalan::binary_search($is->begin(), $is->end(), $i);")
-    // TODO implement for ArraySortBy
+    case a@ArraySortBy(arr, by) =>
+      emitNode(sym, ArrayNew(Const(0))(sym.tp))
+      val aT = src"${remap(a.mA)}"
+      gen"""$sym->resize($arr->size());
+           |std::copy($arr->begin(), $arr->end(), $sym->begin());
+           |auto ${sym}_cmp = [=]($aT x1, $aT x2) -> bool { return $by(x1) < $by(x2); };
+           |std::sort($sym->begin(), $sym->end(), ${sym}_cmp);
+         """
     case _ =>
       super.emitNode(sym, rhs)
   }
