@@ -25,7 +25,7 @@ trait CoreBridgeCxx extends CoreBridge with MethodCallBridge[CxxLibrary, CxxType
           case mA: Manifest[a] =>
             val lmsReceiver = m.symMirrorUntyped(receiver)
             val lmsArgs = adjustArgs(m, args, methodT.argOrder)
-            val templateArgs = adjustArgs(m, args, methodT.templateArgOrder).map(argToTemplateArg)/*.map {
+            val templateArgs = adjustArgs(m, args, methodT.templateArgOrder).map(_.map(argToTemplateArg))/*.map {
               case a: Adjusted[_] => a.map(argToTemplateArg)
               case a => Adjusted(argToTemplateArg(a))
             }*/
@@ -36,10 +36,10 @@ trait CoreBridgeCxx extends CoreBridge with MethodCallBridge[CxxLibrary, CxxType
         elemToManifest(returnType) match {
           case mA: Manifest[a] => lms.cxxMethodCall[a](obj, lms.Pure, method.getName,
             args.collect {
-              case elem: Elem[_] => lms.TypeArg(elemToManifest(elem))
+              case elem: Elem[_] => Adjusted(lms.TypeArg(elemToManifest(elem)))
             },
             /* filter out implicit ClassTag params */
-            args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }: _*)(mA.asInstanceOf[Manifest[a]])
+            args.collect { case v: Exp[_] => Adjusted(m.symMirrorUntyped(v)) }: _*)(mA.asInstanceOf[Manifest[a]])
         }
     }
   }

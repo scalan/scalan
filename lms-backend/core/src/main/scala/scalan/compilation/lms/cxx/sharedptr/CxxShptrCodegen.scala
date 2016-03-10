@@ -165,7 +165,7 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
 
   def emitFunctionDef[A](args: List[Sym[_]], body: Block[A], functionName: String, resultM: Manifest[A], adj: Option[Adjustment]): Unit = {
     val hasJNI = args.map(_.tp.runtimeClass).contains(classOf[JNILmsOps#JNIType[_]]) || resultM.runtimeClass == classOf[JNILmsOps#JNIType[_]]
-    val returnType = returnTyp(resultM, adj)
+    val returnType = this.returnType(resultM, adj)
     val extraArgs = if (hasJNI) "JNIEnv* env, jobject, " else ""
     val argsString = this.mainArgs(args, adj)
     val linkage = if (hasJNI) """extern "C" JNIEXPORT""" else ""
@@ -178,13 +178,13 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
     stream.println("}")
   }
 
-  def functionResult[A](args: List[Sym[_]], body: Block[A], adj: Option[Adjustment]) =
+  protected def functionResult[A](args: List[Sym[_]], body: Block[A], adj: Option[Adjustment]) =
     src"return ${getBlockResult(body)};"
 
-  protected def returnTyp(resultM: Manifest[_], adj: Option[Adjustment]) =
+  protected def returnType(resultM: Manifest[_], adj: Option[Adjustment]) =
     remap(toShptrManifest(resultM))
 
-  protected def mainArgs(args: List[Sym[_]], adj: Option[Adjustment]) =
+  protected def mainArgs[A](args: List[Sym[_]], body: Block[A], adj: Option[Adjustment]) =
     args.map(arg => src"${toShptrManifest(arg.tp)} $arg").mkString(", ")
 
   // override to initialize headerFiles, globals, etc.

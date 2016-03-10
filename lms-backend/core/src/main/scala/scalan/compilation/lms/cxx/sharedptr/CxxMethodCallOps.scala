@@ -16,21 +16,21 @@ trait CxxMethodCallOps extends Base with Effects {
   case class PointerArg[A](target: Rep[A]) extends TemplateArg
   // LValueRefArg, MemberPointerArg, EnumerationArg not needed yet
 
-  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: Seq[TemplateArg], args: Any*): Rep[A]
+  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: Seq[Adjusted[TemplateArg]], args: Adjusted[Any]*): Rep[A]
 
-  def cxxNewObj[A: Manifest](templateArgs: Seq[TemplateArg], args: Any*): Rep[A]
+  def cxxNewObj[A: Manifest](templateArgs: Seq[Adjusted[TemplateArg]], args: Adjusted[Any]*): Rep[A]
 }
 
 trait CxxMethodCallOpsExp extends CxxMethodCallOps with MethodCallOpsExp {
-  case class CxxMethodCall[A](caller: Rep[_], methodName: String, templateArgs: List[TemplateArg], args: List[Any])(implicit val m: Manifest[A]) extends Def[A]
+  case class CxxMethodCall[A](caller: Rep[_], methodName: String, templateArgs: List[Adjusted[TemplateArg]], args: List[Adjusted[Any]])(implicit val m: Manifest[A]) extends Def[A]
 
-  case class CxxNewObj[A](m: Manifest[A], templateArgs: List[TemplateArg], args: List[Any]) extends Def[A]
+  case class CxxNewObj[A](m: Manifest[A], templateArgs: List[Adjusted[TemplateArg]], args: List[Adjusted[Any]]) extends Def[A]
 
-  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: Seq[TemplateArg], args: Any*): Exp[A] = {
+  def cxxMethodCall[A: Manifest](caller: Rep[_], effects: Summary, methodName: String, templateArgs: Seq[Adjusted[TemplateArg]], args: Adjusted[Any]*): Exp[A] = {
     reflectEffect(CxxMethodCall[A](caller, methodName, templateArgs.toList, args.toList), effects)
   }
 
-  def cxxNewObj[A: Manifest](templateArgs: Seq[TemplateArg], args: Any*): Rep[A] =
+  def cxxNewObj[A: Manifest](templateArgs: Seq[Adjusted[TemplateArg]], args: Adjusted[Any]*): Rep[A] =
     reflectEffect(CxxNewObj(manifest[A], templateArgs.toList, args.toList), Alloc)
 
   override def mirror[A: Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
@@ -48,7 +48,8 @@ trait CxxMethodCallOpsExp extends CxxMethodCallOps with MethodCallOpsExp {
     case _ => a
   }
 
-  def transformTemplateArgs(f: Transformer, as: List[TemplateArg]): List[TemplateArg] = as.map(transformTemplateArg(f, _))
+  def transformTemplateArgs(f: Transformer, as: List[Adjusted[TemplateArg]]): List[Adjusted[TemplateArg]] =
+    as.map(_.map(transformTemplateArg(f, _)))
 
   override def transformAny(f: Transformer, x: Any) = x match {
     case ta: TemplateArg => transformTemplateArg(f, ta)
@@ -75,15 +76,15 @@ trait CxxMethodCallOpsExp extends CxxMethodCallOps with MethodCallOpsExp {
 trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxMethodCallOpsExp with TupledFunctionsExp] extends CxxShptrCodegen with GenMethodCallOps[BackendType, CxxLibrary, CxxType, CxxMethod] { self =>
   import IR._
 
-  def quoteTemplateArg(x: TemplateArg): String = x match {
+  def quoteTemplateArg(x: Adjusted[TemplateArg]): String = x.value match {
     case NullPtrArg => "nullptr"
     case TypeArg(m) => remap(m)
     case IntegralArg(value) => value.toString
     case PointerArg(target) => src"&$target"
   }
 
-  private def addTemplateArgsToGlobals(templateArgs: List[IR.TemplateArg]) = templateArgs.foreach {
-    case IR.PointerArg(target) => globals += target
+  private def addTemplateArgsToGlobals(templateArgs: List[Adjusted[TemplateArg]]) = templateArgs.foreach {
+    case Adjusted(PointerArg(target), adjOpt) => globals += Adjusted(target, adjOpt)
     case _ =>
   }
 
@@ -143,15 +144,16 @@ trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxM
     traversal.traverseBlock(body)
   }
 
+  private def mkTemplateArgString(templateArgs: List[Adjusted[TemplateArg]]) =
+    if (templateArgs.isEmpty) "" else s"<${templateArgs.map(quoteTemplateArg).mkString(", ")}>"
+
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case CxxMethodCall(caller, methodName, templateArgs, args) =>
-      val templateArgString =
-        if (templateArgs.isEmpty) "" else s"<${templateArgs.map(quoteTemplateArg).mkString(",")}>"
+      val templateArgString = mkTemplateArgString(templateArgs)
       val rhs1 = src"$caller->$methodName$templateArgString($args)"
       emitValDef(sym, rhs1)
     case CxxNewObj(m, templateArgs, args) =>
-      val templateArgString =
-        if (templateArgs.isEmpty) "" else s"<${templateArgs.map(quoteTemplateArg).mkString(",")}>"
+      val templateArgString = mkTemplateArgString(templateArgs)
       val rhs1 = src"new ${remapWithoutTemplateArgs(m)}$templateArgString($args)"
       emitValDef(sym, rhs1)
     case _ => super.emitNode(sym, rhs)
@@ -166,9 +168,7 @@ trait CxxShptrGenMethodCallOps[BackendType <: Expressions with Effects with CxxM
         val typeArg = m.typeArguments(i)
         adjust(adjOpt, typeArg)
       }
-      // pointer or reference? Should use Ptr/Ref types?
-      src"${lib.namespace.fold("")(_ + "::")}${tpe.mappedName}<$templateArgs>*"
+      src"${lib.namespace.fold("")(_ + "::")}${tpe.mappedName}<$templateArgs>"
     case None => super.remap(m)
   }
 }
-

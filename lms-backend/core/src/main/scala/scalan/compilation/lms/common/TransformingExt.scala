@@ -17,5 +17,6 @@ trait TransformingExt extends Transforming {
   def transformAny(f: Transformer, e: Exp[_]): Exp[_] = f(e)
   def transformAny(f: Transformer, s: Seq[Any]): Seq[Any] = s.map(transformAny(f, _))
   def transformAny(f: Transformer, s: List[Any]): List[Any] = s.map(transformAny(f, _))
+  def transformAny(f: Transformer, s: List[Adjusted[Any]])(implicit d: DummyImplicit): List[Adjusted[Any]] = s.map(transformAny(f, _))
   def transformAny(f: Transformer, a: Adjusted[_]): Adjusted[_] = a.map(transformAny(f, _))
 }

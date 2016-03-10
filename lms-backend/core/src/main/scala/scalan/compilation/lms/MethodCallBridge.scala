@@ -30,10 +30,7 @@ trait MethodCallBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep
   def adjustArgs(m: LmsMirror, args: Seq[Any], shuffle: Seq[Adjusted[Int]]) = shuffle.map { adjIndex =>
     val arg = args(adjIndex.value)
     val lmsArg = mapParam(m, arg, false)
-    adjIndex.adjustment match {
-      case None => lmsArg
-      case Some(adjustment) => lms.adjust(adjustment, lmsArg)
-    }
+    lms.adjust(Adjusted(lmsArg, adjIndex.adjustment))
   }
 
   def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] =
@@ -72,21 +69,26 @@ trait MethodCallBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep
 trait MethodCallOpsExp extends BaseExp with EffectExp with TransformingExt {
   /** Applies the given adjustment to the given value. By default just passes through so it can be used in codegen.
     * Override to transform Exps/Manifests/etc. */
-  def adjust(adjustment: Adjustment, value: Any): Any = adjustment(value)
+  def adjust(adjustment: Adjustment, value: Any): Adjusted[Any] = adjustment(value)
+  def adjust[A](adjusted: Adjusted[A]): Adjusted[A] = adjusted.adjustment match {
+    case Some(adjustment) => adjust(adjustment, adjusted.value).asInstanceOf[Adjusted[A]]
+    case None => adjusted
+  }
 }
 
 trait GenMethodCallOps[BackendType <: Expressions with Effects with MethodCallOpsExp, LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep] extends BaseCodegen[BackendType] {
   def mappings: MethodCallBridge[LibraryT, TypeT, MethodT]
 
-  def adjust(adjustment: Adjustment, value: Any): Any = IR.adjust(adjustment, value)
+  def adjust(adjustment: Adjustment, value: Any): Any = IR.adjust(adjustment, value).value
   def adjust(adjustmentOpt: Option[Adjustment], value: Any): Any = adjustmentOpt match {
     case None => value
     case Some(adjustment) => adjust(adjustment, value)
   }
 
   override def quoteOrRemap(arg: Any) = arg match {
-    case Adjusted(value, None) => quoteOrRemap(value)
-    case Adjusted(value, Some(adj)) => quoteOrRemap(adjust(adj, value))
+    case Adjusted(value, adjOpt) =>
+      val value1 = adjust(adjOpt, value)
+      quoteOrRemap(value1)
     case _ => super.quoteOrRemap(arg)
   }
 }
