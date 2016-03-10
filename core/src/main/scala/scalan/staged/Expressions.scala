@@ -1,3 +1,4 @@
+
 package scalan.staged
 
 import java.lang.reflect.Constructor
@@ -44,7 +45,7 @@ trait BaseExp extends Base { scalan: ScalanExp =>
 
   abstract class BaseDef[+T](implicit val selfType: Elem[T @uncheckedVariance]) extends Def[T]
 
-  case class Const[T: Elem](x: T) extends BaseDef[T]
+  case class Const[T](x: T)(implicit val eT: Elem[T]) extends BaseDef[T]
 
   abstract class Transformer {
     def apply[A](x: Rep[A]): Rep[A]
@@ -93,19 +94,14 @@ trait BaseExp extends Base { scalan: ScalanExp =>
 
   private[this] case class ReflectedProductClass(constructor: Constructor[_], paramMirrors: List[ParamMirror], hasScalanParameter: Boolean)
 
-  private[this] val selfTypeSym =
-    ReflectionUtil.classToSymbol(classOf[BaseDef[_]]).toType.decl(TermName("selfType")).asTerm
   private[this] val baseType = typeOf[Base]
 
   private[this] def reflectProductClass(clazz: Class[_], d: Product) = {
-    val javaMirror = runtimeMirror(clazz.getClassLoader)
-
     val constructors = clazz.getDeclaredConstructors
     assert(constructors.length == 1, s"Every class extending Def must have one constructor, $clazz has ${constructors.length}")
     val constructor = constructors(0)
 
-    val instanceMirror = javaMirror.reflect(d)
-    val paramMirrors = ReflectionUtil.paramMirrors(clazz, instanceMirror, selfTypeSym)
+    val paramMirrors = ReflectionUtil.paramMirrors(d)
 
     val hasScalanParam = constructor.getParameterTypes.headOption match {
       case None => false
@@ -128,23 +124,23 @@ trait BaseExp extends Base { scalan: ScalanExp =>
       val newD = transformProduct(d, t).asInstanceOf[Def[A]]
       reifyObject(newD)
   }
-  
-  def transformProduct(p: Product, t: Transformer): Product = {
-    def transformParam(x: Any): Any = x match {
-      case e: Exp[_] => t(e)
-      case seq: Seq[_] => seq.map(transformParam)
-      case arr: Array[_] => arr.map(transformParam)
-      case opt: Option[_] => opt.map(transformParam)
-      case p: Product => transformProduct(p, t)
-      case x => x
-    }
 
+  protected def transformProductParam(x: Any, t: Transformer): Any = x match {
+    case e: Exp[_] => t(e)
+    case seq: Seq[_] => seq.map(transformProductParam(_, t))
+    case arr: Array[_] => arr.map(transformProductParam(_, t))
+    case opt: Option[_] => opt.map(transformProductParam(_, t))
+    case p: Product => transformProduct(p, t)
+    case x => x
+  }
+
+  def transformProduct(p: Product, t: Transformer): Product = {
     val clazz = p.getClass
     val ReflectedProductClass(constructor, paramMirrors, hasScalanParameter) =
       defClasses.getOrElseUpdate(clazz, reflectProductClass(clazz, p))
 
     val pParams = paramMirrors.map(_.bind(p).get)
-    val transformedParams = pParams.map(transformParam)
+    val transformedParams = pParams.map(transformProductParam(_, t))
     val finalParams =
       (if (hasScalanParameter)
         scalan :: transformedParams
@@ -432,10 +428,10 @@ trait Expressions extends BaseExp { scalan: ScalanExp =>
       Sym(currId)
     }
   }
-  case class Sym[+T](id: Int)(implicit et: LElem[T]) extends Exp[T] {
+  case class Sym[+T](id: Int)(implicit private val eT: LElem[T @uncheckedVariance]) extends Exp[T] {
     override def elem: Elem[T @uncheckedVariance] = this match {
       case Def(d) => d.selfType
-      case _ => et.value
+      case _ => eT.value
     }
     def varName = "s" + id
     override def toString = varName

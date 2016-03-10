@@ -251,7 +251,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
   def createArrayBuffer[T: Elem](count: Rep[Int], f:Rep[Int=>T]): Rep[ArrayBuffer[T]] = ArrayBufferUsingFunc(count, f)
   def createArrayBufferFromArray[T: Elem](arr: Arr[T]): Rep[ArrayBuffer[T]] = ArrayBufferFromArray(arr)
 
-  case class ArrayBufferEmpty[T: Elem]() extends ArrayBufferDef[T] { 
+  case class ArrayBufferEmpty[T]()(implicit eItem: Elem[T]) extends ArrayBufferDef[T] {
     override def equals(other:Any) = {
       other match {
         case that:ArrayBufferEmpty[_] => (this.selfType equals that.selfType)
@@ -260,46 +260,46 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
     }
   }
 
-  case class MakeArrayBuffer[T](ctx: Rep[String])(implicit e: Elem[T]) extends ArrayBufferDef[T]
+  case class MakeArrayBuffer[T](ctx: Rep[String])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferFromElem[T: Elem](v: Rep[T]) extends ArrayBufferDef[T]
+  case class ArrayBufferFromElem[T](v: Rep[T])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferUsingFunc[T: Elem](count: Rep[Int], f: Rep[Int=>T]) extends ArrayBufferDef[T]
+  case class ArrayBufferUsingFunc[T](count: Rep[Int], f: Rep[Int=>T])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferApply[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int]) extends BaseDef[T]
+  case class ArrayBufferApply[T](buf: Rep[ArrayBuffer[T]], i: Rep[Int])(implicit selfType: Elem[T]) extends BaseDef[T]
 
   case class ArrayBufferLength[T](buf: Rep[ArrayBuffer[T]])(implicit val eT: Elem[T]) extends BaseDef[Int]
 
   case class ArrayBufferMap[T, R](buf: Rep[ArrayBuffer[T]], f: Rep[T => R])(implicit val eT: Elem[T], eR: Elem[R]) extends ArrayBufferDef[R]
 
-  case class ArrayBufferUpdate[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int], v: Rep[T]) extends ArrayBufferDef[T]
+  case class ArrayBufferUpdate[T](buf: Rep[ArrayBuffer[T]], i: Rep[Int], v: Rep[T])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferInsert[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int], v: Rep[T]) extends ArrayBufferDef[T]
+  case class ArrayBufferInsert[T](buf: Rep[ArrayBuffer[T]], i: Rep[Int], v: Rep[T])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferAppend[T: Elem](buf: Rep[ArrayBuffer[T]], v: Rep[T]) extends ArrayBufferDef[T]
+  case class ArrayBufferAppend[T](buf: Rep[ArrayBuffer[T]], v: Rep[T])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferAppendArray[T: Elem](buf: Rep[ArrayBuffer[T]], a: Arr[T]) extends ArrayBufferDef[T]
+  case class ArrayBufferAppendArray[T](buf: Rep[ArrayBuffer[T]], a: Arr[T])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferRemove[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int], n: Rep[Int]) extends ArrayBufferDef[T]
+  case class ArrayBufferRemove[T](buf: Rep[ArrayBuffer[T]], i: Rep[Int], n: Rep[Int])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferReset[T: Elem](buf: Rep[ArrayBuffer[T]]) extends ArrayBufferDef[T]
+  case class ArrayBufferReset[T](buf: Rep[ArrayBuffer[T]])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferToArray[T: Elem](buf: Rep[ArrayBuffer[T]]) extends ArrayDef[T]
+  case class ArrayBufferToArray[T](buf: Rep[ArrayBuffer[T]])(implicit eItem: Elem[T]) extends ArrayDef[T]
 
-  case class ArrayBufferFromArray[T: Elem](arr: Rep[Array[T]]) extends ArrayBufferDef[T]
+  case class ArrayBufferFromArray[T](arr: Rep[Array[T]])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferRep[T: Elem](buf: Rep[ArrayBuffer[T]]) extends ArrayBufferDef[T]
+  case class ArrayBufferRep[T](buf: Rep[ArrayBuffer[T]])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
   implicit def resolveArrayBuffer[T: Elem](sym: Rep[ArrayBuffer[T]]): ArrayBuffer[T] = sym match  {
-    case Def(d: ArrayBufferDef[_]) => d.asInstanceOf[ArrayBuffer[T]]
-    case s: Exp[_] => {
+    case Def(d: ArrayBufferDef[_]) =>
+      d.asInstanceOf[ArrayBuffer[T]]
+    case s: Exp[_] =>
       val elem = s.elem
-      elem match { 
+      elem match {
         case ae: ArrayBufferElem[_] => ArrayBufferRep(sym)(ae.asInstanceOf[ArrayBufferElem[T]].eItem)
         case _ =>
           !!!(s"Type mismatch: expected ArrayBufferElem but was $elem", sym)
       }
-    }
     case _ => ???("cannot resolve ArrayBuffer", sym)
   }
 

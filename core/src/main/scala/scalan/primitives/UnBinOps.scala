@@ -58,10 +58,17 @@ trait UnBinOpsExp extends BaseExp with UnBinOps { self: ScalanExp =>
       case true =>
         d match {
           case ApplyUnOp(op: UnOp[a, T @unchecked], Def(Const(arg))) if op.shouldPropagate(arg) =>
-              toRep(op.applySeq(arg.asInstanceOf[a]))(d.selfType)
+            toRep(op.applySeq(arg.asInstanceOf[a]))(d.selfType)
           case ApplyBinOp(op: BinOp[a, T @unchecked], Def(Const(lhs)), Def(Const(rhs))) if op.shouldPropagate(lhs, rhs) =>
             toRep(op.applySeq(lhs.asInstanceOf[a], rhs.asInstanceOf[a]))(d.selfType)
           case _ => super.rewriteDef(d)
         }
     }
+
+  // allows use of context bounds in classes extending UnOp/BinOp.
+  // Note that this must be overridden if some transformation _is_ needed (i.e. if the class contains Rep[_] somewhere)
+  override protected def transformProductParam(x: Any, t: Transformer) = x match {
+    case (_: UnOp[_, _]) | (_: BinOp[_, _]) => x
+    case _ => super.transformProductParam(x, t)
+  }
 }

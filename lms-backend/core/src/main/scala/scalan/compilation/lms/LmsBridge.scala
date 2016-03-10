@@ -122,8 +122,6 @@ trait LmsBridge extends Passes {
   // mirror in the scala-reflect sense, not the class LmsMirror sense
   protected lazy val lmsMirror =
     runtimeMirror(lms.getClass.getClassLoader).reflect(lms)
-  private[this] lazy val selfTypeSym =
-    ReflectionUtil.classToSymbol(classOf[BaseDef[_]]).toType.decl(TermName("selfType")).asTerm
   private[this] lazy val FunctionSym = typeOf[_ => _].typeSymbol
 
   protected def lmsMemberByName(name: String) = lmsTpe.member(TermName(name))
@@ -131,9 +129,7 @@ trait LmsBridge extends Passes {
   protected def reflectPrimitive(clazz: Class[_], d: Def[_]) = {
     // should be guaranteed by the call context, uncomment to verify
     // assert(clazz.isInstance(d.asInstanceOf[AnyRef]))
-    val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(d)
-
-    val paramMirrors = ReflectionUtil.paramMirrors(clazz, instanceMirror, selfTypeSym)
+    val paramMirrors = ReflectionUtil.paramMirrors(d)
     // assumes length only depends on d.getClass
     val paramsLength = extractParams(d, paramMirrors).length
 
@@ -285,13 +281,8 @@ trait LmsBridge extends Passes {
   def registerElemClass[E: ClassTag, C: ClassTag] =
     elementClassTranslations += (classTag[E].runtimeClass -> classTag[C].runtimeClass)
 
-  private[this] lazy val eItemSym =
-    ReflectionUtil.classToSymbol(classOf[EntityElem1[_, _, C] forSome { type C[_] }]).toType.decl(TermName("eItem")).asTerm
-
   private[this] def reflectElement(clazz: Class[_], elem: Elem[_]) = {
-    val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(elem)
-
-    val paramMirrors = ReflectionUtil.paramMirrors(clazz, instanceMirror, eItemSym)
+    val paramMirrors = ReflectionUtil.paramMirrors(elem)
 
     val lmsClass = elementClassTranslations.getOrElse(clazz, elem.runtimeClass)
 

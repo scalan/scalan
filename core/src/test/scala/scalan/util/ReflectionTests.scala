@@ -13,13 +13,8 @@ class ReflectionTests extends BaseCtxTests {
     val ctx = new TestContext with ReflectionExamples
     import ctx._
 
-    val selfTypeSym = ReflectionUtil.classToSymbol(classOf[BaseDef[_]]).toType.decl(TermName("selfType")).asTerm
-
-    val javaMirror = runtimeMirror(this.getClass.getClassLoader)
-
     def check(x: Any)(preds: (List[ParamMirror] => Boolean)*) = {
-      val instanceMirror = javaMirror.reflect(x)
-      val paramMirrors = ReflectionUtil.paramMirrors(x.getClass, instanceMirror, selfTypeSym)
+      val paramMirrors = ReflectionUtil.paramMirrors(x)
       preds.foreach { pred => assert(pred(paramMirrors)) }
     }
 
@@ -43,7 +38,7 @@ class ReflectionTests extends BaseCtxTests {
 
     // A lambda
     val f @ Def(lambda) = fun { x: Rep[Int] => x + 1 }
-    check(f)(canGetAll, namesAre("id", "et"))
+    check(f)(canGetAll, namesAre("id", "eT"))
 
     check(lambda)(canGetAll, namesAre("f", "x", "y", "self0", "mayInline", "eA", "eB"))
 

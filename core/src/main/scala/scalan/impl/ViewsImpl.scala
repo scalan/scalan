@@ -1832,6 +1832,20 @@ trait ViewsExp extends ViewsDsl {
         case _ => None
       }
     }
+
+    object isIdentity {
+      def unapply(d: Def[_]): Option[Rep[MapIso[K1, V1, K2, V2]] forSome {type K1; type V1; type K2; type V2}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MapIsoElem[_, _, _, _]] && method.getName == "isIdentity" =>
+          Some(receiver).asInstanceOf[Option[Rep[MapIso[K1, V1, K2, V2]] forSome {type K1; type V1; type K2; type V2}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[MapIso[K1, V1, K2, V2]] forSome {type K1; type V1; type K2; type V2}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
   }
 
   def mkMapIso[K1, V1, K2, V2]

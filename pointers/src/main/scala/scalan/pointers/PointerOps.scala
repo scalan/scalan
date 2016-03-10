@@ -4,14 +4,14 @@ import scala.reflect.runtime.universe._
 import scalan.{ScalanExp, Base, Scalan}
 
 trait PointerOps extends Base { self: Scalan =>
-  class Pointer[A: Elem]
-  class Scalar[A: Elem]
+  class Pointer[A](implicit val eA: Elem[A])
+  class Scalar[A](implicit val eA: Elem[A])
 
   def nullPtr[A: Elem]: Rep[Pointer[A]]
   def scalarPtr[A: Elem](source: Rep[A]): Rep[Pointer[A]]
   def arrayPtr[A: Elem](xs: Rep[Array[A]]): Rep[Pointer[A]]
 
-  case class PointerElem[A: Elem, To <: Pointer[A]](eItem: Elem[A]) extends EntityElem[To] {
+  case class PointerElem[A, To <: Pointer[A]](eItem: Elem[A]) extends EntityElem[To] {
     def parent: Option[Elem[_]] = None
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eItem))
@@ -22,7 +22,7 @@ trait PointerOps extends Base { self: Scalan =>
     }
     def convertPointer(x: Rep[Pointer[A]]): Rep[To] = x.asRep[To]
     override def isEntityType: Boolean = eItem.isEntityType
-    protected def getDefaultRep = convertPointer(nullPtr[A])
+    protected def getDefaultRep = convertPointer(nullPtr[A](eItem))
   }
   implicit def PointerElement[A](implicit eItem: Elem[A]): Elem[Pointer[A]] =
     new PointerElem[A, Pointer[A]](eItem)
@@ -64,5 +64,3 @@ trait PointerOpsExp extends PointerOps { self: ScalanExp =>
   def arrayPtr[A: Elem](xs: Exp[Array[A]]): Exp[Pointer[A]] = ArrayPtr(xs)
 
 }
-
-

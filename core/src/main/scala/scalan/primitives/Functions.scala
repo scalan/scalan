@@ -55,7 +55,7 @@ trait FunctionsStd extends Functions { self: ScalanStd =>
 
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanExp =>
 
-  class Lambda[A, B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B], self0: Rep[A=>B], val mayInline: Boolean)
+  class Lambda[A, B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B], private val self0: Rep[A => B], val mayInline: Boolean)
                     (implicit val eA: Elem[A] = x.elem, val eB: Elem[B] = y.elem)
     extends BaseDef[A => B] with AstGraph with Product { thisLambda =>
     override lazy val self = self0
@@ -148,7 +148,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   case class Apply[A,B]
     (f: Exp[A => B], arg: Exp[A])
-    (implicit eB: LElem[B])   // enforce explicit laziness at call sites to tie recursive knot (see executeFunction)
+    (implicit val eB: LElem[B])   // enforce explicit laziness at call sites to tie recursive knot (see executeFunction)
       extends Def[B]
   {
     def selfType = eB.value

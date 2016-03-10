@@ -312,7 +312,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |  //implicit def proxy$baseTypeName${typesWithElems}(p: Rep[$baseTypeUse]): $typeUse =
          |  //  proxyOps[$typeUse](p.asRep[$typeUse])
          |
-        |  implicit def unwrapValueOf$typeDecl(w: Rep[$typeUse]): Rep[$baseTypeUse] = w.wrappedValue
+         |  implicit def unwrapValueOf$typeDecl(w: Rep[$typeUse]): Rep[$baseTypeUse] = w.wrappedValue
          |""".stripAndTrim
     }
 
@@ -365,11 +365,11 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |  implicit def cast${e.name}Element${e.tpeArgsDecl}(elem: Elem[${e.typeUse}]): $entityElem =
          |    elem.asInstanceOf[$entityElem]
          |
-        |  ${optBaseType.opt(bt => container(bt.name, false, false))}
+         |  ${optBaseType.opt(bt => container(bt.name, false, false))}
          |
-        |  ${container(e.name, e.isFunctor, true)}
+         |  ${container(e.name, e.isFunctor, true)}
          |
-        |  case class ${e.name}Iso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, ${e.name}] {
+         |  case class ${e.name}Iso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, ${e.name}] {
          |    lazy val selfType = new ConcreteIsoElem[${e.name}[A], ${e.name}[B], ${e.name}Iso[A, B]](eFrom, eTo).
          |      asInstanceOf[Elem[IsoUR[${e.name}[A], ${e.name}[B]]]]
          |    def cC = container[${e.name}]
@@ -377,7 +377,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    def to(x: Rep[${e.name}[A]]) = x.map(innerIso.toFun)
          |  }
          |
-        |  def ${StringUtil.lowerCaseFirst(e.name)}Iso[A, B](innerIso: Iso[A, B]) =
+         |  def ${StringUtil.lowerCaseFirst(e.name)}Iso[A, B](innerIso: Iso[A, B]) =
          |    reifyObject(${e.name}Iso[A, B](innerIso)).asInstanceOf[Iso1[A, B, ${e.name}]]
          |""".stripAndTrim
     }
@@ -484,7 +484,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |      tryConvert(element[${e.typeUse}], this, x, conv)
          |    }
          |
-        |    def convert${e.name}(x: Rep[${e.typeUse}]): Rep[$toArgName] = {
+         |    def convert${e.name}(x: Rep[${e.typeUse}]): Rep[$toArgName] = {
          |      x.selfType1${e.t.isHighKind.opt(".asInstanceOf[Elem[_]]")} match {
          |        case _: $wildcardElem => x.asRep[$toArgName]
          |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e", x)
@@ -500,25 +500,26 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
 
     val companionSql = entityCompOpt.opt(comp => extractSqlQueries(comp.body))
     import e.companionAbsName
-    val companionAbs = s"""
-                          |  implicit case object ${companionName}Elem extends CompanionElem[$companionAbsName] {
-                          |    lazy val tag = weakTypeTag[$companionAbsName]
-                          |    protected def getDefaultRep = ${e.name}
-                          |  }
-                          |
-        |  abstract class $companionAbsName extends CompanionDef[$companionAbsName]${hasCompanion.opt(s" with ${companionName}")} {
-                          |    def selfType = ${companionName}Elem
-                          |    override def toString = "${e.name}"
-                          |    $companionSql
-                          |  }
-                          |  def ${e.name}: Rep[$companionAbsName]
-                          |${hasCompanion.opt
+    val companionAbs =
       s"""
-         |  implicit def proxy$companionAbsName(p: Rep[$companionAbsName]): $companionAbsName =
-         |    proxyOps[$companionAbsName](p)
+         |  implicit case object ${companionName}Elem extends CompanionElem[$companionAbsName] {
+         |    lazy val tag = weakTypeTag[$companionAbsName]
+         |    protected def getDefaultRep = ${e.name}
+         |  }
+         |
+         |  abstract class $companionAbsName extends CompanionDef[$companionAbsName]${hasCompanion.opt(s" with ${companionName}")} {
+         |    def selfType = ${companionName}Elem
+         |    override def toString = "${e.name}"
+         |    $companionSql
+         |  }
+         |  def ${e.name}: Rep[$companionAbsName]
+         |${hasCompanion.opt
+            s"""
+               |  implicit def proxy$companionAbsName(p: Rep[$companionAbsName]): $companionAbsName =
+               |    proxyOps[$companionAbsName](p)
+               |""".stripAndTrim
+          }
          |""".stripAndTrim
-    }
-                          |""".stripAndTrim
 
     val subEntities = for { entity <- module.entities.drop(1) } yield {
       val templateData = EntityTemplateData(module, entity)
@@ -652,10 +653,10 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    }
          |  }
          |
-        |  // state representation type
+         |  // state representation type
          |  type ${className}Data${tpeArgsDecl} = ${dataType(fieldTypes)}
          |
-        |  // 3) Iso for concrete class
+         |  // 3) Iso for concrete class
          |  class ${className}Iso${tpeArgsDecl}${implicitArgsDecl}
          |    extends $parentIsoType with Def[${className}Iso$tpeArgsUse] {
          |    override def from(p: Rep[${c.typeUse}]) =
@@ -698,23 +699,23 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    proxyOps[${c.companionAbsName}](p)
          |  }
          |
-        |  implicit case object ${className}CompanionElem extends CompanionElem[${c.companionAbsName}] {
+         |  implicit case object ${className}CompanionElem extends CompanionElem[${c.companionAbsName}] {
          |    lazy val tag = weakTypeTag[${c.companionAbsName}]
          |    protected def getDefaultRep = $className
          |  }
          |
-        |  implicit def proxy${c.typeDecl}(p: Rep[${c.typeUse}]): ${c.typeUse} =
+         |  implicit def proxy${c.typeDecl}(p: Rep[${c.typeUse}]): ${c.typeUse} =
          |    proxyOps[${c.typeUse}](p)
          |
-        |  implicit class Extended${c.typeDecl}(p: Rep[${c.typeUse}])$implicitArgsDecl {
+         |  implicit class Extended${c.typeDecl}(p: Rep[${c.typeUse}])$implicitArgsDecl {
          |    def toData: Rep[$dataTpe] = iso$className${implicitArgsUse}.from(p)
          |  }
          |
-        |  // 5) implicit resolution of Iso
+         |  // 5) implicit resolution of Iso
          |  implicit def iso${c.typeDecl}${implicitArgsDecl}: Iso[$dataTpe, ${c.typeUse}] =
          |    reifyObject(new ${className}Iso${tpeArgsUse}()$implicitArgsUse)
          |
-        |  // 6) smart constructor and deconstructor
+         |  // 6) smart constructor and deconstructor
          |  def mk${c.typeDecl}(${fieldsWithType.rep()})${implicitArgsDecl}: Rep[${c.typeUse}]
          |  def unmk${c.typeDecl}(p: Rep[$parent]): Option[(${fieldTypes.opt(fieldTypes => fieldTypes.rep(t => s"Rep[$t]"), "Rep[Unit]")})]
          |""".stripAndTrim
@@ -859,12 +860,12 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
       s"""
          |    case ${e.name}Methods.map(xs, Def(IdentityLambda())) => xs
          |
-          |    case view1@View${e.name}(Def(view2@View${e.name}(arr, innerIso2)), innerIso1) =>
+         |    case view1@View${e.name}(Def(view2@View${e.name}(arr, innerIso2)), innerIso1) =>
          |      val compIso = composeIso(innerIso1, innerIso2)
          |      implicit val eAB = compIso.eTo
          |      View${e.name}(arr, compIso)
          |
-          |    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
+         |    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
          |    case mc @ MethodCall(Def(wrapper: Exp${e.name}Impl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
          |      val resultElem = mc.selfType
          |      val wrapperIso = getIsoByElem(resultElem)
@@ -875,7 +876,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |          iso.to(newCall)
          |      }
          |
-          |    case ${e.name}Methods.map(xs, f) => (xs, f) match {
+         |    case ${e.name}Methods.map(xs, f) => (xs, f) match {
          |      case (xs: ${e.entityRepSynonym.name}[a] @unchecked, LambdaResultHasViews(f, iso: Iso[b, c])) =>
          |        val f1 = f.asRep[a => c]
          |        implicit val eB = iso.eFrom
@@ -889,8 +890,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |        source.asRep[${e.name}[a]].map(iso.toFun >> f1)
          |      case _ =>
          |        super.rewriteDef(d)
-         |    }
-           """.stripMargin
+         |    }""".stripMargin
     }
     else ""
   }
@@ -910,7 +910,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    }
          |  }
          |
-        |  override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
+         |  override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
          |    case Def(view: View${e.name}[_, _]) =>
          |      Some((view.source, view.iso))
          |    case UserType${e.name}(iso: Iso[a, b]) =>
@@ -921,9 +921,9 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |      super.unapplyViews(s)
          |  }).asInstanceOf[Option[Unpacked[T]]]
          |
-        |  ${e.entityRepSynonymOpt.isEmpty.opt(e.entityRepSynonym.declaration)}
+         |  ${e.entityRepSynonymOpt.isEmpty.opt(e.entityRepSynonym.declaration)}
          |
-        |  override def rewriteDef[T](d: Def[T]) = d match {
+         |  override def rewriteDef[T](d: Def[T]) = d match {
          |    ${emitContRules(e)}
          |    case _ => super.rewriteDef(d)
          |  }

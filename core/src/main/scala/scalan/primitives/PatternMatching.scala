@@ -51,7 +51,7 @@ trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
   protected def patternMatch[A, B: Elem](selector: Rep[A])(branches: Branch[_ <: A, B]*)(default: Option[Rep[A => B]]) =
     reifyObject(Match[A, B](selector, branches.toList, default))
 
-  case class Match[A, B: Elem](selector: Exp[A], branches: List[Branch[_ <: A, B]], default: Option[Exp[A => B]]) extends BaseDef[B]
+  case class Match[A, B](selector: Exp[A], branches: List[Branch[_ <: A, B]], default: Option[Exp[A => B]])(implicit selfType: Elem[B]) extends BaseDef[B]
 
   private def eDom(branchBody: Exp[_ => _]) = branchBody.elem.asInstanceOf[FuncElem[_, _]].eDom
 

@@ -210,8 +210,6 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   private val proxies = scala.collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
-  private val runtimeMirror =
-    scala.reflect.runtime.universe.runtimeMirror(getClass.getClassLoader).asInstanceOf[RuntimeMirror]
 
   override def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops =
     x match {
