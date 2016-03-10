@@ -54,7 +54,7 @@ abstract class LmsBackend extends LmsBackendFacade { self =>
 }
 
 abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimitives with LiftNumeric with ArrayOpsExtExp with ListOpsExp
-  with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
+  with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExpExt
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with ArrayMutationExp with OrderingOpsExp
   with IfThenElseFatExp with VariablesExpOpt
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with ExtNumOpsExp
@@ -242,7 +242,7 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
   }
 
   def map_toArray[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]]): Exp[Array[(K, V)]] = {
-    arrayMap[K, (K, V)](map.keys.toArray, key => (key, map(key)))
+    arrayMap[K, (K, V)](map_keys(map), key => (key, map(key)))
   }
 
   def map_keys[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]]): Exp[Array[K]] = {

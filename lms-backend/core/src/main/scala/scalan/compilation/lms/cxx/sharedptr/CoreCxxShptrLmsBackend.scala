@@ -4,6 +4,8 @@ package lms
 package cxx
 package sharedptr
 
+import java.util.HashMap
+
 import scala.lms.common._
 import scalan.compilation.lms.common._
 
@@ -33,6 +35,8 @@ class CxxCoreCodegen[BackendCake <: LmsBackendFacade with JNILmsOpsExp](backend:
   with CxxShptrGenStringOps
   with CxxShptrGenEitherOps
   with CxxShptrGenIterableOps
+  with CxxShptrGenHashMapOps
+  with CxxShptrGenHashMapOpsExt
   {
     override val IR: BackendCake = backend
     import IR._
@@ -44,4 +48,8 @@ class CxxCoreCodegen[BackendCake <: LmsBackendFacade with JNILmsOpsExp](backend:
 
 class CoreCxxShptrLmsBackend extends CoreLmsBackend with JNILmsOpsExp { self =>
   override val codegen = new CxxCoreCodegen[self.type](self)
+
+  override def map_keys[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]]): Exp[Array[K]] = {
+    hashmap_keys_array(map)
+  }
 }
