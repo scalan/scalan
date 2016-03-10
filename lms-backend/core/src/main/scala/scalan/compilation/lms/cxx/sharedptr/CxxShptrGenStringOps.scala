@@ -45,7 +45,11 @@ trait CxxShptrGenStringOps extends CxxShptrCodegen {
     case StringToFloat(s) =>
       emitValDef(sym, src"std::stof(*$s)")
     case StringToInt(s) =>
-      emitValDef(sym, src"stt::stoi($s)")
+      emitValDef(sym, src"std::stoi($s)")
+    case StringCharAt(s,i) =>
+      emitValDef(sym, src"$s[$i]")
+    case StringSubstring(s,a,b) =>
+      emitValDef(sym, src"$s.substr($a,$b)")
     case _ => super.emitNode(sym, rhs)
   }
 
