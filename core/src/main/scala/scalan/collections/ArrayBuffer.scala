@@ -156,6 +156,11 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
   override def rewriteDef[T](d: Def[T]) = d match {
     //------------------------------------------------------------
     // Iso lifting rules
+    case ArrayBufferFromElem(HasViews(v, Def(iso: IsoUR[a, b]))) =>
+      implicit val eA = iso.eFrom
+      val v1 = v.asRep[a]
+      ViewArrayBuffer(ArrayBufferFromElem(v1), iso)
+
     case ArrayBufferUpdate(HasViews(buf, Def(iso: ArrayBufferIso[a, b])), i, v@HasViews(_, _)) =>
       implicit val eA = iso.innerIso.eFrom
       val buf1 = buf.asRep[ArrayBuffer[a]]
