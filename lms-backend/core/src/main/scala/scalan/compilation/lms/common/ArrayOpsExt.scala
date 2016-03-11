@@ -266,6 +266,8 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
 
   override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] =
     (e match {
+      case Reflect(SimpleLoop(s,v,body: ArrayElem[A]), u, es) =>
+        reflectMirrored(Reflect(SimpleLoop(f(s),f(v).asInstanceOf[Sym[Int]],mirrorFatDef(body,f)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
       case Reflect(ArrayForeach(a,x,b), u, es) => reflectMirrored(Reflect(ArrayForeach(f(a),f(x).asInstanceOf[Sym[A]],f(b)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
       case Reflect(a @ ArraySortBy(arr, by), u, es) => reflectMirrored(Reflect(ArraySortBy(f(arr), f(by))(a.mA, a.mB), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
       case _ =>
@@ -365,8 +367,7 @@ trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
       gen"""$sym->resize($arr->size());
            |std::copy($arr->begin(), $arr->end(), $sym->begin());
            |auto ${sym}_cmp = [=]($aT x1, $aT x2) -> bool { return $by(x1) < $by(x2); };
-           |std::sort($sym->begin(), $sym->end(), ${sym}_cmp);
-         """
+           |std::sort($sym->begin(), $sym->end(), ${sym}_cmp);"""
     case _ =>
       super.emitNode(sym, rhs)
   }
