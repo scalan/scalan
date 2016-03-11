@@ -123,7 +123,7 @@ class LASuite extends BaseShouldTests {
 
   }
 
-  "DiagonalMatrix" should "return same results as DenseFlatMatrix" in {
+  "DiagonalMatrix" should "return same results as DenseFlatMatrix" ignore {
     val ctx = new Seq
     val dm = ctx.diagonalMatrix(Array(1.0, 2.0, 3.0, 4.0))
     val fm = ctx.flatMatrix((Array(1.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 4.0), 4))
@@ -146,5 +146,5 @@ class LASuite extends BaseShouldTests {
 
   }
 
-  "vvm converters" should "be equivalent for all Vector types" in vvm_converters(cv, cv, res, f1)
+  "vvm converters" should "be equivalent for all Vector types" ignore vvm_converters(cv, cv, res, f1)
 }
