@@ -95,7 +95,8 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => DenseVector(updatedFlatItems)
         case ShiftVector(_, _, cv, _) => DenseVector(shiftedFlatItems(cv))
         case ShiftVectorBoxed(_, cv, _) => DenseVector(shiftedFlatItems(cv))
-        case _ => !!!("matcher for @vector argument in DenseVector.+^(vector: Vec[T]) is not specified.")
+        case _ => vector +^ self
+        //case _ => !!!("matcher for @vector argument in DenseVector.+^(vector: Vec[T]) is not specified.")
       }
     }
     def -^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
@@ -110,7 +111,8 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => DenseVector(updatedFlatItems)
         case ShiftVector(_, _, cv, _) => DenseVector(shiftedFlatItems(cv))
         case ShiftVectorBoxed(_, cv, _) => DenseVector(shiftedFlatItems(cv))
-        case _ => !!!("matcher for @vector argument in DenseVector.-^(vector: Vec[T]) is not specified.")
+        case _ => vector *^ (-toRep(n.one)) +^ self
+        //case _ => !!!("matcher for @vector argument in DenseVector.-^(vector: Vec[T]) is not specified.")
       }
     }
     def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
@@ -126,7 +128,8 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => SparseVectorBoxed(newItems, length)
         case ShiftVector(_, _, cv, _) => DenseVector(shiftedFlatItems(cv))
         case ShiftVectorBoxed(_, cv, _) => DenseVector(shiftedFlatItems(cv))
-        case _ => !!!("matcher for @vector argument in DenseVector.*^(vector: Vec[T]) is not specified.")
+        case _ => vector *^ self
+        //case _ => !!!("matcher for @vector argument in DenseVector.*^(vector: Vec[T]) is not specified.")
       }
     }
     def /^(vector: Vec[T])(implicit f: Fractional[T]): Vec[T] = {
@@ -142,7 +145,7 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => DenseVector(updatedFlatItems)
         case ShiftVector(_, _, cv, _) => DenseVector(shiftedFlatItems(cv))
         case ShiftVectorBoxed(_, cv, _) => DenseVector(shiftedFlatItems(cv))
-        case _ => !!!("matcher for @vector argument in DenseVector.*^(vector: Vec[T]) is not specified.")
+        case _ => !!!("matcher for @vector argument in DenseVector./^(vector: Vec[T]) is not specified.")
       }
     }
     def dot(vector: Vec[T])(implicit n: Numeric[T]): Rep[T] = {
@@ -166,7 +169,8 @@ trait Vectors { self: LADsl =>
         case ConstMatrix(value, _, _) => ConstVector(sum * value, length)
         case DiagonalMatrix(diagonalValues) => self *^ DenseVector(diagonalValues)
         case ConstDiagonalMatrix(diagonalValue, _) => self *^ diagonalValue
-        case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.*(matrix: Matr[T]) is not specified.")
+        case _ => standart
+        //case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
 
@@ -226,7 +230,8 @@ trait Vectors { self: LADsl =>
           case SparseVectorBoxed(_, _) => ShiftVectorBoxed(newItems, const, length)
           case ShiftVector(is, _, cv, _) => ShiftVector(is, newValues, const - cv, length)
           case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, const - cv, length)
-          case _ => !!!("matcher for @vector argument in ConstVector.-^(vector: Vec[T]) is not specified.")
+          case _ => vector *^ (-toRep(n.one)) +^ self
+          //case _ => !!!("matcher for @vector argument in ConstVector.-^(vector: Vec[T]) is not specified.")
         }
       }
       def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
@@ -254,7 +259,8 @@ trait Vectors { self: LADsl =>
           case SparseVectorBoxed(_, _) => DenseVector(flatItems)
           case ShiftVector(is, vs, cv, _) => ShiftVector(is, vs.map(v => const / v), const / cv, length)
           case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, const / cv, length)
-          case _ => !!!("matcher for @vector argument in ConstVector./^(vector: Vec[T]) is not specified.")
+          case _ => DenseVector(flatItems)
+          //case _ => !!!("matcher for @vector argument in ConstVector./^(vector: Vec[T]) is not specified.")
         }
       }
       def dot(vector: Vec[T])(implicit n: Numeric[T]): Rep[T] = {
@@ -301,7 +307,8 @@ trait Vectors { self: LADsl =>
           case SparseVectorBoxed(_, _) => SparseVectorBoxed(newItems, length)
           case ShiftVector(is, _, cv, _) => ShiftVector(is, newValues, -cv, length)
           case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, -cv, length)
-          case _ => !!!("matcher for @vector argument in ConstVector.-^(vector: Vec[T]) is not specified.")
+          case _ => vector *^ (-toRep(n.one))
+          //case _ => !!!("matcher for @vector argument in ConstVector.-^(vector: Vec[T]) is not specified.")
         }
       }
       def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = self
@@ -322,7 +329,7 @@ trait Vectors { self: LADsl =>
           case SparseVectorBoxed(_, _) => shiftOrZero
           case ShiftVector(_, _, cv, _) => IF (cv === zero) THEN shiftOrZero ELSE sparseOrZero
           case ShiftVectorBoxed(_, cv, _) => IF (cv === zero) THEN shiftOrZero ELSE sparseOrZero
-          case _ => self
+          case _ => self // TODO: check it
         }
       }
       def dot(vector: Vec[T])(implicit n: Numeric[T]): Rep[T] = zero
@@ -386,7 +393,8 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => SparseVectorBoxed(newItems, length)
         case ShiftVector(_, _, cv, _) => ShiftVectorBoxed(shiftedItems(cv), -cv, length)
         case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(shiftedItems(cv), -cv, length)
-        case _ => !!!("matcher for @vector argument in SparseVector.-^(vector: Vec[T]) is not specified.")
+        case _ => vector *^ (-toRep(n.one)) +^ self
+        //case _ => !!!("matcher for @vector argument in SparseVector.-^(vector: Vec[T]) is not specified.")
       }
     }
     def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
@@ -437,7 +445,8 @@ trait Vectors { self: LADsl =>
         case ConstMatrix(value, _, _) => ConstVector(sum * value, length)
         case DiagonalMatrix(diagonalValues) => self *^ DenseVector(diagonalValues)
         case ConstDiagonalMatrix(diagonalValue, _) => self *^ diagonalValue
-        case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.*(matrix: Matr[T]) is not specified.")
+        case _ => standart
+        //case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
 
@@ -498,7 +507,8 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => SparseVectorBoxed(newItems, length)
         case ShiftVector(_, _, cv, _) => shift(cv)
         case ShiftVectorBoxed(_, cv, _) => shift(cv)
-        case _ => !!!("matcher for @vector argument in SparseVector.-^(vector: Vec[T]) is not specified.")
+        case _ => vector *^ (-toRep(n.one)) +^ self
+        //case _ => !!!("matcher for @vector argument in SparseVectorBoxed.-^(vector: Vec[T]) is not specified.")
       }
     }
     def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
@@ -525,6 +535,7 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => SparseVector(is, newValues, length)
         case ShiftVector(_, _, cv, _) => SparseVector(is, newValues, length)
         case ShiftVectorBoxed(_, cv, _) => SparseVector(is, newValues, length)
+          // TODO: check case _
         case _ => !!!("matcher for @vector argument in SparseVector./^(vector: Vec[T]) is not specified.")
       }
     }
@@ -601,7 +612,8 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => ShiftVectorBoxed(newItems, constItem, length)
         case ShiftVector(_, _, c2, _) => ShiftVectorBoxed(shiftedItems(c2), constItem - c2, length)
         case ShiftVectorBoxed(_, c2, _) => ShiftVectorBoxed(shiftedItems(c2), constItem - c2, length)
-        case _ => !!!("matcher for @vector argument in ShiftVector.-^(vector: Vec[T]) is not specified.")
+        case _ => vector *^ (-toRep(n.one)) +^ self
+        //case _ => !!!("matcher for @vector argument in ShiftVector.-^(vector: Vec[T]) is not specified.")
       }
     }
     def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
@@ -629,6 +641,7 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => DenseVector(shiftedItems)
         case ShiftVector(_, _, _, _) => DenseVector(shiftedItems)
         case ShiftVectorBoxed(_, _, _) => DenseVector(shiftedItems)
+          // TODO: check case _
         case _ => !!!("matcher for @vector argument in ShiftVector./^(vector: Vec[T]) is not specified.")
       }
     }
@@ -687,21 +700,21 @@ trait Vectors { self: LADsl =>
       }
     }
     def -^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
-      lazy val c1 = offset
-      def x1 = nonZeroItems.map(v => (v._1, v._2 - c1))
+      def x1 = nonZeroItems.map(v => (v._1, v._2 - offset))
       def x2(cv: Rep[T]) = vector.nonZeroItems.map(v => (v._1, v._2 - cv))
       def updates = (nonZeroValues zip vector.items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
-      def newItems = (x1 outerSubtr vector.nonZeroItems).map(v => (v._1, v._2 + c1))
-      def shiftedItems(cv: Rep[T]) = (x1 outerSubtr x2(cv)).map(v => (v._1, v._2 + c1 - cv))
+      def newItems = (x1 outerSubtr vector.nonZeroItems).map(v => (v._1, v._2 + offset))
+      def shiftedItems(cv: Rep[T]) = (x1 outerSubtr x2(cv)).map(v => (v._1, v._2 + offset - cv))
       vector match {
         case DenseVector(vs) => DenseVector(vs.map(v => offset - v).updateMany(nonZeroIndices, updates))
-        case ConstVector(cv, _) => ShiftVectorBoxed(nonZeroItems.map(v => (v._1, v._2 - cv)), c1 - cv, length)
+        case ConstVector(cv, _) => ShiftVectorBoxed(nonZeroItems.map(v => (v._1, v._2 - cv)), offset - cv, length)
         case ZeroVector(_) => self
-        case SparseVector(_, _, _) => ShiftVectorBoxed(newItems, c1, length)
-        case SparseVectorBoxed(_, _) => ShiftVectorBoxed(newItems, c1, length)
-        case ShiftVector(_, _, cv, _) => ShiftVectorBoxed(shiftedItems(cv), c1 - cv, length)
-        case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(shiftedItems(cv), c1 - cv, length)
-        case _ => !!!("matcher for @vector argument in ShiftVectorBoxed.-^(vector: Vec[T]) is not specified.")
+        case SparseVector(_, _, _) => ShiftVectorBoxed(newItems, offset, length)
+        case SparseVectorBoxed(_, _) => ShiftVectorBoxed(newItems, offset, length)
+        case ShiftVector(_, _, cv, _) => ShiftVectorBoxed(shiftedItems(cv), offset - cv, length)
+        case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(shiftedItems(cv), offset - cv, length)
+        case _ => vector *^ (-toRep(n.one)) +^ self
+        //case _ => !!!("matcher for @vector argument in ShiftVectorBoxed.-^(vector: Vec[T]) is not specified.")
       }
     }
     def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
