@@ -33,6 +33,7 @@ class CxxCoreCodegen[BackendCake <: LmsBackendFacade with JNILmsOpsExp](backend:
   with CxxShptrGenStringOps
   with CxxShptrGenEitherOps
   with CxxShptrGenIterableOps
+  with CxxShptrGenArrayJoins
   {
     override val IR: BackendCake = backend
     import IR._

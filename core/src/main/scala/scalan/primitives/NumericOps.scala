@@ -33,6 +33,14 @@ trait NumericOps { self: Scalan =>
     def %(y: Rep[T]): Rep[T] = mod(y)
   }
 
+  implicit class RepIntToNum(x: Rep[Int]) {
+    def to[T](implicit n: Numeric[T], elem: Elem[T]) = NumericFromInt(n).apply(x)
+  }
+
+  implicit class IntToNum(x: Int) {
+    def to[T](implicit n: Numeric[T], elem: Elem[T]) = NumericFromInt(n).apply(x)
+  }
+
   case class NumericPlus[T: Elem](n: Numeric[T]) extends EndoBinOp[T]("+", n.plus)
 
   case class NumericMinus[T: Elem](n: Numeric[T]) extends EndoBinOp[T]("-", n.minus)
@@ -54,6 +62,8 @@ trait NumericOps { self: Scalan =>
   case class NumericToLong[T](n: Numeric[T]) extends UnOp[T,Long]("ToLong", n.toLong)
 
   case class NumericToString[T]() extends UnOp[T,String]("ToString", _.toString)
+
+  case class NumericFromInt[T: Elem](n: Numeric[T]) extends UnOp[Int, T]("FromInt", n.fromInt)
 
   case class FractionalDivide[T](f: Fractional[T])(implicit elem: Elem[T]) extends DivOp[T]("/", f.div, f)
 

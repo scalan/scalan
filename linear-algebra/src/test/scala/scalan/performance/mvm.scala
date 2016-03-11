@@ -2,7 +2,7 @@ package scalan.performance
 
 import org.scalameter.api._
 
-import scalan.linalgebra.{MatricesDslStd, LinearAlgebraExamples}
+import scalan.linalgebra.{LADslStd, LinearAlgebraExamples}
 
 class mvm extends BaseBenchmark {
   //def main(args:Array[String]) {
@@ -72,7 +72,7 @@ class mvm extends BaseBenchmark {
     val inFD = Gen.single("fmdv")((fmat,dvec))
     val inFS = Gen.single("fmsv")((fmat,svec))
 
-    val ctx = new MatricesDslStd with LinearAlgebraExamples
+    val ctx = new LADslStd with LinearAlgebraExamples
 
     performance of "mvm" config (
       exec.minWarmupRuns -> 5,
