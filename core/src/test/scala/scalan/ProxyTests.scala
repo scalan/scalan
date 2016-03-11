@@ -2,6 +2,8 @@ package scalan
 
 import scala.reflect.runtime.universe._
 import scalan.common.{SegmentsDslExp, Lazy}
+import scalan.util.ReflectionUtil
+
 //import scalan.monads.{FreesDslExp, MonadsDslExp}
 
 class ProxyTests extends BaseCtxTests {
@@ -16,7 +18,7 @@ class ProxyTests extends BaseCtxTests {
      */
     def testResultElem[TReceiver, TResult](name: String, params: (Class[_], AnyRef)*)(implicit tag: TypeTag[TReceiver], expectedResultElem: Elem[TResult]) = {
       val tpe = tag.tpe
-      val clazz = runtimeMirror(getClass.getClassLoader).asInstanceOf[JavaMirror].runtimeClass(tpe)
+      val clazz = ReflectionUtil.typeTagToClass(tag)
       val (paramClasses, realParams) = params.unzip
       val method = clazz.getMethod(name, paramClasses: _*)
       val receiverElem = elemFromType(tpe, Map.empty, definitions.NothingTpe)
