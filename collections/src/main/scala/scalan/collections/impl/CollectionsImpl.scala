@@ -741,6 +741,91 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   def mkNestedCollectionFlat[A](values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]]
   def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[A]], Rep[PairCollection[Int, Int]])]
 
+  abstract class AbsCompoundCollection[A]
+      (nestedValues: Coll[Collection[A]])(implicit eA: Elem[A])
+    extends CompoundCollection[A](nestedValues) with Def[CompoundCollection[A]] {
+    lazy val selfType = element[CompoundCollection[A]]
+  }
+  // elem for concrete class
+  class CompoundCollectionElem[A](val iso: Iso[CompoundCollectionData[A], CompoundCollection[A]])(implicit override val eA: Elem[A])
+    extends NestedCollectionElem[A, CompoundCollection[A]]
+    with ConcreteElem[CompoundCollectionData[A], CompoundCollection[A]] {
+    override lazy val parent: Option[Elem[_]] = Some(nestedCollectionElement(element[A]))
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA))
+    }
+
+    override def convertNestedCollection(x: Rep[NestedCollection[A]]) = CompoundCollection(x.nestedValues)
+    override def getDefaultRep = CompoundCollection(element[Collection[Collection[A]]].defaultRepValue)
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[CompoundCollection[A]]
+    }
+  }
+
+  // state representation type
+  type CompoundCollectionData[A] = Collection[Collection[A]]
+
+  // 3) Iso for concrete class
+  class CompoundCollectionIso[A](implicit eA: Elem[A])
+    extends EntityIso[CompoundCollectionData[A], CompoundCollection[A]] with Def[CompoundCollectionIso[A]] {
+    override def from(p: Rep[CompoundCollection[A]]) =
+      p.nestedValues
+    override def to(p: Rep[Collection[Collection[A]]]) = {
+      val nestedValues = p
+      CompoundCollection(nestedValues)
+    }
+    lazy val eFrom = element[Collection[Collection[A]]]
+    lazy val eTo = new CompoundCollectionElem[A](self)
+    lazy val selfType = new CompoundCollectionIsoElem[A](eA)
+    def productArity = 1
+    def productElement(n: Int) = eA
+  }
+  case class CompoundCollectionIsoElem[A](eA: Elem[A]) extends Elem[CompoundCollectionIso[A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new CompoundCollectionIso[A]()(eA))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[CompoundCollectionIso[A]]
+    }
+  }
+  // 4) constructor and deconstructor
+  class CompoundCollectionCompanionAbs extends CompanionDef[CompoundCollectionCompanionAbs] with CompoundCollectionCompanion {
+    def selfType = CompoundCollectionCompanionElem
+    override def toString = "CompoundCollection"
+
+    @scalan.OverloadId("fromFields")
+    def apply[A](nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[CompoundCollection[A]] =
+      mkCompoundCollection(nestedValues)
+
+    def unapply[A](p: Rep[NestedCollection[A]]) = unmkCompoundCollection(p)
+  }
+  lazy val CompoundCollectionRep: Rep[CompoundCollectionCompanionAbs] = new CompoundCollectionCompanionAbs
+  lazy val CompoundCollection: CompoundCollectionCompanionAbs = proxyCompoundCollectionCompanion(CompoundCollectionRep)
+  implicit def proxyCompoundCollectionCompanion(p: Rep[CompoundCollectionCompanionAbs]): CompoundCollectionCompanionAbs = {
+    proxyOps[CompoundCollectionCompanionAbs](p)
+  }
+
+  implicit case object CompoundCollectionCompanionElem extends CompanionElem[CompoundCollectionCompanionAbs] {
+    lazy val tag = weakTypeTag[CompoundCollectionCompanionAbs]
+    protected def getDefaultRep = CompoundCollection
+  }
+
+  implicit def proxyCompoundCollection[A](p: Rep[CompoundCollection[A]]): CompoundCollection[A] =
+    proxyOps[CompoundCollection[A]](p)
+
+  implicit class ExtendedCompoundCollection[A](p: Rep[CompoundCollection[A]])(implicit eA: Elem[A]) {
+    def toData: Rep[CompoundCollectionData[A]] = isoCompoundCollection(eA).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoCompoundCollection[A](implicit eA: Elem[A]): Iso[CompoundCollectionData[A], CompoundCollection[A]] =
+    reifyObject(new CompoundCollectionIso[A]()(eA))
+
+  // 6) smart constructor and deconstructor
+  def mkCompoundCollection[A](nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[CompoundCollection[A]]
+  def unmkCompoundCollection[A](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[Collection[A]]])]
+
   abstract class AbsFuncCollection[A, B, Env]
       (env1: Coll[Env], indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env])
     extends FuncCollection[A, B, Env](env1, indexedFunc) with Def[FuncCollection[A, B, Env]] {
@@ -1025,6 +1110,20 @@ trait CollectionsStd extends scalan.ScalanDslStd with CollectionsDsl {
   def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]) = p match {
     case p: NestedCollectionFlat[A] @unchecked =>
       Some((p.values, p.segments))
+    case _ => None
+  }
+
+  case class StdCompoundCollection[A]
+      (override val nestedValues: Coll[Collection[A]])(implicit eA: Elem[A])
+    extends AbsCompoundCollection[A](nestedValues) {
+  }
+
+  def mkCompoundCollection[A]
+    (nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[CompoundCollection[A]] =
+    new StdCompoundCollection[A](nestedValues)
+  def unmkCompoundCollection[A](p: Rep[NestedCollection[A]]) = p match {
+    case p: CompoundCollection[A] @unchecked =>
+      Some((p.nestedValues))
     case _ => None
   }
 
@@ -2357,6 +2456,18 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
       }
     }
 
+    object nestedValues {
+      def unapply(d: Def[_]): Option[Rep[NestedCollectionFlat[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[NestedCollectionFlatElem[_]] && method.getName == "nestedValues" =>
+          Some(receiver).asInstanceOf[Option[Rep[NestedCollectionFlat[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[NestedCollectionFlat[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object apply {
       def unapply(d: Def[_]): Option[(Rep[NestedCollectionFlat[A]], Rep[Int]) forSome {type A}] = d match {
         case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[NestedCollectionFlatElem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
@@ -2546,6 +2657,240 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
   def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: NestedCollectionFlatElem[A] @unchecked =>
       Some((p.asRep[NestedCollectionFlat[A]].values, p.asRep[NestedCollectionFlat[A]].segments))
+    case _ =>
+      None
+  }
+
+  case class ExpCompoundCollection[A]
+      (override val nestedValues: Coll[Collection[A]])(implicit eA: Elem[A])
+    extends AbsCompoundCollection[A](nestedValues)
+
+  object CompoundCollectionMethods {
+    object segments {
+      def unapply(d: Def[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "segments" =>
+          Some(receiver).asInstanceOf[Option[Rep[CompoundCollection[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object values {
+      def unapply(d: Def[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "values" =>
+          Some(receiver).asInstanceOf[Option[Rep[CompoundCollection[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object length {
+      def unapply(d: Def[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "length" =>
+          Some(receiver).asInstanceOf[Option[Rep[CompoundCollection[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object arr {
+      def unapply(d: Def[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "arr" =>
+          Some(receiver).asInstanceOf[Option[Rep[CompoundCollection[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object lst {
+      def unapply(d: Def[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "lst" =>
+          Some(receiver).asInstanceOf[Option[Rep[CompoundCollection[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object slice {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "slice" =>
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_many {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Coll[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Coll[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Coll[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object mapBy {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => B @uncheckedVariance]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "mapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => B @uncheckedVariance]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => B @uncheckedVariance]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object reduce {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], RepMonoid[Collection[A @uncheckedVariance]]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "reduce" =>
+          Some((receiver, m)).asInstanceOf[Option[(Rep[CompoundCollection[A]], RepMonoid[Collection[A @uncheckedVariance]]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], RepMonoid[Collection[A @uncheckedVariance]]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object zip {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Coll[B]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "zip" =>
+          Some((receiver, ys)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Coll[B]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Coll[B]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object update {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Collection[A]]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "update" =>
+          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Collection[A]]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Collection[A]]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object updateMany {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Coll[Int], Coll[Collection[A]]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "updateMany" =>
+          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Coll[Int], Coll[Collection[A]]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Coll[Int], Coll[Collection[A]]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Collection[B]]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Collection[B]]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object append {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance]]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "append" =>
+          Some((receiver, value)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance]]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance]]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sortBy {
+      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => O], Ordering[O]) forSome {type A; type O}] = d match {
+        case MethodCall(receiver, method, Seq(by, o, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "sortBy" =>
+          Some((receiver, by, o)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => O], Ordering[O]) forSome {type A; type O}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => O], Ordering[O]) forSome {type A; type O}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object CompoundCollectionCompanionMethods {
+    object fromJuggedArray {
+      def unapply(d: Def[_]): Option[Rep[Array[Array[T]]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(xss, _*), _) if receiver.elem == CompoundCollectionCompanionElem && method.getName == "fromJuggedArray" =>
+          Some(xss).asInstanceOf[Option[Rep[Array[Array[T]]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Array[Array[T]]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  def mkCompoundCollection[A]
+    (nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[CompoundCollection[A]] =
+    new ExpCompoundCollection[A](nestedValues)
+  def unmkCompoundCollection[A](p: Rep[NestedCollection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: CompoundCollectionElem[A] @unchecked =>
+      Some((p.asRep[CompoundCollection[A]].nestedValues))
     case _ =>
       None
   }
@@ -3264,7 +3609,7 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
 }
 
 object Collections_Module extends scalan.ModuleInfo {
-  val dump = "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"
+  val dump = "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"
 }
 }
 

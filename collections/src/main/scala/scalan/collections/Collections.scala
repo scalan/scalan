@@ -317,6 +317,7 @@ trait Collections { self: CollectionsDsl =>
   trait NestedCollection[A] extends Collection[Collection[A]] {
     implicit def eA: Elem[A]
     def values: Rep[Collection[A]]
+    def nestedValues: Rep[Collection[Collection[A]]]
     def segments: Rep[PairCollection[Int, Int]]
     def segOffsets = segments.as
     def segLens = segments.bs
@@ -330,6 +331,8 @@ trait Collections { self: CollectionsDsl =>
     extends NestedCollection[A] {
     lazy val eItem = collectionElement(eA)
     def length = segments.length
+    def nestedValues = segments.map { case Pair(o, l) => values.slice(o,l) }
+
     //def segOffsets = segments.asInstanceOf[Rep[PairCollectionSOA[Int,Int]]].as
     //def segLens = segments.asInstanceOf[Rep[PairCollectionSOA[Int,Int]]].bs
     def apply(i: Rep[Int]) = {
@@ -372,6 +375,44 @@ trait Collections { self: CollectionsDsl =>
       val segments = Collection.fromArray(positions).zip(Collection.fromArray(lens))
       val flat_arr = arr.flatMap {i => i}
       NestedCollectionFlat(Collection.fromArray(flat_arr), segments)
+    }
+  }
+
+  abstract class CompoundCollection[A](val nestedValues: Coll[Collection[A]])(implicit val eA: Elem[A])
+    extends NestedCollection[A] {
+    lazy val eItem = collectionElement(eA)
+    def segments = {
+      val offsets = Collection(nestedValues.map(_.length).arr.scan._1)
+      val lengths = nestedValues.map(_.length)
+      offsets zip lengths
+    }
+    def values = {
+      nestedValues.flatMap(row => row)
+    }
+    def length = nestedValues.length
+    def apply(i: Rep[Int]) = nestedValues(i)
+    def arr = nestedValues.arr
+    def lst = arr.toList
+    def slice(offset: Rep[Int], length: Rep[Int]): NColl[A] = CompoundCollection(nestedValues.slice(offset, length))
+    @OverloadId("many")
+    def apply(indices: Coll[Int])(implicit o: Overloaded1): NColl[A] = {
+      CompoundCollection(nestedValues(indices))
+    }
+    def mapBy[B: Elem](f: Rep[Collection[A] => B @uncheckedVariance]): Coll[B] = Collection(arr.mapBy(f))
+    def reduce(implicit m: RepMonoid[Collection[A @uncheckedVariance]]): Coll[A] = arr.reduce(m)
+    def zip[B: Elem](ys: Coll[B]): PairColl[Collection[A], B] = PairCollectionSOA(self, ys)
+    def update (idx: Rep[Int], value: Rep[Collection[A]]): NColl[A] = CompoundCollection(nestedValues.update(idx, value))
+    def updateMany (idxs: Coll[Int], vals: Coll[Collection[A]]): NColl[A] = ???
+    def filterBy(f: Rep[Collection[A @uncheckedVariance] => Boolean]): NColl[A] = ???
+    def flatMapBy[B: Elem](f: Rep[Collection[A @uncheckedVariance] => Collection[B]]): Coll[B] =
+      nestedValues.flatMap { in => f(in) }
+    def append(value: Rep[Collection[A @uncheckedVariance]]): NColl[A]  = ??? //Collection(arr.append(value))
+    def sortBy[O: Elem](by: Rep[Collection[A] => O])(implicit o: Ordering[O]): NColl[A] = ???
+  }
+  trait CompoundCollectionCompanion extends ConcreteClass1[CompoundCollection] {
+    def fromJuggedArray[T: Elem](xss: Rep[Array[Array[T]]]): Rep[CompoundCollection[T]] = {
+      val nestedValues = Collection(xss.map(xs => Collection(xs)))
+      CompoundCollection(nestedValues)
     }
   }
 
