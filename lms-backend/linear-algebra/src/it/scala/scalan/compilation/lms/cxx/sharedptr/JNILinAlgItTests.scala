@@ -26,7 +26,7 @@ trait JNILinAlgProg extends LinearAlgebraExamples with JNIExtractorOps {
 
 class JNILinAlgItTests extends BaseItTests[JNILinAlgProg](???) {
 
-  class ProgExp extends MatricesDslExp with JNILinAlgProg with JNIExtractorOpsExp
+  class ProgExp extends LADslExp with JNILinAlgProg with JNIExtractorOpsExp
 
   val prog = new LmsCompilerCxx(new ProgExp) with JNIBridge with LinAlgBridge {
     override val lms = new LinAlgCxxShptrLmsBackend
