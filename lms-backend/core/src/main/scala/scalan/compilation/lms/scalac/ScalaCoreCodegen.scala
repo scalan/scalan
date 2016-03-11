@@ -24,7 +24,7 @@ class ScalaCoreCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) ex
     with ScalaGenRangeOps
     with ScalaGenMiscOpsExt
     with ScalaGenExtNumOps with ScalaGenSystemOps //from scalan.compilation.lms.common
-    with ScalaGenArrayOpsExt {
+    with ScalaGenArrayOpsExt with ScalaGenArrayJoins {
   val IR: BackendCake = backend
 
   import IR._

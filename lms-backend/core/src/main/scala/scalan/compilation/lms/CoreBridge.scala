@@ -314,6 +314,12 @@ trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL
         case Manifest.Long => _arg
       }
       case NumericToString() => lms.String.valueOf(_arg)
+      case NumericFromInt(n) => mA match {
+        case Manifest.Int => _arg
+        case Manifest.Long => lms.int_to_long(_arg)
+        case Manifest.Float => lms.int_to_float(_arg)
+        case Manifest.Double => lms.int_to_double(_arg)
+      }
       case HashCode() => lms.hash_code(_arg)
       case StringToInt => lms.string_toint(_arg)
       case BooleanToInt => lms.boolean_to_int(_arg)
