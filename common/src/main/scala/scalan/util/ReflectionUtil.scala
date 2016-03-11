@@ -125,4 +125,6 @@ object ReflectionUtil {
       m.paramLists.map(_.map(sym => s"${sym.name}: ${sym.typeSignature}").mkString("(", ", ", ")")).mkString("")
     s"${m.owner.name}.${m.name}$typeParams$params"
   }
+
+  def typeTagToClass(tag: WeakTypeTag[_]): Class[_] = tag.mirror.runtimeClass(tag.tpe)
 }

@@ -295,11 +295,11 @@ trait LmsBridge extends Passes {
   def elemToManifest[T](elem: Elem[T]): Manifest[_] = elem match {
     case el: BaseTypeElem1[_,_,_] =>
       val tag = el.cont.tag
-      val cls = tag.mirror.runtimeClass(tag.tpe)
+      val cls = ReflectionUtil.typeTagToClass(tag)
       Manifest.classType(cls, elemToManifest(el.eItem))
     case el: BaseTypeElem[_,_] =>
       val tag = el.tag
-      val cls = tag.mirror.runtimeClass(tag.tpe)
+      val cls = ReflectionUtil.typeTagToClass(tag)
       Manifest.classType(cls)
     case el: WrapperElem[_,_] =>
       elemToManifest(el.baseElem)

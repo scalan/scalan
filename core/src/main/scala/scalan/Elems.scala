@@ -7,6 +7,7 @@ import scalan.staged.BaseExp
 import annotation.implicitNotFound
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
+import scalan.util.ReflectionUtil
 
 trait Elems extends Base { self: Scalan =>
 
@@ -14,6 +15,7 @@ trait Elems extends Base { self: Scalan =>
 
   /**
     * Reified type representation in Scalan.
+    *
     * @tparam A The represented type
     */
   @implicitNotFound(msg = "No Elem available for ${A}.")
@@ -152,7 +154,7 @@ trait Elems extends Base { self: Scalan =>
   object TagImplicits {
     implicit def elemToClassTag[A](implicit elem: Elem[A]): ClassTag[A] = elem.classTag
     implicit def typeTagToClassTag[A](implicit tag: WeakTypeTag[A]): ClassTag[A] =
-      ClassTag(tag.mirror.runtimeClass(tag.tpe))
+      ClassTag(ReflectionUtil.typeTagToClass(tag))
   }
 
   def elemFromRep[A](x: Rep[A])(implicit eA: Elem[A]): Elem[A] = eA match {
