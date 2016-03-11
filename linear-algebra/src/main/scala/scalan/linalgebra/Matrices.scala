@@ -1,7 +1,7 @@
 package scalan.linalgebra
 
 import scalan._
-import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
+import scalan.common.OverloadHack.{Overloaded3, Overloaded2, Overloaded1}
 import scala.annotation.unchecked.uncheckedVariance
 
 trait Matrices extends Vectors { self: MatricesDsl =>
@@ -431,18 +431,34 @@ trait Matrices extends Vectors { self: MatricesDsl =>
   }
 
   trait CompoundMatrixCompanion extends ConcreteClass1[CompoundMatrix] with MatrixCompanion {
-    override def fromColumns[T: Elem](cols: Coll[Vector[T]]): Matr[T] = ???
+    override def fromColumns[T: Elem](cols: Coll[Vector[T]]): Matr[T] = {
+      ???
+    }
+
     override def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
                              (implicit elem: Elem[T], o: Overloaded1): Matr[T] = {
       CompoundMatrix(items.map { coll => SparseVector(coll.as, coll.bs, numColumns) }, numColumns)
     }
-    @OverloadId("dense")
+
+    @OverloadId("dense1")
     override def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
                              (implicit elem: Elem[T], o: Overloaded2): Matr[T] = {
       CompoundMatrix(items.map { coll => DenseVector(coll) }, numColumns)
     }
-    override def fromRows[T: Elem](rows: Coll[Vector[T]], length: IntRep): Matr[T] = {
-      CompoundMatrix(rows, length)
+
+    @OverloadId("dense2")
+    def fromNColl[T](items: NColl[T])(implicit elem: Elem[T], o: Overloaded3): Matr[T] = {
+      val numColumns = items(0).length
+      fromNColl(items, numColumns)
+    }
+
+    def fromRows[T: Elem](rows: Coll[Vector[T]]): Matr[T] = {
+      val numCols = rows(0).length
+      CompoundMatrix(rows, numCols)
+    }
+
+    override def fromRows[T: Elem](rows: Coll[Vector[T]], numCols: IntRep): Matr[T] = {
+      CompoundMatrix(rows, numCols)
     }
   }
 
