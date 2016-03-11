@@ -19,9 +19,11 @@ trait MapOps extends  Base  { self: Scalan =>
     def isEmpty: Rep[Boolean] = (size === 0)
     def contains(k: Rep[K]): Rep[Boolean]
     def apply(key: Rep[K]): Rep[V]
-    def applyIf[T: Elem](key: Rep[K], exists: Rep[V] => Rep[T], otherwise: () => Rep[T]): Rep[T] =
-      applyIfBy(key, fun(exists), fun { _: Rep[Unit] => otherwise() })
-    def applyIfBy[T](key: Rep[K], exists: Rep[V => T], otherwise: Rep[Unit => T]): Rep[T]
+    def getOrElse(key: Rep[K], otherwise: => Rep[V]): Rep[V] = getOrElseBy(key, fun { _: Rep[Unit] => otherwise })
+    def getOrElseBy(key: Rep[K], otherwise: Rep[Unit => V]): Rep[V]
+    def mapValueIfExists[T: Elem](key: Rep[K], exists: Rep[V] => Rep[T], otherwise: () => Rep[T]): Rep[T] =
+      mapValueIfExistsBy(key, fun(exists), fun { _: Rep[Unit] => otherwise() })
+    def mapValueIfExistsBy[T](key: Rep[K], exists: Rep[V => T], otherwise: Rep[Unit => T]): Rep[T]
     def update(key: Rep[K], value: Rep[V]): Rep[Unit]
     def mapValues[T:Elem](f: Rep[V] => Rep[T]): MM[K, T] = mapValuesBy(fun(f))
     def mapValuesBy[T:Elem](f: Rep[V => T]): MM[K, T]
@@ -93,7 +95,10 @@ trait MapOpsStd extends MapOps { self: ScalanStd =>
     }
     def contains(key: Rep[K]): Rep[Boolean] = impl.contains(key)
     def apply(key: Rep[K]): Rep[V] = impl(key)
-    def applyIfBy[T](key: Rep[K], exists: Rep[V => T], otherwise: Rep[Unit => T]): Rep[T] = {
+    def getOrElseBy(key: Rep[K], otherwise: Rep[Unit => V]): Rep[V] = {
+      impl.getOrElse(key, otherwise(()))
+    }
+    def mapValueIfExistsBy[T](key: Rep[K], exists: Rep[V => T], otherwise: Rep[Unit => T]): Rep[T] = {
       if (impl.contains(key)) exists(impl(key)) else otherwise(())
     }
     def update(key: Rep[K], value: Rep[V]): Rep[Unit] = { impl.update(key, value) ; () }
@@ -139,9 +144,12 @@ trait MapOpsExp extends MapOps { self: ScalanExp =>
     def reduce(that: MM[K, V], f:Rep[((V,V))=>V]): MM[K, V] = MapReduce(this, that, f)
     def contains(key: Rep[K]): Rep[Boolean] = MapContains(this, key)
     def apply(key: Rep[K]): Rep[V] = MapApply(this, key)
-    def applyIfBy[T](key: Rep[K], exists:Rep[V => T], otherwise: Rep[Unit => T]): Rep[T] = {
+    def getOrElseBy(key: Rep[K], otherwise: Rep[Unit => V]): Rep[V] = {
+      MapGetOrElse(self, key, otherwise)
+    }
+    def mapValueIfExistsBy[T](key: Rep[K], exists:Rep[V => T], otherwise: Rep[Unit => T]): Rep[T] = {
       implicit val eT: Elem[T] = otherwise.elem.eRange
-      MapApplyIf(this, key, exists, otherwise)
+      MapMapValueIfExists(this, key, exists, otherwise)
     }
     def update(key: Rep[K], value: Rep[V]): Rep[Unit] = MapUpdate(this, key, value)
     def size: Rep[Int] = MapSize(this)
@@ -188,7 +196,12 @@ trait MapOpsExp extends MapOps { self: ScalanExp =>
 
   case class MapApply[K, V](map: MM[K, V], key: Rep[K])(implicit val eK: Elem[K], val eV: Elem[V]) extends BaseDef[V]
 
-  case class MapApplyIf[K, V, T](map: MM[K, V], key: Rep[K], exists: Rep[V => T], otherwise: Rep[Unit=>T])(implicit val eK: Elem[K], val eV: Elem[V], selfType: Elem[T]) extends BaseDef[T]
+  case class MapGetOrElse[K, V]
+    (map: MM[K, V], key: Rep[K], otherwise: Rep[Unit=>V])
+    (implicit val eK: Elem[K] = extendMMapElement(map.elem).eKey,
+              override val selfType: Elem[V] = extendMMapElement(map.elem).eValue) extends BaseDef[V]
+
+  case class MapMapValueIfExists[K, V, T](map: MM[K, V], key: Rep[K], ifExists: Rep[V => T], otherwise: Rep[Unit=>T])(implicit val eK: Elem[K], val eV: Elem[V], selfType: Elem[T]) extends BaseDef[T]
 
   case class MapUpdate[K, V](map: MM[K, V], key: Rep[K], value: Rep[V])(implicit val eK: Elem[K], val eV: Elem[V]) extends BaseDef[Unit]
 

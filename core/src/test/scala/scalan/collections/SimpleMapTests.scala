@@ -15,6 +15,12 @@ trait SimpleMapProg extends Scalan {
     m1.contains(p._1)
   }
 
+  lazy val mapGetOrElse = fun { p:Rep[(Int,Double)] =>
+    val m = MMap.empty[Int,Double]
+    val m1 = m.update(p._1, p._2) | m
+    m1.getOrElse(p._1, p._2)
+  }
+
   lazy val mapAsSet = fun {in:Rep[Int] =>
     val m = MMap.empty[Int,Unit]
     val m1 = m.update(in,()) | m
@@ -71,6 +77,9 @@ trait SimpleMapProg extends Scalan {
 abstract class MapItTests extends BaseItTests[SimpleMapProg](new ScalanDslStd with SimpleMapProg) {
   test("mapPutContains") {
     compareOutputWithStd(_.mapPutContains)(Tuple2(314,3.14))
+  }
+  test("mapGetOrElse") {
+    compareOutputWithStd(_.mapGetOrElse)(Tuple2(314,3.14))
   }
   test("mapAsSet") {
     compareOutputWithStd(_.mapAsSet)(314)
