@@ -32,7 +32,6 @@ trait Matrices extends Vectors { self: LADsl =>
     def apply(row: Rep[Int]): Vec[T]
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T]
 
-    //def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Matr[R]
     def mapRowsBy[R: Elem](f: Rep[Vector[T] => Vector[R] @uncheckedVariance]): Matr[R]
 
     def transpose(implicit n: Numeric[T]): Matr[T]
@@ -129,6 +128,7 @@ trait Matrices extends Vectors { self: LADsl =>
           DenseFlatMatrix((DenseVector(rmValues) *^ DenseVector(diagonalReplicated)).items, numColumns)
         case ConstDiagonalMatrix(diagonalValue, _) =>
           DenseFlatMatrix((DenseVector(rmValues) *^ diagonalValue).items, numColumns)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
@@ -151,6 +151,7 @@ trait Matrices extends Vectors { self: LADsl =>
           val mainDiagonalIndices = Collection.indexRange(width).map(i => i * width + i)
           val newValues = rmValues(mainDiagonalIndices).map(v => diagonalValue + v)
           DenseFlatMatrix(rmValues.updateMany(mainDiagonalIndices, newValues), numColumns)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.+^^(matrix: Matr[T]) is not specified.")
       }
     }
@@ -171,6 +172,7 @@ trait Matrices extends Vectors { self: LADsl =>
         case ConstDiagonalMatrix(diagonalValue, width) =>
           val mainDiagonalIndices = Collection.indexRange(width).map(i => i * width + i)
           DiagonalMatrix((DenseVector(rmValues(mainDiagonalIndices)) *^ diagonalValue).items)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.*^^(matrix: Matr[T]) is not specified.")
       }
     }
@@ -235,6 +237,7 @@ trait Matrices extends Vectors { self: LADsl =>
           CompoundMatrix(rows.map(row => row *^ diagonalVector), numColumns)
         case ConstDiagonalMatrix(diagonalValue, _) =>
           CompoundMatrix(rows.map(row => row *^ diagonalValue), numColumns)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in CompoundMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
@@ -340,6 +343,7 @@ trait Matrices extends Vectors { self: LADsl =>
           CompoundMatrix(rows.map(row => row *^ diagonalVector), numColumns)
         case ConstDiagonalMatrix(diagonalValue, _) =>
           CompoundMatrix(rows.map(row => row *^ diagonalValue), numColumns)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in CompoundMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
@@ -440,6 +444,7 @@ trait Matrices extends Vectors { self: LADsl =>
           DenseFlatMatrix(Collection.replicate(numRows, rowDiag).flatMap(v => v.items), diagonalValues.length)
         case ConstDiagonalMatrix(diagonalValue, _) =>
           ConstMatrix(constItem * diagonalValue, numRows, numColumns)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in ConstMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
@@ -525,6 +530,7 @@ trait Matrices extends Vectors { self: LADsl =>
           DiagonalMatrix((DenseVector(diagonalValues) *^ DenseVector(diagonalValues1)).items)
         case ConstDiagonalMatrix(diagonalValue, _) =>
           DiagonalMatrix((DenseVector(diagonalValues) *^ diagonalValue).items)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in DiagonalMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
@@ -603,6 +609,7 @@ trait Matrices extends Vectors { self: LADsl =>
           DiagonalMatrix((DenseVector(diagonalValues1) *^ constItem).items)
         case ConstDiagonalMatrix(diagonalValue, width) =>
           ConstDiagonalMatrix(constItem * diagonalValue, width)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in DiagonalMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
