@@ -325,9 +325,17 @@ trait LmsBridge extends Passes {
     case DoubleElement => Manifest.Double
     case StringElement => manifest[String]
 
-    // TODO Can ViewElem be translated to its source type? Alternately, generate code for it
-    case el: ViewElem[_, _] =>
-      !!!(s"Specialization failure: view with elem $el wasn't eliminated")
+    case be: BaseElem[_] =>
+      // covers the case where new BaseElems are added (e.g. DateElem)
+      // Assume there are no type parameters for now
+      val clazz = ReflectionUtil.typeTagToClass(be.tag)
+      Manifest.classType(clazz)
+
+    // Currently handled by the last case. This should only happen when the type is mapped,
+    // but here we don't know if it is and thus can't produce an early error message.
+    // Alternatives to be investigated: 1. translate to source type; 2. generate class code.
+//    case el: ViewElem[_, _] =>
+//      !!!(s"Specialization failure: view with elem $el wasn't eliminated")
 
     // TODO Currently ArrayElem/ListElem/etc. extend EntityElem1
     // Need some way to test if we have an abstract entity type
@@ -341,9 +349,11 @@ trait LmsBridge extends Passes {
       val elemParams = extractParamsByReflection(elem, paramMirrors)
 
       val manifestParams =
-        elemParams.map {
+        elemParams.collect {
           case e: Elem[_] => elemToManifest(e)
-          case e => !!!(s"Bug: $e is a constructor parameter of $elem but not an Elem")
+          // For ConcreteElem, ignore the Iso parameter
+          case e if !(elem.isInstanceOf[ConcreteElem[_, _]] && e.isInstanceOf[Exp[_]]) =>
+            !!!(s"Bug: $e is a constructor parameter of $elem but not an Elem")
         }
 
       manifestParams match {
