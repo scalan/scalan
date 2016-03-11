@@ -1,7 +1,7 @@
 package scalan.linalgebra
 
 import scalan._
-import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
+import scalan.common.OverloadHack.{Overloaded1, Overloaded2, Overloaded3}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
@@ -53,7 +53,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     protected def getDefaultRep = Matrix
   }
 
-  abstract class MatrixCompanionAbs extends CompanionDef[MatrixCompanionAbs] {
+  abstract class MatrixCompanionAbs extends CompanionDef[MatrixCompanionAbs] with MatrixCompanion {
     def selfType = MatrixCompanionElem
     override def toString = "Matrix"
   }
@@ -1122,24 +1122,60 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
 
   object CompoundMatrixCompanionMethods {
     object fromNColl {
-      def unapply(d: Def[_]): Option[(Coll[Collection[(Int, T)]], Rep[Int], Elem[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(NColl[(Int, T)], Rep[Int], Elem[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(items, numColumns, elem, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromNColl" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((items, numColumns, elem)).asInstanceOf[Option[(Coll[Collection[(Int, T)]], Rep[Int], Elem[T]) forSome {type T}]]
+          Some((items, numColumns, elem)).asInstanceOf[Option[(NColl[(Int, T)], Rep[Int], Elem[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Coll[Collection[(Int, T)]], Rep[Int], Elem[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(NColl[(Int, T)], Rep[Int], Elem[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
-    object fromNColl_dense {
-      def unapply(d: Def[_]): Option[(Coll[Collection[T]], Rep[Int], Elem[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(items, numColumns, elem, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromNColl" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "dense" } =>
-          Some((items, numColumns, elem)).asInstanceOf[Option[(Coll[Collection[T]], Rep[Int], Elem[T]) forSome {type T}]]
+    object fromNColl_dense1 {
+      def unapply(d: Def[_]): Option[(NColl[T], Rep[Int], Elem[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(items, numColumns, elem, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromNColl" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "dense1" } =>
+          Some((items, numColumns, elem)).asInstanceOf[Option[(NColl[T], Rep[Int], Elem[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Coll[Collection[T]], Rep[Int], Elem[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(NColl[T], Rep[Int], Elem[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromNColl_dense2 {
+      def unapply(d: Def[_]): Option[(NColl[T], Elem[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(items, elem, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromNColl" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "dense2" } =>
+          Some((items, elem)).asInstanceOf[Option[(NColl[T], Elem[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(NColl[T], Elem[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromRows {
+      def unapply(d: Def[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(rows, numCols, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromRows" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((rows, numCols)).asInstanceOf[Option[(Coll[Vector[T]], IntRep) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromRows_fromRowsNoLength {
+      def unapply(d: Def[_]): Option[Coll[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(rows, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromRows" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "fromRowsNoLength" } =>
+          Some(rows).asInstanceOf[Option[Coll[Vector[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Coll[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -2075,9 +2111,9 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
       }
     }
 
-    object mapRowsBy {
+    object mapBy {
       def unapply(d: Def[_]): Option[(Rep[Matrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[MatrixElem[_, _]] && method.getName == "mapRowsBy" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[MatrixElem[_, _]] && method.getName == "mapBy" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Matrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}]]
         case _ => None
       }
@@ -2255,10 +2291,13 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
       }
     }
   }
+
+  object MatrixCompanionMethods {
+  }
 }
 
 object Matrices_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAM1YTWwbRRSeteP/KOkvBImIEAwIROMAQkXKoQqOC0FuEmVDhUwFGq/H7pbZ2WVmHGwOPfYAN8SVQyUkLr2gHjiAekFIiAMnhJA4ceBUWlU9tAcE4s3sj9eO3RA3RPFhtDsz773vfe9747Gv3UIpwdEzwsIUswWHSLxg6udlIYtmhUlbds+5jTYlK6T5+5evXp9Pfv1tAk3XUPoiFiuC1lDOf6h0vOjZlI0qymFmESFdLiR6sqojlCyXUmJJ22Ul23HaEtcpKVVtIZeqaKLuNrofoMvIqKIjlsssTiQxyxQLQUQwnyUKkR295/R7d93rxWAllUUplsUWx7YE+BDjiL9/k3hml7ms60g0FUBb9xQs2JOxHc/lMgyRAXcX3Ub4OsEwTKBj1Ut4G5cgRKtkSm6zFlgWPGy9j1tkDbao7RMAWBDa3Op6+j1ZRXkhG0DQquNRPdPxEEJQgZc0iIUePwsRPwuKn6JJuI2p/RFWixvc7XSR/zGSCHU8cPHCLi5CD6TCGsWPL1jv3DcLTkIZdxSUjM4wDY6eGKEGXQrg8YfNT8Xd16+eTqB8DeVtsVwXkmNLxksesFXAjLlSY44IxLwF1ZofVS0dZRn2DEgiZ7mOhxl4CqichDpR27Kl2qzmJoPqjKA+Iz0SbjU6nhHlOzciX62bMqZ04+Zjp57+s/J2AiX6Q+TApQnC56FTidLnMMihEzhX47RExpZmWA25Tm/MPCB4RMOzN283vl9EFxIReUGs/1YvcJESv/5S+Pm5MwmUrWl1n6W4VQP+RIUSZ52XXSZrKOtuE+6vZLYxVU9D65dpkCZuUxmwGqcjCXRINDeyDz2iuFrSmjdCAgq+bNdcRopnN4r3zB8/u6ZUydGkv+I35j/26b9/m2pKLViJstw5j2mbiJDiJPR0P+n5ctQJu1ZDL81EsNQwCx5Y2wEnbYcNC8PRU6OE45ENbjtwUG2TV7775q07N9ZSWjvHAu40dP/YCKjr0aiyMxYh0iqTwwST91kxXYccnb9rv3v1E6mlYXT6T6X1+iVIfknbPf4AlYSn41dXrpy888V7x3VXZ+u2dLBXXNxDT4ct+D/2LOov5FQ5+JbQSn+xf3F6hTBBQMbS78gRHajGk9GaX3mowMyAdTmeyGzMNBZ0xhjQT4JshWgmVKvtKsPhqGcjwc2OFhyw9Mhm9QS9deZGAqXeRKkmNLCoolTdbbNGSD98rUrSka+Fc0Y//UA35tiJ6NafOdTLeQC13lgw+vPa2wm4g8TBJpzg7ofjdHn6PMwGqt0NxlgHgBpODU9oUY8v70WuU0phqizjqPXRfuODEusQzLMxszcOhX7gDGJCrsogo6Ei2glqbCkMt86A9eZQHe+vigpllew4EjoRszwo/QyiPXzimWrYuOUyTPfzsrEfp8VKgGus06Lf+MBOi52YD1/BD/i0iGHr8bHfxB/Xbfaw7MfSTQ8VbBIukePXZhfNph8Othr/6u0JNma1U3W7RUeDmxW1gaIWqXMctCZH8yMuXWZwVYW0L9//fO35n67/oS/5eXXphV8zLPoLIX657ycjVV1eETQGF6qqrsAa6r8/N6FwnREAAA=="
+  val dump = "H4sIAAAAAAAAAM1YTWwbRRSeteP4L0r6C0EiIgQDAtE4BaEi5VAFJ4EgN4myoUKmAo3XE3fL7OyyMw42hx57gBviyqESEpdeUA8cQL0gJMSBE0JInDhwKq2qHtoDAvFm9se7zm5CTIjiw2h3Zt573/ve98Zj37iDctxFz3ADU8xmLSLwrK6eF7io6EtMmKJ3wW51KFkkW7998crNmexX32TQRAONXsZ8kdMGKnoPS10nfNZFq46KmBmEC9vlAj1ZVxGqhk0pMYRps6ppWR2Bm5RU6yYX83U00rRbvffRVaTV0THDZoZLBNFrFHNOuD9fIBKRGb4X1XtvzenHYFWZRTWSxaaLTQHwIcYxb/8GcfQes1nPEmjch7bmSFiwJ29aju2KIEQe3F22W8HrCMMwgU7Ur+BtXIUQ7aouXJO1wbLsYOM93CarsEVuHwHAnNCtzZ6j3rN1VOKiBQStWA5VM10HIQQVeFGBmO3zMxvyMyv5qejENTE1P8Rycd21uz3kfbQsQl0HXLywh4vAA1lircpHl4y3H+plKyONuxJKXmU4Co6eSFGDKgXw+P3GJ/z+a9fPZVCpgUomX2hy4WJDREvus1XGjNlCYQ4JxG4bqjWTVi0VZQH2DEiiaNiWgxl48qkcgzpR0zCF3CznxvzqpFCfFw4JtmpdRwvznU7JV+mmhildv/3Ymaf/WHorgzLxEEVwqYPw3cCpQKMXMMih6zuX44RA2qZiWA7Fbn/M7xI8pOHZ23db382hS5mQPD/Wv6sXuMjxX34u//Tc+QwqNJS6lyluN4A/vkSJtebWbCYaqGBvE9dbyW9jKp8S65dvkS3cocJnNUpHFugQaDq1Dx0iuZpXmtcCAsqebFdtRirL65UH+g+f3pCqdNGYt+I15t/mub9+Hd8SSrACFVzrIqYdwgOKs9DTcdJLtbAT9qyGWpoMYclhCjywjgVOOhZLCuOip9KE45B117TgoNomL3/79Zv3bq3mlHZO+Nwp6N6x4VPXp1Fmp81BpBUmkgRT8ljRbYscn7lvvnP9Y6GkoXXjp9Ja8wokP6/sHt9FJcHp+OW1a6fvff7uSdXVhaYpLOxU5vbR00EL/o89i+KFHK/53xJK6WfjixOLhHECMhZeR6Z0oBxPh2te5aECkwPWtWgiUxHTSNBJbUA/GbIZoBmRrbanDJNRT4WCm0oXHLD0yEb9FL1z/lYG5d5AuS1oYF5HuabdYa2AfvhaFaQrXg3mtDj9QDd2sRXSrT7TqJ/zAGq1sazF89rfCbiDxMEmHHHtD4bp8tGLMOurdi8YQx0AcjiTnNCcGl/aj1zHpcJkWYZR66Nx48MSawLmqYjZ60dCP3AGMS5WhJ9Rooh2ghpaCsnWebDeSNTxwaqoXJPJDiOhUxHLw9LPINqjJ57xlonbNsP0IC8bB3FaLPq4hjot4saHdlrsxHz0Cn7Ip0UEW5+Pgyb+pGqz/8p+JN3RRMFm4RI5fG1SNLtLg5TlPXEZWybtnU2Mu7+umEjtBifmcRjW5Phnf4+/saCcyss1Ou5f7KgJFWqTpov9xF00k3Ln0/2bMrB+9eFnq8//ePN39RujJO/c8GOKhf9gRH9bxInK1RcWOY3ABVHJG7iC+g9A2AmOHBIAAA=="
 }
 }
 

@@ -94,10 +94,9 @@ trait Collections { self: CollectionsDsl =>
           val bs = replicate(len, ps._2)
           as zip bs
         }
-        case viewElem: ViewElem[a, b] =>
+        case _: ViewElem[a, b] =>
           CollectionOverArray(SArray.replicate(len, v))
-        case entityElem: EntityElem[_] =>
-          replicateEntity(len, v)
+        case _: EntityElem[_] => replicateEntity(len, v)
         case e => ???(s"Element is $e")
       }
     }
@@ -121,7 +120,7 @@ trait Collections { self: CollectionsDsl =>
 
     def singleton[T: Elem](v: Rep[T]): Coll[T] = {
       element[T] match {
-        case paE: CollectionElem[_, _] => ???
+        case paE: CollectionElem[_, _] => ???(s"Element is CollectionElem: $paE")
         case _ => replicate(toRep(1), v)
       }
     }
@@ -708,7 +707,6 @@ trait CollectionsDslStd extends impl.CollectionsStd with SeqsDslStd {
 trait CollectionsDslExp extends impl.CollectionsExp with SeqsDslExp {
 
   override def rewriteDef[T](d: Def[T]) = d match {
-//    case ExpPairCollectionAOS(pairColl @ Def(_: PairCollection[_, _])) => pairColl
     case _ => super.rewriteDef(d)
   }
 

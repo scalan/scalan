@@ -129,6 +129,7 @@ trait Matrices extends Vectors { self: LADsl =>
           DenseFlatMatrix((DenseVector(rmValues) *^ DenseVector(diagonalReplicated)).items, numColumns)
         case ConstDiagonalMatrix(diagonalValue, _) =>
           DenseFlatMatrix((DenseVector(rmValues) *^ diagonalValue).items, numColumns)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
@@ -151,6 +152,7 @@ trait Matrices extends Vectors { self: LADsl =>
           val mainDiagonalIndices = Collection.indexRange(width).map(i => i * width + i)
           val newValues = rmValues(mainDiagonalIndices).map(v => diagonalValue + v)
           DenseFlatMatrix(rmValues.updateMany(mainDiagonalIndices, newValues), numColumns)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.+^^(matrix: Matr[T]) is not specified.")
       }
     }
@@ -171,6 +173,7 @@ trait Matrices extends Vectors { self: LADsl =>
         case ConstDiagonalMatrix(diagonalValue, width) =>
           val mainDiagonalIndices = Collection.indexRange(width).map(i => i * width + i)
           DiagonalMatrix((DenseVector(rmValues(mainDiagonalIndices)) *^ diagonalValue).items)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.*^^(matrix: Matr[T]) is not specified.")
       }
     }
@@ -235,6 +238,7 @@ trait Matrices extends Vectors { self: LADsl =>
           CompoundMatrix(rows.map(row => row *^ diagonalVector), numColumns)
         case ConstDiagonalMatrix(diagonalValue, _) =>
           CompoundMatrix(rows.map(row => row *^ diagonalValue), numColumns)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in CompoundMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
@@ -340,6 +344,7 @@ trait Matrices extends Vectors { self: LADsl =>
           CompoundMatrix(rows.map(row => row *^ diagonalVector), numColumns)
         case ConstDiagonalMatrix(diagonalValue, _) =>
           CompoundMatrix(rows.map(row => row *^ diagonalValue), numColumns)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in CompoundMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
@@ -440,6 +445,7 @@ trait Matrices extends Vectors { self: LADsl =>
           DenseFlatMatrix(Collection.replicate(numRows, rowDiag).flatMap(v => v.items), diagonalValues.length)
         case ConstDiagonalMatrix(diagonalValue, _) =>
           ConstMatrix(constItem * diagonalValue, numRows, numColumns)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in ConstMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
@@ -525,6 +531,7 @@ trait Matrices extends Vectors { self: LADsl =>
           DiagonalMatrix((DenseVector(diagonalValues) *^ DenseVector(diagonalValues1)).items)
         case ConstDiagonalMatrix(diagonalValue, _) =>
           DiagonalMatrix((DenseVector(diagonalValues) *^ diagonalValue).items)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in DiagonalMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
@@ -603,6 +610,7 @@ trait Matrices extends Vectors { self: LADsl =>
           DiagonalMatrix((DenseVector(diagonalValues1) *^ constItem).items)
         case ConstDiagonalMatrix(diagonalValue, width) =>
           ConstDiagonalMatrix(constItem * diagonalValue, width)
+        // TODO: check case _
         case _ => !!!("matcher for @matrix argument in DiagonalMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
@@ -651,36 +659,26 @@ trait Matrices extends Vectors { self: LADsl =>
       DenseFlatMatrix(items.flatMap { coll => coll }, numColumns)
   }
 
-  trait CompoundMatrixCompanion extends ConcreteClass1[CompoundMatrix] with MatrixCompanion {
-    override def fromColumns[T: Elem](cols: Coll[Vector[T]]): Matr[T] = {
-      ???
-    }
-
-    override def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
-                             (implicit elem: Elem[T], o: Overloaded1): Matr[T] = {
-      CompoundMatrix(items.map { coll => SparseVector(coll.as, coll.bs, numColumns) }, numColumns)
-    }
+  trait CompoundMatrixCompanion extends ConcreteClass1[CompoundMatrix] {
+    def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
+                             (implicit elem: Elem[T], o: Overloaded1): Matr[T] =
+      CompoundMatrix(items.map(coll => SparseVector(coll.as, coll.bs, numColumns)), numColumns)
 
     @OverloadId("dense1")
-    override def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
-                             (implicit elem: Elem[T], o: Overloaded2): Matr[T] = {
-      CompoundMatrix(items.map { coll => DenseVector(coll) }, numColumns)
-    }
+    def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
+                             (implicit elem: Elem[T], o: Overloaded2): Matr[T] =
+      CompoundMatrix(items.map(coll => DenseVector(coll)), numColumns)
 
     @OverloadId("dense2")
-    def fromNColl[T](items: NColl[T])(implicit elem: Elem[T], o: Overloaded3): Matr[T] = {
-      val numColumns = items(0).length
-      fromNColl(items, numColumns)
-    }
+    def fromNColl[T](items: NColl[T])(implicit elem: Elem[T], o: Overloaded3): Matr[T] =
+      fromNColl(items, items(0).length)
 
-    def fromRows[T: Elem](rows: Coll[Vector[T]]): Matr[T] = {
-      val numCols = rows(0).length
+    def fromRows[T: Elem](rows: Coll[Vector[T]], numCols: IntRep): Matr[T] =
       CompoundMatrix(rows, numCols)
-    }
 
-    override def fromRows[T: Elem](rows: Coll[Vector[T]], numCols: IntRep): Matr[T] = {
-      CompoundMatrix(rows, numCols)
-    }
+    @OverloadId("fromRowsNoLength")
+    def fromRows[T: Elem](rows: Coll[Vector[T]]): Matr[T] =
+      fromRows(rows, rows(0).length)
   }
 
   trait ConstMatrixCompanion extends ConcreteClass1[ConstMatrix]

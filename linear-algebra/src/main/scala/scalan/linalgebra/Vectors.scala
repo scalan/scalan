@@ -96,7 +96,6 @@ trait Vectors { self: LADsl =>
         case ShiftVector(_, _, cv, _) => DenseVector(shiftedFlatItems(cv))
         case ShiftVectorBoxed(_, cv, _) => DenseVector(shiftedFlatItems(cv))
         case _ => vector +^ self
-        //case _ => !!!("matcher for @vector argument in DenseVector.+^(vector: Vec[T]) is not specified.")
       }
     }
     def -^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
@@ -112,7 +111,6 @@ trait Vectors { self: LADsl =>
         case ShiftVector(_, _, cv, _) => DenseVector(shiftedFlatItems(cv))
         case ShiftVectorBoxed(_, cv, _) => DenseVector(shiftedFlatItems(cv))
         case _ => vector *^ (-toRep(n.one)) +^ self
-        //case _ => !!!("matcher for @vector argument in DenseVector.-^(vector: Vec[T]) is not specified.")
       }
     }
     def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
@@ -129,7 +127,6 @@ trait Vectors { self: LADsl =>
         case ShiftVector(_, _, cv, _) => DenseVector(shiftedFlatItems(cv))
         case ShiftVectorBoxed(_, cv, _) => DenseVector(shiftedFlatItems(cv))
         case _ => vector *^ self
-        //case _ => !!!("matcher for @vector argument in DenseVector.*^(vector: Vec[T]) is not specified.")
       }
     }
     def /^(vector: Vec[T])(implicit f: Fractional[T]): Vec[T] = {
@@ -145,6 +142,7 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => DenseVector(updatedFlatItems)
         case ShiftVector(_, _, cv, _) => DenseVector(shiftedFlatItems(cv))
         case ShiftVectorBoxed(_, cv, _) => DenseVector(shiftedFlatItems(cv))
+        // TODO: check case _
         case _ => !!!("matcher for @vector argument in DenseVector./^(vector: Vec[T]) is not specified.")
       }
     }
@@ -170,7 +168,6 @@ trait Vectors { self: LADsl =>
         case DiagonalMatrix(diagonalValues) => self *^ DenseVector(diagonalValues)
         case ConstDiagonalMatrix(diagonalValue, _) => self *^ diagonalValue
         case _ => standart
-        //case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
 
@@ -185,164 +182,153 @@ trait Vectors { self: LADsl =>
     def euclideanNorm(implicit n: Numeric[T]): DoubleRep = Math.sqrt(items.map(v => v * v).reduce.toDouble)
   }
 
-  /*trait ConstantVector[T] extends Vector[T] {
+  abstract class ConstVector[T](val const: Rep[T], val length: IntRep)(implicit val eT: Elem[T])
+    extends Vector[T] {
 
-    implicit def eT: Elem[T]
+    def items: Coll[T] = Collection.replicate(length, const)
+    def nonZeroIndices: Coll[Int] = IF (const !== zero) THEN Collection.indexRange(length) ELSE Collection.empty[Int]
+    def nonZeroValues:  Coll[T] =  IF (const !== zero) THEN items ELSE Collection.empty[T]
+    def nonZeroItems:   Coll[(Int, T)] = nonZeroIndices zip nonZeroValues
 
-    def const: Rep[T]
-    def length: IntRep
-  }*/
+    def apply(i: IntRep): Rep[T] = const
+    @OverloadId("apply_by_collection")
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vec[T] = ConstVector(const, is.length)
 
-    abstract class ConstVector[T](val const: Rep[T], val length: IntRep)(implicit val eT: Elem[T])
-      extends Vector[T] {
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vec[T] = IF (f(const)) THEN ConstVector(const, length) ELSE ConstVector(const, 0)
 
-      def items: Coll[T] = Collection.replicate(length, const)
-      def nonZeroIndices: Coll[Int] = IF (const !== zero) THEN Collection.indexRange(length) ELSE Collection.empty[Int]
-      def nonZeroValues:  Coll[T] =  IF (const !== zero) THEN items ELSE Collection.empty[T]
-      def nonZeroItems:   Coll[(Int, T)] = nonZeroIndices zip nonZeroValues
-
-      def apply(i: IntRep): Rep[T] = const
-      @OverloadId("apply_by_collection")
-      def apply(is: Coll[Int])(implicit o: Overloaded1): Vec[T] = ConstVector(const, is.length)
-
-      def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vec[T] = IF (f(const)) THEN ConstVector(const, length) ELSE ConstVector(const, 0)
-
-      def +^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
-        def newValues = vector.nonZeroValues.map(v => v + const)
-        def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, v + const) }
-        vector match {
-          case ConstVector(cv, _) => ConstVector(const + cv, length)
-          case SparseVector(is, _, _) => ShiftVector(is, newValues, const, length)
-          case SparseVectorBoxed(_, _) => ShiftVectorBoxed(newItems, const, length)
-          case ShiftVector(is, _, cv, _) => ShiftVector(is, newValues, const + cv, length)
-          case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, const + cv, length)
-          case _ => vector +^ self
-        }
+    def +^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
+      def newValues = vector.nonZeroValues.map(v => v + const)
+      def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, v + const) }
+      vector match {
+        case ConstVector(cv, _) => ConstVector(const + cv, length)
+        case SparseVector(is, _, _) => ShiftVector(is, newValues, const, length)
+        case SparseVectorBoxed(_, _) => ShiftVectorBoxed(newItems, const, length)
+        case ShiftVector(is, _, cv, _) => ShiftVector(is, newValues, const + cv, length)
+        case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, const + cv, length)
+        case _ => vector +^ self
       }
-      def -^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
-        def newValues = vector.nonZeroValues.map(v => const - v)
-        def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, const - v) }
-        vector match {
-          case DenseVector(vs) => DenseVector(vs.map(v => const - v))
-          case ConstVector(cv, _) => ConstVector(const - cv, length)
-          case ZeroVector(_) => self
-          case SparseVector(is, _, _) => ShiftVector(is, newValues, const, length)
-          case SparseVectorBoxed(_, _) => ShiftVectorBoxed(newItems, const, length)
-          case ShiftVector(is, _, cv, _) => ShiftVector(is, newValues, const - cv, length)
-          case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, const - cv, length)
-          case _ => vector *^ (-toRep(n.one)) +^ self
-          //case _ => !!!("matcher for @vector argument in ConstVector.-^(vector: Vec[T]) is not specified.")
-        }
-      }
-      def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
-        def newValues = vector.nonZeroValues.map(v => v * const)
-        def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, v * const) }
-        vector match {
-          case ConstVector(cv, _) => ConstVector(const * cv, length)
-          case ZeroVector(_) => vector
-          case SparseVector(is, _, _) => SparseVector(is, newValues, length)
-          case SparseVectorBoxed(_, _) => SparseVectorBoxed(newItems, length)
-          case ShiftVector(is, _, cv, _) => ShiftVector(is, newValues, const * cv, length)
-          case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, const * cv, length)
-          case _ => vector *^ self
-        }
-      }
-      def /^(vector: Vec[T])(implicit f: Fractional[T]): Vec[T] = {
-        def singular: Vec[T] = ConstVector(toRep(f.one), length) // TODO: in case x -> 0: x/x -> 1
-        def flatItems = vector.items.map(v => const / v)
-        def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, const / v) }
-        vector match {
-          case DenseVector(_) => DenseVector(flatItems)
-          case ConstVector(cv, _) => IF (const === cv) THEN singular ELSE ConstVector(const / cv, length)
-          case ZeroVector(_) => IF (const === zero) THEN singular ELSE ConstVector(const / zero, length)
-          case SparseVector(_, _, _) => DenseVector(flatItems)
-          case SparseVectorBoxed(_, _) => DenseVector(flatItems)
-          case ShiftVector(is, vs, cv, _) => ShiftVector(is, vs.map(v => const / v), const / cv, length)
-          case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, const / cv, length)
-          case _ => DenseVector(flatItems)
-          //case _ => !!!("matcher for @vector argument in ConstVector./^(vector: Vec[T]) is not specified.")
-        }
-      }
-      def dot(vector: Vec[T])(implicit n: Numeric[T]): Rep[T] = {
-        vector match {
-          case ConstVector(cv, _) => const * cv * length.to[T]
-          case ZeroVector(_) => zero
-          case _ => const * vector.sum
-        }
-      }
-      def *(matrix: Matr[T])(implicit n: Numeric[T]): Vec[T] = ???
-
-      def pow_^(order: DoubleRep)(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
-        ConstVector(Math.pow(const.toDouble, order).asRep[T], length)
-      }
-      def sum(implicit n: Numeric[T]): Rep[T] = const * length.to[T]
-      // TODO: need some monoid matching or optimization rule
-      def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
-
-      def euclideanNorm(implicit n: Numeric[T]): DoubleRep = Math.sqrt(items.map(v => v * v).reduce.toDouble)
     }
-
-    abstract class ZeroVector[T](val length: IntRep)(implicit val eT: Elem[T])
-      extends Vector[T] {
-
-      def items: Coll[T] = Collection.replicate(length, zero)
-      def nonZeroIndices: Coll[Int] = Collection.empty[Int]
-      def nonZeroValues:  Coll[T] =  Collection.empty[T]
-      def nonZeroItems:   Coll[(Int, T)] = Collection.empty[(Int, T)]
-
-      def apply(i: IntRep) = zero
-      @OverloadId("apply_by_collection")
-      def apply(is: Coll[Int])(implicit o: Overloaded1): Vec[T] = ZeroVector(is.length)
-
-      def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vec[T] = self
-
-      def +^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = vector
-      def -^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
-        def newValues = vector.nonZeroValues.map(v => -v)
-        def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, -v) }
-        vector match {
-          case DenseVector(vs) => DenseVector(vs.map(v => -v))
-          case ConstVector(cv, _) => ConstVector(-cv, length)
-          case SparseVector(is, _, _) => SparseVector(is, newValues, length)
-          case SparseVectorBoxed(_, _) => SparseVectorBoxed(newItems, length)
-          case ShiftVector(is, _, cv, _) => ShiftVector(is, newValues, -cv, length)
-          case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, -cv, length)
-          case _ => vector *^ (-toRep(n.one))
-          //case _ => !!!("matcher for @vector argument in ConstVector.-^(vector: Vec[T]) is not specified.")
-        }
+    def -^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
+      def newValues = vector.nonZeroValues.map(v => const - v)
+      def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, const - v) }
+      vector match {
+        case DenseVector(vs) => DenseVector(vs.map(v => const - v))
+        case ConstVector(cv, _) => ConstVector(const - cv, length)
+        case ZeroVector(_) => self
+        case SparseVector(is, _, _) => ShiftVector(is, newValues, const, length)
+        case SparseVectorBoxed(_, _) => ShiftVectorBoxed(newItems, const, length)
+        case ShiftVector(is, _, cv, _) => ShiftVector(is, newValues, const - cv, length)
+        case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, const - cv, length)
+        case _ => vector *^ (-toRep(n.one)) +^ self
       }
-      def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = self
-      def /^(vector: Vec[T])(implicit f: Fractional[T]): Vec[T] = {
-        def one = toRep(f.one)
-        def singular: Vec[T] = ConstVector(one, length) // TODO: in case x -> 0: x/x -> 1
-        def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, IF (v === zero) THEN one ELSE zero) }
-        def filter0 = newItems.filter(p => p._2 !== zero)
-        def filter1 = newItems.filter(p => p._2 !== one)
-        def shift: Vec[T] = ShiftVectorBoxed(filter1, one, length)
-        def sparse: Vec[T] = SparseVectorBoxed(filter0, length)
-        def shiftOrZero = IF (filter1.length > toRep(0)) THEN shift ELSE singular
-        def sparseOrZero = IF (filter0.length > toRep(0)) THEN sparse ELSE self
-        vector match {
-          case ZeroVector(_) => singular
-          case ConstVector(cv, _) => IF (cv === zero) THEN singular ELSE self
-          case SparseVector(_, _, _) => shiftOrZero
-          case SparseVectorBoxed(_, _) => shiftOrZero
-          case ShiftVector(_, _, cv, _) => IF (cv === zero) THEN shiftOrZero ELSE sparseOrZero
-          case ShiftVectorBoxed(_, cv, _) => IF (cv === zero) THEN shiftOrZero ELSE sparseOrZero
-          case _ => self // TODO: check it
-        }
-      }
-      def dot(vector: Vec[T])(implicit n: Numeric[T]): Rep[T] = zero
-      def *(matrix: Matr[T])(implicit n: Numeric[T]): Vec[T] = ZeroVector(matrix.numColumns)
-
-      // TODO: we ignore @order <= 0.0
-      def pow_^(order: DoubleRep)(implicit n: Numeric[T], o: Overloaded2): Vec[T] = self
-      def sum(implicit n: Numeric[T]): Rep[T] = zero
-      // TODO: need some monoid matching or optimization rule
-      def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
-
-      def euclideanNorm(implicit n: Numeric[T]): DoubleRep = zero.toDouble
     }
+    def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
+      def newValues = vector.nonZeroValues.map(v => v * const)
+      def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, v * const) }
+      vector match {
+        case ConstVector(cv, _) => ConstVector(const * cv, length)
+        case ZeroVector(_) => vector
+        case SparseVector(is, _, _) => SparseVector(is, newValues, length)
+        case SparseVectorBoxed(_, _) => SparseVectorBoxed(newItems, length)
+        case ShiftVector(is, _, cv, _) => ShiftVector(is, newValues, const * cv, length)
+        case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, const * cv, length)
+        case _ => vector *^ self
+      }
+    }
+    def /^(vector: Vec[T])(implicit f: Fractional[T]): Vec[T] = {
+      def singular: Vec[T] = ConstVector(toRep(f.one), length) // TODO: in case x -> 0: x/x -> 1
+      def flatItems = vector.items.map(v => const / v)
+      def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, const / v) }
+      vector match {
+        case DenseVector(_) => DenseVector(flatItems)
+        case ConstVector(cv, _) => IF (const === cv) THEN singular ELSE ConstVector(const / cv, length)
+        case ZeroVector(_) => IF (const === zero) THEN singular ELSE ConstVector(const / zero, length)
+        case SparseVector(_, _, _) => DenseVector(flatItems)
+        case SparseVectorBoxed(_, _) => DenseVector(flatItems)
+        case ShiftVector(is, vs, cv, _) => ShiftVector(is, vs.map(v => const / v), const / cv, length)
+        case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, const / cv, length)
+        case _ => DenseVector(flatItems)
+      }
+    }
+    def dot(vector: Vec[T])(implicit n: Numeric[T]): Rep[T] = {
+      vector match {
+        case ConstVector(cv, _) => const * cv * length.to[T]
+        case ZeroVector(_) => zero
+        case _ => const * vector.sum
+      }
+    }
+    def *(matrix: Matr[T])(implicit n: Numeric[T]): Vec[T] = ???
+
+    def pow_^(order: DoubleRep)(implicit n: Numeric[T], o: Overloaded2): Vec[T] = {
+      ConstVector(Math.pow(const.toDouble, order).asRep[T], length)
+    }
+    def sum(implicit n: Numeric[T]): Rep[T] = const * length.to[T]
+    // TODO: need some monoid matching or optimization rule
+    def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
+
+    def euclideanNorm(implicit n: Numeric[T]): DoubleRep = Math.sqrt(items.map(v => v * v).reduce.toDouble)
+  }
+
+  abstract class ZeroVector[T](val length: IntRep)(implicit val eT: Elem[T])
+    extends Vector[T] {
+
+    def items: Coll[T] = Collection.replicate(length, zero)
+    def nonZeroIndices: Coll[Int] = Collection.empty[Int]
+    def nonZeroValues:  Coll[T] =  Collection.empty[T]
+    def nonZeroItems:   Coll[(Int, T)] = Collection.empty[(Int, T)]
+
+    def apply(i: IntRep) = zero
+    @OverloadId("apply_by_collection")
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vec[T] = ZeroVector(is.length)
+
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vec[T] = self
+
+    def +^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = vector
+    def -^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
+      def newValues = vector.nonZeroValues.map(v => -v)
+      def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, -v) }
+      vector match {
+        case DenseVector(vs) => DenseVector(vs.map(v => -v))
+        case ConstVector(cv, _) => ConstVector(-cv, length)
+        case SparseVector(is, _, _) => SparseVector(is, newValues, length)
+        case SparseVectorBoxed(_, _) => SparseVectorBoxed(newItems, length)
+        case ShiftVector(is, _, cv, _) => ShiftVector(is, newValues, -cv, length)
+        case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(newItems, -cv, length)
+        case _ => vector *^ (-toRep(n.one))
+      }
+    }
+    def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = self
+    def /^(vector: Vec[T])(implicit f: Fractional[T]): Vec[T] = {
+      def one = toRep(f.one)
+      def singular: Vec[T] = ConstVector(one, length) // TODO: in case x -> 0: x/x -> 1
+      def newItems = vector.nonZeroItems.map { case Pair(i, v) => (i, IF (v === zero) THEN one ELSE zero) }
+      def filter0 = newItems.filter(p => p._2 !== zero)
+      def filter1 = newItems.filter(p => p._2 !== one)
+      def shift: Vec[T] = ShiftVectorBoxed(filter1, one, length)
+      def sparse: Vec[T] = SparseVectorBoxed(filter0, length)
+      def shiftOrZero = IF (filter1.length > toRep(0)) THEN shift ELSE singular
+      def sparseOrZero = IF (filter0.length > toRep(0)) THEN sparse ELSE self
+      vector match {
+        case ZeroVector(_) => singular
+        case ConstVector(cv, _) => IF (cv === zero) THEN singular ELSE self
+        case SparseVector(_, _, _) => shiftOrZero
+        case SparseVectorBoxed(_, _) => shiftOrZero
+        case ShiftVector(_, _, cv, _) => IF (cv === zero) THEN shiftOrZero ELSE sparseOrZero
+        case ShiftVectorBoxed(_, cv, _) => IF (cv === zero) THEN shiftOrZero ELSE sparseOrZero
+        case _ => self // TODO: check it
+      }
+    }
+    def dot(vector: Vec[T])(implicit n: Numeric[T]): Rep[T] = zero
+    def *(matrix: Matr[T])(implicit n: Numeric[T]): Vec[T] = ZeroVector(matrix.numColumns)
+
+    // TODO: we ignore @order <= 0.0
+    def pow_^(order: DoubleRep)(implicit n: Numeric[T], o: Overloaded2): Vec[T] = self
+    def sum(implicit n: Numeric[T]): Rep[T] = zero
+    // TODO: need some monoid matching or optimization rule
+    def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
+
+    def euclideanNorm(implicit n: Numeric[T]): DoubleRep = zero.toDouble
+  }
 
   abstract class SparseVector[T](val nonZeroIndices: Coll[Int], val nonZeroValues: Coll[T],
                                  val length: IntRep)(implicit val eT: Elem[T])
@@ -394,7 +380,6 @@ trait Vectors { self: LADsl =>
         case ShiftVector(_, _, cv, _) => ShiftVectorBoxed(shiftedItems(cv), -cv, length)
         case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(shiftedItems(cv), -cv, length)
         case _ => vector *^ (-toRep(n.one)) +^ self
-        //case _ => !!!("matcher for @vector argument in SparseVector.-^(vector: Vec[T]) is not specified.")
       }
     }
     def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
@@ -421,6 +406,7 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => SparseVector(is, newValues, length)
         case ShiftVector(_, _, _, _) => SparseVector(is, newValues, length)
         case ShiftVectorBoxed(_, _, _) => SparseVector(is, newValues, length)
+        // TODO: check case _
         case _ => !!!("matcher for @vector argument in SparseVector./^(vector: Vec[T]) is not specified.")
       }
     }
@@ -446,7 +432,6 @@ trait Vectors { self: LADsl =>
         case DiagonalMatrix(diagonalValues) => self *^ DenseVector(diagonalValues)
         case ConstDiagonalMatrix(diagonalValue, _) => self *^ diagonalValue
         case _ => standart
-        //case _ => !!!("matcher for @matrix argument in DenseFlatMatrix.*(matrix: Matr[T]) is not specified.")
       }
     }
 
@@ -508,7 +493,6 @@ trait Vectors { self: LADsl =>
         case ShiftVector(_, _, cv, _) => shift(cv)
         case ShiftVectorBoxed(_, cv, _) => shift(cv)
         case _ => vector *^ (-toRep(n.one)) +^ self
-        //case _ => !!!("matcher for @vector argument in SparseVectorBoxed.-^(vector: Vec[T]) is not specified.")
       }
     }
     def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
@@ -564,11 +548,11 @@ trait Vectors { self: LADsl =>
   }
 
   abstract class ShiftVector[T](val nonZeroIndices: Coll[Int], val nonZeroValues: Coll[T],
-                                val constItem: Rep[T], val length: IntRep)(implicit val eT: Elem[T])
+                                val offset: Rep[T], val length: IntRep)(implicit val eT: Elem[T])
     extends Vector[T] {
 
     def items: Coll[T] = {
-      Collection.replicate(length, constItem).updateMany(nonZeroIndices, nonZeroValues)
+      Collection.replicate(length, offset).updateMany(nonZeroIndices, nonZeroValues)
     }
     def nonZeroItems: Coll[(Int, T)] = nonZeroIndices zip nonZeroValues
 
@@ -576,8 +560,8 @@ trait Vectors { self: LADsl =>
       val zero = toRep(0)
       IF (nonZeroIndices.length > zero) THEN {
         val k = binarySearch(i, nonZeroIndices)
-        IF (k >= zero) THEN nonZeroValues(k) ELSE constItem
-      } ELSE constItem
+        IF (k >= zero) THEN nonZeroValues(k) ELSE offset
+      } ELSE offset
     }
 
     @OverloadId("apply_by_collection")
@@ -589,48 +573,47 @@ trait Vectors { self: LADsl =>
     }
 
     def +^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
-      def x1 = nonZeroIndices zip nonZeroValues.map(v => v - constItem)
+      def x1 = nonZeroIndices zip nonZeroValues.map(v => v - offset)
       def x2(cv: Rep[T]) = vector.nonZeroItems.map(v => (v._1, v._2 - cv))
-      def shiftedItems(cv: Rep[T]) = (x1 outerSum x2(cv)).map(v => (v._1, v._2 + constItem + cv))
+      def shiftedItems(cv: Rep[T]) = (x1 outerSum x2(cv)).map(v => (v._1, v._2 + offset + cv))
       vector match {
-        case ShiftVector(_, _, cv, _) => ShiftVectorBoxed(shiftedItems(cv), constItem + cv, length)
-        case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(shiftedItems(cv), constItem + cv, length)
+        case ShiftVector(_, _, cv, _) => ShiftVectorBoxed(shiftedItems(cv), offset + cv, length)
+        case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(shiftedItems(cv), offset + cv, length)
         case _ => vector +^ self
       }
     }
     def -^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
-      def x1 = nonZeroItems.map(v => (v._1, v._2 - constItem))
+      def x1 = nonZeroItems.map(v => (v._1, v._2 - offset))
       def x2(c2: Rep[T]) = vector.nonZeroItems.map(v => (v._1, v._2 - c2))
       def updates = (nonZeroValues zip vector.items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
-      def newItems = (x1 outerSubtr vector.nonZeroItems).map(v => (v._1, v._2 + constItem))
-      def shiftedItems(c2: Rep[T]) = (x1 outerSubtr x2(c2)).map(v => (v._1, v._2 + constItem - c2))
+      def newItems = (x1 outerSubtr vector.nonZeroItems).map(v => (v._1, v._2 + offset))
+      def shiftedItems(c2: Rep[T]) = (x1 outerSubtr x2(c2)).map(v => (v._1, v._2 + offset - c2))
       vector match {
-        case DenseVector(_) => DenseVector(vector.items.map(v => constItem - v).updateMany(nonZeroIndices, updates))
-        case ConstVector(c2, _) => ShiftVector(nonZeroIndices, nonZeroValues.map(v => v - c2), constItem - c2, length)
+        case DenseVector(_) => DenseVector(vector.items.map(v => offset - v).updateMany(nonZeroIndices, updates))
+        case ConstVector(c2, _) => ShiftVector(nonZeroIndices, nonZeroValues.map(v => v - c2), offset - c2, length)
         case ZeroVector(_) => self
-        case SparseVector(_, _, _) => ShiftVectorBoxed(newItems, constItem, length)
-        case SparseVectorBoxed(_, _) => ShiftVectorBoxed(newItems, constItem, length)
-        case ShiftVector(_, _, c2, _) => ShiftVectorBoxed(shiftedItems(c2), constItem - c2, length)
-        case ShiftVectorBoxed(_, c2, _) => ShiftVectorBoxed(shiftedItems(c2), constItem - c2, length)
+        case SparseVector(_, _, _) => ShiftVectorBoxed(newItems, offset, length)
+        case SparseVectorBoxed(_, _) => ShiftVectorBoxed(newItems, offset, length)
+        case ShiftVector(_, _, c2, _) => ShiftVectorBoxed(shiftedItems(c2), offset - c2, length)
+        case ShiftVectorBoxed(_, c2, _) => ShiftVectorBoxed(shiftedItems(c2), offset - c2, length)
         case _ => vector *^ (-toRep(n.one)) +^ self
-        //case _ => !!!("matcher for @vector argument in ShiftVector.-^(vector: Vec[T]) is not specified.")
       }
     }
     def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
-      def x1 = nonZeroItems.map(v => (v._1, v._2 - constItem))
+      def x1 = nonZeroItems.map(v => (v._1, v._2 - offset))
       def x2(cv: Rep[T]) = vector.nonZeroItems.map(v => (v._1, v._2 - cv))
       def x1_c2(cv: Rep[T]) = x1.map(v => (v._1, v._2 * cv))
-      def x2_c1(cv: Rep[T]) = x2(cv).map(v => (v._1, v._2 * constItem))
+      def x2_c1(cv: Rep[T]) = x2(cv).map(v => (v._1, v._2 * offset))
       def newItems(cv: Rep[T]) = (x1 innerMult x2(cv)) outerSum x1_c2(cv) outerSum x2_c1(cv)
-      def shiftedItems(c2: Rep[T]) = newItems(c2).map(v => (v._1, v._2 + constItem * c2))
+      def shiftedItems(c2: Rep[T]) = newItems(c2).map(v => (v._1, v._2 + offset * c2))
       vector match {
-        case ShiftVector(_, _, cv, _) => ShiftVectorBoxed(shiftedItems(cv), constItem * cv, length)
-        case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(shiftedItems(cv), constItem * cv, length)
+        case ShiftVector(_, _, cv, _) => ShiftVectorBoxed(shiftedItems(cv), offset * cv, length)
+        case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(shiftedItems(cv), offset * cv, length)
         case _ => vector *^ self
       }
     }
     def /^(vector: Vec[T])(implicit f: Fractional[T]): Vec[T] = {
-      lazy val (is, vs, c1) = (nonZeroIndices, nonZeroValues, constItem)
+      lazy val (is, vs, c1) = (nonZeroIndices, nonZeroValues, offset)
       def updates = (vs zip vector.items(is)).map { case Pair(v1, v2) => v1 / v2 }
       def shiftedItems = vector.items.map(v => c1 / v).updateMany(is, updates)
       vector match {
@@ -660,7 +643,7 @@ trait Vectors { self: LADsl =>
       SparseVector(nonZeroIndices, nonZeroValues.map(v => Math.pow(v.toDouble, order).asRep[T]), length)
     }
 
-    def sum(implicit n: Numeric[T]): Rep[T] = nonZeroValues.reduce + (length - nonZeroValues.length).to[T] * constItem
+    def sum(implicit n: Numeric[T]): Rep[T] = nonZeroValues.reduce + (length - nonZeroValues.length).to[T] * offset
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)  //TODO: it's inefficient
 
     def euclideanNorm(implicit n: Numeric[T]): DoubleRep = Math.sqrt(nonZeroValues.map(v => v * v).reduce.toDouble)
@@ -714,7 +697,6 @@ trait Vectors { self: LADsl =>
         case ShiftVector(_, _, cv, _) => ShiftVectorBoxed(shiftedItems(cv), offset - cv, length)
         case ShiftVectorBoxed(_, cv, _) => ShiftVectorBoxed(shiftedItems(cv), offset - cv, length)
         case _ => vector *^ (-toRep(n.one)) +^ self
-        //case _ => !!!("matcher for @vector argument in ShiftVectorBoxed.-^(vector: Vec[T]) is not specified.")
       }
     }
     def *^(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
@@ -742,6 +724,7 @@ trait Vectors { self: LADsl =>
         case SparseVectorBoxed(_, _) => DenseVector(shiftedItems)
         case ShiftVector(_, _, _, _) => DenseVector(shiftedItems)
         case ShiftVectorBoxed(_, _, _) => DenseVector(shiftedItems)
+        // TODO: check case _
         case _ => !!!("matcher for @vector argument in ShiftVectorBoxed./^(vector: Vec[T]) is not specified.")
       }
     }
