@@ -99,17 +99,17 @@ trait SeqsDslExp extends impl.SeqsExp {
       ViewSSeq(filtered, iso)
     }
 
-    case SSeqMethods.+:(HasViews(seq, Def(iso: SSeqIso[a, b])), elem@HasViews(_, _)) =>
+    case SSeqMethods.+:(HasViews(xs, Def(iso: SSeqIso[a, b])), value@HasViews(_, _)) =>
       implicit val eA = iso.innerIso.eFrom
-      val seq1 = seq.asRep[SSeq[a]]
-      val elem1 = iso.innerIso.from(elem.asRep[b]).asRep[a]
-      ViewSSeq(seq1.+:(elem1), iso.innerIso)
+      val xs1 = xs.asRep[SSeq[a]]
+      val value1 = iso.innerIso.from(value.asRep[b])
+      ViewSSeq(xs1.+:(value1), iso.innerIso)
 
-    case SSeqMethods.diff(HasViews(seq, Def(iso: SSeqIso[a, b])), that@HasViews(_, Def(_: SSeqIso[_, _]))) =>
+    case SSeqMethods.diff(HasViews(xs, Def(iso: SSeqIso[a, b])), ys@HasViews(_, Def(_: SSeqIso[_, _]))) =>
       implicit val eA = iso.innerIso.eFrom
-      val seq1 = seq.asRep[SSeq[a]]
-      val that1 = iso.from(that.asRep[SSeq[b]]).asRep[SSeq[a]]
-      ViewSSeq(seq1.diff(that1), iso.innerIso)
+      val xs1 = xs.asRep[SSeq[a]]
+      val ys1 = iso.from(ys.asRep[SSeq[b]])
+      ViewSSeq(xs1.diff(ys1), iso.innerIso)
 
     case _ => super.rewriteDef(d)
   }
