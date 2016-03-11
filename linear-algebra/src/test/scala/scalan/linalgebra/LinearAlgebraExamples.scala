@@ -268,7 +268,7 @@ trait LinearAlgebraExamples extends LADsl {
   lazy val applySparseVector = fun { in: Rep[(Array[(Int, Double)], (Int, Int))] =>
     val Tuple(a, n, i) = in
     val coll = CollectionOverArray(a)
-    val vec = SparseVector(coll, n)
+    val vec = SparseVector(coll.as, coll.bs, n)
     val res = vec(i).toInt
     res
   }
