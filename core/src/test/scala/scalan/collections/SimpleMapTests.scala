@@ -78,9 +78,9 @@ abstract class MapItTests extends BaseItTests[SimpleMapProg](new ScalanDslStd wi
   test("mapPutContains") {
     compareOutputWithStd(_.mapPutContains)(Tuple2(314,3.14))
   }
-  test("mapGetOrElse") {
-    compareOutputWithStd(_.mapGetOrElse)(Tuple2(314,3.14))
-  }
+//  test("mapGetOrElse") {
+//    compareOutputWithStd(_.mapGetOrElse)(Tuple2(314,3.14))
+//  }
   test("mapAsSet") {
     compareOutputWithStd(_.mapAsSet)(314)
   }
