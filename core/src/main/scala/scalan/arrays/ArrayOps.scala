@@ -394,6 +394,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   }
   case class ArrayApplyMany[T](xs: Exp[Array[T]], indices: Exp[Array[Int]]) extends ArrayDef[T]()(xs.elem.eItem)
   case class ArrayMap[T, R](xs: Exp[Array[T]], f: Exp[T => R]) extends ArrayDef[R]()(f.elem.eRange)
+  case class ArrayMapFilter[T, R](xs: Exp[Array[T]], f: Exp[T => (Boolean,R)]) extends ArrayDef[R]()(f.elem.eRange.eSnd)
   case class ArrayFlatMap[T, R](xs: Exp[Array[T]], f: Exp[T => Array[R]]) extends ArrayDef[R]()(f.elem.eRange.eItem)
   case class ArrayReduce[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T]) extends Def[T] {
     def selfType = xs.elem.eItem
@@ -839,13 +840,13 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     // should be the last rule in this rewriteDef (with ArrayMap on top)
     case ArrayMap(Def(d2), f: Rep[Function1[a, b]]@unchecked) =>
       d2.asDef[Array[a]] match {
-        case ArrayMap(xs: Rep[Array[c]]@unchecked, g) =>
-          val xs1 = xs.asRep[Array[c]]
-          val g1 = g.asRep[c => a]
-          implicit val eB = f.elem.eRange
-          implicit val eC = xs.elem.eItem
-          val res = xs1.map { x => f(g1(x))}
-          res
+//        case ArrayMap(xs: Rep[Array[c]]@unchecked, g) =>
+//          val xs1 = xs.asRep[Array[c]]
+//          val g1 = g.asRep[c => a]
+//          implicit val eB = f.elem.eRange
+//          implicit val eC = xs.elem.eItem
+//          val res = xs1.map { x => f(g1(x))}
+//          res
         case ArrayReplicate(length, x) =>
           implicit val eB = f.elem.eRange
           SArray.replicate(length, f(x))
