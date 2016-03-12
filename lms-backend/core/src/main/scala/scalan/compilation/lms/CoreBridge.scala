@@ -57,6 +57,8 @@ trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL
       List(pair, pair.elem.eSnd)
     case ArrayMap(xs, f) =>
       List(xs, f, xs.elem.eItem, f.elem.eRange)
+    case ArrayMapFilter(xs, f) =>
+      List(xs, f, xs.elem.eItem, f.elem.eRange.eSnd)
     case ArrayFlatMap(xs, f) =>
       List(xs, f, xs.elem.eItem, f.elem.eRange.eItem)
     case x@ArrayApply(xs, i) =>

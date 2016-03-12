@@ -77,6 +77,10 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
     arrayIf(a.length) { i => { val item = a.at(i); (f(item), item) }}
   }
 
+  def arrayMapFilter[A: Manifest,R: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[(Boolean,R)]): Exp[Array[R]] = {
+    arrayIf(a.length) { i => { val item = a.at(i); val res = f(item); (res._1, res._2) }}
+  }
+
   def arrayCount[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Int] = {
     sumIfInt(a.length)(i => (f(a.at(i)), 1))
   }
