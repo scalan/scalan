@@ -166,6 +166,15 @@ trait Elems extends Base { self: Scalan =>
     case _ => eA
   }
 
+  def concretizeElem(e: Elem[_]): Elem[_] = e match {
+    case e: BaseElem[_] => e
+    case e: ArrayElem[_] => arrayElement(concretizeElem(e.eItem))
+    case e: ArrayBufferElem[_] => arrayBufferElement(concretizeElem(e.eItem))
+    case e: PairElem[_,_] => pairElement(concretizeElem(e.eFst), concretizeElem(e.eSnd))
+    case e: SumElem[_,_] => sumElement(concretizeElem(e.eLeft), concretizeElem(e.eRight))
+    case _ => e
+  }
+
   def assertEqualElems[A](e1: Elem[A], e2: Elem[A], m: => String) =
     assert(e1 == e2, s"Element $e1 != $e2: $m")
 

@@ -220,7 +220,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
       val res = ViewArray(view.source.toArray, innerIso)
       res
 
-    case ArrayBufferFromArray(HasViews(xs, iso: ArrayIso[a, b])) =>
+    case ArrayBufferFromArray(HasViews(xs, Def(iso: ArrayIso[a, b]))) =>
       val xs1 = xs.asRep[Array[a]]
       val innerIso = iso.innerIso
       implicit val eA = innerIso.eFrom
@@ -264,7 +264,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
   def createArrayBuffer[T: Elem](count: Rep[Int], f:Rep[Int=>T]): Rep[ArrayBuffer[T]] = ArrayBufferUsingFunc(count, f)
   def createArrayBufferFromArray[T: Elem](arr: Arr[T]): Rep[ArrayBuffer[T]] = ArrayBufferFromArray(arr)
 
-  case class ArrayBufferEmpty[T]()(implicit eItem: Elem[T]) extends ArrayBufferDef[T] {
+  case class ArrayBufferEmpty[T]()(implicit eItem: Elem[T]) extends ArrayBufferDef[T]()(concretizeElem(eItem).asElem[T]) {
     override def equals(other:Any) = {
       other match {
         case that:ArrayBufferEmpty[_] => (this.selfType equals that.selfType)
@@ -273,7 +273,8 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
     }
   }
 
-  case class MakeArrayBuffer[T](ctx: Rep[String])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
+  case class MakeArrayBuffer[T](ctx: Rep[String])(implicit eItem: Elem[T])
+     extends ArrayBufferDef[T]()(concretizeElem(eItem).asElem[T])
 
   case class ArrayBufferFromElem[T](v: Rep[T])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
@@ -299,7 +300,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
 
   case class ArrayBufferToArray[T](buf: Rep[ArrayBuffer[T]])(implicit eItem: Elem[T]) extends ArrayDef[T]
 
-  case class ArrayBufferFromArray[T](arr: Rep[Array[T]])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
+  case class ArrayBufferFromArray[T](arr: Rep[Array[T]]) extends ArrayBufferDef[T]()(arr.elem.eItem)
 
   case class ArrayBufferRep[T](buf: Rep[ArrayBuffer[T]])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
