@@ -42,8 +42,13 @@ trait MultiMaps { self: MultiMapsDsl =>
     def contains(key: Rep[K]): Rep[Boolean] = map.contains(key)
 
     def apply(key: Rep[K]): Rep[ArrayBuffer[V]] =
-      map.getOrElse(key, ArrayBuffer.empty[V])
-//      IF (map.contains(key)) THEN map(key) ELSE ArrayBuffer.empty[V]
+//      map.getOrElse(key, ArrayBuffer.empty[V])
+      IF (map.contains(key)) THEN {
+        map(key)
+      } ELSE {
+        val eV = map.selfType1.asInstanceOf[MMapElem[K,ArrayBuffer[V]]].eValue.eItem
+        ArrayBuffer.make[V]("HashMultiMap.apply")(eV)
+      }
 
     def mapValueIfExistsBy[T](key: Rep[K], exists: Rep[ArrayBuffer[V] => T], otherwise: Rep[Unit => T]): Rep[T] =
       map.mapValueIfExistsBy[T](key, exists, otherwise)
