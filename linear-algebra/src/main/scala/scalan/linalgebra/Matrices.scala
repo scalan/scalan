@@ -33,7 +33,7 @@ trait Matrices extends Vectors { self: LADsl =>
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T]
 
     //def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Matr[R]
-    def mapBy[R: Elem](f: Rep[Vector[T] => Vector[R] @uncheckedVariance]): Matr[R]
+    def mapRowsBy[R: Elem](f: Rep[Vector[T] => Vector[R] @uncheckedVariance]): Matr[R]
 
     def transpose(implicit n: Numeric[T]): Matr[T]
     // TODO: implement sumByRows and sumByColumns in specializations.
