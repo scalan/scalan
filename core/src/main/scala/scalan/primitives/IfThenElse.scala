@@ -142,13 +142,17 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
         case _ => None
       }
       optHasViews match {
-        case Some((c, a, b, iso1: Iso[a,c], iso2: Iso[b,d]))
-              if iso1.eTo.isConcrete && iso2.eTo.isConcrete =>
-          (iso1.eTo, iso2.eTo) match {
-            case IsConvertible(cTo, cFrom) =>
-              Some((c, a.asRep[a], b.asRep[b], iso1, iso2, cTo, cFrom))
-            case _ => None
-          }
+        case Some((c, a, b, iso1: Iso[a,c], iso2: Iso[b,d])) =>
+          val eC = iso1.eTo
+          val eD = iso2.eTo
+          if (eC.isConcrete && eD.isConcrete)
+            (eC, eD) match {
+              case IsConvertible(cTo, cFrom) =>
+                Some((c, a.asRep[a], b.asRep[b], iso1, iso2, cTo, cFrom))
+              case _ => None
+            }
+          else
+            None
         case _ => None
       }
     }
