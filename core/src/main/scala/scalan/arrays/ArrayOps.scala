@@ -838,15 +838,15 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     //      SArray.replicate(xs1.length, v)(v.elem)
 
     // should be the last rule in this rewriteDef (with ArrayMap on top)
-    case ArrayMap(Def(d2), f: Rep[Function1[a, b]]@unchecked) =>
+    case ArrayMap(ys @ Def(d2), f: Rep[Function1[a, b]]@unchecked) =>
       d2.asDef[Array[a]] match {
-//        case ArrayMap(xs: Rep[Array[c]]@unchecked, g) =>
-//          val xs1 = xs.asRep[Array[c]]
-//          val g1 = g.asRep[c => a]
-//          implicit val eB = f.elem.eRange
-//          implicit val eC = xs.elem.eItem
-//          val res = xs1.map { x => f(g1(x))}
-//          res
+        case ArrayMap(xs: Rep[Array[c]]@unchecked, g) => //TODO if hasSingleUsage(ys)
+          val xs1 = xs.asRep[Array[c]]
+          val g1 = g.asRep[c => a]
+          implicit val eB = f.elem.eRange
+          implicit val eC = xs.elem.eItem
+          val res = xs1.map { x => f(g1(x))}
+          res
         case ArrayReplicate(length, x) =>
           implicit val eB = f.elem.eRange
           SArray.replicate(length, f(x))
