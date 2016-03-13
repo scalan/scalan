@@ -7,7 +7,7 @@ import scalan._
 class Issue186Test extends BaseCtxTests {
 
   test("issue186") {
-    class Ctx extends TestContext with MatricesDslExp { override def isInvokeEnabled(d: Def[_], m: Method) = false }
+    class Ctx extends TestContext with LADslExp { override def isInvokeEnabled(d: Def[_], m: Method) = false }
     val ctx = new Ctx
     import ctx._
     def sparseData2denseData = fun { data: Rep[SparseVectorData[Double]] =>

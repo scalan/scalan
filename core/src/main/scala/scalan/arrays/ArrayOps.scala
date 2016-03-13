@@ -216,7 +216,7 @@ trait ArrayOps { self: Scalan =>
 trait ArrayOpsStd extends ArrayOps {
   self: ScalanStd =>
 
-  import TagImplicits.elemToClassTag
+  import TagImplicits.elemToClassTag  // do not remove, it's NOT unused
 
   def array_apply[T](x: Arr[T], n: Rep[Int]): Rep[T] = x(n)
 
@@ -243,14 +243,18 @@ trait ArrayOpsStd extends ArrayOps {
 
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val ct = arrayToClassTag(xs)
-    xs.update(index, value)
-    xs
+    //xs.update(index, value) //in-place operation contradicts with lms
+    val xs1 = xs.clone()
+    xs1.update(index, value)
+    xs1
   }
 
   def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = {
     implicit val ct = arrayToClassTag(xs)
-    (0 until indexes.length).foreach(i => xs.update(indexes(i), values(i)))
-    xs
+    //(0 until indexes.length).foreach(i => xs.update(indexes(i), values(i))) //in-place operation contradicts with lms
+    val xs1 = xs.clone()
+    (0 until indexes.length).foreach(i => xs1.update(indexes(i), values(i)))
+    xs1
   }
 
   def array_append[T](xs: Arr[T], value: Rep[T]): Arr[T] = {
@@ -287,7 +291,7 @@ trait ArrayOpsStd extends ArrayOps {
   def array_scan[T](xs: Array[T])(implicit m: RepMonoid[T], elem: Elem[T]): Rep[(Array[T], T)] = {
     val scan = xs.scan(m.zero)(m.append)
     val sum = scan.last
-    (scan.dropRight(1).toArray, sum)
+    (scan.dropRight(1), sum)
   }
 
   def array_replicate[T: Elem](len: Rep[Int], v: Rep[T]): Arr[T] = scala.Array.fill(len)(v)
@@ -297,12 +301,11 @@ trait ArrayOpsStd extends ArrayOps {
 
   def array_rangeFrom0(n: Rep[Int]): Arr[Int] = 0.until(n).toArray
 
-  def array_filter[T](xs: Array[T], f: T => Boolean): Array[T] =
-    genericArrayOps(xs).filter(f)
+  def array_filter[T](xs: Array[T], f: T => Boolean): Array[T] = genericArrayOps(xs).filter(f)
 
   def array_find[T](xs: Array[T], f: T => Boolean): Array[Int] = {
     val buf = scala.collection.mutable.ArrayBuffer.empty[Int]
-    for (i <- 0 until xs.length) {
+    for (i <- xs.indices) {
       if (f(xs(i))) buf += i
     }
     buf.toArray
@@ -380,10 +383,7 @@ trait ArrayOpsStd extends ArrayOps {
 }
 
 trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
-  def withElemOfArray[T, R](xs: Arr[T])(block: Elem[T] => R): R =
-    withElemOf(xs) { eTArr =>
-      block(eTArr.eItem)
-    }
+  def withElemOfArray[T, R](xs: Arr[T])(block: Elem[T] => R): R = withElemOf(xs) { eTArr => block(eTArr.eItem) }
 
   abstract class ArrayDef[T](implicit val eItem: Elem[T]) extends Def[Array[T]] {
     lazy val selfType = element[Array[T]]
@@ -435,6 +435,17 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     val length: Rep[Int] = symbols.length
   }
 
+  case class ArrayInnerJoin[K, B, C, R](xs: Exp[Array[(K, B)]], ys: Exp[Array[(K, C)]], f: Exp[((B, C)) => R])
+                                       (implicit val ordK: Ordering[K], val nK: Numeric[K], val eK: Elem[K],
+                                        val eB: Elem[B], val eC: Elem[C], val eR: Elem[R])
+    extends ArrayDef[(K, R)]
+
+  case class ArrayOuterJoin[K, B, C, R](xs: Exp[Array[(K, B)]], ys: Exp[Array[(K, C)]], f: Exp[((B, C)) => R],
+                                        f1: Exp[B => R], f2: Exp[C => R])
+                                       (implicit val ordK: Ordering[K], val nK: Numeric[K], val eK: Elem[K],
+                                        val eB: Elem[B], val eC: Elem[C], val eR: Elem[R])
+    extends ArrayDef[(K, R)]
+
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val eT = xs.elem.eItem
     ArrayUpdate(xs, index, value)
@@ -472,7 +483,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   def array_fold[T,S:Elem](xs: Arr[T], init:Rep[S], f:Rep[((S,T))=>S]): Rep[S] =
     withElemOfArray(xs) { implicit eT => ArrayFold(xs, init, f) }
 
-  def array_map_reduce[T,K:Elem,V:Elem](xs: Exp[Array[T]], map:Exp[T=>(K,V)], reduce:Exp[((V,V))=>V]) = ArrayMapReduce(xs, map, reduce)
+  def array_map_reduce[T,K:Elem,V:Elem](xs: Exp[Array[T]], map:Exp[T=>(K,V)], reduce:Exp[((V,V))=>V]) =
+    ArrayMapReduce(xs, map, reduce)
 
   def array_scan[T](xs: Arr[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)] =
     ArrayScan(xs, m)
