@@ -1,6 +1,7 @@
 package scalan.compilation
 
 import scalan.ScalanExp
+import scala.collection._
 
 trait Passes {
   val scalan: ScalanExp
@@ -9,8 +10,25 @@ trait Passes {
   // to avoid need to import compiler.scalan.Exp in many places
   type Exp[+T] = scalan.Exp[T]
 
+  abstract class Analysis {
+    def name: String
+    def apply(graph: PGraph): Unit
+    override def toString = s"Analysis($name)"
+  }
+
   abstract class GraphPass extends Pass {
+    def analyse(graph: PGraph): Unit = {
+      for (a <- analyses) {
+        a(graph)
+      }
+    }
     def apply(graph: PGraph): PGraph
+    private val analyses = mutable.ArrayBuffer[Analysis]()
+    def addAnalysis(a: Analysis) = {
+      if (analyses.exists(_.name == a.name))
+        !!!(s"Duplicate analysis ${a.name} for the phase ${this.name}, existing analyses: $analyses")
+      analyses += a
+    }
   }
 
   trait ExpPass extends Pass {
