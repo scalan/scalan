@@ -81,9 +81,9 @@ trait Vectors { self: VectorsDsl =>
 
     def +^(other: Vec[T])(implicit n: Numeric[T]): Vec[T] = {
       other match {
-        case SparseVector(nonZeroIndices, nonZeroValues, _) =>
-          val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 + v2 }
-          DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
+        case SparseVector(nonZeroIndices1, nonZeroValues1, _) =>
+          val nonZeroValuesNew = (nonZeroValues1 zip items(nonZeroIndices1)).map { case Pair(v1, v2) => v1 + v2 }
+          DenseVector(items.updateMany(nonZeroIndices1, nonZeroValuesNew))
         case SparseVector1(nonZeroItemsL, _) =>
           val (nonZeroIndicesL, nonZeroValuesL) = (nonZeroItemsL.as, nonZeroItemsL.bs)
           val nonZeroValuesNew = (nonZeroValuesL zip items(nonZeroIndicesL)).map { case Pair(v1, v2) => v1 + v2 }
@@ -292,8 +292,8 @@ trait Vectors { self: VectorsDsl =>
         case SparseVector1(nonZeroItemsL, _) =>
           val newItems = (nonZeroIndices zip nonZeroValues) outerSubtr (nonZeroItemsL.as zip nonZeroItemsL.bs)
           SparseVector1(newItems, length)
-        case DenseVector(items) =>
-          val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
+        case DenseVector(items1) =>
+          val nonZeroValuesNew = (nonZeroValues zip items1(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
           DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
         case _ =>
           (other -^ self) *^ n.negate(n.one)
