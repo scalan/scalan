@@ -452,6 +452,7 @@ trait Matrices extends Vectors { self: MatricesDsl =>
       fromNColl(items, numColumns)
     }
 
+    @OverloadId("fromRows")
     def fromRows[T: Elem](rows: Coll[Vector[T]]): Matr[T] = {
       val numCols = rows(0).length
       CompoundMatrix(rows, numCols)
