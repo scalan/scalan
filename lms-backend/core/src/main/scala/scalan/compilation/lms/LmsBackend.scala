@@ -57,7 +57,7 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
   with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExpExt
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with ArrayMutationExp with OrderingOpsExp
   with IfThenElseFatExp with VariablesExpOpt
-  with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with ExtNumOpsExp
+  with ArrayOpsExp with ArrayJoinsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with ExtNumOpsExp
 // FIXME using CastingOpsExpOpt instead of CastingOpsExp generates wrong code, perhaps due to LMS bug
 // Without it we get useless casts and more code than should be present
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
@@ -345,5 +345,3 @@ abstract class CoreLmsBackend extends LmsBackend
 class ScalaCoreLmsBackend extends CoreLmsBackend { self =>
   override val codegen = new ScalaCoreCodegen[self.type](self)
 }
-
-
