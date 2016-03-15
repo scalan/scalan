@@ -243,14 +243,20 @@ trait ArrayOpsStd extends ArrayOps {
 
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val ct = arrayToClassTag(xs)
-    xs.update(index, value)
-    xs
+//    xs.update(index, value)
+//    xs //in-place operation contradicts with lms
+    val xs1 = xs.clone()
+    xs1.update(index, value)
+    xs1
   }
 
   def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = {
     implicit val ct = arrayToClassTag(xs)
-    (0 until indexes.length).foreach(i => xs.update(indexes(i), values(i)))
-    xs
+//    (0 until indexes.length).foreach(i => xs.update(indexes(i), values(i)))
+//    xs //in-place operation contradicts with lms
+    val xs1 = xs.clone()
+    (0 until indexes.length).foreach(i => xs1.update(indexes(i), values(i)))
+    xs1
   }
 
   def array_append[T](xs: Arr[T], value: Rep[T]): Arr[T] = {

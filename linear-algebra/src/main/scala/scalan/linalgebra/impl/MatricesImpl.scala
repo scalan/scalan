@@ -1,7 +1,7 @@
 package scalan.linalgebra
 
 import scalan._
-import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
+import scalan.common.OverloadHack.{Overloaded1, Overloaded2, Overloaded3}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
@@ -986,9 +986,9 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
       }
     }
 
-    object fromNColl_dense {
+    object fromNColl_dense1 {
       def unapply(d: Def[_]): Option[(NColl[T], Rep[Int], Elem[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(items, numColumns, elem, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromNColl" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "dense" } =>
+        case MethodCall(receiver, method, Seq(items, numColumns, elem, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromNColl" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "dense1" } =>
           Some((items, numColumns, elem)).asInstanceOf[Option[(NColl[T], Rep[Int], Elem[T]) forSome {type T}]]
         case _ => None
       }
@@ -998,10 +998,34 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
       }
     }
 
+    object fromNColl_dense2 {
+      def unapply(d: Def[_]): Option[(NColl[T], Elem[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(items, elem, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromNColl" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "dense2" } =>
+          Some((items, elem)).asInstanceOf[Option[(NColl[T], Elem[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(NColl[T], Elem[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromRows_fromRows {
+      def unapply(d: Def[_]): Option[Coll[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(rows, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromRows" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "fromRows" } =>
+          Some(rows).asInstanceOf[Option[Coll[Vector[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Coll[Vector[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object fromRows {
       def unapply(d: Def[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(rows, length, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromRows" =>
-          Some((rows, length)).asInstanceOf[Option[(Coll[Vector[T]], IntRep) forSome {type T}]]
+        case MethodCall(receiver, method, Seq(rows, numCols, _*), _) if receiver.elem == CompoundMatrixCompanionElem && method.getName == "fromRows" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((rows, numCols)).asInstanceOf[Option[(Coll[Vector[T]], IntRep) forSome {type T}]]
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = exp match {
