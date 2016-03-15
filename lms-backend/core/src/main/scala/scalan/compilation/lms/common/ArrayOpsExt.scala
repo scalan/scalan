@@ -266,7 +266,7 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
 
   override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] =
     (e match {
-      case Reflect(SimpleLoop(s,v,body: ArrayElem[A]), u, es) =>
+      case Reflect(SimpleLoop(s,v,body: ArrayElem[A]@unchecked), u, es) =>
         reflectMirrored(Reflect(SimpleLoop(f(s),f(v).asInstanceOf[Sym[Int]],mirrorFatDef(body,f)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
       case Reflect(ArrayForeach(a,x,b), u, es) => reflectMirrored(Reflect(ArrayForeach(f(a),f(x).asInstanceOf[Sym[A]],f(b)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
       case Reflect(a @ ArraySortBy(arr, by), u, es) => reflectMirrored(Reflect(ArraySortBy(f(arr), f(by))(a.mA, a.mB), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
