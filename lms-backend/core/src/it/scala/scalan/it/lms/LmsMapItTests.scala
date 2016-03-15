@@ -27,7 +27,7 @@ class LmsMapCxxItTests extends BaseItTests[SimpleMapProg](new ScalanDslStd with 
   val progStagedCxx = new LmsCompilerCxx(new ProgExp)
 
   // TODO lack of maps support in LMS C++ backend
-  val defaultCompilers = compilers(progStagedCxx)
+  val defaultCompilers = compilers(progStaged)
 
   test("mapPutContains") {
     compareOutputWithStd(_.mapPutContains)(Tuple2(314,3.14))
