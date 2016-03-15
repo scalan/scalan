@@ -164,26 +164,26 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
     case ArrayBufferUpdate(HasViews(buf, Def(iso: ArrayBufferIso[a, b])), i, v@HasViews(_, _)) =>
       implicit val eA = iso.innerIso.eFrom
       val buf1 = buf.asRep[ArrayBuffer[a]]
-      val v1 = iso.innerIso.from(v.asRep[b]).asRep[a]
+      val v1 = iso.innerIso.from(v.asRep[b])
       ViewArrayBuffer(buf1.update(i, v1), iso.innerIso)
 
     case ArrayBufferInsert(HasViews(buf, Def(iso: ArrayBufferIso[a, b])), i, v@HasViews(_, _)) =>
       implicit val eA = iso.innerIso.eFrom
       val buf1 = buf.asRep[ArrayBuffer[a]]
-      val v1 = iso.innerIso.from(v.asRep[b]).asRep[a]
+      val v1 = iso.innerIso.from(v.asRep[b])
       ViewArrayBuffer(buf1.insert(i, v1), iso.innerIso)
 
     case ArrayBufferAppend(HasViews(buf, Def(iso: ArrayBufferIso[a, b])), v@HasViews(_, _)) =>
       implicit val eA = iso.innerIso.eFrom
       val buf1 = buf.asRep[ArrayBuffer[a]]
-      val v1 = iso.innerIso.from(v.asRep[b]).asRep[a]
+      val v1 = iso.innerIso.from(v.asRep[b])
       ViewArrayBuffer(buf1 += v1, iso.innerIso)
 
     case ArrayBufferAppendArray(HasViews(buf, Def(iso: ArrayBufferIso[a, b])), a@HasViews(_, Def(_: ArrayIso[_, _]))) =>
       implicit val eA = iso.innerIso.eFrom
       val buf1 = buf.asRep[ArrayBuffer[a]]
       val arrIso = arrayIso(iso.innerIso)
-      val a1 = arrIso.from(a.asRep[Array[b]]).asRep[Array[a]]
+      val a1 = arrIso.from(a.asRep[Array[b]])
       ViewArrayBuffer(buf1 ++= a1, iso.innerIso)
 
     case mk@MakeArrayBuffer(ctx) if UnpackableElem.unapply(mk.eItem).isDefined =>

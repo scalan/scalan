@@ -140,25 +140,25 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsDslExp with Ba
     case ArrayUpdate(HasViews(xs, Def(iso: ArrayIso[a, b])), index, value@HasViews(_, _)) =>
       implicit val eA = iso.innerIso.eFrom
       val xs1 = xs.asRep[Array[a]]
-      val value1 = iso.innerIso.from(value.asRep[b]).asRep[a]
+      val value1 = iso.innerIso.from(value.asRep[b])
       ViewArray(xs1.update(index, value1), iso.innerIso)
 
     case ArrayUpdateMany(HasViews(xs, Def(iso: ArrayIso[a, b])), is, vs@HasViews(_, Def(_: ArrayIso[_, _]))) =>
       implicit val eA = iso.innerIso.eFrom
       val xs1 = xs.asRep[Array[a]]
-      val vs1 = iso.from(vs.asRep[Array[b]]).asRep[Array[a]]
+      val vs1 = iso.from(vs.asRep[Array[b]])
       ViewArray(xs1.updateMany(is, vs1), iso.innerIso)
 
     case ArrayAppend(HasViews(xs, Def(iso: ArrayIso[a, b])), value@HasViews(_, _)) =>
       implicit val eA = iso.innerIso.eFrom
       val xs1 = xs.asRep[Array[a]]
-      val value1 = iso.innerIso.from(value.asRep[b]).asRep[a]
+      val value1 = iso.innerIso.from(value.asRep[b])
       ViewArray(xs1 :+ value1, iso.innerIso)
 
     case ArrayCons(value@HasViews(_, _), HasViews(xs, Def(iso: ArrayIso[a, b]))) =>
       implicit val eA = iso.innerIso.eFrom
       val xs1 = xs.asRep[Array[a]]
-      val value1 = iso.innerIso.from(value.asRep[b]).asRep[a]
+      val value1 = iso.innerIso.from(value.asRep[b])
       ViewArray(value1 +: xs1, iso.innerIso)
 
     case ArrayReverse(HasViews(source, Def(iso: ArrayIso[a, b]))) =>

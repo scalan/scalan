@@ -53,7 +53,7 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
       implicit val eV = mapIso.iso2.eFrom.asElem[v]
       val map1 = map.asRep[MMap[k,v]]
-      val key1 = mapIso.iso1.from(key.asRep[k2]).asRep[k]
+      val key1 = mapIso.iso1.from(key.asRep[k2])
       mapIso.iso2.to(map1.apply(key1))
     // clean v2 if still needed after k2 is cleaned
     case MapApply(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key) if mapIso.iso1.isIdentity =>
@@ -68,7 +68,7 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
       implicit val eV = mapIso.iso2.eFrom.asElem[v]
       val map1 = map.asRep[MMap[k,v]]
-      val key1 = mapIso.iso1.from(key.asRep[k2]).asRep[k]
+      val key1 = mapIso.iso1.from(key.asRep[k2])
       map1.contains(key1)
     // clean v2 if still needed after k2 is cleaned
     case MapContains(HasViews(map, Def(mapIso: MapIso[k,v,k2,v2])), key) if mapIso.iso1.isIdentity =>
@@ -82,7 +82,7 @@ trait MapViewsExp extends MapViews with MapOpsExp with ViewsDslExp { self: Scala
       implicit val eK = mapIso.iso1.eFrom.asElem[k]
       implicit val eV = mapIso.iso2.eFrom.asElem[v]
       val left1 = left.asRep[MMap[k,v]]
-      val right1 = mapIso.from(right.asRep[MMap[k2,v2]]).asRep[MMap[k,v]]
+      val right1 = mapIso.from(right.asRep[MMap[k2,v2]])
       ViewMap(left1 union right1)(mapIso.iso1, mapIso.iso2)
 
     case MapUsingFunc(count, LambdaResultHasViews(f, Def(iso: PairIso[a1, a2, b1, b2]))) => {
