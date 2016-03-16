@@ -13,6 +13,7 @@ class CxxCoreCodegen[BackendCake <: LmsBackendFacade with JNILmsOpsExp](backend:
   with CxxShptrCodegen
   with CLikeGenEqual
   with CLikeGenPrimitiveOps
+  with CLikeGenMathOps
   with CxxShptrGenStruct
   with CxxShptrGenFatArrayLoopsFusionOpt
   with LoopFusionOpt
