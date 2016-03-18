@@ -51,6 +51,8 @@ trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL
       List(r, d.selfType.eLeft, d.selfType.eRight)
     case SumFold(s, l, r) =>
       List(s, l, r, s.elem.eLeft, s.elem.eRight, l.elem.eRange)
+    case SumMap(s, l, r) =>
+      List(s, l, r, s.elem.eLeft, s.elem.eRight, l.elem.eRange, r.elem.eRange)
     case First(pair) =>
       List(pair, pair.elem.eFst)
     case Second(pair) =>
