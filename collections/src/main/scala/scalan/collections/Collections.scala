@@ -34,6 +34,10 @@ trait Collections { self: CollectionsDsl =>
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  // = Collection(arr.append(value))
     def foldLeft[S: Elem](init: Rep[S], f: Rep[((S, Item)) => S]): Rep[S] = arr.fold(init, f)
     def sortBy[O: Elem](by: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item]
+    @OverloadId("generic")
+    def innerJoin[B, K, R](ys: Coll[B], a: Rep[Item => K], b: Rep[B => K], f: Rep[((Item, B)) => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)]
     /*def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(Collection[A], A)] = {
       val arrScan = arr.scan(m)
       (Collection(arrScan._1), arrScan._2)
@@ -143,6 +147,10 @@ trait Collections { self: CollectionsDsl =>
     def flatMapBy[B: Elem](f: Rep[Unit => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[Unit]): Coll[Unit]  = Collection(arr.append(value))
     def sortBy[O: Elem](by: Rep[Unit => O])(implicit o: Ordering[O]): Coll[Unit] = ???
+    @OverloadId("generic")
+    def innerJoin[B, K, R](ys: Coll[B], a: Rep[Unit => K], b: Rep[B => K], f: Rep[((Unit, B)) => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
   }
   trait UnitCollectionCompanion extends ConcreteClass0[UnitCollection]
 
@@ -165,6 +173,10 @@ trait Collections { self: CollectionsDsl =>
     def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr})
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = CollectionOverArray(arr.append(value))
     def sortBy[O: Elem](means: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item] = CollectionOverArray(arr.sortBy(means))
+    @OverloadId("generic")
+    def innerJoin[B, K, R](ys: Coll[B], a: Rep[Item => K], b: Rep[B => K], f: Rep[((Item, B)) => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
   }
   trait CollectionOverArrayCompanion extends ConcreteClass1[CollectionOverArray]
 
@@ -185,6 +197,10 @@ trait Collections { self: CollectionsDsl =>
       CollectionOverList(lst.flatMap { in => f(in).lst } )
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = CollectionOverList(value :: lst)
     def sortBy[O: Elem](by: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item] = ???
+    @OverloadId("generic")
+    def innerJoin[B, K, R](ys: Coll[B], a: Rep[Item => K], b: Rep[B => K], f: Rep[((Item, B)) => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
   }
   trait CollectionOverListCompanion extends ConcreteClass1[CollectionOverList]
 
@@ -210,6 +226,10 @@ trait Collections { self: CollectionsDsl =>
     def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] = ???
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = ???
     def sortBy[O: Elem](by: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item] = ???
+    @OverloadId("generic")
+    def innerJoin[B, K, R](ys: Coll[B], a: Rep[Item => K], b: Rep[B => K], f: Rep[((Item, B)) => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
   }
   trait CollectionOverSeqCompanion extends ConcreteClass1[CollectionOverSeq]
 
@@ -225,6 +245,10 @@ trait Collections { self: CollectionsDsl =>
                        (implicit ordK: Ordering[A], nA: Numeric[A], eB: Elem[B], eC: Elem[C], eR: Elem[R]): PairColl[A, R]
     def outerJoin[C, R](other: PairColl[A, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])
                        (implicit ordK: Ordering[A], nA: Numeric[A], eB: Elem[B], eC: Elem[C], eR: Elem[R]): PairColl[A, R]
+    @OverloadId("generic")
+    def innerJoin[C, K, R](ys: Coll[C], a: Rep[((A, B)) => K], b: Rep[C => K], f: Rep[(((A, B), C)) => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eC: Elem[C], eK: Elem[K], eR: Elem[R]): Coll[(K, R)]
   }
   type PairColl[A, B] = Rep[PairCollection[A, B]]
 
@@ -266,6 +290,10 @@ trait Collections { self: CollectionsDsl =>
       val sorted = Collection(arr.sortBy(means))
       PairCollectionSOA(sorted.as, sorted.bs)
     }
+    @OverloadId("generic")
+    def innerJoin[C, K, R](ys: Coll[C], a: Rep[((A, B)) => K], b: Rep[C => K], f: Rep[(((A, B), C)) => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eC: Elem[C], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
   }
 
   trait PairCollectionSOACompanion extends ConcreteClass2[PairCollectionSOA]
@@ -302,6 +330,10 @@ trait Collections { self: CollectionsDsl =>
       PairCollectionAOS(pairColl_outerJoin(this, other, f, f1, f2))
     }
     def sortBy[O: Elem](means: Rep[((A, B)) => O])(implicit o: Ordering[O]): PairColl[A, B] = PairCollectionAOS(Collection(arr.sortBy(means)))
+    @OverloadId("generic")
+    def innerJoin[C, K, R](ys: Coll[C], a: Rep[((A, B)) => K], b: Rep[C => K], f: Rep[(((A, B), C)) => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eC: Elem[C], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
   }
   trait PairCollectionAOSCompanion extends ConcreteClass2[PairCollectionAOS] {
     def fromArray[A: Elem, B: Elem](arr: Arr[(A, B)]) = PairCollectionAOS(CollectionOverArray(arr))
@@ -316,6 +348,10 @@ trait Collections { self: CollectionsDsl =>
     def segLens = segments.bs
     @OverloadId("many")
     override def apply(indices: Coll[Int])(implicit o: Overloaded1): Rep[NestedCollection[A]]
+    @OverloadId("generic")
+    def innerJoin[B, K, R](ys: Coll[B], a: Rep[Collection[A] => K], b: Rep[B => K], f: Rep[((Collection[A], B)) => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
   }
   //type NColl[A] = Rep[NestedCollectionFlat[A]]
   type NColl[A] = Rep[NestedCollection[A]]
@@ -442,6 +478,10 @@ trait Collections { self: CollectionsDsl =>
     def flatMapBy[R: Elem](f: Rep[((A=>B)) => Collection[R]]): Coll[R] = ???
     def append(value: Rep[A=>B]): Coll[A=>B]  = ???
     def sortBy[O: Elem](by: Rep[(A=>B) => O])(implicit o: Ordering[O]): Coll[A=>B] = ???
+    @OverloadId("generic")
+    def innerJoin[C, K, R](ys: Coll[C], a: Rep[(A => B) => K], b: Rep[C => K], f: Rep[((A => B, C)) => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eB: Elem[C], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
   }
 
   implicit def convertCollectionElem[A](e: Elem[Collection[A]]): CollectionElem[A, _] =
@@ -523,6 +563,11 @@ trait Collections { self: CollectionsDsl =>
     def append(value: Rep[StructItem[Val, Schema]]) = ???
 
     def sortBy[O: Elem](by: Rep[(StructItem[Val, Schema]) => O])(implicit o: Ordering[O]) = ???
+
+    @OverloadId("generic")
+    def innerJoin[B, K, R](ys: Coll[B], a: Rep[StructItem[Val,Schema] => K], b: Rep[B => K], f: Rep[((StructItem[Val,Schema], B)) => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
   }
 }
 
@@ -581,6 +626,15 @@ trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
     def indexRange(l: Rep[Int]): Coll[Int]
   }
 
+  def genericInnerJoin[A, B, K, R](xs: Coll[A], ys: Coll[B], a: Rep[A => K], b: Rep[B => K], f: Rep[((A, B)) => R])
+                                  (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                                   eA: Elem[A], eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)]
+
+  def genericOuterJoin[A, B, K, R](xs: Coll[A], ys: Coll[B], a: Rep[A => K], b: Rep[B => K],
+                                   f: Rep[((A, B)) => R], f1: Rep[A => R], f2: Rep[B => R])
+                                  (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                                   eA: Elem[A], eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)]
+
   def pairColl_innerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R])
                                     (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
                                      eK: Elem[K], eB: Elem[B], eC: Elem[C], eR: Elem[R]): Coll[(K, R)]
@@ -592,13 +646,70 @@ trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
 
 trait CollectionsDslStd extends impl.CollectionsStd with SeqsDslStd {
 
-  import scala.collection.mutable.ArrayBuilder
+  def genericInnerJoin[A, B, K, R](xs: Coll[A], ys: Coll[B], a: Rep[A => K], b: Rep[B => K], f: Rep[((A, B)) => R])
+                                  (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                                   eA: Elem[A], eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = {
+    val res = mutable.ArrayBuilder.make[(K, R)]
+    var i = 0
+    var j = 0
+    val n1 = xs.length
+    val n2 = ys.length
+    while (i < n1 && j < n2) {
+      val x = xs(i)
+      val y = ys(j)
+      val k = a(x)
+      val l = b(y)
+      val cmp = ordK.compare(k, l)
+      if (cmp == 0) {
+        res += ((k, f((x, y))))
+        i = i + 1
+        j = j + 1
+      } else if (cmp < 0) { i = i + 1 } else { j = j + 1 }
+    }
+    Collection(res.result)
+  }
+
+  def genericOuterJoin[A, B, K, R](xs: Coll[A], ys: Coll[B], a: Rep[A => K], b: Rep[B => K],
+                                   f: Rep[((A, B)) => R], f1: Rep[A => R], f2: Rep[B => R])
+                                  (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                                   eA: Elem[A], eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = {
+    val res = mutable.ArrayBuilder.make[(K, R)]
+    var i = 0
+    var j = 0
+    val n1 = xs.length
+    val n2 = ys.length
+    while (i < n1 && j < n2) {
+      if (i == n1) {
+        val y = ys(j)
+        val l = b(y)
+        res += ((l, f2(y)))
+        j = j + 1
+      } else if (j == n2) {
+        val x = xs(i)
+        val k = a(x)
+        res += ((k, f1(x)))
+        i = i + 1
+      } else {
+        val x = xs(i)
+        val y = ys(j)
+        val k = a(x)
+        val l = b(y)
+        val cmp = ordK.compare(k, l)
+        if (cmp == 0) {
+          res += ((k, f((x, y))))
+          i = i + 1
+          j = j + 1
+        } else if (cmp < 0) i = i + 1 else j = j + 1
+      }
+    }
+    Collection(res.result)
+  }
 
   def pairColl_innerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R])
                                     (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
                                      eK: Elem[K], eB: Elem[B], eC: Elem[C], eR: Elem[R]): Coll[(K, R)] = {
 
-    val res = ArrayBuilder.make[(K, R)]
+    val res = mutable.ArrayBuilder.make[(K, R)]
     var i = 0
     var j = 0
     val n1 = xs.length
@@ -619,7 +730,7 @@ trait CollectionsDslStd extends impl.CollectionsStd with SeqsDslStd {
   def pairColl_outerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])
                                     (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
                                      eK: Elem[K], eB: Elem[B], eC: Elem[C], eR: Elem[R]): Coll[(K, R)] = {
-    val res = ArrayBuilder.make[(K, R)]
+    val res = mutable.ArrayBuilder.make[(K, R)]
     var i = 0
     var j = 0
     val n1 = xs.length
@@ -682,6 +793,19 @@ trait CollectionsDslExp extends impl.CollectionsExp with SeqsDslExp {
       case _ => super.getResultElem(receiver, m, args)
     }
     case _ => super.getResultElem(receiver, m, args)
+  }
+
+  def genericInnerJoin[A, B, K, R](xs: Coll[A], ys: Coll[B], a: Rep[A => K], b: Rep[B => K], f: Rep[((A, B)) => R])
+                                  (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                                   eA: Elem[A], eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = {
+    Collection(GenericInnerJoin(xs.arr, ys.arr, a, b, f))
+  }
+
+  def genericOuterJoin[A, B, K, R](xs: Coll[A], ys: Coll[B], a: Rep[A => K], b: Rep[B => K],
+                                   f: Rep[((A, B)) => R], f1: Rep[A => R], f2: Rep[B => R])
+                                  (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                                   eA: Elem[A], eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = {
+    Collection(GenericOuterJoin(xs.arr, ys.arr, a, b, f, f1, f2))
   }
 
   def pairColl_innerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R])

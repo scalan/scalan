@@ -1346,6 +1346,18 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
         case _ => None
       }
     }
+
+    object innerJoin_generic {
+      def unapply(d: Def[_]): Option[(Rep[UnitCollection], Coll[B], Rep[Unit => K], Rep[B => K], Rep[((Unit, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type B; type K; type R}] = d match {
+        case MethodCall(receiver, method, Seq(ys, a, b, f, ordK, nK, selfType, eB, eK, eR, _*), _) if receiver.elem.isInstanceOf[UnitCollectionElem] && method.getName == "innerJoin" =>
+          Some((receiver, ys, a, b, f, ordK, nK, selfType, eB, eK, eR)).asInstanceOf[Option[(Rep[UnitCollection], Coll[B], Rep[Unit => K], Rep[B => K], Rep[((Unit, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type B; type K; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[UnitCollection], Coll[B], Rep[Unit => K], Rep[B => K], Rep[((Unit, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type B; type K; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object UnitCollectionCompanionMethods {
@@ -1533,6 +1545,18 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
         case _ => None
       }
     }
+
+    object innerJoin_generic {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}] = d match {
+        case MethodCall(receiver, method, Seq(ys, a, b, f, ordK, nK, selfType, eB, eK, eR, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "innerJoin" =>
+          Some((receiver, ys, a, b, f, ordK, nK, selfType, eB, eK, eR)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object CollectionOverArrayCompanionMethods {
@@ -1716,6 +1740,18 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Rep[Item => O], Ordering[O]) forSome {type Item; type O}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object innerJoin_generic {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}] = d match {
+        case MethodCall(receiver, method, Seq(ys, a, b, f, ordK, nK, selfType, eB, eK, eR, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "innerJoin" =>
+          Some((receiver, ys, a, b, f, ordK, nK, selfType, eB, eK, eR)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1915,6 +1951,18 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Item => O], Ordering[O]) forSome {type Item; type O}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object innerJoin_generic {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}] = d match {
+        case MethodCall(receiver, method, Seq(ys, a, b, f, ordK, nK, selfType, eB, eK, eR, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "innerJoin" =>
+          Some((receiver, ys, a, b, f, ordK, nK, selfType, eB, eK, eR)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -2121,7 +2169,7 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
 
     object innerJoin {
       def unapply(d: Def[_]): Option[(Rep[PairCollectionSOA[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Numeric[A], Elem[B], Elem[C], Elem[R]) forSome {type A; type B; type C; type R}] = d match {
-        case MethodCall(receiver, method, Seq(other, f, ordK, nA, eB, eC, eR, _*), _) if receiver.elem.isInstanceOf[PairCollectionSOAElem[_, _]] && method.getName == "innerJoin" =>
+        case MethodCall(receiver, method, Seq(other, f, ordK, nA, eB, eC, eR, _*), _) if receiver.elem.isInstanceOf[PairCollectionSOAElem[_, _]] && method.getName == "innerJoin" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, other, f, ordK, nA, eB, eC, eR)).asInstanceOf[Option[(Rep[PairCollectionSOA[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Numeric[A], Elem[B], Elem[C], Elem[R]) forSome {type A; type B; type C; type R}]]
         case _ => None
       }
@@ -2150,6 +2198,18 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[PairCollectionSOA[A, B]], Rep[((A, B)) => O], Ordering[O]) forSome {type A; type B; type O}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object innerJoin_generic {
+      def unapply(d: Def[_]): Option[(Rep[PairCollectionSOA[A, B]], Coll[C], Rep[((A, B)) => K], Rep[C => K], Rep[(((A, B), C)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[C], Elem[K], Elem[R]) forSome {type A; type R; type K; type C; type B}] = d match {
+        case MethodCall(receiver, method, Seq(ys, a, b, f, ordK, nK, selfType, eC, eK, eR, _*), _) if receiver.elem.isInstanceOf[PairCollectionSOAElem[_, _]] && method.getName == "innerJoin" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "generic" } =>
+          Some((receiver, ys, a, b, f, ordK, nK, selfType, eC, eK, eR)).asInstanceOf[Option[(Rep[PairCollectionSOA[A, B]], Coll[C], Rep[((A, B)) => K], Rep[C => K], Rep[(((A, B), C)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[C], Elem[K], Elem[R]) forSome {type A; type R; type K; type C; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollectionSOA[A, B]], Coll[C], Rep[((A, B)) => K], Rep[C => K], Rep[(((A, B), C)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[C], Elem[K], Elem[R]) forSome {type A; type R; type K; type C; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -2380,7 +2440,7 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
 
     object innerJoin {
       def unapply(d: Def[_]): Option[(Rep[PairCollectionAOS[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Numeric[A], Elem[B], Elem[C], Elem[R]) forSome {type A; type B; type C; type R}] = d match {
-        case MethodCall(receiver, method, Seq(other, f, ordK, nA, eB, eC, eR, _*), _) if receiver.elem.isInstanceOf[PairCollectionAOSElem[_, _]] && method.getName == "innerJoin" =>
+        case MethodCall(receiver, method, Seq(other, f, ordK, nA, eB, eC, eR, _*), _) if receiver.elem.isInstanceOf[PairCollectionAOSElem[_, _]] && method.getName == "innerJoin" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, other, f, ordK, nA, eB, eC, eR)).asInstanceOf[Option[(Rep[PairCollectionAOS[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Numeric[A], Elem[B], Elem[C], Elem[R]) forSome {type A; type B; type C; type R}]]
         case _ => None
       }
@@ -2409,6 +2469,18 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[PairCollectionAOS[A, B]], Rep[((A, B)) => O], Ordering[O]) forSome {type A; type B; type O}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object innerJoin_generic {
+      def unapply(d: Def[_]): Option[(Rep[PairCollectionAOS[A, B]], Coll[C], Rep[((A, B)) => K], Rep[C => K], Rep[(((A, B), C)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[C], Elem[K], Elem[R]) forSome {type A; type R; type K; type C; type B}] = d match {
+        case MethodCall(receiver, method, Seq(ys, a, b, f, ordK, nK, selfType, eC, eK, eR, _*), _) if receiver.elem.isInstanceOf[PairCollectionAOSElem[_, _]] && method.getName == "innerJoin" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "generic" } =>
+          Some((receiver, ys, a, b, f, ordK, nK, selfType, eC, eK, eR)).asInstanceOf[Option[(Rep[PairCollectionAOS[A, B]], Coll[C], Rep[((A, B)) => K], Rep[C => K], Rep[(((A, B), C)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[C], Elem[K], Elem[R]) forSome {type A; type R; type K; type C; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollectionAOS[A, B]], Coll[C], Rep[((A, B)) => K], Rep[C => K], Rep[(((A, B), C)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[C], Elem[K], Elem[R]) forSome {type A; type R; type K; type C; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -3079,6 +3151,18 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
         case _ => None
       }
     }
+
+    object innerJoin_generic {
+      def unapply(d: Def[_]): Option[(Rep[FuncCollection[A, B, Env]], Coll[C], Rep[A => B => K], Rep[C => K], Rep[((A => B, C)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[C], Elem[K], Elem[R]) forSome {type A; type R; type Env; type K; type C; type B}] = d match {
+        case MethodCall(receiver, method, Seq(ys, a, b, f, ordK, nK, selfType, eB, eK, eR, _*), _) if receiver.elem.isInstanceOf[FuncCollectionElem[_, _, _]] && method.getName == "innerJoin" =>
+          Some((receiver, ys, a, b, f, ordK, nK, selfType, eB, eK, eR)).asInstanceOf[Option[(Rep[FuncCollection[A, B, Env]], Coll[C], Rep[A => B => K], Rep[C => K], Rep[((A => B, C)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[C], Elem[K], Elem[R]) forSome {type A; type R; type Env; type K; type C; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FuncCollection[A, B, Env]], Coll[C], Rep[A => B => K], Rep[C => K], Rep[((A => B, C)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[C], Elem[K], Elem[R]) forSome {type A; type R; type Env; type K; type C; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   def mkFuncCollection[A, B, Env]
@@ -3285,6 +3369,18 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Rep[StructItem[Val, Schema] => O], Ordering[O]) forSome {type Val; type Schema <: Struct; type O}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object innerJoin_generic {
+      def unapply(d: Def[_]): Option[(Rep[StructItemCollection[Val, Schema]], Coll[B], Rep[StructItem[Val, Schema] => K], Rep[B => K], Rep[((StructItem[Val, Schema], B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Schema <: Struct; type R; type K; type Val; type B}] = d match {
+        case MethodCall(receiver, method, Seq(ys, a, b, f, ordK, nK, selfType, eB, eK, eR, _*), _) if receiver.elem.isInstanceOf[StructItemCollectionElem[_, _]] && method.getName == "innerJoin" =>
+          Some((receiver, ys, a, b, f, ordK, nK, selfType, eB, eK, eR)).asInstanceOf[Option[(Rep[StructItemCollection[Val, Schema]], Coll[B], Rep[StructItem[Val, Schema] => K], Rep[B => K], Rep[((StructItem[Val, Schema], B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Schema <: Struct; type R; type K; type Val; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[StructItemCollection[Val, Schema]], Coll[B], Rep[StructItem[Val, Schema] => K], Rep[B => K], Rep[((StructItem[Val, Schema], B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Schema <: Struct; type R; type K; type Val; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -3513,6 +3609,18 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Rep[Item => O], Ordering[O]) forSome {type Item; type O}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object innerJoin_generic {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}] = d match {
+        case MethodCall(receiver, method, Seq(ys, a, b, f, ordK, nK, selfType, eB, eK, eR, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "innerJoin" =>
+          Some((receiver, ys, a, b, f, ordK, nK, selfType, eB, eK, eR)).asInstanceOf[Option[(Rep[Collection[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Coll[B], Rep[Item => K], Rep[B => K], Rep[((Item, B)) => R], Ordering[K], Numeric[K], Elem[Array[(K, R)]], Elem[B], Elem[K], Elem[R]) forSome {type Item; type B; type K; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
