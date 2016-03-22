@@ -100,6 +100,8 @@ trait CxxShptrGenEitherOps extends CxxShptrCodegen {
   val IR: EitherOpsExp
   import IR._
 
+  headerFiles += "boost/variant.hpp"
+
   override protected def doNotWrap(m: Manifest[_]) = m.runtimeClass == classOf[Either[_,_]] ||
     super.doNotWrap(m)
 
