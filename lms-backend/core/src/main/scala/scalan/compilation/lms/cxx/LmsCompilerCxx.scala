@@ -6,6 +6,8 @@ import scalan.ScalanDslExp
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.LmsCompiler
 import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
+import scalan.compilation.lms.source2bin.Gcc
+import scalan.util.{ProcessUtil, FileUtil}
 
 class LmsCompilerCxx[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) {
   import scalan._
@@ -18,16 +20,28 @@ class LmsCompilerCxx[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends L
 
   override protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
-    /* LMS stuff */
+    val sourceFile = emitSource(sourcesDir, functionName, graph, eInput, eOutput, graphVizConfig)
 
-    emitSource(sourcesDir, functionName, graph, eInput, eOutput, graphVizConfig)
-//    val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
-//      sourceFile.getAbsolutePath
-//
-//    val command = Seq("make")
-//    ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
+    val makefileContents = this.makefileContents(sourceFile, executableDir, functionName, compilerConfig)
+    val makefile = FileUtil.file(sourcesDir, "Makefile")
+    FileUtil.write(makefile, makefileContents)
+
+    val command = Seq("make")
+    ProcessUtil.launch(sourcesDir, command: _*)
   }
 
+  // Any other arguments?
+  protected def makefileContents(sourceFile: File, executableDir: File, functionName: String, compilerConfig: CompilerConfig): String = {
+    val libFileName = System.mapLibraryName(functionName)
+    val sourceFileName = sourceFile.getName
+    val compileCommand = Gcc.compileCommand(executableDir.getAbsolutePath, sourceFile.getParentFile, sourceFile, functionName)
+    s"""all: $libFileName
+        |
+        |$libFileName: $sourceFileName
+        |""".stripMargin + "\t" + compileCommand // TODO how to better put tabs here?
+  }
+
+  // TODO currently not executed
   override protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
 //    val url = new File(jarPath(functionName, executableDir)).toURI.toURL
 //    // ensure Scala library is available
