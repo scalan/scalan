@@ -16,7 +16,7 @@ class DummyCompiler[ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends Com
 
   type CustomCompilerOutput = Unit
 
-  override def graphPasses(compilerConfig: CompilerConfig) = Seq.empty[PGraph => GraphPass]
+  override def graphPasses(compilerConfig: CompilerConfig) = Seq.empty[PassBuilder[GraphPass]]
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = ()

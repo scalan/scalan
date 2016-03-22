@@ -10,36 +10,44 @@ trait Passes {
   // to avoid need to import compiler.scalan.Exp in many places
   type Exp[+T] = scalan.Exp[T]
 
-  abstract class Analysis {
-    def name: String
-    def apply(graph: PGraph): Unit
-    override def toString = s"Analysis($name)"
-  }
-
   abstract class GraphPass extends Pass {
+    def builder: PassBuilder[GraphPass]
     def analyse(graph: PGraph): Unit = {
-      for (a <- analyses) {
+      for (a <- builder.analyses) {
         a(graph)
       }
     }
     def apply(graph: PGraph): PGraph
-    private val analyses = mutable.ArrayBuffer[Analysis]()
-    def addAnalysis(a: Analysis) = {
+  }
+
+  trait PassBuilder[+P <: Pass] extends (PGraph => P) {
+    def name: String
+
+    val analyses = mutable.ArrayBuffer[Analyzer]()
+    def addAnalysis(a: Analyzer) = {
       if (analyses.exists(_.name == a.name))
         !!!(s"Duplicate analysis ${a.name} for the phase ${this.name}, existing analyses: $analyses")
       analyses += a
     }
   }
 
+  class GraphPassBuilder[+P <: GraphPass](val name: String, createPass: (PassBuilder[P], PGraph) => P)
+      extends PassBuilder[P] {
+    def apply(g: PGraph) = createPass(this, g)
+  }
+
+  class ConstPassBuilder[+P <: GraphPass](name: String, createPass: (PassBuilder[P], PGraph) => P)
+      extends GraphPassBuilder[P](name, createPass)
+
   trait ExpPass extends Pass {
     def apply[A](s: Exp[A]): Exp[_]
   }
 
-  class GraphTransformPass(val name: String, mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
+  class GraphTransformPass(val builder: PassBuilder[GraphPass], val name: String, mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
     def apply(graph: PGraph): PGraph = graph.transform(mirror, rewriter, MapTransformer.Empty)
   }
 
-  class EnableInvokePass(methodsDescription: String)(invokePred: InvokeTester) extends GraphPass {
+  class EnableInvokePass(val builder: PassBuilder[GraphPass], methodsDescription: String)(invokePred: InvokeTester) extends GraphPass {
     def name = s"enable_invoke_$methodsDescription"
 
     def apply(graph: PGraph) = {
@@ -52,7 +60,7 @@ trait Passes {
     }
   }
 
-  class EnableUnpackPass(methodsDescription: String)(unpackPred: UnpackTester) extends GraphPass {
+  class EnableUnpackPass(val builder: PassBuilder[GraphPass], methodsDescription: String)(unpackPred: UnpackTester) extends GraphPass {
     def name = s"enable_unpack_$methodsDescription"
 
     def apply(graph: PGraph) = {
@@ -65,15 +73,16 @@ trait Passes {
     }
   }
 
-  def constantPass(pass: GraphPass) = (_: PGraph) => pass
+  def constantPass[P <: GraphPass](name: String, creator: PassBuilder[P] => P) =
+    new ConstPassBuilder[P](name, (b,_) => creator(b))
 
-  def invokeEnabler(name: String)(pred: InvokeTester) =
-    constantPass(new EnableInvokePass(name)(NamedInvokeTester(name, pred)))
+  def invokeEnabler(name: String)(pred: InvokeTester): PassBuilder[GraphPass] =
+    constantPass[GraphPass](name, b => new EnableInvokePass(b, name)(NamedInvokeTester(name, pred)))
 
-  lazy val AllInvokeEnabler = invokeEnabler("all") { (_, _) => true }
+  lazy val AllInvokeEnabler = invokeEnabler("invoke") { (_, _) => true }
 
-  def unpackEnabler(name: String)(pred: UnpackTester) =
-    constantPass(new EnableUnpackPass(name)(NamedUnpackTester(name, pred)))
+  def unpackEnabler(name: String)(pred: UnpackTester): PassBuilder[GraphPass] =
+    constantPass[GraphPass](name, b => new EnableUnpackPass(b, name)(NamedUnpackTester(name, pred)))
 
-  lazy val AllUnpackEnabler = unpackEnabler("all") { _ => true }
+  lazy val AllUnpackEnabler = unpackEnabler("unpack") { _ => true }
 }

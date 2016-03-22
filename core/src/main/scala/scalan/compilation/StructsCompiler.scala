@@ -9,16 +9,18 @@ trait StructsCompiler[+ScalanCake <: ScalanDslExp with StructsDslExp] extends Co
   override def graphPasses(compilerConfig: CompilerConfig) = {
     val passes = super.graphPasses(compilerConfig) ++
       Seq(AllInvokeEnabler,
-        constantPass(new StructsPass(DefaultMirror, StructsRewriter)))
+        constantPass[StructsPass](StructsPass.name, b => new StructsPass(b, DefaultMirror, StructsRewriter)))
     passes.distinct
   }
 
-  class StructsPass(mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
-    def name = "structs"
+  class StructsPass(val builder: PassBuilder[GraphPass], mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
+    def name = StructsPass.name
     override val config = PassConfig(shouldUnpackTuples = true)
     def apply(graph: PGraph): PGraph = {
       graph.transform(mirror, rewriter, MapTransformer.Empty)
     }
   }
-
+  object StructsPass {
+    val name = "structs"
+  }
 }

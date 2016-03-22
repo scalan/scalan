@@ -20,7 +20,7 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
 
   // see comment for buildInitialGraph
   // TODO sequence may depend on input or intermediate graphs, use a state monad instead
-  def graphPasses(compilerConfig: CompilerConfig): Seq[PGraph => GraphPass] = Seq()
+  def graphPasses(compilerConfig: CompilerConfig): Seq[PassBuilder[GraphPass]] = Seq()
   def onFinishGraphPasses() = {
     scalan.resetTesters()
   }

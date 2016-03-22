@@ -9,10 +9,12 @@ class RewritingTests extends BaseCtxTests {
   trait TestTransform extends Passes {
     import scalan._
 
-    lazy val pass = new GraphTransformPass("testTransformPass", DefaultMirror, NoRewriting)
+    val passName = "testTransformPass"
+    lazy val builder = constantPass[GraphPass](passName, b => new GraphTransformPass(b, passName, DefaultMirror, NoRewriting))
 
     def doTransform[A](e: Exp[A]): Exp[_] = {
       val g0 = new PGraph(e)
+      val pass = builder(g0)
       val g = pass.apply(g0)
       g.roots.head
     }

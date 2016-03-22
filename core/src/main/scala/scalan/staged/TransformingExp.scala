@@ -398,4 +398,11 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       }
     }
   }
+
+  abstract class Analyzer {
+    def name: String
+    def apply(graph: PGraph): Unit
+    override def toString = s"Analysis($name)"
+  }
+
 }
