@@ -35,9 +35,15 @@ trait GraphVizExport { self: ScalanExp =>
       case _ =>
     }
     stream.println(StringUtil.quote(sym) + " [")
-    stream.println(nodeLabel(sym.toStringWithType + " =", formatDef(rhs)))
+    val parts = List(sym.toStringWithType + " =", formatDef(rhs)) ::: (if (config.emitMetadata) List(formatMetadata(sym)) else Nil)
+    stream.println(nodeLabel(parts: _*))
     stream.println(s"shape=box,color=${nodeColor(sym)},tooltip=${StringUtil.quote(sym.toStringWithType)}")
     stream.println("]")
+  }
+
+  protected def formatMetadata(s: Exp[_]): String = {
+    val metaNode = s.allMetadata
+    metaNode.meta.map { case (k, v) => s"$k:$v" }.mkString("{", ";", "}")
   }
 
   protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
@@ -253,7 +259,8 @@ object ControlFlowWithArrows extends ControlFlowStyle
 case class GraphVizConfig(emitGraphs: Boolean,
                           orientation: Orientation,
                           maxLabelLineLength: Int,
-                          subgraphClusters: Boolean) {
+                          subgraphClusters: Boolean,
+                          emitMetadata: Boolean = false) {
 
   // ensures nice line wrapping
   def nodeLabel(parts: Seq[String]):String = {
