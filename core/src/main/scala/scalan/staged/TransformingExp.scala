@@ -2,8 +2,10 @@ package scalan.staged
 
 import java.lang.reflect.InvocationTargetException
 
+import scala.collection.{mutable, Seq}
 import scalan.{Scalan, ScalanExp}
-import scalan.common.Lazy
+import scalan.common.{Default, Lazy}
+import scala.reflect.runtime.universe._
 
 trait Transforming { self: Scalan =>
 
@@ -38,6 +40,29 @@ trait Transforming { self: Scalan =>
   }
   def endPass(pass: Pass): Unit = {
     _currentPass = Pass.defaultPass
+  }
+
+  case class SingletonElem[T: WeakTypeTag](value: T)
+    extends BaseElem[T]()(weakTypeTag[T], Default.defaultVal(value))
+
+  case class KeyPath(path: String) {
+    def +(other: KeyPath) = KeyPath(s"$path+${other.path}")
+    def +(other: String) = KeyPath(s"$path+${other}")
+    def isAll = path == KeyPath.All.path
+    def isNone = path == null || path == KeyPath.None.path
+  }
+  object KeyPath {
+    val Root = KeyPath("/")
+    val This = KeyPath(".")
+    val All = KeyPath("*")
+    val None = KeyPath("")
+  }
+
+  def keyPathElem(kp: KeyPath): Elem[KeyPath] = SingletonElem(kp)
+  def keyPathElem(path: String): Elem[KeyPath] = keyPathElem(KeyPath(path))
+
+  implicit class KeyPathElemOps(eKeyPath: Elem[KeyPath]) {
+    def keyPath = eKeyPath.asInstanceOf[SingletonElem[KeyPath]].value
   }
 
 }
@@ -243,7 +268,7 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
 
     private def setMirroredMetadata(t1: Ctx, node: Exp[_], mirrored: Exp[_]): (Ctx, Exp[_]) = {
       val (t2, mirroredMetadata) = mirrorMetadata(t1, node, mirrored)
-      setAllMetadata(mirrored, mirroredMetadata)
+      setAllMetadata(mirrored, mirroredMetadata.filterSinglePass)
       (t2, mirrored)
     }
 
@@ -401,8 +426,64 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
 
   abstract class Analyzer {
     def name: String
-    def apply(graph: PGraph): Unit
     override def toString = s"Analysis($name)"
   }
 
+  trait Lattice[M[_]] {
+    def join[T](a: M[T], b: M[T]): M[T]
+  }
+
+  trait BackwardAnalyzer[M[_]] extends Analyzer {
+    type MarkedSym = (Exp[T], M[T]) forSome {type T}
+    type MarkedSyms = Seq[MarkedSym]
+    def keyPrefix: String = name
+
+    def lattice: Lattice[M]
+    def defaultMarking[T:Elem]: M[T]
+    def getInboundMarkings[T](d: Def[T], outMark: M[T]): MarkedSyms
+
+    def getMarkingKey[T](implicit eT:Elem[T]): MetaKey[M[T]] = markingKey[T](keyPrefix).asInstanceOf[MetaKey[M[T]]]
+
+    def getMark[T](s: Exp[T]): M[T] = {
+      implicit val eT = s.elem
+      val mark = s.getMetadata(getMarkingKey[T]).getOrElse(defaultMarking[T])
+      mark
+    }
+
+    def updateOutboundMarking[T](s: Exp[T], mark: M[T]): Unit = {
+      implicit val eT = s.elem
+      val current = getMark(s)
+      val updated = lattice.join(current, mark)
+      val key = getMarkingKey[T]
+      s.setMetadata(key)(updated)
+    }
+  }
+
+  trait Marking[T] {
+    def elem: Elem[T]
+    def basePath: KeyPath
+    def nonEmpty: Boolean
+  }
+
+  class EmptyMarking[T](
+                         val elem: Elem[T],
+                         val basePath: KeyPath = KeyPath(".")) extends Marking[T] {
+    def nonEmpty = false
+  }
+
+  type MarkedSym = (Exp[T], Marking[T]) forSome {type T}
+  type MarkedSyms = Seq[MarkedSym]
+
+  implicit def markingDefault[T:Elem]: Default[Marking[T]] =
+    Default.defaultVal(new EmptyMarking[T](element[T]))
+
+  class MarkingElem[T:Elem] extends BaseElem[Marking[T]]()
+  implicit def markingElem[T:Elem] = new MarkingElem[T]
+
+  private val markingKeys = mutable.Map.empty[Elem[_], MetaKey[_]]
+
+  def markingKey[T](prefix: String)(implicit eT:Elem[T]): MetaKey[Marking[T]] = {
+    val key = markingKeys.getOrElseUpdate(eT, MetaKey[Marking[T]](s"${prefix}_marking[${eT.name}]", Some(true)))
+    key.asInstanceOf[MetaKey[Marking[T]]]
+  }
 }

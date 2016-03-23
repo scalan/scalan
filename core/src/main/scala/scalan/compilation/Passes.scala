@@ -12,22 +12,38 @@ trait Passes {
 
   abstract class GraphPass extends Pass {
     def builder: PassBuilder[GraphPass]
-    def analyse(graph: PGraph): Unit = {
-      for (a <- builder.analyses) {
-        a(graph)
-      }
+    def backwardAnalyse(graph: PGraph): Unit = {
+      builder.backwardAnalyze(graph)
     }
     def apply(graph: PGraph): PGraph
   }
 
   trait PassBuilder[+P <: Pass] extends (PGraph => P) {
     def name: String
+    type Analyzer = BackwardAnalyzer[M] forSome {type M[_]}
+    val backwardAnalyses = mutable.ArrayBuffer[Analyzer]()
+    def addAnalysis[M[_]](a: BackwardAnalyzer[M]) = {
+      if (backwardAnalyses.exists(_.name == a.name))
+        !!!(s"Duplicate analysis ${a.name} for the phase ${this.name}, existing analyses: $backwardAnalyses")
+      backwardAnalyses += a.asInstanceOf[Analyzer]
+    }
 
-    val analyses = mutable.ArrayBuffer[Analyzer]()
-    def addAnalysis(a: Analyzer) = {
-      if (analyses.exists(_.name == a.name))
-        !!!(s"Duplicate analysis ${a.name} for the phase ${this.name}, existing analyses: $analyses")
-      analyses += a
+    def backwardAnalyze(g: AstGraph): Unit = {
+      val revSchedule = g.schedule.reverseIterator
+      for (TableEntry(s: Exp[t], d) <- revSchedule) {
+        d match {
+          case l: Lambda[a,b] =>
+            backwardAnalyze(l)   // analize lambda first
+          case _ =>
+        }
+        for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
+          val outMark = a.getMark(s)
+          val inMarks = a.getInboundMarkings(d, outMark)
+          for ((s, mark) <- inMarks) {
+            a.updateOutboundMarking(s, mark)
+          }
+        }
+      }
     }
   }
 

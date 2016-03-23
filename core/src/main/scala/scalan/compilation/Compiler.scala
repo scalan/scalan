@@ -63,7 +63,7 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
 
       emittingGraph[PGraph](dotFileName, pass.name, g => g) {
         scalan.beginPass(pass)
-        pass.analyse(graph)
+        pass.backwardAnalyse(graph)
         val graph1 = pass(graph).withoutContext
         scalan.endPass(pass)
         graph1
