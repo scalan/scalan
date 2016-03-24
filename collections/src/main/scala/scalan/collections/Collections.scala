@@ -38,6 +38,12 @@ trait Collections { self: CollectionsDsl =>
     def innerJoin[B, K, R](ys: Coll[B], a: Rep[Item => K], b: Rep[B => K], f: Rep[((Item, B)) => R])
                           (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
                            eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)]
+    @OverloadId("generic")
+    def outerJoin[B, K, R](ys: Coll[B], a: Rep[Item => K], b: Rep[B => K],
+                           f: Rep[((Item, B)) => R], f1: Rep[Item => R], f2: Rep[B => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] =
+      genericOuterJoin(this, ys, a, b, f, f1, f2)
     /*def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(Collection[A], A)] = {
       val arrScan = arr.scan(m)
       (Collection(arrScan._1), arrScan._2)
@@ -177,6 +183,10 @@ trait Collections { self: CollectionsDsl =>
     def innerJoin[B, K, R](ys: Coll[B], a: Rep[Item => K], b: Rep[B => K], f: Rep[((Item, B)) => R])
                           (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
                            eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
+    /*@OverloadId("generic")
+    def outerJoin[B, K, R](ys: Coll[B], a: Rep[Item => K], b: Rep[B => K], f: Rep[((Item, B)) => R], f1: Rep[Item => R], f2: Rep[B => R])
+                          (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
+                           eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???*/
   }
   trait CollectionOverArrayCompanion extends ConcreteClass1[CollectionOverArray]
 
@@ -293,7 +303,7 @@ trait Collections { self: CollectionsDsl =>
     @OverloadId("generic")
     def innerJoin[C, K, R](ys: Coll[C], a: Rep[((A, B)) => K], b: Rep[C => K], f: Rep[(((A, B), C)) => R])
                           (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
-                           eC: Elem[C], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
+                           eC: Elem[C], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = genericInnerJoin(this, ys, a, b, f)
   }
 
   trait PairCollectionSOACompanion extends ConcreteClass2[PairCollectionSOA]
@@ -333,7 +343,7 @@ trait Collections { self: CollectionsDsl =>
     @OverloadId("generic")
     def innerJoin[C, K, R](ys: Coll[C], a: Rep[((A, B)) => K], b: Rep[C => K], f: Rep[(((A, B), C)) => R])
                           (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
-                           eC: Elem[C], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = ???
+                           eC: Elem[C], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = genericInnerJoin(this, ys, a, b, f)
   }
   trait PairCollectionAOSCompanion extends ConcreteClass2[PairCollectionAOS] {
     def fromArray[A: Elem, B: Elem](arr: Arr[(A, B)]) = PairCollectionAOS(CollectionOverArray(arr))
