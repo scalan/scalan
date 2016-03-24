@@ -284,7 +284,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
 
   case class ArrayBufferLength[T](buf: Rep[ArrayBuffer[T]])(implicit val eT: Elem[T]) extends BaseDef[Int]
 
-  case class ArrayBufferMap[T, R](buf: Rep[ArrayBuffer[T]], f: Rep[T => R])(implicit val eT: Elem[T], eR: Elem[R]) extends ArrayBufferDef[R]
+  case class ArrayBufferMap[T, R](buf: Rep[ArrayBuffer[T]], f: Rep[T => R])(implicit val eT: Elem[T], val eR: Elem[R]) extends ArrayBufferDef[R]
 
   case class ArrayBufferUpdate[T](buf: Rep[ArrayBuffer[T]], i: Rep[Int], v: Rep[T])(implicit eItem: Elem[T]) extends ArrayBufferDef[T]
 
