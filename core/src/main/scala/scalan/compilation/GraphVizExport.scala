@@ -43,7 +43,7 @@ trait GraphVizExport { self: ScalanExp =>
 
   protected def formatMetadata(s: Exp[_]): String = {
     val metaNode = s.allMetadata
-    metaNode.meta.map { case (k, v) => s"$k:$v" }.mkString("{", ";", "}")
+    metaNode.meta.map { case (k, v) => s"$k:${v.value}" }.mkString("{", ";", "}")
   }
 
   protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {

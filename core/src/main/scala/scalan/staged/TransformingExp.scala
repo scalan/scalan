@@ -440,6 +440,11 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
 
     def lattice: Lattice[M]
     def defaultMarking[T:Elem]: M[T]
+
+    def updateMark[T](s: Exp[T], other: M[T]): (Exp[T], M[T]) = {
+      s -> lattice.join(getMark(s), other)
+    }
+
     def getInboundMarkings[T](d: Def[T], outMark: M[T]): MarkedSyms
 
     def getMarkingKey[T](implicit eT:Elem[T]): MetaKey[M[T]] = markingKey[T](keyPrefix).asInstanceOf[MetaKey[M[T]]]
@@ -455,19 +460,17 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       val current = getMark(s)
       val updated = lattice.join(current, mark)
       val key = getMarkingKey[T]
-      s.setMetadata(key)(updated)
+      s.setMetadata(key)(updated, Some(true))
     }
   }
 
   trait Marking[T] {
     def elem: Elem[T]
-    def basePath: KeyPath
+    def basePath: KeyPath = KeyPath.Root
     def nonEmpty: Boolean
   }
 
-  class EmptyMarking[T](
-                         val elem: Elem[T],
-                         val basePath: KeyPath = KeyPath(".")) extends Marking[T] {
+  class EmptyMarking[T](val elem: Elem[T]) extends Marking[T] {
     def nonEmpty = false
   }
 
@@ -480,10 +483,10 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
   class MarkingElem[T:Elem] extends BaseElem[Marking[T]]()
   implicit def markingElem[T:Elem] = new MarkingElem[T]
 
-  private val markingKeys = mutable.Map.empty[Elem[_], MetaKey[_]]
+  private val markingKeys = mutable.Map.empty[(String, Elem[_]), MetaKey[_]]
 
   def markingKey[T](prefix: String)(implicit eT:Elem[T]): MetaKey[Marking[T]] = {
-    val key = markingKeys.getOrElseUpdate(eT, MetaKey[Marking[T]](s"${prefix}_marking[${eT.name}]", Some(true)))
+    val key = markingKeys.getOrElseUpdate((prefix, eT), MetaKey[Marking[T]](s"${prefix}_marking[${eT.name}]"))
     key.asInstanceOf[MetaKey[Marking[T]]]
   }
 }

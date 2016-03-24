@@ -31,17 +31,17 @@ trait Passes {
     def backwardAnalyze(g: AstGraph): Unit = {
       val revSchedule = g.schedule.reverseIterator
       for (TableEntry(s: Exp[t], d) <- revSchedule) {
-        d match {
-          case l: Lambda[a,b] =>
-            backwardAnalyze(l)   // analize lambda first
-          case _ =>
-        }
         for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
           val outMark = a.getMark(s)
           val inMarks = a.getInboundMarkings(d, outMark)
           for ((s, mark) <- inMarks) {
             a.updateOutboundMarking(s, mark)
           }
+        }
+        d match {
+          case l: Lambda[a,b] =>
+            backwardAnalyze(l)   // analize lambda after the markings were assigned to the l.y
+          case _ =>
         }
       }
     }
