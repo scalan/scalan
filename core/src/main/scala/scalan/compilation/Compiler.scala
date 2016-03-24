@@ -60,10 +60,12 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
 
       val indexStr = (index + 1).toString
       val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}.dot"
+      val dotFileNameAna = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}_ana.dot"
 
       emittingGraph[PGraph](dotFileName, pass.name, g => g) {
         scalan.beginPass(pass)
         pass.backwardAnalyse(graph)
+        val analyzed = emittingGraph[PGraph](dotFileNameAna, pass.name, g => g)(graph)
         val graph1 = pass(graph).withoutContext
         scalan.endPass(pass)
         graph1
