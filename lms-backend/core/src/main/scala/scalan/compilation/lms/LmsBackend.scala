@@ -232,7 +232,7 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
 //    map.getOrElse(key, otherwise(()))
 //  }
 
-  def map_mapValuesIfExists[K: Manifest, V: Manifest, T: Manifest](map: Exp[HashMap[K, V]], key: Exp[K], exists: Exp[V] => Exp[T], otherwise: Exp[Unit] => Exp[T]): Exp[T] = {
+  def map_mapValueIfExists[K: Manifest, V: Manifest, T: Manifest](map: Exp[HashMap[K, V]], key: Exp[K], exists: Exp[V] => Exp[T], otherwise: Exp[Unit] => Exp[T]): Exp[T] = {
     if (map.contains(key)) exists(map(key)) else otherwise(())
   }
 
