@@ -29,18 +29,29 @@ trait Passes {
     }
 
     def backwardAnalyze(g: AstGraph): Unit = {
+      // first clear markings for all analyzers
+      g.scheduleAll.foreach(te => {
+        for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
+          a.clearMark(te.sym)
+        }
+      })
+      // then assign new markings
+      backwardAnalyzeRec(g)
+    }
+
+    def backwardAnalyzeRec(g: AstGraph): Unit = {
       val revSchedule = g.schedule.reverseIterator
-      for (TableEntry(s: Exp[t], d) <- revSchedule) {
+      for (te @ TableEntry(s: Exp[t], d) <- revSchedule) {
         for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
           val outMark = a.getMark(s)
-          val inMarks = a.getInboundMarkings(d, outMark)
+          val inMarks = a.getInboundMarkings(te, outMark)
           for ((s, mark) <- inMarks) {
             a.updateOutboundMarking(s, mark)
           }
         }
         d match {
           case l: Lambda[a,b] =>
-            backwardAnalyze(l)   // analize lambda after the markings were assigned to the l.y
+            backwardAnalyzeRec(l)   // analize lambda after the markings were assigned to the l.y
           case _ =>
         }
       }

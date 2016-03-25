@@ -50,7 +50,8 @@ trait MetadataExp extends Metadata { self: ScalanExp =>
   case class MetaNode(val meta: Map[MetaKey[_], MetaValue[Any]]) {
     def get[A](key: MetaKey[A]) = meta.get(key).map(_.value).asInstanceOf[Option[A]]
 
-    def set[A](key: MetaKey[A])(value: A) = new MetaNode(meta.updated(key, MetaValue(value)))
+    def set[A](key: MetaKey[A])(value: A, mirrorWithDef: Option[Boolean] = None) =
+      new MetaNode(meta.updated(key, MetaValue(value, mirrorWithDef)))
 
     def remove[A](key: MetaKey[A]) = new MetaNode(meta - key)
 
@@ -91,15 +92,27 @@ trait MetadataExp extends Metadata { self: ScalanExp =>
 
   def setMetadata[A, B](target: Rep[A], key: MetaKey[B])(value: B, mirrorWithDef: Option[Boolean] = None): Rep[A] = {
     val node = allMetadataOf(target)
-    metadataPool += target -> node.set(key)(value)
+    metadataPool += target -> node.set(key)(value, mirrorWithDef)
     target
   }
 
   def getMetadata[A](target: Rep[_], key: MetaKey[A]): Option[A] =
     allMetadataOf(target).get(key)
 
+  def removeMetadata[A](target: Rep[_], key: MetaKey[A]): Unit = {
+    metadataPool.get(target) match {
+      case Some(node) =>
+        if (node.meta.contains(key)) {
+          val newNode = node.remove(key)
+          metadataPool += target -> newNode
+        }
+      case _ =>
+    }
+  }
+
   implicit class MetadataOpsExp(target: Rep[_]) {
     def getMetadata[A](key: MetaKey[A]): Option[A] = self.getMetadata(target, key)
+    def removeMetadata[A](key: MetaKey[A]): Unit = self.removeMetadata(target, key)
 
     def allMetadata = self.allMetadataOf(target)
   }

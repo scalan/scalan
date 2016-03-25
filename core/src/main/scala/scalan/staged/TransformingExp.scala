@@ -445,9 +445,14 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       s -> lattice.join(getMark(s), other)
     }
 
-    def getInboundMarkings[T](d: Def[T], outMark: M[T]): MarkedSyms
+    def getInboundMarkings[T](te: TableEntry[T], outMark: M[T]): MarkedSyms
 
     def getMarkingKey[T](implicit eT:Elem[T]): MetaKey[M[T]] = markingKey[T](keyPrefix).asInstanceOf[MetaKey[M[T]]]
+
+    def clearMark[T](s: Exp[T]): Unit = {
+      implicit val eT = s.elem
+      s.removeMetadata(getMarkingKey[T])
+    }
 
     def getMark[T](s: Exp[T]): M[T] = {
       implicit val eT = s.elem
