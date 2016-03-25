@@ -20,7 +20,7 @@ class ScalaCoreCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) ex
     with ScalaGenIfThenElseFat with LoopFusionOpt with ScalaGenCastingOps with ScalaGenMathOps
     with ScalaGenMethodCallOps //from scalan.compilation.lms.common
     with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile with ScalaGenIfThenElse
-    with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions
+    with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenTupledFunctions
     with ScalaGenRangeOps
     with ScalaGenMiscOpsExt
     with ScalaGenExtNumOps with ScalaGenSystemOps //from scalan.compilation.lms.common

@@ -1,9 +1,9 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.lms.common.{BaseGenFunctions, CLikeGenEffect, FunctionsExp}
+import scala.lms.common.{CGenTupledFunctions, CLikeGenEffect, TupledFunctionsExp}
 
-trait CxxShptrGenFunctions extends CLikeGenEffect with BaseGenFunctions with CxxShptrCodegen {
-  val IR: FunctionsExp
+trait CxxShptrGenFunctions extends CLikeGenEffect with CGenTupledFunctions with CxxShptrCodegen {
+  val IR: TupledFunctionsExp
   import IR._
 
   headerFiles ++= Seq("functional")
