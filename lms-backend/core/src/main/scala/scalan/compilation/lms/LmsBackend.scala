@@ -345,5 +345,3 @@ abstract class CoreLmsBackend extends LmsBackend
 class ScalaCoreLmsBackend extends CoreLmsBackend { self =>
   override val codegen = new ScalaCoreCodegen[self.type](self)
 }
-
-
