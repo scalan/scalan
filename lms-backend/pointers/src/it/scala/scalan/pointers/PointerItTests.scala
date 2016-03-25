@@ -54,7 +54,6 @@ class PointerItTests extends BaseItTests[PointerProg](???) {
   def commonTestScenario[A, B](functionName: String, func: => progExp.Exp[A => B]): Unit = {
     val dir = new File(prefix, functionName)
     progExp.buildExecutable(dir, dir, functionName, func, GraphVizConfig.default)
-    println("cxx file generated")
   }
 
   /**

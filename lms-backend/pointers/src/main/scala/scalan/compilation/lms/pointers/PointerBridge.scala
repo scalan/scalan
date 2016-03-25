@@ -17,5 +17,5 @@ trait PointerBridge extends CoreBridge {
   }
 
   registerElemClass[ScalarElem[_, _], PointerLmsOps#Scalar[_]]
-  registerElemClass[PointerElem[_, _], PointerLmsOps#Scalar[_]]
+  registerElemClass[PointerElem[_, _], PointerLmsOps#Pointer[_]]
 }

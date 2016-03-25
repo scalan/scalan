@@ -8,14 +8,16 @@ import scalan.util.ProcessUtil
  * Created by adel on 5/26/15.
  */
 object Gcc {
-  def compile(targetDir: String, sourceDir: File, sourceFile: File, libName: String): Array[String] = {  //extraCompilerOptions: List[String],
+  def compile(targetDir: String, sourceDir: File, sourceFile: File, libName: String): Array[String] = {
+    val command = compileCommand(targetDir, sourceDir, sourceFile, libName)
+    ProcessUtil.launch(sourceDir, command.split("\\s+"): _*)
+  }
+
+  def compileCommand(targetDir: String, sourceDir: File, sourceFile: File, libName: String) = {
     val sourceName = sourceFile.getAbsolutePath
     val targetFile = targetDir+fileSeparator+System.mapLibraryName(libName)
     val include = s"$includeJavaFlag $includeRuntimeDirFlag $includeFlags"
-    val command = s"$cxx $sourceName $include -fPIC -shared -pthread $commonFlags $optFlags -o $targetFile".split("\\s+").toSeq
-    println("command: " + command.mkString(" "))
-    ProcessUtil.launch(sourceDir, command: _*)
-
+    s"$cxx $sourceName $include -fPIC -shared -pthread $commonFlags $optFlags -o $targetFile"
   }
 
   def includeRuntimeDirFlag: String = {
