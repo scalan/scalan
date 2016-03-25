@@ -24,7 +24,9 @@ class JNI_MsfItTests extends BaseCtxItTests[JNIMsfProg](new GraphsDslStd with JN
 
   lazy val defaultCompilers = compilers(compiler)
 
-  test("MSF_JNI") {
+  test("MSF_JNI_adjlist") {
+    pending // same reason as scalan.LmsJNIExtractorItTests."JNI_Extract failing examples"
+
     val ctx1 = new Ctx
 
     val ctx2 = new Ctx
