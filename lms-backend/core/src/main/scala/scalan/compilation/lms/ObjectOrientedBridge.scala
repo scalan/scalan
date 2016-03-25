@@ -27,16 +27,24 @@ trait ObjectOrientedBridge extends LmsBridge with CoreMethodMappingDSL {
   def methodReplaceConf = mappingDSLs(languageId)
 
   def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] = {
-    val obj = m.symMirrorUntyped(receiver)
     elemToManifest(returnType) match {
       case mA: Manifest[a] =>
-        val typeArgs = args.collect { case elem: Elem[_] => elemToManifest(elem) }
-        val lmsArgs = args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }
-        lms.methodCall[a](obj, lms.Pure, method.getName, typeArgs, lmsArgs: _*)(mA.asInstanceOf[Manifest[a]])
+        mappedFunc(method) match {
+          case Some(func) =>
+            mappedMethodCall(m, receiver, func, args, mA)
+          case None =>
+            val lmsReceiver = m.symMirrorUntyped(receiver)
+            val typeArgs = args.collect { case elem: Elem[_] => elemToManifest(elem) }
+            val lmsArgs = args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }
+            lms.methodCall[a](lmsReceiver, lms.Pure, method.getName, typeArgs, lmsArgs: _*)(mA)
+        }
     }
   }
 
-  def newObj[A: Manifest](aClass: Class[_], args: Seq[Any], newKeyWord: Boolean): lms.Exp[A] = {
+  def mappedMethodCall[A](m: LmsMirror, receiver: Exp[_], func: MappingTags#Fun, args: List[AnyRef], mReturn: Manifest[A]): lms.Exp[_]
+
+  def newObj[A: Manifest](args: Seq[Any], newKeyWord: Boolean): lms.Exp[A] = {
+    val aClass = manifest[A].runtimeClass
     val name = mappedClassName(aClass).getOrElse(aClass.getName)
     lms.newObj[A](name, args, newKeyWord)
   }
