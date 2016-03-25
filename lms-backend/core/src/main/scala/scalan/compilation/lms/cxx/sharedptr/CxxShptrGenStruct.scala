@@ -14,7 +14,7 @@ trait CxxShptrGenStruct  extends CxxShptrCodegen with BaseGenStruct {
     case Struct(tag, elems) =>
       sym.tp match {
         case tup2m if tup2m.runtimeClass == classOf[Tuple2[_,_]] =>
-          emitConstruct(sym, elems.map(e => quote(e._2)).mkString(","))
+          emitValDef(sym, src"std::make_pair(${elems.map(_._2)})")
         case _ =>
           registerStruct(structName(sym.tp), elems)
           emitValDef(sym, src"std::make_tuple(${elems.map(_._2)})")
@@ -52,6 +52,10 @@ trait CxxShptrGenStruct  extends CxxShptrCodegen with BaseGenStruct {
 
   override def remap[A](m: Manifest[A]) = m match {
 //    case s if s <::< manifest[Record] => structName(m)
+    case _ if m.runtimeClass == classOf[(_, _)] =>
+      val mA = m.typeArguments(0)
+      val mB = m.typeArguments(1)
+      src"std::pair<$mA, $mB>"
     case rm: RefinedManifest[_] =>
       src"std::tuple<${rm.fields.map(_._2)}>"
     case _ => super.remap(m)

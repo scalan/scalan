@@ -56,10 +56,6 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
         "auto"
       case _ if m.runtimeClass == classOf[size_t] =>
         "size_t"
-      case _ if m.runtimeClass == classOf[scala.Tuple2[_,_]] =>
-        val mA = m.typeArguments(0)
-        val mB = m.typeArguments(1)
-        src"std::pair<${remap(mA)},${remap(mB)}>"
       case _ if m.runtimeClass == classOf[Unit] =>
         "boost::blank"
       case _ if m.isPrimitive =>
