@@ -22,11 +22,10 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
     if( m.runtimeClass == classOf[SharedPtr[_]] )
       m
     else {
-      val nArgs = m.typeArguments.length
-      val newM = nArgs match {
-        case 0 => m
-        case 1 => Manifest.classType(m.runtimeClass, toShptrManifest(m.typeArguments(0)))
-        case n => Manifest.classType(m.runtimeClass, toShptrManifest(m.typeArguments(0)), m.typeArguments.drop(1).map(toShptrManifest): _*)
+      val newM = m.typeArguments match {
+        case Nil => m
+        case h :: t =>
+          Manifest.classType(m.runtimeClass, toShptrManifest(h), t.map(toShptrManifest): _*)
       }
 
       wrapSharedPtr(newM)
@@ -111,18 +110,14 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
           "*******************************************/")
       //emitFileHeader()
 
-      val has = args.map(_.tp.runtimeClass).contains(classOf[JNILmsOps#JNIType[_]]) || resultM.runtimeClass == classOf[JNILmsOps#JNIType[_]]
-      val jniEnv = if (has) "JNIEnv* env, jobject, " else ""
-      val braceName = if (has) "extern \"C\" " else "namespace scalan"
-      val retType = if (has) s"JNIEXPORT $sA JNICALL" else sA
+      val hasJNI = args.map(_.tp.runtimeClass).contains(classOf[JNILmsOps#JNIType[_]]) || resultM.runtimeClass == classOf[JNILmsOps#JNIType[_]]
+      val jniEnv = if (hasJNI) "JNIEnv* env, jobject, " else ""
+      val retType = if (hasJNI) s"""extern "C" JNIEXPORT $sA JNICALL""" else sA
 
-      stream.println(s"${braceName} {")
       stream.println(s"${retType} $className(${jniEnv}${args.map(arg => src"${toShptrManifest(arg.tp)} $arg").mkString(", ")} ) {")
 
       emitBlock(body)
       stream.println(src"return ${getBlockResult(body)};")
-
-      stream.println("}")
 
       stream.println("}")
       stream.println("/*****************************************\n" +
