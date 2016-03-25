@@ -32,11 +32,11 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
 
   def buildGraph[A, B](sourcesDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): CommonCompilerOutput[A, B] = {
     // G is PGraph with some extra information
-    def emittingGraph[G](fileName: String, passName: String, toGraph: G => PGraph)(mkGraph: => G): G = {
+    def emittingGraph[G](fileName: String, passName: String, emitMetadata: Boolean, toGraph: G => PGraph)(mkGraph: => G): G = {
       val file = new File(sourcesDir, fileName)
       try {
         val g = mkGraph
-        emitDepGraph(toGraph(g), file)(graphVizConfig)
+        emitDepGraph(toGraph(g), file)(graphVizConfig.copy(emitMetadata = emitMetadata))
         g
       } catch {
         case e: Exception =>
@@ -45,7 +45,7 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
       }
     }
 
-    val (initialGraph, eInput, eOutput) = emittingGraph[(PGraph, Elem[A], Elem[B])](s"$functionName.dot", "Initial graph generation", _._1) {
+    val (initialGraph, eInput, eOutput) = emittingGraph[(PGraph, Elem[A], Elem[B])](s"$functionName.dot", "Initial graph generation", false, _._1) {
       val func0 = func
       val eFunc = func0.elem
       (buildInitialGraph(func0)(compilerConfig), eFunc.eDom, eFunc.eRange)
@@ -62,10 +62,10 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
       val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}.dot"
       val dotFileNameAna = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}_ana.dot"
 
-      emittingGraph[PGraph](dotFileName, pass.name, g => g) {
+      emittingGraph[PGraph](dotFileName, pass.name, false, g => g) {
         scalan.beginPass(pass)
         pass.backwardAnalyse(graph)
-        val analyzed = emittingGraph[PGraph](dotFileNameAna, pass.name, g => g)(graph)
+        val analyzed = emittingGraph[PGraph](dotFileNameAna, pass.name, true, g => g)(graph)
         val graph1 = pass(graph).withoutContext
         scalan.endPass(pass)
         graph1
