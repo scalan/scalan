@@ -688,7 +688,7 @@ trait CollectionsDslStd extends impl.CollectionsStd with SeqsDslStd {
     var j = 0
     val n1 = xs.length
     val n2 = ys.length
-    while (i < n1 && j < n2) {
+    while (i < n1 || j < n2) {
       if (i == n1) {
         val y = ys(j)
         val l = b(y)
@@ -709,7 +709,13 @@ trait CollectionsDslStd extends impl.CollectionsStd with SeqsDslStd {
           res += ((k, f((x, y))))
           i = i + 1
           j = j + 1
-        } else if (cmp < 0) i = i + 1 else j = j + 1
+        } else if (cmp < 0) {
+          res += ((k, f1(x)))
+          i = i + 1
+        } else {
+          res += ((l, f2(y)))
+          j = j + 1
+        }
       }
     }
     Collection(res.result)
@@ -745,7 +751,7 @@ trait CollectionsDslStd extends impl.CollectionsStd with SeqsDslStd {
     var j = 0
     val n1 = xs.length
     val n2 = ys.length
-    while (i < n1 && j < n2) {
+    while (i < n1 || j < n2) {
       if (i == n1) {
         val y = ys(j)
         res += ((y._1, f2(y._2)))
@@ -762,7 +768,13 @@ trait CollectionsDslStd extends impl.CollectionsStd with SeqsDslStd {
           res += ((x._1, f((x._2, y._2))))
           i = i + 1
           j = j + 1
-        } else if (cmp < 0) i = i + 1 else j = j + 1
+        } else if (cmp < 0) {
+          res += ((x._1, f1(x._2)))
+          i = i + 1
+        } else {
+          res += ((y._1, f2(y._2)))
+          j = j + 1
+        }
       }
     }
     Collection(res.result)

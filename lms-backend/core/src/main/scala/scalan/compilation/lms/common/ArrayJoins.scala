@@ -58,7 +58,7 @@ trait ArrayJoinsExp extends ArrayJoins with ArrayBuilderOpsExp { self: LmsBacken
     var i2 = 0
     val n1 = xs.length
     val n2 = ys.length
-    while (readVar(i1) < n1 && readVar(i2) < n2) {
+    while (readVar(i1) < n1 || readVar(i2) < n2) {
       val i = readVar(i1)
       val j = readVar(i2)
       if (i == n1) {
@@ -76,7 +76,13 @@ trait ArrayJoinsExp extends ArrayJoins with ArrayBuilderOpsExp { self: LmsBacken
           res += (x._1, f((x._2, y._2)))
           i1 = i + 1
           i2 = j + 1
-        } else if (x._1 < y._1) i1 = i + 1 else i2 = j + 1
+        } else if (x._1 < y._1) {
+          res += (x._1, f1(x._2))
+          i1 = i + 1
+        } else {
+          res += (y._1, f2(y._2))
+          i2 = j + 1
+        }
       }
     }
     res.result
@@ -113,7 +119,7 @@ trait ArrayJoinsExp extends ArrayJoins with ArrayBuilderOpsExp { self: LmsBacken
     var i2 = 0
     val n1 = xs.length
     val n2 = ys.length
-    while (readVar(i1) < n1 && readVar(i2) < n2) {
+    while (readVar(i1) < n1 || readVar(i2) < n2) {
       val i = readVar(i1)
       val j = readVar(i2)
       if (i == n1) {
@@ -133,7 +139,13 @@ trait ArrayJoinsExp extends ArrayJoins with ArrayBuilderOpsExp { self: LmsBacken
           res += (iX, f((x, y)))
           i1 = i + 1
           i2 = j + 1
-        } else if (iX < jY) i1 = i + 1 else i2 = j + 1
+        } else if (iX < jY) {
+          res += (a(x), f1(x))
+          i1 = i + 1
+        } else {
+          res += (b(y), f2(y))
+          i2 = j + 1
+        }
       }
     }
     res.result

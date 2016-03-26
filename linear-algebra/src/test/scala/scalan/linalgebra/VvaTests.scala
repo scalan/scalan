@@ -20,17 +20,14 @@ class VvaTests extends BaseViewTests {
     val ctx = new Ctx
     ctx.test("dd_vva", ctx.compiler.scalan.dd_vva)
   }
-
   test("ds_vva") {
     val ctx = new Ctx
     ctx.test("ds_vva", ctx.compiler.scalan.ds_vva)
   }
-
   test("sd_vva") {
     val ctx = new Ctx
     ctx.test("sd_vva", ctx.compiler.scalan.sd_vva)
   }
-
   test("ss_vva") {
     val ctx = new Ctx
     ctx.test("ss_vva", ctx.compiler.scalan.ss_vva)

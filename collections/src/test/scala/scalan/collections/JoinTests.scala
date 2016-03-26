@@ -3,79 +3,118 @@ package scalan.collections
 import java.io.File
 import java.lang.reflect.Method
 
+import scala.language.postfixOps
 import scalan.{BaseShouldTests, ScalanDsl, ScalanDslExp}
-import scalan.compilation.{GraphVizExport, GraphVizConfig}
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 
 trait JoinTests extends CollectionsDsl with ScalanDsl {
 
-   lazy val b = (_: Rep[(Int, Double)])._1
-   lazy val f1 = (_: Rep[(Int, Double)])._2
-   lazy val f = (x: Rep[(Double, Double)]) => x._1 * x._2
-   lazy val fg = (x: Rep[(((Int, Double), (Int, Double)))]) => x._1._2 * x._3
+  lazy val b = (_: Rep[(Int, Double)])._1
+  lazy val f1 = (_: Rep[(Int, Double)])._2
+  lazy val id = (x: DoubleRep) => x
+  lazy val fm = (x: Rep[(Double, Double)]) => x._1 * x._2
+  lazy val fa = (x: Rep[(Double, Double)]) => x._1 + x._2
+  lazy val fmc = (x: Rep[(((Int, Double), (Int, Double)))]) => x._1._2 * x._3
+  lazy val fac = (x: Rep[(((Int, Double), (Int, Double)))]) => x._1._2 + x._3
 
-  lazy val innerJoin = fun { (xys: Rep[(Array[(Int, Double)], Array[(Int, Double)])]) =>
+  def pairedInnerJoin(xys: Rep[(Array[(Int, Double)], Array[(Int, Double)])]) = {
     val Pair(xs, ys) = xys
-    val res = PairCollectionAOS(Collection(xs)).innerJoin(PairCollectionAOS(Collection(ys)), f)
+    val res = PairCollectionAOS(Collection(xs)).innerJoin(PairCollectionAOS(Collection(ys)), fm)
     res.coll.arr
   }
-  lazy val outerJoin = fun { (xys: Rep[(Array[(Int, Double)], Array[(Int, Double)])]) =>
+
+  def pairedOuterJoin(xys: Rep[(Array[(Int, Double)], Array[(Int, Double)])]) = {
     val Pair(xs, ys) = xys
-    val res = PairCollectionAOS(Collection(xs)).innerJoin(PairCollectionAOS(Collection(ys)), f)
+    val res = PairCollectionAOS(Collection(xs)).outerJoin(PairCollectionAOS(Collection(ys)), fa, id, id)
     res.coll.arr
   }
-  lazy val innerJoinGeneric = fun { (xys: Rep[(Array[(Int, Double)], Array[(Int, Double)])]) =>
+
+  def commonInnerJoin(xys: Rep[(Array[(Int, Double)], Array[(Int, Double)])]) = {
     val Pair(xs, ys) = xys
-    val res = Collection(xs).innerJoin(Collection(ys), b, b, fg)
+    val res = Collection(xs).innerJoin(Collection(ys), b, b, fmc)
     res.arr
   }
-  lazy val outerJoinGeneric = fun { (xys: Rep[(Array[(Int, Double)], Array[(Int, Double)])]) =>
+
+  def commonOuterJoin(xys: Rep[(Array[(Int, Double)], Array[(Int, Double)])]) = {
     val Pair(xs, ys) = xys
-    val res = Collection(xs).outerJoin(Collection(ys), b, b, fg, f1, f1)
+    val res = Collection(xs).outerJoin(Collection(ys), b, b, fac, f1, f1)
     res.arr
   }
-  lazy val innerJoinGenFull = fun { (in: Rep[(Array[(Int, Double)], (Array[(Int, Double)],
-                                             (((Int, Double)) => Int,
-                                               (((Int, Double)) => Int,
-                                                 (((Int, Double), (Int, Double))) => Double))))]) =>
+
+  def commonInnerJoinFull(in: Rep[(Array[(Int, Double)], (Array[(Int, Double)],
+                                   (((Int, Double)) => Int,
+                                    (((Int, Double)) => Int,
+                                     (((Int, Double), (Int, Double))) => Double))))]) = {
     val Tuple(xs, ys, a, b, f) = in
-    val res = Collection(xs).innerJoin(Collection(ys), b, b, f)
+    val res = Collection(xs).innerJoin(Collection(ys), a, b, f)
     res.arr
   }
-  lazy val outerJoinGenFull = fun { (in: Rep[(Array[(Int, Double)], (Array[(Int, Double)],
-                                             (((Int, Double)) => Int,
-                                               (((Int, Double)) => Int,
-                                                 ((((Int, Double), (Int, Double))) => Double,
-                                                   ((((Int, Double))) => Double,
-                                                     (((Int, Double))) => Double))))))]) =>
+
+  def commonOuterJoinFull(in: Rep[(Array[(Int, Double)], (Array[(Int, Double)],
+                                   (((Int, Double)) => Int,
+                                    (((Int, Double)) => Int,
+                                     ((((Int, Double), (Int, Double))) => Double,
+                                      ((((Int, Double))) => Double,
+                                       (((Int, Double))) => Double))))))]) = {
     val Tuple(xs, ys, a, b, f, f1, f2) = in
     val res = Collection(xs).outerJoin(Collection(ys), a, b, f, f1, f2)
     res.arr
   }
+
+  lazy val innerJoin = fun(pairedInnerJoin)
+  lazy val outerJoin = fun { pairedOuterJoin }
+  lazy val innerJoinCommon = fun { commonInnerJoin }
+  lazy val outerJoinCommon = fun { commonOuterJoin }
+  lazy val innerJoinCommonFull = fun { commonInnerJoinFull }
+  lazy val outerJoinCommonFull = fun { commonOuterJoinFull }
 }
 
 class JoinTestSuite extends BaseShouldTests {
 
+  val b = (_: (Int, Double))._1
+  val f1 = (_: (Int, Double))._2
+  val fm = (x: (((Int, Double), (Int, Double)))) => x._1._2 * x._2._2
+  val fa = (x: (((Int, Double), (Int, Double)))) => x._1._2 + x._2._2
+
+  val xs = Array((1, 2.0), (2, 3.0), (3, 4.0))
+  val ys = Array((1, 1.0), (3, 2.0), (5, 3.0))
+
+  object result {
+    val innerJoin = Array((1, 2.0), (3, 8.0))
+    val outerJoin = Array((1, 3.0), (2, 3.0), (3, 6.0), (5, 3.0))
+  }
+
   def testMethod(name: String) = {
-    val ctx = new ScalanDslExp with CollectionsDslExp with JoinTests with GraphVizExport {
-      override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
-    }
+    val ctx = new ScalanDslExp with CollectionsDslExp with JoinTests with GraphVizExport
     val f = ctx.getStagedFunc(name)
     ctx.emitDepGraph(f, new File(prefix, s"$name.dot"))(GraphVizConfig.default)
   }
 
-  "when staged" should "innerJoin" beArgFor { testMethod(_) }
-  "when staged" should "innerJoinGeneric" beArgFor { testMethod(_) }
-  "when staged" should "innerJoinGenFull" beArgFor { testMethod(_) }
-  "when staged" should "outerJoin" beArgFor { testMethod(_) }
-  "when staged" should "outerJoinGeneric" beArgFor { testMethod(_) }
-  "when staged" should "outerJoinGenFull" beArgFor { testMethod(_) }
+  val ctx = new CollectionsDslStd with JoinTests
 
-  "in std" should "execute functions" in {
-    val ctx = new MatricesDslStd with LinearAlgebraExamples {}
-    val i = 3
-    val in = (vector1, (len, i))
-    val res = ctx.applySparseVector(in)
-    println("res: " + res)
-    res should be(4)
+  "in staged context" should "innerJoin" beArgFor { testMethod(_) }
+  "in staged context" should "outerJoin" beArgFor { testMethod(_) }
+  "in staged context" should "innerJoinCommon" beArgFor { testMethod(_) }
+  "in staged context" should "outerJoinCommon" beArgFor { testMethod(_) }
+  "in staged context" should "innerJoinCommonFull" beArgFor { testMethod(_) }
+  "in staged context" should "outerJoinCommonFull" beArgFor { testMethod(_) }
+
+  "paired innerJoin" should "give correct result" in {
+    ctx.innerJoin((xs, ys)) should be(result innerJoin)
+  }
+  "paired outerJoin" should "give correct result" in {
+    ctx.outerJoin((xs, ys)) should be(result outerJoin)
+  }
+  "common innerJoin" should "give correct result" in {
+    ctx.innerJoinCommon((xs, ys)) should be(result innerJoin)
+  }
+  "common outerJoin" should "give correct result" in {
+    ctx.outerJoinCommon((xs, ys)) should be(result outerJoin)
+  }
+  "innerJoinCommon with input functions" should "give correct result" in {
+    ctx.innerJoinCommonFull((xs, (ys, (b, (b, fm))))) should be(result innerJoin)
+  }
+  "outerJoinCommon with input functions" should "give correct result" in {
+    ctx.outerJoinCommonFull((xs, (ys, (b, (b, (fa, (f1, f1))))))) should be (result outerJoin)
   }
 }

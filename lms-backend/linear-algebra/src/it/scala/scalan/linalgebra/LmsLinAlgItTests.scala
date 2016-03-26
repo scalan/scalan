@@ -25,28 +25,25 @@ abstract class LmsLinAlgItTests extends BaseItTests[LinearAlgebraExamples](new M
 
   val defaultCompilers = compilers(progStaged, cwc(progStagedU)(compilerConfigU))
   val progStagedOnly = compilers(progStaged)
+
+  lazy val dv1 = Array(1.0, 1.0)
+  lazy val dv2 = Array(2.0, 3.0)
+  lazy val sv1 = sparseVectorBoxedData(dv1)
+  lazy val sv2 = sparseVectorBoxedData(dv2)
 }
 
 class LmsVvmItTests extends LmsLinAlgItTests {
   import progStd._
 
-  val dv1 = Array(1.0, 1.0)
-  val dv2 = Array(2.0, 3.0)
-  val sv1 = sparseVectorBoxedData(dv1)
-  val sv2 = sparseVectorBoxedData(dv2)
-
   test("ddvvm") {
     compareOutputWithStd(_.dd_vvm)(Pair(dv1, dv2))
   }
-
   test("dsvvm") {
     compareOutputWithStd(_.ds_vvm)(Pair(dv1, sv2))
   }
-
   test("sdvvm") {
     compareOutputWithStd(_.sd_vvm)(Pair(sv1, dv2))
   }
-
   test("ssvvm") {
     compareOutputWithStd(_.ss_vvm)(Pair(sv1, sv2))
   }
@@ -55,23 +52,15 @@ class LmsVvmItTests extends LmsLinAlgItTests {
 class LmsVvaItTests extends LmsLinAlgItTests {
   import progStd._
 
-  val dv1 = Array(1.0, 1.0)
-  val dv2 = Array(2.0, 3.0)
-  val sv1 = sparseVectorBoxedData(dv1)
-  val sv2 = sparseVectorBoxedData(dv2)
-
   test("ddvva") {
     compareOutputWithStd(_.dd_vva)(Pair(dv1, dv2))
   }
-
   test("dsvva") {
     compareOutputWithStd(_.ds_vva)(Pair(dv1, sv2))
   }
-
   test("sdvva") {
     compareOutputWithStd(_.sd_vva)(Pair(sv1, dv2))
   }
-
   test("ssvva") {
     compareOutputWithStd(_.ss_vva)(Pair(sv1, sv2))
   }
