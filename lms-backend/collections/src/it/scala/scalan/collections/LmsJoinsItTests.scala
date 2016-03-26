@@ -1,16 +1,16 @@
 package scalan.collections
 
 import scalan.JNIExtractorOpsExp
-import scalan.compilation.lms.collections.{CollectionsLmsCompilerScala, CollectionsLmsCompilerUni}
-import scalan.compilation.lms.scalac.LmsCompilerScalaConfig
+import scalan.compilation.lms.scalac.{LmsCompilerScala, LmsCompilerScalaConfig}
+import scalan.compilation.lms.uni.LmsCompilerUni
 import scalan.compilation.lms.source2bin.SbtConfig
 import scalan.it.BaseItTests
 
 abstract class LmsJoinsItTests extends BaseItTests[JoinTests](new CollectionsDslStd with JoinTests) {
   class ProgExp extends CollectionsDslExp with JNIExtractorOpsExp with JoinTests
 
-  val progStaged = new CollectionsLmsCompilerScala(new ProgExp)
-  val progStagedU = new CollectionsLmsCompilerUni(new ProgExp)
+  val progStaged = new LmsCompilerScala(new ProgExp)
+  val progStagedU = new LmsCompilerUni(new ProgExp)
   val compilerConfigU = LmsCompilerScalaConfig().withSbtConfig(SbtConfig(scalaVersion = "2.11.2"))
 
   val defaultCompilers = compilers(progStaged, cwc(progStagedU)(compilerConfigU))
