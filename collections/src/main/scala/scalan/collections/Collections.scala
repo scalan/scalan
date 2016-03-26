@@ -808,25 +808,25 @@ trait CollectionsDslExp extends impl.CollectionsExp with SeqsDslExp {
   def genericInnerJoin[A, B, K, R](xs: Coll[A], ys: Coll[B], a: Rep[A => K], b: Rep[B => K], f: Rep[((A, B)) => R])
                                   (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
                                    eA: Elem[A], eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = {
-    Collection(GenericInnerJoin(xs.arr, ys.arr, a, b, f))
+    Collection(CommonInnerJoin(xs.arr, ys.arr, a, b, f))
   }
 
   def genericOuterJoin[A, B, K, R](xs: Coll[A], ys: Coll[B], a: Rep[A => K], b: Rep[B => K],
                                    f: Rep[((A, B)) => R], f1: Rep[A => R], f2: Rep[B => R])
                                   (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
                                    eA: Elem[A], eB: Elem[B], eK: Elem[K], eR: Elem[R]): Coll[(K, R)] = {
-    Collection(GenericOuterJoin(xs.arr, ys.arr, a, b, f, f1, f2))
+    Collection(CommonOuterJoin(xs.arr, ys.arr, a, b, f, f1, f2))
   }
 
   def pairColl_innerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R])
                                     (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
                                      eK: Elem[K], eB: Elem[B], eC: Elem[C], eR: Elem[R]): Coll[(K, R)] = {
-    Collection(ArrayInnerJoin(xs.arr, ys.arr, f))
+    Collection(PairedInnerJoin(xs.arr, ys.arr, f))
   }
 
   def pairColl_outerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])
                                     (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Elem[Array[(K, R)]],
                                      eK: Elem[K], eB: Elem[B], eC: Elem[C], eR: Elem[R]): Coll[(K, R)] = {
-    Collection(ArrayOuterJoin(xs.arr, ys.arr, f, f1, f2))
+    Collection(PairedOuterJoin(xs.arr, ys.arr, f, f1, f2))
   }
 }

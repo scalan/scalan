@@ -6,32 +6,32 @@ import scala.reflect.SourceContext
 import scalan.compilation.lms.LmsBackendFacade
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
-trait ArrayJoins extends Base with ArrayBuilderOps {
+trait ArrayJoins extends Base {
 
-  def arrayInnerJoin[K, B, C, R](xs: Rep[Array[(K, B)]], ys: Rep[Array[(K, C)]], f: Rep[((B, C)) => R])
-                                (implicit ordK: Ordering[K], nK: Numeric[K], mK: Manifest[K],
-                                 mB: Manifest[B], mC: Manifest[C], mR: Manifest[R]): Rep[Array[(K, R)]]
+  def paired_innerJoin[K, B, C, R](xs: Rep[Array[(K, B)]], ys: Rep[Array[(K, C)]], f: Rep[((B, C)) => R])
+                                  (implicit ordK: Ordering[K], nK: Numeric[K], mK: Manifest[K],
+                                   mB: Manifest[B], mC: Manifest[C], mR: Manifest[R]): Rep[Array[(K, R)]]
 
-  def arrayOuterJoin[K, B, C, R](xs: Rep[Array[(K, B)]], ys: Rep[Array[(K, C)]], f: Rep[((B, C)) => R],
-                                 f1: Rep[B => R], f2: Rep[C => R])
-                                (implicit ordK: Ordering[K], nK: Numeric[K], mK: Manifest[K],
-                                 mB: Manifest[B], mC: Manifest[C], mR: Manifest[R]): Rep[Array[(K, R)]]
+  def paired_outerJoin[K, B, C, R](xs: Rep[Array[(K, B)]], ys: Rep[Array[(K, C)]], f: Rep[((B, C)) => R],
+                                   f1: Rep[B => R], f2: Rep[C => R])
+                                  (implicit ordK: Ordering[K], nK: Numeric[K], mK: Manifest[K],
+                                   mB: Manifest[B], mC: Manifest[C], mR: Manifest[R]): Rep[Array[(K, R)]]
 
-  def generic_innerJoin[A, B, K, R](xs: Rep[Array[A]], ys: Rep[Array[B]], a: Rep[A => K], b: Rep[B => K], f: Rep[((A, B)) => R])
+  def common_innerJoin[A, B, K, R](xs: Rep[Array[A]], ys: Rep[Array[B]], a: Rep[A => K], b: Rep[B => K], f: Rep[((A, B)) => R])
                                   (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Manifest[Array[(K, R)]],
                                    eA: Manifest[A], eB: Manifest[B], eK: Manifest[K], eR: Manifest[R]): Rep[Array[(K, R)]]
 
-  def generic_outerJoin[A, B, K, R](xs: Rep[Array[A]], ys: Rep[Array[B]], a: Rep[A => K], b: Rep[B => K],
+  def common_outerJoin[A, B, K, R](xs: Rep[Array[A]], ys: Rep[Array[B]], a: Rep[A => K], b: Rep[B => K],
                                    f: Rep[((A, B)) => R], f1: Rep[A => R], f2: Rep[B => R])
                                   (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Manifest[Array[(K, R)]],
                                    eA: Manifest[A], eB: Manifest[B], eK: Manifest[K], eR: Manifest[R]): Rep[Array[(K, R)]]
 }
 
-trait ArrayJoinsExp extends ArrayJoins with EffectExp with VariablesExp with Transforming { self: LmsBackendFacade =>
+trait ArrayJoinsExp extends ArrayJoins with ArrayBuilderOpsExp { self: LmsBackendFacade =>
 
-  def arrayInnerJoin[K, B, C, R](xs: Rep[Array[(K, B)]], ys: Rep[Array[(K, C)]], f: Rep[((B, C)) => R])
-                                (implicit ordK: Ordering[K], nK: Numeric[K], mK: Manifest[K],
-                                 mB: Manifest[B], mC: Manifest[C], mR: Manifest[R]) = {
+  def paired_innerJoin[K, B, C, R](xs: Rep[Array[(K, B)]], ys: Rep[Array[(K, C)]], f: Rep[((B, C)) => R])
+                                  (implicit ordK: Ordering[K], nK: Numeric[K], mK: Manifest[K],
+                                   mB: Manifest[B], mC: Manifest[C], mR: Manifest[R]) = {
     val res = ArrayBuilder.make[(K, R)]
     var i1 = 0
     var i2 = 0
@@ -49,10 +49,10 @@ trait ArrayJoinsExp extends ArrayJoins with EffectExp with VariablesExp with Tra
     res.result
   }
 
-  def arrayOuterJoin[K, B, C, R](xs: Rep[Array[(K, B)]], ys: Rep[Array[(K, C)]], f: Rep[((B, C)) => R],
-                                 f1: Rep[B => R], f2: Rep[C => R])
-                                (implicit ordK: Ordering[K], nK: Numeric[K], mK: Manifest[K],
-                                 mB: Manifest[B], mC: Manifest[C], mR: Manifest[R]) = {
+  def paired_outerJoin[K, B, C, R](xs: Rep[Array[(K, B)]], ys: Rep[Array[(K, C)]], f: Rep[((B, C)) => R],
+                                   f1: Rep[B => R], f2: Rep[C => R])
+                                  (implicit ordK: Ordering[K], nK: Numeric[K], mK: Manifest[K],
+                                   mB: Manifest[B], mC: Manifest[C], mR: Manifest[R]) = {
     val res = ArrayBuilder.make[(K, R)]
     var i1 = 0
     var i2 = 0
@@ -82,7 +82,7 @@ trait ArrayJoinsExp extends ArrayJoins with EffectExp with VariablesExp with Tra
     res.result
   }
 
-  def generic_innerJoin[A, B, K, R](xs: Exp[Array[A]], ys: Exp[Array[B]], a: Rep[A => K], b: Rep[B => K], f: Rep[((A, B)) => R])
+  def common_innerJoin[A, B, K, R](xs: Exp[Array[A]], ys: Exp[Array[B]], a: Rep[A => K], b: Rep[B => K], f: Rep[((A, B)) => R])
                                   (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Manifest[Array[(K, R)]],
                                    eA: Manifest[A], eB: Manifest[B], eK: Manifest[K], eR: Manifest[R]): Rep[Array[(K, R)]] = {
     val res = ArrayBuilder.make[(K, R)]
@@ -104,7 +104,7 @@ trait ArrayJoinsExp extends ArrayJoins with EffectExp with VariablesExp with Tra
     res.result
   }
 
-  def generic_outerJoin[A, B, K, R](xs: Exp[Array[A]], ys: Exp[Array[B]], a: Rep[A => K], b: Rep[B => K],
+  def common_outerJoin[A, B, K, R](xs: Exp[Array[A]], ys: Exp[Array[B]], a: Rep[A => K], b: Rep[B => K],
                                    f: Rep[((A, B)) => R], f1: Rep[A => R], f2: Rep[B => R])
                                   (implicit ordK: Ordering[K], nK: Numeric[K], selfType: Manifest[Array[(K, R)]],
                                    eA: Manifest[A], eB: Manifest[B], eK: Manifest[K], eR: Manifest[R]): Rep[Array[(K, R)]] = {

@@ -385,7 +385,7 @@ trait ArrayOpsStd extends ArrayOps {
   def array_fromSyms[T:Elem](syms: Seq[Rep[T]]): Arr[T] = syms.toArray
 }
 
-trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
+trait ArrayOpsExp extends ArrayOps with JoinPrimitives with BaseExp { self: ScalanExp =>
   def withElemOfArray[T, R](xs: Arr[T])(block: Elem[T] => R): R =
     withElemOf(xs) { eTArr =>
       block(eTArr.eItem)
@@ -440,21 +440,6 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class SymsArray[A](symbols: Seq[Exp[A]])(implicit override val eItem: Elem[A]) extends ArrayDef[A] {
     val length: Rep[Int] = symbols.length
   }
-
-  case class GenericInnerJoin[A, B, K, R](xs: Exp[Array[A]], ys: Exp[Array[B]], a: Rep[A => K], b: Rep[B => K], f: Rep[((A, B)) => R])
-                                         (implicit val ordK: Ordering[K], val nK: Numeric[K], val st: Elem[Array[(K, R)]],
-                                          val eA: Elem[A], val eB: Elem[B], val eK: Elem[K], val eR: Elem[R]) extends ArrayDef[(K, R)]
-
-  case class GenericOuterJoin[A, B, K, R](xs: Exp[Array[A]], ys: Exp[Array[B]], a: Rep[A => K], b: Rep[B => K], f: Rep[((A, B)) => R], f1: Rep[A => R], f2: Rep[B => R])
-                                         (implicit val ordK: Ordering[K], val nK: Numeric[K], val st: Elem[Array[(K, R)]],
-                                          val eA: Elem[A], val eB: Elem[B], val eK: Elem[K], val eR: Elem[R]) extends ArrayDef[(K, R)]
-
-  case class ArrayInnerJoin[K, B, C, R](xs: Exp[Array[(K, B)]], ys: Exp[Array[(K, C)]], f: Exp[((B, C)) => R])
-                                       (implicit val ordK: Ordering[K], val nK: Numeric[K], val eK: Elem[K], val eB: Elem[B], val eC: Elem[C], val eR: Elem[R]) extends ArrayDef[(K, R)]
-
-  case class ArrayOuterJoin[K, B, C, R](xs: Exp[Array[(K, B)]], ys: Exp[Array[(K, C)]], f: Exp[((B, C)) => R],
-                                        f1: Exp[B => R], f2: Exp[C => R])
-                                       (implicit val ordK: Ordering[K], val nK: Numeric[K], val eK: Elem[K], val eB: Elem[B], val eC: Elem[C], val eR: Elem[R]) extends ArrayDef[(K, R)]
 
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val eT = xs.elem.eItem

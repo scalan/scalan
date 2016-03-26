@@ -6,7 +6,7 @@ import java.lang.reflect.Method
 import scalan.{BaseShouldTests, ScalanDsl, ScalanDslExp}
 import scalan.compilation.{GraphVizExport, GraphVizConfig}
 
-trait CollectionJoins extends CollectionsDsl with ScalanDsl {
+trait JoinTests extends CollectionsDsl with ScalanDsl {
 
    lazy val b = (_: Rep[(Int, Double)])._1
    lazy val f1 = (_: Rep[(Int, Double)])._2
@@ -53,10 +53,10 @@ trait CollectionJoins extends CollectionsDsl with ScalanDsl {
   }
 }
 
-class CollectionJoinTests extends BaseShouldTests {
+class JoinTestSuite extends BaseShouldTests {
 
   def testMethod(name: String) = {
-    val ctx = new ScalanDslExp with CollectionsDslExp with CollectionJoins with GraphVizExport {
+    val ctx = new ScalanDslExp with CollectionsDslExp with JoinTests with GraphVizExport {
       override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
     val f = ctx.getStagedFunc(name)
@@ -69,4 +69,13 @@ class CollectionJoinTests extends BaseShouldTests {
   "when staged" should "outerJoin" beArgFor { testMethod(_) }
   "when staged" should "outerJoinGeneric" beArgFor { testMethod(_) }
   "when staged" should "outerJoinGenFull" beArgFor { testMethod(_) }
+
+  "in std" should "execute functions" in {
+    val ctx = new MatricesDslStd with LinearAlgebraExamples {}
+    val i = 3
+    val in = (vector1, (len, i))
+    val res = ctx.applySparseVector(in)
+    println("res: " + res)
+    res should be(4)
+  }
 }

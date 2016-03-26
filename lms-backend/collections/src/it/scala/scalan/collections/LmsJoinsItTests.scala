@@ -10,8 +10,8 @@ import scalan.arrays.ArrayOpsExp
 import scalan.it.BaseItTests
 import scalan.{JNIExtractorOpsExp, ScalanDslExp}
 
-abstract class LmsJoinsItTests extends BaseItTests[CollectionJoins](new CollectionsDslStd with CollectionJoins) {
-  class ProgExp extends CollectionsDslExp with JNIExtractorOpsExp with CollectionJoins
+abstract class LmsJoinsItTests extends BaseItTests[JoinTests](new CollectionsDslStd with JoinTests) {
+  class ProgExp extends CollectionsDslExp with JNIExtractorOpsExp with JoinTests
 
   val progStaged = new CollectionsLmsCompilerScala(new ProgExp)
   val progStagedU = new CollectionsLmsCompilerUni(new ProgExp)
