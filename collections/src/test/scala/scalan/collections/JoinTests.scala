@@ -1,9 +1,7 @@
 package scalan.collections
 
 import java.io.File
-import java.lang.reflect.Method
 
-import scala.language.postfixOps
 import scalan.{BaseShouldTests, ScalanDsl, ScalanDslExp}
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 
@@ -61,7 +59,7 @@ trait JoinTests extends CollectionsDsl with ScalanDsl {
     res.arr
   }
 
-  lazy val innerJoin = fun(pairedInnerJoin)
+  lazy val innerJoin = fun { pairedInnerJoin }
   lazy val outerJoin = fun { pairedOuterJoin }
   lazy val innerJoinCommon = fun { commonInnerJoin }
   lazy val outerJoinCommon = fun { commonOuterJoin }
@@ -100,21 +98,21 @@ class JoinTestSuite extends BaseShouldTests {
   "in staged context" should "outerJoinCommonFull" beArgFor { testMethod(_) }
 
   "paired innerJoin" should "give correct result" in {
-    ctx.innerJoin((xs, ys)) should be(result innerJoin)
+    ctx.innerJoin((xs, ys)) should be(result.innerJoin)
   }
   "paired outerJoin" should "give correct result" in {
-    ctx.outerJoin((xs, ys)) should be(result outerJoin)
+    ctx.outerJoin((xs, ys)) should be(result.outerJoin)
   }
   "common innerJoin" should "give correct result" in {
-    ctx.innerJoinCommon((xs, ys)) should be(result innerJoin)
+    ctx.innerJoinCommon((xs, ys)) should be(result.innerJoin)
   }
   "common outerJoin" should "give correct result" in {
-    ctx.outerJoinCommon((xs, ys)) should be(result outerJoin)
+    ctx.outerJoinCommon((xs, ys)) should be(result.outerJoin)
   }
-  "innerJoinCommon with input functions" should "give correct result" in {
-    ctx.innerJoinCommonFull((xs, (ys, (b, (b, fm))))) should be(result innerJoin)
+  "common innerJoin with input functions" should "give correct result" in {
+    ctx.innerJoinCommonFull((xs, (ys, (b, (b, fm))))) should be(result.innerJoin)
   }
-  "outerJoinCommon with input functions" should "give correct result" in {
-    ctx.outerJoinCommonFull((xs, (ys, (b, (b, (fa, (f1, f1))))))) should be (result outerJoin)
+  "common outerJoin with input functions" should "give correct result" in {
+    ctx.outerJoinCommonFull((xs, (ys, (b, (b, (fa, (f1, f1))))))) should be (result.outerJoin)
   }
 }

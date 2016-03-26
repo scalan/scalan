@@ -1,10 +1,7 @@
 package scalan.compilation.lms.common
 
 import scala.lms.common._
-import scala.lms.internal.Transforming
-import scala.reflect.SourceContext
 import scalan.compilation.lms.LmsBackendFacade
-import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait ArrayJoins extends Base {
 
