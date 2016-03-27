@@ -80,7 +80,7 @@ trait BlocksExp extends Blocks with Expressions { self: ScalanExp =>
       semicolonMulti(res.result().distinct, d)
 
     // Rule: as ;; V(b, iso2)) ==> iso2.to(as ; b)
-    case block@SemicolonMulti(as, Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
+    case block@SemicolonMulti(as, HasViews(b, iso2: Iso[b, d])) =>
       iso2.to(SemicolonMulti(as, b.asRep[b]))
 
     // WARNING: this should be the last rule in this method

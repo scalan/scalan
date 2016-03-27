@@ -146,13 +146,6 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
 
   val HasArrayBufferViewArg = HasArg(hasArrayBufferViewArg)
 
-  def mapUnderlyingArrayBuffer[A,B,C](view: ViewArrayBuffer[A,B], f: Rep[B=>C]): Rep[ArrayBuffer[C]] = {
-    val iso = view.innerIso
-    implicit val eA = iso.eFrom
-    implicit val eC: Elem[C] = f.elem.eRange
-    ArrayBuffer.fromArray(view.source.toArray.mapBy(iso.toFun >> f))
-  }
-
   override def rewriteDef[T](d: Def[T]) = d match {
     //------------------------------------------------------------
     // Iso lifting rules
@@ -197,16 +190,21 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
       implicit val eA = xs.elem.eItem
       xs.length
 
-    case ArrayBufferMap(xs: Rep[ArrayBuffer[a]] @unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
+    case (_: ArrayBufferMap[_,r]) && ArrayBufferMap(HasViews(xs_, Def(iso: ArrayBufferIso[a, b])), f_) =>
+      val xs = xs_.asRep[ArrayBuffer[a]]
+      val f = f_.asRep[b => r]
+      val innerIso = iso.innerIso
+      implicit val eA = innerIso.eFrom
+      implicit val eR = f.elem.eRange
+      xs.mapBy(innerIso.toFun >> f)
+
+    case ArrayBufferMap(xs: Rep[ArrayBuffer[a]] @unchecked, f@Def(Lambda(_, _, _, HasViews(_, iso: Iso[c, b])))) =>
       val f1 = f.asRep[a => b]
       val xs1 = xs.asRep[ArrayBuffer[a]]
       implicit val eA = xs1.elem.eItem
       implicit val eC = iso.eFrom
       val s = xs1.mapBy(f1 >> iso.fromFun)
       ViewArrayBuffer(s, iso)
-
-    case ArrayBufferMap(Def(view: ViewArrayBuffer[_, _]), f) =>
-      mapUnderlyingArrayBuffer(view, f)
 
     case view1@ViewArrayBuffer(Def(view2@ViewArrayBuffer(arr, innerIso2)), innerIso1) =>
       val compIso = composeIso(innerIso1, innerIso2)

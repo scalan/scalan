@@ -49,7 +49,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseE
       list_length(arr)
 
     case lm: ListMap[_,c] => (lm.xs, lm.f) match {
-      case (xs: Lst[a]@unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[b, c])))) => {
+      case (xs: Lst[a]@unchecked, f@Def(Lambda(_, _, _, HasViews(_, iso: Iso[b, c])))) => {
         val f1 = f.asRep[a => c]
         implicit val eA = xs.elem.eItem
         implicit val eB = iso.eFrom
@@ -68,7 +68,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseE
         super.rewriteDef(d)
     }
     case lm: ListFlatMap[_,c] => (lm.xs, lm.f) match {
-      case (xs: Lst[a]@unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, Def(listIso: ListIso[b, c]))))) => {
+      case (xs: Lst[a]@unchecked, f@Def(Lambda(_, _, _, HasViews(_, Def(listIso: ListIso[b, c]))))) => {
         val f1 = f.asRep[a => List[c]]
         val xs1 = xs.asRep[List[a]]
         implicit val eA = xs1.elem.eItem

@@ -526,19 +526,15 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
         case view: View[a, T] => Some((view.source, view.iso))
         // TODO make UserTypeDef extend View with lazy iso0/source?
         case _ =>
-          val eT = d.selfType
-          eT match {
-            case UnpackableElem(iso: Iso[a, T] @unchecked) =>
-              Some((iso.from(d.self), iso))
-            case _ => None
-          }
+          None
       }
   }
 
   object UnpackableExp {
     def unapply[T](e: Exp[T]): Option[Unpacked[T]] =
       e match {
-        case Def(d) => UnpackableDef.unapply(d)
+        case Def(UnpackableDef(source, iso: Iso[a, T] @unchecked)) =>
+          Some((source.asRep[a], iso))
         case _ =>
           val eT = e.elem
           eT match {
@@ -583,27 +579,27 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
 
   override def rewriteDef[T](d: Def[T]) = d match {
     // Rule: (V(a, iso1), V(b, iso2)) ==> V((a,b), PairIso(iso1, iso2))
-    case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
+    case Tup(HasViews(a, iso1: Iso[a, c]), HasViews(b, iso2: Iso[b, d])) =>
       PairView((a.asRep[a], b.asRep[b]))(iso1, iso2)
 
     // Rule: (V(a, iso1), b) ==> V((a,b), PairIso(iso1, id))
-    case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) =>
+    case Tup(HasViews(a, iso1: Iso[a, c]), b: Rep[b]) =>
       PairView((a.asRep[a], b))(iso1, identityIso(b.elem)).self
 
     // Rule: (a, V(b, iso2)) ==> V((a,b), PairIso(id, iso2))
-    case Tup(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
+    case Tup(a: Rep[a], HasViews(b, iso2: Iso[b, d])) =>
       PairView((a, b.asRep[b]))(identityIso(a.elem), iso2).self
 
     // Rule: V(a, iso1) ; V(b, iso2)) ==> iso2.to(a ; b)
-    case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
+    case block@Semicolon(HasViews(a, iso1: Iso[a, c]), HasViews(b, iso2: Iso[b, d])) =>
       iso2.to(Semicolon(a.asRep[a], b.asRep[b])(iso2.eFrom))
 
     // Rule: a ; V(b, iso2)) ==> iso2.to(a ; b)
-    case block@Semicolon(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
+    case block@Semicolon(a: Rep[a], HasViews(b, iso2: Iso[b, d])) =>
       iso2.to(Semicolon(a, b.asRep[b])(iso2.eFrom))
 
     // Rule: V(a, iso1) ; b ==> a ; b
-    case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) =>
+    case block@Semicolon(HasViews(a, iso1: Iso[a, c]), b: Rep[b]) =>
       Semicolon(a.asRep[a], b)(block.selfType.asElem[b])
 
     // Rule: PairView(source, iso1, _)._1  ==> iso1.to(source._1)
@@ -625,25 +621,10 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
     case UnpackView(Def(UnpackableDef(source, _)), _) => source
 
     // Rule: ParExec(nJobs, f @ i => ... V(_, iso)) ==> V(ParExec(nJobs, f >> iso.from), arrayiso(iso))
-    case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[a, b])))) =>
+    case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, HasViews(_, iso: Iso[a, b])))) =>
       implicit val ea = iso.eFrom
       val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
       ViewArray(parRes, iso)
-
-    // Rule: ArrayFold(xs, V(init, iso), step) ==> iso.to(ArrayFold(xs, init, p => iso.from(step(iso.to(p._1), p._2)) ))
-    case ArrayFold(xs: Rep[Array[t]] @unchecked, HasViews(init, iso: Iso[a, b]), step) =>
-      val init1 = init.asRep[a]
-      implicit val eT = xs.elem.asElem[Array[t]].eItem
-      implicit val eA = iso.eFrom
-      implicit val eB = iso.eTo
-      val step1 = fun { (p: Rep[(a,t)]) =>
-        val x_viewed = (iso.to(p._1), p._2)
-        val res_viewed = step.asRep[((b,t)) => b](x_viewed)
-        val res = iso.from(res_viewed)
-        res
-      }
-      val foldRes = ArrayFold(xs, init1, step1)
-      iso.to(foldRes)
 
     // Rule: loop(V(start, iso), step, isMatch) ==> iso.to(loop(start, iso.to >> step >> iso.from, iso.to >> isMatch))
     case LoopUntil(HasViews(startWithoutViews, iso: Iso[a, b]), step, isMatch) =>
