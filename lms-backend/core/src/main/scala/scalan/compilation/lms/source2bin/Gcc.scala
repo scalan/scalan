@@ -25,7 +25,7 @@ object Gcc {
   }
 
   val javaHome = scalan.Base.config.getProperty("java.home")+"/.."
-  val includeJavaFlag = s"-I$javaHome/include -I$javaHome/include/linux -I$javaHome/include/darwin"
+  val includeJavaFlag = s"-I$javaHome/include -I$javaHome/include/linux -I$javaHome/include/darwin -I/usr/local/Cellar/boost/1.58.0/include"
   val fileSeparator = scalan.Base.config.getProperty("file.separator")
   val osName = scalan.Base.config.getProperty("os.name")
   val cxx = sys.env.getOrElse("CXX", "g++")
