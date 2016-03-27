@@ -568,17 +568,20 @@ trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
     implicit lazy val (eItemA, eItemB): (Elem[A], Elem[B]) = coll.selfType1.eItem match {
       case PairElem(eFst, eSnd) => (eFst, eSnd)
     }
-    private def pc(coll: Coll[(A, B)]) = PairCollectionAOS(coll)
-    private def self: PairColl[A, B] = PairCollectionAOS(coll)
+    private def pc(otherColl: Coll[(A, B)]): PairColl[A, B] = otherColl match {
+      case aos: PairCollectionAOS[A, B] => aos
+      case soa: PairCollectionSOA[A, B] => soa
+      case _ => PairCollectionAOS(otherColl)
+    }
 
     def innerMult(other: Coll[(A, B)])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
-      self.innerJoin[B, B](pc(other), (b1: Rep[(B, B)]) => b1._1 * b1._2)
+      pc(coll).innerJoin[B, B](pc(other), (b1: Rep[(B, B)]) => b1._1 * b1._2).coll
     }
     def outerSum(other: Coll[(A, B)])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
-      self.outerJoin[B, B](pc(other), (b1: Rep[(B, B)]) => b1._1 + b1._2, (b: Rep[B]) => b, (b: Rep[B]) => b)
+      pc(coll).outerJoin[B, B](pc(other), (b1: Rep[(B, B)]) => b1._1 + b1._2, (b: Rep[B]) => b, (b: Rep[B]) => b).coll
     }
     def outerSubtr(other: Coll[(A, B)])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
-      self.outerJoin[B, B](pc(other), (b1: Rep[(B, B)]) => b1._1 - b1._2, (b: Rep[B]) => b, (b: Rep[B]) => b)
+      pc(coll).outerJoin[B, B](pc(other), (b1: Rep[(B, B)]) => b1._1 - b1._2, (b: Rep[B]) => b, (b: Rep[B]) => -b).coll
     }
   }
 

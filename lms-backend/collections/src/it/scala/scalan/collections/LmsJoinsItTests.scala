@@ -28,30 +28,67 @@ class LmsJoinsItTestsSuite extends LmsJoinsItTests {
   val ys = Array((1, 1.0), (3, 2.0), (5, 3.0))
 
   test("pairedInnerJoin") {
-    compareOutputWithStd(_.innerJoin)((xs, ys))
+    compareOutputWithStd(_.pairedInnerJoin, progStagedOnly)((xs, ys))
   }
   test("pairedOuterJoin") {
-    compareOutputWithStd(_.outerJoin)((xs, ys))
+    compareOutputWithStd(_.pairedOuterJoin, progStagedOnly)((xs, ys))
   }
   test("commonInnerJoin") {
-    compareOutputWithStd(_.innerJoinCommon)((xs, ys))
+    compareOutputWithStd(_.commonInnerJoin, progStagedOnly)((xs, ys))
   }
   test("commonOuterJoin") {
-    compareOutputWithStd(_.outerJoinCommon)((xs, ys))
+    compareOutputWithStd(_.commonOuterJoin, progStagedOnly)((xs, ys))
   }
   test("SCALA ONLY commonInnerJoin with input functions") {
-    compareOutputWithStd(_.innerJoinCommonFull, progStagedOnly)((xs, (ys, (b, (b, fm)))))
+    compareOutputWithStd(_.commonInnerJoinFull, progStagedOnly)((xs, (ys, (b, (b, fm)))))
   }
   test("SCALA ONLY commonOuterJoin with input functions") {
-    compareOutputWithStd(_.outerJoinCommonFull, progStagedOnly)((xs, (ys, (b, (b, (fa, (f1, f1)))))))
+    compareOutputWithStd(_.commonOuterJoinFull, progStagedOnly)((xs, (ys, (b, (b, (fa, (f1, f1)))))))
   }
 
   test("FAILING IN UniCompiler commonInnerJoin with input functions") {
     pending
-    compareOutputWithStd(_.innerJoinCommonFull)((xs, (ys, (b, (b, fm)))))
+    compareOutputWithStd(_.commonInnerJoinFull)((xs, (ys, (b, (b, fm)))))
   }
   test("FAILING IN UniCompiler commonOuterJoin with input functions") {
     pending
-    compareOutputWithStd(_.outerJoinCommonFull)((xs, (ys, (b, (b, (fa, (f1, f1)))))))
+    compareOutputWithStd(_.commonOuterJoinFull)((xs, (ys, (b, (b, (fa, (f1, f1)))))))
+  }
+
+  test("extension innerMult1") {
+    compareOutputWithStd(_.innerMult1, progStagedOnly)((xs, ys))
+  }
+  test("extension innerMult2") {
+    compareOutputWithStd(_.innerMult2, progStagedOnly)((xs, ys))
+  }
+  test("extension innerMult3") {
+    compareOutputWithStd(_.innerMult3, progStagedOnly)((xs, ys))
+  }
+  test("extension innerMult4") {
+    compareOutputWithStd(_.innerMult4, progStagedOnly)((xs, ys))
+  }
+  test("extension outerSum1") {
+    compareOutputWithStd(_.outerSum1, progStagedOnly)((xs, ys))
+  }
+  test("extension outerSum2") {
+    compareOutputWithStd(_.outerSum2, progStagedOnly)((xs, ys))
+  }
+  test("extension outerSum3") {
+    compareOutputWithStd(_.outerSum3, progStagedOnly)((xs, ys))
+  }
+  test("extension outerSum4") {
+    compareOutputWithStd(_.outerSum4, progStagedOnly)((xs, ys))
+  }
+  test("extension outerSubtr1") {
+    compareOutputWithStd(_.outerSubtr1, progStagedOnly)((xs, ys))
+  }
+  test("extension outerSubtr2") {
+    compareOutputWithStd(_.outerSubtr2, progStagedOnly)((xs, ys))
+  }
+  test("extension outerSubtr3") {
+    compareOutputWithStd(_.outerSubtr3, progStagedOnly)((xs, ys))
+  }
+  test("extension outerSubtr4") {
+    compareOutputWithStd(_.outerSubtr4, progStagedOnly)((xs, ys))
   }
 }
