@@ -846,13 +846,13 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     // should be the last rule in this rewriteDef (with ArrayMap on top)
     case ArrayMap(ys @ Def(d2), f: Rep[Function1[a, b]]@unchecked) =>
       d2.asDef[Array[a]] match {
-        case ArrayMap(xs: Rep[Array[c]]@unchecked, g) => //TODO if hasSingleUsage(ys)
-          val xs1 = xs.asRep[Array[c]]
-          val g1 = g.asRep[c => a]
-          implicit val eB = f.elem.eRange
-          implicit val eC = xs.elem.eItem
-          val res = xs1.map { x => f(g1(x))}
-          res
+//        case ArrayMap(xs: Rep[Array[c]]@unchecked, g) => //TODO if hasSingleUsage(ys)
+//          val xs1 = xs.asRep[Array[c]]
+//          val g1 = g.asRep[c => a]
+//          implicit val eB = f.elem.eRange
+//          implicit val eC = xs.elem.eItem
+//          val res = xs1.map { x => f(g1(x))}
+//          res
         case ArrayReplicate(length, x) =>
           implicit val eB = f.elem.eRange
           SArray.replicate(length, f(x))
@@ -931,15 +931,15 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
           super.rewriteDef(d)
       }
 
-    // Rule: fuse ArrayMap into ArrayMapReduce
-    case mr@ArrayMapReduce(Def(map1: ArrayMap[x, y]@unchecked), map2: Rep[Function1[_, (k, v)]], reduce) =>
-      val xs = map1.xs.asRep[Array[x]]
-      implicit val eX = xs.elem.eItem
-      implicit val eY = map1.elem.eItem
-      implicit val eK = mr.elemKey.asElem[k]
-      implicit val eV = mr.elemValue.asElem[v]
-      val res = xs.mapReduceBy[k, v](fun { e => map2.asRep[y => (k, v)](map1.f(e)) }, reduce.asRep[((v, v)) => v])
-      res
+//    // Rule: fuse ArrayMap into ArrayMapReduce
+//    case mr@ArrayMapReduce(Def(map1: ArrayMap[x, y]@unchecked), map2: Rep[Function1[_, (k, v)]], reduce) =>
+//      val xs = map1.xs.asRep[Array[x]]
+//      implicit val eX = xs.elem.eItem
+//      implicit val eY = map1.elem.eItem
+//      implicit val eK = mr.elemKey.asElem[k]
+//      implicit val eV = mr.elemValue.asElem[v]
+//      val res = xs.mapReduceBy[k, v](fun { e => map2.asRep[y => (k, v)](map1.f(e)) }, reduce.asRep[((v, v)) => v])
+//      res
 
     case _ => super.rewriteDef(d)
   }
