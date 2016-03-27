@@ -25,7 +25,7 @@ trait BlocksExp extends Blocks with Expressions { self: ScalanExp =>
     implicit val eR = right.elem
     Semicolon(left, right)
   }
-  def semicolon[B](xs: Seq[Rep[_]], y: Rep[B]): Rep[B] = {
+  def semicolonMulti[B](xs: Seq[Rep[_]], y: Rep[B]): Rep[B] = {
     val res = xs.map(x => peelViews(x))
     SemicolonMulti(res, y)
   }
@@ -52,12 +52,12 @@ trait BlocksExp extends Blocks with Expressions { self: ScalanExp =>
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case Semicolon(a, Def(Semicolon(b,c))) => semicolon(Seq(a,b), c)
-    case Semicolon(Def(Semicolon(a,b)), c) => semicolon(Seq(a,b), c)
+    case Semicolon(a, Def(Semicolon(b,c))) => semicolonMulti(Seq(a,b), c)
+    case Semicolon(Def(Semicolon(a,b)), c) => semicolonMulti(Seq(a,b), c)
 //    case Semicolon(Def(Semicolon(a,b)), Def(Semicolon(c,d))) if b == c => semicolon(Seq(a,b), d)
-    case Semicolon(Def(Semicolon(a,b)), Def(Semicolon(c,d))) => semicolon(Seq(a,b,c), d)
+    case Semicolon(Def(Semicolon(a,b)), Def(Semicolon(c,d))) => semicolonMulti(Seq(a,b,c), d)
     case Semicolon(Def(SemicolonMulti(as,b)), c) =>
-      semicolon(addToSet(as.asInstanceOf[Seq[Rep[Any]]], b), c)
+      semicolonMulti(addToSet(as.asInstanceOf[Seq[Rep[Any]]], b), c)
     case semi @ SemicolonMulti(HasSemicolons(semicols), d) =>
       val res = mutable.ArrayBuilder.make[Rep[Any]]()
       for (a <- semi.left) {
@@ -77,7 +77,7 @@ trait BlocksExp extends Blocks with Expressions { self: ScalanExp =>
         else
           res += a
       }
-      semicolon(res.result().distinct, d)
+      semicolonMulti(res.result().distinct, d)
 
     // Rule: as ;; V(b, iso2)) ==> iso2.to(as ; b)
     case block@SemicolonMulti(as, Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
@@ -90,7 +90,7 @@ trait BlocksExp extends Blocks with Expressions { self: ScalanExp =>
       if (peeled == as)
         super.rewriteDef(d)
       else
-        semicolon(peeled, b)
+        semicolonMulti(peeled, b)
 
     case _ =>
       super.rewriteDef (d)
