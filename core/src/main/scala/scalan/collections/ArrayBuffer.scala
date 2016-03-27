@@ -117,11 +117,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
   object UserTypeArrayBuffer {
     def unapply(s: Exp[_]): Option[Iso[_, _]] = {
       s.elem match {
-        case pae: ArrayBufferElem[_] =>
-          pae.eItem match {
-            case e: ViewElem[_, _] => Some(e.iso)
-            case _ => None
-          }
+        case ArrayBufferElem(UnpackableElem(iso)) => Some(iso)
         case _ => None
       }
     }
