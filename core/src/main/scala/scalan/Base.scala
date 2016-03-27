@@ -135,6 +135,9 @@ trait Base extends LazyLogging { self: Scalan =>
   object Def {
     def unapply[T](e: Rep[T]): Option[Def[T]] = def_unapply(e)
   }
+  object && {
+    def unapply[T](x: T): Option[(T,T)] = Some((x, x))
+  }
 
   def def_unapply[T](e: Rep[T]): Option[Def[T]]
 
