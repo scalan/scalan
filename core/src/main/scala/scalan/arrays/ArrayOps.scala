@@ -385,7 +385,7 @@ trait ArrayOpsStd extends ArrayOps {
   def array_fromSyms[T:Elem](syms: Seq[Rep[T]]): Arr[T] = syms.toArray
 }
 
-trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
+trait ArrayOpsExp extends ArrayOps with JoinPrimitives with BaseExp { self: ScalanExp =>
   def withElemOfArray[T, R](xs: Arr[T])(block: Elem[T] => R): R =
     withElemOf(xs) { eTArr =>
       block(eTArr.eItem)

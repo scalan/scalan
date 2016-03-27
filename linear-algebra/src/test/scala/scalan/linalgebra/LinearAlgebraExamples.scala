@@ -1,6 +1,52 @@
 package scalan.linalgebra
 
 trait LinearAlgebraExamples extends MatricesDsl {
+
+  def vvm[T](v1: Vec[T], v2: Vec[T])(implicit eT: Elem[T], n: Numeric[T]): Vec[T] = v1 *^ v2
+  def vva[T](v1: Vec[T], v2: Vec[T])(implicit eT: Elem[T], n: Numeric[T]): Vec[T] = v1 +^ v2
+
+  lazy val dd_vvm = fun { p: Rep[(Array[Double], Array[Double])] =>
+    val Pair(arr1, arr2) = p
+    val (items1, items2) = (Collection(arr1), Collection(arr2))
+    vvm(DenseVector(items1), DenseVector(items2)).items.arr
+  }
+  lazy val ds_vvm = fun { p: Rep[(Array[Double], (Array[(Int, Double)], Int))] =>
+    val Pair(arr1, Pair(arr2, len)) = p
+    val (items1, items2) = (Collection(arr1), Collection(arr2))
+    vvm(DenseVector(items1), SparseVector(items2.as, items2.bs, len)).items.arr
+  }
+  lazy val sd_vvm = fun { p: Rep[((Array[(Int, Double)], Int), Array[Double])] =>
+    val Pair(Pair(arr1, len), arr2) = p
+    val (items1, items2) = (Collection(arr1), Collection(arr2))
+    vvm(SparseVector(items1.as, items1.bs, len), DenseVector(items2)).items.arr
+  }
+  lazy val ss_vvm = fun { p: Rep[((Array[(Int, Double)], Int), (Array[(Int, Double)], Int))] =>
+    val Pair(Pair(arr1, len1), Pair(arr2, len2)) = p
+    val (items1, items2) = (Collection(arr1), Collection(arr2))
+    vvm(SparseVector(items1.as, items1.bs, len1), SparseVector(items2.as, items2.bs, len2)).items.arr
+  }
+
+  lazy val dd_vva = fun { p: Rep[(Array[Double], Array[Double])] =>
+    val Pair(arr1, arr2) = p
+    val (items1, items2) = (Collection(arr1), Collection(arr2))
+    vva(DenseVector(items1), DenseVector(items2)).items.arr
+  }
+  lazy val ds_vva = fun { p: Rep[(Array[Double], (Array[(Int, Double)], Int))] =>
+    val Pair(arr1, Pair(arr2, len)) = p
+    val (items1, items2) = (Collection(arr1), Collection(arr2))
+    vva(DenseVector(items1), SparseVector(items2.as, items2.bs, len)).items.arr
+  }
+  lazy val sd_vva = fun { p: Rep[((Array[(Int, Double)], Int), Array[Double])] =>
+    val Pair(Pair(arr1, len), arr2) = p
+    val (items1, items2) = (Collection(arr1), Collection(arr2))
+    vva(SparseVector(items1.as, items1.bs, len), DenseVector(items2)).items.arr
+  }
+  lazy val ss_vva = fun { p: Rep[((Array[(Int, Double)], Int), (Array[(Int, Double)], Int))] =>
+    val Pair(Pair(arr1, len1), Pair(arr2, len2)) = p
+    val (items1, items2) = (Collection(arr1), Collection(arr2))
+    vva(SparseVector(items1.as, items1.bs, len1), SparseVector(items2.as, items2.bs, len2)).items.arr
+  }
+
   def mvm[T](matrix: Matr[T], vector: Vec[T])(implicit eT: Elem[T], n: Numeric[T]): Vec[T] =
     DenseVector(matrix.rows.mapBy( fun{ r => r dot vector }))
 

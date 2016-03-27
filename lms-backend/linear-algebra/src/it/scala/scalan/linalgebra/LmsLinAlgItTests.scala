@@ -15,11 +15,59 @@ abstract class LmsLinAlgItTests extends BaseItTests[LinearAlgebraExamples](new M
   val progStagedU = new LinAlgLmsCompilerUni(new ProgExp)
 
   val compilerConfigU = LmsCompilerScalaConfig().withSbtConfig(SbtConfig(scalaVersion = "2.11.2"))
-  
-  def sparseVectorData(arr: Array[Double]) = (arr.indices.toArray, (arr, arr.length))
+
+  def toSparse(arr: Array[Double]) = (arr.indices.toArray zip arr).filter(p => Math.abs(p._2) > Double.MinPositiveValue)
+
+  def sparseVectorData(array: Array[Double]) = {
+    val (is, vs) = toSparse(array).unzip
+    (is, (vs, array.length))
+  }
+
+  def sparseVectorBoxedData(array: Array[Double]) = (toSparse(array), array.length)
 
   val defaultCompilers = compilers(progStaged, cwc(progStagedU)(compilerConfigU))
   val progStagedOnly = compilers(progStaged)
+}
+
+class LmsVectorsOpsItTests extends LmsLinAlgItTests {
+  import progStd._
+
+  lazy val dv1 = Array(1.0, 1.0)
+  lazy val dv2 = Array(2.0, 3.0)
+  lazy val sv1 = sparseVectorBoxedData(dv1)
+  lazy val sv2 = sparseVectorBoxedData(dv2)
+
+  test("ddvvm") {
+    compareOutputWithStd(_.dd_vvm)(Pair(dv1, dv2))
+  }
+
+  test("dsvvm") {
+    compareOutputWithStd(_.ds_vvm)(Pair(dv1, sv2))
+  }
+
+  test("sdvvm") {
+    compareOutputWithStd(_.sd_vvm)(Pair(sv1, dv2))
+  }
+
+  test("ssvvm") {
+    compareOutputWithStd(_.ss_vvm)(Pair(sv1, sv2))
+  }
+
+  test("ddvva") {
+    compareOutputWithStd(_.dd_vva)(Pair(dv1, dv2))
+  }
+
+  test("dsvva") {
+    compareOutputWithStd(_.ds_vva)(Pair(dv1, sv2))
+  }
+
+  test("sdvva") {
+    compareOutputWithStd(_.sd_vva)(Pair(sv1, dv2))
+  }
+
+  test("ssvva") {
+    compareOutputWithStd(_.ss_vva)(Pair(sv1, sv2))
+  }
 }
 
 class LmsMvmItTests extends LmsLinAlgItTests {
