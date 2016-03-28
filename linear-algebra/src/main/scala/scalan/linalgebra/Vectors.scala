@@ -6,10 +6,10 @@ package scalan.linalgebra
 
 import scalan._
 import scalan.collections.{CollectionsDsl, CollectionsDslStd, CollectionsDslExp}
-import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
+import scalan.common.OverloadHack.{Overloaded1, Overloaded2}
 import scala.annotation.unchecked.uncheckedVariance
 
-trait Vectors { self: VectorsDsl =>
+trait Vectors { self: LADsl =>
 
   type Vec[T] = Rep[Vector[T]]
 
@@ -504,7 +504,7 @@ trait Vectors { self: VectorsDsl =>
   }
 }
 
-trait VectorsDsl extends CollectionsDsl with impl.VectorsAbs {
+trait VectorsDsl extends impl.VectorsAbs { self: LADsl =>
 
 //  type VecCompanion = Rep[VectorCompanion]
 
@@ -535,7 +535,7 @@ trait VectorsDsl extends CollectionsDsl with impl.VectorsAbs {
   }
 }
 
-trait VectorsDslStd extends CollectionsDslStd with impl.VectorsStd {
+trait VectorsDslStd extends impl.VectorsStd { self: LADslStd =>
 
   def dotSparse[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): Rep[T] = {
@@ -570,7 +570,7 @@ trait VectorsDslStd extends CollectionsDslStd with impl.VectorsStd {
   }
 }
 
-trait VectorsDslExp extends CollectionsDslExp with impl.VectorsExp {
+trait VectorsDslExp extends impl.VectorsExp { self: LADslExp =>
   def dotSparse[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): Rep[T] = {
     DotSparse(xIndices.arr, xValues.arr, yIndices.arr, yValues.arr)

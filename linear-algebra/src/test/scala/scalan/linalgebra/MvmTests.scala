@@ -11,7 +11,7 @@ class MvmTests extends BaseViewTests {
 
   class Ctx extends TestCompilerContext {
 
-    class ScalanCake extends ScalanDslExp with LinearAlgebraExamples with MatricesDslExp {
+    class ScalanCake extends ScalanDslExp with LinearAlgebraExamples with LADslExp {
       override val cacheElems = false
 
       def noTuples[A, B](f: Rep[A => B]): Boolean = {

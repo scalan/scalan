@@ -5,9 +5,9 @@ import java.io.File
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.linalgebra.LinAlgLmsCompilerScala
 import scalan.it.BaseItTests
-import scalan.linalgebra.{MatricesDsl, MatricesDslExp, MatricesDslStd}
+import scalan.linalgebra.{LADsl, LADslStd, LADslExp}
 
-trait HelloScalan extends MatricesDsl {
+trait HelloScalan extends LADsl {
   lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0).length
@@ -22,7 +22,7 @@ trait HelloScalan extends MatricesDsl {
 }
 
 // to run: scalan-lms-backend/test:runMain HelloScalanStd
-object HelloScalanStd extends MatricesDslStd with HelloScalan {
+object HelloScalanStd extends LADslStd with HelloScalan {
   def result = run(input)
 
   def main(args: Array[String]) = {
@@ -35,7 +35,7 @@ object HelloScalanExp {
   // allows use of standard Scala library, commented out to make tests faster
   // override val defaultCompilerConfig = CompilerConfig(Some("2.11.7"), Seq.empty)
 
-  val program = new MatricesDslExp with HelloScalan
+  val program = new LADslExp with HelloScalan
 
   val compiler = new LinAlgLmsCompilerScala(program)
   import compiler._

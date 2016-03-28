@@ -1,10 +1,10 @@
 package scalan.linalgebra
 
 import scalan._
-import scalan.common.OverloadHack.{Overloaded3, Overloaded2, Overloaded1}
+import scalan.common.OverloadHack.{Overloaded1, Overloaded2, Overloaded3}
 import scala.annotation.unchecked.uncheckedVariance
 
-trait Matrices extends Vectors { self: MatricesDsl =>
+trait Matrices { self: LADsl =>
 
   type Matr[T] = Rep[Matrix[T]]
 
@@ -499,7 +499,7 @@ trait Matrices extends Vectors { self: MatricesDsl =>
   }
 }
 
-trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanDsl =>
+trait MatricesDsl extends impl.MatricesAbs { self: LADsl =>
 
 //  type MatrCompanion = Rep[MatrixCompanion]
 
@@ -534,6 +534,6 @@ trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanDsl =>
   }
 }
 
-trait MatricesDslStd extends impl.MatricesStd with VectorsDslStd
+trait MatricesDslStd extends impl.MatricesStd { self: LADslStd => }
 
-trait MatricesDslExp extends impl.MatricesExp with VectorsDslExp
+trait MatricesDslExp extends impl.MatricesExp { self: LADslExp => }
