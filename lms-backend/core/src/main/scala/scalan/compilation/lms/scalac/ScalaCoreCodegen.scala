@@ -7,7 +7,7 @@ import scalan.compilation.lms.{BaseCodegen, LmsBackendFacade}
 
 class ScalaCoreCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extends
     BaseCodegen[BackendCake]
-    with ScalaGenObjectOpsExt //from scalan.compilation.lms.common
+    with ScalaGenObjectOrientedOps //from scalan.compilation.lms.common
     with ScalaGenArrayOps
     with ScalaGenListOps // todo may be our ScalaGenLstOps should extend lms's ScalaGenListOps?
     with ScalaGenLstOps //from scalan.compilation.lms.common
@@ -18,7 +18,6 @@ class ScalaCoreCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) ex
     with ScalaGenFatArrayLoopsFusionOpt
     with ScalaGenArrayMutation
     with ScalaGenIfThenElseFat with LoopFusionOpt with ScalaGenCastingOps with ScalaGenMathOps
-    with ScalaGenMethodCallOps //from scalan.compilation.lms.common
     with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile with ScalaGenIfThenElse
     with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions
     with ScalaGenRangeOps
