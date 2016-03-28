@@ -39,6 +39,12 @@ trait ObjectOrientedOpsExp extends ObjectOrientedOps with BaseExp with EffectExp
         case arg => arg
       }
       newObj(className, newArgs, newKeyWord)(mtype(manifest[A])) // TODO check: Why not use the manifest from the NewObj
+    case Reflect(NewObj(className, args, newKeyWord), u, es) =>
+      val newArgs = args.map {
+        case arg: Exp[_] => f(arg)
+        case arg => arg
+      }
+      reflectMirrored(Reflect(NewObj[A](className, newArgs, newKeyWord), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
     case _ => super.mirror(e, f)
   }
 
