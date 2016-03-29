@@ -6,7 +6,7 @@ import scalan._
 import scalan.compilation.lms.linalgebra.{LinAlgBridge, LinAlgLmsCompilerUni}
 import scalan.graphs.{GraphsDslExp, GraphsDslStd, GraphTestInputs, MsfFuncs}
 import scalan.it.BaseItTests
-import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslExp, MatricesDslStd}
+import scalan.linalgebra.{LinearAlgebraExamples, LADslStd, LADslExp}
 
 /**
  * Created by adel on 5/15/15.
@@ -80,11 +80,11 @@ trait UniCompilerTestProg extends MsfFuncs with LinearAlgebraExamples {
 
 }
 
-class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new GraphsDslStd with MatricesDslStd with UniCompilerTestProg) with GraphTestInputs {
+class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new GraphsDslStd with LADslStd with UniCompilerTestProg) with GraphTestInputs {
 
   val in3Arrays = (Array(2, 3), (Array(1, 4), Array(1, -1)))
 
-  class ProgExp extends GraphsDslExp with MatricesDslExp with UniCompilerTestProg with JNIExtractorOpsExp
+  class ProgExp extends GraphsDslExp with LADslExp with UniCompilerTestProg with JNIExtractorOpsExp
 
   val progStaged = new LinAlgLmsCompilerUni(new ProgExp) with LinAlgBridge
 

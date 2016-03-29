@@ -9,7 +9,7 @@ import scalan.meta.ScalanAst._
 package impl {
 // Abs -----------------------------------
 trait MatricesAbs extends scalan.ScalanDsl with Matrices {
-  self: MatricesDsl =>
+  self: LADsl =>
 
   // single proxy for each type family
   implicit def proxyMatrix[T](p: Rep[Matrix[T]]): Matrix[T] = {
@@ -414,7 +414,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
 
 // Std -----------------------------------
 trait MatricesStd extends scalan.ScalanDslStd with MatricesDsl {
-  self: MatricesDslStd =>
+  self: LADslStd =>
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs {
   }
 
@@ -477,7 +477,7 @@ trait MatricesStd extends scalan.ScalanDslStd with MatricesDsl {
 
 // Exp -----------------------------------
 trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
-  self: MatricesDslExp =>
+  self: LADslExp =>
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs {
   }
 
@@ -1975,7 +1975,7 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
 }
 
 object Matrices_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAM1XS2wbRRie9SN+RU5bWggSFiEYEIjGKQgVKYcqOAlq5SZRNlTIVKDxeuxumZ1ddsbB5tBjD3BDXDlUQuLSC+qBA6gXhIQ4cEIIiVMPnEpR1QM9gfhn9uFdZ52QyET1YbQ7j//xfd8//vfmPZTlLnqeG5hitmARgRd09bzMRVVfZcIUg4t2u0fJCunc+fL1W/Ppr79NoZkmmrqC+QqnTVTwHlb7Tvisi3YDFTAzCBe2ywV6pqE81AybUmII02Y107J6ArcoqTVMLpYaKNOy24MP0DWkNdAxw2aGSwTR6xRzTrg/nycyIjN8L6j3wYYz9MFqMotaJIttF5sCwgcfx7z9W8TRB8xmA0ugsh/ahiPDgj0503JsVwQucmDuit0OXjMMwwQ60biKd3ANXHRrunBN1oWTJQcb7+MuWYctcnsGAuaEdrYHjnpPN1CRizYAdN5yqJrpOwghYOAVFcTCEJ+FEJ8FiU9VJ66JqfkRloubrt0fIO+npRHqO2Di5X1MBBbIKmtXP75svPNQL1kpebgvQ8mpDKfA0NNj1KCoABx/2PqUP3jzxtkUKjZR0eTLLS5cbIgo5T5aJcyYLVTMIYDY7QJb8+PYUl6WYc+IJAqGbTmYgSUfymngiZqGKeRmOTftszMG+pxwSLBV6ztamO/cmHyVbuqY0s27T55+7o/Vt1MoFXdRAJM6CN8NjAo0dRGDHPq+cTnOCKRtK4TlUOgPx9wezkMYXrj7Z/v7RXQ5FYLn+/pvfIGJLP/1l9LPL55LoXxTqXuN4m4T8OOrlFgbbt1moony9g5xvZXcDqbyKZG/XJt0cI8KH9UoHGmAQ6C5sXXoEInVktK8FgBQ8mS7bjNSXdus/qX/+NlNqUoXTXsrXmH+Y579+7dyRyjBCpR3rUuY9ggPIE5DTcdBL9bDStiXDbU0G4YlhwpYYD0LjPQsluTGRc+OE45DNl3Tgotqh7z23Tdv3b+9nlXaOeFjp0L3rg0fuiGMMjttETydZyJJMEUPFd22yPH5B+a7Nz4RShpaP34rbbSuQvJL6txTe6gkuB2/un791P0v3ntMVXW+ZQoLO9XFA9R0UIL/Y82iOJHluv8voZR+Jr44s0IYJyBj4VVkhPNwi7dSjwaZi6Itx1PhrCcLoGd2xHTMQCVyNBLRrDYirhTZDuLIyDrcV6PJKVVCNVbGqxEgfHyrcZLeO3c7hbIXULYD1c0bKNuye6wdcAP/uYL0xRvBnBbnBrjALrZCLtRvDg1zHolabSxp8bwOdj3uAnG0QjOu/eFhroCpSzDrS3q/MA51O8jhdHJCi2p89SBaLkuFSVomLuUn4paPSskJCVUixy48GuIyhZ9Morh2x3NoiSSfzsHprUR9T1ZdJVjkk78lT0bMHpWuRlN59ERVbpu4azNMJ9m+TEAE5RU/rslfMXHLR3bF7E7oYGqIZD+ViGcauqbDa2UManvwV5KN0Rq2TDo4k+h3L03u5iWJTw8IJ2bxMKjJ8c5wj78xr4zKbhId95sVagJDXdJysZ+4i+bH9DG63xoC6tcefr7+0k+3fldNdVE2mfD1wMJP9mgzPQJhEAF8g0eCBlXJxlMF/C+w/EV1ExEAAA=="
+  val dump = "H4sIAAAAAAAAAM1XS2wbRRie9SN+RU5bWggSFiEYEIjGKQgVKYcqOAlq5SZRNlTIVKDxeuxumZ1ddsbB5tBjD3BDXDlUQuLSC+qBA6gXhIQ4cEIIiVMPnEpR1QM9gfhn9uFdZ52QyET1YbQ7j//xfd8//vfmPZTlLnqeG5hitmARgRd09bzMRVVfZcIUg4t2u0fJCunc+fL1W/Ppr79NoZkmmrqC+QqnTVTwHlb7Tvisi3YDFTAzCBe2ywV6pqE81AybUmII02Y107J6ArcoqTVMLpYaKNOy24MP0DWkNdAxw2aGSwTR6xRzTrg/nycyIjN8L6j3wYYz9MFqMotaJIttF5sCwgcfx7z9W8TRB8xmA0ugsh/ahiPDgj0503JsVwQucmDuit0OXjMMwwQ60biKd3ANXHRrunBN1oWTJQcb7+MuWYctcnsGAuaEdrYHjnpPN1CRizYAdN5yqJrpOwghYOAVFcTCEJ+FEJ8FiU9VJ66JqfkRloubrt0fIO+npRHqO2Di5X1MBBbIKmtXP75svPNQL1kpebgvQ8mpDKfA0NNj1KCoABx/2PqUP3jzxtkUKjZR0eTLLS5cbIgo5T5aJcyYLVTMIYDY7QJb8+PYUl6WYc+IJAqGbTmYgSUfymngiZqGKeRmOTftszMG+pxwSLBV6ztamO/cmHyVbuqY0s27T55+7o/Vt1MoFXdRAJM6CN8NjAo0dRGDHPq+cTnOCKRtK4TlUOgPx9wezkMYXrj7Z/v7RXQ5FYLn+/pvfIGJLP/1l9LPL55LoXxTqXuN4m4T8OOrlFgbbt1moony9g5xvZXcDqbyKZG/XJt0cI8KH9UoHGmAQ6C5sXXoEInVktK8FgBQ8mS7bjNSXdus/qX/+NlNqUoXTXsrXmH+Y579+7dyRyjBCpR3rUuY9ggPIE5DTcdBL9bDStiXDbU0G4YlhwpYYD0LjPQsluTGRc+OE45DNl3Tgotqh7z23Tdv3b+9nlXaOeFjp0L3rg0fuiGMMjttETydZyJJMEUPFd22yPH5B+a7Nz4RShpaP34rbbSuQvJL6txTe6gkuB2/un791P0v3ntMVXW+ZQoLO9XFA9R0UIL/Y82iOJHluv8voZR+Jr44s0IYJyBj4VVkhPNwi7dSjwaZi6Itx1PhrCcLoGd2xHTMQCVyNBLRrDYirhTZDuLIyDrcV6PJKVVCNVbGqxEgfHyrcZLeO3c7hbIXULYD1c0bKNuye6wdcAP/uYL0xRvBnBbnBrjALrZCLtRvDg1zHolabSxp8bwOdj3uAnG0QjOu/eFhroCpSzDrS3q/MA51O8jhdHJCi2p89SBaLkuFSVomLuUn4paPSskJCVUixy48GuIyhZ9Morh2x3NoiSSfzsHprUR9T1ZdJVjkk78lT0bMHpWuRlN59ERVbpu4azNMJ9m+TEAE5RU/rslfMXHLR3bF7E7oYGqIZD+ViGcauqbDa2UManvwV5KN0Rq2TDo4k+h3L03u5iWJTw8IJ2bxMKjJ8c5wj78xr4zKbhId95sVagJDXdJysZ+4i+bH9DG63xoC6tcefr7+0k+3fldNdVE2mfD1wMJP9mgzHQcq21iGr+9IuKAn2XKqUP8FwxvQbw0RAAA="
 }
 }
 

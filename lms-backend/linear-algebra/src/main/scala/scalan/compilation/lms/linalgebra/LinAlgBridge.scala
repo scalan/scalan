@@ -2,10 +2,10 @@ package scalan.compilation.lms.linalgebra
 
 import scalan.compilation.lms.collections.CollectionsBridgeScala
 import scalan.compilation.lms.{CoreBridge, CoreLmsBackend}
-import scalan.linalgebra.{VectorsDslExp, LinAlgMethodMappingDSL}
+import scalan.linalgebra.{LADslExp, LinAlgMethodMappingDSL}
 
 trait LinAlgBridge extends CoreBridge with LinAlgMethodMappingDSL {
-  override val scalan: VectorsDslExp
+  override val scalan: LADslExp
   import scalan._
 
   val lms: CoreLmsBackend with VectorOpsExp

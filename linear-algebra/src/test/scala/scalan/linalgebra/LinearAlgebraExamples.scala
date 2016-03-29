@@ -1,6 +1,6 @@
 package scalan.linalgebra
 
-trait LinearAlgebraExamples extends MatricesDsl {
+trait LinearAlgebraExamples extends LADsl {
   def mvm[T](matrix: Matr[T], vector: Vec[T])(implicit eT: Elem[T], n: Numeric[T]): Vec[T] =
     DenseVector(matrix.rows.mapBy( fun{ r => r dot vector }))
 
