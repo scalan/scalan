@@ -48,17 +48,18 @@ lazy val scalaVirtualizedSettings = Seq(
   )
 )
 
-lazy val commonBackendSettings = commonSettings ++ Defaults.itSettings ++
-  scalaVirtualizedSettings ++ Seq(
-    libraryDependencies ++= Seq(
-      "org.scala-lang.lms" %% "lms-core" % "0.9.1-SNAPSHOT",
-      "org.scalatest" %% "scalatest" % "2.2.6" % "it"),
-    // we know we use LMS snapshot here, ignore it
-    releaseSnapshotDependencies := Seq.empty,
+lazy val backendSettings = commonSettings ++ Defaults.itSettings ++
+  Seq(
+    libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "it",
     javaOptions in IntegrationTest ++=
       Seq("-Xmx3g", "-XX:PermSize=384m", "-XX:MaxPermSize=384m", "-XX:ReservedCodeCacheSize=384m"),
     parallelExecution in IntegrationTest := false,
     fork in IntegrationTest := true)
+
+lazy val lmsBackendSettings = backendSettings ++ scalaVirtualizedSettings ++ Seq(
+    libraryDependencies += "org.scala-lang.lms" %% "lms-core" % "0.9.1-SNAPSHOT",
+    // we know we use LMS snapshot here, ignore it
+    releaseSnapshotDependencies := Seq.empty)
 
 lazy val allConfigDependency = "compile->compile;test->test"
 
@@ -109,30 +110,37 @@ lazy val effects = Project("scalan-effects", file("effects"))
   .dependsOn(collections % allConfigDependency)
   .settings(commonSettings)
 
-lazy val backendCore = Project("scalan-lms-backend-core", file("lms-backend") / "core")
+lazy val lmsBackendCore = Project("scalan-lms-backend-core", file("lms-backend") / "core")
   .dependsOn(core % "compile->compile;it->test")
-  .configs(IntegrationTest).settings(commonBackendSettings)
+  .configs(IntegrationTest).settings(lmsBackendSettings)
 
-lazy val backendCollections = Project("scalan-lms-backend-collections", file("lms-backend") / "collections")
-  .dependsOn(backendCore, collections % "compile->compile;it->test")
-  .configs(IntegrationTest).settings(commonBackendSettings)
+lazy val lmsBackendCollections = Project("scalan-lms-backend-collections", file("lms-backend") / "collections")
+  .dependsOn(lmsBackendCore, collections % "compile->compile;it->test")
+  .configs(IntegrationTest).settings(lmsBackendSettings)
 
-lazy val backendLinAlg = Project("scalan-lms-backend-linear-algebra", file("lms-backend") / "linear-algebra")
-  .dependsOn(backendCollections, linalg % "compile->compile;it->test")
-  .configs(IntegrationTest).settings(commonBackendSettings)
+lazy val lmsBackendLinAlg = Project("scalan-lms-backend-linear-algebra", file("lms-backend") / "linear-algebra")
+  .dependsOn(lmsBackendCollections, linalg % "compile->compile;it->test")
+  .configs(IntegrationTest).settings(lmsBackendSettings)
 
-lazy val backendPointers = Project("scalan-lms-backend-pointers", file("lms-backend") / "pointers")
-  .dependsOn(backendCore, pointers % "compile->compile;it->test")
-  .configs(IntegrationTest).settings(commonBackendSettings)
+lazy val lmsBackendPointers = Project("scalan-lms-backend-pointers", file("lms-backend") / "pointers")
+  .dependsOn(lmsBackendCore, pointers % "compile->compile;it->test")
+  .configs(IntegrationTest).settings(lmsBackendSettings)
 
 // contains the integration tests for library modules which don't have their own backend module
 // and tests which use multiple modules together
-lazy val backendIT = Project("scalan-lms-backend-tests", file("lms-backend") / "tests")
-  .dependsOn(backendCollections % "compile->compile;it->it", backendLinAlg % "compile->compile;it->it", graphs % "compile->compile;it->test", backendPointers % "compile->compile;it->it", effects % "compile->compile;it->test")
-  .configs(IntegrationTest).settings(commonBackendSettings)
+lazy val lmsBackendIT = Project("scalan-lms-backend-tests", file("lms-backend") / "tests")
+  .dependsOn(lmsBackendCollections % "compile->compile;it->it", lmsBackendLinAlg % "compile->compile;it->it", graphs % "compile->compile;it->test", lmsBackendPointers % "compile->compile;it->it", effects % "compile->compile;it->test")
+  .configs(IntegrationTest).settings(lmsBackendSettings)
+
+lazy val luaBackendCore = Project("scalan-lua-backend-core", file("lua-backend") / "core").
+  dependsOn(core % "compile->compile;it->test").
+  configs(IntegrationTest).settings(backendSettings).settings(
+    libraryDependencies += "org.luaj" % "luaj-jse" % "3.0.1"
+  )
 
 lazy val root = Project("scalan", file("."))
   .aggregate(common, meta, core,
     collections, linalg, graphs, pointers, effects,
-    backendCore, backendCollections, backendLinAlg, backendPointers, backendIT)
+    lmsBackendCore, lmsBackendCollections, lmsBackendLinAlg, lmsBackendPointers, lmsBackendIT,
+    luaBackendCore)
   .settings(buildSettings, publishArtifact := false)
