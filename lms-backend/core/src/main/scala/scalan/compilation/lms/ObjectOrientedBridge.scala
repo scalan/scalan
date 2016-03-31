@@ -20,30 +20,39 @@ trait ObjectOrientedBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: Metho
   def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] = {
     elemToManifest(returnType) match {
       case mA: Manifest[a] =>
-        mappedMethod(method) match {
-          case Some((libraryT, typeT, methodT)) =>
-            val numArgs = args.length
+        val numArgs = args.length
 
-            def checkArg[A](iAdj: Adjusted[Int])(f: PartialFunction[Any, A]) = iAdj.value match {
-              case -1 =>
-                f.applyOrElse(receiver, { x: Any => !!!(s"Unexpected receiver for method $methodT: $x") })
-              case i =>
-                if (i < numArgs) {
-                  f.applyOrElse(args(i), { x: Any =>
-                    val numStr = i match {
-                      case 1 => "1st"
-                      case 2 => "2nd"
-                      case 3 => "3rd"
-                      case _ => s"${i}th"
-                    }
-                    !!!(s"Unexpected $numStr argument for method $method: $x")
-                  })
-                } else {
-                  // TODO show the method better
-                  !!!(s"Mapping error for method $method: got $numArgs arguments, must be at least ${i + 1}.")
+        def checkArg[A](iAdj: Adjusted[Int])(f: PartialFunction[Any, A]) = iAdj.value match {
+          case -1 =>
+            f.applyOrElse(receiver, { x: Any => !!!(s"Unexpected receiver for method $method: $x") })
+          case i =>
+            if (i < numArgs) {
+              f.applyOrElse(args(i), { x: Any =>
+                val numStr = i match {
+                  case 1 => "1st"
+                  case 2 => "2nd"
+                  case 3 => "3rd"
+                  case _ => s"${i}th"
                 }
+                !!!(s"Unexpected $numStr argument for method $method: $x")
+              })
+            } else {
+              // TODO show the method better
+              !!!(s"Mapping error for method $method: got $numArgs arguments, must be at least ${i + 1}.")
             }
+        }
 
+        mappedMethod(method) match {
+          case Some((_, _, methodT)) if methodT.isInternal =>
+            val lmsArgs = methodT.argOrder.map(checkArg(_) {
+              case e: Exp[_] =>
+                m.symMirrorUntyped(e)
+            })
+
+            val lmsMethod = lmsMemberByName(methodT.mappedName).asMethod
+            lmsMirror.reflectMethod(lmsMethod).apply(lmsArgs: _*).asInstanceOf[lms.Exp[_]]
+
+          case Some((libraryT, typeT, methodT)) =>
             val mappedReceiver = checkArg(methodT.receiverIndex) {
               case e: Exp[_] => e
             }
@@ -61,13 +70,6 @@ trait ObjectOrientedBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: Metho
                 m.symMirrorUntyped(e)
             })
             lms.methodCall[a](lmsReceiver, lms.Pure, methodT.mappedName, typeArgs, lmsArgs: _*)(mA)
-
-            // TODO handle mapping to LMS methods
-            //        case e: ScalaMappingDSL#EmbeddedObject if e.name == "lms" =>
-            //          val lmsReceiver = m.symMirrorUntyped(receiver)
-            //          val name = methodT.name
-            //          val lmsMethod = lmsMemberByName(name).asMethod
-            //          lmsMirror.reflectMethod(lmsMethod).apply(lmsReceiver, lmsReceiver.tp).asInstanceOf[lms.Exp[_]]
 
           case None =>
             val lmsReceiver = if (receiver.isCompanion) {

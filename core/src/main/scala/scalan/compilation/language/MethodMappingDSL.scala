@@ -99,6 +99,7 @@ trait MethodRep {
   def mappedName: String
   def overloadId: Option[String]
   def isStatic: Boolean
+  def isInternal: Boolean
   def receiverIndex: Adjusted[Int]
   def argOrder: Seq[Adjusted[Int]]
 }
@@ -141,7 +142,7 @@ object ScalaMapping {
 
   case class ScalaType(scalanName: String, mappedName: String, methods: Seq[ScalaMethod]) extends TypeRep[ScalaMethod] // TODO constructor arguments
 
-  case class ScalaMethod(scalanName: String, overloadId: Option[String], mappedName: String, isStatic: Boolean, receiverIndex: Adjusted[Int], typeArgOrder: Seq[Adjusted[Int]], argOrder: Seq[Adjusted[Int]], implicitArgOrder: Seq[Adjusted[Int]]) extends MethodRep
+  case class ScalaMethod(scalanName: String, overloadId: Option[String], mappedName: String, isStatic: Boolean, isInternal: Boolean, receiverIndex: Adjusted[Int], typeArgOrder: Seq[Adjusted[Int]], argOrder: Seq[Adjusted[Int]], implicitArgOrder: Seq[Adjusted[Int]]) extends MethodRep
 
   case class ScalaMappingBuilder(moduleName: String, packageName: Option[String], jars: Seq[File]) extends MappingBuilder[ScalaLibrary, ScalaType, ScalaMethod] {
     def language = SCALA
@@ -167,8 +168,10 @@ object ScalaMapping {
       apply(tag.runtimeClass.getSimpleName, fieldSyms: _*)
   }
 
-  case class MapMethodScala(scalanName: String, overloadId: Option[String], scalanArgs: Seq[Symbol], mappedName: String, isStatic: Boolean, receiverSym: Adjusted[Symbol], typeArgs: Seq[Adjusted[Symbol]], args: Seq[Adjusted[Symbol]], implicitArgs: Seq[Adjusted[Symbol]]) extends MethodBuilder[ScalaLibrary, ScalaType, ScalaMethod, MapMethodScala] {
+  case class MapMethodScala(scalanName: String, overloadId: Option[String], scalanArgs: Seq[Symbol], mappedName: String, isStatic: Boolean, isInternal: Boolean, receiverSym: Adjusted[Symbol], typeArgs: Seq[Adjusted[Symbol]], args: Seq[Adjusted[Symbol]], implicitArgs: Seq[Adjusted[Symbol]]) extends MethodBuilder[ScalaLibrary, ScalaType, ScalaMethod, MapMethodScala] {
     def to(mappedName: String) = copy(mappedName = mappedName)
+    def internal(mappedName: String) =
+      copy(isInternal = true, mappedName = mappedName, args = Adjusted('this) +: this.args)
     def onCompanion = copy(isStatic = true)
     def onArg(receiver: Adjusted[Symbol]) =
       copy(receiverSym = receiver, args = this.args.filter(_.value != receiver.value))
@@ -182,13 +185,13 @@ object ScalaMapping {
       val argOrder = symbolOrder(scalanArgs, args, scalanName)
       val implicitArgOrder = symbolOrder(scalanArgs, implicitArgs, scalanName)
 
-      ScalaMethod(scalanName, overloadId, mappedName, isStatic, receiverIndex, typeArgOrder, argOrder, implicitArgOrder)
+      ScalaMethod(scalanName, overloadId, mappedName, isStatic, isInternal, receiverIndex, typeArgOrder, argOrder, implicitArgOrder)
     }
   }
 
   object MapMethodScala {
-    def apply(scalanName: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, None, argSyms, scalanName, false, 'this, Nil, argSyms.map(Adjusted(_)), Nil)
-    def apply(scalanName: String, overloadId: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, Some(overloadId), argSyms, scalanName, false, 'this, Nil, argSyms.map(Adjusted(_)), Nil)
+    def apply(scalanName: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, None, argSyms, scalanName, false, false, 'this, Nil, argSyms.map(Adjusted(_)), Nil)
+    def apply(scalanName: String, overloadId: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, Some(overloadId), argSyms, scalanName, false, false, 'this, Nil, argSyms.map(Adjusted(_)), Nil)
   }
 }
 
@@ -201,7 +204,7 @@ object CxxMapping {
 
   case class CxxType(scalanName: String, mappedName: String, templateArgOrder: Seq[Adjusted[Int]], methods: Seq[CxxMethod]) extends TypeRep[CxxMethod]
 
-  case class CxxMethod(scalanName: String, overloadId: Option[String], mappedName: String, isStatic: Boolean, receiverIndex: Adjusted[Int], templateArgOrder: Seq[Adjusted[Int]], argOrder: Seq[Adjusted[Int]]) extends MethodRep
+  case class CxxMethod(scalanName: String, overloadId: Option[String], mappedName: String, isStatic: Boolean, isInternal: Boolean, receiverIndex: Adjusted[Int], templateArgOrder: Seq[Adjusted[Int]], argOrder: Seq[Adjusted[Int]]) extends MethodRep
 
   case class CxxMappingBuilder(moduleName: String, headerName: Option[String], namespace: Option[String]) extends MappingBuilder[CxxLibrary, CxxType, CxxMethod] {
     def language = CXX
@@ -227,9 +230,11 @@ object CxxMapping {
       apply(tag.runtimeClass.getSimpleName, fieldSyms: _*)
   }
 
-  case class MapMethodCxx(scalanName: String, overloadId: Option[String], scalanArgs: Seq[Symbol], mappedName: String, isStatic: Boolean, receiverSym: Adjusted[Symbol], templateArgs: Seq[Adjusted[Symbol]], args: Seq[Adjusted[Symbol]]) extends MethodBuilder[CxxLibrary, CxxType, CxxMethod, MapMethodCxx] {
+  case class MapMethodCxx(scalanName: String, overloadId: Option[String], scalanArgs: Seq[Symbol], mappedName: String, isStatic: Boolean, isInternal: Boolean, receiverSym: Adjusted[Symbol], templateArgs: Seq[Adjusted[Symbol]], args: Seq[Adjusted[Symbol]]) extends MethodBuilder[CxxLibrary, CxxType, CxxMethod, MapMethodCxx] {
     def to(mappedName: String) = copy(mappedName = mappedName)
     def static = copy(isStatic = true)
+    def internal(mappedName: String) =
+      copy(isInternal = true, mappedName = mappedName, args = Adjusted('this) +: this.args)
     def templateArgs(templateArgs: Adjusted[Symbol]*): MapMethodCxx = copy(templateArgs = templateArgs)
     def args(args: Adjusted[Symbol]*): MapMethodCxx = copy(args = args)
 
@@ -238,15 +243,15 @@ object CxxMapping {
       val templateArgOrder = symbolOrder(scalanArgs, templateArgs, scalanName)
       val argOrder = symbolOrder(scalanArgs, args, scalanName)
 
-      CxxMethod(scalanName, overloadId, mappedName, isStatic, receiverIndex, templateArgOrder, argOrder)
+      CxxMethod(scalanName, overloadId, mappedName, isStatic, isInternal, receiverIndex, templateArgOrder, argOrder)
     }
   }
 
   object MapMethodCxx {
     def apply(scalanName: String, argSyms: Symbol*): MapMethodCxx =
-      new MapMethodCxx(scalanName, None, argSyms, scalanName, false, 'this, Nil, argSyms.map(Adjusted(_)))
+      new MapMethodCxx(scalanName, None, argSyms, scalanName, false, false, 'this, Nil, argSyms.map(Adjusted(_)))
     def apply(scalanName: String, overloadId: String, argSyms: Symbol*): MapMethodCxx =
-      new MapMethodCxx(scalanName, Some(overloadId), argSyms, scalanName, false, 'this, Nil, argSyms.map(Adjusted(_)))
+      new MapMethodCxx(scalanName, Some(overloadId), argSyms, scalanName, false, false, 'this, Nil, argSyms.map(Adjusted(_)))
   }
 }
 
