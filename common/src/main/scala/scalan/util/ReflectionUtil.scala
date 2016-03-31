@@ -1,7 +1,10 @@
 package scalan.util
 
-import scala.reflect.ReflectionUtil0
+import java.lang.reflect.{Method, AnnotatedElement}
+
+import scala.reflect.{classTag, ClassTag, ReflectionUtil0}
 import scala.reflect.runtime.universe._
+import scalan.OverloadId
 
 sealed trait ParamMirror {
   def bind(newReceiver: Any): ParamMirror
@@ -25,6 +28,11 @@ object ReflectionUtil {
   def annotation[T: TypeTag](symbol: Symbol) = symbol.annotations.find {
     _.tree.tpe =:= typeOf[T]
   }
+
+  def jAnnotation[A <: java.lang.annotation.Annotation : ClassTag](element: AnnotatedElement) =
+    Option(element.getAnnotation(classTag[A].runtimeClass.asInstanceOf[Class[A]]))
+
+  def overloadId(method: Method) = jAnnotation[OverloadId](method).map(_.value)
 
   def methodToJava(sym: MethodSymbol) = ReflectionUtil0.methodToJava(sym)
 

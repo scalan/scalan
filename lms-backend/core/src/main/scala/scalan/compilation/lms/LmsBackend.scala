@@ -53,19 +53,20 @@ abstract class LmsBackend extends LmsBackendFacade { self =>
 
 }
 
-abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimitives with LiftNumeric with ArrayOpsExtExp with ListOpsExp
+abstract class LmsBackendFacade extends
+  ObjectOrientedOpsExp with LiftVariables with LiftPrimitives with LiftNumeric with ArrayOpsExtExp with ListOpsExp
   with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExpExt
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with ArrayMutationExp with OrderingOpsExp
   with IfThenElseFatExp with VariablesExpOpt
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with ExtNumOpsExp
-// FIXME using CastingOpsExpOpt instead of CastingOpsExp generates wrong code, perhaps due to LMS bug
-// Without it we get useless casts and more code than should be present
-  with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
+  // FIXME using CastingOpsExpOpt instead of CastingOpsExp generates wrong code, perhaps due to LMS bug
+  // Without it we get useless casts and more code than should be present
+  with CastingOpsExp with EitherOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt
-// FIXME using StructFatExpOptCommon instead of StructExpOptCommon leads to bad code generated in LmsMstPrimeItTests
-// Not clear whether this is due to our or LMS error
-// Replace StructExpOptCommon with StructExp if needed to verify codegen works correctly;
-// otherwise they can get optimized out
+  // FIXME using StructFatExpOptCommon instead of StructExpOptCommon leads to bad code generated in LmsMstPrimeItTests
+  // Not clear whether this is due to our or LMS error
+  // Replace StructExpOptCommon with StructExp if needed to verify codegen works correctly;
+  // otherwise they can get optimized out
   with MiscOpsExtExp with StructExpOptCommon with Effects {
   def toStringWithDefinition(x: Exp[_]) = s"$x: ${x.tp}" + (x match {
     case sym: Sym[_] =>
@@ -345,5 +346,3 @@ abstract class CoreLmsBackend extends LmsBackend
 class ScalaCoreLmsBackend extends CoreLmsBackend { self =>
   override val codegen = new ScalaCoreCodegen[self.type](self)
 }
-
-
