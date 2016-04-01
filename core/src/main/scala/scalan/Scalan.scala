@@ -35,6 +35,7 @@ abstract class Scalan
   with MapOps
   with MapViews
   with Transforming
+  with Analyzing
   with ArrayOps
   with ArrayBuffers
   with Exceptions
@@ -73,6 +74,7 @@ abstract class ScalanStd
   with MapOpsStd
   with MapViewsStd
   with MonoidsStd
+  with AnalyzingStd
   with ArrayOpsStd
   with ArrayBuffersStd
   with ExceptionsStd
@@ -115,6 +117,7 @@ abstract class ScalanExp
   with MapOpsExp
   with MapViewsExp
   with TransformingExp
+  with AnalyzingExp
   with ArrayOpsExp
   with ArrayBuffersExp
   with ExceptionsExp
