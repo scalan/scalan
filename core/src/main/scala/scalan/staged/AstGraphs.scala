@@ -329,7 +329,7 @@ trait AstGraphs extends TransformingExp { self: ScalanExp =>
     * @param thenBody  schedule of `then` branch
     * @param elseBody  schedule of `else` branch
     */
-  case class IfBranches(graph: AstGraph, ifSym: Exp[_], thenBody: ThunkDef[_], elseBody: ThunkDef[_])
+  case class  IfBranches(graph: AstGraph, ifSym: Exp[_], thenBody: ThunkDef[_], elseBody: ThunkDef[_])
   {
     // filter out definitions from this branches that were reassigned to the deeper levels
     def cleanBranches(assignments: Map[Exp[_], BranchPath]) = {
