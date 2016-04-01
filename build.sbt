@@ -1,5 +1,5 @@
 lazy val buildSettings = Seq(
-scalaVersion := "2.11.7",
+scalaVersion := "2.11.8",
 organization := "com.huawei.scalan",
 scalacOptions ++= Seq(
   "-encoding", "UTF-8",
