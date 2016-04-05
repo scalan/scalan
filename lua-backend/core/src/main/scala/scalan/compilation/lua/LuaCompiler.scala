@@ -6,7 +6,7 @@ import org.luaj.vm2.{LuaTable, LuaValue}
 import org.luaj.vm2.lib.jse.JsePlatform
 
 import scala.collection.mutable
-import scalan.ScalanDslExp
+import scalan.{ScalanDslExp, ScalanDslStd}
 import scalan.compilation.{Compiler, GraphVizConfig}
 
 class LuaCompiler[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends Compiler(_scalan) {
@@ -46,6 +46,15 @@ class LuaCompiler[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends Comp
       val fst = toLuaValue(pair._1, eFst)
       val snd = toLuaValue(pair._2, eSnd)
       LuaValue.listOf(Array(fst, snd))
+    case StructElem(_, fields) =>
+      val struct = x.asInstanceOf[scalanStd.Struct]
+      val namedValues = Array.ofDim[LuaValue](fields.length * 2)
+      fields.zipWithIndex.foreach { case ((key, elem), i) =>
+        namedValues(i * 2) = LuaValue.valueOf(key)
+        val value = struct.fields(i)._2
+        namedValues(i * 2 + 1) = toLuaValue(value, elem)
+      }
+      LuaValue.tableOf(namedValues)
     case _ => !!!(s"Can't convert $x of type ${eX.name} to a Lua value")
   }
 
@@ -71,6 +80,13 @@ class LuaCompiler[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends Comp
       val fst = fromLuaValue(lv.get(1), eFst)
       val snd = fromLuaValue(lv.get(2), eSnd)
       (fst, snd)
+    case StructElem(tag, elemFields) =>
+      val tagStd = tag.asInstanceOf[scalanStd.StructTag[A with scalanStd.Struct]]
+      val structFields = elemFields.map { case (key, elem) =>
+        val value = fromLuaValue(lv.get(key), elem)
+        (key, value)
+      }
+      scalanStd.struct(tagStd, structFields)
     case _ => !!!(s"Can't convert LuaValue $lv to JVM value of type ${eA.name}")
   }).asInstanceOf[A]
 
@@ -79,4 +95,6 @@ class LuaCompiler[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends Comp
     val luaOutput = compilerOutput.custom.call(luaInput)
     fromLuaValue(luaOutput, compilerOutput.common.eOutput)
   }
+
+  protected[this] lazy val scalanStd = new ScalanDslStd
 }

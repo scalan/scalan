@@ -89,6 +89,9 @@ class LuaCodegen[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends BaseC
     case ArrayApply(xs, i) => src"$xs[$i + 1]"
     case ArrayLength(xs) => src"#$xs"
     case ArrayEmpty() => "{}"
+    case SimpleStruct(_, fields) =>
+      tableLit(fields.map { case (key, value) => s"""["$key"] = $value""" })
+    case FieldApply(struct, key) => src"""$struct["$key"]"""
     case _ => super.rhs(d)
   }
 
@@ -96,9 +99,9 @@ class LuaCodegen[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends BaseC
     // No F or L suffixes for literals in Lua
     case (_: Float) | (_: Long) => value.toString
     case null => "nil"
-    case xs: Array[_] => s"{${xs.map(literal).mkString(", ")}}"
-    case xs: Seq[_] => s"{${xs.map(literal).mkString(", ")}}"
-    case map: Map[_, _] => s"{${map.map { case (k, v) => s"$k = $v"}.mkString(", ")}}"
+    case xs: Array[_] => tableLit(xs.map(literal))
+    case xs: Seq[_] => tableLit(xs.map(literal))
+    case map: Map[_, _] => tableLit(map.map { case (k, v) => s"""[$k] = $v""" })
     case _ => super.literal(value)
   }
 
@@ -113,4 +116,5 @@ class LuaCodegen[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends BaseC
     case _ => super.binOp(op, x, y)
   }
 
+  def tableLit(elems: Iterable[String]) = "{" + elems.mkString(", ") + "}"
 }
