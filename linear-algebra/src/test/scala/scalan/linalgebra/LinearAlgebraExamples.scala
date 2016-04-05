@@ -363,7 +363,7 @@ trait LinearAlgebraExamples extends LADsl {
   }
   lazy val sparseVector1 = fun { p: Rep[(Array[(Int, Double)], Int)] =>
     val Tuple(arr, n) = p
-    SparseVector1(Collection(arr), n)
+    SparseVector(Collection(arr), n)
   }
 
   lazy val flatMatrix = fun { p: Rep[(Array[Double], Int)] =>
