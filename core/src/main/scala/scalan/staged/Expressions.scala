@@ -374,7 +374,9 @@ trait BaseExp extends Base { scalan: ScalanExp =>
       case Def(_: Lambda[_, _]) => true
       case _ => false
     }
-    def tp: TableEntry[_] = findDefinition(symbol).get
+    def tp: TableEntry[_] = findDefinition(symbol).getOrElse {
+      !!!(s"No definition found for $symbol", symbol)
+    }
     def sameScopeAs(other: Exp[_]): Boolean = this.tp.lambda == other.tp.lambda
   }
 

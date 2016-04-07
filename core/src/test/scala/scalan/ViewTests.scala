@@ -12,13 +12,13 @@ abstract class BaseViewTests extends BaseCtxTests {
       _testLambdaResultHasViews(msg, f, None)
 
     private def _testLambdaResultHasViews[A,B](msg: String, f: Rep[A => B], expectedDataElem: Option[Elem[_]]) = {
-      val ok = f match {
+      val actualDataElem = f match {
         case LambdaResultHasViews(f, iso) =>
-          expectedDataElem.isDefined && expectedDataElem.get == iso.eFrom
+          Some(iso.eFrom)
         case _ =>
-          !expectedDataElem.isDefined
+          None
       }
-      assert(ok, msg)
+      assert(expectedDataElem == actualDataElem, msg)
     }
 
     def testGetIso[From, To](e: Elem[To], eFromExpected: Elem[From]) = {
