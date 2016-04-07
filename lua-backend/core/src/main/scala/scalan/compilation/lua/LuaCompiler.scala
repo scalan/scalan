@@ -24,9 +24,15 @@ class LuaCompiler[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends Comp
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): CustomCompilerOutput = {
     val file = codegen.emitSourceFile(graph, functionName, sourcesDir)
     val globals = JsePlatform.standardGlobals()
-    globals.get("dofile").call(LuaValue.valueOf(file.getAbsolutePath))
+    val fullPath = file.getAbsolutePath
+    try {
+      globals.get("dofile").call(LuaValue.valueOf(fullPath))
+    } catch {
+      // LuaJ doesn't show the full path otherwise
+      case e: Exception => !!!(s"Failed to read or compile $fullPath", e)
+    }
     val fun = globals.get(functionName)
-    assert(!fun.isnil(), s"Global function $functionName is expected to be present in script ${file.getAbsolutePath}")
+    assert(!fun.isnil(), s"Global function $functionName is expected to be present in script $fullPath")
     fun
   }
 
