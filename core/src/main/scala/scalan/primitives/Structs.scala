@@ -605,41 +605,25 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
     }
   }
 
-  object IdentityStructMapping {
+  object SameStructAs {
     def unapply[A](d: Def[A]): Option[Rep[A]] = d match {
-      case Struct(_, fields) =>
-        val inputStructs = scala.collection.mutable.HashSet[Rep[A]]()
-        val okNames = fields.forall { case (fn, s) =>
-          s match {
-            case Def(Field(struct, name)) if name == fn =>
-              inputStructs += struct.asRep[A]
-              true
-            case _ => false
-          }
+      case Struct(tag, fields) =>
+        fields.headOption match {
+          case Some((_, Def(Field(possibleSourceStruct, _)))) if d.selfType == possibleSourceStruct.elem =>
+            val eachFieldComesFromPossibleSourceStruct = fields.forall {
+              case (name, Def(Field(`possibleSourceStruct`, name1))) if name == name1 =>
+                true
+              case _ =>
+                false
+            }
+            if (eachFieldComesFromPossibleSourceStruct)
+              Some(possibleSourceStruct.asRep[A])
+            else
+              None
+          case _ => None
         }
-        if (okNames && inputStructs.size == 1)
-          Some(inputStructs.head)
-        else
-          None
       case _ => None
     }
-  }
-
-  object IdentityStructLambda {
-    def unapply[A,B](lam: Lambda[A, B]): Boolean = lam.y match {
-      case Def(Struct(_, fields)) =>
-        fields.forall { case (fn, s) =>
-          s match {
-            case Def(Field(struct, name)) if struct == lam.x && name == fn => true
-            case _ => false
-          }
-        }
-      case _ => false
-    }
-  }
-
-  override def isIdentityLambda[A,B](lam: Lambda[A, B]): Boolean = {
-    super.isIdentityLambda(lam) || IdentityStructLambda.unapply(lam)
   }
 
   def shouldUnpackTuples = currentPass.config.shouldUnpackTuples
@@ -648,7 +632,7 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
 
   override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
     case FieldGet(v) if shouldExtractFields => v
-    case IdentityStructMapping(s) => s
+    case SameStructAs(s) => s
     case _ => super.rewriteDef(d)
   }
 
@@ -659,7 +643,3 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
     }).asRep[T]
   }
 }
-
-
-
-

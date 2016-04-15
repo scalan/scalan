@@ -117,9 +117,8 @@ class StructTests extends BaseViewTests {
       override val cacheElems = false
 //      override val cachePairs = false
 
-      def noTuples[A,B](f: Rep[A=>B]): Boolean = {
-        val g = new PGraph(f)
-        !g.scheduleAll.exists(tp => tp.rhs match {
+      def containsTuples(g: PGraph): Boolean = {
+        g.scheduleAll.exists(tp => tp.rhs match {
           case First(_) => true
           case Second(_) => true
           case Tup(_,_) => true
@@ -215,8 +214,8 @@ class StructTests extends BaseViewTests {
       def testWrapper[A,B](functionName: String,
                              f: => Exp[A => B], expectTuples: Boolean = false): compiler.CompilerOutput[A, B] = {
         val out = super.test(functionName, f)
-        val hasTuples = !noTuples(out.common.graph.roots(0).asRep[A => B])
-        assert(expectTuples && hasTuples || (!expectTuples && !hasTuples))
+        val hasTuples = containsTuples(out.common.graph)
+        assert(expectTuples == hasTuples)
         out
       }
     }
@@ -235,6 +234,37 @@ class StructTests extends BaseViewTests {
     ctx.testWrapper("t14_inout", structWrapper(t14), false)
     ctx.testWrapper("t15", t15)
     ctx.testWrapper("t16", t16)
+  }
+
+  test("Rewrite rule for SameStructAs works") {
+    val ctx = new Ctx
+
+    import ctx.compiler.scalan._
+
+    val eStruct1 = structElement(Seq("in1" -> eInt, "in2" -> eInt))
+    val eStruct2 = structElement(Seq("in2" -> eInt, "in1" -> eInt))
+    val eStruct3 = structElement(Seq("in1" -> eInt))
+
+    val f1 = fun[Struct, Struct] {
+      x => struct("in1" -> field(x, "in1"), "in2" -> field(x, "in2"))
+    }(Lazy(eStruct1), eStruct1)
+
+    val f2 = fun[Struct, Struct] {
+      x => struct("in1" -> field(x, "in2"), "in2" -> field(x, "in1"))
+    }(Lazy(eStruct1), eStruct1)
+
+    val f3 = fun[Struct, Struct] {
+      x => struct("in2" -> field(x, "in2"), "in1" -> field(x, "in1"))
+    }(Lazy(eStruct1), eStruct2)
+
+    val f4 = fun[Struct, Struct] {
+      x => struct("in1" -> field(x, "in1"))
+    }(Lazy(eStruct1), eStruct3)
+
+    f1 should matchPattern { case Def(IdentityLambda()) => }
+    f2 shouldNot matchPattern { case Def(IdentityLambda()) => }
+    f3 shouldNot matchPattern { case Def(IdentityLambda()) => }
+    f4 shouldNot matchPattern { case Def(IdentityLambda()) => }
   }
 
   test("structWrapper_IfThenElse") {
