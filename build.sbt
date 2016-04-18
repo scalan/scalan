@@ -1,26 +1,26 @@
 lazy val buildSettings = Seq(
-scalaVersion := "2.11.7",
-organization := "com.huawei.scalan",
-scalacOptions ++= Seq(
-  "-encoding", "UTF-8",
-  "-unchecked",
-  "-deprecation",
-  "-Xlint",
-  "-feature",
-  "-Ywarn-adapted-args",
-  "-Ywarn-inaccessible",
-  "-Ywarn-nullary-override",
-  "-language:higherKinds",
-  "-language:implicitConversions",
-  "-language:existentials",
-  "-language:experimental.macros"),
-publishTo := {
-  val nexus = "http://10.122.85.37:9081/nexus/"
-  if (version.value.trim.endsWith("SNAPSHOT"))
-    Some("snapshots" at (nexus + "content/repositories/snapshots"))
-  else
-    Some("releases" at (nexus + "content/repositories/releases"))
-},
+  scalaVersion := "2.11.8",
+  organization := "com.huawei.scalan",
+  scalacOptions ++= Seq(
+    "-encoding", "UTF-8",
+    "-unchecked",
+    "-deprecation",
+    "-Xlint",
+    "-feature",
+    "-Ywarn-adapted-args",
+    "-Ywarn-inaccessible",
+    "-Ywarn-nullary-override",
+    "-language:higherKinds",
+    "-language:implicitConversions",
+    "-language:existentials",
+    "-language:experimental.macros"),
+  publishTo := {
+    val nexus = "http://10.122.85.37:9081/nexus/"
+    if (version.value.trim.endsWith("SNAPSHOT"))
+      Some("snapshots" at (nexus + "content/repositories/snapshots"))
+    else
+      Some("releases" at (nexus + "content/repositories/releases"))
+  },
   // do not publish docs for snapshot versions
   publishArtifact in (Compile, packageDoc) := !version.value.trim.endsWith("SNAPSHOT"))
 
