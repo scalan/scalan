@@ -17,7 +17,7 @@ tmp/
 .worksheet
 benchmark/mvm-staged
 /bin
-/lms-backend/data/
-/lms-backend/tests/data/
-/lms-backend/core/data/
+# data/ directory created by LMS tests sometimes ends up in root
+/lms-backend/**/data/
+/data/
 *.log
