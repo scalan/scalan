@@ -61,16 +61,18 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
       struct(structTag, fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)
     def get(fieldName: String): Option[Elem[_]] = fields.find(_._1 == fieldName).map(_._2)
     def apply(fieldIndex: Int): Elem[_] = fields(fieldIndex)._2
-    def apply(fieldName: String): Elem[_] = fields.find(_._1 == fieldName).map(_._2).get
+    def apply(fieldName: String): Elem[_] = get(fieldName).getOrElse {
+      !!!(s"""Field $fieldName not found in struct $fieldsString""")
+    }
     def fieldNames = fields.map(_._1)
     def fieldElems: Seq[Elem[_]] = fields.map(_._2)
     def isEqualType(tuple: Seq[Elem[_]]) = {
       fields.length == tuple.length && fields.zip(tuple).forall { case ((fn,fe), e) => fe == e }
     }
-    override def getName = {
-      s"${baseStructName(structTag)}$fieldsString"
-    }
-    def fieldsString = s"{${fields.map { case (fn,fe) => s"$fn: ${fe.name}"}.mkString("; ")}}"
+    override def getName =
+      baseStructName(structTag) + fieldsString
+    def fieldsString =
+      "{" + fields.map { case (fn,fe) => s"$fn: ${fe.name}" }.mkString("; ") + "}"
     def findFieldIndex(fieldName: String): Int = fields.iterator.map(_._1).indexOf(fieldName)
   }
   implicit def StructElemExtensions[T <: Struct](e: Elem[T]): StructElem[T] = e.asInstanceOf[StructElem[T]]
@@ -473,31 +475,25 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
   abstract class AbstractField[T] extends Def[T] {
     def struct: Rep[Struct]
     def field: String
-    lazy val selfType = Struct.getFieldElem(struct, field).asElem[T]
+    lazy val selfType = struct.elem match {
+      case se: StructElem[_] => se(field).asElem[T]
+      case _ =>
+        !!!(s"Attempt to get a struct field of ${struct.toStringWithType} which isn't a struct", struct)
+    }
   }
 
   object Struct {
-    def getFieldElem(struct: Rep[Struct], fn: String): Elem[_] = struct.elem match {
-      case se: StructElem[_] =>
-        se.get(fn).get
-      case _ => !!!(s"Symbol with StructElem expected but found ${struct.elem}", struct)
+    def unapply[T <: Struct](d: Def[T]): Option[(StructTag[T], Seq[StructField])] = d match {
+      case s: AbstractStruct[T] => Some((s.tag, s.fields))
+      case _ => None
     }
-
-    def unapply[T <: Struct](d: Def[T]) = unapplyStruct(d)
-  }
-
-  def unapplyStruct[T <: Struct](d: Def[T]): Option[(StructTag[T], Seq[StructField])] = d match {
-    case s: AbstractStruct[T] => Some((s.tag, s.fields))
-    case _ => None
   }
 
   object Field {
-    def unapply[T](d: Def[T]) = unapplyField(d)
-  }
-
-  def unapplyField[T](d: Def[T]): Option[(Rep[Struct], String)] = d match {
-    case f: AbstractField[T] => Some((f.struct, f.field))
-    case _ => None
+    def unapply[T](d: Def[T]): Option[(Rep[Struct], String)] = d match {
+      case f: AbstractField[T] => Some((f.struct, f.field))
+      case _ => None
+    }
   }
 
   case class SimpleStruct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]) extends AbstractStruct[T]
@@ -609,41 +605,25 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
     }
   }
 
-  object IdentityStructMapping {
+  object SameStructAs {
     def unapply[A](d: Def[A]): Option[Rep[A]] = d match {
-      case Struct(_, fields) =>
-        val inputStructs = scala.collection.mutable.HashSet[Rep[A]]()
-        val okNames = fields.forall { case (fn, s) =>
-          s match {
-            case Def(Field(struct, name)) if name == fn =>
-              inputStructs += struct.asRep[A]
-              true
-            case _ => false
-          }
+      case Struct(tag, fields) =>
+        fields.headOption match {
+          case Some((_, Def(Field(possibleSourceStruct, _)))) if d.selfType == possibleSourceStruct.elem =>
+            val eachFieldComesFromPossibleSourceStruct = fields.forall {
+              case (name, Def(Field(`possibleSourceStruct`, name1))) if name == name1 =>
+                true
+              case _ =>
+                false
+            }
+            if (eachFieldComesFromPossibleSourceStruct)
+              Some(possibleSourceStruct.asRep[A])
+            else
+              None
+          case _ => None
         }
-        if (okNames && inputStructs.size == 1)
-          Some(inputStructs.head)
-        else
-          None
       case _ => None
     }
-  }
-
-  object IdentityStructLambda {
-    def unapply[A,B](lam: Lambda[A, B]): Boolean = lam.y match {
-      case Def(Struct(_, fields)) =>
-        fields.forall { case (fn, s) =>
-          s match {
-            case Def(Field(struct, name)) if struct == lam.x && name == fn => true
-            case _ => false
-          }
-        }
-      case _ => false
-    }
-  }
-
-  override def isIdentityLambda[A,B](lam: Lambda[A, B]): Boolean = {
-    super.isIdentityLambda(lam) || IdentityStructLambda.unapply(lam)
   }
 
   def shouldUnpackTuples = currentPass.config.shouldUnpackTuples
@@ -652,7 +632,7 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
 
   override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
     case FieldGet(v) if shouldExtractFields => v
-    case IdentityStructMapping(s) => s
+    case SameStructAs(s) => s
     case _ => super.rewriteDef(d)
   }
 
@@ -663,7 +643,3 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
     }).asRep[T]
   }
 }
-
-
-
-

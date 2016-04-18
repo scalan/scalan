@@ -374,7 +374,9 @@ trait BaseExp extends Base { scalan: ScalanExp =>
       case Def(_: Lambda[_, _]) => true
       case _ => false
     }
-    def tp: TableEntry[_] = findDefinition(symbol).get
+    def tp: TableEntry[_] = findDefinition(symbol).getOrElse {
+      !!!(s"No definition found for $symbol", symbol)
+    }
     def sameScopeAs(other: Exp[_]): Boolean = this.tp.lambda == other.tp.lambda
   }
 
@@ -438,6 +440,7 @@ trait Expressions extends BaseExp { scalan: ScalanExp =>
 
     lazy val definition = findDefinition(this).map(_.rhs)
     def toStringWithDefinition = toStringWithType + definition.map(d => s" = $d").getOrElse("")
+    def show() = showGraphs(this)
   }
 
   def fresh[T: LElem]: Exp[T] = Sym.fresh[T]
