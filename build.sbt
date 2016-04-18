@@ -62,6 +62,8 @@ lazy val commonBackendSettings = commonSettings ++ Defaults.itSettings ++
 
 lazy val allConfigDependency = "compile->compile;test->test"
 
+cancelable in Global := true
+
 // projects
 
 lazy val common = Project("scalan-common", file("common"))
