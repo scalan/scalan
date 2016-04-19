@@ -4,7 +4,7 @@ import org.scalatest.BeforeAndAfterAll
 
 import scalan.collections.{CollectionsDsl, CollectionsDslExp, CollectionsDslStd}
 import scalan.compilation.language.MethodMappingDSL
-import scalan.compilation.language.ScalaMapping._
+import scalan.compilation.language.Scala._
 import scalan.compilation.lms.collections.CollectionsBridgeScala
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.source2bin.SbtConfig

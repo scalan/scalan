@@ -31,12 +31,6 @@ object Adjusted {
   implicit def apply[A](x: A): Adjusted[A] = Adjusted(x, None)
 }
 
-trait LanguageId
-
-// TODO Should this be unified with ScalaMapping/CxxMapping?
-case object SCALA extends LanguageId
-case object CXX extends LanguageId
-
 class Mapping[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep](library: LibraryT, types: Map[String, (TypeT, Map[(String, Option[String]), MethodT])]) {
   private def supertypes(clazz: Class[_]): Iterable[Class[_]] = {
     val superclass = clazz.getSuperclass
@@ -69,7 +63,7 @@ class Mapping[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep](library
 }
 
 trait MappingBuilder[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep] {
-  def language: LanguageId
+  def language: LanguageMapping
   type TypeBuilderT <: TypeBuilder[LibraryT, TypeT, MethodT, TypeBuilderT]
 
   def moduleName: String
@@ -104,8 +98,8 @@ trait MethodRep {
   def argOrder: Seq[Adjusted[Int]]
 }
 
-object MappingBuilder {
-  def symbolIndex(originalArgs: Seq[Symbol], symbol: Adjusted[Symbol], name: String) = symbol.map {
+trait LanguageMapping {
+  protected def symbolIndex(originalArgs: Seq[Symbol], symbol: Adjusted[Symbol], name: String) = symbol.map {
     case 'this => -1
     case a =>
       originalArgs.indexOf(a) match {
@@ -115,12 +109,10 @@ object MappingBuilder {
       }
   }
 
-  def symbolOrder(originalArgs: Seq[Symbol], reorderedArgs: Seq[Adjusted[Symbol]], name: String) = {
+  protected def symbolOrder(originalArgs: Seq[Symbol], reorderedArgs: Seq[Adjusted[Symbol]], name: String) = {
     reorderedArgs.map(argSym => symbolIndex(originalArgs, argSym, name))
   }
 }
-
-import MappingBuilder.{symbolIndex, symbolOrder}
 
 trait TypeBuilder[LibraryT, TypeT, MethodT, TypeBuilderT] {
   type MethodBuilderT <: MethodBuilder[LibraryT, TypeT, MethodT, MethodBuilderT]
@@ -134,7 +126,7 @@ trait MethodBuilder[LibraryT, TypeT, MethodT, MethodBuilderT] {
   def apply(): MethodT
 }
 
-object ScalaMapping {
+case object Scala extends LanguageMapping {
   def MapModuleScala(moduleName: String): ScalaMappingBuilder = new ScalaMappingBuilder(moduleName, None, Nil)
   def MapModuleScala[A](implicit tag: ClassTag[A]): ScalaMappingBuilder = MapModuleScala(tag.runtimeClass.getName)
 
@@ -145,7 +137,7 @@ object ScalaMapping {
   case class ScalaMethod(scalanName: String, overloadId: Option[String], mappedName: String, isStatic: Boolean, isInternal: Boolean, receiverIndex: Adjusted[Int], typeArgOrder: Seq[Adjusted[Int]], argOrder: Seq[Adjusted[Int]], implicitArgOrder: Seq[Adjusted[Int]]) extends MethodRep
 
   case class ScalaMappingBuilder(moduleName: String, packageName: Option[String], jars: Seq[File]) extends MappingBuilder[ScalaLibrary, ScalaType, ScalaMethod] {
-    def language = SCALA
+    def language = Scala
     def packageName(name: String): ScalaMappingBuilder = copy(packageName = Some(name))
     def jars(files: File*) = copy(jars = this.jars ++ files)
     def library = ScalaLibrary(packageName, jars)
@@ -195,7 +187,7 @@ object ScalaMapping {
   }
 }
 
-object CxxMapping {
+case object Cxx extends LanguageMapping {
   def MapModuleCxx(moduleName: String): CxxMappingBuilder = new CxxMappingBuilder(moduleName, None, None)
   def MapModuleCxx[A](implicit tag: ClassTag[A]): CxxMappingBuilder = MapModuleCxx(tag.runtimeClass.getName)
 
@@ -207,7 +199,7 @@ object CxxMapping {
   case class CxxMethod(scalanName: String, overloadId: Option[String], mappedName: String, isStatic: Boolean, isInternal: Boolean, receiverIndex: Adjusted[Int], templateArgOrder: Seq[Adjusted[Int]], argOrder: Seq[Adjusted[Int]]) extends MethodRep
 
   case class CxxMappingBuilder(moduleName: String, headerName: Option[String], namespace: Option[String]) extends MappingBuilder[CxxLibrary, CxxType, CxxMethod] {
-    def language = CXX
+    def language = Cxx
     def withHeader(name: String): CxxMappingBuilder = copy(headerName = Some(name))
     def withNamespace(namespace: String): CxxMappingBuilder = copy(namespace = Some(namespace))
     def library = CxxLibrary(headerName, namespace)
@@ -264,7 +256,7 @@ trait MethodMappingDSL {
     type MethodT <: MethodRep
   }
 
-  val mappingDSLs: mutable.Map[LanguageId, ArrayBuffer[AMapping]] = mutable.Map.empty
-  def addMapping(language: LanguageId, mapping: AMapping) =
+  val mappingDSLs: mutable.Map[LanguageMapping, ArrayBuffer[AMapping]] = mutable.Map.empty
+  def addMapping(language: LanguageMapping, mapping: AMapping) =
     mappingDSLs.getOrElseUpdate(language, ArrayBuffer.empty) += mapping
 }

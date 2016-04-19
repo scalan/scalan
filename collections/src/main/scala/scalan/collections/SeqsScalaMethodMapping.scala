@@ -1,7 +1,7 @@
 package scalan.collections
 
 import scalan.compilation.language.MethodMappingDSL
-import scalan.compilation.language.ScalaMapping._
+import scalan.compilation.language.Scala._
 
 trait SeqsScalaMethodMapping extends MethodMappingDSL {
   MapModuleScala[Seqs].types(

@@ -4,8 +4,8 @@ import scalan.compilation.language._
 
 class MethodMappingDSLTest extends BaseTests {
   object TestMethodMappingDSL extends MethodMappingDSL {
-    import CxxMapping._
-    import ScalaMapping._
+    import Cxx._
+    import Scala._
 
     MapModuleScala("scalan.flint.DataFrames").types( // apply?
       MapTypeScala("FlintDataFrame").to("org.spark.RDD").methods(
@@ -25,12 +25,12 @@ class MethodMappingDSLTest extends BaseTests {
 
   test("Scala Method") {
     // TODO asInstanceOf should be possible to remove
-    val scalaMethod = TestMethodMappingDSL.mappingDSLs(SCALA).head.getMethod("scalan.flint.DataFrames$FlintDataFrame", "length", None)
+    val scalaMethod = TestMethodMappingDSL.mappingDSLs(Scala).head.getMethod("scalan.flint.DataFrames$FlintDataFrame", "length", None)
     scalaMethod.map(_._3.mappedName) should be(Some("count"))
   }
 
   test("C++ Method") {
-    val cxxMethod = TestMethodMappingDSL.mappingDSLs(CXX).head.getMethod("scalan.flint.DataFrames$FlintDataFrame", "length", None)
+    val cxxMethod = TestMethodMappingDSL.mappingDSLs(Cxx).head.getMethod("scalan.flint.DataFrames$FlintDataFrame", "length", None)
     cxxMethod should be(None)
 //    cxxMethod.mappedName should equal("length")
   }

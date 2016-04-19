@@ -13,9 +13,9 @@ trait ObjectOrientedBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: Metho
   def mappedType(m: Manifest[_]): Option[(LibraryT, TypeT)] =
     methodReplaceConf.map(_.getType(m)).collectFirst { case Some(x) => x }
 
-  val languageId: LanguageId
+  val language: LanguageMapping
 
-  lazy val methodReplaceConf = mappingDSLs.getOrElse(languageId, Nil).asInstanceOf[Seq[Mapping[LibraryT, TypeT, MethodT]]]
+  lazy val methodReplaceConf = mappingDSLs.getOrElse(language, Nil).asInstanceOf[Seq[Mapping[LibraryT, TypeT, MethodT]]]
 
   def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] = {
     elemToManifest(returnType) match {
