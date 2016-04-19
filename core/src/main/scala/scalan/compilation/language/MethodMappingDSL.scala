@@ -35,6 +35,7 @@ trait LanguageMapping {
   type LibraryT
   type TypeT <: TypeRep
   type MethodT <: MethodRep
+  type ModuleBuilderT <: ModuleMappingBuilder
   type TypeBuilderT <: TypeBuilder
   type MethodBuilderT <: MethodBuilder
 
@@ -124,17 +125,33 @@ trait LanguageMapping {
     def to(mappedName: String): MethodBuilderT
     def apply(): MethodT
   }
+
+  def mapModule(moduleName: String): ModuleBuilderT
+  def mapModule[A](implicit tag: ClassTag[A]): ModuleBuilderT = mapModule(tag.runtimeClass.getName)
+
+  def mapType(scalanName: String, fieldSyms: Symbol*): TypeBuilderT
+  def mapType[A](fieldSyms: Symbol*)(implicit tag: ClassTag[A]): TypeBuilderT =
+    mapType(tag.runtimeClass.getSimpleName, fieldSyms: _*)
+
+  def mapMethod(scalanName: String, overloadIdOpt: Option[String], argSyms: Symbol*): MethodBuilderT
+  def mapMethod(scalanName: String, argSyms: Symbol*): MethodBuilderT =
+    mapMethod(scalanName, None, argSyms: _*)
+  def mapMethod(scalanName: String, overloadId: String, argSyms: Symbol*): MethodBuilderT =
+    mapMethod(scalanName, Some(overloadId), argSyms: _*)
 }
 
 case object Scala extends LanguageMapping {
   type LibraryT = ScalaLibrary
   type TypeT = ScalaType
   type MethodT = ScalaMethod
+  type ModuleBuilderT = ScalaModuleMappingBuilder
   type TypeBuilderT = MapTypeScala
   type MethodBuilderT = MapMethodScala
 
-  def MapModuleScala(moduleName: String): ScalaModuleMappingBuilder = new ScalaModuleMappingBuilder(moduleName, None, Nil)
-  def MapModuleScala[A](implicit tag: ClassTag[A]): ScalaModuleMappingBuilder = MapModuleScala(tag.runtimeClass.getName)
+  def mapModule(moduleName: String) = new ScalaModuleMappingBuilder(moduleName, None, Nil)
+  def mapType(scalanName: String, fieldSyms: Symbol*) = new MapTypeScala(scalanName, fieldSyms, scalanName)
+  def mapMethod(scalanName: String, overloadIdOpt: Option[String], argSyms: Symbol*) =
+    new MapMethodScala(scalanName, overloadIdOpt, argSyms, scalanName, false, false, 'this, Nil, argSyms.map(Adjusted(_)), Nil)
 
   case class ScalaLibrary(packageName: Option[String], jars: Seq[File]) // Add SBT dependency support?
 
@@ -152,13 +169,6 @@ case object Scala extends LanguageMapping {
     def to(mappedName: String) = copy(mappedName = mappedName)
     def methods(methodBuilders: MethodBuilderT*) =
       ScalaType(scalanName, mappedName, methodBuilders.map(_.apply()))
-  }
-
-  object MapTypeScala {
-    def apply(scalanName: String, fieldSyms: Symbol*): MapTypeScala =
-      new MapTypeScala(scalanName, fieldSyms, scalanName)
-    def apply[A](fieldSyms: Symbol*)(implicit tag: ClassTag[A]): MapTypeScala =
-      apply(tag.runtimeClass.getSimpleName, fieldSyms: _*)
   }
 
   case class MapMethodScala(scalanName: String, overloadId: Option[String], scalanArgs: Seq[Symbol], mappedName: String, isStatic: Boolean, isInternal: Boolean, receiverSym: Adjusted[Symbol], typeArgs: Seq[Adjusted[Symbol]], args: Seq[Adjusted[Symbol]], implicitArgs: Seq[Adjusted[Symbol]]) extends MethodBuilder {
@@ -181,22 +191,21 @@ case object Scala extends LanguageMapping {
       ScalaMethod(scalanName, overloadId, mappedName, isStatic, isInternal, receiverIndex, typeArgOrder, argOrder, implicitArgOrder)
     }
   }
-
-  object MapMethodScala {
-    def apply(scalanName: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, None, argSyms, scalanName, false, false, 'this, Nil, argSyms.map(Adjusted(_)), Nil)
-    def apply(scalanName: String, overloadId: String, argSyms: Symbol*): MapMethodScala = new MapMethodScala(scalanName, Some(overloadId), argSyms, scalanName, false, false, 'this, Nil, argSyms.map(Adjusted(_)), Nil)
-  }
 }
 
 case object Cxx extends LanguageMapping {
   type LibraryT = CxxLibrary
   type TypeT = CxxType
   type MethodT = CxxMethod
+  type ModuleBuilderT = CxxModuleMappingBuilder
   type TypeBuilderT = MapTypeCxx
   type MethodBuilderT = MapMethodCxx
 
-  def MapModuleCxx(moduleName: String): CxxModuleMappingBuilder = new CxxModuleMappingBuilder(moduleName, None, None)
-  def MapModuleCxx[A](implicit tag: ClassTag[A]): CxxModuleMappingBuilder = MapModuleCxx(tag.runtimeClass.getName)
+  def mapModule(moduleName: String) = new CxxModuleMappingBuilder(moduleName, None, None)
+  def mapType(scalanName: String, fieldSyms: Symbol*) =
+    new MapTypeCxx(scalanName, fieldSyms, scalanName, Nil)
+  def mapMethod(scalanName: String, overloadIdOpt: Option[String], argSyms: Symbol*) =
+    new MapMethodCxx(scalanName, overloadIdOpt, argSyms, scalanName, false, false, 'this, Nil, argSyms.map(Adjusted(_)))
 
   // Distinguish <> and "" headers in the future? For now, always use "", since it works for both.
   case class CxxLibrary(headerName: Option[String], namespace: Option[String])
@@ -217,13 +226,6 @@ case object Cxx extends LanguageMapping {
       CxxType(scalanName, mappedName, Nil /* TODO use templateArgs */, methodBuilders.map(_.apply()))
   }
 
-  object MapTypeCxx {
-    def apply(scalanName: String, fieldSyms: Symbol*): MapTypeCxx =
-      new MapTypeCxx(scalanName, fieldSyms, scalanName, Nil)
-    def apply[A](fieldSyms: Symbol*)(implicit tag: ClassTag[A]): MapTypeCxx =
-      apply(tag.runtimeClass.getSimpleName, fieldSyms: _*)
-  }
-
   case class MapMethodCxx(scalanName: String, overloadId: Option[String], scalanArgs: Seq[Symbol], mappedName: String, isStatic: Boolean, isInternal: Boolean, receiverSym: Adjusted[Symbol], templateArgs: Seq[Adjusted[Symbol]], args: Seq[Adjusted[Symbol]]) extends MethodBuilder {
     def to(mappedName: String) = copy(mappedName = mappedName)
     def static = copy(isStatic = true)
@@ -239,13 +241,6 @@ case object Cxx extends LanguageMapping {
 
       CxxMethod(scalanName, overloadId, mappedName, isStatic, isInternal, receiverIndex, templateArgOrder, argOrder)
     }
-  }
-
-  object MapMethodCxx {
-    def apply(scalanName: String, argSyms: Symbol*): MapMethodCxx =
-      new MapMethodCxx(scalanName, None, argSyms, scalanName, false, false, 'this, Nil, argSyms.map(Adjusted(_)))
-    def apply(scalanName: String, overloadId: String, argSyms: Symbol*): MapMethodCxx =
-      new MapMethodCxx(scalanName, Some(overloadId), argSyms, scalanName, false, false, 'this, Nil, argSyms.map(Adjusted(_)))
   }
 }
 

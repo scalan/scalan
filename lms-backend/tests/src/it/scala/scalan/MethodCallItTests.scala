@@ -212,9 +212,9 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new CollectionsD
   }
 
   val jarReplaceExp = new LmsCompilerScala(new ProgStaged) {
-    MapModuleScala[Exceptions].types(
-      MapTypeScala[Exceptions#SThrowable]().to("scalan.it.lms.MappingMethodFromJar.TestMethod").methods(
-        MapMethodScala("getMessage").to("testMessage").onCompanion.args('this)
+    mapModule[Exceptions].types(
+      mapType[Exceptions#SThrowable]().to("scalan.it.lms.MappingMethodFromJar.TestMethod").methods(
+        mapMethod("getMessage").to("testMessage").onCompanion.args('this)
       )
     )
   }
