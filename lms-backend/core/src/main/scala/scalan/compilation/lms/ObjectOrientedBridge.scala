@@ -4,8 +4,9 @@ import java.lang.reflect.Method
 
 import scalan.compilation.language._
 
-trait ObjectOrientedBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep] extends LmsBridge with MethodMappingDSL {
+trait ObjectOrientedBridge extends LmsBridge with MethodMappingDSL {
   import scalan._
+  import language.{LibraryT, TypeT, MethodT}
 
   def mappedMethod(method: Method): Option[(LibraryT, TypeT, MethodT)] =
     methodReplaceConf.map(_.getMethod(method)).collectFirst { case Some(x) => x }
@@ -15,7 +16,7 @@ trait ObjectOrientedBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: Metho
 
   val language: LanguageMapping
 
-  lazy val methodReplaceConf = mappingDSLs.getOrElse(language, Nil).asInstanceOf[Seq[Mapping[LibraryT, TypeT, MethodT]]]
+  lazy val methodReplaceConf = mappingsFor(language)
 
   def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] = {
     elemToManifest(returnType) match {
