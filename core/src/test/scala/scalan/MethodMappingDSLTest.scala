@@ -29,7 +29,7 @@ class MethodMappingDSLTest extends BaseTests {
   test("Scala Method") {
     // TODO asInstanceOf should be possible to remove
     val scalaMethod = TestMethodMappingDSL.mappingsFor(Scala).head.getMethod("scalan.flint.DataFrames$FlintDataFrame", "length", None)
-    scalaMethod.map(_._3.mappedName) should be(Some("count"))
+    scalaMethod.map(_.method.mappedName) should be(Some("count"))
   }
 
   test("C++ Method") {

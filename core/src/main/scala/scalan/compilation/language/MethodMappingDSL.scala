@@ -80,7 +80,7 @@ trait LanguageMapping {
     }
     private def supertypesIncluding(clazz: Class[_]) = Iterable(clazz) ++ supertypes(clazz)
 
-    def getMethod(method: Method): Option[(Library, TypeT, MethodT)] = {
+    def getMethod(method: Method): Option[MethodMapping] = {
       val overloadId = ReflectionUtil.overloadId(method)
       val methodName = method.getName
 
@@ -89,18 +89,25 @@ trait LanguageMapping {
         case Some(x) => x
       }
     }
-    def getMethod(className: String, methodName: String, overloadId: Option[String]): Option[(Library, TypeT, MethodT)] = {
+    def getMethod(className: String, methodName: String, overloadId: Option[String]): Option[MethodMapping] = {
       val typeMapping = types.get(className)
-      typeMapping.flatMap(pair => pair._2.get((methodName, overloadId)).map(methodT => (library, pair._1, methodT)))
+      typeMapping.flatMap {
+        pair => pair._2.get((methodName, overloadId)).map { methodT => MethodMapping(library, pair._1, methodT) }
+      }
     }
     // TODO handle type arguments
-    def getType(m: Manifest[_]): Option[(Library, TypeT)] = {
+    def getType(m: Manifest[_]): Option[TypeMapping] = {
       supertypesIncluding(m.runtimeClass).map(clazz => getType(clazz.getName)).collectFirst {
         case Some(x) => x
       }
     }
-    def getType(className: String) = types.get(className).map(pair => (library, pair._1))
+    def getType(className: String): Option[TypeMapping] =
+      types.get(className).map(pair => TypeMapping(library, pair._1))
   }
+
+  case class TypeMapping(library: Library, tpe: TypeT)
+
+  case class MethodMapping(library: Library, tpe: TypeT, method: MethodT)
 
   trait AbstractModuleBuilder {
     def moduleName: String

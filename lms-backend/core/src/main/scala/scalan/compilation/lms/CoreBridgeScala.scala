@@ -5,6 +5,6 @@ import scalan.compilation.language.Scala
 trait CoreBridgeScala extends CoreBridge with ObjectOrientedBridge {
   val language = Scala
 
-  override def staticReceiverString(library: Scala.Library, tpe: Scala.TypeT): String =
-    library.packageName.fold("")(_ + ".") + tpe.mappedName
+  override def staticReceiverString(typeMapping: language.TypeMapping): String =
+    typeMapping.library.packageName.fold("")(_ + ".") + typeMapping.tpe.mappedName
 }
