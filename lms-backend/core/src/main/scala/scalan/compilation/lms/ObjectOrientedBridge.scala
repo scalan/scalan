@@ -6,12 +6,12 @@ import scalan.compilation.language._
 
 trait ObjectOrientedBridge extends LmsBridge with MethodMappingDSL {
   import scalan._
-  import language.{LibraryT, TypeT, MethodT}
+  import language.{Library, TypeT, MethodT}
 
-  def mappedMethod(method: Method): Option[(LibraryT, TypeT, MethodT)] =
+  def mappedMethod(method: Method): Option[(Library, TypeT, MethodT)] =
     methodReplaceConf.map(_.getMethod(method)).collectFirst { case Some(x) => x }
 
-  def mappedType(m: Manifest[_]): Option[(LibraryT, TypeT)] =
+  def mappedType(m: Manifest[_]): Option[(Library, TypeT)] =
     methodReplaceConf.map(_.getType(m)).collectFirst { case Some(x) => x }
 
   val language: LanguageMapping
@@ -92,7 +92,7 @@ trait ObjectOrientedBridge extends LmsBridge with MethodMappingDSL {
   }
 
   // TODO move to codegen
-  def staticReceiverString(library: LibraryT, tpe: TypeT): String
+  def staticReceiverString(library: Library, tpe: TypeT): String
 
   def newObj[A](m: Manifest[A], args: Seq[Any]): lms.Exp[A] = {
     val name = mappedType(m) match {
