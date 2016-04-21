@@ -4,18 +4,20 @@ import java.lang.reflect.Method
 
 import scalan.compilation.language._
 
-trait ObjectOrientedBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: MethodRep] extends LmsBridge with MethodMappingDSL {
+trait ObjectOrientedBridge extends LmsBridge with MethodMappingDSL {
   import scalan._
 
-  def mappedMethod(method: Method): Option[(LibraryT, TypeT, MethodT)] =
+  val language: LanguageMapping
+
+  import language.{TypeMapping, MethodMapping}
+
+  def mappedMethod(method: Method): Option[MethodMapping] =
     methodReplaceConf.map(_.getMethod(method)).collectFirst { case Some(x) => x }
 
-  def mappedType(m: Manifest[_]): Option[(LibraryT, TypeT)] =
+  def mappedType(m: Manifest[_]): Option[TypeMapping] =
     methodReplaceConf.map(_.getType(m)).collectFirst { case Some(x) => x }
 
-  val languageId: LanguageId
-
-  lazy val methodReplaceConf = mappingDSLs.getOrElse(languageId, Nil).asInstanceOf[Seq[Mapping[LibraryT, TypeT, MethodT]]]
+  lazy val methodReplaceConf = mappingsFor(language)
 
   def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] = {
     elemToManifest(returnType) match {
@@ -43,7 +45,7 @@ trait ObjectOrientedBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: Metho
         }
 
         mappedMethod(method) match {
-          case Some((_, _, methodT)) if methodT.isInternal =>
+          case Some(MethodMapping(_, _, methodT)) if methodT.isInternal =>
             val lmsArgs = methodT.argOrder.map(checkArg(_) {
               case e: Exp[_] =>
                 m.symMirrorUntyped(e)
@@ -52,13 +54,13 @@ trait ObjectOrientedBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: Metho
             val lmsMethod = lmsMemberByName(methodT.mappedName).asMethod
             lmsMirror.reflectMethod(lmsMethod).apply(lmsArgs: _*).asInstanceOf[lms.Exp[_]]
 
-          case Some((libraryT, typeT, methodT)) =>
+          case Some(MethodMapping(libraryT, typeT, methodT)) =>
             val mappedReceiver = checkArg(methodT.receiverIndex) {
               case e: Exp[_] => e
             }
             // TODO make sure header/jar is added
             val lmsReceiver = if (mappedReceiver.isCompanion || methodT.isStatic) {
-              lms.Static(staticReceiverString(libraryT, typeT))
+              lms.Static(staticReceiverString(TypeMapping(libraryT, typeT)))
             } else {
               lms.Instance(m.symMirrorUntyped(mappedReceiver))
             }
@@ -74,8 +76,8 @@ trait ObjectOrientedBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: Metho
           case None =>
             val lmsReceiver = if (receiver.isCompanion) {
               mappedType(elemToManifest(receiver.elem)) match {
-                case Some((library, tpe)) =>
-                  lms.Static(staticReceiverString(library, tpe))
+                case Some(typeMapping) =>
+                  lms.Static(staticReceiverString(typeMapping))
                 case None =>
                   // TODO handle this case, at least for TypeWrapper
                   !!!(s"Add mapping for unmapped companion ${receiver.toStringWithDefinition}", receiver)
@@ -91,12 +93,12 @@ trait ObjectOrientedBridge[LibraryT, TypeT <: TypeRep[MethodT], MethodT <: Metho
   }
 
   // TODO move to codegen
-  def staticReceiverString(library: LibraryT, tpe: TypeT): String
+  def staticReceiverString(typeMapping: TypeMapping): String
 
   def newObj[A](m: Manifest[A], args: Seq[Any]): lms.Exp[A] = {
     val name = mappedType(m) match {
-      case Some((_, tpe)) =>
-        tpe.mappedName
+      case Some(typeMapping) =>
+        typeMapping.tpe.mappedName
       case _ =>
         m.runtimeClass.getName
     }

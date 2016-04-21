@@ -4,7 +4,7 @@ import org.scalatest.BeforeAndAfterAll
 
 import scalan.collections.{CollectionsDsl, CollectionsDslExp, CollectionsDslStd}
 import scalan.compilation.language.MethodMappingDSL
-import scalan.compilation.language.ScalaMapping._
+import scalan.compilation.language.Scala._
 import scalan.compilation.lms.collections.CollectionsBridgeScala
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.source2bin.SbtConfig
@@ -212,9 +212,9 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new CollectionsD
   }
 
   val jarReplaceExp = new LmsCompilerScala(new ProgStaged) {
-    MapModuleScala[Exceptions].types(
-      MapTypeScala[Exceptions#SThrowable]().to("scalan.it.lms.MappingMethodFromJar.TestMethod").methods(
-        MapMethodScala("getMessage").to("testMessage").onCompanion.args('this)
+    mapModule[Exceptions].types(
+      mapType[Exceptions#SThrowable]().to("scalan.it.lms.MappingMethodFromJar.TestMethod").methods(
+        mapMethod("getMessage").to("testMessage").onCompanion.args('this)
       )
     )
   }
