@@ -1,6 +1,6 @@
 package scalan.staged
 
-import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.{Method, InvocationTargetException}
 
 import scala.collection.{mutable, Seq}
 import scalan.{Scalan, ScalanExp}
@@ -14,6 +14,13 @@ trait Transforming { self: Scalan =>
     def config: PassConfig = Pass.defaultPassConfig
     // TODO what arguments?
     def doFinalization(): Unit = {}
+    /**
+      * Pass specific optional decision.
+      * @param d receiver of the method
+      * @param m method to invoke
+      * @return Some(decision) if some this Pass defines some logic, None - then core behavior is used
+      */
+    def isInvokeEnabled(d: Def[_], m: Method): Option[Boolean] = None
   }
   object Pass {
     val defaultPassName = "default"

@@ -102,6 +102,7 @@ class LuaCodegen[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends BaseC
     case xs: Array[_] => tableLit(xs.map(literal))
     case xs: Seq[_] => tableLit(xs.map(literal))
     case map: Map[_, _] => tableLit(map.map { case (k, v) => s"""[$k] = $v""" })
+    case _: Unit => "{}"
     case _ => super.literal(value)
   }
 

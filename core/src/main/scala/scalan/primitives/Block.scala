@@ -26,7 +26,8 @@ trait BlocksExp extends Blocks with Expressions { self: ScalanExp =>
     Semicolon(left, right)
   }
   def semicolonMulti[B](xs: Seq[Rep[_]], y: Rep[B]): Rep[B] = {
-    val res = xs.map(x => peelViews(x))
+    val peeled = xs.map(x => peelViews(x))
+    val res = peeled.filterNot(isPureDataflow(_))
     SemicolonMulti(res, y)
   }
 
@@ -34,6 +35,11 @@ trait BlocksExp extends Blocks with Expressions { self: ScalanExp =>
     case Def(PairView(s)) => peelViews(s)
     case HasViews(s, _) => peelViews(s)
     case _ => x
+  }
+
+  def isPureDataflow[A](x: Rep[A]): Boolean = x match {
+    case Def(Const(_)) => true
+    case _ => false
   }
 
   object HasSemicolons {

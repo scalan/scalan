@@ -286,8 +286,17 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   protected val initialInvokeTesters = Set(isCompanionApply, isFieldGetter)
   private var invokeTesters: Set[InvokeTester] = initialInvokeTesters
 
-  def isInvokeEnabled(d: Def[_], m: Method) = invokeAll || invokeTesters.exists(_(d, m))
   protected def invokeAll = false
+
+  def isInvokeEnabled(d: Def[_], m: Method) = invokeAll || {
+    if (_currentPass != null) {
+      _currentPass.isInvokeEnabled(d, m).getOrElse {
+        invokeTesters.exists(_(d, m))
+      }
+    }
+    else
+      invokeTesters.exists(_(d, m))
+  }
 
   protected def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) = {
     if (m.getDeclaringClass.isAssignableFrom(d.getClass)) {
