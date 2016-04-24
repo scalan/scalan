@@ -324,7 +324,7 @@ trait Matrices { self: LADsl =>
 
     def numColumns: Rep[Int] = diagonalValues.length
     def numRows: Rep[Int] = numColumns
-    def rmValues : Rep[Collection[T]] = SparseVector1(
+    def rmValues : Rep[Collection[T]] = SparseVector(
       Collection.indexRange(numColumns).map { i : Rep[Int] =>  (numColumns * i + i, diagonalValues(i))},
       numColumns * numColumns
     ).items
