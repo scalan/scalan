@@ -442,6 +442,13 @@ object ScalanAst {
           em.tpeArgs == m.tpeArgs
       }
   }
+  case class SStdImplementations(stdDecls: Map[String, SStdImplementation]) {
+    def containsMethodDef(name: String, m: SMethodDef) =
+      stdDecls.get(name) match {
+        case Some(decl) => decl.containsMethodDef(m)
+        case None => false
+      }
+  }
 
   type Entity = STraitOrClassDef
   case class SEntityModuleDef(
@@ -455,7 +462,7 @@ object ScalanAst {
                                methods: List[SMethodDef],
                                selfType: Option[SSelfTypeDef],
                                body: List[SBodyItem] = Nil,
-                               stdDslImpl: Option[SStdImplementation] = None,
+                               stdDslImpls: Option[SStdImplementations] = None,
                                hasDsl: Boolean = false,
                                hasDslStd: Boolean = false,
                                hasDslExp: Boolean = false,
@@ -477,6 +484,13 @@ object ScalanAst {
     def isClass(name: String) = concreteSClasses.exists(c => c.name == name)
 
     def allEntities = entities ++ concreteSClasses
+
+    def hasStdImplFor(traitName: String) = {
+      stdDslImpls match {
+        case Some(impls) => impls.stdDecls.contains(traitName)
+        case None => false
+      }
+    }
 
     def clean = {
       val _entities = entities.map(_.clean)

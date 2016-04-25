@@ -23,7 +23,7 @@ trait HashSets extends Base with TypeWrappers { self: HashSetsDsl =>
 }
 
 trait HashSetsDslStd extends impl.HashSetsStd {
-  trait StdSHashSet[A] extends SHashSetImpl[A] {
+  trait SHashSetImplDecls[A] extends SHashSetImpl[A] {
     override def map[B:Elem](f: Rep[A => B]): Rep[SHashSet[B]] = SHashSetImpl(wrappedValue.map(f))
     //override def +(elem: Rep[A]): Rep[HashSet[A]] = value + elem
   }

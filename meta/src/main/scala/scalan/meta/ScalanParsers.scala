@@ -56,10 +56,12 @@ trait ScalanParsers {
 
   def config: CodegenConfig
 
-  def stdImplementation(traitTree: ClassDef) = {
-    val methods = traitTree.impl.body.collect { case item: DefDef => item }
-
-    SStdImplementation(methods.map(methodDef(_)))
+  def createStdImplementation(stdDecls: Iterable[(String, ClassDef)]) = {
+    val m = stdDecls.map { case (name, stdDecl) =>
+      val methods = stdDecl.impl.body.collect { case item: DefDef => item }
+      (name, SStdImplementation(methods.map(methodDef(_))))
+    }.toMap
+    SStdImplementations(m)
   }
 
   def entityModule(fileTree: PackageDef) = {
@@ -84,11 +86,11 @@ trait ScalanParsers {
 
     val hasDsl =
       findClassDefByName(fileTree.stats, moduleName + "Dsl").isDefined
-    
-    val dslStdOpt = findClassDefByName(fileTree.stats, moduleName + "DslStd")
-    val hasDslStd = dslStdOpt.isDefined
 
-    val hasDslExp =
+    val dslStdModuleOpt = findClassDefByName(fileTree.stats, moduleName + "DslStd")
+    val hasDslStdModule = dslStdModuleOpt.isDefined
+
+    val hasDslExpModule =
       findClassDefByName(fileTree.stats, moduleName + "DslExp").isDefined
 
     val defs = moduleTrait.body
@@ -130,17 +132,19 @@ trait ScalanParsers {
     }
     val methods = defs.collect { case md: SMethodDef => md }
 
-    val stdImplementation = for {
-      dslStd <- dslStdOpt
-      stdOpsTrait <- findClassDefByName(dslStd.impl.body, "Std" + entity.name)
+    val stdImplementations = for {
+      dslStdModule <- dslStdModuleOpt.toList
+      t <- traits ++ classes
+      stdOpsTrait <- findClassDefByName(dslStdModule.impl.body, t.name + "Decls")
     } yield {
-      this.stdImplementation(stdOpsTrait)
+      (t.name, stdOpsTrait)
     }
+    val declaredStdImplementations = createStdImplementation(stdImplementations)
 
     SEntityModuleDef(packageName, imports, moduleName,
       entityRepSynonym, entity, traits, classes, methods,
-      moduleTrait.selfType, Nil, stdImplementation,
-      hasDsl, hasDslStd, hasDslExp, moduleTrait.ancestors)
+      moduleTrait.selfType, Nil, Some(declaredStdImplementations),
+      hasDsl, hasDslStdModule, hasDslExpModule, moduleTrait.ancestors)
   }
 
   def importStat(i: Import): SImportStat = {

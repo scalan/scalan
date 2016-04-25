@@ -179,10 +179,10 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     (externalConstrs, externalMethods)
   }
 
-  def filterByExplicitDeclaration(ms: List[SMethodDef]): List[SMethodDef] =
-    module.stdDslImpl match {
+  def filterByExplicitDeclaration(traitName: String, ms: List[SMethodDef]): List[SMethodDef] =
+    module.stdDslImpls match {
       case Some(impl) =>
-        ms.filterNot(impl.containsMethodDef(_))
+        ms.filterNot(impl.containsMethodDef(traitName, _))
       case None => ms
     }
 
@@ -757,14 +757,14 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     val implicitArgsDecl = c.implicitArgsDecl()
 
     val externalMethods = entity.getMethodsWithAnnotation(ExternalAnnotation)
-    val externalMethodsStr = filterByExplicitDeclaration(externalMethods).rep(md => externalStdMethod(md, true), "\n")
+    val externalMethodsStr = filterByExplicitDeclaration(c.name, externalMethods).rep(md => externalStdMethod(md, true), "\n")
 
     val parent     = clazz.ancestors.head
 
     s"""
        |  case class Std${c.typeDecl}
        |      (${fieldsWithType.rep(f => s"override val $f")})${implicitArgsDecl}
-       |    extends ${e.optBaseType.isEmpty.opt("Abs")}${c.typeUse}(${fields.rep()})${module.stdDslImpl.ifDefined(s" with Std$typeUse")} {
+       |    extends ${e.optBaseType.isEmpty.opt("Abs")}${c.typeUse}(${fields.rep()})${module.hasStdImplFor(c.name).opt(s" with ${c.name}Decls${c.tpeArgsUse}")} {
        |$externalMethodsStr
        |  }
        |
@@ -821,8 +821,8 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     )
 
     val companionMethods = getCompanionMethods.opt { case (constrs, methods) =>
-      filterByExplicitDeclaration(constrs).rep(md => externalStdConstructor(md), "\n") +
-        filterByExplicitDeclaration(methods).filter(_.body.isEmpty).rep(md => externalStdMethod(md, false), "\n")
+      filterByExplicitDeclaration(e.name, constrs).rep(md => externalStdConstructor(md), "\n") +
+        filterByExplicitDeclaration(e.name, methods).filter(_.body.isEmpty).rep(md => externalStdMethod(md, false), "\n")
     }
 
     s"""
