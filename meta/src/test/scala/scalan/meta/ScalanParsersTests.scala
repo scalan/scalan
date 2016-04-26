@@ -218,7 +218,8 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
         L(obsImpl1, obsImpl2),
         Nil,
         None,
-        stdDslImpls = Some(SStdImplementations(Map())),
+        stdDslImpls = Some(SDeclaredImplementations(Map())),
+        expDslImpls = Some(SDeclaredImplementations(Map())),
         ancestors = L(STraitCall("ScalanDsl", Nil))))
   }
 

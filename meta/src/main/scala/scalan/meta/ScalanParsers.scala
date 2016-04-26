@@ -56,13 +56,25 @@ trait ScalanParsers {
 
   def config: CodegenConfig
 
-  def createStdImplementation(stdDecls: Iterable[(String, ClassDef)]) = {
-    val m = stdDecls.map { case (name, stdDecl) =>
-      val methods = stdDecl.impl.body.collect { case item: DefDef => item }
-      (name, SStdImplementation(methods.map(methodDef(_))))
+  def parseDeclaredImplementations(entities: List[STraitOrClassDef], moduleDefOpt: Option[ClassDef]) = {
+    val decls = for {
+      dslModule <- moduleDefOpt.toList
+      t <- entities
+      stdOpsTrait <- findClassDefByName(dslModule.impl.body, t.name + "Decls")
+    } yield {
+      (t.name, stdOpsTrait)
+    }
+    val m = decls.map { case (name, decl) =>
+      val methods = decl.impl.body.collect { case item: DefDef => item }
+      (name, SDeclaredImplementation(methods.map(methodDef(_))))
     }.toMap
-    SStdImplementations(m)
+    SDeclaredImplementations(m)
   }
+
+  def findClassDefByName(trees: List[Tree], name: String) =
+    trees.collectFirst {
+      case cd: ClassDef if cd.name.toString == name => cd
+    }
 
   def entityModule(fileTree: PackageDef) = {
     val packageName = fileTree.pid.toString
@@ -79,19 +91,13 @@ trait ScalanParsers {
     val moduleTrait = traitDef(moduleTraitTree, Some(moduleTraitTree))
     val moduleName = moduleTrait.name
 
-    def findClassDefByName(trees: List[Tree], name: String) =
-      trees.collectFirst {
-        case cd: ClassDef if cd.name.toString == name => cd
-      }
-
     val hasDsl =
       findClassDefByName(fileTree.stats, moduleName + "Dsl").isDefined
 
     val dslStdModuleOpt = findClassDefByName(fileTree.stats, moduleName + "DslStd")
+    val dslExpModuleOpt = findClassDefByName(fileTree.stats, moduleName + "DslExp")
     val hasDslStdModule = dslStdModuleOpt.isDefined
-
-    val hasDslExpModule =
-      findClassDefByName(fileTree.stats, moduleName + "DslExp").isDefined
+    val hasDslExpModule = dslExpModuleOpt.isDefined
 
     val defs = moduleTrait.body
 
@@ -132,18 +138,14 @@ trait ScalanParsers {
     }
     val methods = defs.collect { case md: SMethodDef => md }
 
-    val stdImplementations = for {
-      dslStdModule <- dslStdModuleOpt.toList
-      t <- traits ++ classes
-      stdOpsTrait <- findClassDefByName(dslStdModule.impl.body, t.name + "Decls")
-    } yield {
-      (t.name, stdOpsTrait)
-    }
-    val declaredStdImplementations = createStdImplementation(stdImplementations)
+    val declaredStdImplementations = parseDeclaredImplementations(traits ++ classes, dslStdModuleOpt)
+    val declaredExpImplementations = parseDeclaredImplementations(traits ++ classes, dslExpModuleOpt)
 
     SEntityModuleDef(packageName, imports, moduleName,
       entityRepSynonym, entity, traits, classes, methods,
-      moduleTrait.selfType, Nil, Some(declaredStdImplementations),
+      moduleTrait.selfType, Nil,
+      Some(declaredStdImplementations),
+      Some(declaredExpImplementations),
       hasDsl, hasDslStdModule, hasDslExpModule, moduleTrait.ancestors)
   }
 

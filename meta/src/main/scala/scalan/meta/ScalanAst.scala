@@ -435,16 +435,16 @@ object ScalanAst {
     }
   }
 
-  case class SStdImplementation(explicitMethods: List[SMethodDef]) {
+  case class SDeclaredImplementation(explicitMethods: List[SMethodDef]) {
     def containsMethodDef(m: SMethodDef) =
       explicitMethods.exists { em =>
         em.name == m.name && em.allArgs == m.allArgs &&
           em.tpeArgs == m.tpeArgs
       }
   }
-  case class SStdImplementations(stdDecls: Map[String, SStdImplementation]) {
+  case class SDeclaredImplementations(declarations: Map[String, SDeclaredImplementation]) {
     def containsMethodDef(name: String, m: SMethodDef) =
-      stdDecls.get(name) match {
+      declarations.get(name) match {
         case Some(decl) => decl.containsMethodDef(m)
         case None => false
       }
@@ -462,7 +462,8 @@ object ScalanAst {
                                methods: List[SMethodDef],
                                selfType: Option[SSelfTypeDef],
                                body: List[SBodyItem] = Nil,
-                               stdDslImpls: Option[SStdImplementations] = None,
+                               stdDslImpls: Option[SDeclaredImplementations] = None,
+                               expDslImpls: Option[SDeclaredImplementations] = None,
                                hasDsl: Boolean = false,
                                hasDslStd: Boolean = false,
                                hasDslExp: Boolean = false,
@@ -485,12 +486,14 @@ object ScalanAst {
 
     def allEntities = entities ++ concreteSClasses
 
-    def hasStdImplFor(traitName: String) = {
-      stdDslImpls match {
-        case Some(impls) => impls.stdDecls.contains(traitName)
+    private def hasDeclaredImplFor(traitName: String, decls: Option[SDeclaredImplementations]) = {
+      decls match {
+        case Some(impls) => impls.declarations.contains(traitName)
         case None => false
       }
     }
+    def hasStdImplFor(traitName: String) = hasDeclaredImplFor(traitName, stdDslImpls)
+    def hasExpImplFor(traitName: String) = hasDeclaredImplFor(traitName, expDslImpls)
 
     def clean = {
       val _entities = entities.map(_.clean)

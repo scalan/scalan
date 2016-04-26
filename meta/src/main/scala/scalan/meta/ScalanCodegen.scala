@@ -790,6 +790,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
        |  case class Exp${c.typeDecl}
        |      (${fieldsWithType.rep(f => s"override val $f")})${implicitArgsDecl()}
        |    extends ${e.optBaseType.isEmpty.opt("Abs")}${c.typeUse}(${fields.rep()})
+       |    ${c.module.hasExpImplFor(c.name).opt(s" with ${c.name}Decls${c.tpeArgsUse}")}
        |
        |${methodExtractorsString(clazz)}
        |
