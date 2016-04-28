@@ -9,8 +9,8 @@ object SqlAST {
 
   case class SqlException(msg: String) extends Exception(msg)
 
-  type Script = Array[Statement]
-  type Schema = Array[Column]
+  type Script = List[Statement]
+  type Schema = List[Column]
   type ColumnList = List[String]
   type ExprList = List[Expression]
 
@@ -149,9 +149,9 @@ object SqlAST {
 
   def ColumnList(list: String*): ColumnList = list.toList
 
-  def Schema(list: Column*): Schema = list.toArray
+  def Schema(list: Column*): Schema = list.toList
 
-  def Script(stmts: Statement*): Script = stmts.toArray
+  def Script(stmts: Statement*): Script = stmts.toList
 
   def ExprList(exprs: Expression*): ExprList = exprs.toList
 }
