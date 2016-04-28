@@ -689,17 +689,9 @@ class SqlParserTests extends BaseNestedTests {
     val parser = new SqlParser {}
     parser.parseDDL(schema)
 
-    val ignoredQueries = Set.empty[Int]
-
     // just verifies that queries can be parsed
     queries.zipWithIndex.foreach { case (sql, i) =>
       it(s"Q${i + 1}") {
-        if (ignoredQueries.contains(i + 1)) {
-          pendingUntilFixed {
-            val parsed = parser.parseSelect(sql)
-            println(parsed)
-          }
-        }
         val parsed = parser.parseSelect(sql)
         println(parsed)
       }

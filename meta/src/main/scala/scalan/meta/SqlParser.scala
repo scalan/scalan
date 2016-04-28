@@ -240,10 +240,11 @@ trait SqlParser {
 
     protected lazy val projection: Parser[Expression] =
       expression ~ (AS.? ~> ident.?) ^^ {
-        case e ~ a => {
-          e.alias = a.getOrElse("")
-          e
-        }
+        case e ~ a =>
+          a match {
+            case None => e
+            case Some(alias) => ExprAlias(e, alias)
+          }
       }
 
     // Based very loosely on the MySQL Grammar.

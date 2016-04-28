@@ -80,8 +80,9 @@ object SqlAST {
 
   case class CreateIndexStmt(name: String, table: Table, key: ColumnList) extends Statement
 
-  sealed abstract class Expression {
-    var alias = ""
+  sealed trait Expression
+  sealed trait NamedExpression extends Expression {
+    def name: String
   }
 
   case class StarExpr() extends Expression
@@ -152,12 +153,14 @@ object SqlAST {
 
   case class CaseWhenExpr(list: ExprList) extends Expression
 
-  case class ColumnRef(table: Option[String], name: String) extends Expression {
+  case class ColumnRef(table: Option[String], name: String) extends NamedExpression {
     def asString = (table match {
       case Some(table) => table + "."
       case None => ""
     }) + name
   }
+
+  case class ExprAlias(expr: Expression, name: String) extends NamedExpression
 
   def ColumnList(list: String*): ColumnList = list.toList
 
