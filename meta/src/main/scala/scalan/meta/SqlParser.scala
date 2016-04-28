@@ -166,6 +166,7 @@ trait SqlParser {
     protected val MIN = Keyword("MIN")
     protected val NOT = Keyword("NOT")
     protected val NULL = Keyword("NULL")
+    protected val NULLS = Keyword("NULLS")
     protected val ON = Keyword("ON")
     protected val OR = Keyword("OR")
     protected val ORDER = Keyword("ORDER")
@@ -292,19 +293,13 @@ trait SqlParser {
         | FULL ~ OUTER.? ^^^ FullOuter
         )
 
-    protected lazy val ordering: Parser[List[Expression]] =
-      rep1sep(singleOrder, ",")
+    protected lazy val ordering: Parser[List[SortSpec]] =
+      rep1sep(sortSpec, ",")
 
-    protected lazy val singleOrder: Parser[Expression] =
-      expression ~ direction.? ^^ {
-        case e ~ o => o match {
-          case Some(Descending) => NegExpr(e)
-          case _ => e
-        }
+    protected lazy val sortSpec: Parser[SortSpec] =
+      expression ~ (ASC ^^^ Ascending | DESC ^^^ Descending).? ~ (NULLS ~> (FIRST ^^^ NullsFirst | LAST ^^^ NullsLast)).? ^^ {
+        case e ~ o ~ n => SortSpec(e, o.getOrElse(Ascending), n.getOrElse(NullsOrderingUnspecified))
       }
-
-    protected lazy val direction: Parser[SortDirection] =
-      ASC ^^^ Ascending | DESC ^^^ Descending
 
     protected lazy val expression: Parser[Expression] =
       orExpression

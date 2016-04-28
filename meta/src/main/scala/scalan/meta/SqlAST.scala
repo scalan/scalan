@@ -36,10 +36,6 @@ object SqlAST {
   case object FullOuter extends JoinType
   case object LeftSemi extends JoinType
 
-  abstract sealed class SortDirection
-  case object Ascending extends SortDirection
-  case object Descending extends SortDirection
-
   abstract sealed class Operator
 
   case class Scan(table: Table) extends Operator
@@ -57,7 +53,18 @@ object SqlAST {
 
   case class GroupBy(parent: Operator, columns: ExprList) extends Operator
 
-  case class OrderBy(parent: Operator, columns: ExprList) extends Operator
+  abstract sealed class SortDirection
+  case object Ascending extends SortDirection
+  case object Descending extends SortDirection
+
+  sealed trait NullsOrdering
+  case object NullsFirst extends NullsOrdering
+  case object NullsLast extends NullsOrdering
+  case object NullsOrderingUnspecified extends NullsOrdering
+
+  case class SortSpec(expr: Expression, direction: SortDirection, nulls: NullsOrdering)
+
+  case class OrderBy(parent: Operator, columns: List[SortSpec]) extends Operator
 
   case class Limit(parent: Operator, limit: Expression) extends Operator
 

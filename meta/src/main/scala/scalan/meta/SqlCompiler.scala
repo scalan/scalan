@@ -503,7 +503,7 @@ trait SqlCompiler extends SqlParser {
     subquery match { 
       case Join(outer, inner, cond) => depends(on, outer) || depends(on, inner)
       case Scan(t) => false
-      case OrderBy(p, by) => depends(on, p) || using(on, by)
+      case OrderBy(p, by) => depends(on, p) || using(on, by.map(_.expr))
       case GroupBy(p, by) => depends(on, p) || using(on, by)
       case Filter(p, predicate) => depends(on, p) || using(on, predicate)
       case Project(p, columns) => depends(on, p) || using(on, columns)
@@ -582,7 +582,16 @@ trait SqlCompiler extends SqlParser {
           case Some(arg) => arg.name
           case _ => t.name.toLowerCase
         }
-      case OrderBy(p, by) => generateOperator(p) + s"""\n$indent.orderBy(${generateLambdaExprList(p, by)})"""
+      case OrderBy(p, by) =>
+        // TODO ignores null ordering
+        val expressions = by.map {
+          case SortSpec(expr, Ascending, _) =>
+            expr
+          case SortSpec(expr, Descending, _) =>
+            // TODO doesn't handle strings properly, but this requires changes in scalan-sql
+            NegExpr(expr)
+        }
+        generateOperator(p) + s"""\n$indent.orderBy(${generateLambdaExprList(p, expressions)})"""
       case GroupBy(p, by) => groupBy(p, by)
       case Filter(p, predicate) => {
         val (joins, conjuncts) = optimize(p, predicate)
