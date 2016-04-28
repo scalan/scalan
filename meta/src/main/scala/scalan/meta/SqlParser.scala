@@ -7,9 +7,7 @@ import scala.util.parsing.combinator.syntactical.StandardTokenParsers
 import scala.util.parsing.input.CharArrayReader.EofCh
 import SqlAST._
 
-/**
- * Created by knizhnik on 1/13/15.
- */
+// see http://savage.net.au/SQL/sql-2003-2.bnf.html for full SQL grammar
 trait SqlParser {
 
   def parseDDL(sql: String) = Grammar.schema(sql)
@@ -202,20 +200,18 @@ trait SqlParser {
 
     override val lexical = new SqlLexical(reservedWords)
 
-
     protected lazy val selectStmt: Parser[SelectStmt] =
-      setOp ^^ { o => SelectStmt(o)}
+      (select * setOp) ^^ { o => SelectStmt(o)}
 
-    protected lazy val setOp: Parser[Operator] =
-      select *
-        (UNION ~ ALL ^^^ { (q1: Operator, q2: Operator) => Union(q1, q2)}
-          | INTERSECT ^^^ { (q1: Operator, q2: Operator) => Intersect(q1, q2)}
-          | EXCEPT ^^^ { (q1: Operator, q2: Operator) => Except(q1, q2)}
-          | UNION ~ DISTINCT.? ^^^ { (q1: Operator, q2: Operator) => Distinct(Union(q1, q2))}
-          )
+    protected lazy val setOp: Parser[(Operator, Operator) => Operator] =
+      UNION ~ ALL ^^^ { Union(_, _) } |
+        INTERSECT ^^^ { Intersect(_, _) } |
+        EXCEPT ^^^ { Except(_, _) } |
+        UNION ~ DISTINCT.? ^^^ { (q1, q2) => Distinct(Union(q1, q2)) }
 
-    def selectAll(columns: List[Expression]): Boolean = {
-      columns.length == 1 && columns(0).isInstanceOf[StarExpr]
+    def selectAll(columns: List[Expression]): Boolean = columns match {
+      case List(StarExpr()) => true
+      case _ => false
     }
 
     protected lazy val select: Parser[Operator] =
@@ -239,7 +235,6 @@ trait SqlParser {
           withLimit
       }
 
-
     protected lazy val projection: Parser[Expression] =
       expression ~ (AS.? ~> ident.?) ^^ {
         case e ~ a => {
@@ -261,15 +256,22 @@ trait SqlParser {
       joinedRelation | relationFactor
 
     protected lazy val relationFactor: Parser[Operator] =
-      (ident ~ (opt(AS) ~> opt(ident)) ^^ {
-        case name ~ alias => {
-          if (!tables.contains(name)) throw SqlException("Table " + name + " not found")
-          val t = Scan(tables(name))
-          if (alias.isDefined) TableAlias(t, alias.get) else t
+      (ident ~ (opt(AS) ~> opt(ident))) ^^ {
+        case name ~ aliasOpt =>
+          tables.get(name) match {
+            case Some(table) =>
+              val t = Scan(table)
+              aliasOpt match {
+                case Some(alias) => TableAlias(t, alias)
+                case _ => t
+              }
+            case None =>
+              throw SqlException("Table " + name + " not found")
+          }
+      } |
+        ("(" ~> selectStmt <~ ")") ~ (AS.? ~> ident) ^^ {
+          case s ~ a => TableAlias(SubSelect(s.operator), a)
         }
-      }
-        | ("(" ~> selectStmt <~ ")") ~ (AS.? ~> ident) ^^ { case s ~ a => TableAlias(SubSelect(s.operator), a)}
-        )
 
     protected lazy val joinedRelation: Parser[Operator] =
       relationFactor ~ rep1(joinType.? ~ (JOIN ~> relationFactor) ~ joinConditions) ^^ {
@@ -293,7 +295,6 @@ trait SqlParser {
     protected lazy val ordering: Parser[List[Expression]] =
       rep1sep(singleOrder, ",")
 
-
     protected lazy val singleOrder: Parser[Expression] =
       expression ~ direction.? ^^ {
         case e ~ o => o match {
@@ -303,9 +304,7 @@ trait SqlParser {
       }
 
     protected lazy val direction: Parser[SortDirection] =
-      (ASC ^^^ Ascending
-        | DESC ^^^ Descending
-        )
+      ASC ^^^ Ascending | DESC ^^^ Descending
 
     protected lazy val expression: Parser[Expression] =
       orExpression
