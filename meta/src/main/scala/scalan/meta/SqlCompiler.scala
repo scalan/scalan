@@ -8,12 +8,13 @@ import SqlAST._
 trait SqlCompiler extends SqlParser {
   case class Scope(var ctx: Context, outer: Option[Scope], nesting: Int, name: String) {
     def lookup(col: ColumnRef): Binding = {
-      ctx.resolve(col.table, col.name) match {
+      ctx.resolve(col) match {
         case Some(b) => b
         case None => {
           outer match {
             case Some(s: Scope) => s.lookup(col)
-            case _ => throw SqlException( s"""Failed to lookup column ${col.table}.${col.name}""")
+            case _ =>
+              throw SqlException( s"""Failed to lookup column ${col.asString}""")
           }
         }
       }
@@ -113,21 +114,21 @@ trait SqlCompiler extends SqlParser {
   case class Binding(scope: String, path: String, column: Column)
 
   abstract class Context {
-    def resolve(schema: String, name: String): Option[Binding]
+    def resolve(ref: ColumnRef): Option[Binding]
     val scope = currScope
   }
 
   class GlobalContext() extends Context {
-    def resolve(schema: String, name: String): Option[Binding] = None
+    def resolve(ref: ColumnRef): Option[Binding] = None
   }
   
   case class TableContext(table: Table) extends Context {
-    def resolve(schema: String, name: String): Option[Binding] = {
-      if (schema.isEmpty || schema == table.name) {
-        val i = table.schema.indexWhere(c => c.name == name)
+    def resolve(ref: ColumnRef): Option[Binding] = {
+      if (ref.table.isEmpty || ref.table == Some(table.name)) {
+        val i = table.schema.indexWhere(c => c.name == ref.name)
         if (i >= 0) {
           //val path = indexToPath(i, table.schema.length);
-          val path = "." + name
+          val path = "." + ref.name
           Some(Binding(scope.name, path, table.schema(i)))
         } else None
       } else None
@@ -135,11 +136,11 @@ trait SqlCompiler extends SqlParser {
   }
 
   case class JoinContext(outer: Context, inner: Context) extends Context {
-    def resolve(schema: String, name: String): Option[Binding] = {
-      (outer.resolve(schema, name), inner.resolve(schema, name)) match {
+    def resolve(ref: ColumnRef): Option[Binding] = {
+      (outer.resolve(ref), inner.resolve(ref)) match {
         case (Some(b), None) => Some(Binding(b.scope, ".head" + b.path, b.column))
         case (None, Some(b)) => Some(Binding(b.scope, ".tail" + b.path, b.column))
-        case (Some(_), Some(_)) => throw SqlException( s"""Ambiguous reference to $schema.$name""")
+        case (Some(_), Some(_)) => throw SqlException(s"""Ambiguous reference to ${ref.asString}""")
         case _ => None
 
       }
@@ -147,25 +148,23 @@ trait SqlCompiler extends SqlParser {
   }
 
   case class AliasContext(parent: Context, alias: String) extends Context {
-    def resolve(scope: String, name: String): Option[Binding] = {
-      if (scope == alias) {
-        parent.resolve("", name) match {
-          case Some(b) => Some(Binding(b.scope, b.path, b.column))
-          case None => None
-        }
-      } else parent.resolve(scope, name)
+    def resolve(ref: ColumnRef): Option[Binding] = {
+      if (ref.table == Some(alias)) {
+        parent.resolve(ColumnRef(None, ref.name))
+      } else
+        parent.resolve(ref)
     }
   }
 
   case class ProjectContext(parent: Context, columns: ExprList) extends Context {
-    def resolve(table: String, name: String): Option[Binding] = {
-      val i = columns.indexWhere(c => (table.isEmpty && c.alias == name) || c == ColumnRef(table, name))
+    def resolve(ref: ColumnRef): Option[Binding] = {
+      val i = columns.indexWhere(c => matchExpr(c, ref))
       if (i >= 0) {
         val saveScope = currScope
         currScope = Scope(parent, scope.outer, scope.nesting, scope.name)
         val cType =  getExprType(columns(i))
         currScope = saveScope
-        Some(Binding(scope.name, indexToPath(i, columns.length), Column(name, cType)))
+        Some(Binding(scope.name, indexToPath(i, columns.length), Column(ref.name, cType)))
       }
       else None
     }
@@ -335,7 +334,7 @@ trait SqlCompiler extends SqlParser {
 
   def resolveKey(key: Expression): Option[Binding] = {
     key match {
-      case ColumnRef(table, name) => currScope.ctx.resolve(table, name)
+      case ref: ColumnRef => currScope.ctx.resolve(ref)
       case _ => throw SqlException("Unsupported join condition")
     }
   }
@@ -535,7 +534,7 @@ trait SqlCompiler extends SqlParser {
       case NotExpr(opd) => using(op, opd)
       case Literal(v, t) => false
       case CastExpr(exp, typ) => using(op, exp)
-      case ColumnRef(table, name) => buildContext(op).resolve(table, name).isDefined
+      case ref: ColumnRef => buildContext(op).resolve(ref).isDefined
       case SelectExpr(s) => depends(op, s.operator)
       case CountExpr() => false
       case CountDistinctExpr(opd) => using(op, opd)
@@ -683,7 +682,7 @@ trait SqlCompiler extends SqlParser {
 
   def generateIndex(index:CreateIndexStmt): String = {
     currScope = Scope(TableContext(index.table), Some(currScope), 0, "r")
-    val result = s"""def ${index.name}(${currScope.name}: Rep[${index.table.name.capitalize}]) = ${buildTree(index.key.map(part => {currScope.name} + lookup(ColumnRef("", part)).path), "Pair(")}"""
+    val result = s"""def ${index.name}(${currScope.name}: Rep[${index.table.name.capitalize}]) = ${buildTree(index.key.map(part => {currScope.name} + lookup(ColumnRef(None, part)).path), "Pair(")}"""
     popContext()
     result
   }

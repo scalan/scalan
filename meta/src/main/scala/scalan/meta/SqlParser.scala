@@ -439,16 +439,10 @@ trait SqlParser {
         | cast
         | "(" ~> expression <~ ")"
         | function
-        | qualifiedName
-        | ident ^^ { id => ColumnRef("", id)}
+        | (ident <~ ".").? ~ ident ^^ { case tableOpt ~ name => ColumnRef(tableOpt, name)}
         | signedPrimary
         | "(" ~> selectStmt <~ ")" ^^ { stmt => SelectExpr(stmt)}
         )
-
-    protected lazy val qualifiedName: Parser[Expression] =
-      (ident <~ ".") ~ ident ^^ {
-        case table ~ name => ColumnRef(table, name)
-      }
   }
 
 }

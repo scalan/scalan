@@ -152,7 +152,12 @@ object SqlAST {
 
   case class CaseWhenExpr(list: ExprList) extends Expression
 
-  case class ColumnRef(table: String, name: String) extends Expression
+  case class ColumnRef(table: Option[String], name: String) extends Expression {
+    def asString = (table match {
+      case Some(table) => table + "."
+      case None => ""
+    }) + name
+  }
 
   def ColumnList(list: String*): ColumnList = list.toList
 
