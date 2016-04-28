@@ -115,10 +115,12 @@ trait SqlParser {
       repsep(ident, ",") ^^ { fs => ColumnList(fs: _*)}
 
 
-    protected case class Keyword(str: String)
+    protected case class Keyword(str: String) {
+      // TODO better case insensitivity (using RegexParsers?)
+      lazy val parser = lexical.allCaseVersions(str).map(x => x: Parser[String]).reduce(_ | _) ^^^ this
+    }
 
-    protected implicit def asParser(k: Keyword): Parser[String] =
-      lexical.allCaseVersions(k.str).map(x => x: Parser[String]).reduce(_ | _)
+    protected implicit def asParser(k: Keyword): Parser[Keyword] = k.parser
 
     protected val ABS = Keyword("ABS")
     protected val ALL = Keyword("ALL")
