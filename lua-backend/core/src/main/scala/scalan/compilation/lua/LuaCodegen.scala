@@ -92,6 +92,10 @@ class LuaCodegen[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends BaseC
     case SimpleStruct(_, fields) =>
       tableLit(fields.map { case (key, value) => s"""["$key"] = $value""" })
     case FieldApply(struct, key) => src"""$struct["$key"]"""
+    case SymsArray(syms) =>
+      tableLit(syms.zipWithIndex.map { case (s, i) => src"""[${(i + 1).toString}] = $s""" })
+    case Semicolon(_,b) => src"$b"
+    case SemicolonMulti(_,b) => src"$b"
     case _ => super.rhs(d)
   }
 
