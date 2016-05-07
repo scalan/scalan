@@ -7,9 +7,10 @@ import org.luaj.vm2.lib.jse.JsePlatform
 
 import scala.collection.mutable
 import scalan.{ScalanDslExp, ScalanDslStd}
-import scalan.compilation.{Compiler, GraphVizConfig}
+import scalan.compilation.{ScalanCompiler, Compiler, GraphVizConfig}
 
-class LuaCompiler[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends Compiler(_scalan) {
+class LuaCompiler[+ScalanCake <: ScalanDslExp](val _scalan: ScalanCake)
+  extends ScalanCompiler[ScalanCake, LuaCodegen[ScalanCake]](_scalan) {
   import scalan._
 
   val codegen = new LuaCodegen[scalan.type](scalan)
