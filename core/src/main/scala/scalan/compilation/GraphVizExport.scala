@@ -1,9 +1,11 @@
 package scalan.compilation
 
+import java.awt.Desktop
 import java.io.{File, PrintWriter}
 
-import _root_.scalan.ScalanExp
-import scalan.util.{ScalaNameUtil, StringUtil, FileUtil}
+import _root_.scalan.{Base, ScalanExp}
+import scala.util.Properties
+import scalan.util.{FileUtil, ScalaNameUtil, StringUtil}
 
 trait GraphVizExport { self: ScalanExp =>
 
@@ -118,15 +120,34 @@ trait GraphVizExport { self: ScalanExp =>
 
   implicit class ExpExtensionsForEmitGraph(symbol: Exp[_]) {
 //    def emitGraph(file: File) = emitDepGraph(symbol, file)(defaultGraphVizConfig)
-    def show() = showGraphs(symbol)
+    // Not default argument to allow use from the debugger
+    def show(): Unit = show(defaultGraphVizConfig)
+    def show(config: GraphVizConfig): Unit = showGraphs(symbol)(config)
   }
 
-  def showGraphs(rootSyms: Exp[_]*): Unit = {
+  implicit class SeqExpExtensionsForEmitGraph(symbols: Seq[Exp[_]]) {
+    // Not default argument to allow use from the debugger
+    def show(): Unit = show(defaultGraphVizConfig)
+    def show(config: GraphVizConfig): Unit = showGraphs(symbols: _*)(config)
+  }
+
+  def showGraphs(rootSyms: Exp[_]*)(implicit config: GraphVizConfig): Unit = {
     val prefix = rootSyms.mkString("_")
     val file = File.createTempFile(s"graph_${prefix}_", ".dot")
-    emitDepGraph(rootSyms, file)(defaultGraphVizConfig)
-    val builder = new ProcessBuilder("open", file.getAbsolutePath)
-    val _ = builder.start()
+    // unfortunately can end up deleting the file before the process reads it
+    // file.deleteOnExit()
+    emitDepGraph(rootSyms, file)(config)
+    openDotFile(file)
+  }
+
+  def openDotFile(file: File): Unit = {
+    Base.config.getProperty("scalan.graphviz.viewer") match {
+      case null =>
+        Desktop.getDesktop.open(file)
+      case command =>
+        val builder = new ProcessBuilder(command, file.getAbsolutePath)
+        val _ = builder.start()
+    }
   }
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {

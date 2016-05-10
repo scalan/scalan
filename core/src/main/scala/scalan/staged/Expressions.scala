@@ -440,7 +440,6 @@ trait Expressions extends BaseExp { scalan: ScalanExp =>
 
     lazy val definition = findDefinition(this).map(_.rhs)
     def toStringWithDefinition = toStringWithType + definition.map(d => s" = $d").getOrElse("")
-    def show() = showGraphs(this)
   }
 
   def fresh[T: LElem]: Exp[T] = Sym.fresh[T]
