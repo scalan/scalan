@@ -4,7 +4,7 @@ import java.lang.reflect.Method
 
 import scalan.compilation.language._
 
-trait ObjectOrientedBridge extends LmsBridge with MethodMappingDSL {
+trait ObjectOrientedLmsBridge extends LmsBridge with MethodMappingDSL {
   import scalan._
 
   val language: LanguageMapping

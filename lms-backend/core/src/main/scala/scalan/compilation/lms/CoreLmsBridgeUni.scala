@@ -5,7 +5,7 @@ import scalan.primitives.AbstractStringsDslExp
 import scalan.util.StringUtil
 import scalan.{ScalanDslExp, JNIExtractorOpsExp}
 
-trait JNIBridge extends CoreBridge {
+trait JNILmsBridge extends CoreLmsBridge {
   override val scalan: ScalanDslExp with JNIExtractorOpsExp with AbstractStringsDslExp
   import scalan._
 
@@ -31,4 +31,4 @@ trait JNIBridge extends CoreBridge {
   }
 }
 
-trait CoreBridgeUni extends CoreBridge with JNIBridge
+trait CoreLmsBridgeUni extends CoreLmsBridge with JNILmsBridge

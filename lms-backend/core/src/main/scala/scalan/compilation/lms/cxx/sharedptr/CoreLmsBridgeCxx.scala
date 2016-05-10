@@ -1,9 +1,9 @@
 package scalan.compilation.lms.cxx.sharedptr
 
 import scalan.compilation.language.Cxx
-import scalan.compilation.lms.{ObjectOrientedBridge, CoreBridge}
+import scalan.compilation.lms.{ObjectOrientedLmsBridge, CoreLmsBridge}
 
-trait CoreBridgeCxx extends CoreBridge with ObjectOrientedBridge {
+trait CoreLmsBridgeCxx extends CoreLmsBridge with ObjectOrientedLmsBridge {
   val language = Cxx
 
   override def staticReceiverString(typeMapping: language.TypeMapping): String =
