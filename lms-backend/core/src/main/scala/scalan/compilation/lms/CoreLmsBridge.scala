@@ -7,7 +7,7 @@ import scala.reflect.runtime.universe._
 
 import scalan.util.{ParamMirror, StringUtil}
 
-trait CoreBridge extends StructBridge {
+trait CoreLmsBridge extends StructLmsBridge {
   import scalan._
 
   val lms: CoreLmsBackend

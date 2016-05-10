@@ -4,7 +4,7 @@ import scala.reflect.RefinedManifest
 import scala.reflect.runtime.universe._
 import scalan.util.ParamMirror
 
-trait StructBridge extends LmsBridge {
+trait StructLmsBridge extends LmsBridge {
   import scalan._
 
   override protected def lmsMethodName(d: Def[_], primitiveName: String): String = d match {

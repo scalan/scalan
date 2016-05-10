@@ -1,10 +1,10 @@
 package scalan
 
 import scala.collection.immutable.ListMap
-import scala.collection.mutable.{Map => MutMap}
+import scala.collection.mutable
 import scala.language.higherKinds
 import scalan.common.Lazy
-import scalan.meta.ScalanAst.SEntityModuleDef
+import scalan.meta.ScalanAst.{STraitOrClassDef, SEntityModuleDef}
 import scalan.util.ReflectionUtil
 
 trait Entities extends Elems { self: Scalan =>
@@ -65,7 +65,7 @@ trait Entities extends Elems { self: Scalan =>
     def asEntityElem = e.asInstanceOf[EntityElem[A]]
   }
 
-  private[this] lazy val modules = MutMap.empty[String, SEntityModuleDef]
+  private[this] lazy val modules = mutable.Map.empty[String, SEntityModuleDef]
   def getModules = modules
 
   def allEntities = modules.values.flatMap(_.allEntities)
@@ -79,7 +79,7 @@ trait Entities extends Elems { self: Scalan =>
     }
   }
 
-  def entityDef(e: EntityElem[_]) = {
+  def entityDef(e: EntityElem[_]): STraitOrClassDef = {
     val elemClassSymbol = ReflectionUtil.classToSymbol(e.getClass)
     val moduleName = elemClassSymbol.owner.name.toString.stripSuffix("Abs")
     val module = modules.getOrElse(moduleName, !!!(s"Module $moduleName not found"))

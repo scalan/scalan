@@ -11,6 +11,6 @@ class LinAlgLmsBackendUni extends LmsBackendUni with VectorOpsExp { self =>
   override val nativeCodegen = new CxxCoreCodegen[self.type](self) with CxxShptrGenVectorOps
 }
 
-class LinAlgLmsCompilerUni[+ScalanCake <: ScalanDslExp with LADslExp with JNIExtractorOpsExp](_scalan: ScalanCake) extends LmsCompilerUni[ScalanCake](_scalan) with LinAlgBridge {
+class LinAlgLmsCompilerUni[+ScalanCake <: ScalanDslExp with LADslExp with JNIExtractorOpsExp](_scalan: ScalanCake) extends LmsCompilerUni[ScalanCake](_scalan) with LinAlgLmsBridge {
   override val lms = new LinAlgLmsBackendUni
 }

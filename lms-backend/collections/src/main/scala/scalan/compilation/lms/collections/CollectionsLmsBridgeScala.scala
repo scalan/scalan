@@ -2,9 +2,9 @@ package scalan.compilation.lms.collections
 
 import scalan.collections.{CollectionsDslExp, SeqsScalaMethodMapping}
 import scalan.collections.impl.CollectionsExp
-import scalan.compilation.lms.CoreBridgeScala
+import scalan.compilation.lms.CoreLmsBridgeScala
 
-trait CollectionsBridgeScala extends CoreBridgeScala with SeqsScalaMethodMapping {
+trait CollectionsLmsBridgeScala extends CoreLmsBridgeScala with SeqsScalaMethodMapping {
   override val scalan: CollectionsDslExp
   import scalan._
 
