@@ -3,7 +3,7 @@ package scalan.monads
 import java.io.File
 
 import scalan._
-import scalan.compilation.lms.JNIBridge
+import scalan.compilation.lms.JNILmsBridge
 import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.uni.LmsCompilerUni
@@ -147,7 +147,7 @@ class EffectsJniItTests extends BaseItTests[State0Prog](???) {
 
     lazy val jniZipCollectionWithIndexW3 = JNI_Wrap(zipCollectionWithIndexW3)
   }
-  val progcxx = new LmsCompilerCxx(new EffectsExpCxx) with JNIBridge with EffectfulCompiler[EffectsExpCxx]
+  val progcxx = new LmsCompilerCxx(new EffectsExpCxx) with JNILmsBridge with EffectfulCompiler[EffectsExpCxx]
 
   val defaultCompilers = compilers(progcxx)
 

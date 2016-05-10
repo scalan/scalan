@@ -2,7 +2,7 @@ package scalan.graphs
 
 import scala.language.reflectiveCalls
 import scalan._
-import scalan.compilation.lms.JNIBridge
+import scalan.compilation.lms.JNILmsBridge
 import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.it.BaseCtxItTests
 
@@ -16,7 +16,7 @@ class JNI_MsfItTests extends BaseCtxItTests[JNIMsfProg](new GraphsDslStd with JN
 
   class ProgExp extends GraphsDslExp with JNIExtractorOpsExp with JNIMsfProg
 
-  val compiler = new LmsCompilerCxx(new ProgExp) with JNIBridge
+  val compiler = new LmsCompilerCxx(new ProgExp) with JNILmsBridge
 
   class Ctx extends TestCompilerContext("MSF_JNI-cxx") {
     val compiler = JNI_MsfItTests.this.compiler

@@ -3,7 +3,7 @@ package scalan.compilation.lms.uni
 import java.io.File
 
 import scalan._
-import scalan.compilation.lms.linalgebra.{LinAlgBridge, LinAlgLmsCompilerUni}
+import scalan.compilation.lms.linalgebra.{LinAlgLmsBridge, LinAlgLmsCompilerUni}
 import scalan.graphs.{GraphsDslExp, GraphsDslStd, GraphTestInputs, MsfFuncs}
 import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, LADslStd, LADslExp}
@@ -86,7 +86,7 @@ class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new GraphsDslS
 
   class ProgExp extends GraphsDslExp with LADslExp with UniCompilerTestProg with JNIExtractorOpsExp
 
-  val progStaged = new LinAlgLmsCompilerUni(new ProgExp) with LinAlgBridge
+  val progStaged = new LinAlgLmsCompilerUni(new ProgExp) with LinAlgLmsBridge
 
   val defaultCompilers = compilers(progStaged)
 

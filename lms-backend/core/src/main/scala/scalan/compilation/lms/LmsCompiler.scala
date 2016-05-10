@@ -6,7 +6,7 @@ import java.io.File
 
 import scalan.util.FileUtil
 
-abstract class LmsCompiler[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends Compiler(_scalan) with CoreBridge {
+abstract class LmsCompiler[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends Compiler(_scalan) with CoreLmsBridge {
   import scalan._
 
   override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
