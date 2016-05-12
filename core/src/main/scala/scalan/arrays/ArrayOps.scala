@@ -1,5 +1,6 @@
 package scalan.arrays
 
+import scala.collection.immutable.ListMap
 import scala.reflect.ClassTag
 import scalan.common.OverloadHack.Overloaded1
 import scalan.staged.BaseExp
@@ -120,9 +121,7 @@ trait ArrayOps { self: Scalan =>
   case class ScalaArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     def parent: Option[Elem[_]] = Some(arrayElement(eItem))
     override def isEntityType = eItem.isEntityType
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("A" -> Left(eItem))
-    }
+    override lazy val typeArgs = ListMap("A" -> AnElem(eItem))
     lazy val tag = {
       implicit val tag1 = eItem.tag
       weakTypeTag[Array[A]]
