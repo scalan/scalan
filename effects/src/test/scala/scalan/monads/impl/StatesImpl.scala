@@ -21,9 +21,7 @@ trait StatesAbs extends scalan.ScalanDsl with States {
     def eS = _eS
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("S" -> Left(eS), "A" -> Left(eA))
-    }
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("S" -> AnElem(eS), "A" -> AnElem(eA))
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagS = eS.tag
@@ -72,9 +70,7 @@ trait StatesAbs extends scalan.ScalanDsl with States {
     extends State0Elem[S, A, StateBase[S, A]]
     with ConcreteElem[StateBaseData[S, A], StateBase[S, A]] {
     override lazy val parent: Option[Elem[_]] = Some(state0Element(element[S], element[A]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("S" -> Left(eS), "A" -> Left(eA))
-    }
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("S" -> AnElem(eS), "A" -> AnElem(eA))
 
     override def convertState0(x: Rep[State0[S, A]]) = StateBase(x.run)
     override def getDefaultRep = StateBase(constFun[S, (A, S)](Pair(element[A].defaultRepValue, element[S].defaultRepValue)))

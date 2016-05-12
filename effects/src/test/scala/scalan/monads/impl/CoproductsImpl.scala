@@ -22,9 +22,7 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
     def cG = _cG
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("F" -> Right(cF.asInstanceOf[SomeCont]), "G" -> Right(cG.asInstanceOf[SomeCont]), "A" -> Left(eA))
-    }
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("F" -> ACont(cF.asInstanceOf[SomeCont]), "G" -> ACont(cG.asInstanceOf[SomeCont]), "A" -> AnElem(eA))
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -72,9 +70,7 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
     extends CoproductElem[F, G, A, CoproductImpl[F, G, A]]
     with ConcreteElem[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] {
     override lazy val parent: Option[Elem[_]] = Some(coproductElement(container[F], container[G], element[A]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("F" -> Right(cF.asInstanceOf[SomeCont]), "G" -> Right(cG.asInstanceOf[SomeCont]), "A" -> Left(eA))
-    }
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("F" -> ACont(cF.asInstanceOf[SomeCont]), "G" -> ACont(cG.asInstanceOf[SomeCont]), "A" -> AnElem(eA))
 
     override def convertCoproduct(x: Rep[Coproduct[F, G, A]]) = CoproductImpl(x.run)
     override def getDefaultRep = CoproductImpl(element[Either[F[A], G[A]]].defaultRepValue)
