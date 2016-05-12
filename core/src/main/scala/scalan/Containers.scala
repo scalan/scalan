@@ -7,7 +7,17 @@ trait Containers { self: Scalan =>
 
   type SomeF[X] = F[X] forSome { type F[_] }
   type SomeCont = Cont[SomeF]
-  type TypeDesc = Elem[_] | SomeCont
+
+  // TODO Could have Elem and Cont extend TypeDesc directly, see which makes ProxyExp simpler
+  sealed trait TypeDesc {
+    def name: String
+  }
+  case class AnElem(elem: Elem[_]) extends TypeDesc {
+    def name = elem.name
+  }
+  case class ACont(cont: SomeCont) extends TypeDesc {
+    def name = cont.name
+  }
 
   @implicitNotFound(msg = "No Cont available for ${F}.")
   trait Cont[F[_]] {

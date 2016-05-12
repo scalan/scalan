@@ -23,9 +23,7 @@ trait StructItemsAbs extends StructItems {
     def eVal = _eVal
     def eSchema = _eSchema
     lazy val parent: Option[Elem[_]] = None
-    lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("Val" -> Left(eVal), "Schema" -> Left(eSchema))
-    }
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Val" -> AnElem(eVal), "Schema" -> AnElem(eSchema))
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagAnnotatedVal = eVal.tag
@@ -74,9 +72,7 @@ trait StructItemsAbs extends StructItems {
     extends StructItemElem[Val, Schema, StructItemBase[Val, Schema]]
     with ConcreteElem[StructItemBaseData[Val, Schema], StructItemBase[Val, Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(structItemElement(element[Val], element[Schema]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("Val" -> Left(eVal), "Schema" -> Left(eSchema))
-    }
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Val" -> AnElem(eVal), "Schema" -> AnElem(eSchema))
 
     override def convertStructItem(x: Rep[StructItem[Val, Schema]]) = StructItemBase(x.key, x.value)
     override def getDefaultRep = StructItemBase(element[StructKey[Schema]].defaultRepValue, element[Val].defaultRepValue)

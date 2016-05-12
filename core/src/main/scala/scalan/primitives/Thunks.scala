@@ -1,9 +1,10 @@
 package scalan.primitives
 
+import scala.collection.immutable.ListMap
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.{ViewsDslExp, ScalanExp, ScalanStd, Scalan}
+import scalan.{Scalan, ScalanExp, ScalanStd, ViewsDslExp}
 import scala.reflect.runtime.universe._
 
 trait Thunks { self: Scalan =>
@@ -34,9 +35,7 @@ trait Thunks { self: Scalan =>
     extends EntityElem1[A, Thunk[A], Thunk](eItem, container[Thunk]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("A" -> Left(eItem))
-    }
+    override lazy val typeArgs = ListMap("A" -> AnElem(eItem))
     lazy val tag = {
       implicit val rt = eItem.tag
       weakTypeTag[Thunk[A]]

@@ -23,9 +23,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     def eV = _eV
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
-    lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("V" -> Left(eV), "E" -> Left(eE))
-    }
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> AnElem(eV), "E" -> AnElem(eE))
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -74,9 +72,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
     with ConcreteElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("V" -> Left(eV), "E" -> Left(eE))
-    }
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> AnElem(eV), "E" -> AnElem(eE))
 
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
     override def getDefaultRep = AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue)
@@ -163,9 +159,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     extends GraphElem[V, E, IncidenceGraph[V, E]]
     with ConcreteElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("V" -> Left(eV), "E" -> Left(eE))
-    }
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> AnElem(eV), "E" -> AnElem(eE))
 
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
     override def getDefaultRep = IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0)

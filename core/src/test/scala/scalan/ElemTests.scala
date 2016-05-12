@@ -16,6 +16,7 @@ abstract class AbstractElemTests extends BaseNestedTests {
   }
 }
 
+/** See also scalan.collections.MoreElemTests in collections subproject */
 class ElemTests extends AbstractElemTests {
   class Ctx extends super.Ctx with KindsExamples with KindsDslExp with JNIExtractorOpsExp
 

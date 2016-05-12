@@ -19,9 +19,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
   class AStringElem[To <: AString]
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
-    lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map()
-    }
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]()
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
@@ -68,9 +66,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
     extends AStringElem[SString]
     with ConcreteElem[SStringData, SString] {
     override lazy val parent: Option[Elem[_]] = Some(aStringElement)
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map()
-    }
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]()
 
     override def convertAString(x: Rep[AString]) = SString(x.wrappedValue)
     override def getDefaultRep = SString("")
@@ -151,9 +147,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
     extends AStringElem[CString]
     with ConcreteElem[CStringData, CString] {
     override lazy val parent: Option[Elem[_]] = Some(aStringElement)
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map()
-    }
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]()
 
     override def convertAString(x: Rep[AString]) = CString(x.wrappedValue)
     override def getDefaultRep = CString("")

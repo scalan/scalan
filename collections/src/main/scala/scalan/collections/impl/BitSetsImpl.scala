@@ -19,9 +19,7 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
   class BitSetElem[To <: BitSet]
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
-    lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map()
-    }
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]()
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
@@ -68,9 +66,7 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
     extends BitSetElem[BoolCollBitSet]
     with ConcreteElem[BoolCollBitSetData, BoolCollBitSet] {
     override lazy val parent: Option[Elem[_]] = Some(bitSetElement)
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map()
-    }
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]()
 
     override def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
     override def getDefaultRep = BoolCollBitSet(element[Collection[Boolean]].defaultRepValue)

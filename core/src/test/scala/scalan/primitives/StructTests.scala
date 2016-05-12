@@ -159,7 +159,7 @@ class StructTests extends BaseViewTests {
     val t2 = e2.tag
     val t3 = e3.tag
     assert(t1 == t2, "should be equal")
-    // TODO this inconsistensy can potentially lead to some problems
+    // TODO this inconsistency can potentially lead to some problems
     // and should be fixed with better implementation of StructElem.tag
     assert(t1 == t3, "should be equal as well even though e1 != e3 !!!")
 

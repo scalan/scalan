@@ -1,5 +1,6 @@
 package scalan
 
+import scala.collection.immutable.ListMap
 import scala.collection.mutable.{Map => MutMap}
 import scala.language.higherKinds
 import scalan.common.Lazy
@@ -9,7 +10,7 @@ import scalan.util.ReflectionUtil
 trait Entities extends Elems { self: Scalan =>
   abstract class EntityElem[A] extends Elem[A] with scala.Equals {
     def parent: Option[Elem[_]]
-    def tyArgSubst: Map[String, TypeDesc]
+    def typeArgs: ListMap[String, TypeDesc]
     def convert(x: Rep[Def[_]]): Rep[A] = !!!("should not be called")
     //def getConverterTo[B](eB: Elem[B]): Conv[A,B] = !!!  //TODO make it abstract
     // TODO generate code for this in implementations
@@ -23,11 +24,18 @@ trait Entities extends Elems { self: Scalan =>
       case _ => false
     }
     override def hashCode = tag.tpe.hashCode
+    override protected def getName = {
+      val className = runtimeClass.getSimpleName
+      if (typeArgs.isEmpty)
+        className
+      else
+        s"$className[${typeArgs.valuesIterator.map(_.name).mkString(", ")}]"
+    }
   }
 
   abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
     extends EntityElem[To] {
-    override def getName = {
+    override protected def getName = {
       s"${cont.name}[${eItem.name}]"
     }
     override def canEqual(other: Any) = other match {

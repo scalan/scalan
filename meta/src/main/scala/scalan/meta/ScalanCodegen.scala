@@ -62,7 +62,7 @@ trait MetaCodegen extends SqlCompiler with ScalanAstExtensions {
     }
 
     def tpeSubstStr = tpeSubst.filter(_._2.isDefined).rep {
-      case (n, Some(v)) => StringUtil.quote(n) + " -> " + v.fold(l => s"Left($l)", r => s"Right($r.asInstanceOf[SomeCont])")
+      case (n, Some(v)) => StringUtil.quote(n) + " -> " + v.fold(l => s"AnElem($l)", r => s"ACont($r.asInstanceOf[SomeCont])")
       case (n, _) => !!!(s"No substitution for $n") // impossible due to filter above
     }
 
@@ -470,9 +470,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    extends $parentElem {
          |${e.implicitArgs.opt(_.rep(a => s"    ${(e.entity.isInheritedDeclared(a.name, e.module)).opt("override ")}def ${a.name} = _${a.name}", "\n"))}
          |    ${overrideIfHasParent}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
-         |    ${overrideIfHasParent}lazy val tyArgSubst: Map[String, TypeDesc] = {
-         |      Map(${e.tpeSubstStr})
-         |    }
+         |    ${overrideIfHasParent}lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc](${e.tpeSubstStr})
          |    override def isEntityType = true
          |    override lazy val tag = {
          |${implicitTagsFromElems(e)}
@@ -641,9 +639,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    extends ${parent.name}Elem[${join(parentTpeArgsStr, c.typeUse)}]
          |    with $concreteElemSuperType {
          |    override lazy val parent: Option[Elem[_]] = Some($parentElem)
-         |    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-         |      Map(${c.tpeSubstStr})
-         |    }
+         |    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc](${c.tpeSubstStr})
          |    ${e.isWrapper.opt("override lazy val eTo: Elem[_] = this")}
          |    override def convert${parent.name}(x: Rep[$parent]) = $converterBody
          |    override def getDefaultRep = $className(${fieldTypes.rep(zeroSExpr(_))})
