@@ -1,9 +1,12 @@
 package scalan.compilation
 
+import java.awt.Desktop
 import java.io.{File, PrintWriter}
 
-import _root_.scalan.ScalanExp
-import scalan.util.{ScalaNameUtil, StringUtil, FileUtil}
+import _root_.scalan.{Base, ScalanExp}
+import scalan.util.{FileUtil, ScalaNameUtil, StringUtil}
+
+import GraphVizExport.lineBreak
 
 trait GraphVizExport { self: ScalanExp =>
 
@@ -47,6 +50,9 @@ trait GraphVizExport { self: ScalanExp =>
   }
 
   protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
+    case Const(x) =>
+      val formattedX = formatConst(x)
+      s"Const($formattedX)"
     case l: Lambda[_, _] =>
       val y = l.y
       val bodyStr = y match {
@@ -69,9 +75,33 @@ trait GraphVizExport { self: ScalanExp =>
       case NumericToFloat(_) => s"$arg.toFloat"
       case NumericToDouble(_) => s"$arg.toDouble"
       case NumericToInt(_) => s"$arg.toInt"
+      case NumericToString() => s"$arg.toString"
       case _ => s"${op.opName} $arg"
     }
     case _ => d.toString
+  }
+
+  protected def formatConst(x: Any): String = x match {
+    case str: String =>
+      val escQuote = """\""""
+      str.lines.map(_.replace("\"", escQuote).replace("""\""", """\\""")).toSeq match {
+        case Seq() =>
+          // should be impossible, but see SI-9773
+          escQuote + escQuote
+        case Seq(line) =>
+          escQuote + line + escQuote
+        case lines =>
+          val tripleQuote = escQuote * 3
+          (tripleQuote +: lines :+ tripleQuote).mkString(lineBreak)
+      }
+    case c: Char => s"'$c'"
+    case f: Float => s"${f}f"
+    case l: Long => s"${l}l"
+    case arr: Array[_] => s"Array(${arr.toSeq.map(formatConst).mkString(", ")})"
+    case seq: Seq[_] =>
+      s"${seq.stringPrefix}(${seq.map(formatConst).mkString(", ")})"
+    case null => "null"
+    case _ => x.toString
   }
 
   private def emitDepEdges(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter, config: GraphVizConfig) = {
@@ -118,15 +148,34 @@ trait GraphVizExport { self: ScalanExp =>
 
   implicit class ExpExtensionsForEmitGraph(symbol: Exp[_]) {
 //    def emitGraph(file: File) = emitDepGraph(symbol, file)(defaultGraphVizConfig)
-    def show() = showGraphs(symbol)
+    // Not default argument to allow use from the debugger
+    def show(): Unit = show(defaultGraphVizConfig)
+    def show(config: GraphVizConfig): Unit = showGraphs(symbol)(config)
   }
 
-  def showGraphs(rootSyms: Exp[_]*): Unit = {
+  implicit class SeqExpExtensionsForEmitGraph(symbols: Seq[Exp[_]]) {
+    // Not default argument to allow use from the debugger
+    def show(): Unit = show(defaultGraphVizConfig)
+    def show(config: GraphVizConfig): Unit = showGraphs(symbols: _*)(config)
+  }
+
+  def showGraphs(rootSyms: Exp[_]*)(implicit config: GraphVizConfig): Unit = {
     val prefix = rootSyms.mkString("_")
     val file = File.createTempFile(s"graph_${prefix}_", ".dot")
-    emitDepGraph(rootSyms, file)(defaultGraphVizConfig)
-    val builder = new ProcessBuilder("open", file.getAbsolutePath)
-    val _ = builder.start()
+    // unfortunately can end up deleting the file before the process reads it
+    // file.deleteOnExit()
+    emitDepGraph(rootSyms, file)(config)
+    openDotFile(file)
+  }
+
+  def openDotFile(file: File): Unit = {
+    Base.config.getProperty("scalan.graphviz.viewer") match {
+      case null =>
+        Desktop.getDesktop.open(file)
+      case command =>
+        val builder = new ProcessBuilder(command, file.getAbsolutePath)
+        val _ = builder.start()
+    }
   }
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
@@ -247,6 +296,10 @@ trait GraphVizExport { self: ScalanExp =>
   }
 }
 
+object GraphVizExport {
+  final val lineBreak = """\l"""
+}
+
 sealed trait Orientation
 object Portrait extends Orientation
 object Landscape extends Orientation
@@ -274,13 +327,19 @@ case class GraphVizConfig(emitGraphs: Boolean,
         sb.append(" ")
         lineLength += 1
       } else {
-        sb.append("\\l")
+        sb.append(lineBreak)
         lineLength = 0
       }
       sb.append(part)
       lineLength += part.length
     }
-    s"label=${StringUtil.quote(sb.result)}"
+    val label0 = sb.result()
+    // left-justify the last line if there are multiple lines
+    val label = if (label0.contains(lineBreak))
+      label0 + lineBreak
+    else
+      label0
+    s"label=${StringUtil.quote(label0)}"
   }
 
   def orientationString = if (orientation == Landscape) "rankdir=LR" else ""
