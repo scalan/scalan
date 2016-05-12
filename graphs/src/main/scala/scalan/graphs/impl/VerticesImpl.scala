@@ -20,7 +20,7 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
     def eV = _eV
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> AnElem(eV), "E" -> AnElem(eE))
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> eV, "E" -> eE)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -69,7 +69,7 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
     extends VertexElem[V, E, SVertex[V, E]]
     with ConcreteElem[SVertexData[V, E], SVertex[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(vertexElement(element[V], element[E]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> AnElem(eV), "E" -> AnElem(eE))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> eV, "E" -> eE)
 
     override def convertVertex(x: Rep[Vertex[V, E]]) = SVertex(x.id, x.graph)
     override def getDefaultRep = SVertex(0, element[Graph[V, E]].defaultRepValue)

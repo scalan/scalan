@@ -9,7 +9,15 @@ import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 import scalan.util.ReflectionUtil
 
-trait Elems extends Base { self: Scalan =>
+trait TypeDescs extends Base { self: Scalan =>
+
+  sealed trait TypeDesc extends Serializable {
+    protected def getName: String
+    lazy val name = getName
+
+    // <> to delimit because: [] is used inside name; {} looks bad with structs.
+    override def toString = s"${getClass.getSimpleName}<$name>"
+  }
 
   type LElem[A] = Lazy[Elem[A]] // lazy element
 
@@ -19,7 +27,7 @@ trait Elems extends Base { self: Scalan =>
     * @tparam A The represented type
     */
   @implicitNotFound(msg = "No Elem available for ${A}.")
-  abstract class Elem[A] extends Serializable { _: scala.Equals =>
+  abstract class Elem[A] extends TypeDesc { _: scala.Equals =>
     def isEntityType: Boolean
     def isBaseType: Boolean = this.isInstanceOf[BaseElem[_]]
     def tag: WeakTypeTag[A]
@@ -29,9 +37,6 @@ trait Elems extends Base { self: Scalan =>
     protected def getDefaultRep: Rep[A]
     lazy val defaultRepValue = getDefaultRep
     protected def getName = cleanUpTypeName(tag.tpe)
-    lazy val name = getName
-
-    override def toString = s"${getClass.getSimpleName}{$name}"
 
     def <:<(e: Elem[_]) = tag.tpe <:< e.tag.tpe
     def >:>(e: Elem[_]) = e <:< this
@@ -180,15 +185,46 @@ trait Elems extends Base { self: Scalan =>
   def assertEqualElems[A](e1: Elem[A], e2: Elem[A], m: => String) =
     assert(e1 == e2, s"Element $e1 != $e2: $m")
 
-  import scalan.meta.ScalanAst
-  import ScalanAst._
+  @implicitNotFound(msg = "No Cont available for ${F}.")
+  trait Cont[F[_]] extends TypeDesc {
+    def tag[T](implicit tT: WeakTypeTag[T]): WeakTypeTag[F[T]]
+    def lift[T](implicit eT: Elem[T]): Elem[F[T]]
+    def unlift[T](implicit eFT: Elem[F[T]]): Elem[T]
+    def getElem[T](fa: Rep[F[T]]): Elem[F[T]]
+    def getItemElem[T](fa: Rep[F[T]]): Elem[T] = unlift(getElem(fa))
+    def unapply[T](e: Elem[_]): Option[Elem[F[T]]]
+
+    protected def getName = {
+      // note: will use WeakTypeTag[x], so x type parameter ends up in the result
+      // instead of the actual type parameter it's called with (see below)
+      def tpeA[x] = tag[x].tpe
+
+      val tpe = tpeA[Nothing]
+
+      val str = cleanUpTypeName(tpe)
+
+      if (str.endsWith("[x]"))
+        str.stripSuffix("[x]")
+      else
+        "[x]" + str
+    }
+    def isFunctor = this.isInstanceOf[Functor[F]]
+  }
+
+  def container[F[_]: Cont] = implicitly[Cont[F]]
+
+  implicit def containerElem[F[_]:Cont, A:Elem]: Elem[F[A]] = container[F].lift(element[A])
+
+  trait Functor[F[_]] extends Cont[F] {
+    def map[A:Elem,B:Elem](a: Rep[F[A]])(f: Rep[A] => Rep[B]): Rep[F[B]]
+  }
 }
 
-trait ElemsStd extends Elems { self: ScalanStd =>
+trait TypeDescsStd extends TypeDescs { self: ScalanStd =>
 
 }
 
-trait ElemsExp extends Elems with BaseExp { self: ScalanExp =>
+trait TypeDescsExp extends TypeDescs with BaseExp { self: ScalanExp =>
 
   def withElemOf[A, R](x: Rep[A])(block: Elem[A] => R) = block(x.elem)
   def withResultElem[A, B, R](f: Rep[A => B])(block: Elem[B] => R) = block(withElemOf(f) { e => e.eRange })

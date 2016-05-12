@@ -26,7 +26,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends EntityElem[To] {
     def eItem = _eItem
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> AnElem(eItem))
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> eItem)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagAnnotatedItem = eItem.tag
@@ -74,7 +74,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def eA = _eA
     def eB = _eB
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(pairElement(element[A],element[B])))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA), "B" -> AnElem(eB))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> eA, "B" -> eB)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -109,7 +109,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[Collection[A], To] {
     def eA = _eA
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(collectionElement(element[A])))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> eA)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -225,7 +225,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[Item, CollectionOverArray[Item]]
     with ConcreteElem[CollectionOverArrayData[Item], CollectionOverArray[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> AnElem(eItem))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> eItem)
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverArray(x.arr)
     override def getDefaultRep = CollectionOverArray(element[Array[Item]].defaultRepValue)
@@ -308,7 +308,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[Item, CollectionOverList[Item]]
     with ConcreteElem[CollectionOverListData[Item], CollectionOverList[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> AnElem(eItem))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> eItem)
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverList(x.lst)
     override def getDefaultRep = CollectionOverList(element[List[Item]].defaultRepValue)
@@ -391,7 +391,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[Item, CollectionOverSeq[Item]]
     with ConcreteElem[CollectionOverSeqData[Item], CollectionOverSeq[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> AnElem(eItem))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> eItem)
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverSeq(x.seq)
     override def getDefaultRep = CollectionOverSeq(element[SSeq[Item]].defaultRepValue)
@@ -474,7 +474,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends PairCollectionElem[A, B, PairCollectionSOA[A, B]]
     with ConcreteElem[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA), "B" -> AnElem(eB))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> eA, "B" -> eB)
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionSOA(x.as, x.bs)
     override def getDefaultRep = PairCollectionSOA(element[Collection[A]].defaultRepValue, element[Collection[B]].defaultRepValue)
@@ -561,7 +561,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends PairCollectionElem[A, B, PairCollectionAOS[A, B]]
     with ConcreteElem[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA), "B" -> AnElem(eB))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> eA, "B" -> eB)
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionAOS(x.coll)
     override def getDefaultRep = PairCollectionAOS(element[Collection[(A, B)]].defaultRepValue)
@@ -646,7 +646,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends NestedCollectionElem[A, NestedCollectionFlat[A]]
     with ConcreteElem[NestedCollectionFlatData[A], NestedCollectionFlat[A]] {
     override lazy val parent: Option[Elem[_]] = Some(nestedCollectionElement(element[A]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> eA)
 
     override def convertNestedCollection(x: Rep[NestedCollection[A]]) = NestedCollectionFlat(x.values, x.segments)
     override def getDefaultRep = NestedCollectionFlat(element[Collection[A]].defaultRepValue, element[PairCollection[Int, Int]].defaultRepValue)
@@ -731,7 +731,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends NestedCollectionElem[A, CompoundCollection[A]]
     with ConcreteElem[CompoundCollectionData[A], CompoundCollection[A]] {
     override lazy val parent: Option[Elem[_]] = Some(nestedCollectionElement(element[A]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> eA)
 
     override def convertNestedCollection(x: Rep[NestedCollection[A]]) = CompoundCollection(x.nestedValues)
     override def getDefaultRep = CompoundCollection(element[Collection[Collection[A]]].defaultRepValue)
@@ -814,7 +814,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[A => B, FuncCollection[A, B, Env]]
     with ConcreteElem[FuncCollectionData[A, B, Env], FuncCollection[A, B, Env]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(funcElement(element[A],element[B])))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA), "B" -> AnElem(eB), "Env" -> AnElem(eEnv))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> eA, "B" -> eB, "Env" -> eEnv)
 
     override def convertCollection(x: Rep[Collection[A => B]]) = // Converter is not generated by meta
 !!!("Cannot convert from Collection to FuncCollection: missing fields List(env1, indexedFunc)")
@@ -904,7 +904,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[StructItem[Val, Schema], StructItemCollection[Val, Schema]]
     with ConcreteElem[StructItemCollectionData[Val, Schema], StructItemCollection[Val, Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(structItemElement(element[Val], element[Schema])))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Val" -> AnElem(eVal), "Schema" -> AnElem(eSchema))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Val" -> eVal, "Schema" -> eSchema)
 
     override def convertCollection(x: Rep[Collection[StructItem[Val, Schema]]]) = // Converter is not generated by meta
 !!!("Cannot convert from Collection to StructItemCollection: missing fields List(struct)")

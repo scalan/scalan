@@ -65,7 +65,7 @@ trait ListOps { self: Scalan =>
     extends EntityElem1[A, List[A], List](eItem, container[List]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-    override lazy val typeArgs = ListMap("A" -> AnElem(eItem))
+    override lazy val typeArgs = ListMap("A" -> eItem)
     lazy val tag = {
       implicit val rt = eItem.tag
       weakTypeTag[List[A]]

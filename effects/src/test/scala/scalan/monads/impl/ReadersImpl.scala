@@ -21,7 +21,7 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
     def eEnv = _eEnv
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Env" -> AnElem(eEnv), "A" -> AnElem(eA))
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Env" -> eEnv, "A" -> eA)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagEnv = eEnv.tag
@@ -70,7 +70,7 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
     extends ReaderElem[Env, A, ReaderBase[Env, A]]
     with ConcreteElem[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
     override lazy val parent: Option[Elem[_]] = Some(readerElement(element[Env], element[A]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Env" -> AnElem(eEnv), "A" -> AnElem(eA))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Env" -> eEnv, "A" -> eA)
 
     override def convertReader(x: Rep[Reader[Env, A]]) = ReaderBase(x.run)
     override def getDefaultRep = ReaderBase(constFun[Env, A](element[A].defaultRepValue))

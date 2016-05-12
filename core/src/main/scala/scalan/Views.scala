@@ -8,7 +8,7 @@ import scalan.common.Lazy
 import scalan.staged.{BaseExp,Transforming}
 import scalan.meta.ScalanAst.STraitOrClassDef
 
-trait Views extends Elems { self: ViewsDsl with Scalan =>
+trait Views extends TypeDescs { self: ViewsDsl with Scalan =>
   type Iso[From, To] = Rep[IsoUR[From, To]]
 
   // TODO try to find a way to generate eTo such that equals and hashCode can refer to it (see commented code)

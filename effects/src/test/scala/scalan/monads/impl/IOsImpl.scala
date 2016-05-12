@@ -21,7 +21,7 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
     extends EntityElem[To] {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA))
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> eA)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag

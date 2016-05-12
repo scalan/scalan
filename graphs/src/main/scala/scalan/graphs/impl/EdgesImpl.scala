@@ -21,7 +21,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     def eV = _eV
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> AnElem(eV), "E" -> AnElem(eE))
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> eV, "E" -> eE)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -70,7 +70,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     extends EdgeElem[V, E, AdjEdge[V, E]]
     with ConcreteElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> AnElem(eV), "E" -> AnElem(eE))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> eV, "E" -> eE)
 
     override def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
     override def getDefaultRep = AdjEdge(0, 0, element[Graph[V, E]].defaultRepValue)
@@ -157,7 +157,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     extends EdgeElem[V, E, IncEdge[V, E]]
     with ConcreteElem[IncEdgeData[V, E], IncEdge[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> AnElem(eV), "E" -> AnElem(eE))
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("V" -> eV, "E" -> eE)
 
     override def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
     override def getDefaultRep = IncEdge(0, 0, element[Graph[V, E]].defaultRepValue)

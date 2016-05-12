@@ -46,7 +46,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
     extends EntityElem1[A, ArrayBuffer[A], ArrayBuffer](eItem, container[ArrayBuffer]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-    override lazy val typeArgs = ListMap("A" -> AnElem(eItem))
+    override lazy val typeArgs = ListMap("A" -> eItem)
     lazy val tag = {
       implicit val tag1 = eItem.tag
       weakTypeTag[ArrayBuffer[A]]

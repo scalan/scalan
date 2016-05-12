@@ -62,7 +62,7 @@ trait MetaCodegen extends SqlCompiler with ScalanAstExtensions {
     }
 
     def tpeSubstStr = tpeSubst.filter(_._2.isDefined).rep {
-      case (n, Some(v)) => StringUtil.quote(n) + " -> " + v.fold(l => s"AnElem($l)", r => s"ACont($r.asInstanceOf[SomeCont])")
+      case (n, Some(v)) => StringUtil.quote(n) + " -> " + v.fold(l => l, r => r)
       case (n, _) => !!!(s"No substitution for $n") // impossible due to filter above
     }
 
