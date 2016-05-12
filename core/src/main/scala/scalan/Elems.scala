@@ -12,6 +12,7 @@ import scalan.util.ReflectionUtil
 trait Elems extends Base { self: Scalan =>
 
   type LElem[A] = Lazy[Elem[A]] // lazy element
+  trait Dummy
 
   /**
     * Reified type representation in Scalan.
@@ -19,7 +20,7 @@ trait Elems extends Base { self: Scalan =>
     * @tparam A The represented type
     */
   @implicitNotFound(msg = "No Elem available for ${A}.")
-  abstract class Elem[A] extends Serializable { _: scala.Equals =>
+  abstract class Elem[A] extends Serializable with Dummy { _: scala.Equals =>
     def isEntityType: Boolean
     def isBaseType: Boolean = this.isInstanceOf[BaseElem[_]]
     def tag: WeakTypeTag[A]
