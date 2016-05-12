@@ -383,7 +383,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         listElement(eItem)
       case _ if classSymbol.asType.isParameter =>
         getDesc(elemMap, classSymbol, s"Can't create element for abstract type $tpe") match {
-          case elem: Elem[_] => elem
+          case elem: Elem[_] =>
+            elem
           case cont: Cont[_] =>
             val paramElem = elemFromType(params(0), elemMap, baseType)
             cont.lift(paramElem)
@@ -396,7 +397,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
               case TypeRef(_, classSymbol, _) =>
                 val desc = getDesc(elemMap, classSymbol, s"Can't find the descriptor for type argument $typaram of $tpe")
                 desc match {
-                  case cont: Cont[_] => cont
+                  case cont: Cont[_] =>
+                    cont
                   case _ =>
                     !!!(s"Expected a Cont, got $desc for type argument $typaram of $tpe")
                 }
@@ -537,31 +539,28 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       elemsWithTypes match {
         case Nil =>
           knownParams
-        case (elem: Elem[_], tpe) :: rest =>
-          tpe.dealias match {
-            case TypeRef(_, classSymbol, params) => classSymbol match {
-              case _ if classSymbol.asType.isParameter =>
-                extractElems(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, elem))
-              case _ =>
-                val elemParts = extractParts(elem, classSymbol, params, tpe)
-                extractElems(elemParts ++ rest, unknownParams, knownParams)
-            }
-            case _ =>
-              !!!(s"$tpe was not a TypeRef")
-          }
-        case (cont: Cont[_], tpe) :: rest =>
-          val classSymbol = tpe.dealias match {
-            case TypeRef(_, classSymbol, _) => classSymbol
-            case PolyType(_, TypeRef(_, classSymbol, _)) => classSymbol
+        case (typeDesc, tpe) :: rest =>
+          val (classSymbol, params) = tpe.dealias match {
+            case TypeRef(_, classSymbol, params) =>
+              (classSymbol, params)
+            case PolyType(_, TypeRef(_, classSymbol, _)) =>
+              // only happens if typeDesc is Cont and params isn't useful
+              (classSymbol, Nil)
             case _ => !!!(s"Failed to extract symbol from $tpe")
           }
 
           if (classSymbol.asType.isParameter)
-            extractElems(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, cont))
+            extractElems(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, typeDesc))
           else {
-//            val elem = cont.lift(UnitElement)
-//            val elemParts = extractParts(elem, classSymbol, List(typeOf[Unit]), tpe)
-            extractElems(/*elemParts ++ */rest, unknownParams, knownParams)
+            val typeDescParts = typeDesc match {
+              case elem: Elem[_] =>
+                extractParts(elem, classSymbol, params, tpe)
+              case cont: Cont[_] =>
+                //            val elem = cont.lift(UnitElement)
+                //            val elemParts = extractParts(elem, classSymbol, List(typeOf[Unit]), tpe)
+                Nil
+            }
+            extractElems(typeDescParts ++ rest, unknownParams, knownParams)
           }
       }
 
@@ -662,10 +661,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         val elemsWithTypes: List[(TypeDesc, Type)] = args.zip(paramTypes).reverse.flatMap {
           case (e: Exp[_], TypeRef(_, sym, List(tpeE))) if sym.name.toString == "Rep" =>
             List(e.elem -> tpeE)
-          case (elem: Elem[_], TypeRef(_, ElementSym, List(tpeElem))) =>
-            List(elem -> tpeElem)
-          case (cont: Cont[_], TypeRef(_, ContSym, List(tpeCont))) =>
-            List(cont -> tpeCont)
+          case (typeDesc: TypeDesc, TypeRef(_, ElementSym | ContSym, List(typeArg))) =>
+            List(typeDesc -> typeArg)
           // below cases can be safely skipped without doing reflection
           case (_: Function0[_] | _: Function1[_, _] | _: Function2[_, _, _] | _: Numeric[_] | _: Ordering[_], _) => Nil
           case (obj, tpeObj) =>
@@ -680,12 +677,10 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                     // val methodMirror = objMirror.reflectMethod(method)
                     val jMethod = ReflectionUtil.methodToJava(method)
                     jMethod.invoke(obj) /* methodMirror.apply() */ match {
-                      case elem: Elem[_] =>
-                        List(elem -> tpeElemOrCont.asSeenFrom(tpeObj, method.owner))
-                      case cont: Cont[_] =>
-                        List(cont -> tpeElemOrCont.asSeenFrom(tpeObj, method.owner))
+                      case typeDesc: TypeDesc =>
+                        List(typeDesc -> tpeElemOrCont.asSeenFrom(tpeObj, method.owner))
                       case x =>
-                        !!!(s"$tpeObj.$method must return Elem or Cont but returned $x")
+                        !!!(s"$tpeObj.$method must return a TypeDesc but returned $x")
                     }
                   case _ =>
                     Nil
