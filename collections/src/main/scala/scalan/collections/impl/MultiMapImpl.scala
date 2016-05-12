@@ -20,9 +20,7 @@ trait MultiMapsAbs extends scalan.ScalanDsl with MultiMaps {
     def elemKey = _elemKey
     def elemValue = _elemValue
     lazy val parent: Option[Elem[_]] = None
-    lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("K" -> Left(elemKey), "V" -> Left(elemValue))
-    }
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("K" -> AnElem(elemKey), "V" -> AnElem(elemValue))
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagK = elemKey.tag
@@ -71,9 +69,7 @@ trait MultiMapsAbs extends scalan.ScalanDsl with MultiMaps {
     extends MMultiMapElem[K, V, HashMMultiMap[K, V]]
     with ConcreteElem[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
     override lazy val parent: Option[Elem[_]] = Some(mMultiMapElement(element[K], element[V]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("K" -> Left(elemKey), "V" -> Left(elemValue))
-    }
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("K" -> AnElem(elemKey), "V" -> AnElem(elemValue))
 
     override def convertMMultiMap(x: Rep[MMultiMap[K, V]]) = HashMMultiMap(x.map)
     override def getDefaultRep = HashMMultiMap(element[MMap[K, ArrayBuffer[V]]].defaultRepValue)
