@@ -8,12 +8,13 @@ import SqlAST._
 trait SqlCompiler extends SqlParser {
   case class Scope(var ctx: Context, outer: Option[Scope], nesting: Int, name: String) {
     def lookup(col: ColumnRef): Binding = {
-      ctx.resolve(col.table, col.name) match {
+      ctx.resolve(col) match {
         case Some(b) => b
         case None => {
           outer match {
             case Some(s: Scope) => s.lookup(col)
-            case _ => throw SqlException( s"""Failed to lookup column ${col.table}.${col.name}""")
+            case _ =>
+              throw SqlException( s"""Failed to lookup column ${col.asString}""")
           }
         }
       }
@@ -84,6 +85,7 @@ trait SqlCompiler extends SqlParser {
       case CastExpr(exp, typ) => tablesInNestedSelects(exp)
       case SelectExpr(s) => tables(s.operator)
       case InExpr(s, q) => tablesInNestedSelects(s) ++ tables(q.operator)
+      case ExprAlias(expr, _) => tablesInNestedSelects(expr)
       case _ => Set()
     }
   }
@@ -103,31 +105,36 @@ trait SqlCompiler extends SqlParser {
   }
 
   def indexToPath(i: Int, n: Int) = {
-    if (n > 1 && (n <= 8 || i < 7)) "._" + (i+1)
+    if (n > 1 && (n <= 8 || i < 7)) List("_" + (i+1))
     else {
-      val path = ".tail" * i
-      if (i == n - 1) path else path + ".head"
+      val path = List.fill(i)("tail")
+      if (i == n - 1) path else path :+ "head"
     }
   }
 
-  case class Binding(scope: String, path: String, column: Column)
+  def pathString(path: List[String]): String = pathString(currScope.name, path)
+  def pathString(scope: String, path: List[String]): String = scope + "." + path.mkString(".")
+
+  case class Binding(scope: String, path: List[String], column: Column) {
+    def asScalaCode = pathString(scope, path)
+  }
 
   abstract class Context {
-    def resolve(schema: String, name: String): Option[Binding]
+    def resolve(ref: ColumnRef): Option[Binding]
     val scope = currScope
   }
 
   class GlobalContext() extends Context {
-    def resolve(schema: String, name: String): Option[Binding] = None
+    def resolve(ref: ColumnRef): Option[Binding] = None
   }
   
   case class TableContext(table: Table) extends Context {
-    def resolve(schema: String, name: String): Option[Binding] = {
-      if (schema.isEmpty || schema == table.name) {
-        val i = table.schema.indexWhere(c => c.name == name)
+    def resolve(ref: ColumnRef): Option[Binding] = {
+      if (ref.table.isEmpty || ref.table == Some(table.name)) {
+        val i = table.schema.indexWhere(c => c.name == ref.name)
         if (i >= 0) {
           //val path = indexToPath(i, table.schema.length);
-          val path = "." + name
+          val path = List(ref.name)
           Some(Binding(scope.name, path, table.schema(i)))
         } else None
       } else None
@@ -135,37 +142,34 @@ trait SqlCompiler extends SqlParser {
   }
 
   case class JoinContext(outer: Context, inner: Context) extends Context {
-    def resolve(schema: String, name: String): Option[Binding] = {
-      (outer.resolve(schema, name), inner.resolve(schema, name)) match {
-        case (Some(b), None) => Some(Binding(b.scope, ".head" + b.path, b.column))
-        case (None, Some(b)) => Some(Binding(b.scope, ".tail" + b.path, b.column))
-        case (Some(_), Some(_)) => throw SqlException( s"""Ambiguous reference to $schema.$name""")
+    def resolve(ref: ColumnRef): Option[Binding] = {
+      (outer.resolve(ref), inner.resolve(ref)) match {
+        case (Some(b), None) => Some(Binding(b.scope, "head" :: b.path, b.column))
+        case (None, Some(b)) => Some(Binding(b.scope, "tail" :: b.path, b.column))
+        case (Some(_), Some(_)) => throw SqlException(s"""Ambiguous reference to ${ref.asString}""")
         case _ => None
-
       }
     }
   }
 
   case class AliasContext(parent: Context, alias: String) extends Context {
-    def resolve(scope: String, name: String): Option[Binding] = {
-      if (scope == alias) {
-        parent.resolve("", name) match {
-          case Some(b) => Some(Binding(b.scope, b.path, b.column))
-          case None => None
-        }
-      } else parent.resolve(scope, name)
+    def resolve(ref: ColumnRef): Option[Binding] = {
+      if (ref.table == Some(alias)) {
+        parent.resolve(ColumnRef(None, ref.name))
+      } else
+        parent.resolve(ref)
     }
   }
 
   case class ProjectContext(parent: Context, columns: ExprList) extends Context {
-    def resolve(table: String, name: String): Option[Binding] = {
-      val i = columns.indexWhere(c => (table.isEmpty && c.alias == name) || c == ColumnRef(table, name))
+    def resolve(ref: ColumnRef): Option[Binding] = {
+      val i = columns.indexWhere(c => matchExpr(c, ref))
       if (i >= 0) {
         val saveScope = currScope
         currScope = Scope(parent, scope.outer, scope.nesting, scope.name)
         val cType =  getExprType(columns(i))
         currScope = saveScope
-        Some(Binding(scope.name, indexToPath(i, columns.length), Column(name, cType)))
+        Some(Binding(scope.name, indexToPath(i, columns.length), Column(ref.name, cType)))
       }
       else None
     }
@@ -245,7 +249,7 @@ trait SqlCompiler extends SqlParser {
       case CastExpr(exp, typ) => generateExpr(exp) + (if (typ == StringType) ".toStr" else ".to" + typ.scalaName)
       case c: ColumnRef => {
         val binding = lookup(c)
-        binding.scope + binding.path
+        binding.asScalaCode
       }
       case SelectExpr(s) => {
         val saveIndent = indent
@@ -272,6 +276,7 @@ trait SqlCompiler extends SqlParser {
         subselect
       }
       case FuncExpr(name, args) => name + "(" + args.map(p => generateExpr(p)).mkString(", ") + ")"
+      case ExprAlias(expr, _) => generateExpr(expr)
       case _ => throw new NotImplementedError(s"generateExpr($expr)")
     }
   }
@@ -317,6 +322,7 @@ trait SqlCompiler extends SqlParser {
       case Literal(v, t) => t
       case CastExpr(e, t) => t
       case c: ColumnRef => lookup(c).column.ctype
+      case ExprAlias(expr, _) => getExprType(expr)
       case SelectExpr(s) => DoubleType
       case FuncExpr(nume, args) => DoubleType
       case _ => throw new NotImplementedError(s"getExprType($expr)")
@@ -335,7 +341,7 @@ trait SqlCompiler extends SqlParser {
 
   def resolveKey(key: Expression): Option[Binding] = {
     key match {
-      case ColumnRef(table, name) => currScope.ctx.resolve(table, name)
+      case ref: ColumnRef => currScope.ctx.resolve(ref)
       case _ => throw SqlException("Unsupported join condition")
     }
   }
@@ -345,8 +351,8 @@ trait SqlCompiler extends SqlParser {
       case AndExpr(l, r) => "Pair(" + extractKey(l) + ", " + extractKey(r) + ")"
       case EqExpr(l, r) => (resolveKey(l), resolveKey(r)) match {
         case (Some(_), Some(_)) => throw SqlException("Ambiguous reference to column")
-        case (Some(b), None) => b.scope + b.path
-        case (None, Some(b)) => b.scope + b.path
+        case (Some(b), None) => b.asScalaCode
+        case (None, Some(b)) => b.asScalaCode
         case (None, None) => throw SqlException("Failed to locate column in join condition")
       }
       case _ => throw new NotImplementedError(s"extractKey($on)")
@@ -389,6 +395,7 @@ trait SqlCompiler extends SqlParser {
       case MulExpr(l, r) => isAggregate(l) || isAggregate(r)
       case DivExpr(l, r) => isAggregate(l) || isAggregate(r)
       case NegExpr(opd) => isAggregate(opd)
+      case ExprAlias(expr, _) => isAggregate(expr)
       case _ => false
     }
   }
@@ -403,6 +410,7 @@ trait SqlCompiler extends SqlParser {
       case SumExpr(opd) => generateExpr(opd)
       case MaxExpr(opd) => generateExpr(opd)
       case MinExpr(opd) => generateExpr(opd)
+      case ExprAlias(expr, _) => generateAggOperand(expr)
       case _ => throw new NotImplementedError(s"generateAggOperand($agg)")
     }
   }
@@ -416,6 +424,7 @@ trait SqlCompiler extends SqlParser {
       case SumExpr(opd) => s"""$s1 + $s2"""
       case MaxExpr(opd) => s"""if ($s1 > $s2) $s1 else $s2"""
       case MinExpr(opd) => s"""if ($s1 < $s2) $s1 else $s2"""
+      case ExprAlias(expr, _) => aggCombine(expr, s1, s2)
       case _ => throw new NotImplementedError(s"aggCombine($agg, $s1, $s2)")
     }
   }
@@ -425,30 +434,38 @@ trait SqlCompiler extends SqlParser {
     for (i <- 0 until n) {
       if (isAggregate(columns(i))) aggIndex += 1
     }
-    currScope.name + ".tail" + indexToPath(aggIndex, aggregates.length)
+    pathString("tail" :: indexToPath(aggIndex, aggregates.length))
   }
 
   def matchExpr(col: Expression, exp: Expression): Boolean = {
-    col == exp || (exp match {
-      case ColumnRef(table, name) if table.isEmpty => name == col.alias
+    col == exp || ((col, exp) match {
+      case (ExprAlias(_, alias), ColumnRef(None, name)) => name == alias
+      case (ColumnRef(None, name), ExprAlias(_, alias)) => name == alias
       case _ => false
     })
   }
 
-  def generateAggResult(columns: ExprList, aggregates: ExprList, gby: ExprList, i: Int, count: Int): String = {
-    columns(i) match {
-      case CountExpr() => getAggPath(columns, aggregates, i)
-      case CountNotNullExpr(_) => getAggPath(columns, aggregates, i)
-      case CountDistinctExpr(_) => getAggPath(columns, aggregates, i)
-      case AvgExpr(opd) => s"""(${getAggPath(columns, aggregates, i)}.toDouble / ${currScope.name}.tail${indexToPath(count, aggregates.length)}.toDouble)"""
-      case SumExpr(opd) => getAggPath(columns, aggregates, i)
-      case MaxExpr(opd) => getAggPath(columns, aggregates, i)
-      case MinExpr(opd) => getAggPath(columns, aggregates, i)
+  def generateAggResult(columns: ExprList, aggregates: ExprList, gby: ExprList, i: Int, count: Int, expr: Expression): String = {
+    lazy val aggPath = getAggPath(columns, aggregates, i)
+    expr match {
+      case CountExpr() => aggPath
+      case CountNotNullExpr(_) => aggPath
+      case CountDistinctExpr(_) => aggPath
+      case AvgExpr(opd) =>
+        val countPath = pathString("tail" :: indexToPath(count, aggregates.length))
+        s"""($aggPath.toDouble / $countPath.toDouble)"""
+      case SumExpr(opd) => aggPath
+      case MaxExpr(opd) => aggPath
+      case MinExpr(opd) => aggPath
       case c: ColumnRef => {
         val keyIndex = gby.indexWhere(k => matchExpr(c, k))
-        if (keyIndex < 0) throw SqlException("Unsupported group-by clause")
-        currScope.name + ".head" + indexToPath(keyIndex, gby.length)
+        if (keyIndex < 0)
+          throw SqlException("Unsupported group-by clause")
+        else
+          pathString("head" :: indexToPath(keyIndex, gby.length))
       }
+      case ExprAlias(expr, _) =>
+        generateAggResult(columns, aggregates, gby, i, count, expr)
       case _ => throw new NotImplementedError(s"generateAggResult($columns, $aggregates, $gby, $i, $count)")
     }
   }
@@ -464,8 +481,16 @@ trait SqlCompiler extends SqlParser {
     agg match {
       case Project(p, columns)  => {
         var aggregates = columns.filter(e => isAggregate(e))
-        var countIndex = aggregates.indexWhere(e => e.isInstanceOf[CountExpr])
-        if (countIndex < 0 && aggregates.exists(e => e.isInstanceOf[AvgExpr])) {
+        var countIndex = aggregates.indexWhere {
+          case CountExpr() => true
+          case ExprAlias(CountExpr(), _) => true
+          case _ => false
+        }
+        if (countIndex < 0 && aggregates.exists {
+          case AvgExpr(_) => true
+          case ExprAlias(AvgExpr(_), _) => true
+          case _ => false
+        }) {
           countIndex = aggregates.length
           aggregates = aggregates :+ CountExpr()
         }
@@ -473,10 +498,14 @@ trait SqlCompiler extends SqlParser {
         val aggTypes = buildTree(aggregates.map(agg => getExprType(agg).scalaName))
         val groupBy = buildTree(gby.map(col => {
           val binding = lookup(ref(col))
-          binding.scope + binding.path }), "Pair(")
+          binding.asScalaCode
+        }), "Pair(")
         val map = buildTree(aggregates.map(agg => generateAggOperand(agg)), "Pair(")
-        val reduce = if (aggregates.length == 1) aggCombine(aggregates(0), "s1", "s2") else Array.tabulate(aggregates.length)(i => aggCombine(aggregates(i), "s1._" + (i+1), "s2._" + (i+1))).mkString(",")
-        val aggResult = buildTree(Array.tabulate(columns.length)(i => generateAggResult(columns, aggregates, gby, i, countIndex)), "Pair(")
+        val reduce = if (aggregates.length == 1)
+          aggCombine(aggregates(0), "s1", "s2")
+        else
+          aggregates.indices.map(i => aggCombine(aggregates(i), "s1._" + (i+1), "s2._" + (i+1))).mkString(",")
+        val aggResult = buildTree(columns.indices.map(i => generateAggResult(columns, aggregates, gby, i, countIndex, columns(i))), "Pair(")
         val result = s"""ReadOnlyTable(${generateOperator(p)}
            |$indent.mapReduce(${currScope.name} => Pair(${groupBy}, ${map}),
            |$indent\t(s1: Rep[${aggTypes}], s2: Rep[${aggTypes}]) => (${reduce})).toArray.map(${currScope.name} => ${aggResult}))""".stripMargin
@@ -503,7 +532,7 @@ trait SqlCompiler extends SqlParser {
     subquery match { 
       case Join(outer, inner, cond) => depends(on, outer) || depends(on, inner)
       case Scan(t) => false
-      case OrderBy(p, by) => depends(on, p) || using(on, by)
+      case OrderBy(p, by) => depends(on, p) || using(on, by.map(_.expr))
       case GroupBy(p, by) => depends(on, p) || using(on, by)
       case Filter(p, predicate) => depends(on, p) || using(on, predicate)
       case Project(p, columns) => depends(on, p) || using(on, columns)
@@ -535,7 +564,8 @@ trait SqlCompiler extends SqlParser {
       case NotExpr(opd) => using(op, opd)
       case Literal(v, t) => false
       case CastExpr(exp, typ) => using(op, exp)
-      case ColumnRef(table, name) => buildContext(op).resolve(table, name).isDefined
+      case ref: ColumnRef => buildContext(op).resolve(ref).isDefined
+      case ExprAlias(expr, _) => using(op, expr)
       case SelectExpr(s) => depends(op, s.operator)
       case CountExpr() => false
       case CountDistinctExpr(opd) => using(op, opd)
@@ -582,7 +612,16 @@ trait SqlCompiler extends SqlParser {
           case Some(arg) => arg.name
           case _ => t.name.toLowerCase
         }
-      case OrderBy(p, by) => generateOperator(p) + s"""\n$indent.orderBy(${generateLambdaExprList(p, by)})"""
+      case OrderBy(p, by) =>
+        // TODO ignores null ordering
+        val expressions = by.map {
+          case SortSpec(expr, Ascending, _) =>
+            expr
+          case SortSpec(expr, Descending, _) =>
+            // TODO doesn't handle strings properly, but this requires changes in scalan-sql
+            NegExpr(expr)
+        }
+        generateOperator(p) + s"""\n$indent.orderBy(${generateLambdaExprList(p, expressions)})"""
       case GroupBy(p, by) => groupBy(p, by)
       case Filter(p, predicate) => {
         val (joins, conjuncts) = optimize(p, predicate)
@@ -659,7 +698,7 @@ trait SqlCompiler extends SqlParser {
     val n_columns = columns.length
     val typeName = table.name.capitalize
 //    val typeDef = buildTree(columns.map(c => c.ctype.scalaName))
-    val classDef = Array.tabulate(n_columns)(i => "  def " + columns(i).name + " = self" + indexToPath(i, n_columns)).mkString("\n")
+    val classDef = Array.tabulate(n_columns)(i => s"  def ${columns(i).name} = ${pathString("self", indexToPath(i, n_columns))}").mkString("\n")
     val parse = buildTree(Array.tabulate(n_columns)(i => "c(" + i + ")" + parseType(columns(i).ctype)), "Pair(")
     val pairTableDef = buildTree(columns.map(c => "Table.create[" + c.ctype.scalaName + "](tableName + \"." + c.name + "\")"), "PairTable.create(")
     s"""
@@ -674,7 +713,8 @@ trait SqlCompiler extends SqlParser {
 
   def generateIndex(index:CreateIndexStmt): String = {
     currScope = Scope(TableContext(index.table), Some(currScope), 0, "r")
-    val result = s"""def ${index.name}(${currScope.name}: Rep[${index.table.name.capitalize}]) = ${buildTree(index.key.map(part => {currScope.name} + lookup(ColumnRef("", part)).path), "Pair(")}"""
+    val body = buildTree(index.key.map(part => pathString(lookup(ColumnRef(None, part)).path)), "Pair(")
+    val result = s"""def ${index.name}(${currScope.name}: Rep[${index.table.name.capitalize}]) = $body"""
     popContext()
     result
   }

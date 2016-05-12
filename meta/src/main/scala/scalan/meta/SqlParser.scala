@@ -7,9 +7,7 @@ import scala.util.parsing.combinator.syntactical.StandardTokenParsers
 import scala.util.parsing.input.CharArrayReader.EofCh
 import SqlAST._
 
-/**
- * Created by knizhnik on 1/13/15.
- */
+// see http://savage.net.au/SQL/sql-2003-2.bnf.html for full SQL grammar
 trait SqlParser {
 
   def parseDDL(sql: String) = Grammar.schema(sql)
@@ -117,10 +115,12 @@ trait SqlParser {
       repsep(ident, ",") ^^ { fs => ColumnList(fs: _*)}
 
 
-    protected case class Keyword(str: String)
+    protected case class Keyword(str: String) {
+      // TODO better case insensitivity (using RegexParsers?)
+      lazy val parser = lexical.allCaseVersions(str).map(x => x: Parser[String]).reduce(_ | _) ^^^ this
+    }
 
-    protected implicit def asParser(k: Keyword): Parser[String] =
-      lexical.allCaseVersions(k.str).map(x => x: Parser[String]).reduce(_ | _)
+    protected implicit def asParser(k: Keyword): Parser[Keyword] = k.parser
 
     protected val ABS = Keyword("ABS")
     protected val ALL = Keyword("ALL")
@@ -168,6 +168,7 @@ trait SqlParser {
     protected val MIN = Keyword("MIN")
     protected val NOT = Keyword("NOT")
     protected val NULL = Keyword("NULL")
+    protected val NULLS = Keyword("NULLS")
     protected val ON = Keyword("ON")
     protected val OR = Keyword("OR")
     protected val ORDER = Keyword("ORDER")
@@ -202,20 +203,18 @@ trait SqlParser {
 
     override val lexical = new SqlLexical(reservedWords)
 
-
     protected lazy val selectStmt: Parser[SelectStmt] =
-      setOp ^^ { o => SelectStmt(o)}
+      (select * setOp) ^^ { o => SelectStmt(o)}
 
-    protected lazy val setOp: Parser[Operator] =
-      select *
-        (UNION ~ ALL ^^^ { (q1: Operator, q2: Operator) => Union(q1, q2)}
-          | INTERSECT ^^^ { (q1: Operator, q2: Operator) => Intersect(q1, q2)}
-          | EXCEPT ^^^ { (q1: Operator, q2: Operator) => Except(q1, q2)}
-          | UNION ~ DISTINCT.? ^^^ { (q1: Operator, q2: Operator) => Distinct(Union(q1, q2))}
-          )
+    protected lazy val setOp: Parser[(Operator, Operator) => Operator] =
+      UNION ~ ALL ^^^ { Union(_, _) } |
+        INTERSECT ^^^ { Intersect(_, _) } |
+        EXCEPT ^^^ { Except(_, _) } |
+        UNION ~ DISTINCT.? ^^^ { (q1, q2) => Distinct(Union(q1, q2)) }
 
-    def selectAll(columns: List[Expression]): Boolean = {
-      columns.length == 1 && columns(0).isInstanceOf[StarExpr]
+    def selectAll(columns: List[Expression]): Boolean = columns match {
+      case List(StarExpr()) => true
+      case _ => false
     }
 
     protected lazy val select: Parser[Operator] =
@@ -239,13 +238,13 @@ trait SqlParser {
           withLimit
       }
 
-
     protected lazy val projection: Parser[Expression] =
       expression ~ (AS.? ~> ident.?) ^^ {
-        case e ~ a => {
-          e.alias = a.getOrElse("")
-          e
-        }
+        case e ~ a =>
+          a match {
+            case None => e
+            case Some(alias) => ExprAlias(e, alias)
+          }
       }
 
     // Based very loosely on the MySQL Grammar.
@@ -261,15 +260,22 @@ trait SqlParser {
       joinedRelation | relationFactor
 
     protected lazy val relationFactor: Parser[Operator] =
-      (ident ~ (opt(AS) ~> opt(ident)) ^^ {
-        case name ~ alias => {
-          if (!tables.contains(name)) throw SqlException("Table " + name + " not found")
-          val t = Scan(tables(name))
-          if (alias.isDefined) TableAlias(t, alias.get) else t
+      (ident ~ (opt(AS) ~> opt(ident))) ^^ {
+        case name ~ aliasOpt =>
+          tables.get(name) match {
+            case Some(table) =>
+              val t = Scan(table)
+              aliasOpt match {
+                case Some(alias) => TableAlias(t, alias)
+                case _ => t
+              }
+            case None =>
+              throw SqlException("Table " + name + " not found")
+          }
+      } |
+        ("(" ~> selectStmt <~ ")") ~ (AS.? ~> ident) ^^ {
+          case s ~ a => TableAlias(SubSelect(s.operator), a)
         }
-      }
-        | ("(" ~> selectStmt <~ ")") ~ (AS.? ~> ident) ^^ { case s ~ a => TableAlias(SubSelect(s.operator), a)}
-        )
 
     protected lazy val joinedRelation: Parser[Operator] =
       relationFactor ~ rep1(joinType.? ~ (JOIN ~> relationFactor) ~ joinConditions) ^^ {
@@ -290,22 +296,13 @@ trait SqlParser {
         | FULL ~ OUTER.? ^^^ FullOuter
         )
 
-    protected lazy val ordering: Parser[List[Expression]] =
-      rep1sep(singleOrder, ",")
+    protected lazy val ordering: Parser[List[SortSpec]] =
+      rep1sep(sortSpec, ",")
 
-
-    protected lazy val singleOrder: Parser[Expression] =
-      expression ~ direction.? ^^ {
-        case e ~ o => o match {
-          case Some(Descending) => NegExpr(e)
-          case _ => e
-        }
+    protected lazy val sortSpec: Parser[SortSpec] =
+      expression ~ (ASC ^^^ Ascending | DESC ^^^ Descending).? ~ (NULLS ~> (FIRST ^^^ NullsFirst | LAST ^^^ NullsLast)).? ^^ {
+        case e ~ o ~ n => SortSpec(e, o.getOrElse(Ascending), n.getOrElse(NullsOrderingUnspecified))
       }
-
-    protected lazy val direction: Parser[SortDirection] =
-      (ASC ^^^ Ascending
-        | DESC ^^^ Descending
-        )
 
     protected lazy val expression: Parser[Expression] =
       orExpression
@@ -443,16 +440,10 @@ trait SqlParser {
         | cast
         | "(" ~> expression <~ ")"
         | function
-        | qualifiedName
-        | ident ^^ { id => ColumnRef("", id)}
+        | (ident <~ ".").? ~ ident ^^ { case tableOpt ~ name => ColumnRef(tableOpt, name)}
         | signedPrimary
         | "(" ~> selectStmt <~ ")" ^^ { stmt => SelectExpr(stmt)}
         )
-
-    protected lazy val qualifiedName: Parser[Expression] =
-      (ident <~ ".") ~ ident ^^ {
-        case table ~ name => ColumnRef(table, name)
-      }
   }
 
 }

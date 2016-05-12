@@ -9,8 +9,8 @@ object SqlAST {
 
   case class SqlException(msg: String) extends Exception(msg)
 
-  type Script = Array[Statement]
-  type Schema = Array[Column]
+  type Script = List[Statement]
+  type Schema = List[Column]
   type ColumnList = List[String]
   type ExprList = List[Expression]
 
@@ -36,10 +36,6 @@ object SqlAST {
   case object FullOuter extends JoinType
   case object LeftSemi extends JoinType
 
-  abstract sealed class SortDirection
-  case object Ascending extends SortDirection
-  case object Descending extends SortDirection
-
   abstract sealed class Operator
 
   case class Scan(table: Table) extends Operator
@@ -57,7 +53,18 @@ object SqlAST {
 
   case class GroupBy(parent: Operator, columns: ExprList) extends Operator
 
-  case class OrderBy(parent: Operator, columns: ExprList) extends Operator
+  abstract sealed class SortDirection
+  case object Ascending extends SortDirection
+  case object Descending extends SortDirection
+
+  sealed trait NullsOrdering
+  case object NullsFirst extends NullsOrdering
+  case object NullsLast extends NullsOrdering
+  case object NullsOrderingUnspecified extends NullsOrdering
+
+  case class SortSpec(expr: Expression, direction: SortDirection, nulls: NullsOrdering)
+
+  case class OrderBy(parent: Operator, columns: List[SortSpec]) extends Operator
 
   case class Limit(parent: Operator, limit: Expression) extends Operator
 
@@ -73,8 +80,9 @@ object SqlAST {
 
   case class CreateIndexStmt(name: String, table: Table, key: ColumnList) extends Statement
 
-  sealed abstract class Expression {
-    var alias = ""
+  sealed trait Expression
+  sealed trait NamedExpression extends Expression {
+    def name: String
   }
 
   case class StarExpr() extends Expression
@@ -145,13 +153,20 @@ object SqlAST {
 
   case class CaseWhenExpr(list: ExprList) extends Expression
 
-  case class ColumnRef(table: String, name: String) extends Expression
+  case class ColumnRef(table: Option[String], name: String) extends NamedExpression {
+    def asString = (table match {
+      case Some(table) => table + "."
+      case None => ""
+    }) + name
+  }
+
+  case class ExprAlias(expr: Expression, name: String) extends NamedExpression
 
   def ColumnList(list: String*): ColumnList = list.toList
 
-  def Schema(list: Column*): Schema = list.toArray
+  def Schema(list: Column*): Schema = list.toList
 
-  def Script(stmts: Statement*): Script = stmts.toArray
+  def Script(stmts: Statement*): Script = stmts.toList
 
   def ExprList(exprs: Expression*): ExprList = exprs.toList
 }
