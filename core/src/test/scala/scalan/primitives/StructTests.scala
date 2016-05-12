@@ -162,7 +162,7 @@ class StructTests extends BaseViewTests {
     val t2 = e2.tag
     val t3 = e3.tag
     assert(t1 == t2, "should be equal")
-    // TODO this inconsistensy can potentially lead to some problems
+    // TODO this inconsistency can potentially lead to some problems
     // and should be fixed with better implementation of StructElem.tag
     assert(t1 == t3, "should be equal as well even though e1 != e3 !!!")
 
@@ -170,6 +170,18 @@ class StructTests extends BaseViewTests {
     assert(es1 != es2)
     assert(es1 != es3)
     assert(es2 != es3)
+  }
+
+  test("Structs as type parameters are included in names") {
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
+    val structElem = structElement(Seq("a" -> eInt))
+
+    val arrayOfStructsElem = arrayElement(structElem)
+    assert(arrayOfStructsElem.name.contains(structElem.name))
+
+    val arrayOfArraysOfStructsElem = arrayElement(arrayOfStructsElem)
+    assert(arrayOfArraysOfStructsElem.name.contains(structElem.name))
   }
 
   test("StructElem as result type") {

@@ -21,9 +21,7 @@ trait StructKeysAbs extends StructKeys {
     extends EntityElem[To] {
     def eSchema = _eSchema
     lazy val parent: Option[Elem[_]] = None
-    lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("Schema" -> Left(eSchema))
-    }
+    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Schema" -> AnElem(eSchema))
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagSchema = eSchema.tag
@@ -71,9 +69,7 @@ trait StructKeysAbs extends StructKeys {
     extends StructKeyElem[Schema, IndexStructKey[Schema]]
     with ConcreteElem[IndexStructKeyData[Schema], IndexStructKey[Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(structKeyElement(element[Schema]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("Schema" -> Left(eSchema))
-    }
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Schema" -> AnElem(eSchema))
 
     override def convertStructKey(x: Rep[StructKey[Schema]]) = IndexStructKey(x.index)
     override def getDefaultRep = IndexStructKey(0)
@@ -156,9 +152,7 @@ trait StructKeysAbs extends StructKeys {
     extends StructKeyElem[Schema, NameStructKey[Schema]]
     with ConcreteElem[NameStructKeyData[Schema], NameStructKey[Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(structKeyElement(element[Schema]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("Schema" -> Left(eSchema))
-    }
+    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Schema" -> AnElem(eSchema))
 
     override def convertStructKey(x: Rep[StructKey[Schema]]) = NameStructKey(x.name)
     override def getDefaultRep = NameStructKey("")
