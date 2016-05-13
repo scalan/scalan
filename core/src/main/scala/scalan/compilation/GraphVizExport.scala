@@ -32,7 +32,8 @@ trait GraphVizExport { self: ScalanExp =>
       case l: Lambda[_, _] =>
         val x = l.x
         stream.println(StringUtil.quote(x) + " [")
-        stream.println(nodeLabel(x.toStringWithType))
+        val parts = List(x.toStringWithType) ::: (if (config.emitMetadata) List(formatMetadata(x)) else Nil)
+        stream.println(nodeLabel(parts: _*))
         stream.println(s"color=${nodeColor(x)}")
         stream.println("]")
       case _ =>
