@@ -167,7 +167,9 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
     // every mirrorXXX method should return a pair (t + (v -> v1), v1)
     protected def mirrorVar[A](t: Ctx, rewriter: Rewriter, v: Exp[A]): (Ctx, Exp[_]) = {
       val newVar = fresh(Lazy(v.elem))
-      (t + (v -> newVar), newVar)
+      val (t1, mirroredMetadata) = mirrorMetadata(t, v, newVar)
+      setAllMetadata(newVar, mirroredMetadata)
+      (t1 + (v -> newVar), newVar)
     }
 
     protected def mirrorDef[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = {
