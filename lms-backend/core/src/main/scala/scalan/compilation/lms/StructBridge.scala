@@ -14,7 +14,7 @@ trait StructBridge extends LmsBridge {
 
   override protected def extractParams(d: Def[_], paramMirrors: List[ParamMirror]) = d match {
     case fa: FieldApply[_] =>
-      List(fa.struct, fa.field, fa.selfType)
+      List(fa.struct, fa.fieldName, fa.selfType)
     case _ =>
       super.extractParams(d, paramMirrors)
   }

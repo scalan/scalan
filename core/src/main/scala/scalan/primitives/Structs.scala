@@ -471,17 +471,6 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
     lazy val selfType = structElement(tag, fields.map { case (name, value) => (name, value.elem) })
   }
 
-  // should this just extend BaseDef? Having field[T] would simplify usage in some cases
-  abstract class AbstractField[T] extends Def[T] {
-    def struct: Rep[Struct]
-    def field: String
-    lazy val selfType = struct.elem match {
-      case se: StructElem[_] => se(field).asElem[T]
-      case _ =>
-        !!!(s"Attempt to get a struct field of ${struct.toStringWithType} which isn't a struct", struct)
-    }
-  }
-
   object Struct {
     def unapply[T <: Struct](d: Def[T]): Option[(StructTag[T], Seq[StructField])] = d match {
       case s: AbstractStruct[T] => Some((s.tag, s.fields))
@@ -491,13 +480,13 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
 
   object Field {
     def unapply[T](d: Def[T]): Option[(Rep[Struct], String)] = d match {
-      case f: AbstractField[T] => Some((f.struct, f.field))
+      case FieldApply(struct, fieldName) => Some((struct, fieldName))
       case _ => None
     }
   }
 
   case class SimpleStruct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]) extends AbstractStruct[T]
-  case class FieldApply[T](struct: Rep[Struct], field: String) extends AbstractField[T]
+  case class FieldApply[T](struct: Rep[Struct], fieldName: String)(implicit selfType: Elem[T]) extends BaseDef[T]
 
   case class FieldUpdate[S <: Struct, T](struct: Rep[S], fieldName: String, value: Rep[T]) extends AbstractStruct[S] {
     val tag = struct.elem.structTag
@@ -515,7 +504,15 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
   }
 
   def struct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]): Rep[T] = SimpleStruct(tag, fields)
-  def field(struct: Rep[Struct], field: String): Rep[_] = FieldApply[Any](struct, field) // TODO Any?
+  def field(struct: Rep[Struct], field: String): Rep[_] = {
+    struct.elem match {
+      case se: StructElem[_] =>
+        val fieldElem = se(field)
+        FieldApply(struct, field)(fieldElem)
+      case _ =>
+        !!!(s"Attempt to get field $field from a non-struct ${struct.toStringWithType}", struct)
+    }
+  }
   def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[Any]): Rep[S] = FieldUpdate[S,Any](struct, fieldName, v)
   def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct] = ProjectionStruct(struct, fields)
 
