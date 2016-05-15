@@ -299,7 +299,7 @@ trait CoreBridge extends StructBridge {
         case Manifest.Int => lms.int_to_long(_arg)
         case Manifest.Long => _arg
       }
-      case NumericToString() => lms.String.valueOf(_arg)
+      case ToString() => lms.String.valueOf(_arg)
       case HashCode() => lms.hash_code(_arg)
       case StringToInt => lms.string_toint(_arg)
       case BooleanToInt => lms.boolean_to_int(_arg)

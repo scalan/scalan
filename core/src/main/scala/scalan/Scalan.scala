@@ -26,6 +26,7 @@ abstract class Scalan
   with NumericOps
   with StringOps
   with Equal
+  with UniversalOps
   with MathOps
   with Functions
   with IfThenElse
@@ -110,6 +111,7 @@ abstract class ScalanExp
   with UnBinOpsExp
   with LogicalOpsExp
   with EqualExp
+  with UniversalOpsExp
   with FunctionsExp
   with IfThenElseExp
   with BlocksExp

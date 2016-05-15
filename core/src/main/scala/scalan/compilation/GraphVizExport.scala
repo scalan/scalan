@@ -75,7 +75,8 @@ trait GraphVizExport { self: ScalanExp =>
       case NumericToFloat(_) => s"$arg.toFloat"
       case NumericToDouble(_) => s"$arg.toDouble"
       case NumericToInt(_) => s"$arg.toInt"
-      case NumericToString() => s"$arg.toString"
+      case ToString() => s"$arg.toString"
+      case HashCode() => s"$arg.hashCode"
       case _ => s"${op.opName} $arg"
     }
     case _ => d.toString
