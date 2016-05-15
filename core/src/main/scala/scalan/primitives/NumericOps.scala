@@ -117,8 +117,15 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanExp =>
       case _ => super.rewriteDef(d)
     }
     // -(-x) => x
-    case ApplyUnOp(op1, Def(ApplyUnOp(op2, x))) if
-      op1.isInstanceOf[NumericNegate[_]] && op2.isInstanceOf[NumericNegate[_]] => x
+    case ApplyUnOp(_: NumericNegate[_], Def(ApplyUnOp(_: NumericNegate[_], x))) => x
+    // (x: Int).toInt => x
+    case ApplyUnOp(NumericToInt(_), x) if x.elem == IntElement => x
+    // (x: Long).toLong => x
+    case ApplyUnOp(NumericToLong(_), x) if x.elem == LongElement => x
+    // (x: Float).toFloat => x
+    case ApplyUnOp(NumericToFloat(_), x) if x.elem == FloatElement => x
+    // (x: Double).toDouble => x
+    case ApplyUnOp(NumericToDouble(_), x) if x.elem == DoubleElement => x
     case _ => super.rewriteDef(d)
   }
 }
