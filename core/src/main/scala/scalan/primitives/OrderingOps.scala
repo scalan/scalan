@@ -29,5 +29,5 @@ trait OrderingOps { self: Scalan =>
 
   case class OrderingMin[T: Elem](ord: Ordering[T]) extends BinOp[T, T]("min", ord.min)
 
-  case class OrderingCompare[T: Elem](ord: Ordering[T])(implicit val eT: Elem[T]) extends BinOp[T, Int]("compare", ord.compare)
+  case class OrderingCompare[T: Elem](ord: Ordering[T]) extends BinOp[T, Int]("compare", ord.compare)
 }
