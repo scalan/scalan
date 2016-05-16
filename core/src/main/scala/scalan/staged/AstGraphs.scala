@@ -3,6 +3,7 @@ package scalan.staged
 import scala.collection._
 import scalan.ScalanExp
 import scalan.common.GraphUtil
+import scalan.compilation.GraphVizConfig
 
 trait AstGraphs extends TransformingExp { self: ScalanExp =>
 
@@ -311,6 +312,10 @@ trait AstGraphs extends TransformingExp { self: ScalanExp =>
     }
 
     def isAssignedToIfBranch(sym: Exp[_]) = branches.assignments.contains(sym)
+
+    def show(): Unit = show(defaultGraphVizConfig)
+    def show(emitMetadata: Boolean): Unit = show(defaultGraphVizConfig.copy(emitMetadata = emitMetadata))
+    def show(config: GraphVizConfig): Unit = showGraphs(this)(config)
   }
 
   /** When stored in Map, describes for each key the branch of the symbol
