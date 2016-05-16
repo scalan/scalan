@@ -30,6 +30,9 @@ trait AnalyzingExp extends Analyzing { self: ScalanExp =>
       updateMark(s, mkLevelMark(level)(s.elem))
     }
 
+    def getLambdaMarking[A, B](lam: Lambda[A, B], argMark: LevelCount[A]): LevelCount[(A) => B] =
+      mkLevelMark(0)(lam.elem)
+
     def getInboundMarkings[T](te: TableEntry[T], outMark: LevelCount[T]): MarkedSyms = {
       val l = outMark.level
       te.rhs match {
@@ -80,6 +83,9 @@ trait AnalyzingExp extends Analyzing { self: ScalanExp =>
     }
 
     def getLevel[T](s: Exp[T]): Int = levelAnalyzer.getMark(s).level
+
+    def getLambdaMarking[A, B](lam: Lambda[A, B], argMark: UsageCount[A]): UsageCount[(A) => B] =
+      mkUsageMark(Map())(lam.elem)
 
     def getInboundMarkings[T](te: TableEntry[T], outMark: UsageCount[T]): MarkedSyms = {
       te.rhs match {
