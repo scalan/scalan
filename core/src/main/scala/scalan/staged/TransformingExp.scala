@@ -456,6 +456,8 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
 
     def getInboundMarkings[T](te: TableEntry[T], outMark: M[T]): MarkedSyms
 
+    def getLambdaMarking[A,B](lam: Lambda[A,B], argMark: M[A]): M[A => B]
+
     def getMarkingKey[T](implicit eT:Elem[T]): MetaKey[M[T]] = markingKey[T](keyPrefix).asInstanceOf[MetaKey[M[T]]]
 
     def clearMark[T](s: Exp[T]): Unit = {
