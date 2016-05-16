@@ -150,8 +150,6 @@ trait GraphVizExport { self: ScalanExp =>
 
   implicit class ExpExtensionsForEmitGraph(symbol: Exp[_]) {
 //    def emitGraph(file: File) = emitDepGraph(symbol, file)(defaultGraphVizConfig)
-    // Not default argument to allow use from the debugger
-    def show(): Unit = show(defaultGraphVizConfig)
     def show(config: GraphVizConfig): Unit = showGraphs(symbol)(config)
   }
 

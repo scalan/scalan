@@ -40,6 +40,8 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     def varName: String
     def toStringWithType = varName + ":" + elem.name
     def toStringWithDefinition: String
+
+    def show() = showGraphs(this)(defaultGraphVizConfig)
   }
   type ExpAny = Exp[_]
 
