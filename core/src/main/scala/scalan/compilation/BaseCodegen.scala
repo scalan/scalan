@@ -58,7 +58,7 @@ abstract class BaseCodegen[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) 
   /** Emits the complete source file */
   def emitSourceFile(graph: PGraph, functionName: String, sourcesDir: File) = {
     init(functionName, graph)
-    val sourceFile = new File(sourcesDir, fileName(functionName))
+    val sourceFile = this.sourceFile(sourcesDir, functionName)
     FileUtil.withFile(sourceFile) { implicit stream =>
       emitHeader(graph, functionName)
       emitKernel(graph, functionName)
@@ -68,8 +68,17 @@ abstract class BaseCodegen[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) 
     sourceFile
   }
 
-  def emitSchedule(graph: AstGraph)(implicit stream: PrintWriter, indentLevel: IndentLevel) =
-    graph.schedule.foreach { te => emitNode(te.sym, te.rhs, graph) }
+  def sourceFile(sourcesDir: File, functionName: String): File = {
+    new File(sourcesDir, fileName(functionName))
+  }
+
+  def emitSchedule(graph: AstGraph, f: Schedule => Schedule = identity)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
+    val originalSchedule = graph.schedule
+    val schedule = f(originalSchedule)
+    schedule.foreach { te =>
+      emitNode(te.sym, te.rhs, graph)
+    }
+  }
 
   /** Emits a node in the schedule. Override this for nodes which need more than one line, and
     * `rhs` for the simple cases. */
