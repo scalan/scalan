@@ -14,7 +14,7 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
 
   type CustomCompilerOutput
 
-  case class CommonCompilerOutput[A, B](graph: PGraph, name: String, eInput: Elem[A], eOutput: Elem[B])
+  case class CommonCompilerOutput[A, B](graph: PGraph, sourcesDirectory: File, name: String, eInput: Elem[A], eOutput: Elem[B])
 
   case class CompilerOutput[A, B](common: CommonCompilerOutput[A, B], custom: CustomCompilerOutput, config: CompilerConfig)
 
@@ -73,7 +73,7 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
     }
     onFinishGraphPasses()
 
-    CommonCompilerOutput(finalGraph, functionName, eInput, eOutput)
+    CommonCompilerOutput(finalGraph, sourcesDir, functionName, eInput, eOutput)
   }
 
   def buildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)
