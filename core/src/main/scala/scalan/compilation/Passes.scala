@@ -51,7 +51,14 @@ trait Passes {
         }
         d match {
           case l: Lambda[a,b] =>
-            backwardAnalyzeRec(l)   // analize lambda after the markings were assigned to the l.y
+            // analize lambda after the markings were assigned to the l.y
+            backwardAnalyzeRec(l)
+            // assign marking to l if not identity
+            for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
+              val argMark = a.getMark(l.x)
+              val lMark = a.getLambdaMarking(l, argMark)
+              a.updateOutboundMarking(l.self, lMark)
+            }
           case _ =>
         }
       }
