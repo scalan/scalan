@@ -9,8 +9,9 @@ import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
 import scalan.util.{ParamMirror, ReflectionUtil}
-import scalan.{Base, ScalanExp, Scalan}
+import scalan.{Base, Scalan, ScalanExp}
 import scalan.common.Lazy
+import scalan.compilation.GraphVizConfig
 
 trait BaseExp extends Base { scalan: ScalanExp =>
   type Rep[+A] = Exp[A]
@@ -41,7 +42,8 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     def toStringWithType = varName + ":" + elem.name
     def toStringWithDefinition: String
 
-    def show() = showGraphs(this)(defaultGraphVizConfig)
+    def show(): Unit = show(defaultGraphVizConfig)
+    def show(config: GraphVizConfig): Unit = showGraphs(this)(config)
   }
   type ExpAny = Exp[_]
 

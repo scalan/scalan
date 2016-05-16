@@ -148,23 +148,21 @@ trait GraphVizExport { self: ScalanExp =>
       }
     }
 
-  implicit class ExpExtensionsForEmitGraph(symbol: Exp[_]) {
-//    def emitGraph(file: File) = emitDepGraph(symbol, file)(defaultGraphVizConfig)
-    def show(config: GraphVizConfig): Unit = showGraphs(symbol)(config)
-  }
-
   implicit class SeqExpExtensionsForEmitGraph(symbols: Seq[Exp[_]]) {
     // Not default argument to allow use from the debugger
     def show(): Unit = show(defaultGraphVizConfig)
     def show(config: GraphVizConfig): Unit = showGraphs(symbols: _*)(config)
   }
 
-  def showGraphs(rootSyms: Exp[_]*)(implicit config: GraphVizConfig): Unit = {
-    val prefix = rootSyms.mkString("_")
+  def showGraphs(roots: Exp[_]*)(implicit config: GraphVizConfig): Unit =
+    showGraphs(new PGraph(roots.toList))
+
+  def showGraphs(graph: AstGraph)(implicit config: GraphVizConfig): Unit = {
+    val prefix = graph.roots.mkString("_")
     val file = File.createTempFile(s"graph_${prefix}_", ".dot")
     // unfortunately can end up deleting the file before the process reads it
     // file.deleteOnExit()
-    emitDepGraph(rootSyms, file)(config)
+    emitDepGraph(graph, file)(config)
     openDotFile(file)
   }
 
