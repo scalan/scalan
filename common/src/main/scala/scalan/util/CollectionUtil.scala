@@ -33,6 +33,28 @@ object CollectionUtil {
     res
   }
 
+  def outerJoinSeqs[O, I, K, R]
+      (outer: Seq[O], inner: Seq[I])
+      (outKey: O=>K, inKey: I=>K)
+      (projO: (K,O) => R, projI: (K,I) => R, proj:(K,O,I) => R): Seq[(K,R)] = {
+    val res = ArrayBuffer.empty[(K,R)]
+    val kis = inner.map(i => (inKey(i), i))
+    val kvs = createMultiMap(kis)
+    val outerKeys = mutable.Set.empty[K]
+    for (o <- outer) {
+      val ko = outKey(o)
+      outerKeys += ko
+      if (!kvs.contains(ko))
+        res += ((ko, projO(ko, o)))
+      else
+        for (i <- kvs(ko))
+          res += ((ko, proj(ko, o, i)))
+    }
+    for ((k,i) <- kis if !outerKeys.contains(k))
+      res += ((k, projI(k, i)))
+    res
+  }
+
   def outerJoin[K, L, R, O]
         (left: Map[K, L], right: Map[K, R])
         (l: (K,L) => O, r: (K,R) => O, inner: (K,L,R) => O): Map[K,O] = {
