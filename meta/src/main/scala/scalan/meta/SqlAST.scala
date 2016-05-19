@@ -67,11 +67,16 @@ object SqlAST {
 
   case class SubSelect(parent: Operator) extends Operator
 
-  case class Join(outer: Operator, inner: Operator, on: Expression) extends Operator
+  sealed trait JoinSpec
+  case class On(condition: Expression) extends JoinSpec
+  case class Using(columns: ColumnList) extends JoinSpec
+  case object Natural extends JoinSpec
+
+  case class Join(outer: Operator, inner: Operator, joinType: JoinType, spec: JoinSpec) extends Operator
   case class CrossJoin(outer: Operator, inner: Operator) extends Operator
+  case class UnionJoin(outer: Operator, inner: Operator) extends Operator
 
   case class SelectStmt(operator: Operator) extends Statement
-
 
   case class CreateTableStmt(table: Table) extends Statement
 
@@ -158,8 +163,6 @@ object SqlAST {
   }
 
   case class ExprAlias(expr: Expression, name: String) extends NamedExpression
-
-  def ColumnList(list: String*): ColumnList = list.toList
 
   def Schema(list: Column*): Schema = list.toList
 

@@ -92,7 +92,7 @@ trait SqlCompiler extends SqlParser {
 
   def tables(op: Operator): Set[Table] = {
     op match {
-      case Join(outer, inner, on) => tables(outer) ++ tables(inner)
+      case Join(outer, inner, _, _) => tables(outer) ++ tables(inner)
       case Scan(t) => Set(t)
       case OrderBy(p, by) => tables(p)
       case GroupBy(p, by) => tables(p)
@@ -177,7 +177,7 @@ trait SqlCompiler extends SqlParser {
 
   def buildContext(op: Operator): Context = {
     op match {
-      case Join(outer, inner, on) => JoinContext(buildContext(outer), buildContext(inner))
+      case Join(outer, inner, _, _) => JoinContext(buildContext(outer), buildContext(inner))
       case Scan(t) => TableContext(t)
       case OrderBy(p, by) => buildContext(p)
       case GroupBy(p, by) => buildContext(p)
@@ -346,6 +346,11 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
+  def extractKey(spec: JoinSpec): String = spec match {
+    case On(on) => extractKey(on)
+    case _ => throw new NotImplementedError(s"extractKey($spec)")
+  }
+
   def extractKey(on: Expression): String = {
     on match {
       case AndExpr(l, r) => "Pair(" + extractKey(l) + ", " + extractKey(r) + ")"
@@ -359,9 +364,9 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
-  def generateJoinKey(table: Operator, on: Expression): String = {
+  def generateJoinKey(table: Operator, spec: JoinSpec): String = {
     pushContext(table)
-    val result = currScope.name + " => " + extractKey(on)
+    val result = currScope.name + " => " + extractKey(spec)
     popContext()
     result
   }
@@ -530,7 +535,7 @@ trait SqlCompiler extends SqlParser {
 
   def depends(on: Operator, subquery: Operator): Boolean = {
     subquery match { 
-      case Join(outer, inner, cond) => depends(on, outer) || depends(on, inner)
+      case Join(outer, inner, _, _) => depends(on, outer) || depends(on, inner)
       case Scan(t) => false
       case OrderBy(p, by) => depends(on, p) || using(on, by.map(_.expr))
       case GroupBy(p, by) => depends(on, p) || using(on, by)
@@ -584,26 +589,27 @@ trait SqlCompiler extends SqlParser {
   }
 
 
-  def optimize(op: Operator, predicate: Expression): (Operator,Expression) = {
+  def optimize(op: Operator, predicate: Expression): (Operator, Expression) = {
     op match { 
-      case Join(outer, inner, on) => {
-        if (!using(inner, predicate)) (Join(Filter(outer, predicate), inner, on), Literal(true, BoolType))
-        else predicate match {
-          case AndExpr(l, r) => {
-            val (jr, cr) = optimize(op, r) 
-            val (jl, cl) = optimize(jr, l) 
-            (jl, and(cl, cr))
+      case Join(outer, inner, joinType, joinSpec) =>
+        if (!using(inner, predicate))
+          (Join(Filter(outer, predicate), inner, joinType, joinSpec), Literal(true, BoolType))
+        else
+          predicate match {
+            case AndExpr(l, r) =>
+              val (jr, cr) = optimize(op, r)
+              val (jl, cl) = optimize(jr, l)
+              (jl, and(cl, cr))
+            case _ => (op, predicate)
           }
-          case _ => (op, predicate)
-        }
-      }
-      case _ => (op, predicate)      
+      case _ => (op, predicate)
     }
   }
 
   def generateOperator(op:Operator): String = {
     op match {
-      case Join(outer, inner, on) => generateOperator(outer) + s"""\n$indent.join(${generateOperator(inner)})(${generateJoinKey(outer, on)}, ${generateJoinKey(inner, on)})"""
+      case Join(outer, inner, joinType, spec) =>
+        generateOperator(outer) + s"""\n$indent.join(${generateOperator(inner)}, $joinType)(${generateJoinKey(outer, spec)}, ${generateJoinKey(inner, spec)})"""
       case Scan(t) =>
         currMethod.explicitArgs.find(arg =>arg.tpe match { 
           case STraitCall(n1, List(STraitCall(n2, List(p)))) if n1 == "Rep" && n2 == "Table" && p.toString == t.name.capitalize => true
@@ -660,7 +666,7 @@ trait SqlCompiler extends SqlParser {
 
   def operatorType(op: Operator): String = {
     op match {
-      case Join(outer, inner, on) => "(" + operatorType(outer) + ", " + operatorType(inner) + ")"
+      case Join(outer, inner, _, _) => "(" + operatorType(outer) + ", " + operatorType(inner) + ")"
       case Scan(t) => buildTree(t.schema.map(c => c.ctype.scalaName))
       case OrderBy(p, by) => operatorType(p)
       case GroupBy(p, by) => operatorType(p)

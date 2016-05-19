@@ -5,7 +5,7 @@ import scala.util.parsing.combinator.PackratParsers
 import scala.util.parsing.combinator.lexical.StdLexical
 import scala.util.parsing.combinator.syntactical.StandardTokenParsers
 import scala.util.parsing.input.CharArrayReader.EofCh
-import SqlAST._
+import scalan.meta.SqlAST._
 
 // see http://savage.net.au/SQL/sql-2003-2.bnf.html for full SQL grammar
 trait SqlParser {
@@ -94,7 +94,7 @@ trait SqlParser {
       }
 
     lazy val createIndexStmt: Parser[Statement] =
-      CREATE ~> INDEX ~> ident ~ ("on" ~> table) ~ ("(" ~> fieldList <~ ")") ^^ {
+      CREATE ~> INDEX ~> ident ~ (ON ~> table) ~ ("(" ~> fieldList <~ ")") ^^ {
         case name ~ table ~ key => CreateIndexStmt(name, table, key)
       }
 
@@ -112,8 +112,7 @@ trait SqlParser {
     //lazy val ident: Parser[String] = """[\w]+""".r
 
     lazy val fieldList: Parser[ColumnList] =
-      repsep(ident, ",") ^^ { fs => ColumnList(fs: _*)}
-
+      repsep(ident, ",")
 
     protected case class Keyword(str: String) {
       // TODO better case insensitivity (using RegexParsers?)
@@ -136,6 +135,7 @@ trait SqlParser {
     protected val CAST = Keyword("CAST")
     protected val COUNT = Keyword("COUNT")
     protected val CREATE = Keyword("CREATE")
+    protected val CROSS = Keyword("CROSS")
     protected val DECIMAL = Keyword("DECIMAL")
     protected val DESC = Keyword("DESC")
     protected val DISTINCT = Keyword("DISTINCT")
@@ -166,6 +166,7 @@ trait SqlParser {
     protected val LOWER = Keyword("LOWER")
     protected val MAX = Keyword("MAX")
     protected val MIN = Keyword("MIN")
+    protected val NATURAL = Keyword("NATURAL")
     protected val NOT = Keyword("NOT")
     protected val NULL = Keyword("NULL")
     protected val NULLS = Keyword("NULLS")
@@ -190,6 +191,7 @@ trait SqlParser {
     protected val TRUE = Keyword("TRUE")
     protected val UNION = Keyword("UNION")
     protected val UPPER = Keyword("UPPER")
+    protected val USING = Keyword("USING")
     protected val WHEN = Keyword("WHEN")
     protected val WHERE = Keyword("WHERE")
 
@@ -278,15 +280,34 @@ trait SqlParser {
         }
 
     protected lazy val joinedRelation: Parser[Operator] =
-      relationFactor ~ rep1(joinType.? ~ (JOIN ~> relationFactor) ~ joinConditions) ^^ {
+      relationFactor ~ rep1(joiner) ^^ {
         case r1 ~ joins =>
-          joins.foldLeft(r1) { case (lhs, jt ~ rhs ~ cond) =>
-            Join(lhs, rhs, cond)
+          joins.foldLeft(r1) { case (lhs, joiner) =>
+            joiner(lhs)
           }
-      }
+        }
 
-    protected lazy val joinConditions: Parser[Expression] =
-      ON ~> expression
+    protected lazy val joiner: Parser[Operator => Operator] =
+      (joinType.? ~ (JOIN ~> relationFactor) ~ joinSpec) ^^ {
+        case jtOpt ~ rhs ~ joinSpec =>
+          l: Operator => Join(l, rhs, jtOpt.getOrElse(Inner), joinSpec)
+      } |
+        (CROSS ~> JOIN ~> relation) ^^ {
+          rhs =>
+            l: Operator => CrossJoin(l, rhs)
+        } |
+        (NATURAL ~> joinType.? ~ (JOIN ~> relation)) ^^ {
+          case jtOpt ~ rhs =>
+            l: Operator => Join(l, rhs, jtOpt.getOrElse(Inner), Natural)
+        } |
+        (UNION ~> JOIN ~> relation) ^^ {
+          rhs =>
+            l: Operator => UnionJoin(l, rhs)
+        }
+
+    protected lazy val joinSpec: Parser[JoinSpec] =
+      ON ~> expression ^^ { On(_) } |
+      USING ~> fieldList ^^ { Using(_) }
 
     protected lazy val joinType: Parser[JoinType] =
       (INNER ^^^ Inner
