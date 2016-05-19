@@ -172,17 +172,21 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       (t1 + (v -> newVar), newVar)
     }
 
+    protected def rewriteUntilFixPoint[T](start: Exp[T], mn: MetaNode, rw: Rewriter): Exp[T] = {
+      var res = start
+      var curr: Exp[T] = res
+      do {
+        curr = res
+        setAllMetadata(curr, mn)
+        res = rw(curr)
+      } while (res != curr)
+      res
+    }
+
     protected def mirrorDef[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = {
       val (t1, mirrored) = apply(t, rewriter, node, d)
       val (t2, mirroredMetadata) = mirrorMetadata(t1, node, mirrored)
-      var res = mirrored
-      var curr = res
-      do {
-        curr = res
-        setAllMetadata(curr, mirroredMetadata)
-        res = rewriter(curr)
-      } while (res != curr)
-
+      val res = rewriteUntilFixPoint(mirrored, mirroredMetadata, rewriter)
       (t2 + (node -> res), res)
     }
 
@@ -220,7 +224,10 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       createDefinition(thunkStack.top, newLambdaSym, newLambda)
       val newLambdaExp = toExp(newLambda, newLambdaSym)
 
-      (tRes + (node -> newLambdaExp), newLambdaExp)
+      val (tRes2, mirroredMetadata) = mirrorMetadata(tRes, node, newLambdaExp)
+      val resLam = rewriteUntilFixPoint(newLambdaExp, mirroredMetadata, rewriter)
+
+      (tRes2 + (node -> resLam), resLam)
     }
 
     protected def mirrorBranch[A](t: Ctx, rewriter: Rewriter, g: AstGraph, branch: ThunkDef[A]): (Ctx, Exp[_]) = {
@@ -454,6 +461,8 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       s -> lattice.join(getMark(s), other)
     }
 
+    def beforeAnalyze[A,B](l: Lambda[A,B]): Unit = {}
+
     def getInboundMarkings[T](te: TableEntry[T], outMark: M[T]): MarkedSyms
 
     def getLambdaMarking[A,B](lam: Lambda[A,B], argMark: M[A]): M[A => B]
@@ -477,6 +486,33 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       val updated = lattice.join(current, mark)
       val key = getMarkingKey[T]
       s.setMetadata(key)(updated, Some(true))
+    }
+
+    def backwardAnalyzeRec(g: AstGraph): Unit = {
+      val revSchedule = g.schedule.reverseIterator
+      for (te <- revSchedule) te match { case te: TableEntry[t] =>
+        val s = te.sym
+        val d = te.rhs
+        // back-propagate analysis information (including from Lambda to Lambda.y, see LevelAnalyzer)
+        val outMark = getMark(s)
+        val inMarks = getInboundMarkings[t](te, outMark)
+        for ((s, mark) <- inMarks) {
+          updateOutboundMarking(s, mark)
+        }
+        d match {
+          // additionally if it is Lambda
+          case l: Lambda[a,b] =>
+            // analyze lambda after the markings were assigned to the l.y during previous propagation step
+            backwardAnalyzeRec(l)
+            // markings were propagated up to the lambda variable
+            val argMark = getMark(l.x)
+
+            // update markings attached to l
+            val lMark = getLambdaMarking(l, argMark)
+            updateOutboundMarking(l.self, lMark)
+          case _ =>
+        }
+      }
     }
   }
 

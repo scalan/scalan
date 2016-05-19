@@ -15,6 +15,9 @@ trait Passes {
     def backwardAnalyse(graph: PGraph): Unit = {
       builder.backwardAnalyze(graph)
     }
+    def clearMarkings(graph: PGraph): Unit = {
+      builder.clearMarkings(graph)
+    }
     def apply(graph: PGraph): PGraph
   }
 
@@ -28,41 +31,64 @@ trait Passes {
       backwardAnalyses += a.asInstanceOf[Analyzer]
     }
 
-    def backwardAnalyze(g: AstGraph): Unit = {
+    def clearMarkings(g: AstGraph): Unit = {
       // first clear markings for all analyzers
       g.scheduleAll.foreach(te => {
         for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
           a.clearMark(te.sym)
         }
       })
-      // then assign new markings
-      backwardAnalyzeRec(g)
     }
 
-    def backwardAnalyzeRec(g: AstGraph): Unit = {
-      val revSchedule = g.schedule.reverseIterator
-      for (te @ TableEntry(s: Exp[t], d) <- revSchedule) {
-        for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
-          val outMark = a.getMark(s)
-          val inMarks = a.getInboundMarkings(te, outMark)
-          for ((s, mark) <- inMarks) {
-            a.updateOutboundMarking(s, mark)
-          }
-        }
-        d match {
-          case l: Lambda[a,b] =>
-            // analize lambda after the markings were assigned to the l.y
-            backwardAnalyzeRec(l)
-            // assign marking to l if not identity
-            for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
-              val argMark = a.getMark(l.x)
-              val lMark = a.getLambdaMarking(l, argMark)
-              a.updateOutboundMarking(l.self, lMark)
-            }
-          case _ =>
-        }
+    def backwardAnalyze(g: AstGraph): Unit = {
+      // assign new markings
+      for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
+        a.backwardAnalyzeRec(g)
       }
     }
+
+//    def analyzeNestedLambdas(g: AstGraph) = {
+//      for (te @ TableEntry(s: Exp[t], d) <- g.schedule) {
+//        d match {
+//          case l: Lambda[a,b] =>
+//            for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
+//              a.beforeAnalyze(l)
+//            }
+//            backwardAnalyzeRec(l)
+//          case _ =>
+//        }
+//      }
+//    }
+
+//    def backwardAnalyzeRec(g: AstGraph): Unit = {
+//      // first analyze nested lambdas
+//      analyzeNestedLambdas(g)
+//
+//      val revSchedule = g.schedule.reverseIterator
+//      for (te @ TableEntry(s: Exp[t], d) <- revSchedule) {
+//        // back-propagate analysis information (including from Lambda to Lambda.y, see LevelAnalyzer)
+//        for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
+//          val outMark = a.getMark(s)
+//          val inMarks = a.getInboundMarkings(te, outMark)
+//          for ((s, mark) <- inMarks) {
+//            a.updateOutboundMarking(s, mark)
+//          }
+//        }
+//        d match {
+//          // additionally if it is Lambda
+//          case l: Lambda[a,b] =>
+//            // analize lambda after the markings were assigned to the l.y (this is second round)
+//            backwardAnalyzeRec(l)
+//            // assign marking to l if not identity
+//            for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
+//              val argMark = a.getMark(l.x)
+//              val lMark = a.getLambdaMarking(l, argMark)
+//              a.updateOutboundMarking(l.self, lMark)
+//            }
+//          case _ =>
+//        }
+//      }
+//    }
   }
 
   class GraphPassBuilder[+P <: GraphPass](val name: String, createPass: (PassBuilder[P], PGraph) => P)
