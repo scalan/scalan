@@ -27,6 +27,9 @@ object SqlAST {
   val CharType = ColumnType("char", "Char")
   val BoolType = ColumnType("bit", "Boolean")
   val DateType = ColumnType("date", "Int")
+  val TimeType = ColumnType("time", "Int")
+  val TimestampType = ColumnType("timestamp", "Long")
+  val BlobType = ColumnType("blob", "Array[Byte]")
   val NullType = ColumnType("null", "Any")
 
   sealed abstract class JoinType
@@ -152,6 +155,7 @@ object SqlAST {
 
   case class Literal(value: Any, tp: ColumnType) extends Expression
 
+  // FIXME CaseWhenExpr(operand: Option[Expression], cases: List[(Expression, Expression)], default: Option[Expression])
   case class CaseWhenExpr(list: ExprList) extends Expression
 
   case class ColumnRef(table: Option[String], name: String) extends Expression {

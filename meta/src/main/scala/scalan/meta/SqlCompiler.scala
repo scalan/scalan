@@ -317,9 +317,46 @@ trait SqlCompiler extends SqlParser {
       case CastExpr(e, t) => t
       case c: ColumnRef => lookup(c).column.ctype
       case SelectExpr(s) => DoubleType
-      case FuncExpr(nume, args) => DoubleType
+      case FuncExpr(name, args) => funcType(name, args)
       case _ => throw new NotImplementedError(s"getExprType($expr)")
     }
+  }
+
+  /** Returns the type of `FuncExpr(name, args)`. Override if the type depends on args, use
+    * `registerFunctionType` otherwise. Default is `DoubleType`
+    */
+  def funcType(name: String, args: List[Expression]) = name match {
+    case "abs" | "trunc" | "truncate" | "round" | "power" | "mod" | "sign" | "ceiling" | "ceil" | "floor" =>
+      getExprType(args.head)
+    case _ =>
+      funcTypes.getOrElse(name,
+        throw new IllegalArgumentException(s"Unknown return type for $name(${args.mkString(", ")}). Override `SqlCompiler.funcType` or call `registerFunctionType` if the type doesn't depend on arguments"))
+  }
+
+  def registerFunctionType(name: String, tpe: ColumnType) =
+    funcTypes.update(name, tpe)
+
+  private val funcTypes = collection.mutable.Map.empty[String, ColumnType]
+
+  // https://en.wikibooks.org/wiki/SQL_Dialects_Reference
+  Seq(
+    IntType -> Seq(
+      "length", "bit_length", "char_length", "octet_length", "width_bucket", "ascii", "instr"
+    ),
+    DoubleType -> Seq(
+      "asin", "acos", "atan", "atan2", "sin", "cos", "tan", "cot", "sinh", "cosh", "tanh", "atanh",
+      "sqrt", "exp", "ln", "log", "log10", "rand"
+    ),
+    StringType -> Seq(
+      "chr", "char", "concat", "hex", "lower", "upper", "lcase", "ucase", "lpad", "rpad",
+      "trim", "ltrim", "rtrim", "left", "right", "repeat", "reverse", "space", "substring", "substr",
+      "replace", "initcap", "translate", "quote", "soundex", "md5", "sha1"
+    ),
+    DateType -> Seq("current_date", "date"),
+    TimeType -> Seq("current_time", "time"),
+    TimestampType -> Seq("current_timestamp", "now")
+  ).foreach {
+    case (tpe, funs) => funs.foreach(registerFunctionType(_, tpe))
   }
 
   def buildTree(elems: Seq[String], lpar: String = "(", rpar: String = ")", i: Int = 0): String = {
