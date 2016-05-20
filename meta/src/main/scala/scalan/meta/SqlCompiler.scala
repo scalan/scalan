@@ -64,8 +64,14 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
+  def dealias(e: Expression): Expression = e match {
+    case ExprAlias(e1, _) =>
+      dealias(e1)
+    case _ => e
+  }
+
   def tablesInNestedSelects(e: Expression): Set[Table] = {
-    e match {
+    dealias(e) match {
       case AndExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
       case OrExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
       case AddExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
@@ -85,7 +91,6 @@ trait SqlCompiler extends SqlParser {
       case CastExpr(exp, typ) => tablesInNestedSelects(exp)
       case SelectExpr(s) => tables(s.operator)
       case InExpr(s, q) => tablesInNestedSelects(s) ++ tables(q.operator)
-      case ExprAlias(expr, _) => tablesInNestedSelects(expr)
       case _ => Set()
     }
   }
@@ -229,7 +234,7 @@ trait SqlCompiler extends SqlParser {
   }
 
   def generateExpr(expr: Expression): String = {
-    expr match {
+    dealias(expr) match {
       case AndExpr(l, r) => "(" + generateExpr(l) + " && " + generateExpr(r) + ")"
       case OrExpr(l, r) => "(" + generateExpr(l) + " || " + generateExpr(r) + ")"
       case AddExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " + " + generateExpr(castTo(r, l)) + ")"
@@ -278,7 +283,6 @@ trait SqlCompiler extends SqlParser {
         subselect
       }
       case FuncExpr(name, args) => name + "(" + args.map(p => generateExpr(p)).mkString(", ") + ")"
-      case ExprAlias(expr, _) => generateExpr(expr)
       case _ => throw new NotImplementedError(s"generateExpr($expr)")
     }
   }
@@ -294,7 +298,7 @@ trait SqlCompiler extends SqlParser {
   }
 
   def getExprType(expr: Expression): ColumnType = {
-    expr match {
+    dealias(expr) match {
       case AndExpr(l, r) => BoolType
       case OrExpr(l, r) => BoolType
       case AddExpr(l, r) => getExprType(l) | getExprType(r)
@@ -324,7 +328,6 @@ trait SqlCompiler extends SqlParser {
       case Literal(v, t) => t
       case CastExpr(e, t) => t
       case c: ColumnRef => lookup(c).column.ctype
-      case ExprAlias(expr, _) => getExprType(expr)
       case SelectExpr(s) => DoubleType
       case FuncExpr(nume, args) => DoubleType
       case _ => throw new NotImplementedError(s"getExprType($expr)")
@@ -388,8 +391,8 @@ trait SqlCompiler extends SqlParser {
   }
 
 
-  def isAggregate(agg: Expression): Boolean = {
-    agg match {
+  def isAggregate(expr: Expression): Boolean = {
+    dealias(expr) match {
       case CountExpr() => true
       case CountNotNullExpr(_) => true
       case CountDistinctExpr(_) => true
@@ -402,14 +405,13 @@ trait SqlCompiler extends SqlParser {
       case MulExpr(l, r) => isAggregate(l) || isAggregate(r)
       case DivExpr(l, r) => isAggregate(l) || isAggregate(r)
       case NegExpr(opd) => isAggregate(opd)
-      case ExprAlias(expr, _) => isAggregate(expr)
       case _ => false
     }
   }
 
 
   def generateAggOperand(agg: Expression): String = {
-    agg match {
+    dealias(agg) match {
       case CountExpr() => "1"
       case CountNotNullExpr(_) => "1"
       case CountDistinctExpr(_) => "1"
@@ -417,13 +419,12 @@ trait SqlCompiler extends SqlParser {
       case SumExpr(opd) => generateExpr(opd)
       case MaxExpr(opd) => generateExpr(opd)
       case MinExpr(opd) => generateExpr(opd)
-      case ExprAlias(expr, _) => generateAggOperand(expr)
       case _ => throw new NotImplementedError(s"generateAggOperand($agg)")
     }
   }
 
   def aggCombine(agg: Expression, s1: String, s2: String): String = {
-    agg match {
+    dealias(agg) match {
       case CountExpr() => s"""$s1 + $s2"""
       case CountNotNullExpr(_) => s"""$s1 + $s2"""
       case CountDistinctExpr(_) => s"""$s1 + $s2"""
@@ -431,7 +432,6 @@ trait SqlCompiler extends SqlParser {
       case SumExpr(opd) => s"""$s1 + $s2"""
       case MaxExpr(opd) => s"""if ($s1 > $s2) $s1 else $s2"""
       case MinExpr(opd) => s"""if ($s1 < $s2) $s1 else $s2"""
-      case ExprAlias(expr, _) => aggCombine(expr, s1, s2)
       case _ => throw new NotImplementedError(s"aggCombine($agg, $s1, $s2)")
     }
   }
@@ -446,15 +446,19 @@ trait SqlCompiler extends SqlParser {
 
   def matchExpr(col: Expression, exp: Expression): Boolean = {
     col == exp || ((col, exp) match {
-      case (ExprAlias(_, alias), ColumnRef(None, name)) => name == alias
-      case (ColumnRef(None, name), ExprAlias(_, alias)) => name == alias
+      case (ExprAlias(e1, alias), ColumnRef(None, name)) =>
+        name == alias || matchExpr(e1, exp)
+      case (ColumnRef(None, name), ExprAlias(e1, alias)) =>
+        name == alias || matchExpr(col, e1)
+      case (ExprAlias(e1, _), ExprAlias(e2, _)) =>
+        matchExpr(e1, e2)
       case _ => false
     })
   }
 
   def generateAggResult(columns: ExprList, aggregates: ExprList, gby: ExprList, i: Int, count: Int, expr: Expression): String = {
     lazy val aggPath = getAggPath(columns, aggregates, i)
-    expr match {
+    dealias(expr) match {
       case CountExpr() => aggPath
       case CountNotNullExpr(_) => aggPath
       case CountDistinctExpr(_) => aggPath
@@ -471,8 +475,6 @@ trait SqlCompiler extends SqlParser {
         else
           pathString("head" :: indexToPath(keyIndex, gby.length))
       }
-      case ExprAlias(expr, _) =>
-        generateAggResult(columns, aggregates, gby, i, count, expr)
       case _ => throw new NotImplementedError(s"generateAggResult($columns, $aggregates, $gby, $i, $count)")
     }
   }
@@ -489,14 +491,10 @@ trait SqlCompiler extends SqlParser {
       case Project(p, columns)  => {
         var aggregates = columns.filter(e => isAggregate(e))
         var countIndex = aggregates.indexWhere {
-          case CountExpr() => true
-          case ExprAlias(CountExpr(), _) => true
-          case _ => false
+          dealias(_).isInstanceOf[CountExpr]
         }
         if (countIndex < 0 && aggregates.exists {
-          case AvgExpr(_) => true
-          case ExprAlias(AvgExpr(_), _) => true
-          case _ => false
+          dealias(_).isInstanceOf[AvgExpr]
         }) {
           countIndex = aggregates.length
           aggregates = aggregates :+ CountExpr()
@@ -536,7 +534,7 @@ trait SqlCompiler extends SqlParser {
   }
 
   def depends(on: Operator, subquery: Operator): Boolean = {
-    subquery match { 
+    subquery match {
       case Join(outer, inner, _, _) => depends(on, outer) || depends(on, inner)
       case Scan(t) => false
       case OrderBy(p, by) => depends(on, p) || using(on, by.map(_.expr))
@@ -552,7 +550,7 @@ trait SqlCompiler extends SqlParser {
   def using(op: Operator, list: ExprList): Boolean = list.exists(e => using(op, e))
 
   def using(op: Operator, predicate: Expression): Boolean = {
-    predicate match {
+    dealias(predicate) match {
       case AndExpr(l, r) => using(op, l) || using(op, r)
       case OrExpr(l, r) =>  using(op, l) || using(op, r)
       case AddExpr(l, r) => using(op, l) || using(op, r)
@@ -573,7 +571,6 @@ trait SqlCompiler extends SqlParser {
       case Literal(v, t) => false
       case CastExpr(exp, typ) => using(op, exp)
       case ref: ColumnRef => buildContext(op).resolve(ref).isDefined
-      case ExprAlias(expr, _) => using(op, expr)
       case SelectExpr(s) => depends(op, s.operator)
       case CountExpr() => false
       case CountDistinctExpr(opd) => using(op, opd)
