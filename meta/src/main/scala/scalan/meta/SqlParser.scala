@@ -215,14 +215,9 @@ trait SqlParser {
         EXCEPT ^^^ { Except(_, _) } |
         UNION ~ DISTINCT.? ^^^ { (q1, q2) => Distinct(Union(q1, q2)) }
 
-    def selectAll(columns: List[Expression]): Boolean = columns match {
-      case List(StarExpr()) => true
-      case _ => false
-    }
-
     protected lazy val select: Parser[Operator] =
       SELECT ~> DISTINCT.? ~
-        repsep(projection, ",") ~
+        selectList ~
         (FROM ~> relations) ~
         (WHERE ~> expression).? ~
         (GROUP ~ BY ~> rep1sep(expression, ",")).? ~
@@ -232,7 +227,11 @@ trait SqlParser {
         case d ~ p ~ r ~ f ~ g ~ h ~ o ~ l =>
           val base = r
           val withFilter = f.map(Filter(base, _)).getOrElse(base)
-          val withProjection = if (selectAll(p)) withFilter else Project(withFilter, p)
+          val withProjection = p match {
+            case None => withFilter
+            case Some(columns) =>
+              Project(withFilter, columns)
+          }
           val withGroupBy = g.map(GroupBy(withProjection, _)).getOrElse(withProjection)
           val withDistinct = d.map(_ => Distinct(withGroupBy)).getOrElse(withGroupBy)
           val withHaving = h.map(Filter(withDistinct, _)).getOrElse(withDistinct)
@@ -241,13 +240,12 @@ trait SqlParser {
           withLimit
       }
 
-    protected lazy val projection: Parser[Expression] =
+    protected lazy val selectList: Parser[Option[List[ProjectionColumn]]] =
+      ("*" ^^^ None) | (repsep(projectionColumn, ",") ^^ { Some(_) })
+
+    protected lazy val projectionColumn: Parser[ProjectionColumn] =
       expression ~ (AS.? ~> ident.?) ^^ {
-        case e ~ a =>
-          a match {
-            case None => e
-            case Some(alias) => ExprAlias(e, alias)
-          }
+        case e ~ a => ProjectionColumn(e, a)
       }
 
     // Based very loosely on the MySQL Grammar.
@@ -456,21 +454,16 @@ trait SqlParser {
         | elem("decimal", _.isInstanceOf[lexical.FloatLit]) ^^ (_.chars)
         )
 
-    protected lazy val baseExpression: Parser[Expression] =
-      ("*" ^^^ StarExpr()
-        | primary
-        )
+    protected lazy val signedExpression: Parser[Expression] =
+      sign ~ baseExpression ^^ { case s ~ e => if (s == "-") NegExpr(e) else e}
 
-    protected lazy val signedPrimary: Parser[Expression] =
-      sign ~ primary ^^ { case s ~ e => if (s == "-") NegExpr(e) else e}
-
-    protected lazy val primary: PackratParser[Expression] =
+    protected lazy val baseExpression: PackratParser[Expression] =
       (literal
         | cast
         | "(" ~> expression <~ ")"
         | function
         | (ident <~ ".").? ~ ident ^^ { case tableOpt ~ name => ColumnRef(tableOpt, name)}
-        | signedPrimary
+        | signedExpression
         | "(" ~> selectStmt <~ ")" ^^ { stmt => SelectExpr(stmt)}
         )
   }
