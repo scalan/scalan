@@ -8,7 +8,7 @@ trait StringOps extends UnBinOps { self: Scalan =>
   implicit class StringOpsCls(lhs: Rep[String]) {
     def toInt = StringToInt(lhs)
     def toDouble = StringToDouble(lhs)
-    def length = string_length(lhs)
+    def length = StringLength(lhs)
     def apply(index: Rep[Int]) = string_apply(lhs, index)
     def substring(start: Rep[Int], end: Rep[Int]) = string_substring(lhs, start, end)
     def +(rhs: Rep[String]) = StringConcat(lhs, rhs)
@@ -22,12 +22,12 @@ trait StringOps extends UnBinOps { self: Scalan =>
     lazy val empty = toRep("")
   }
 
-  def string_length(str: Rep[String]): Rep[Int]
   def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String]
   def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char]
 
   val StringToInt = new UnOp[String, Int]("toInt", _.toInt)
   val StringToDouble = new UnOp[String, Double]("toDouble", _.toDouble)
+  val StringLength = new UnOp[String, Int]("length", _.length)
 
   val StringConcat = new EndoBinOp[String]("+", _ + _)
   val StringContains = new BinOp[String, Boolean]("contains", _.contains(_))
@@ -38,7 +38,6 @@ trait StringOps extends UnBinOps { self: Scalan =>
 
 
 trait StringOpsStd extends StringOps { self: ScalanStd =>
-  def string_length(str: Rep[String]): Rep[Int] = str.length
   def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String] = str.substring(start, end)
   def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char] = str.charAt(index)
 }
@@ -47,11 +46,18 @@ trait StringOpsStd extends StringOps { self: ScalanStd =>
 trait StringOpsExp extends StringOps with BaseExp { self: ScalanExp =>
 
   case class StringSubstring(str: Rep[String], start: Rep[Int], end: Rep[Int]) extends BaseDef[String]
-  case class StringLength(str: Rep[String]) extends BaseDef[Int]
   case class StringCharAt(str: Rep[String], index: Rep[Int]) extends BaseDef[Char]
 
-  def string_length(str: Rep[String]): Rep[Int] = StringLength(str)
   def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String] = StringSubstring(str, start, end)
   def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char] = StringCharAt(str, index)
-}
 
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case ApplyBinOp(op, x, Def(Const(""))) if op == StringConcat =>
+      x
+    case ApplyBinOp(op, Def(Const("")), x) if op == StringConcat =>
+      x
+    case ApplyBinOp(op, x, Def(Const(""))) if op == StringStartsWith || op == StringEndsWith =>
+      toRep(true)
+    case _ => super.rewriteDef(d)
+  }
+}
