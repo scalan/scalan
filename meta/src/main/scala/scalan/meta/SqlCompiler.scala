@@ -79,7 +79,7 @@ trait SqlCompiler extends SqlParser {
       case GtExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
       case GeExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
       case ExistsExpr(q) => tablesInNestedSelects(q)
-      case LikeExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
+      case LikeExpr(l, r, _) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
       case NegExpr(opd) => tablesInNestedSelects(opd)
       case NotExpr(opd) => tablesInNestedSelects(opd)
       case CastExpr(exp, typ) => tablesInNestedSelects(exp)
@@ -203,10 +203,11 @@ trait SqlCompiler extends SqlParser {
     } else from
   }
 
-  def patternMatch(text: Expression, pattern: Expression): String = {
+  def patternMatch(text: Expression, pattern: Expression, escape: Option[Expression]): String = {
     val left = generateExpr(text)
     pattern match {
       case Literal(v, t) if (t == StringType) =>
+        assert(escape.isEmpty, "escape currently not supported")
         val p = v.toString
         if (p.indexOf('%') < 0 && p.indexOf('_') < 0) "(" + left + " == \"" + p + "\")"
         else if (p.lastIndexOf('%') == 0 && p.indexOf('_') < 0) left + ".startsWith(\"" + p.substring(1) + "\")"
@@ -242,7 +243,8 @@ trait SqlCompiler extends SqlParser {
       case GtExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " > " + generateExpr(castTo(r, l)) + ")"
       case GeExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " >= " + generateExpr(castTo(r, l)) + ")"
       case ExistsExpr(q) => "(" + generateExpr(q) + ".count !== 0)"
-      case LikeExpr(l, r) => patternMatch(l, r)
+      case LikeExpr(l, r, escape) =>
+        patternMatch(l, r, escape)
       case NegExpr(opd) => "-" + generateExpr(opd)
       case NotExpr(opd) => "!" + generateExpr(opd)
       case Literal(v, t) => "toRep(" + printValue(v, t) + ")"
@@ -305,7 +307,7 @@ trait SqlCompiler extends SqlParser {
       case LtExpr(l, r) => BoolType
       case GtExpr(l, r) => BoolType
       case GeExpr(l, r) => BoolType
-      case LikeExpr(l, r) => BoolType
+      case LikeExpr(l, r, escape) => BoolType
       case InExpr(l, r) => BoolType
       case ExistsExpr(_) => BoolType
       case NegExpr(opd) => getExprType(opd)
@@ -564,7 +566,8 @@ trait SqlCompiler extends SqlParser {
       case GtExpr(l, r) => using(op, l) || using(op, r)
       case GeExpr(l, r) => using(op, l) || using(op, r)
       case ExistsExpr(q) => using(op, q)
-      case LikeExpr(l, r) => using(op, l) || using(op, r)
+      case LikeExpr(l, r, escape) =>
+        using(op, l) || using(op, r) || escape.exists(using(op, _))
       case NegExpr(opd) => using(op, opd)
       case NotExpr(opd) => using(op, opd)
       case Literal(v, t) => false

@@ -114,7 +114,7 @@ object SqlAST {
 
   case class LeExpr(left: Expression, right: Expression) extends Expression
 
-  case class LikeExpr(left: Expression, right: Expression) extends Expression
+  case class LikeExpr(left: Expression, right: Expression, escape: Option[Expression]) extends Expression
 
   case class AndExpr(left: Expression, right: Expression) extends Expression
 
