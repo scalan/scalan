@@ -14,6 +14,8 @@ trait AnalyzingExp extends Analyzing { self: ScalanExp =>
   }
 
   implicit object LevelCountLattice extends Lattice[LevelCount] {
+    def maximal[T:Elem] = Some(LevelCount(Int.MaxValue))
+    def minimal[T:Elem] = Some(LevelCount(0))
     def join[T](a: LevelCount[T], b: LevelCount[T]) = {
       implicit val eT = a.elem
       LevelCount(a.level max b.level)
@@ -63,6 +65,8 @@ trait AnalyzingExp extends Analyzing { self: ScalanExp =>
   }
 
   implicit object UsageCountLattice extends Lattice[UsageCount] {
+    def maximal[T:Elem] = None
+    def minimal[T:Elem] = Some(UsageCount(Map()))
     def join[T](a: UsageCount[T], b: UsageCount[T]) = {
       implicit val eT = a.elem
       UsageCount[T](
