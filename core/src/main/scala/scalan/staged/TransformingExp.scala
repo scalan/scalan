@@ -446,6 +446,8 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
   }
 
   trait Lattice[M[_]] {
+    def maximal[T:Elem]: Option[M[T]]
+    def minimal[T:Elem]: Option[M[T]]
     def join[T](a: M[T], b: M[T]): M[T]
   }
 
