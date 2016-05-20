@@ -142,6 +142,7 @@ trait SqlParser {
     protected val DOUBLE = Keyword("DOUBLE")
     protected val ELSE = Keyword("ELSE")
     protected val END = Keyword("END")
+    protected val ESCAPE = Keyword("ESCAPE")
     protected val EXCEPT = Keyword("EXCEPT")
     protected val EXISTS = Keyword("EXISTS")
     protected val FALSE = Keyword("FALSE")
@@ -334,40 +335,47 @@ trait SqlParser {
     protected lazy val andExpression: Parser[Expression] =
       comparisonExpression * (AND ^^^ { (e1: Expression, e2: Expression) => AndExpr(e1, e2)})
 
+    private def notOpt(not: Option[_], expr: Expression) =
+      not match {
+        case None => expr
+        case Some(_) => NotExpr(expr)
+      }
+
     protected lazy val comparisonExpression: Parser[Expression] =
-      (termExpression ~ ("=" ~> termExpression) ^^ { case e1 ~ e2 => EqExpr(e1, e2)}
-        | termExpression ~ ("<" ~> termExpression) ^^ { case e1 ~ e2 => LtExpr(e1, e2)}
-        | termExpression ~ ("<=" ~> termExpression) ^^ { case e1 ~ e2 => LeExpr(e1, e2)}
-        | termExpression ~ (">" ~> termExpression) ^^ { case e1 ~ e2 => GtExpr(e1, e2)}
-        | termExpression ~ (">=" ~> termExpression) ^^ { case e1 ~ e2 => GeExpr(e1, e2)}
-        | termExpression ~ ("!=" ~> termExpression) ^^ { case e1 ~ e2 => NeExpr(e1, e2)}
-        | termExpression ~ ("<>" ~> termExpression) ^^ { case e1 ~ e2 => NeExpr(e1, e2)}
-        | termExpression ~ NOT.? ~ (BETWEEN ~> termExpression) ~ (AND ~> termExpression) ^^ {
-        case e ~ not ~ el ~ eu =>
-          val betweenExpr: Expression = AndExpr(GeExpr(e, el), LeExpr(e, eu))
-          not.fold(betweenExpr)(f => NotExpr(betweenExpr))
-      }
-        | termExpression ~ (LIKE ~> termExpression) ^^ { case e1 ~ e2 => LikeExpr(e1, e2)}
-        | termExpression ~ (NOT ~ LIKE ~> termExpression) ^^ { case e1 ~ e2 => NotExpr(LikeExpr(e1, e2))}
-        | termExpression ~ (IN ~ "(" ~> rep1sep(termExpression, ",")) <~ ")" ^^ {
-        case e1 ~ e2 => InListExpr(e1, e2)
-      }
-        | termExpression ~ (NOT ~ IN ~ "(" ~> rep1sep(termExpression, ",")) <~ ")" ^^ {
-        case e1 ~ e2 => NotExpr(InListExpr(e1, e2))
-      }
-        | termExpression ~ (IN ~ "(" ~> selectStmt) <~ ")" ^^ {
-        case e1 ~ e2 => InExpr(e1, e2)
-      }
-        | termExpression ~ (NOT ~ IN ~ "(" ~> selectStmt) <~ ")" ^^ {
-        case e1 ~ e2 => NotExpr(InExpr(e1, e2))
-      }
-        | termExpression <~ IS ~ NULL ^^ { case e => IsNullExpr(e)}
-        | termExpression <~ IS ~ NOT ~ NULL ^^ { case e => NotExpr(IsNullExpr(e))}
-        | NOT ~> termExpression ^^ { e => NotExpr(e)}
-        | EXISTS ~> termExpression ^^ { e => ExistsExpr(e) }
-        | NOT ~ EXISTS ~> termExpression ^^ { e => NotExpr(ExistsExpr(e)) }
-        | termExpression
-        )
+      termExpression ~ ("=" ~> termExpression) ^^ { case e1 ~ e2 => EqExpr(e1, e2) } |
+        termExpression ~ ("<" ~> termExpression) ^^ { case e1 ~ e2 => LtExpr(e1, e2) } |
+        termExpression ~ ("<=" ~> termExpression) ^^ { case e1 ~ e2 => LeExpr(e1, e2) } |
+        termExpression ~ (">" ~> termExpression) ^^ { case e1 ~ e2 => GtExpr(e1, e2) } |
+        termExpression ~ (">=" ~> termExpression) ^^ { case e1 ~ e2 => GeExpr(e1, e2) } |
+        termExpression ~ ("!=" ~> termExpression) ^^ { case e1 ~ e2 => NeExpr(e1, e2) } |
+        termExpression ~ ("<>" ~> termExpression) ^^ { case e1 ~ e2 => NeExpr(e1, e2) } |
+        termExpression ~ NOT.? ~ (BETWEEN ~> termExpression) ~ (AND ~> termExpression) ^^ {
+          case e ~ not ~ el ~ eu =>
+            val betweenExpr = AndExpr(GeExpr(e, el), LeExpr(e, eu))
+            notOpt(not, betweenExpr)
+        } |
+        termExpression ~ NOT.? ~ (LIKE ~> termExpression) ~ (ESCAPE ~> termExpression).? ^^ {
+          case e1 ~ not ~ e2 ~ escapeOpt =>
+            notOpt(not, LikeExpr(e1, e2, escapeOpt))
+        } |
+        termExpression ~ (NOT.? <~ IN) ~ ("(" ~> rep1sep(termExpression, ",") <~ ")") ^^ {
+          case e1 ~ not ~ e2 =>
+            notOpt(not, InListExpr(e1, e2))
+        } |
+        termExpression ~ (NOT.? <~ IN) ~ ("(" ~> selectStmt <~ ")") ^^ {
+          case e1 ~ not ~ e2 =>
+            notOpt(not, InExpr(e1, e2))
+        } |
+        (termExpression <~ IS) ~ (NOT.? <~ NULL) ^^ {
+          case e ~ not =>
+            notOpt(not, IsNullExpr(e))
+        } |
+        NOT ~> termExpression ^^ { e => NotExpr(e) } |
+        NOT.? ~ (EXISTS ~> termExpression) ^^ {
+          case not ~ e =>
+            notOpt(not, ExistsExpr(e))
+          } |
+        termExpression
 
     protected lazy val termExpression: Parser[Expression] =
       productExpression *
