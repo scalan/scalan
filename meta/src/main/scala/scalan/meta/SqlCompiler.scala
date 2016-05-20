@@ -316,15 +316,26 @@ trait SqlCompiler extends SqlParser {
       case AggregateExpr(Avg, _, _) => DoubleType
       case AggregateExpr(Sum | Max | Min, _, opd) => getExprType(opd)
       case SubstrExpr(str,from,len) => StringType
-      case CaseWhenExpr(list) => getExprType(list(1))
+      case CaseWhenExpr(list) => getExprType(list.head)
       case Literal(v, t) => t
       case CastExpr(e, t) => t
       case c: ColumnRef => lookup(c).column.ctype
       case SelectExpr(s) => DoubleType
-      case FuncExpr(nume, args) => DoubleType
+      case FuncExpr(name, args) => funcType(name, args)
       case _ => throw new NotImplementedError(s"getExprType($expr)")
     }
   }
+
+  /** Returns the type of `FuncExpr(name, args)`. Override if the type depends on args, use
+    * `registerFunctionType` otherwise. Default is `DoubleType`
+    */
+  def funcType(name: String, args: List[Expression]) =
+    funcTypes.getOrElse(name, DoubleType)
+
+  def registerFunctionType(name: String, tpe: ColumnType) =
+    funcTypes.update(name, tpe)
+
+  private val funcTypes = collection.mutable.Map.empty[String, ColumnType]
 
   def buildTree(elems: Seq[String], lpar: String = "(", rpar: String = ")", i: Int = 0): String = {
     val n = elems.length
