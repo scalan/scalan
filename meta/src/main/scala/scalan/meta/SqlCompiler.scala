@@ -72,18 +72,7 @@ trait SqlCompiler extends SqlParser {
 
   def tablesInNestedSelects(e: Expression): Set[Table] = {
     dealias(e) match {
-      case AndExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case OrExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case AddExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case SubExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case MulExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case DivExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case EqExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case NeExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case LeExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case LtExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case GtExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case GeExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
+      case BinOpExpr(op, l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
       case ExistsExpr(q) => tablesInNestedSelects(q)
       case LikeExpr(l, r, _) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
       case NegExpr(opd) => tablesInNestedSelects(opd)
@@ -235,18 +224,27 @@ trait SqlCompiler extends SqlParser {
 
   def generateExpr(expr: Expression): String = {
     dealias(expr) match {
-      case AndExpr(l, r) => "(" + generateExpr(l) + " && " + generateExpr(r) + ")"
-      case OrExpr(l, r) => "(" + generateExpr(l) + " || " + generateExpr(r) + ")"
-      case AddExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " + " + generateExpr(castTo(r, l)) + ")"
-      case SubExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " - " + generateExpr(castTo(r, l)) + ")"
-      case MulExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " * " + generateExpr(castTo(r, l)) + ")"
-      case DivExpr(l, r) => "(" + generateExpr(castTo(l, r)) + divOp(expr) + generateExpr(castTo(r, l)) + ")"
-      case EqExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " === " + generateExpr(castTo(r, l)) + ")"
-      case NeExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " !== " + generateExpr(castTo(r, l)) + ")"
-      case LeExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " <= " + generateExpr(castTo(r, l)) + ")"
-      case LtExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " < " + generateExpr(castTo(r, l)) + ")"
-      case GtExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " > " + generateExpr(castTo(r, l)) + ")"
-      case GeExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " >= " + generateExpr(castTo(r, l)) + ")"
+      case BinOpExpr(op, l, r) =>
+        // Ignore behavior on nulls currently
+        val opStr = op match {
+          case And => "&&"
+          case Or => "||"
+          case Plus => "+"
+          case Minus => "-"
+          case Times => "*"
+          case Divide => divOp(expr)
+          case Modulo => "%"
+          case Is => "==="
+          case Eq => "==="
+          case Less => "<"
+          case LessEq => "<="
+          case Greater => ">"
+          case GreaterEq => ">="
+          case Concat => "concat"
+        }
+        val lCode = generateExpr(l)
+        val rCode = generateExpr(r)
+        s"($lCode $opStr $rCode)"
       case ExistsExpr(q) => "(" + generateExpr(q) + ".count !== 0)"
       case LikeExpr(l, r, escape) =>
         patternMatch(l, r, escape)
@@ -299,18 +297,14 @@ trait SqlCompiler extends SqlParser {
 
   def getExprType(expr: Expression): ColumnType = {
     dealias(expr) match {
-      case AndExpr(l, r) => BoolType
-      case OrExpr(l, r) => BoolType
-      case AddExpr(l, r) => getExprType(l) | getExprType(r)
-      case SubExpr(l, r) => getExprType(l) | getExprType(r)
-      case MulExpr(l, r) => getExprType(l) | getExprType(r)
-      case DivExpr(l, r) => getExprType(l) | getExprType(r)
-      case NeExpr(l, r) => BoolType
-      case EqExpr(l, r) => BoolType
-      case LeExpr(l, r) => BoolType
-      case LtExpr(l, r) => BoolType
-      case GtExpr(l, r) => BoolType
-      case GeExpr(l, r) => BoolType
+      case BinOpExpr(op, l, r) =>
+        op match {
+          case _: LogicOp | _: ComparisonOp =>
+            BoolType
+          case _: ArithOp =>
+            getExprType(l) | getExprType(r)
+          case Concat => StringType
+        }
       case LikeExpr(l, r, escape) => BoolType
       case InExpr(l, r) => BoolType
       case ExistsExpr(_) => BoolType
@@ -358,8 +352,8 @@ trait SqlCompiler extends SqlParser {
 
   def extractKey(on: Expression): String = {
     on match {
-      case AndExpr(l, r) => "Pair(" + extractKey(l) + ", " + extractKey(r) + ")"
-      case EqExpr(l, r) => (resolveKey(l), resolveKey(r)) match {
+      case BinOpExpr(And, l, r) => "Pair(" + extractKey(l) + ", " + extractKey(r) + ")"
+      case BinOpExpr(Eq, l, r) => (resolveKey(l), resolveKey(r)) match {
         case (Some(_), Some(_)) => throw SqlException("Ambiguous reference to column")
         case (Some(b), None) => b.asScalaCode
         case (None, Some(b)) => b.asScalaCode
@@ -400,10 +394,7 @@ trait SqlCompiler extends SqlParser {
       case SumExpr(_) => true
       case MaxExpr(_) => true
       case MinExpr(_) => true
-      case AddExpr(l, r) => isAggregate(l) || isAggregate(r)
-      case SubExpr(l, r) => isAggregate(l) || isAggregate(r)
-      case MulExpr(l, r) => isAggregate(l) || isAggregate(r)
-      case DivExpr(l, r) => isAggregate(l) || isAggregate(r)
+      case BinOpExpr(_, l, r) => isAggregate(l) || isAggregate(r)
       case NegExpr(opd) => isAggregate(opd)
       case _ => false
     }
@@ -525,14 +516,6 @@ trait SqlCompiler extends SqlParser {
     !columns.exists(e => !isAggregate(e))
   }
 
-  def and(left: Expression, right: Expression) = {
-    (left, right) match { 
-      case (l:Literal, r:Expression) => r
-      case (l:Expression, r:Literal) => l
-      case (l:Expression, r:Expression) => AndExpr(l, r)
-    }
-  }
-
   def depends(on: Operator, subquery: Operator): Boolean = {
     subquery match {
       case Join(outer, inner, _, _) => depends(on, outer) || depends(on, inner)
@@ -551,18 +534,7 @@ trait SqlCompiler extends SqlParser {
 
   def using(op: Operator, predicate: Expression): Boolean = {
     dealias(predicate) match {
-      case AndExpr(l, r) => using(op, l) || using(op, r)
-      case OrExpr(l, r) =>  using(op, l) || using(op, r)
-      case AddExpr(l, r) => using(op, l) || using(op, r)
-      case SubExpr(l, r) => using(op, l) || using(op, r)
-      case MulExpr(l, r) => using(op, l) || using(op, r)
-      case DivExpr(l, r) => using(op, l) || using(op, r)
-      case EqExpr(l, r) => using(op, l) || using(op, r)
-      case NeExpr(l, r) => using(op, l) || using(op, r)
-      case LeExpr(l, r) => using(op, l) || using(op, r)
-      case LtExpr(l, r) => using(op, l) || using(op, r)
-      case GtExpr(l, r) => using(op, l) || using(op, r)
-      case GeExpr(l, r) => using(op, l) || using(op, r)
+      case BinOpExpr(_, l, r) => using(op, l) || using(op, r)
       case ExistsExpr(q) => using(op, q)
       case LikeExpr(l, r, escape) =>
         using(op, l) || using(op, r) || escape.exists(using(op, _))
@@ -588,6 +560,14 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
+  def and(left: Expression, right: Expression) = {
+    if (left == Literal(true, BoolType) || right == Literal(false, BoolType))
+      right
+    else if (right == Literal(true, BoolType) || left == Literal(false, BoolType))
+      left
+    else
+      BinOpExpr(And, left, right)
+  }
 
   def optimize(op: Operator, predicate: Expression): (Operator, Expression) = {
     op match { 
@@ -596,7 +576,7 @@ trait SqlCompiler extends SqlParser {
           (Join(Filter(outer, predicate), inner, joinType, joinSpec), Literal(true, BoolType))
         else
           predicate match {
-            case AndExpr(l, r) =>
+            case BinOpExpr(And, l, r) =>
               val (jr, cr) = optimize(op, r)
               val (jl, cl) = optimize(jr, l)
               (jl, and(cl, cr))

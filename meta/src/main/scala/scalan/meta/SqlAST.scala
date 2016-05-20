@@ -91,31 +91,32 @@ object SqlAST {
 
   case class SelectExpr(stmt: SelectStmt) extends Expression
 
-  case class AddExpr(left: Expression, right: Expression) extends Expression
+  sealed trait BinOp
 
-  case class SubExpr(left: Expression, right: Expression) extends Expression
+  sealed trait ArithOp extends BinOp
+  case object Plus extends ArithOp
+  case object Minus extends ArithOp
+  case object Times extends ArithOp
+  case object Divide extends ArithOp
+  case object Modulo extends ArithOp
 
-  case class MulExpr(left: Expression, right: Expression) extends Expression
+  sealed trait LogicOp extends BinOp
+  case object And extends LogicOp
+  case object Or extends LogicOp
 
-  case class DivExpr(left: Expression, right: Expression) extends Expression
+  sealed trait ComparisonOp extends BinOp
+  case object Eq extends ComparisonOp
+  case object Greater extends ComparisonOp
+  case object GreaterEq extends ComparisonOp
+  case object Less extends ComparisonOp
+  case object LessEq extends ComparisonOp
+  case object Is extends ComparisonOp
 
-  case class EqExpr(left: Expression, right: Expression) extends Expression
+  case object Concat extends BinOp
 
-  case class NeExpr(left: Expression, right: Expression) extends Expression
-
-  case class GtExpr(left: Expression, right: Expression) extends Expression
-
-  case class GeExpr(left: Expression, right: Expression) extends Expression
-
-  case class LtExpr(left: Expression, right: Expression) extends Expression
-
-  case class LeExpr(left: Expression, right: Expression) extends Expression
+  case class BinOpExpr(op: BinOp, left: Expression, right: Expression) extends Expression
 
   case class LikeExpr(left: Expression, right: Expression, escape: Option[Expression]) extends Expression
-
-  case class AndExpr(left: Expression, right: Expression) extends Expression
-
-  case class OrExpr(left: Expression, right: Expression) extends Expression
 
   case class InListExpr(left: Expression, right: ExprList) extends Expression
 
