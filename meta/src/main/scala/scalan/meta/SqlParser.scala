@@ -328,10 +328,10 @@ trait SqlParser {
       orExpression
 
     protected lazy val orExpression: Parser[Expression] =
-      andExpression * (OR ^^^ { (e1: Expression, e2: Expression) => OrExpr(e1, e2)})
+      andExpression * (OR ^^^ { (e1: Expression, e2: Expression) => BinOpExpr(Or, e1, e2)})
 
     protected lazy val andExpression: Parser[Expression] =
-      comparisonExpression * (AND ^^^ { (e1: Expression, e2: Expression) => AndExpr(e1, e2)})
+      comparisonExpression * (AND ^^^ { (e1: Expression, e2: Expression) => BinOpExpr(And, e1, e2)})
 
     private def notOpt(not: Option[_], expr: Expression) =
       not match {
@@ -339,17 +339,24 @@ trait SqlParser {
         case Some(_) => NotExpr(expr)
       }
 
+    protected lazy val comparisonOp: Parser[ComparisonOp ~ Boolean] =
+      ("=" | "==") ^^^ new ~(Eq, false) | ("<>" | "!=") ^^^ new ~(Eq, true) |
+        IS ~ NOT ^^^ new ~(Is, true) | IS ^^^ new ~(Is, false) |
+        ("<" ^^^ Less | "<=" ^^^ LessEq | ">" ^^^ Greater | ">=" ^^^ GreaterEq) ^^ { op => new ~(op, false) }
+
     protected lazy val comparisonExpression: Parser[Expression] =
-      termExpression ~ ("=" ~> termExpression) ^^ { case e1 ~ e2 => EqExpr(e1, e2) } |
-        termExpression ~ ("<" ~> termExpression) ^^ { case e1 ~ e2 => LtExpr(e1, e2) } |
-        termExpression ~ ("<=" ~> termExpression) ^^ { case e1 ~ e2 => LeExpr(e1, e2) } |
-        termExpression ~ (">" ~> termExpression) ^^ { case e1 ~ e2 => GtExpr(e1, e2) } |
-        termExpression ~ (">=" ~> termExpression) ^^ { case e1 ~ e2 => GeExpr(e1, e2) } |
-        termExpression ~ ("!=" ~> termExpression) ^^ { case e1 ~ e2 => NeExpr(e1, e2) } |
-        termExpression ~ ("<>" ~> termExpression) ^^ { case e1 ~ e2 => NeExpr(e1, e2) } |
+      termExpression ~ comparisonOp ~ termExpression ^^ {
+        case e1 ~ (op ~ negate) ~ e2 =>
+          if (negate)
+            NotExpr(BinOpExpr(op, e1, e2))
+          else
+            BinOpExpr(op, e1, e2)
+      } |
         termExpression ~ NOT.? ~ (BETWEEN ~> termExpression) ~ (AND ~> termExpression) ^^ {
           case e ~ not ~ el ~ eu =>
-            val betweenExpr = AndExpr(GeExpr(e, el), LeExpr(e, eu))
+            val betweenExpr = BinOpExpr(And,
+              BinOpExpr(GreaterEq, e, el),
+              BinOpExpr(LessEq, e, eu))
             notOpt(not, betweenExpr)
         } |
         termExpression ~ NOT.? ~ (LIKE ~> termExpression) ~ (ESCAPE ~> termExpression).? ^^ {
@@ -375,17 +382,24 @@ trait SqlParser {
           } |
         termExpression
 
+    protected lazy val plusPriorityOp: Parser[BinOp] =
+      "+" ^^^ Plus | "-" ^^^ Minus
+
     protected lazy val termExpression: Parser[Expression] =
       productExpression *
-        ("+" ^^^ { (e1: Expression, e2: Expression) => AddExpr(e1, e2)}
-          | "-" ^^^ { (e1: Expression, e2: Expression) => SubExpr(e1, e2)}
-          )
+        (plusPriorityOp ^^ { op =>
+          (e1: Expression, e2: Expression) => BinOpExpr(op, e1, e2)
+        })
+
+    // || actually has even higher priority, shouldn't mix up with the rest in actual SQL
+    protected lazy val timesPriorityOp: Parser[BinOp] =
+      "||" ^^^ Concat | "*" ^^^ Times | "/" ^^^ Divide | "%" ^^^ Modulo
 
     protected lazy val productExpression: Parser[Expression] =
       baseExpression *
-        ("*" ^^^ { (e1: Expression, e2: Expression) => MulExpr(e1, e2)}
-          | "/" ^^^ { (e1: Expression, e2: Expression) => DivExpr(e1, e2)}
-          )
+        (timesPriorityOp ^^ { op =>
+          (e1: Expression, e2: Expression) => BinOpExpr(op, e1, e2)
+        })
 
     protected lazy val function: Parser[Expression] =
       (SUM ~> "(" ~> expression <~ ")" ^^ { case exp => SumExpr(exp)}
@@ -400,7 +414,7 @@ trait SqlParser {
         ( ELSE ~> expression).? <~ END ^^ {
         case casePart ~ altPart ~ elsePart =>
           val altExprs = altPart.flatMap { case whenExpr ~ thenExpr =>
-            Seq(casePart.fold(whenExpr)(EqExpr(_, whenExpr)), thenExpr)
+            Seq(casePart.fold(whenExpr)(BinOpExpr(Eq, _, whenExpr)), thenExpr)
           }
           CaseWhenExpr(altExprs ++ elsePart.toList)
       }
