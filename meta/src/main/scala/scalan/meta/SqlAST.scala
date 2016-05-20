@@ -116,6 +116,21 @@ object SqlAST {
 
   case class BinOpExpr(op: BinOp, left: Expression, right: Expression) extends Expression
 
+  sealed trait AggregateOp
+  case object Count extends AggregateOp
+  case object Sum extends AggregateOp
+  case object Avg extends AggregateOp
+  case object Max extends AggregateOp
+  case object Min extends AggregateOp
+//  case object Every extends AggregateOp
+//  case object Any extends AggregateOp
+//  case object Some extends AggregateOp
+
+  case class AggregateExpr(op: AggregateOp, distinct: Boolean, value: Expression) extends Expression {
+    def isCountAll = this == CountAllExpr
+  }
+  val CountAllExpr = AggregateExpr(Count, false, Literal(1, IntType))
+
   case class LikeExpr(left: Expression, right: Expression, escape: Option[Expression]) extends Expression
 
   case class InListExpr(left: Expression, right: ExprList) extends Expression
@@ -128,23 +143,7 @@ object SqlAST {
 
   case class NotExpr(opd: Expression) extends Expression
 
-  case class AvgExpr(opd: Expression) extends Expression
-
-  case class SumExpr(opd: Expression) extends Expression
-
-  case class SumDistinctExpr(opd: Expression) extends Expression
-
-  case class MaxExpr(opd: Expression) extends Expression
-
-  case class MinExpr(opd: Expression) extends Expression
-
   case class SubstrExpr(str: Expression, from: Expression, len: Expression) extends Expression
-
-  case class CountExpr() extends Expression
-
-  case class CountNotNullExpr(exp: Expression) extends Expression
-
-  case class CountDistinctExpr(exps: ExprList) extends Expression
 
   case class IsNullExpr(opd: Expression) extends Expression
 

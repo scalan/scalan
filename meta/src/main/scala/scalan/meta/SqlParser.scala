@@ -403,16 +403,20 @@ trait SqlParser {
           (e1: Expression, e2: Expression) => BinOpExpr(op, e1, e2)
         })
 
-    protected lazy val function: Parser[Expression] =
-      (SUM ~> "(" ~> expression <~ ")" ^^ { case exp => SumExpr(exp)}
-        | SUM ~> "(" ~> DISTINCT ~> expression <~ ")" ^^ { case exp => SumDistinctExpr(exp)}
-        | COUNT ~ "(" ~> "*" <~ ")" ^^ { case _ => CountExpr()}
-        | COUNT ~ "(" ~> expression <~ ")" ^^ { case exp => CountNotNullExpr(exp)}
-        | COUNT ~> "(" ~> DISTINCT ~> repsep(expression, ",") <~ ")" ^^ { case exps => CountDistinctExpr(exps)}
-        | AVG ~ "(" ~> expression <~ ")" ^^ { case exp => AvgExpr(exp)}
-        | MIN ~ "(" ~> expression <~ ")" ^^ { case exp => MinExpr(exp)}
-        | MAX ~ "(" ~> expression <~ ")" ^^ { case exp => MaxExpr(exp)}
-        | CASE ~> expression.? ~ (WHEN ~> expression ~ (THEN ~> expression)).* ~
+    protected lazy val aggregateOp: Parser[AggregateOp] =
+      COUNT ^^^ Count | SUM ^^^ Sum | AVG ^^^ Avg | MAX ^^^ Max | MIN ^^^ Min
+
+    protected lazy val aggregateExpression =
+      COUNT ~ "(" ~> "*" <~ ")" ^^^ CountAllExpr |
+        // FILTER clause not supported for now
+        aggregateOp ~ ("(" ~> (DISTINCT | ALL).?) ~ expression <~ ")" ^^ {
+          case op ~ quantifier ~ value =>
+            val distinct = quantifier == Some(DISTINCT)
+            AggregateExpr(op, distinct, value)
+        }
+
+    protected lazy val caseExpression =
+      CASE ~> expression.? ~ (WHEN ~> expression ~ (THEN ~> expression)).* ~
         ( ELSE ~> expression).? <~ END ^^ {
         case casePart ~ altPart ~ elsePart =>
           val altExprs = altPart.flatMap { case whenExpr ~ thenExpr =>
@@ -420,9 +424,14 @@ trait SqlParser {
           }
           CaseWhenExpr(altExprs ++ elsePart.toList)
       }
-        | (SUBSTR | SUBSTRING) ~ "(" ~> expression ~ ("," ~> expression) ~ ("," ~> expression) <~ ")" ^^ { case s ~ p ~ l => SubstrExpr(s, p, l)}
-        | ident ~ ("(" ~> repsep(expression, ",")) <~ ")" ^^ { case func ~ exprs => FuncExpr(func, exprs)}
-        )
+
+    protected lazy val function: Parser[Expression] =
+      aggregateExpression |
+        caseExpression |
+        (SUBSTR | SUBSTRING) ~ "(" ~> expression ~ ("," ~> expression) ~ ("," ~> expression) <~ ")" ^^ {
+          case s ~ p ~ l => SubstrExpr(s, p, l)
+        } |
+        ident ~ ("(" ~> repsep(expression, ",")) <~ ")" ^^ { case func ~ exprs => FuncExpr(func, exprs)}
 
     protected lazy val cast: Parser[Expression] =
       CAST ~ "(" ~> expression ~ (AS ~> fieldType) <~ ")" ^^ { case exp ~ t => CastExpr(exp, t)}
