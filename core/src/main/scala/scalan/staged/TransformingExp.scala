@@ -467,7 +467,7 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
 
     def getInboundMarkings[T](te: TableEntry[T], outMark: M[T]): MarkedSyms
 
-    def getLambdaMarking[A,B](lam: Lambda[A,B], argMark: M[A]): M[A => B]
+    def getLambdaMarking[A,B](lam: Lambda[A,B], mDom: M[A], mRange: M[B]): M[A => B]
 
     def getMarkingKey[T](implicit eT:Elem[T]): MetaKey[M[T]] = markingKey[T](keyPrefix).asInstanceOf[MetaKey[M[T]]]
 
@@ -507,10 +507,11 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
             // analyze lambda after the markings were assigned to the l.y during previous propagation step
             backwardAnalyzeRec(l)
             // markings were propagated up to the lambda variable
-            val argMark = getMark(l.x)
+            val mDom = getMark(l.x)
+            val mRange = getMark(l.y)
 
             // update markings attached to l
-            val lMark = getLambdaMarking(l, argMark)
+            val lMark = getLambdaMarking(l, mDom, mRange)
             updateOutboundMarking(l.self, lMark)
           case _ =>
         }
