@@ -389,8 +389,20 @@ trait SqlCompiler extends SqlParser {
     result
   }
 
+  def isAggregate(column: ProjectionColumn): Boolean = isAggregate(column.expr)
 
-  def isAggregate(column: ProjectionColumn): Boolean = column.expr.isInstanceOf[AggregateExpr]
+  def isAggregate(expr: Expression): Boolean =
+    expr match {
+      case _: AggregateExpr =>
+        true
+      case BinOpExpr(_, l, r) =>
+        isAggregate(l) || isAggregate(r)
+      case NegExpr(opd) =>
+        isAggregate(opd)
+      case NotExpr(opd) =>
+        isAggregate(opd)
+      case _ => false
+    }
 
   def generateAggOperand(agg: Expression): String = {
     agg match {
