@@ -64,14 +64,8 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
-  def dealias(e: Expression): Expression = e match {
-    case ExprAlias(e1, _) =>
-      dealias(e1)
-    case _ => e
-  }
-
   def tablesInNestedSelects(e: Expression): Set[Table] = {
-    dealias(e) match {
+    e match {
       case BinOpExpr(op, l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
       case ExistsExpr(q) => tablesInNestedSelects(q)
       case LikeExpr(l, r, _) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
@@ -155,13 +149,15 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
-  case class ProjectContext(parent: Context, columns: ExprList) extends Context {
+  case class ProjectContext(parent: Context, columns: List[ProjectionColumn]) extends Context {
     def resolve(ref: ColumnRef): Option[Binding] = {
-      val i = columns.indexWhere(c => matchExpr(c, ref))
+      val i = columns.indexWhere {
+        case ProjectionColumn(c, alias) => matchExpr(c, alias, ref)
+      }
       if (i >= 0) {
         val saveScope = currScope
         currScope = Scope(parent, scope.outer, scope.nesting, scope.name)
-        val cType =  getExprType(columns(i))
+        val cType =  getExprType(columns(i).expr)
         currScope = saveScope
         Some(Binding(scope.name, indexToPath(i, columns.length), Column(ref.name, cType)))
       }
@@ -223,7 +219,7 @@ trait SqlCompiler extends SqlParser {
   }
 
   def generateExpr(expr: Expression): String = {
-    dealias(expr) match {
+    expr match {
       case BinOpExpr(op, l, r) =>
         // Ignore behavior on nulls currently
         val opStr = op match {
@@ -298,7 +294,7 @@ trait SqlCompiler extends SqlParser {
   }
 
   def getExprType(expr: Expression): ColumnType = {
-    dealias(expr) match {
+    expr match {
       case BinOpExpr(op, l, r) =>
         op match {
           case _: LogicOp | _: ComparisonOp =>
@@ -394,12 +390,10 @@ trait SqlCompiler extends SqlParser {
   }
 
 
-  def isAggregate(expr: Expression): Boolean = {
-    dealias(expr).isInstanceOf[AggregateExpr]
-  }
+  def isAggregate(column: ProjectionColumn): Boolean = column.expr.isInstanceOf[AggregateExpr]
 
   def generateAggOperand(agg: Expression): String = {
-    dealias(agg) match {
+    agg match {
       case AggregateExpr(op, _, opd) =>
         op match {
           case Count => "1"
@@ -410,7 +404,7 @@ trait SqlCompiler extends SqlParser {
   }
 
   def aggCombine(agg: Expression, s1: String, s2: String): String = {
-    dealias(agg) match {
+    agg match {
       case AggregateExpr(op, _, opd) =>
         op match {
           case Count | Avg | Sum =>
@@ -424,45 +418,43 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
-  def getAggPath(columns: ExprList, aggregates: ExprList, n: Int): String = {
+  def getAggPath(columns: List[ProjectionColumn], length: Int, n: Int): String = {
     var aggIndex = 0
     for (i <- 0 until n) {
       if (isAggregate(columns(i))) aggIndex += 1
     }
-    pathString("tail" :: indexToPath(aggIndex, aggregates.length))
+    pathString("tail" :: indexToPath(aggIndex, length))
   }
 
-  def matchExpr(col: Expression, exp: Expression): Boolean = {
-    col == exp || ((col, exp) match {
-      case (ExprAlias(e1, alias), ColumnRef(None, name)) =>
-        name == alias || matchExpr(e1, exp)
-      case (ColumnRef(None, name), ExprAlias(e1, alias)) =>
-        name == alias || matchExpr(col, e1)
-      case (ExprAlias(e1, _), ExprAlias(e2, _)) =>
-        matchExpr(e1, e2)
+  def matchExpr(col: Expression, alias: Option[String], exp: Expression): Boolean = {
+    col == exp || (exp match {
+      case ColumnRef(None, name) =>
+        alias == Some(name)
       case _ => false
     })
   }
 
-  def generateAggResult(columns: ExprList, aggregates: ExprList, gby: ExprList, i: Int, count: Int, expr: Expression): String = {
-    lazy val aggPath = getAggPath(columns, aggregates, i)
-    dealias(expr) match {
+  def generateAggResult(columns: List[ProjectionColumn], length: Int, gby: ExprList, i: Int, count: Int, expr: Expression): String = {
+    lazy val aggPath = getAggPath(columns, length, i)
+    expr match {
       case AggregateExpr(op, _, opd) =>
         op match {
           case Count | Sum | Max | Min =>
             aggPath
           case Avg =>
-            val countPath = pathString("tail" :: indexToPath(count, aggregates.length))
+            val countPath = pathString("tail" :: indexToPath(count, length))
             s"""($aggPath.toDouble / $countPath.toDouble)"""
         }
       case c: ColumnRef => {
-        val keyIndex = gby.indexWhere(k => matchExpr(c, k))
+        val keyIndex = gby.indexWhere {
+          k => matchExpr(c, None, k)
+        }
         if (keyIndex < 0)
           throw SqlException("Unsupported group-by clause")
         else
           pathString("head" :: indexToPath(keyIndex, gby.length))
       }
-      case _ => throw new NotImplementedError(s"generateAggResult($columns, $aggregates, $gby, $i, $count)")
+      case _ => throw new NotImplementedError(s"generateAggResult($columns, $length, $gby, $i, $count)")
     }
   }
 
@@ -476,34 +468,31 @@ trait SqlCompiler extends SqlParser {
   def groupBy(agg: Operator, gby: ExprList): String = {
     agg match {
       case Project(p, columns)  => {
-        var aggregates = columns.filter(e => isAggregate(e))
+        var aggregates = columns.filter(isAggregate)
         var countIndex = aggregates.indexWhere {
-          dealias(_) match {
-            case AggregateExpr(Count, _, _) => true
-            case _ => false
-          }
+          case ProjectionColumn(AggregateExpr(Count, _, _), _) => true
+          case _ => false
         }
         if (countIndex < 0 && aggregates.exists {
-          dealias(_) match {
-            case AggregateExpr(Avg, _, _) => true
-            case _ => false
-          }
+          case ProjectionColumn(AggregateExpr(Avg, _, _), _) => true
+          case _ => false
         }) {
           countIndex = aggregates.length
-          aggregates = aggregates :+ CountAllExpr
+          aggregates = aggregates :+ ProjectionColumn(CountAllExpr, None)
         }
+        val numberOfAggregates = aggregates.length
         pushContext(p)
-        val aggTypes = buildTree(aggregates.map(agg => getExprType(agg).scalaName))
+        val aggTypes = buildTree(aggregates.map(agg => getExprType(agg.expr).scalaName))
         val groupBy = buildTree(gby.map(col => {
           val binding = lookup(ref(col))
           binding.asScalaCode
         }), "Pair(")
-        val map = buildTree(aggregates.map(agg => generateAggOperand(agg)), "Pair(")
-        val reduce = if (aggregates.length == 1)
-          aggCombine(aggregates(0), "s1", "s2")
+        val map = buildTree(aggregates.map(agg => generateAggOperand(agg.expr)), "Pair(")
+        val reduce = if (numberOfAggregates == 1)
+          aggCombine(aggregates(0).expr, "s1", "s2")
         else
-          aggregates.indices.map(i => aggCombine(aggregates(i), "s1._" + (i+1), "s2._" + (i+1))).mkString(",")
-        val aggResult = buildTree(columns.indices.map(i => generateAggResult(columns, aggregates, gby, i, countIndex, columns(i))), "Pair(")
+          aggregates.indices.map(i => aggCombine(aggregates(i).expr, "s1._" + (i+1), "s2._" + (i+1))).mkString(",")
+        val aggResult = buildTree(columns.indices.map(i => generateAggResult(columns, numberOfAggregates, gby, i, countIndex, columns(i).expr)), "Pair(")
         val result = s"""ReadOnlyTable(${generateOperator(p)}
            |$indent.mapReduce(${currScope.name} => Pair(${groupBy}, ${map}),
            |$indent\t(s1: Rep[${aggTypes}], s2: Rep[${aggTypes}]) => (${reduce})).toArray.map(${currScope.name} => ${aggResult}))""".stripMargin
@@ -514,7 +503,7 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
-  def isGrandAggregate(columns: ExprList): Boolean = {
+  def isGrandAggregate(columns: List[ProjectionColumn]): Boolean = {
     columns.forall(isAggregate)
   }
 
@@ -525,7 +514,7 @@ trait SqlCompiler extends SqlParser {
       case OrderBy(p, by) => depends(on, p) || using(on, by.map(_.expr))
       case GroupBy(p, by) => depends(on, p) || using(on, by)
       case Filter(p, predicate) => depends(on, p) || using(on, predicate)
-      case Project(p, columns) => depends(on, p) || using(on, columns)
+      case Project(p, columns) => depends(on, p) || using(on, columns.map(_.expr))
       case TableAlias(t, a) =>  depends(on, t)
       case SubSelect(p) => depends(on, p)
       case _ => false
@@ -535,7 +524,7 @@ trait SqlCompiler extends SqlParser {
   def using(op: Operator, list: ExprList): Boolean = list.exists(e => using(op, e))
 
   def using(op: Operator, predicate: Expression): Boolean = {
-    dealias(predicate) match {
+    predicate match {
       case BinOpExpr(_, l, r) => using(op, l) || using(op, r)
       case ExistsExpr(q) => using(op, q)
       case LikeExpr(l, r, escape) =>
@@ -615,11 +604,11 @@ trait SqlCompiler extends SqlParser {
       case Project(p, columns) =>
         if (isGrandAggregate(columns)) {
           pushContext(p)
-          val agg = s"""{ val result = ${generateOperator(p)} ; (${generateExprList(columns)}) }"""
+          val agg = s"""{ val result = ${generateOperator(p)} ; (${generateExprList(columns.map(_.expr))}) }"""
           popContext()
           agg
         } else {
-          generateOperator(p) + s"""\n$indent.select(${generateLambdaExprList(p, columns)})"""
+          generateOperator(p) + s"""\n$indent.select(${generateLambdaExprList(p, columns.map(_.expr))})"""
         }
       case TableAlias(t, a) => generateOperator(t)
       case SubSelect(p) =>
@@ -635,7 +624,7 @@ trait SqlCompiler extends SqlParser {
   def tableToArray(op:Operator):String = {
     op match {
       case OrderBy(p, by) => ""
-      case Project(p, c) if (isGrandAggregate(c)) => ""
+      case Project(p, c) if isGrandAggregate(c) => ""
       case _ => ".toArray"
     }
   }
@@ -649,7 +638,7 @@ trait SqlCompiler extends SqlParser {
       case Filter(p, predicate) => operatorType(p)
       case Project(p, columns) => {
         pushContext(p)
-        val projection = buildTree(columns.map(c => getExprType(c).scalaName))
+        val projection = buildTree(columns.map(c => getExprType(c.expr).scalaName))
         popContext()
         projection
       }
@@ -662,7 +651,7 @@ trait SqlCompiler extends SqlParser {
   def resultType(query: SelectStmt): String = {
     query.operator match {
       case OrderBy(p, by) => "Arr[" + operatorType(p) + "]"
-      case Project(p, c) if (isGrandAggregate(c)) => "Rep[" + operatorType(p) + "]"
+      case Project(p, c) if isGrandAggregate(c) => "Rep[" + operatorType(p) + "]"
       case _ => "Arr[" + operatorType(query.operator) + "]"
     }
   }

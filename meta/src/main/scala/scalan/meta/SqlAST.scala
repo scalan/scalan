@@ -44,7 +44,8 @@ object SqlAST {
 
   case class TableAlias(table: Operator, alias: String) extends Operator
 
-  case class Project(parent: Operator, columns: ExprList) extends Operator
+  case class ProjectionColumn(expr: Expression, alias: Option[String])
+  case class Project(parent: Operator, columns: List[ProjectionColumn]) extends Operator
 
   case class Filter(parent: Operator, predicate: Expression) extends Operator
 
@@ -83,11 +84,6 @@ object SqlAST {
   case class CreateIndexStmt(name: String, table: Table, key: ColumnList) extends Statement
 
   sealed trait Expression
-  sealed trait NamedExpression extends Expression {
-    def name: String
-  }
-
-  case class StarExpr() extends Expression
 
   case class SelectExpr(stmt: SelectStmt) extends Expression
 
@@ -155,14 +151,12 @@ object SqlAST {
 
   case class CaseWhenExpr(list: ExprList) extends Expression
 
-  case class ColumnRef(table: Option[String], name: String) extends NamedExpression {
+  case class ColumnRef(table: Option[String], name: String) extends Expression {
     def asString = (table match {
       case Some(table) => table + "."
       case None => ""
     }) + name
   }
-
-  case class ExprAlias(expr: Expression, name: String) extends NamedExpression
 
   def Schema(list: Column*): Schema = list.toList
 
