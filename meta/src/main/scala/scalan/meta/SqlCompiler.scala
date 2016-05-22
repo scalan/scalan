@@ -312,7 +312,7 @@ trait SqlCompiler extends SqlParser {
       case AggregateExpr(Avg, _, _) => DoubleType
       case AggregateExpr(Sum | Max | Min, _, opd) => getExprType(opd)
       case SubstrExpr(str,from,len) => StringType
-      case CaseWhenExpr(list) => getExprType(list.head)
+      case CaseWhenExpr(list) => getExprType(list(1))
       case Literal(v, t) => t
       case CastExpr(e, t) => t
       case c: ColumnRef => lookup(c).column.ctype

@@ -415,7 +415,7 @@ trait SqlParser {
 
     protected lazy val caseExpression =
       CASE ~> expression.? ~ (WHEN ~> expression ~ (THEN ~> expression)).* ~
-        ( ELSE ~> expression).? <~ END ^^ {
+        (ELSE ~> expression).? <~ END ^^ {
         case casePart ~ altPart ~ elsePart =>
           val altExprs = altPart.flatMap { case whenExpr ~ thenExpr =>
             Seq(casePart.fold(whenExpr)(BinOpExpr(Eq, _, whenExpr)), thenExpr)
