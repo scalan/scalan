@@ -77,9 +77,15 @@ trait Elems extends Base { self: Scalan =>
     override def isEntityType = false
     override def canEqual(other: Any) = other.isInstanceOf[BaseElem[_]]
     override def equals(other: Any) = other match {
-      case other: BaseElem[_] => (this eq other) || (other.canEqual(this) && tag.tpe =:= other.tag.tpe)
+      case other: BaseElem[_] =>
+        this.eq(other) ||
+          (other.canEqual(this) &&
+            this.runtimeClass == other.runtimeClass &&
+            noTypeArgs)
       case _ => false
     }
+    private[this] lazy val noTypeArgs =
+      if (tag.tpe.typeArgs.isEmpty) true else !!!(s"$this is a BaseElem for a generic type, must override equals")
     override def hashCode = tag.tpe.hashCode
   }
 

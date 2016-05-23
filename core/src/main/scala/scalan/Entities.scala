@@ -15,7 +15,11 @@ trait Entities extends Elems { self: Scalan =>
     // TODO generate code for this in implementations
     def canEqual(other: Any) = other.isInstanceOf[EntityElem[_]]
     override def equals(other: Any) = other match {
-      case other: EntityElem[_] => other.canEqual(this) && tag.tpe =:= other.tag.tpe
+      case other: EntityElem[_] =>
+        this.eq(other) ||
+          (other.canEqual(this) &&
+            this.runtimeClass == other.runtimeClass &&
+            this.typeArgs.valuesIterator.sameElements(other.typeArgs.valuesIterator))
       case _ => false
     }
     override def hashCode = tag.tpe.hashCode

@@ -28,7 +28,17 @@ trait TypeWrappers extends Base { self: Scalan =>
 
   class BaseTypeElem1[A, CBase[_], TWrapper <: TypeWrapper[CBase[A], TWrapper]]
     (wrapperElem: Elem[TWrapper])(implicit val eItem: Elem[A], val cont: Cont[CBase], z: Default[CBase[A]])
-    extends BaseTypeElem[CBase[A], TWrapper](wrapperElem)(cont.tag(eItem.tag), z)
+    extends BaseTypeElem[CBase[A], TWrapper](wrapperElem)(cont.tag(eItem.tag), z) {
+    override def equals(other: Any) = other match {
+      case other: BaseTypeElem1[_, _, _] =>
+        this.eq(other) ||
+          (other.canEqual(this) &&
+            this.runtimeClass == other.runtimeClass &&
+            cont == other.cont &&
+            eItem == other.eItem)
+      case _ => false
+    }
+  }
 
   protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase]
 
