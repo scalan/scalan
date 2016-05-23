@@ -315,6 +315,7 @@ trait AstGraphs extends TransformingExp { self: ScalanExp =>
 
     def show(): Unit = showGraphs(this)(defaultGraphVizConfig)
     def show(config: GraphVizConfig): Unit = showGraphs(this)(config)
+    def show(emitMetadata: Boolean): Unit = showGraphs(this)(defaultGraphVizConfig.copy(emitMetadata = emitMetadata))
   }
 
   /** When stored in Map, describes for each key the branch of the symbol
