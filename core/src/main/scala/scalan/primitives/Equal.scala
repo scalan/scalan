@@ -15,6 +15,10 @@ trait Equal extends UnBinOps { self: Scalan =>
 trait EqualExp extends Equal with BaseExp { self: ScalanExp =>
   override def rewriteDef[T](d: Def[T]) = d match {
     case ApplyBinOp(_: Equals[_], x, y) if x == y => true
+    case ApplyBinOp(_: Equals[_], x, Def(Const(b: Boolean))) if x.elem == BooleanElement =>
+      if (b) x else !x.asRep[Boolean]
+    case ApplyBinOp(_: Equals[_], Def(Const(b: Boolean)), x) if x.elem == BooleanElement =>
+      if (b) x else !x.asRep[Boolean]
     case _ => super.rewriteDef(d)
   }
 }
