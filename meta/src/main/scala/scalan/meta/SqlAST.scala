@@ -24,6 +24,9 @@ object SqlAST {
   val CharType = ColumnType("char", "Char")
   val BoolType = ColumnType("bit", "Boolean")
   val DateType = ColumnType("date", "Int")
+  val TimeType = ColumnType("time", "Int")
+  val TimestampType = ColumnType("timestamp", "Long")
+  val BlobType = ColumnType("blob", "Array[Byte]")
   val NullType = ColumnType("null", "Any")
 
   sealed abstract class JoinType
