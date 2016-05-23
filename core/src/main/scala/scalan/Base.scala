@@ -21,6 +21,7 @@ trait Base extends LazyLogging { self: Scalan =>
   type FloatRep = Rep[Float]
   type DoubleRep = Rep[Double]
   type :=>[-A, +B] = PartialFunction[A, B]
+  type RFunc[-A,+B] = Rep[Function1[A,B]]
 
   protected def stagingExceptionMessage(message: String, syms: Seq[Rep[_]]): String
 

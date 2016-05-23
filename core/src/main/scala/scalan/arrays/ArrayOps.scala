@@ -843,7 +843,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     //      SArray.replicate(xs1.length, v)(v.elem)
 
     // should be the last rule in this rewriteDef (with ArrayMap on top)
-    case ArrayMap(ys @ Def(d2), f: Rep[Function1[a, b]]@unchecked) =>
+    case ArrayMap(ys @ Def(d2), f: RFunc[a, b]@unchecked) =>
       d2.asDef[Array[a]] match {
 //        case ArrayMap(xs: Rep[Array[c]]@unchecked, g) => //TODO if hasSingleUsage(ys)
 //          val xs1 = xs.asRep[Array[c]]
@@ -871,7 +871,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       implicit val eB = l.eB
       ArraySumBy(ys1, sliceSecond(f), n.asInstanceOf[Numeric[b]])
 
-    case ArraySumBy(Def(ArrayApplyMany(xs, Def(find: ArrayFind[c]))), by: Rep[Function1[a, b]] @unchecked, n) =>
+    case ArraySumBy(Def(ArrayApplyMany(xs, Def(find: ArrayFind[c]))), by: RFunc[a, b] @unchecked, n) =>
       val a1 = xs.asRep[Array[a]]
       val a2 = find.xs
       implicit val eA = a1.elem.eItem
@@ -880,14 +880,14 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       implicit val num = n.asInstanceOf[Numeric[b]]
       val len = a2.length
       loopUntil2(0, num.zero)({ (i, sum) => i === len }, { (i, sum) => (i + 1, IF (find.f(a2(i))) THEN sum + by(a1(i)) ELSE sum) })._2
-    case ArraySumBy(Def(many: ArrayApplyMany[_]), by:Rep[Function1[a, b]] @unchecked, n) =>
+    case ArraySumBy(Def(many: ArrayApplyMany[_]), by: RFunc[a, b]@unchecked, n) =>
       val xs = many.xs.asRep[Array[a]]
       val indices = many.indices
       implicit val eA = xs.elem.eItem
       implicit val eB = by.elem.eRange
       implicit val num = n.asInstanceOf[Numeric[b]]
       indices.fold[b](num.zero, fun { p => p._1 + by(xs(p._2))})
-    case ArraySumBy(Def(filter: ArrayFilter[_]), by:Rep[Function1[a, b]] @unchecked, n) =>
+    case ArraySumBy(Def(filter: ArrayFilter[_]), by: RFunc[a, b]@unchecked, n) =>
       val xs = filter.xs.asRep[Array[a]]
       implicit val eA = xs.elem.eItem
       implicit val eB = by.elem.eRange
@@ -931,7 +931,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       }
 
 //    // Rule: fuse ArrayMap into ArrayMapReduce
-//    case mr@ArrayMapReduce(Def(map1: ArrayMap[x, y]@unchecked), map2: Rep[Function1[_, (k, v)]], reduce) =>
+//    case mr@ArrayMapReduce(Def(map1: ArrayMap[x, y]@unchecked), map2: RFunc[_, (k, v)]@unchecked, reduce) =>
 //      val xs = map1.xs.asRep[Array[x]]
 //      implicit val eX = xs.elem.eItem
 //      implicit val eY = map1.elem.eItem
