@@ -882,7 +882,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |        val s = xs.map(f1 >> iso.fromFun)
          |        val res = View${e.name}(s, iso)
          |        res
-         |      case (HasViews(source, Def(contIso: ${e.name}Iso[a, b])), f: Rep[Function1[_, c] @unchecked]) =>
+         |      case (HasViews(source, Def(contIso: ${e.name}Iso[a, b])), f: RFunc[_, c]@unchecked) =>
          |        val f1 = f.asRep[b => c]
          |        val iso = contIso.innerIso
          |        implicit val eC = f1.elem.eRange
