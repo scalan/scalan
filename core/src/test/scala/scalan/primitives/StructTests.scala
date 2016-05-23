@@ -113,9 +113,6 @@ class StructTests extends BaseViewTests {
 
   class Ctx extends TestCompilerContext {
     class ScalanCake extends ScalanDslExp with StructExamples with SegmentsDslExp {
-      // FIXME structWrapper test fails without this!
-      override val cacheElems = false
-//      override val cachePairs = false
 
       def containsTuples(g: PGraph): Boolean = {
         g.scheduleAll.exists(tp => tp.rhs match {
