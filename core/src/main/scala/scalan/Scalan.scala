@@ -1,18 +1,17 @@
 package scalan
 
+import scalan.arrays._
+import scalan.collections._
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
-import scalan.collections._
-import scalan.arrays._
 import scalan.seq.BaseStd
-import scalan.staged.{Transforming, BaseExp, Expressions, TransformingExp}
-import scalan.util.{ExceptionsDslExp, ExceptionsDslStd, ExceptionsDsl/*, Exceptions*/}
+import scalan.staged.{BaseExp, Expressions, Transforming, TransformingExp}
+import scalan.util.{ExceptionsDsl, ExceptionsDslExp, ExceptionsDslStd}
 
 abstract class Scalan
   extends Base
   with Debugging
-  with Elems
-  with Containers
+  with TypeDescs
   with TypeWrappers
   with ViewsDsl
   with Entities
@@ -56,10 +55,9 @@ extends Scalan
   with AbstractStringsDsl
 
 abstract class ScalanStd
-  extends Scalan
+extends Scalan
   with BaseStd
-  with ElemsStd
-  with ContainersStd
+  with TypeDescsStd
   with TypeWrappersStd
   with ViewsDslStd
   with ProxyStd
@@ -99,8 +97,7 @@ extends ScalanStd
 abstract class ScalanExp
   extends Scalan
   with BaseExp
-  with ElemsExp
-  with ContainersExp
+  with TypeDescsExp
   with TypeWrappersExp
   with ViewsDslExp
   with ProxyExp

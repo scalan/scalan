@@ -355,15 +355,15 @@ trait ScalanParsers {
         Some(SApply(SLiteral(ident.name.intern()), List(), List(List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue)))))
       case _ => optExpr(md.rhs)
     }
-    val isElemOrCont = md.tpt match {
+    val isTypeDesc = md.tpt match {
       case AppliedTypeTree(tpt, _) if Set("Elem", "Cont").contains(tpt.toString) =>
         true
-      case _ =>
-        false
+      case tpt =>
+        tpt.toString == "TypeDesc"
     }
 
     SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, isOverride,
-      optOverloadId, annotations, optBody, isElemOrCont)
+      optOverloadId, annotations, optBody, isTypeDesc)
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {

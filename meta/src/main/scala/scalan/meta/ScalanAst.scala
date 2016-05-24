@@ -190,7 +190,7 @@ object ScalanAst {
                          overloadId: Option[String],
                          annotations: List[SMethodAnnotation] = Nil,
                          body: Option[SExpr] = None,
-                         isElemOrCont: Boolean = false)
+                         isTypeDesc: Boolean = false)
     extends SBodyItem {
     def externalOpt: Option[SMethodAnnotation] = annotations.find(_.annotationClass == "External")
     def explicitArgs = argSections.flatMap(_.args.filterNot(_.impFlag))
@@ -241,7 +241,7 @@ object ScalanAst {
                          tpe: STpeExpr,
                          default: Option[SExpr],
                          annotations: List[SArgAnnotation] = Nil,
-                         isElemOrCont: Boolean = false)
+                         isTypeDesc: Boolean = false)
     extends SMethodOrClassArg
 
   case class SClassArg(
@@ -252,7 +252,7 @@ object ScalanAst {
                         tpe: STpeExpr,
                         default: Option[SExpr],
                         annotations: List[SArgAnnotation] = Nil,
-                        isElemOrCont: Boolean = false)
+                        isTypeDesc: Boolean = false)
     extends SMethodOrClassArg
 
   trait SMethodOrClassArgs {

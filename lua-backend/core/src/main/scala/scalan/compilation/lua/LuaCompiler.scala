@@ -36,7 +36,8 @@ class LuaCompiler[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends Comp
     fun
   }
 
-  protected def toLuaValue(x: Any, eX: Elem[_]): LuaValue = eX match {
+  // Cast to TypeDesc to work around https://issues.scala-lang.org/browse/SI-9779, remove when it's fixed
+  protected def toLuaValue(x: Any, eX: Elem[_]): LuaValue = eX.asInstanceOf[TypeDesc] match {
     case UnitElement => LuaValue.NIL
     case BooleanElement => LuaValue.valueOf(x.asInstanceOf[Boolean])
     case IntElement => LuaValue.valueOf(x.asInstanceOf[Int])
@@ -65,7 +66,8 @@ class LuaCompiler[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends Comp
   }
 
   // should check type before conversion?
-  protected def fromLuaValue[A](lv: LuaValue, eA: Elem[A]): A = (eA match {
+  // Cast to TypeDesc to work around https://issues.scala-lang.org/browse/SI-9779, remove when it's fixed
+  protected def fromLuaValue[A](lv: LuaValue, eA: Elem[A]): A = (eA.asInstanceOf[TypeDesc] match {
     case UnitElement => ()
     case BooleanElement => lv.toboolean()
     case IntElement => lv.toint()

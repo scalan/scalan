@@ -26,7 +26,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends EntityElem[To] {
     def eItem = _eItem
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> AnElem(eItem))
+    lazy val typeArgs = TypeArgs("Item" -> eItem)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagAnnotatedItem = eItem.tag
@@ -74,7 +74,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def eA = _eA
     def eB = _eB
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(pairElement(element[A],element[B])))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA), "B" -> AnElem(eB))
+    override lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -109,7 +109,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[Collection[A], To] {
     def eA = _eA
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(collectionElement(element[A])))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA))
+    override lazy val typeArgs = TypeArgs("A" -> eA)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -144,7 +144,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[Unit, UnitCollection]
     with ConcreteElem[UnitCollectionData, UnitCollection] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(UnitElement))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]()
+    override lazy val typeArgs = TypeArgs()
 
     override def convertCollection(x: Rep[Collection[Unit]]) = UnitCollection(x.length)
     override def getDefaultRep = UnitCollection(0)
@@ -225,7 +225,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[Item, CollectionOverArray[Item]]
     with ConcreteElem[CollectionOverArrayData[Item], CollectionOverArray[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> AnElem(eItem))
+    override lazy val typeArgs = TypeArgs("Item" -> eItem)
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverArray(x.arr)
     override def getDefaultRep = CollectionOverArray(element[Array[Item]].defaultRepValue)
@@ -308,7 +308,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[Item, CollectionOverList[Item]]
     with ConcreteElem[CollectionOverListData[Item], CollectionOverList[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> AnElem(eItem))
+    override lazy val typeArgs = TypeArgs("Item" -> eItem)
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverList(x.lst)
     override def getDefaultRep = CollectionOverList(element[List[Item]].defaultRepValue)
@@ -391,7 +391,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[Item, CollectionOverSeq[Item]]
     with ConcreteElem[CollectionOverSeqData[Item], CollectionOverSeq[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Item" -> AnElem(eItem))
+    override lazy val typeArgs = TypeArgs("Item" -> eItem)
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverSeq(x.seq)
     override def getDefaultRep = CollectionOverSeq(element[SSeq[Item]].defaultRepValue)
@@ -474,7 +474,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends PairCollectionElem[A, B, PairCollectionSOA[A, B]]
     with ConcreteElem[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA), "B" -> AnElem(eB))
+    override lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB)
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionSOA(x.as, x.bs)
     override def getDefaultRep = PairCollectionSOA(element[Collection[A]].defaultRepValue, element[Collection[B]].defaultRepValue)
@@ -561,7 +561,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends PairCollectionElem[A, B, PairCollectionAOS[A, B]]
     with ConcreteElem[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA), "B" -> AnElem(eB))
+    override lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB)
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionAOS(x.coll)
     override def getDefaultRep = PairCollectionAOS(element[Collection[(A, B)]].defaultRepValue)
@@ -646,7 +646,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends NestedCollectionElem[A, NestedCollectionFlat[A]]
     with ConcreteElem[NestedCollectionFlatData[A], NestedCollectionFlat[A]] {
     override lazy val parent: Option[Elem[_]] = Some(nestedCollectionElement(element[A]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA))
+    override lazy val typeArgs = TypeArgs("A" -> eA)
 
     override def convertNestedCollection(x: Rep[NestedCollection[A]]) = NestedCollectionFlat(x.values, x.segments)
     override def getDefaultRep = NestedCollectionFlat(element[Collection[A]].defaultRepValue, element[PairCollection[Int, Int]].defaultRepValue)
@@ -731,7 +731,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends NestedCollectionElem[A, CompoundCollection[A]]
     with ConcreteElem[CompoundCollectionData[A], CompoundCollection[A]] {
     override lazy val parent: Option[Elem[_]] = Some(nestedCollectionElement(element[A]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA))
+    override lazy val typeArgs = TypeArgs("A" -> eA)
 
     override def convertNestedCollection(x: Rep[NestedCollection[A]]) = CompoundCollection(x.nestedValues)
     override def getDefaultRep = CompoundCollection(element[Collection[Collection[A]]].defaultRepValue)
@@ -814,7 +814,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[A => B, FuncCollection[A, B, Env]]
     with ConcreteElem[FuncCollectionData[A, B, Env], FuncCollection[A, B, Env]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(funcElement(element[A],element[B])))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("A" -> AnElem(eA), "B" -> AnElem(eB), "Env" -> AnElem(eEnv))
+    override lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB, "Env" -> eEnv)
 
     override def convertCollection(x: Rep[Collection[A => B]]) = // Converter is not generated by meta
 !!!("Cannot convert from Collection to FuncCollection: missing fields List(env1, indexedFunc)")
@@ -904,7 +904,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     extends CollectionElem[StructItem[Val, Schema], StructItemCollection[Val, Schema]]
     with ConcreteElem[StructItemCollectionData[Val, Schema], StructItemCollection[Val, Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(structItemElement(element[Val], element[Schema])))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Val" -> AnElem(eVal), "Schema" -> AnElem(eSchema))
+    override lazy val typeArgs = TypeArgs("Val" -> eVal, "Schema" -> eSchema)
 
     override def convertCollection(x: Rep[Collection[StructItem[Val, Schema]]]) = // Converter is not generated by meta
 !!!("Cannot convert from Collection to StructItemCollection: missing fields List(struct)")
@@ -3583,7 +3583,7 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
 }
 
 object Collections_Module extends scalan.ModuleInfo {
-  val dump = "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"
+  val dump = "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"
 }
 }
 
