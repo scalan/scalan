@@ -283,14 +283,16 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
-  implicit class TypeImplicitCasts(left: ColumnType) {
-    def |(right: ColumnType): ColumnType = {
-      if (left == right) left
-      else if (left == StringType || right == StringType) StringType
-      else if (left == DoubleType || right == DoubleType) DoubleType
-      else if (left == IntType || right == IntType) IntType
-      else throw SqlException("Incompatible types " + left.sqlName + " and " + right.sqlName)
-    }
+  def commonType(left: ColumnType, right: ColumnType): ColumnType = {
+    if (left == right)
+      left
+    else if (left == DoubleType || right == DoubleType)
+      DoubleType
+    else if (left == IntType || right == IntType)
+      IntType
+    else if (left == StringType || right == StringType)
+      StringType
+    else throw SqlException("Incompatible types " + left.sqlName + " and " + right.sqlName)
   }
 
   def getExprType(expr: Expression): ColumnType = {
@@ -300,7 +302,7 @@ trait SqlCompiler extends SqlParser {
           case _: LogicOp | _: ComparisonOp =>
             BoolType
           case _: ArithOp =>
-            getExprType(l) | getExprType(r)
+            commonType(getExprType(l), getExprType(r))
           case Concat => StringType
         }
       case LikeExpr(l, r, escape) => BoolType
@@ -326,8 +328,10 @@ trait SqlCompiler extends SqlParser {
     * `registerFunctionType` otherwise. Default is `DoubleType`
     */
   def funcType(name: String, args: List[Expression]) = name match {
-    case "abs" | "trunc" | "truncate" | "round" | "power" | "mod" | "sign" | "ceiling" | "ceil" | "floor" =>
+    case "abs" | "trunc" | "truncate" | "round" | "power" | "mod" | "sign" | "ceiling" | "ceil" | "floor" | "nullif" =>
       getExprType(args.head)
+    case "coalesce" =>
+      args.map(getExprType).reduce(commonType)
     case _ =>
       funcTypes.getOrElse(name,
         throw new IllegalArgumentException(s"Unknown return type for $name(${args.mkString(", ")}). Override `SqlCompiler.funcType` or call `registerFunctionType` if the type doesn't depend on arguments"))
