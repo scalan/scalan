@@ -105,6 +105,7 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
       implicit val tagA = eA.tag
       weakTypeTag[DoneIso[F, A]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "A" -> eA)
   }
   // 4) constructor and deconstructor
   class DoneCompanionAbs extends CompanionDef[DoneCompanionAbs] with DoneCompanion {
@@ -189,6 +190,7 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
       implicit val tagA = eA.tag
       weakTypeTag[MoreIso[F, A]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "A" -> eA)
   }
   // 4) constructor and deconstructor
   class MoreCompanionAbs extends CompanionDef[MoreCompanionAbs] with MoreCompanion {
@@ -275,6 +277,7 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
       implicit val tagB = eA.tag
       weakTypeTag[FlatMapIso[F, S, B]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "S" -> eS, "B" -> eA)
   }
   // 4) constructor and deconstructor
   class FlatMapCompanionAbs extends CompanionDef[FlatMapCompanionAbs] with FlatMapCompanion {

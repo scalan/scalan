@@ -105,6 +105,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
       implicit val tagT = eT.tag
       weakTypeTag[DenseVectorIso[T]]
     }
+    lazy val typeArgs = TypeArgs("T" -> eT)
   }
   // 4) constructor and deconstructor
   class DenseVectorCompanionAbs extends CompanionDef[DenseVectorCompanionAbs] with DenseVectorCompanion {
@@ -189,6 +190,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
       implicit val tagT = eT.tag
       weakTypeTag[ConstVectorIso[T]]
     }
+    lazy val typeArgs = TypeArgs("T" -> eT)
   }
   // 4) constructor and deconstructor
   class ConstVectorCompanionAbs extends CompanionDef[ConstVectorCompanionAbs] with ConstVectorCompanion {
@@ -274,6 +276,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
       implicit val tagT = eT.tag
       weakTypeTag[SparseVectorIso[T]]
     }
+    lazy val typeArgs = TypeArgs("T" -> eT)
   }
   // 4) constructor and deconstructor
   class SparseVectorCompanionAbs extends CompanionDef[SparseVectorCompanionAbs] with SparseVectorCompanion {
@@ -359,6 +362,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
       implicit val tagT = eT.tag
       weakTypeTag[SparseVector1Iso[T]]
     }
+    lazy val typeArgs = TypeArgs("T" -> eT)
   }
   // 4) constructor and deconstructor
   class SparseVector1CompanionAbs extends CompanionDef[SparseVector1CompanionAbs] with SparseVector1Companion {

@@ -106,6 +106,7 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
       implicit val tagE = eE.tag
       weakTypeTag[SVertexIso[V, E]]
     }
+    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
   }
   // 4) constructor and deconstructor
   class SVertexCompanionAbs extends CompanionDef[SVertexCompanionAbs] with SVertexCompanion {

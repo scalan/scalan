@@ -107,6 +107,7 @@ trait ConvertersAbs extends Converters {
       implicit val tagR = eR.tag
       weakTypeTag[BaseConverterIso[T, R]]
     }
+    lazy val typeArgs = TypeArgs("T" -> eT, "R" -> eR)
   }
   // 4) constructor and deconstructor
   class BaseConverterCompanionAbs extends CompanionDef[BaseConverterCompanionAbs] with BaseConverterCompanion {
@@ -197,6 +198,7 @@ trait ConvertersAbs extends Converters {
       implicit val tagB2 = eB2.tag
       weakTypeTag[PairConverterIso[A1, A2, B1, B2]]
     }
+    lazy val typeArgs = TypeArgs("A1" -> eA1, "A2" -> eA2, "B1" -> eB1, "B2" -> eB2)
   }
   // 4) constructor and deconstructor
   class PairConverterCompanionAbs extends CompanionDef[PairConverterCompanionAbs] with PairConverterCompanion {
@@ -289,6 +291,7 @@ trait ConvertersAbs extends Converters {
       implicit val tagB2 = eB2.tag
       weakTypeTag[SumConverterIso[A1, A2, B1, B2]]
     }
+    lazy val typeArgs = TypeArgs("A1" -> eA1, "A2" -> eA2, "B1" -> eB1, "B2" -> eB2)
   }
   // 4) constructor and deconstructor
   class SumConverterCompanionAbs extends CompanionDef[SumConverterCompanionAbs] with SumConverterCompanion {
@@ -377,6 +380,7 @@ trait ConvertersAbs extends Converters {
       implicit val tagB = eB.tag
       weakTypeTag[FunctorConverterIso[A, B, F]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB)
   }
   // 4) constructor and deconstructor
   class FunctorConverterCompanionAbs extends CompanionDef[FunctorConverterCompanionAbs] with FunctorConverterCompanion {
@@ -460,6 +464,7 @@ trait ConvertersAbs extends Converters {
       implicit val tagA = eA.tag
       weakTypeTag[NaturalConverterIso[A, F, G]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "F" -> cF, "G" -> cG)
   }
   // 4) constructor and deconstructor
   class NaturalConverterCompanionAbs extends CompanionDef[NaturalConverterCompanionAbs] {

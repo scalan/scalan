@@ -7,14 +7,14 @@ import scalan.staged.BaseExp
 import annotation.implicitNotFound
 import scala.collection.immutable.ListMap
 import scala.reflect.runtime.universe._
-import scala.reflect.ClassTag
+import scala.reflect.{AnyValManifest, ClassTag}
 import scalan.util.ReflectionUtil
 
 trait TypeDescs extends Base { self: Scalan =>
 
   sealed trait TypeDesc extends Serializable {
-    protected def getName: String
-    lazy val name = getName
+    def getName(f: TypeDesc => String): String
+    lazy val name: String = getName(_.name)
 
     // <> to delimit because: [] is used inside name; {} looks bad with structs.
     override def toString = s"${getClass.getSimpleName}<$name>"
@@ -35,10 +35,24 @@ trait TypeDescs extends Base { self: Scalan =>
     final lazy val classTag: ClassTag[A] = ReflectionUtil.typeTagToClassTag(tag)
     // classTag.runtimeClass is cheap, no reason to make it lazy
     final def runtimeClass: Class[_] = classTag.runtimeClass
+    def typeArgs: ListMap[String, TypeDesc]
+    def typeArgsIterator = typeArgs.valuesIterator
     // should only be called by defaultRepValue
     protected def getDefaultRep: Rep[A]
     lazy val defaultRepValue = getDefaultRep
-    protected def getName = cleanUpTypeName(tag.tpe)
+
+    override def getName(f: TypeDesc => String) = {
+      val className = classTag match {
+        case anyValTag: AnyValManifest[_] => anyValTag.toString
+        case objectTag => objectTag.runtimeClass.getSimpleName
+      }
+      if (typeArgs.isEmpty)
+        className
+      else {
+        val typeArgString = typeArgsIterator.map(f).mkString(", ")
+        s"$className[$typeArgString]"
+      }
+    }
 
     def <:<(e: Elem[_]) = tag.tpe <:< e.tag.tpe
     def >:>(e: Elem[_]) = e <:< this
@@ -111,7 +125,8 @@ trait TypeDescs extends Base { self: Scalan =>
       implicit val tB = eSnd.tag
       weakTypeTag[(A, B)]
     }
-    override protected def getName = s"(${eFst.name},${eSnd.name})"
+    override def getName(f: TypeDesc => String) = s"(${f(eFst)}, ${f(eSnd)})"
+    lazy val typeArgs = ListMap("A" -> eFst, "B" -> eSnd)
     protected def getDefaultRep = Pair(eFst.defaultRepValue, eSnd.defaultRepValue)
   }
 
@@ -122,7 +137,8 @@ trait TypeDescs extends Base { self: Scalan =>
       implicit val tB = eRight.tag
       weakTypeTag[A | B]
     }
-    override protected def getName = s"(${eLeft.name}|${eRight.name})"
+    override def getName(f: TypeDesc => String) = s"(${f(eLeft)} | ${f(eRight)})"
+    lazy val typeArgs = ListMap("A" -> eLeft, "B" -> eRight)
     protected def getDefaultRep = mkLeft[A, B](eLeft.defaultRepValue)(eRight)
   }
 
@@ -133,7 +149,8 @@ trait TypeDescs extends Base { self: Scalan =>
       implicit val tB = eRange.tag
       weakTypeTag[A => B]
     }
-    override protected def getName = s"${eDom.name}=>${eRange.name}"
+    override def getName(f: TypeDesc => String) = s"${f(eDom)} => ${f(eRange)}"
+    lazy val typeArgs = ListMap("A" -> eDom, "B" -> eRange)
     protected def getDefaultRep = {
       val defaultB = eRange.defaultRepValue
       fun[A, B](_ => defaultB)(Lazy(eDom), eRange)
@@ -209,7 +226,7 @@ trait TypeDescs extends Base { self: Scalan =>
     def getItemElem[T](fa: Rep[F[T]]): Elem[T] = unlift(getElem(fa))
     def unapply[T](e: Elem[_]): Option[Elem[F[T]]]
 
-    protected def getName = {
+    def getName(f: TypeDesc => String) = {
       // note: will use WeakTypeTag[x], so x type parameter ends up in the result
       // instead of the actual type parameter it's called with (see below)
       def tpeA[x] = tag[x].tpe

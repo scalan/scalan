@@ -103,6 +103,7 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
     lazy val tag = {
       weakTypeTag[ReadFileIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class ReadFileCompanionAbs extends CompanionDef[ReadFileCompanionAbs] with ReadFileCompanion {
@@ -185,6 +186,7 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
     lazy val tag = {
       weakTypeTag[WriteFileIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class WriteFileCompanionAbs extends CompanionDef[WriteFileCompanionAbs] with WriteFileCompanion {

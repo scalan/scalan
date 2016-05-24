@@ -99,6 +99,7 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
     lazy val tag = {
       weakTypeTag[BoolCollBitSetIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class BoolCollBitSetCompanionAbs extends CompanionDef[BoolCollBitSetCompanionAbs] with BoolCollBitSetCompanion {

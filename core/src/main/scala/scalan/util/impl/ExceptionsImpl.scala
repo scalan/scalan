@@ -124,6 +124,7 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
     lazy val tag = {
       weakTypeTag[SThrowableImplIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class SThrowableImplCompanionAbs extends CompanionDef[SThrowableImplCompanionAbs] {

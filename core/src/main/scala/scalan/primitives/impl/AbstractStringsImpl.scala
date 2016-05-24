@@ -99,6 +99,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
     lazy val tag = {
       weakTypeTag[SStringIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class SStringCompanionAbs extends CompanionDef[SStringCompanionAbs] with SStringCompanion {
@@ -180,6 +181,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
     lazy val tag = {
       weakTypeTag[CStringIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class CStringCompanionAbs extends CompanionDef[CStringCompanionAbs] with CStringCompanion {

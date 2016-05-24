@@ -172,6 +172,7 @@ trait HashSetsAbs extends scalan.ScalanDsl with HashSets {
       implicit val tagA = eA.tag
       weakTypeTag[SHashSetImplIso[A]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA)
   }
   // 4) constructor and deconstructor
   class SHashSetImplCompanionAbs extends CompanionDef[SHashSetImplCompanionAbs] {

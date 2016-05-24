@@ -34,6 +34,8 @@ trait JNIExtractorOps extends Base { self: Scalan with AbstractStringsDsl =>
     override def isEntityType: Boolean = eT.isEntityType
 
     lazy val getDefaultRep = null.asInstanceOf[Rep[JNIType[T]]]
+
+    lazy val typeArgs = TypeArgs("T" -> eT)
   }
 
 //  case class JNIFieldIDElem[T](eT: Elem[T]) extends Elem[JNIFieldID[T]] {
@@ -51,7 +53,7 @@ trait JNIExtractorOps extends Base { self: Scalan with AbstractStringsDsl =>
     def parent: Option[Elem[_]] = Some(arrayElement(eItem))
     override def isEntityType = eItem.isEntityType
     override lazy val typeArgs = TypeArgs("A" -> eItem)
-    override def getName = "JNI-" + cleanUpTypeName(tag.tpe)
+    override def getName(f: TypeDesc => String) = s"JNI-${super.getName(f)}"
 
     lazy val tag = {
       implicit val tag1 = eItem.tag

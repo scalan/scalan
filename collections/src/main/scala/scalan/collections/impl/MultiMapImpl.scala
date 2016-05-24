@@ -106,6 +106,7 @@ trait MultiMapsAbs extends scalan.ScalanDsl with MultiMaps {
       implicit val tagV = elemValue.tag
       weakTypeTag[HashMMultiMapIso[K, V]]
     }
+    lazy val typeArgs = TypeArgs("K" -> elemKey, "V" -> elemValue)
   }
   // 4) constructor and deconstructor
   class HashMMultiMapCompanionAbs extends CompanionDef[HashMMultiMapCompanionAbs] with HashMMultiMapCompanion {

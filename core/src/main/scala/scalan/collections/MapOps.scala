@@ -50,6 +50,8 @@ trait MapOps extends  Base  { self: Scalan =>
     }
 
     protected def getDefaultRep = emptyMap[K, V](eKey, eValue)
+
+    lazy val typeArgs = TypeArgs("K" -> eKey, "V" -> eValue)
   }
 
   implicit def mMapElement[K, V](implicit eKey: Elem[K], eValue: Elem[V]): MMapElem[K, V] = new MMapElem(eKey, eValue)

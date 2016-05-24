@@ -109,6 +109,7 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
       implicit val tagA = eA.tag
       weakTypeTag[StateGetIso[S, A]]
     }
+    lazy val typeArgs = TypeArgs("S" -> eS, "A" -> eA)
   }
   // 4) constructor and deconstructor
   class StateGetCompanionAbs extends CompanionDef[StateGetCompanionAbs] with StateGetCompanion {
@@ -195,6 +196,7 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
       implicit val tagA = eA.tag
       weakTypeTag[StatePutIso[S, A]]
     }
+    lazy val typeArgs = TypeArgs("S" -> eS, "A" -> eA)
   }
   // 4) constructor and deconstructor
   class StatePutCompanionAbs extends CompanionDef[StatePutCompanionAbs] with StatePutCompanion {

@@ -109,6 +109,7 @@ trait StructItemsAbs extends StructItems {
       implicit val tagSchema = eSchema.tag
       weakTypeTag[StructItemBaseIso[Val, Schema]]
     }
+    lazy val typeArgs = TypeArgs("Val" -> eVal, "Schema" -> eSchema)
   }
   // 4) constructor and deconstructor
   class StructItemBaseCompanionAbs extends CompanionDef[StructItemBaseCompanionAbs] {

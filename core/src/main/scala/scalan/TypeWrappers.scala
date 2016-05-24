@@ -23,7 +23,8 @@ trait TypeWrappers extends Base { self: Scalan =>
       val wrapperDefaultValue = wrapperElem.defaultRepValue
       unwrapTypeWrapperRep(wrapperDefaultValue)
     }
-    override protected def getName = s"${super.getName}{base type, wrapper: ${wrapperElem.name}}"
+    override def getName(f: TypeDesc => String) =
+      s"${super.getName(f)}{base type, wrapper: ${f(wrapperElem)}}"
   }
 
   class BaseTypeElem1[A, CBase[_], TWrapper <: TypeWrapper[CBase[A], TWrapper]]
