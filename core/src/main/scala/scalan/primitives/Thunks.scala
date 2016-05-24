@@ -58,9 +58,8 @@ trait ThunksStd extends Thunks { self: ScalanStd =>
 trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>
 
   case class ThunkDef[A](val root: Exp[A], override val schedule: Schedule)
-                        (implicit val eA: Elem[A] = root.elem)
-    extends BaseDef[Thunk[A]] with AstGraph with Product {
-
+    extends BaseDef[Thunk[A]]()(thunkElement(root.elem)) with AstGraph with Product {
+    implicit val eA: Elem[A] = root.elem
     // structural equality pattern implementation
     override lazy val hashCode: Int = 41 * (41 + root.hashCode) + schedule.hashCode
     override def equals(other: Any) =

@@ -77,7 +77,11 @@ abstract class LmsBackendFacade extends
     case _ => ""
   })
 
-  def tuple2[A: Manifest, B: Manifest](a: Exp[A], b: Exp[B]): Exp[(A, B)] = make_tuple2(a -> b)
+  def tuple2[A, B](a: Exp[A], b: Exp[B]): Exp[(A, B)] = {
+    implicit val mA = a.tp
+    implicit val mB = b.tp
+    make_tuple2(a -> b)
+  }
 
   def num_negate[T: Manifest](arg: Exp[T])(implicit n: Numeric[T]) = {
     n.zero - arg
@@ -93,7 +97,8 @@ abstract class LmsBackendFacade extends
       throw new IllegalStateException(s"LMS only supports mod operation for Int, got $mA instead")
   }
 
-  def semicolon[A, B: Manifest](left: Exp[A], right: Exp[B]) = {
+  def semicolon[A, B](left: Exp[A], right: Exp[B]) = {
+    implicit val mB = right.tp
     val l = left
     right
   }
@@ -103,8 +108,9 @@ abstract class LmsBackendFacade extends
     right
   }
 
-  def loop_until[A: Manifest](init: Exp[A], step: Rep[A] => Rep[A], cond: Rep[A] => Rep[Boolean]): Exp[A] = {
+  def loop_until[A](init: Exp[A], step: Rep[A] => Rep[A], cond: Rep[A] => Rep[Boolean]): Exp[A] = {
     // TODO check correctness
+    implicit val mA = init.tp
     var state = init
     while (!cond(state)) state = step(state)
     state
