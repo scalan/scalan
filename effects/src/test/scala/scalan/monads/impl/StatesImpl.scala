@@ -107,6 +107,7 @@ trait StatesAbs extends scalan.ScalanDsl with States {
       implicit val tagA = eA.tag
       weakTypeTag[StateBaseIso[S, A]]
     }
+    lazy val typeArgs = TypeArgs("S" -> eS, "A" -> eA)
   }
   // 4) constructor and deconstructor
   class StateBaseCompanionAbs extends CompanionDef[StateBaseCompanionAbs] with StateBaseCompanion {

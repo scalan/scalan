@@ -100,6 +100,7 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
     lazy val tag = {
       weakTypeTag[BaseFrontIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class BaseFrontCompanionAbs extends CompanionDef[BaseFrontCompanionAbs] with BaseFrontCompanion {
@@ -184,6 +185,7 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
     lazy val tag = {
       weakTypeTag[ListFrontIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class ListFrontCompanionAbs extends CompanionDef[ListFrontCompanionAbs] with ListFrontCompanion {
@@ -268,6 +270,7 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
     lazy val tag = {
       weakTypeTag[CollectionFrontIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class CollectionFrontCompanionAbs extends CompanionDef[CollectionFrontCompanionAbs] with CollectionFrontCompanion {
@@ -352,6 +355,7 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
     lazy val tag = {
       weakTypeTag[MapBasedFrontIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class MapBasedFrontCompanionAbs extends CompanionDef[MapBasedFrontCompanionAbs] with MapBasedFrontCompanion {

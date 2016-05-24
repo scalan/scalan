@@ -104,6 +104,7 @@ trait StructKeysAbs extends StructKeys {
       implicit val tagSchema = eSchema.tag
       weakTypeTag[IndexStructKeyIso[Schema]]
     }
+    lazy val typeArgs = TypeArgs("Schema" -> eSchema)
   }
   // 4) constructor and deconstructor
   class IndexStructKeyCompanionAbs extends CompanionDef[IndexStructKeyCompanionAbs] {
@@ -187,6 +188,7 @@ trait StructKeysAbs extends StructKeys {
       implicit val tagSchema = eSchema.tag
       weakTypeTag[NameStructKeyIso[Schema]]
     }
+    lazy val typeArgs = TypeArgs("Schema" -> eSchema)
   }
   // 4) constructor and deconstructor
   class NameStructKeyCompanionAbs extends CompanionDef[NameStructKeyCompanionAbs] {

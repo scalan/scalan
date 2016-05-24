@@ -104,6 +104,7 @@ trait InteractionsAbs extends scalan.ScalanDsl with Interactions {
     lazy val tag = {
       weakTypeTag[AskIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class AskCompanionAbs extends CompanionDef[AskCompanionAbs] with AskCompanion {
@@ -186,6 +187,7 @@ trait InteractionsAbs extends scalan.ScalanDsl with Interactions {
     lazy val tag = {
       weakTypeTag[TellIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class TellCompanionAbs extends CompanionDef[TellCompanionAbs] with TellCompanion {

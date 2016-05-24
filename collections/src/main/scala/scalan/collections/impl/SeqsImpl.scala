@@ -214,6 +214,7 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
       implicit val tagA = eA.tag
       weakTypeTag[SSeqImplIso[A]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA)
   }
   // 4) constructor and deconstructor
   class SSeqImplCompanionAbs extends CompanionDef[SSeqImplCompanionAbs] {

@@ -105,6 +105,7 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
       implicit val tagA = eA.tag
       weakTypeTag[CoproductImplIso[F, G, A]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "G" -> cG, "A" -> eA)
   }
   // 4) constructor and deconstructor
   class CoproductImplCompanionAbs extends CompanionDef[CoproductImplCompanionAbs] with CoproductImplCompanion {

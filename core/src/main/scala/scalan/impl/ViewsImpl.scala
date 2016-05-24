@@ -147,6 +147,7 @@ trait ViewsAbs extends Views {
       implicit val tagA = eA.tag
       weakTypeTag[IdentityIsoIso[A]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA)
   }
   // 4) constructor and deconstructor
   class IdentityIsoCompanionAbs extends CompanionDef[IdentityIsoCompanionAbs] {
@@ -239,6 +240,7 @@ trait ViewsAbs extends Views {
       implicit val tagB2 = eB2.tag
       weakTypeTag[PairIsoIso[A1, A2, B1, B2]]
     }
+    lazy val typeArgs = TypeArgs("A1" -> eA1, "A2" -> eA2, "B1" -> eB1, "B2" -> eB2)
   }
   // 4) constructor and deconstructor
   class PairIsoCompanionAbs extends CompanionDef[PairIsoCompanionAbs] with PairIsoCompanion {
@@ -331,6 +333,7 @@ trait ViewsAbs extends Views {
       implicit val tagB2 = eB2.tag
       weakTypeTag[SumIsoIso[A1, A2, B1, B2]]
     }
+    lazy val typeArgs = TypeArgs("A1" -> eA1, "A2" -> eA2, "B1" -> eB1, "B2" -> eB2)
   }
   // 4) constructor and deconstructor
   class SumIsoCompanionAbs extends CompanionDef[SumIsoCompanionAbs] {
@@ -421,6 +424,7 @@ trait ViewsAbs extends Views {
       implicit val tagC = eC.tag
       weakTypeTag[ComposeIsoIso[A, B, C]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB, "C" -> eC)
   }
   // 4) constructor and deconstructor
   class ComposeIsoCompanionAbs extends CompanionDef[ComposeIsoCompanionAbs] {
@@ -513,6 +517,7 @@ trait ViewsAbs extends Views {
       implicit val tagD = eD.tag
       weakTypeTag[FuncIsoIso[A, B, C, D]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB, "C" -> eC, "D" -> eD)
   }
   // 4) constructor and deconstructor
   class FuncIsoCompanionAbs extends CompanionDef[FuncIsoCompanionAbs] {
@@ -601,6 +606,7 @@ trait ViewsAbs extends Views {
       implicit val tagB = eB.tag
       weakTypeTag[ConverterIsoIso[A, B]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB)
   }
   // 4) constructor and deconstructor
   class ConverterIsoCompanionAbs extends CompanionDef[ConverterIsoCompanionAbs] {
@@ -688,6 +694,7 @@ trait ViewsAbs extends Views {
       implicit val tagB = eB.tag
       weakTypeTag[ArrayIsoIso[A, B]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB)
   }
   // 4) constructor and deconstructor
   class ArrayIsoCompanionAbs extends CompanionDef[ArrayIsoCompanionAbs] {
@@ -773,6 +780,7 @@ trait ViewsAbs extends Views {
       implicit val tagB = eB.tag
       weakTypeTag[ListIsoIso[A, B]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB)
   }
   // 4) constructor and deconstructor
   class ListIsoCompanionAbs extends CompanionDef[ListIsoCompanionAbs] {
@@ -858,6 +866,7 @@ trait ViewsAbs extends Views {
       implicit val tagB = eB.tag
       weakTypeTag[ArrayBufferIsoIso[A, B]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB)
   }
   // 4) constructor and deconstructor
   class ArrayBufferIsoCompanionAbs extends CompanionDef[ArrayBufferIsoCompanionAbs] {
@@ -943,6 +952,7 @@ trait ViewsAbs extends Views {
       implicit val tagB = eB.tag
       weakTypeTag[ThunkIsoIso[A, B]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB)
   }
   // 4) constructor and deconstructor
   class ThunkIsoCompanionAbs extends CompanionDef[ThunkIsoCompanionAbs] {
@@ -1033,6 +1043,7 @@ trait ViewsAbs extends Views {
       implicit val tagV2 = eV2.tag
       weakTypeTag[MapIsoIso[K1, V1, K2, V2]]
     }
+    lazy val typeArgs = TypeArgs("K1" -> eK1, "V1" -> eV1, "K2" -> eK2, "V2" -> eV2)
   }
   // 4) constructor and deconstructor
   class MapIsoCompanionAbs extends CompanionDef[MapIsoCompanionAbs] {
