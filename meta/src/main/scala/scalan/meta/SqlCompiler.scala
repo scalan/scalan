@@ -132,21 +132,27 @@ trait SqlCompiler extends SqlParser {
   case class JoinContext(outer: Context, inner: Context) extends Context {
     def resolve(ref: ColumnRef): Option[Binding] = {
       (outer.resolve(ref), inner.resolve(ref)) match {
-        case (Some(b), None) => Some(Binding(b.scope, "head" :: b.path, b.column))
-        case (None, Some(b)) => Some(Binding(b.scope, "tail" :: b.path, b.column))
-        case (Some(_), Some(_)) => throw SqlException(s"""Ambiguous reference to ${ref.asString}""")
+        case (Some(b), None) =>
+          Some(Binding(b.scope, "head" :: b.path, b.column))
+        case (None, Some(b)) =>
+          Some(Binding(b.scope, "tail" :: b.path, b.column))
+        case (Some(_), Some(_)) =>
+          throw SqlException(s"""Ambiguous reference to ${ref.asString}""")
         case _ => None
       }
     }
   }
 
   case class AliasContext(parent: Context, alias: String) extends Context {
-    def resolve(ref: ColumnRef): Option[Binding] = {
-      if (ref.table == Some(alias)) {
-        parent.resolve(ColumnRef(None, ref.name))
-      } else
-        parent.resolve(ref)
-    }
+    def resolve(ref: ColumnRef): Option[Binding] =
+      ref.table match {
+        case None =>
+          parent.resolve(ref)
+        case Some(`alias`) =>
+          parent.resolve(ColumnRef(None, ref.name))
+        case _ =>
+          None
+      }
   }
 
   case class ProjectContext(parent: Context, columns: List[ProjectionColumn]) extends Context {
