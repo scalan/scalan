@@ -592,15 +592,15 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
 
     // Rule: V(a, iso1) ; V(b, iso2)) ==> iso2.to(a ; b)
     case block@Semicolon(HasViews(a, iso1: Iso[a, c]), HasViews(b, iso2: Iso[b, d])) =>
-      iso2.to(Semicolon(a.asRep[a], b.asRep[b])(iso2.eFrom))
+      iso2.to(Semicolon(a.asRep[a], b.asRep[b]))
 
     // Rule: a ; V(b, iso2)) ==> iso2.to(a ; b)
     case block@Semicolon(a: Rep[a], HasViews(b, iso2: Iso[b, d])) =>
-      iso2.to(Semicolon(a, b.asRep[b])(iso2.eFrom))
+      iso2.to(Semicolon(a, b.asRep[b]))
 
     // Rule: V(a, iso1) ; b ==> a ; b
     case block@Semicolon(HasViews(a, iso1: Iso[a, c]), b: Rep[b]) =>
-      Semicolon(a.asRep[a], b)(block.selfType.asElem[b])
+      Semicolon(a.asRep[a], b)
 
     // Rule: PairView(source, iso1, _)._1  ==> iso1.to(source._1)
     case First(Def(view@PairView(source))) =>

@@ -18,7 +18,7 @@ trait BlocksStd extends Blocks { self: ScalanStd =>
 }
 
 trait BlocksExp extends Blocks with Expressions { self: ScalanExp =>
-  case class Semicolon[A,B](left: Exp[A], right: Exp[B])(implicit selfType: Elem[B]) extends BaseDef[B]
+  case class Semicolon[A,B](left: Exp[A], right: Exp[B]) extends BaseDef[B]()(right.elem)
   case class SemicolonMulti[B](left: Seq[Exp[_]], right: Exp[B]) extends BaseDef[B]()(right.elem)
 
   def semicolon[A,B](left: Rep[A], right: Rep[B]): Rep[B] = {
