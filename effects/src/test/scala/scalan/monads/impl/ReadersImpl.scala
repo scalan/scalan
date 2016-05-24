@@ -107,6 +107,7 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
       implicit val tagA = eA.tag
       weakTypeTag[ReaderBaseIso[Env, A]]
     }
+    lazy val typeArgs = TypeArgs("Env" -> eEnv, "A" -> eA)
   }
   // 4) constructor and deconstructor
   class ReaderBaseCompanionAbs extends CompanionDef[ReaderBaseCompanionAbs] with ReaderBaseCompanion {

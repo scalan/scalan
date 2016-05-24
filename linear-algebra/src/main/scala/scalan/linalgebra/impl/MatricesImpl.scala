@@ -104,6 +104,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
       implicit val tagT = eT.tag
       weakTypeTag[DenseFlatMatrixIso[T]]
     }
+    lazy val typeArgs = TypeArgs("T" -> eT)
   }
   // 4) constructor and deconstructor
   class DenseFlatMatrixCompanionAbs extends CompanionDef[DenseFlatMatrixCompanionAbs] with DenseFlatMatrixCompanion {
@@ -189,6 +190,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
       implicit val tagT = eT.tag
       weakTypeTag[CompoundMatrixIso[T]]
     }
+    lazy val typeArgs = TypeArgs("T" -> eT)
   }
   // 4) constructor and deconstructor
   class CompoundMatrixCompanionAbs extends CompanionDef[CompoundMatrixCompanionAbs] with CompoundMatrixCompanion {
@@ -275,6 +277,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
       implicit val tagT = eT.tag
       weakTypeTag[ConstMatrixIso[T]]
     }
+    lazy val typeArgs = TypeArgs("T" -> eT)
   }
   // 4) constructor and deconstructor
   class ConstMatrixCompanionAbs extends CompanionDef[ConstMatrixCompanionAbs] with ConstMatrixCompanion {
@@ -361,6 +364,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
       implicit val tagT = eT.tag
       weakTypeTag[DiagonalMatrixIso[T]]
     }
+    lazy val typeArgs = TypeArgs("T" -> eT)
   }
   // 4) constructor and deconstructor
   class DiagonalMatrixCompanionAbs extends CompanionDef[DiagonalMatrixCompanionAbs] with DiagonalMatrixCompanion {

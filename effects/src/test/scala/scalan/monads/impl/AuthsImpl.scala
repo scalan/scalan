@@ -103,6 +103,7 @@ trait AuthenticationsAbs extends scalan.ScalanDsl with Authentications {
     lazy val tag = {
       weakTypeTag[LoginIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class LoginCompanionAbs extends CompanionDef[LoginCompanionAbs] with LoginCompanion {
@@ -187,6 +188,7 @@ trait AuthenticationsAbs extends scalan.ScalanDsl with Authentications {
     lazy val tag = {
       weakTypeTag[HasPermissionIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class HasPermissionCompanionAbs extends CompanionDef[HasPermissionCompanionAbs] with HasPermissionCompanion {

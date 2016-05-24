@@ -416,7 +416,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                   def unlift[T](implicit eFT: Elem[F[T]]) = ???
                   def getElem[T](fa: Exp[F[T]]) = ???
                   def unapply[T](e: Elem[_]) = ???
-                  override protected def getName = typaram.toString
+                  override def getName(f: TypeDesc => String) = typaram.toString
                 }
             }
           case (typaram, _) =>

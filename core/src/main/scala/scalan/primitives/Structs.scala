@@ -69,10 +69,12 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     def isEqualType(tuple: Seq[Elem[_]]) = {
       fields.length == tuple.length && fields.zip(tuple).forall { case ((fn,fe), e) => fe == e }
     }
-    override def getName =
-      baseStructName(structTag) + fieldsString
-    def fieldsString =
-      "{" + fields.map { case (fn,fe) => s"$fn: ${fe.name}" }.mkString("; ") + "}"
+    override def getName(f: TypeDesc => String) =
+      baseStructName(structTag) + fieldsString(f)
+    lazy val typeArgs = TypeArgs()
+    def fieldsString(f: TypeDesc => String): String =
+      "{" + fields.map { case (fn,fe) => s"$fn: ${f(fe)}" }.mkString("; ") + "}"
+    lazy val fieldsString: String = fieldsString(_.name)
     def findFieldIndex(fieldName: String): Int = fields.iterator.map(_._1).indexOf(fieldName)
   }
   implicit def StructElemExtensions[T <: Struct](e: Elem[T]): StructElem[T] = e.asInstanceOf[StructElem[T]]

@@ -671,9 +671,11 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    def isEntityType = true
          |    def getDefaultRep = reifyObject(new ${className}Iso${tpeArgsUse}()$implicitArgsUse)
          |    lazy val tag = {
+         |
          |${implicitTagsFromElems(c)}
          |      weakTypeTag[${className}Iso$tpeArgsUse]
          |    }
+         |    lazy val typeArgs = TypeArgs(${c.tpeSubstStr})
          |  }
          |  // 4) constructor and deconstructor
          |  class ${c.companionAbsName} extends CompanionDef[${c.companionAbsName}]${hasCompanion.opt(s" with ${c.companionName}")} {

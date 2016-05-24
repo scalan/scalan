@@ -99,6 +99,7 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     lazy val tag = {
       weakTypeTag[IntervalIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class IntervalCompanionAbs extends CompanionDef[IntervalCompanionAbs] with IntervalCompanion {
@@ -182,6 +183,7 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     lazy val tag = {
       weakTypeTag[SliceIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class SliceCompanionAbs extends CompanionDef[SliceCompanionAbs] with SliceCompanion {
@@ -266,6 +268,7 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     lazy val tag = {
       weakTypeTag[CenteredIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class CenteredCompanionAbs extends CompanionDef[CenteredCompanionAbs] with CenteredCompanion {

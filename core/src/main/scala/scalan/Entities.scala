@@ -1,6 +1,5 @@
 package scalan
 
-import scala.collection.immutable.ListMap
 import scala.collection.mutable
 import scala.language.higherKinds
 import scalan.common.Lazy
@@ -10,7 +9,6 @@ import scalan.util.ReflectionUtil
 trait Entities extends TypeDescs { self: Scalan =>
   abstract class EntityElem[A] extends Elem[A] with scala.Equals {
     def parent: Option[Elem[_]]
-    def typeArgs: ListMap[String, TypeDesc]
     def convert(x: Rep[Def[_]]): Rep[A] = !!!("should not be called")
     //def getConverterTo[B](eB: Elem[B]): Conv[A,B] = !!!  //TODO make it abstract
     // TODO generate code for this in implementations
@@ -20,23 +18,16 @@ trait Entities extends TypeDescs { self: Scalan =>
         this.eq(other) ||
           (other.canEqual(this) &&
             this.runtimeClass == other.runtimeClass &&
-            this.typeArgs.valuesIterator.sameElements(other.typeArgs.valuesIterator))
+            this.typeArgsIterator.sameElements(other.typeArgsIterator))
       case _ => false
     }
     override def hashCode = tag.tpe.hashCode
-    override protected def getName = {
-      val className = runtimeClass.getSimpleName
-      if (typeArgs.isEmpty)
-        className
-      else
-        s"$className[${typeArgs.valuesIterator.map(_.name).mkString(", ")}]"
-    }
   }
 
   abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
     extends EntityElem[To] {
-    override protected def getName = {
-      s"${cont.name}[${eItem.name}]"
+    override def getName(f: TypeDesc => String) = {
+      s"${f(cont)}[${f(eItem)}]"
     }
     override def canEqual(other: Any) = other match {
       case _: EntityElem1[_, _, _] => true
@@ -123,6 +114,8 @@ trait Entities extends TypeDescs { self: Scalan =>
   }
   trait CompanionElem[T] extends Elem[T] { _: scala.Equals =>
     override def isEntityType = false
+
+    lazy val typeArgs = TypeArgs()
   }
 
   trait TypeFamily1[F[_]]
