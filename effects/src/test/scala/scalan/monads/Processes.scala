@@ -4,7 +4,7 @@ import scalan._
 import scala.reflect.runtime.universe._
 import scalan.monads.{MonadsDsl, Monads}
 
-trait Processes extends Base with Containers { self: ProcessesDsl =>
+trait Processes extends Base { self: ProcessesDsl =>
 
   type RProc[F[_],O] = Rep[Process[F,O]]
   type IO[A] = Oper[A]

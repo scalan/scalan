@@ -38,6 +38,7 @@ trait TypeWrappers extends Base { self: Scalan =>
             eItem == other.eItem)
       case _ => false
     }
+    override lazy val typeArgs = TypeArgs("A" -> eItem, "CBase" -> cont, "TWrapper" -> wrapperElem)
   }
 
   protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase]

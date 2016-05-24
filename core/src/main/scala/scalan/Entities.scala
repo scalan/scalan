@@ -7,7 +7,7 @@ import scalan.common.Lazy
 import scalan.meta.ScalanAst.{STraitOrClassDef, SEntityModuleDef}
 import scalan.util.ReflectionUtil
 
-trait Entities extends Elems { self: Scalan =>
+trait Entities extends TypeDescs { self: Scalan =>
   abstract class EntityElem[A] extends Elem[A] with scala.Equals {
     def parent: Option[Elem[_]]
     def typeArgs: ListMap[String, TypeDesc]

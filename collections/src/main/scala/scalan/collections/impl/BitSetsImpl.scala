@@ -19,7 +19,7 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
   class BitSetElem[To <: BitSet]
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]()
+    lazy val typeArgs = TypeArgs()
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
@@ -66,7 +66,7 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
     extends BitSetElem[BoolCollBitSet]
     with ConcreteElem[BoolCollBitSetData, BoolCollBitSet] {
     override lazy val parent: Option[Elem[_]] = Some(bitSetElement)
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]()
+    override lazy val typeArgs = TypeArgs()
 
     override def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
     override def getDefaultRep = BoolCollBitSet(element[Collection[Boolean]].defaultRepValue)
@@ -301,7 +301,7 @@ trait BitSetsExp extends scalan.ScalanDslExp with BitSetsDsl {
 }
 
 object BitSets_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTYgcRRSumdnd2ZlZNuuKaPZiXMfE+DOzGCSHRcPu7ESUyeySToyMQantrplUrK4qu2qXHg8RPOSgnkS8eQgoXnIRj4IIKogEQRERcvYUlZCDOSm+qv6dZTvRg3Noqqpfv/e+733v1Vz9HU2rAB1WLmaYt3yiccux6zWlm06Xa6rHp4S3w8gGGf7w+Jei/ta7/TJaGKCZC1htKDZAtWjRDWW6drTXQzXMXaK0CJRGD/VshLYrGCOupoK3qe/vaLzNSLtHlV7toalt4Y1fR5dQqYcWXMHdgGjidBhWiqj4fJaYjGi6r9n9eFNmMXjboGjnUJwJMNWQPsRYiOxPE+mMueBjX6P5OLVNadICmwYJJWB43pfMhqn0UJX6UgQ6iVqFCBeEl2ynOIYDtNi7iHdxG6KO2o4OKB8ZZxK7r+ER6YOJMZ8CDIqw4ZmxJLHzhtLeRLxQIoSgKk/ZxFoZZ62Us5bhrOmQgGJG38Dm5VYgwjGKfqUKQqEEF0/cxUXigXS513z7vPvybafhl83HoUmlahOaAUcPFijElge4/fb0e+rWc1eOl1F9gOpUrW0rHWBX52UQ09XAnAttc04ZxMEIKrhcVEEbZQ1s9sik5gpfYg6eYi7noFCMulQbY3M2F5engPuqliQxLYWylOI9VIDXaqmDGdu6cfDJR37rvlRG5ckQNXDpQDMEiVONZtYpMK0to+ZRi8ktDpMCPnLjD++bFXS+nNIUe/13lQEX0+qXnxs/HT1RRrMDK+STDI8GwJTqMuJvBh3B9QDNil0SRG+qu5iZ1b6VqnpkiHeYjvnLA68AcI0OFXahJIaVVavuUkJAIxJoX3DSPLnV/NP57v2rRn8BmoveRG35Nz3+1/X5obbS1KABqpVN6YBGFejmmI34pN5J9Z7S9HBRQSXZCqgPQ2WXPP3V52dvftGftjVdjJG+iNkOifo5BpqBNrlMDzFTALy6LgQjmGcFzj8N1nqEyBE+uWf5Fn3lyjvalrUUTg6Pze2LkPyq/e7gHSqczLVPL1++7+ZHr95re28WqPGxbK78h85LGuV/7CyUij+aKYvZ3jyWgMj7DYGmclG3dPIJLO39Eub2pHlmFZGeU8RRNCmPCnA2ebJ/g9bCffO1+8Ox57vDOlAIZ3IyLO2JvmIP42ABahWIYIO4DAfEM9cH8eF6i8p77IMT51544NxZK7A5zxpFb9IW3f8yPoXlqr06Hr3D1QFGza4v4a8BLI59/cyPb1775GPbmxl+0xEWHERcjJPPnKkU2HIBMCfWExTr0u0P+499/9mvti/rRpkwLnh6Hef7cbKu87lBAFdsViczJOLskvOIeZgtRsi5Gj9rHuv/ACleDNUpCQAA"
+  val dump = "H4sIAAAAAAAAALVWTYgcRRSumdnd2ZlZNpsR0ezFuE4SE3VmMUiERWV/JqJMZod0YmQMSm13zaRidVfZVbv0eIjgIQf1JOJB8BBQvARBvCmIYAQREczVs6cYCTmYk+Kr6prunmU70YNzaKqqX7/3vu9779VcvYmmZYgOSxczHDR9onDTMetVqRpOO1BUjU5xb5uRDTL45bFvefXt97pFtNBHMxew3JCsjyrxoh2JZO0or4MqOHCJVDyUCj3cMRFaLmeMuIryoEV9f1vhLUZaHSrVSgdNbXFv9Aa6hAodtODywA2JIs46w1ISac9nic6IJvuK2Y82RRojaGkUrQyKMyGmCtKHGAux/WkinFHAg5Gv0LxNbVPotMCmRiIBGF7wBTNhSh1Upr7goRpHLUOEC9wbb6cCDAeo3rmId3ALog5bjgppMNTOBHZfx0PSBRNtPgUYJGGDMyNBrPOaVN5EvEgghECVJ01izZSzZsJZU3PWcEhIMaNvYv2yF/JohOJfoYRQJMDF4/dwMfZA2oHXeOe8+8odp+YX9ceRTqVsEpoBRw/lVIiRB7j94fT78vbzV04UUbWPqlSubkkVYldly8DSVcNBwJXJOWEQh0NQcClPQRNlFWx2lUnF5b7AAXiyXM6BUIy6VGljfTZn5cnhvqwEGZsWIlFI8B7MwWtqaR0z1rtx4IlDv7dfLqLiZIgKuHSgGcKxU4Vm1igwrQyj+lGx5OaHSQAfufGH9/0yOl9MaLJe/50y4KL+9EdfHSK9z4totm8K+STDQ6OR5mGDSLePZvkOCePz8g5merWnTmWPDPA2U5a9LOwSwFboYG4PCqI5WTG1XRjDr8Xl2eUBaZzsNf50fvzgqq6+EM3Fb+Km/Jue+OvX+YEyhamgAqiSJqV9CpWgly0X9qS6nlR7QtIjeXIK0gupDyNlhzz13ddnb33TnTaK1i3SlzDbJnE3W6ApaJ3L9AAzCcDLa5wzgoNU3uxTY63GiBzuk/1Lt+mrV95VRtRCNDk6NrcuQvIr5rsDd9F3PNW+uHz5/lufvHaf6bxZoMbHorH8H/pu3Cb/Y1+hpPTjiVJP9/qxCEQ+oAnUysW9sp5NYHH3lzC1J81Tq5j0TEUcRZPlUQLOJk/2bs9KtGe+Zn/Yer43rH25cCbnwuKu6Mvm0AYLUTOnCDaIy3BIPH15EB8ut1je4x8+d+7FB8+dNQU25xmj+E3SontfxaewWDEXx6N3uTjAqNH2BfwxgMXxa89cf+unzz41vZni1x1hwEHEuk0+dSYTYEs5wBxbTyDWpTsfd4/9/OVvpi+rujJhXATJZZztx0ld5zODAC7YVCc9JGx24/OYeZgtupAzGj+rH2v/AAaM1KcnCQAA"
 }
 }
 

@@ -1,6 +1,5 @@
 package scalan.collections
 
-import scala.collection.immutable.ListMap
 import scala.reflect.ClassTag
 import scalan.common.OverloadHack.Overloaded1
 import scalan.staged.BaseExp
@@ -65,7 +64,7 @@ trait ListOps { self: Scalan =>
     extends EntityElem1[A, List[A], List](eItem, container[List]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-    override lazy val typeArgs = ListMap("A" -> AnElem(eItem))
+    override lazy val typeArgs = TypeArgs("A" -> eItem)
     lazy val tag = {
       implicit val rt = eItem.tag
       weakTypeTag[List[A]]

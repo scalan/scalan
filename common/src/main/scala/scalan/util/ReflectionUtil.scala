@@ -134,5 +134,19 @@ object ReflectionUtil {
     s"${m.owner.name}.${m.name}$typeParams$params"
   }
 
-  def typeTagToClass(tag: WeakTypeTag[_]): Class[_] = tag.mirror.runtimeClass(tag.tpe)
+  def typeTagToClass(tag: WeakTypeTag[_]): Class[_] =
+    typeTagToClassTag(tag).runtimeClass
+
+  def typeTagToClassTag[A](tag: WeakTypeTag[A]) = (tag match {
+    case TypeTag.Any =>
+      ClassTag.Any
+    case TypeTag.AnyVal =>
+      ClassTag.AnyVal
+    case TypeTag.Null =>
+      ClassTag.Null
+    case TypeTag.Nothing =>
+      ClassTag.Nothing
+    case _ =>
+      ClassTag(tag.mirror.runtimeClass(tag.tpe))
+  }).asInstanceOf[ClassTag[A]]
 }

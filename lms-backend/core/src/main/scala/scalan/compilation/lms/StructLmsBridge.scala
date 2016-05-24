@@ -20,9 +20,9 @@ trait StructLmsBridge extends LmsBridge {
   }
 
   private def refinedManifestForStruct[A <: Struct](se: StructElem[A]) = {
-    val classTag = TagImplicits.typeTagToClassTag(se.tag)
+    val clazz = se.runtimeClass
     new RefinedManifest[A] {
-      def runtimeClass = classTag.runtimeClass
+      def runtimeClass = clazz
       val fields = se.fields.toList.map {
         case (name, elem) => (name, elemToManifest(elem))
       }

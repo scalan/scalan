@@ -21,7 +21,7 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
     def eEnv = _eEnv
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Env" -> AnElem(eEnv), "A" -> AnElem(eA))
+    lazy val typeArgs = TypeArgs("Env" -> eEnv, "A" -> eA)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagEnv = eEnv.tag
@@ -70,7 +70,7 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
     extends ReaderElem[Env, A, ReaderBase[Env, A]]
     with ConcreteElem[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
     override lazy val parent: Option[Elem[_]] = Some(readerElement(element[Env], element[A]))
-    override lazy val typeArgs = scala.collection.immutable.ListMap[String, TypeDesc]("Env" -> AnElem(eEnv), "A" -> AnElem(eA))
+    override lazy val typeArgs = TypeArgs("Env" -> eEnv, "A" -> eA)
 
     override def convertReader(x: Rep[Reader[Env, A]]) = ReaderBase(x.run)
     override def getDefaultRep = ReaderBase(constFun[Env, A](element[A].defaultRepValue))
@@ -225,7 +225,7 @@ trait ReadersExp extends scalan.ScalanDslExp with ReadersDsl {
 }
 
 object Readers_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRR+duw4tkMTCP9VmxCZv0Dtih56iFDkOg5K5fwoW1RkKqrx7tjdsju77Iwtm0OROPQAnBBC4sChEohLL4g74gASqhASqEJInDhwKkWoB3oC8Wb215E3pSB8GO3MPr+f7/vem716E/Lcgye4TizCqjYVpKqp5zoXFa3JhClGW47Rt+g67X73zBdO6c13trMw34bpC4Svc6sNRf+hOXSjZ00YLSgSplMuHI8LeKylItR0x7KoLkyH1Uzb7gvSsWitZXKx2oJcxzFGr8ElyLRgXneY7lFBtYZFOKc8OJ+hMiMz2hfVfrTjxjFYTVZRS1RxxiOmwPQxxrxvv0ddbcQcNrIFHApS23FlWmhTpkMXa9i0XUuFmWpBwbRdxxNh1AJGuOAY4TbHCB7Afa2LZEBqGLVX04Rnsp505hL9VdKj22gizXNYA6dW98zIpYHzMhfGWLyhCwDIynMqsWqMWTXCrCoxq2jUM4llvk7ky13PGY7A/2WmAIYuunj2Di5CD7TJjMpb5/SXb2tlOyv/PJSpFFRC0+hoMUUhih7E9uu9d/mtF66czEKpDSWT1ztceEQXSRkEcJUJY45QOUcIEq+HDC6nMaii1NFmn0yKumO7hKGnAMtZJMoydVNIY3k2G9CTgn1BuDQ0zQzdTFTvUkq9SksNYlm7Nx459vivzZeykB0PUUSXGjaDFzoVML1HiUG9wLlc5wRMNdkgxhgPMnW1lUtxGK+FA7KJcHnyxm/GV8fhXDZCMwj+zwhEF3n+4w/l60+vZWGmrfS+YZFeGwHlTYvaO17DYaINM86Aev6bwoBY8mkioQWDdknfEgHMSXymEB8BS6nN6lIJ3qpqgkwIQNnX8bbDaGVjt/KHdu29q1KmHsz6b/zu/cs8+edPh7pCKRgh9vosght7PgLjaBq7Lt3oM/365gcLc0fO/6y4nTYcm5hKYIdbkPewvVUphwNw75LKkp+v5tj03uVb5itX3haKtMxwfILsdC5ix66q/x09gL9wuH16+fIDv390fkE14EzHFDZxK8fvov3Cbvkf2wsiVHykHor3cllEyhb8VjlFOG0kgy8m/pXoo0czoUiUkYAcTrJBSENOSjel63xWJjvJ0voBLiaQK6AU562cRFI7ki41RObBvdb91s21z7OQPw35LrYTR411nD4zQsjxJhR0KE6FZ5lxyBFi4hE7glj9liDGbL88G5NMJtSUKPoY7AMR9TZ+8p8mXDFx1yQkofYrQQJ3Vs6cn8IE1cQTOElNKhb/Di65bsb+V5D6agr161S3iEcNeeNTG79I/GY88f7a2dMPn31RjYNZQxn5b6JxOfn7aYu4q+q2f+qA2x6NKk3bxa85fDjx5fPfv/HNJx+rORlDKaAQ8CjgnjB5hxGDRzUtp9SkBY2Pyrh0+8PtlW8/+0VNz5IcITi1WfTxFIs3up0CeRS3VCz8Fkqgiy0oh0pCDEQu9G+eTSIBugoAAA=="
+  val dump = "H4sIAAAAAAAAALVWTYgcRRR+Mzu7szOzZtes/yHZdZmorGYmmEOERcJkd1Y2zP6wHYmMwVDTXTPp2F3ddtUMPR4ieMhBPYkICh4CipcgiDcP4iGCiAiKN08ePMWI5GBOiq+qf2eZ3hjFORRdNa/fz/d971VfuwmT3IPHuE4swmo2FaSmqecGF1WtyYQphpuO0bfoGu1+/+SXTvn1t7byMNeGqYuEr3GrDaXgoem78bMmjBaUCNMpF47HBTzaUhHqumNZVBemw+qmbfcF6Vi03jK5WGlBoeMYw1fgMuRaMKc7TPeooNqqRTinPDyfpjIjM96X1H647SYxWF1WUU9VcdYjpsD0McZcYL9LXW3IHDa0BRwIU9t2ZVpoU6G+izVs2K6lwky0oGjaruOJKGoRI1x0jGhbYAQP4GDrEhmQOkbt1TXhmawnnblEf5n06BaaSPMC1sCp1T07dGnovMKFMRLPdwEAWXlaJVZLMKvFmNUkZlWNeiaxzFeJ/HPHc/whBL/cBIDvooun7uAi8kCbzKi+cV5/8bZWsfPyZV+mUlQJTaGjhQyFKHoQ26933+a3nrt6Mg/lNpRN3uhw4RFdpGUQwlUhjDlC5RwjSLweMriUxaCK0kCbPTIp6Y7tEoaeQixnkCjL1E0hjeXZTEhPBvZF4dLINOe7ubjexYx6lZZWiWXt3Hj42NFfmy/kIT8aooQuNWwGL3IqYGqXEoN6oXO5zgqYaLJBgjEe5BpqK5eSn6zFfbKJcXn8xm/GV8fhfD5GMwz+zwhEFwefef/zo3TnkzxMt5Xe1y3SU1RKuNYo19sw7QyoF5wXB8SST2PpLBq0S/qWCEFOozOB6AhYzGxVl0roVlQL5KLyK4GKtxxGq+s71T+0b965JkXqwUzwT9C7f5kn//zpQFco/SLAXp/FYGPHx1AcyeLWpet9pv+48d787OELPytmpwzHJqaS16EWTHrY3KqUQyG0d0lkOchXc2x679It86WrbwpFWc4fnR/bnUvYryvqvSP7sBeNtk+vXLn/9w8vzKv2m+6YwiZu9fhdNF/UK/9jc0GMSoDUg8leLgtI2XzQKKcJp6vp4Aupt1Jd9EguEokyElDAOTaIaCg0LWpn9FzAyngnedrYx8UYcgWUk7yVk1hqh7Olhsg8sNu6z7p56os8TJ6ByS62E0eNdZw+MyLI8R4U1Beno7PcKOQIMfGIHUOsfouQYLZXnqvjTMbUlCr6GOwBEfU2evKf5lspddOkJKH2y2ECd1bObJDCGNUk8zdNTSYW/w4uuW4k/peR+loG9WtUt4hHDXnfUxu/R4JmPPHuqXNnHjr3vBoHM4YyCv6Jx+X4r6dN4q6ou/6Jfe56NKo2bRe/5fDhxPVnf3jt248/UnMygVJAMeRRwD1R8g4jBo9rWsqoSQsbH5Vx+fYHW8vfffaLmp5lOUJwarP40ykRb3w3hfIobapY+CWUQhdbUA6VlBiIXOjf5Jo1ObgKAAA="
 }
 }
 
