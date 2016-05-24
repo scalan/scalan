@@ -1,7 +1,7 @@
 package scalan
 
 import scala.language.reflectiveCalls
-import scalan.common.{SegmentsDslExp, CommonExamples, ViewExamples}
+import scalan.common.{CommonExamples, MetaTestsDslExp, SegmentsDslExp, ViewExamples}
 
 abstract class BaseViewTests extends BaseCtxTests {
   class ViewTestsCtx extends TestContext {
@@ -47,7 +47,7 @@ abstract class BaseViewTests extends BaseCtxTests {
       }
     }
   }
-  class CtxForStructs extends ViewTestsCtx with SegmentsDslExp {
+  class CtxForStructs extends ViewTestsCtx with SegmentsDslExp with MetaTestsDslExp {
     override def shouldUnpack(e: Elem[_])  = true
     override val currentPass = new Pass {
       val name = "test"

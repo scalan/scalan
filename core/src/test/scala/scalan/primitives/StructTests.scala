@@ -2,11 +2,11 @@ package scalan.primitives
 
 import scala.language.reflectiveCalls
 import scalan._
-import scalan.common.{SegmentsDslStd, SegmentsDsl, SegmentsDslExp, Lazy}
-import scalan.compilation.{StructsCompiler, DummyCompiler}
+import scalan.common._
+import scalan.compilation.{DummyCompiler, StructsCompiler}
 import scalan.it.BaseItTests
 
-trait StructExamples extends Scalan with SegmentsDsl {
+trait StructExamples extends Scalan with SegmentsDsl with MetaTestsDsl {
   def eInt = IntElement
 
   lazy val t1 = fun({ (in: Rep[Int]) =>
@@ -112,7 +112,7 @@ trait StructExamples extends Scalan with SegmentsDsl {
 class StructTests extends BaseViewTests {
 
   class Ctx extends TestCompilerContext {
-    class ScalanCake extends ScalanDslExp with StructExamples with SegmentsDslExp {
+    class ScalanCake extends ScalanDslExp with StructExamples with SegmentsDslExp with MetaTestsDslExp {
 
       def containsTuples(g: PGraph): Boolean = {
         g.scheduleAll.exists(tp => tp.rhs match {
@@ -167,6 +167,29 @@ class StructTests extends BaseViewTests {
     assert(es1 != es2)
     assert(es1 != es3)
     assert(es2 != es3)
+  }
+
+  test("Structs as generic parameters for entities") {
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
+
+    val se1 = structElement(Seq("a" -> eInt))
+    val se2 = structElement(Seq("a" -> eInt))
+    val se3 = structElement(Seq("b" -> eInt))
+
+    val me1 = metaTestElement(se1)
+    val me2 = metaTestElement(se2)
+    val me3 = metaTestElement(se3)
+
+    assert(me1 == me2)
+    assert(me1 != me3)
+
+    val ae1 = arrayElement(se1)
+    val ae2 = arrayElement(se2)
+    val ae3 = arrayElement(se3)
+
+    assert(ae1 == ae2)
+    assert(ae1 != ae3)
   }
 
   test("Structs as type parameters are included in names") {
@@ -402,7 +425,7 @@ class StructTests extends BaseViewTests {
   }
 }
 
-abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslStd with SegmentsDslStd with StructExamples) {
+abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslStd with SegmentsDslStd with MetaTestsDslStd with StructExamples) {
   import progStd._
 
   test("struct out") {
@@ -424,7 +447,6 @@ abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslSt
   test("struct with many fields in and out") {
     compareOutputWithStd(s => s.crossFields.asInstanceOf[s.Rep[Struct => Struct]])(struct("in1" -> 200, "in2" -> 50))
   }
-
 
   test("struct used inside") {
     compareOutputWithStd(_.structInside)(100)

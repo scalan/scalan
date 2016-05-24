@@ -1,14 +1,14 @@
 package scalan.it.lms
 
-import scalan.common.SegmentsDslExp
+import scalan.common.{MetaTestsDslExp, SegmentsDslExp}
 import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.uni.LmsCompilerUni
-import scalan.primitives.{StructItTests, StructExamples}
+import scalan.primitives.{StructExamples, StructItTests}
 import scalan.{JNIExtractorOpsExp, ScalanDslExp}
 
 class LmsStructItTests extends StructItTests {
-  class ProgExp extends ScalanDslExp with StructExamples with SegmentsDslExp with JNIExtractorOpsExp
+  class ProgExp extends ScalanDslExp with StructExamples with SegmentsDslExp with JNIExtractorOpsExp with MetaTestsDslExp
 
   val progStaged = new LmsCompilerScala(new ProgExp)
 
