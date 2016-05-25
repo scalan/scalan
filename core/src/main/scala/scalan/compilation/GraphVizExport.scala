@@ -12,14 +12,16 @@ trait GraphVizExport { self: ScalanExp =>
 
   // TODO it would be better to have nodeColor(elem: Elem[_], optDef: Option[Def[_]]) to
   // avoid looking up definition, but this leads to ClassFormatError (likely Scala bug)
-  protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig): String = sym match {
-    case Def(_: View[_, _]) => "darkgreen"
-    case _ => sym.elem match {
-      case _: ViewElem[_, _] => "green"
-      case _: FuncElem[_, _] => "magenta"
-      case _: CompanionElem[_] => "lightgray"
-      case _ => "gray"
-    }
+  protected def nodeColor(td: TypeDesc, d: Def[_])(implicit config: GraphVizConfig): String = d match {
+    case _: View[_, _] => "darkgreen"
+    case _ => nodeColor(td)
+  }
+
+  protected def nodeColor(td: TypeDesc): String = td match {
+    case _: ViewElem[_, _] => "green"
+    case _: FuncElem[_, _] => "magenta"
+    case _: CompanionElem[_] => "lightgray"
+    case _ => "gray"
   }
 
   // ensures nice line wrapping
@@ -27,22 +29,48 @@ trait GraphVizExport { self: ScalanExp =>
     config.nodeLabel(parts)
   }
 
-  protected def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter, config: GraphVizConfig) = {
-    rhs match {
-      case l: Lambda[_, _] =>
-        val x = l.x
-        stream.println(StringUtil.quote(x) + " [")
-        val parts = List(x.toStringWithType) ::: (if (config.emitMetadata) List(formatMetadata(x)) else Nil)
-        stream.println(nodeLabel(parts: _*))
-        stream.println(s"color=${nodeColor(x)}")
-        stream.println("]")
-      case _ =>
+  private def emitNode0(x: Exp[_], d: Option[Def[_]], acc: GraphData)(implicit stream: PrintWriter, config: GraphVizConfig) = {
+    stream.println(StringUtil.quote(x) + " [")
+    val acc1 = acc.addNode(x, d)
+    val xElem = x.elem
+    val label = acc1.typeString(xElem)
+    val xStr = s"$x: $label" + (if (d.isDefined) " =" else "")
+    val xAndD = d match {
+      case Some(rhs) =>
+        val rhsStr = formatDef(rhs)
+        val rhsElem = rhs.selfType
+        if (rhsElem != xElem) {
+          List(xStr, s"$rhsStr:", acc1.typeString(rhsElem))
+        } else {
+          List(xStr, rhsStr)
+        }
+      case None =>
+        List(xStr)
     }
-    stream.println(StringUtil.quote(sym) + " [")
-    val parts = List(sym.toStringWithType + " =", formatDef(rhs)) ::: (if (config.emitMetadata) List(formatMetadata(sym)) else Nil)
-    stream.println(nodeLabel(parts: _*))
-    stream.println(s"shape=box,color=${nodeColor(sym)},tooltip=${StringUtil.quote(sym.toStringWithType)}")
+    val metadata = if (config.emitMetadata) List(formatMetadata(x)) else Nil
+    val allParts = xAndD ++ metadata
+    stream.println(nodeLabel(allParts: _*))
+
+    val (shape, color) = d match {
+      case Some(d) =>
+        ("box", nodeColor(xElem, d))
+      case None =>
+        ("oval", nodeColor(xElem))
+    }
+    // use full type name for the tooltip
+    stream.println(s"shape=$shape, color=$color, tooltip=${StringUtil.quote(x.toStringWithType)}")
     stream.println("]")
+    acc1
+  }
+
+  private def emitNode(sym: Exp[_], rhs: Def[_], acc: GraphData)(implicit stream: PrintWriter, config: GraphVizConfig) = {
+    val acc1 = rhs match {
+      case g: AstGraph =>
+        g.boundVars.foldLeft(acc)((acc2, x) => emitNode0(x, None, acc2))
+      case _ =>
+        acc
+    }
+    emitNode0(sym, Some(rhs), acc1)
   }
 
   protected def formatMetadata(s: Exp[_]): String = {
@@ -202,11 +230,10 @@ trait GraphVizExport { self: ScalanExp =>
 
   // This function accumulates all emitted nodes so that dependency edges are placed outside any clusters.
   // Otherwise dot will incorrectly show nodes inside clusters they don't belong to.
-  private def emitCluster(g: AstGraph, acc: Map[Exp[_], Def[_]])(implicit stream: PrintWriter, config: GraphVizConfig): Map[Exp[_], Def[_]] = {
+  private def emitCluster(g: AstGraph, acc: GraphData)(implicit stream: PrintWriter, config: GraphVizConfig): GraphData = {
     val schedule = clusterSchedule(g)
 
     schedule.foldLeft(acc) { case (acc1, TableEntry(s, d)) =>
-      val acc2 = acc1 + (s -> d)
       d match {
         case g: AstGraph if shouldEmitCluster(g) =>
           if (config.subgraphClusters) {
@@ -215,7 +242,7 @@ trait GraphVizExport { self: ScalanExp =>
               stream.println(s"style=dashed; color=${StringUtil.quote(color)}")
             }
           }
-          emitNode(s, d)
+          val acc2 = emitNode(s, d, acc1)
           // for lambdas, do we want lambdaDeps instead?
           val sources = g.boundVars
           if (config.subgraphClusters && sources.nonEmpty) {
@@ -228,13 +255,12 @@ trait GraphVizExport { self: ScalanExp =>
           }
           acc3
         case _ =>
-          emitNode(s, d)
-          acc2
+          emitNode(s, d, acc1)
       }
     }
   }
 
-  private def emitExceptionCluster(e: Throwable, depth: Int, acc: Map[Exp[_], Def[_]])(implicit stream: PrintWriter, config: GraphVizConfig): Map[Exp[_], Def[_]] = {
+  private def emitExceptionCluster(e: Throwable, depth: Int, acc: GraphData)(implicit stream: PrintWriter, config: GraphVizConfig): GraphData = {
     // edges appear before their end nodes but it shouldn't be a problem
     val nodeName = exceptionNodeName(depth)
 
@@ -275,20 +301,128 @@ trait GraphVizExport { self: ScalanExp =>
     stream.println("]")
   }
 
+  private sealed trait Label {
+    def label: String
+  }
+  private case class NoAlias(label: String) extends Label
+  private case class Alias(label: String, rhs: String, td: TypeDesc) extends Label
+
+  private case class GraphData(nodes: Map[Exp[_], Option[Def[_]]], labels: Map[TypeDesc, Label], aliases: List[Alias], aliasCounter: Int)(implicit config: GraphVizConfig) {
+    def addNode(s: Exp[_], d: Option[Def[_]]): GraphData = {
+      val withType = config.aliasLongTypes match {
+        case Some(maxLength) =>
+          val elems = d.map(_.selfType).toSet + s.elem
+          elems.foldLeft(this)(_.registerType(_, maxLength))
+        case None =>
+          this
+      }
+      val nodes1 = withType.nodes + (s -> d)
+      withType.copy(nodes = nodes1)
+    }
+
+    def typeString(td: TypeDesc) = {
+      def f(td1: TypeDesc, recurse: Boolean): String =
+        labels.get(td1) match {
+          case Some(l) =>
+            l.label
+          case None =>
+            if (recurse) {
+              td1.getName(f(_, false))
+            } else {
+              // TODO this should never happen, but does with TypeWrappers
+              // !!!(s"$td1 is used in $td.getName, but isn't registered in $labels")
+              td1.name
+            }
+        }
+
+      f(td, true)
+    }
+
+    private def partsIterator(td: TypeDesc) = td match {
+      case se: StructElem[_] =>
+        se.fieldElems.iterator
+      case e: Elem[_] =>
+        e.typeArgsIterator
+      case _: Cont[_] =>
+        Iterator.empty
+    }
+
+    private def registerType(td: TypeDesc, maxLength: Int): GraphData = {
+      if (labels.contains(td))
+        this
+      else {
+        val withTypeArgs = partsIterator(td).foldLeft(this)(_.registerType(_, maxLength))
+        withTypeArgs.registerType0(td, maxLength)
+      }
+    }
+
+    private def registerType0(td: TypeDesc, maxLength: Int): GraphData = {
+      val labelString0 = typeString(td)
+
+      val (label, newAliases, newAliasCounter) =
+        if (labelString0.length > maxLength) {
+          val alias = Alias(s"T$aliasCounter", labelString0, td)
+          (alias, alias :: aliases, aliasCounter + 1)
+        } else
+          (NoAlias(labelString0), aliases, aliasCounter)
+
+      val newLabels = labels + (td -> label)
+      copy(labels = newLabels, aliases = newAliases, aliasCounter = newAliasCounter)
+    }
+
+    def finishGraph(implicit stream: PrintWriter) = {
+      nodes.foreach {
+        case (sym, Some(rhs)) =>
+          emitDepEdges(sym, rhs)
+        case _ =>
+      }
+
+      def emitAliasEdge(node: Any, td: TypeDesc): Unit =
+        labels.get(td) match {
+          case Some(Alias(label1, _, _)) =>
+            // dotted doesn't work in xdot
+            emitEdge(node, label1, """[style=dashed, color=turquoise]""")
+          case _ =>
+        }
+
+      if (aliasCounter > 0) {
+        stream.println(s"subgraph cluster_aliases {")
+        stream.println("""label="Type Aliases"""")
+        val orderedAliases = aliases.reverse
+        orderedAliases.foreach {
+          case Alias(label, rhs, td) =>
+            stream.println(s"""$label [label="type $label = $rhs", shape=box, style=rounded, color=${nodeColor(td)}]""")
+            // Below code doesn't show the dependencies correctly
+//            if (config.typeAliasEdges) {
+//              partsIterator(td).foreach(emitAliasEdge(label, _))
+//            }
+        }
+        stream.println(orderedAliases.map(_.label).mkString(" -> ") + " [style=invis]")
+        stream.println("}")
+        if (config.typeAliasEdges) {
+          nodes.keysIterator.foreach {
+            s => emitAliasEdge(s, s.elem)
+          }
+        }
+      }
+    }
+  }
+  private object GraphData {
+    def empty(implicit config: GraphVizConfig) = GraphData(Map.empty, Map.empty, Nil, 0)
+  }
+
   private def emitDepGraph(exceptionOrGraph: Either[Throwable, AstGraph], name: String)(implicit stream: PrintWriter, config: GraphVizConfig): Unit = {
-    stream.println(s"""digraph "${name}" {""")
+    stream.println(s"""digraph "$name" {""")
 
     stream.println("concentrate=true")
     stream.println(config.orientationString)
 
-    val nodes = exceptionOrGraph match {
-      case Left(e) => emitExceptionCluster(e, 0, Map.empty)
-      case Right(graph) => emitCluster(graph, Map.empty)
+    val finalData = exceptionOrGraph match {
+      case Left(e) => emitExceptionCluster(e, 0, GraphData.empty)
+      case Right(graph) => emitCluster(graph, GraphData.empty)
     }
 
-    nodes.foreach { case (sym, rhs) =>
-      emitDepEdges(sym, rhs)
-    }
+    finalData.finishGraph(stream)
     stream.println("}")
     stream.close()
   }
@@ -311,7 +445,10 @@ case class GraphVizConfig(emitGraphs: Boolean,
                           orientation: Orientation,
                           maxLabelLineLength: Int,
                           subgraphClusters: Boolean,
-                          emitMetadata: Boolean = false) {
+                          aliasLongTypes: Option[Int],
+                          typeAliasEdges: Boolean,
+                          emitMetadata: Boolean
+                         ) {
 
   // ensures nice line wrapping
   def nodeLabel(parts: Seq[String]):String = {
@@ -337,7 +474,7 @@ case class GraphVizConfig(emitGraphs: Boolean,
       label0 + lineBreak
     else
       label0
-    s"label=${StringUtil.quote(label0)}"
+    s"label=${StringUtil.quote(label)}"
   }
 
   def orientationString = if (orientation == Landscape) "rankdir=LR" else ""
@@ -350,8 +487,12 @@ object GraphVizConfig {
   def default = GraphVizConfig(
     emitGraphs = true,
     orientation = Portrait,
-    maxLabelLineLength = 40,
-    subgraphClusters = true)
+    maxLabelLineLength = 50,
+    subgraphClusters = true,
+    aliasLongTypes = Some(45),
+    typeAliasEdges = false,
+    emitMetadata = false
+  )
 
   def none = default.copy(emitGraphs = false)
 }
