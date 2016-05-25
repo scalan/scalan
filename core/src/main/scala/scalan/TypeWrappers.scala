@@ -80,9 +80,9 @@ trait TypeWrappersExp extends TypeWrappers with GraphVizExport { scalan: ScalanE
   protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase] =
     x.asInstanceOf[Rep[TBase]]
 
-  override protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig) = sym.elem match {
+  override protected def nodeColor(td: TypeDesc)(implicit config: GraphVizConfig) = td match {
     case _: BaseTypeElem[_, _] => "blue"
-    case _ => super.nodeColor(sym)
+    case _ => super.nodeColor(td)
   }
 
   def unwrapSyms(syms: List[AnyRef]): List[AnyRef] = {
