@@ -176,13 +176,10 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     case e => e
   }
 
-  override protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig) = sym match {
-    case Def(d) => d match {
-      case mc: MethodCall if mc.neverInvoke => "darkblue"
-      case no: NewObject[_] if no.neverInvoke => "darkblue"
-      case _ => super.nodeColor(sym)
-    }
-    case _ => super.nodeColor(sym)
+  override protected def nodeColor(td: TypeDesc, d: Def[_])(implicit config: GraphVizConfig) = d match {
+    case mc: MethodCall if mc.neverInvoke => "darkblue"
+    case no: NewObject[_] if no.neverInvoke => "darkblue"
+    case _ => super.nodeColor(td, d)
   }
 
   override protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
