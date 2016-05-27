@@ -4,9 +4,19 @@ import java.awt.Desktop
 import java.io.{File, PrintWriter}
 
 import _root_.scalan.{Base, ScalanExp}
-import scalan.util.{FileUtil, ScalaNameUtil, StringUtil}
-
+import scalan.util.{FileUtil, ProcessUtil, ScalaNameUtil, StringUtil}
 import GraphVizExport.lineBreak
+
+case class GraphFile(file: File, fileType: String) {
+  def open() = {
+    Base.config.getProperty(s"scalan.graphviz.viewer.$fileType") match {
+      case null =>
+        Desktop.getDesktop.open(file)
+      case command =>
+        ProcessUtil.launch(file.getParentFile, command, file.getAbsolutePath)
+    }
+  }
+}
 
 trait GraphVizExport { self: ScalanExp =>
 
@@ -58,7 +68,7 @@ trait GraphVizExport { self: ScalanExp =>
         ("oval", nodeColor(xElem))
     }
     // use full type name for the tooltip
-    stream.println(s"shape=$shape, color=$color, tooltip=${StringUtil.quote(x.toStringWithType)}")
+    stream.println(s"shape=$shape, color=$color, tooltip=${StringUtil.quote(x.toStringWithType)}, style=filled, fillcolor=white")
     stream.println("]")
     acc1
   }
@@ -75,7 +85,7 @@ trait GraphVizExport { self: ScalanExp =>
 
   protected def formatMetadata(s: Exp[_]): String = {
     val metaNode = s.allMetadata
-    metaNode.meta.map { case (k, v) => s"$k:${v.value}" }.mkString("{", ";", "}")
+    metaNode.meta.map { case (k, v) => s"$k:${formatConst(v.value)}" }.mkString("{", "; ", "}")
   }
 
   protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
@@ -153,28 +163,45 @@ trait GraphVizExport { self: ScalanExp =>
   def defaultGraphVizConfig: GraphVizConfig =
     GraphVizConfig.default
 
-  def emitDepGraph(d: Def[_], file: File)(implicit config: GraphVizConfig): Unit =
-    emitDepGraph(dep(d), file)(config)
-  def emitDepGraph(start: Exp[_], file: File)(implicit config: GraphVizConfig): Unit =
-    emitDepGraph(List(start), file)(config)
-  def emitDepGraph(ss: Seq[Exp[_]], file: File)(implicit config: GraphVizConfig): Unit =
-    emitDepGraph(new PGraph(ss.toList), file)(config)
-  def emitExceptionGraph(e: Throwable, file: File)(implicit config: GraphVizConfig): Unit =
-    emitDepGraph(Left(e), file)
-  def emitDepGraph(graph: AstGraph, file: File)(implicit config: GraphVizConfig): Unit =
-    emitDepGraph(Right(graph), file)
-  def emitDepGraph(exceptionOrGraph: Either[Throwable, AstGraph], file: File)(implicit config: GraphVizConfig): Unit =
-    if (config.emitGraphs) {
-      FileUtil.withFile(file) {
-        emitDepGraph(exceptionOrGraph, file.getName)(_, config)
-      }
+  def emitDepGraph(d: Def[_], directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
+    emitDepGraph(dep(d), directory, fileName)(config)
+  def emitDepGraph(start: Exp[_], directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
+    emitDepGraph(List(start), directory, fileName)(config)
+  def emitDepGraph(ss: Seq[Exp[_]], directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
+    emitDepGraph(new PGraph(ss.toList), directory, fileName)(config)
+  def emitExceptionGraph(e: Throwable, directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
+    emitDepGraph(Left(e), directory, fileName)
+  def emitDepGraph(graph: AstGraph, directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
+    emitDepGraph(Right(graph), directory, fileName)
+  def emitDepGraph(exceptionOrGraph: Either[Throwable, AstGraph], directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
+    emitGraphFile(directory, fileName)(emitDepGraph(exceptionOrGraph, fileName)(_, config))
+
+  def emitDot(dotText: String, directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
+    emitGraphFile(directory, fileName)(_.println(dotText))
+
+  private def emitGraphFile(directory: File, fileName: String)(f: PrintWriter => Unit)(implicit config: GraphVizConfig): Option[GraphFile] = {
+    config.emitGraphs.map { format =>
+      val dotFileName = s"$fileName.dot"
+      val file = new File(directory, dotFileName)
+      FileUtil.withFile(file)(f)
+
+      val dotFile = new File(directory, dotFileName)
+      val dotGraphFile = GraphFile(dotFile, "dot")
+
+      if (format != "dot") {
+        val convertedFileName = FileUtil.withExtension(dotFileName, format)
+        try {
+          ProcessUtil.launch(directory, "dot", s"-T$format", "-o", convertedFileName, dotFileName)
+          GraphFile(new File(directory, convertedFileName), format)
+        } catch {
+          case e: Exception =>
+            logger.warn(s"Failed to convert ${dotFile.getAbsolutePath} to $format: ${e.getMessage}")
+            dotGraphFile
+        }
+      } else
+        dotGraphFile
     }
-  def emitDot(dotText: String, file: File)(implicit config: GraphVizConfig): Unit =
-    if (config.emitGraphs) {
-      FileUtil.withFile(file) {
-        _.println(dotText)
-      }
-    }
+  }
 
   implicit class SeqExpExtensionsForEmitGraph(symbols: Seq[Exp[_]]) {
     // Not default argument to allow use from the debugger
@@ -190,18 +217,9 @@ trait GraphVizExport { self: ScalanExp =>
     val file = File.createTempFile(s"graph_${prefix}_", ".dot")
     // unfortunately can end up deleting the file before the process reads it
     // file.deleteOnExit()
-    emitDepGraph(graph, file)(config)
-    openDotFile(file)
-  }
-
-  def openDotFile(file: File): Unit = {
-    Base.config.getProperty("scalan.graphviz.viewer") match {
-      case null =>
-        Desktop.getDesktop.open(file)
-      case command =>
-        val builder = new ProcessBuilder(command, file.getAbsolutePath)
-        val _ = builder.start()
-    }
+    val directory = file.getAbsoluteFile.getParentFile
+    val fileName = FileUtil.stripExtension(file.getName)
+    emitDepGraph(graph, directory, fileName)(config).foreach(_.open())
   }
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
@@ -297,7 +315,7 @@ trait GraphVizExport { self: ScalanExp =>
       !(methodName.endsWith("???") || methodName.endsWith("!!!") || methodName.startsWith("throw"))
     }.map(ste => ScalaNameUtil.cleanScalaName(ste.toString)).toList
     stream.println(config.nodeLabel(e.toString.lines.toList ++ firstUsefulStackTraceLine))
-    stream.println(s"shape=note,color=red")
+    stream.println(s"shape=note,color=red,style=filled,fillcolor=white")
     stream.println("]")
   }
 
@@ -391,13 +409,15 @@ trait GraphVizExport { self: ScalanExp =>
         val orderedAliases = aliases.reverse
         orderedAliases.foreach {
           case Alias(label, rhs, td) =>
-            stream.println(s"""$label [label="type $label = $rhs", shape=box, style=rounded, color=${nodeColor(td)}]""")
+            stream.println(s"""$label [label="type $label = $rhs", shape=box, style=rounded, color=${nodeColor(td)}, fillcolor=white]""")
             // Below code doesn't show the dependencies correctly
 //            if (config.typeAliasEdges) {
 //              partsIterator(td).foreach(emitAliasEdge(label, _))
 //            }
         }
-        stream.println(orderedAliases.map(_.label).mkString(" -> ") + " [style=invis]")
+        if (aliases.length > 1) {
+          stream.println(orderedAliases.map(_.label).mkString(" -> ") + " [style=invis]")
+        }
         stream.println("}")
         if (config.typeAliasEdges) {
           nodes.keysIterator.foreach {
@@ -415,6 +435,7 @@ trait GraphVizExport { self: ScalanExp =>
     stream.println(s"""digraph "$name" {""")
 
     stream.println("concentrate=true")
+    stream.println(s"node [style=filled, fillcolor=orangered]")
     stream.println(config.orientationString)
 
     val finalData = exceptionOrGraph match {
@@ -441,7 +462,7 @@ object ControlFlowWithBoxes extends ControlFlowStyle
 object ControlFlowWithArrows extends ControlFlowStyle
 
 // outside the cake to be usable from ItTestsUtil
-case class GraphVizConfig(emitGraphs: Boolean,
+case class GraphVizConfig(emitGraphs: Option[String],
                           orientation: Orientation,
                           maxLabelLineLength: Int,
                           subgraphClusters: Boolean,
@@ -485,7 +506,7 @@ object GraphVizConfig {
   // not made implicit because it would be too easy to use
   // it accidentally instead of passing up
   def default = GraphVizConfig(
-    emitGraphs = true,
+    emitGraphs = Some("svg"),
     orientation = Portrait,
     maxLabelLineLength = 50,
     subgraphClusters = true,
@@ -494,5 +515,5 @@ object GraphVizConfig {
     emitMetadata = false
   )
 
-  def none = default.copy(emitGraphs = false)
+  def none = default.copy(emitGraphs = None)
 }

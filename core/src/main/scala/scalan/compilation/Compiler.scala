@@ -33,19 +33,24 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
   def buildGraph[A, B](sourcesDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): CommonCompilerOutput[A, B] = {
     // G is PGraph with some extra information
     def emittingGraph[G](fileName: String, passName: String, emitMetadata: Boolean, toGraph: G => PGraph)(mkGraph: => G): G = {
-      val file = new File(sourcesDir, fileName)
+      val graphVizConfig1 = graphVizConfig.copy(emitMetadata = emitMetadata)
       try {
         val g = mkGraph
-        emitDepGraph(toGraph(g), file)(graphVizConfig.copy(emitMetadata = emitMetadata))
+        emitDepGraph(toGraph(g), sourcesDir, fileName)(graphVizConfig1)
         g
       } catch {
         case e: Exception =>
-          emitExceptionGraph(e, file)(graphVizConfig)
-          throw new CompilationException(s"$passName failed. See ${file.getAbsolutePath} for exception graph.", e)
+          val graphMsg = scalan.emitExceptionGraph(e, sourcesDir, functionName)(graphVizConfig1) match {
+            case Some(graphFile) =>
+              s"See ${graphFile.file.getAbsolutePath} for exception graph."
+            case None =>
+              s"No exception graph produced."
+          }
+          throw new CompilationException(s"Staging $functionName failed at pass $passName. $graphMsg", e)
       }
     }
 
-    val (initialGraph, eInput, eOutput) = emittingGraph[(PGraph, Elem[A], Elem[B])](s"$functionName.dot", "Initial graph generation", false, _._1) {
+    val (initialGraph, eInput, eOutput) = emittingGraph[(PGraph, Elem[A], Elem[B])](functionName, "Initial graph generation", false, _._1) {
       val func0 = func
       val eFunc = func0.elem
       (buildInitialGraph(func0)(compilerConfig), eFunc.eDom, eFunc.eRange)
@@ -59,8 +64,8 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
       val pass = passFunc(graph)
 
       val indexStr = (index + 1).toString
-      val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}.dot"
-      val dotFileNameAna = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}_ana.dot"
+      val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}"
+      val dotFileNameAna = dotFileName + "_analyzed"
 
       emittingGraph[PGraph](dotFileName, pass.name, false, g => g) {
         scalan.beginPass(pass)
