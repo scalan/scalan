@@ -95,6 +95,42 @@ trait Views extends TypeDescs { self: ViewsDsl with Scalan =>
   }
   trait PairIsoCompanion
 
+  abstract class AbsorbFirstUnitIso[A2,B2](val iso2: Iso[A2, B2])(
+    implicit val eA2: Elem[A2], val eB2: Elem[B2])
+    extends IsoUR[A2, (Unit, B2)] {
+    lazy val eFrom = eA2
+    lazy val eTo: Elem[(Unit, B2)] = element[(Unit, B2)]
+    def from(b: Rep[(Unit, B2)]) = {
+      iso2.from(b._2)
+    }
+    def to(a: Rep[A2]) = {
+      Pair((), iso2.to(a))
+    }
+    override def isIdentity = false
+    override def equals(other: Any) = other match {
+      case i: Views#AbsorbFirstUnitIso[_, _] => (this eq i) || (iso2 == i.iso2)
+      case _ => false
+    }
+  }
+
+  abstract class AbsorbSecondUnitIso[A1,B1](val iso1: Iso[A1, B1])(
+    implicit val eA1: Elem[A1], val eB1: Elem[B1])
+    extends IsoUR[A1, (B1,Unit)] {
+    lazy val eFrom = eA1
+    lazy val eTo: Elem[(B1,Unit)] = element[(B1,Unit)]
+    def from(b: Rep[(B1,Unit)]) = {
+      iso1.from(b._1)
+    }
+    def to(a: Rep[A1]) = {
+      Pair(iso1.to(a), ())
+    }
+    override def isIdentity = false
+    override def equals(other: Any) = other match {
+      case i: Views#AbsorbSecondUnitIso[_, _] => (this eq i) || (iso1 == i.iso1)
+      case _ => false
+    }
+  }
+
   abstract class SumIso[A1, A2, B1, B2](val iso1: Iso[A1, B1], val iso2: Iso[A2, B2])(
     implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
     extends IsoUR[A1 | A2, B1 | B2] {
@@ -275,7 +311,7 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
     def fromElem[A,B](pe: PairElem[A,B]) = (getIsoByElem(pe.eFst), getIsoByElem(pe.eSnd))
 
     def unapply[T](e: Elem[T]): Option[(PairElem[_,_], Iso[_,_], Iso[_,_])] = e match {
-      case pe: PairElem[a,b] =>
+      case pe: PairElem[a,b] if pe.eFst != UnitElement && pe.eSnd != UnitElement =>
         fromElem(pe) match {
           case (iso1: Iso[s, a] @unchecked, iso2: Iso[t, b] @unchecked) => Some((pe, iso1, iso2))
           case _ => None
@@ -343,13 +379,23 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
           ve.iso
         else
           deepIso >> ve.iso
-      case pe: PairElem[a,b] =>
-        (builder(pe.eFst), builder(pe.eSnd)) match {
-          case (iso1: Iso[s,a] @unchecked, iso2: Iso[t,b] @unchecked) =>
-            val pIso = pairIso(iso1,iso2)
-            val deepIso = builder(pIso.eFrom)
-            deepIso >> pIso
-        }
+      case pe: PairElem[a,b] => (pe.eFst, pe.eSnd) match {
+        case (`UnitElement`, eB) =>
+          builder(eB) match { case isoB: Iso[s,b] @unchecked =>
+            AbsorbFirstUnitIso(isoB)(isoB.eFrom, isoB.eTo)
+          }
+        case (eA, `UnitElement`) =>
+          builder(eA) match { case isoA: Iso[s,a] @unchecked =>
+            AbsorbSecondUnitIso(isoA)(isoA.eFrom, isoA.eTo)
+          }
+        case (eA, eB) =>
+          (builder(eA), builder(eB)) match {
+            case (iso1: Iso[s,a] @unchecked, iso2: Iso[t,b] @unchecked) =>
+              val pIso = pairIso(iso1,iso2)
+              val deepIso = builder(pIso.eFrom)
+              deepIso >> pIso
+          }
+      }
       case pe: SumElem[a,b] =>
         val iso1 = builder(pe.eLeft)
         val iso2 = builder(pe.eRight)
