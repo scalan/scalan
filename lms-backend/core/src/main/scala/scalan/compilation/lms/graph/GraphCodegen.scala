@@ -90,8 +90,8 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
      *  export to graphViz - not compilled in separate class
      */
 
-    def exportToGraphVis(file: File, config:GraphVizConfig) {
-      if (!config.emitGraphs)
+    def exportToGraphVis(file: File, config: GraphVizConfig) {
+      if (config.emitGraphs.isEmpty)
         return
 
 

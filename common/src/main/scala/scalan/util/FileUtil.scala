@@ -173,6 +173,24 @@ object FileUtil {
       source.close()
     }
   }
+
+  def stripExtension(fileName: String) =
+    fileName.lastIndexOf('.') match {
+      case -1 =>
+        fileName
+      case n =>
+        fileName.substring(0, n)
+    }
+
+  def withExtension(fileName: String, extension: String): String =
+    s"${stripExtension(fileName)}.$extension"
+
+  def modifyName(file: File)(f: String => String): File = {
+    val parent = file.getParentFile
+    val name = file.getName
+    val newName = f(name)
+    new File(parent, newName)
+  }
 }
 
 case class ExtensionFilter(extension: String) extends FilenameFilter {
