@@ -36,7 +36,7 @@ class CollectionExamplesSuite extends BaseShouldTests {
       override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
     val f = ctx.getStagedFunc(name)
-    ctx.emitDepGraph(f, new File(prefix, s"$name.dot"))(GraphVizConfig.default)
+    ctx.emitDepGraph(f, prefix, name)(GraphVizConfig.default)
   }
 
   val whenStaged = "when staged"

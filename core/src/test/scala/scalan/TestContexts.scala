@@ -7,15 +7,20 @@ import scalan.util.FileUtil
 
 trait TestContexts extends TestsUtil {
   protected[this] def stage(scalan: ScalanExp)(testName: String, name: String, sfs: Seq[() => scalan.Exp[_]]): Unit = {
-    val dotFile = FileUtil.file(prefix, testName, s"$name.dot")
+    val directory = FileUtil.file(prefix, testName)
     implicit val graphVizConfig = scalan.defaultGraphVizConfig
     try {
       val ss = sfs.map(_.apply())
-      scalan.emitDepGraph(ss, dotFile)
+      scalan.emitDepGraph(ss, directory, name)
     } catch {
       case e: Exception =>
-        scalan.emitExceptionGraph(e, dotFile)
-        fail(s"Staging $name failed. See ${dotFile.getAbsolutePath} for exception graph.", e)
+        val graphMsg = scalan.emitExceptionGraph(e, directory, name) match {
+          case Some(graphFile) =>
+            s"See ${graphFile.file.getAbsolutePath} for exception graph."
+          case None =>
+            s"No exception graph produced."
+        }
+        fail(s"Staging $name failed. $graphMsg", e)
     }
   }
 
