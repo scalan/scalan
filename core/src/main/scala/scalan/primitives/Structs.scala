@@ -93,10 +93,10 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
   /**
     * Get tuple field name by index
     */
-  def tupleFN(fieldIndex: Int) = s"_$fieldIndex"
+  def tupleFN(fieldIndex: Int) = s"_${fieldIndex + 1}"
 
   def tupleStructElement(fieldElems: Elem[_]*)(implicit o: Overloaded1): StructElem[Struct] = {
-    val fields = fieldElems.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f }
+    val fields = fieldElems.zipWithIndex.map { case (f, i) => tupleFN(i) -> f }
     // TODO add tupleTag(n)?
     structElement(defaultStructTag, fields)
   }
@@ -125,10 +125,10 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
       asElem[IsoUR[Struct, (B1, B2)]]
 
     override def from(p: Rep[(B1, B2)]) =
-      struct(tupleFN(1) -> iso1.from(p._1), tupleFN(2) -> iso2.from(p._2))
+      struct(tupleFN(0) -> iso1.from(p._1), tupleFN(1) -> iso2.from(p._2))
 
     override def to(struct: Rep[Struct]) = {
-      Pair(iso1.to(struct(1).asRep[A1]), iso2.to(struct(2).asRep[A2]))
+      Pair(iso1.to(struct(tupleFN(0)).asRep[A1]), iso2.to(struct(tupleFN(1)).asRep[A2]))
     }
   }
 
@@ -191,12 +191,13 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     struct(tag, fields)
   def struct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]): Rep[T]
   def tupleStruct(items: Rep[_]*): Rep[Struct] = {
-    val fields = items.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f }
+    val fields = items.zipWithIndex.map { case (f, i) => tupleFN(i) -> f }
     struct(defaultStructTag, fields)
   }
   def field(struct: Rep[Struct], field: String): Rep[_]
-  def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[Any]): Rep[S]
-  def field(struct: Rep[Struct], fieldIndex: Int): Rep[_] = field(struct, tupleFN(fieldIndex))
+  def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[_]): Rep[S]
+  def field(struct: Rep[Struct], fieldIndex: Int): Rep[_]
+
   def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct]
 
   case class Link(field: String, nestedField: String, nestedElem: Elem[_], flatName: String)
@@ -302,7 +303,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
 
     val links =
       fromFields.zipWithIndex.map {
-        case ((fn, (nestedN, nestedE)), i) => Link(fn, nestedN, nestedE, tupleFN(i + 1))
+        case ((fn, (nestedN, nestedE)), i) => Link(fn, nestedN, nestedE, tupleFN(i))
       }
 
     val res: Iso[_, T] = reifyObject(FlatteningIso(eTo, flatIsos, links))
@@ -448,8 +449,11 @@ trait StructsDslStd extends StructsDsl with StructItemsDslStd with StructKeysDsl
       case Some((_, value)) => value
       case None => !!!(s"Field $field not found in structure $struct", struct)
     }
+  def field(struct: Rep[Struct], fieldIndex: Int): Rep[_] = {
+    val fieldName = struct.asInstanceOf[StructSeq[_]].fields(fieldIndex)._2
+  }
 
-  def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[Any]): Rep[S] = {
+  def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[_]): Rep[S] = {
     val s = struct.asInstanceOf[StructSeq[S]]
     val buf = new scala.collection.mutable.ArrayBuffer[StructField](s.fields.length)
     s.fields.copyToBuffer(buf)
@@ -515,7 +519,12 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
         !!!(s"Attempt to get field $field from a non-struct ${struct.toStringWithType}", struct)
     }
   }
-  def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[Any]): Rep[S] = FieldUpdate[S,Any](struct, fieldName, v)
+  def field(struct: Rep[Struct], fieldIndex: Int): Rep[_] = {
+    val fieldName = struct.elem.fields(fieldIndex)._1
+    field(struct, fieldName)
+  }
+
+  def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[_]): Rep[S] = FieldUpdate[S,Any](struct, fieldName, v)
   def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct] = ProjectionStruct(struct, fields)
 
   override def syms(e: Any): List[Exp[Any]] = e match {
