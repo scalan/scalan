@@ -482,6 +482,11 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       mark
     }
 
+    def hasMark[T](s: Exp[T]): Boolean = {
+      implicit val eT = s.elem
+      s.getMetadata(getMarkingKey[T]).isDefined
+    }
+
     def updateOutboundMarking[T](s: Exp[T], mark: M[T]): Unit = {
       implicit val eT = s.elem
       val current = getMark(s)
