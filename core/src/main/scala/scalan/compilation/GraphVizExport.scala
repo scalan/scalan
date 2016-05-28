@@ -506,11 +506,11 @@ object GraphVizConfig {
   // not made implicit because it would be too easy to use
   // it accidentally instead of passing up
   def default = GraphVizConfig(
-    emitGraphs = Some("svg"),
+    emitGraphs = Some("dot"),
     orientation = Portrait,
     maxLabelLineLength = 50,
     subgraphClusters = true,
-    aliasLongTypes = Some(45),
+    aliasLongTypes = None,
     typeAliasEdges = false,
     emitMetadata = false
   )
