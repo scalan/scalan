@@ -52,21 +52,21 @@ trait Transforming { self: Scalan =>
   case class SingletonElem[T: WeakTypeTag](value: T)
     extends BaseElem[T]()(weakTypeTag[T], Default.defaultVal(value))
 
-  case class KeyPath(path: String) {
-    def +(other: KeyPath) = KeyPath(s"$path+${other.path}")
-    def +(other: String) = KeyPath(s"$path+${other}")
-    def isAll = path == KeyPath.All.path
-    def isNone = path == null || path == KeyPath.None.path
+  sealed trait KeyPath {
+    def isNone = this == KeyPath.None
+    def isAll = this == KeyPath.All
   }
   object KeyPath {
-    val Root = KeyPath("/")
-    val This = KeyPath(".")
-    val All = KeyPath("*")
-    val None = KeyPath("")
+    case object Root extends KeyPath
+    case object This extends KeyPath
+    case object All extends KeyPath
+    case object None extends KeyPath
+    case object First extends KeyPath
+    case object Second extends KeyPath
+    case class Field(name: String) extends KeyPath
   }
 
   def keyPathElem(kp: KeyPath): Elem[KeyPath] = SingletonElem(kp)
-  def keyPathElem(path: String): Elem[KeyPath] = keyPathElem(KeyPath(path))
 
   implicit class KeyPathElemOps(eKeyPath: Elem[KeyPath]) {
     def keyPath = eKeyPath.asInstanceOf[SingletonElem[KeyPath]].value
