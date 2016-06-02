@@ -40,7 +40,7 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
         g
       } catch {
         case e: Exception =>
-          val graphMsg = scalan.emitExceptionGraph(e, sourcesDir, functionName)(graphVizConfig1) match {
+          val graphMsg = scalan.emitExceptionGraph(e, sourcesDir, fileName)(graphVizConfig1) match {
             case Some(graphFile) =>
               s"See ${graphFile.file.getAbsolutePath} for exception graph."
             case None =>
