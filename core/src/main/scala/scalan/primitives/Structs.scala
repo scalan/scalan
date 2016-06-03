@@ -434,9 +434,6 @@ trait StructsDslStd extends StructsDsl with StructItemsDslStd with StructKeysDsl
     override def equals(other: Any) = other match {
       case ss: StructsDslStd#StructSeq[_] =>
         tag == ss.tag && fields.sameElements(ss.fields)
-      case p: Product =>
-        val items = p.productIterator
-        fields.iterator.map(_._2).sameElements(items)
       case _ => false
     }
     def findFieldIndex(fieldName: String): Int = fields.iterator.map(_._1).indexOf(fieldName)
