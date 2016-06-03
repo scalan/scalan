@@ -447,7 +447,7 @@ trait StructsDslStd extends StructsDsl with StructItemsDslStd with StructKeysDsl
       case None => !!!(s"Field $field not found in structure $struct", struct)
     }
   def field(struct: Rep[Struct], fieldIndex: Int): Rep[_] = {
-    val fieldName = struct.asInstanceOf[StructSeq[_]].fields(fieldIndex)._2
+    struct.asInstanceOf[StructSeq[_]].fields(fieldIndex)._2
   }
 
   def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[_]): Rep[S] = {
