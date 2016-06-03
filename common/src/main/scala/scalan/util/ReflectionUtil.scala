@@ -123,6 +123,9 @@ object ReflectionUtil {
   /** True if the symbol represents an anonymous class */
   def isAnonymousClass(symbol: Symbol) = symbol.isClass && symbol.name.toString.contains("$anon")
 
+  /** True if `x` is a Scala `object` */
+  def isSingleton(x: Any) = x.getClass.getField("MODULE$") != null
+
   /** A string describing the argument which allows to distinguish between overloads and overrides, unlike MethodSymbol.toString */
   def showMethod(m: MethodSymbol) = {
     val typeParams = m.typeParams match {
