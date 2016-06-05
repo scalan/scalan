@@ -145,6 +145,90 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
   def mkDenseFlatMatrix[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]]
   def unmkDenseFlatMatrix[T](p: Rep[Matrix[T]]): Option[(Rep[Collection[T]], Rep[Int])]
 
+  abstract class AbsDenseMatrix[T]
+      (toNColl: Rep[NestedCollection[T]])(implicit eT: Elem[T])
+    extends DenseMatrix[T](toNColl) with Def[DenseMatrix[T]] {
+    lazy val selfType = element[DenseMatrix[T]]
+  }
+  // elem for concrete class
+  class DenseMatrixElem[T](val iso: Iso[DenseMatrixData[T], DenseMatrix[T]])(implicit override val eT: Elem[T])
+    extends MatrixElem[T, DenseMatrix[T]]
+    with ConcreteElem[DenseMatrixData[T], DenseMatrix[T]] {
+    override lazy val parent: Option[Elem[_]] = Some(matrixElement(element[T]))
+    override lazy val typeArgs = TypeArgs("T" -> eT)
+
+    override def convertMatrix(x: Rep[Matrix[T]]) = DenseMatrix(x.toNColl)
+    override def getDefaultRep = DenseMatrix(element[NestedCollection[T]].defaultRepValue)
+    override lazy val tag = {
+      implicit val tagT = eT.tag
+      weakTypeTag[DenseMatrix[T]]
+    }
+  }
+
+  // state representation type
+  type DenseMatrixData[T] = NestedCollection[T]
+
+  // 3) Iso for concrete class
+  class DenseMatrixIso[T](implicit eT: Elem[T])
+    extends EntityIso[DenseMatrixData[T], DenseMatrix[T]] with Def[DenseMatrixIso[T]] {
+    override def from(p: Rep[DenseMatrix[T]]) =
+      p.toNColl
+    override def to(p: Rep[NestedCollection[T]]) = {
+      val toNColl = p
+      DenseMatrix(toNColl)
+    }
+    lazy val eFrom = element[NestedCollection[T]]
+    lazy val eTo = new DenseMatrixElem[T](self)
+    lazy val selfType = new DenseMatrixIsoElem[T](eT)
+    def productArity = 1
+    def productElement(n: Int) = eT
+  }
+  case class DenseMatrixIsoElem[T](eT: Elem[T]) extends Elem[DenseMatrixIso[T]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new DenseMatrixIso[T]()(eT))
+    lazy val tag = {
+      implicit val tagT = eT.tag
+      weakTypeTag[DenseMatrixIso[T]]
+    }
+    lazy val typeArgs = TypeArgs("T" -> eT)
+  }
+  // 4) constructor and deconstructor
+  class DenseMatrixCompanionAbs extends CompanionDef[DenseMatrixCompanionAbs] with DenseMatrixCompanion {
+    def selfType = DenseMatrixCompanionElem
+    override def toString = "DenseMatrix"
+
+    @scalan.OverloadId("fromFields")
+    def apply[T](toNColl: Rep[NestedCollection[T]])(implicit eT: Elem[T]): Rep[DenseMatrix[T]] =
+      mkDenseMatrix(toNColl)
+
+    def unapply[T](p: Rep[Matrix[T]]) = unmkDenseMatrix(p)
+  }
+  lazy val DenseMatrixRep: Rep[DenseMatrixCompanionAbs] = new DenseMatrixCompanionAbs
+  lazy val DenseMatrix: DenseMatrixCompanionAbs = proxyDenseMatrixCompanion(DenseMatrixRep)
+  implicit def proxyDenseMatrixCompanion(p: Rep[DenseMatrixCompanionAbs]): DenseMatrixCompanionAbs = {
+    proxyOps[DenseMatrixCompanionAbs](p)
+  }
+
+  implicit case object DenseMatrixCompanionElem extends CompanionElem[DenseMatrixCompanionAbs] {
+    lazy val tag = weakTypeTag[DenseMatrixCompanionAbs]
+    protected def getDefaultRep = DenseMatrix
+  }
+
+  implicit def proxyDenseMatrix[T](p: Rep[DenseMatrix[T]]): DenseMatrix[T] =
+    proxyOps[DenseMatrix[T]](p)
+
+  implicit class ExtendedDenseMatrix[T](p: Rep[DenseMatrix[T]])(implicit eT: Elem[T]) {
+    def toData: Rep[DenseMatrixData[T]] = isoDenseMatrix(eT).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoDenseMatrix[T](implicit eT: Elem[T]): Iso[DenseMatrixData[T], DenseMatrix[T]] =
+    reifyObject(new DenseMatrixIso[T]()(eT))
+
+  // 6) smart constructor and deconstructor
+  def mkDenseMatrix[T](toNColl: Rep[NestedCollection[T]])(implicit eT: Elem[T]): Rep[DenseMatrix[T]]
+  def unmkDenseMatrix[T](p: Rep[Matrix[T]]): Option[(Rep[NestedCollection[T]])]
+
   abstract class AbsCompoundMatrix[T]
       (rows: Rep[Collection[Vector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T])
     extends CompoundMatrix[T](rows, numColumns) with Def[CompoundMatrix[T]] {
@@ -423,6 +507,20 @@ trait MatricesStd extends scalan.ScalanDslStd with MatricesDsl {
   def unmkDenseFlatMatrix[T](p: Rep[Matrix[T]]) = p match {
     case p: DenseFlatMatrix[T] @unchecked =>
       Some((p.rmValues, p.numColumns))
+    case _ => None
+  }
+
+  case class StdDenseMatrix[T]
+      (override val toNColl: Rep[NestedCollection[T]])(implicit eT: Elem[T])
+    extends AbsDenseMatrix[T](toNColl) {
+  }
+
+  def mkDenseMatrix[T]
+    (toNColl: Rep[NestedCollection[T]])(implicit eT: Elem[T]): Rep[DenseMatrix[T]] =
+    new StdDenseMatrix[T](toNColl)
+  def unmkDenseMatrix[T](p: Rep[Matrix[T]]) = p match {
+    case p: DenseMatrix[T] @unchecked =>
+      Some((p.toNColl))
     case _ => None
   }
 
@@ -765,6 +863,276 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
   def unmkDenseFlatMatrix[T](p: Rep[Matrix[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: DenseFlatMatrixElem[T] @unchecked =>
       Some((p.asRep[DenseFlatMatrix[T]].rmValues, p.asRep[DenseFlatMatrix[T]].numColumns))
+    case _ =>
+      None
+  }
+
+  case class ExpDenseMatrix[T]
+      (override val toNColl: Rep[NestedCollection[T]])(implicit eT: Elem[T])
+    extends AbsDenseMatrix[T](toNColl)
+
+  object DenseMatrixMethods {
+    object companion {
+      def unapply(d: Def[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "companion" =>
+          Some(receiver).asInstanceOf[Option[Rep[DenseMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object rows {
+      def unapply(d: Def[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "rows" =>
+          Some(receiver).asInstanceOf[Option[Rep[DenseMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object numColumns {
+      def unapply(d: Def[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "numColumns" =>
+          Some(receiver).asInstanceOf[Option[Rep[DenseMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object columns {
+      def unapply(d: Def[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "columns" =>
+          Some(receiver).asInstanceOf[Option[Rep[DenseMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object numRows {
+      def unapply(d: Def[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "numRows" =>
+          Some(receiver).asInstanceOf[Option[Rep[DenseMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object rmValues {
+      def unapply(d: Def[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "rmValues" =>
+          Some(receiver).asInstanceOf[Option[Rep[DenseMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[DenseMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_rows {
+      def unapply(d: Def[_]): Option[(Rep[DenseMatrix[T]], Coll[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(iRows, _*), _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "rows" } =>
+          Some((receiver, iRows)).asInstanceOf[Option[(Rep[DenseMatrix[T]], Coll[Int]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseMatrix[T]], Coll[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_row {
+      def unapply(d: Def[_]): Option[(Rep[DenseMatrix[T]], Rep[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(row, _*), _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "row" } =>
+          Some((receiver, row)).asInstanceOf[Option[(Rep[DenseMatrix[T]], Rep[Int]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseMatrix[T]], Rep[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[DenseMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(row, column, _*), _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, row, column)).asInstanceOf[Option[(Rep[DenseMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object mapBy {
+      def unapply(d: Def[_]): Option[(Rep[DenseMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "mapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[DenseMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseMatrix[T]], Rep[Vector[T] => Vector[R] @uncheckedVariance]) forSome {type T; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object transpose {
+      def unapply(d: Def[_]): Option[(Rep[DenseMatrix[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "transpose" =>
+          Some((receiver, n)).asInstanceOf[Option[(Rep[DenseMatrix[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseMatrix[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object reduceByColumns {
+      def unapply(d: Def[_]): Option[(Rep[DenseMatrix[T]], RepMonoid[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(m, n, _*), _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "reduceByColumns" =>
+          Some((receiver, m, n)).asInstanceOf[Option[(Rep[DenseMatrix[T]], RepMonoid[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseMatrix[T]], RepMonoid[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object matrix_* {
+      def unapply(d: Def[_]): Option[(Rep[DenseMatrix[T]], Matr[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(matrix, n, _*), _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "$times" =>
+          Some((receiver, matrix, n)).asInstanceOf[Option[(Rep[DenseMatrix[T]], Matr[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseMatrix[T]], Matr[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object +^^ {
+      def unapply(d: Def[_]): Option[(Rep[DenseMatrix[T]], Matr[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "$plus$up$up" =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[DenseMatrix[T]], Matr[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseMatrix[T]], Matr[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object matrix_*^^ {
+      def unapply(d: Def[_]): Option[(Rep[DenseMatrix[T]], Matr[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "$times$up$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "matrix" } =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[DenseMatrix[T]], Matr[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseMatrix[T]], Matr[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object *^^ {
+      def unapply(d: Def[_]): Option[(Rep[DenseMatrix[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(value, n, _*), _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "$times$up$up" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, value, n)).asInstanceOf[Option[(Rep[DenseMatrix[T]], Rep[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseMatrix[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object average {
+      def unapply(d: Def[_]): Option[(Rep[DenseMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, m, _*), _) if receiver.elem.isInstanceOf[DenseMatrixElem[_]] && method.getName == "average" =>
+          Some((receiver, f, m)).asInstanceOf[Option[(Rep[DenseMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object DenseMatrixCompanionMethods {
+    object fromColumns {
+      def unapply(d: Def[_]): Option[Coll[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem == DenseMatrixCompanionElem && method.getName == "fromColumns" =>
+          Some(cols).asInstanceOf[Option[Coll[Vector[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Coll[Vector[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromNColl {
+      def unapply(d: Def[_]): Option[(NColl[(Int, T)], Rep[Int], Elem[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(items, numColumns, elem, _*), _) if receiver.elem == DenseMatrixCompanionElem && method.getName == "fromNColl" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((items, numColumns, elem)).asInstanceOf[Option[(NColl[(Int, T)], Rep[Int], Elem[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(NColl[(Int, T)], Rep[Int], Elem[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromNColl_dense1 {
+      def unapply(d: Def[_]): Option[(NColl[T], Rep[Int], Elem[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(items, numColumns, elem, _*), _) if receiver.elem == DenseMatrixCompanionElem && method.getName == "fromNColl" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "dense1" } =>
+          Some((items, numColumns, elem)).asInstanceOf[Option[(NColl[T], Rep[Int], Elem[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(NColl[T], Rep[Int], Elem[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromRows {
+      def unapply(d: Def[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(rows, numCols, _*), _) if receiver.elem == DenseMatrixCompanionElem && method.getName == "fromRows" =>
+          Some((rows, numCols)).asInstanceOf[Option[(Coll[Vector[T]], IntRep) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Coll[Vector[T]], IntRep) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  def mkDenseMatrix[T]
+    (toNColl: Rep[NestedCollection[T]])(implicit eT: Elem[T]): Rep[DenseMatrix[T]] =
+    new ExpDenseMatrix[T](toNColl)
+  def unmkDenseMatrix[T](p: Rep[Matrix[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: DenseMatrixElem[T] @unchecked =>
+      Some((p.asRep[DenseMatrix[T]].toNColl))
     case _ =>
       None
   }
@@ -1700,6 +2068,18 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
       }
     }
 
+    object toNColl {
+      def unapply(d: Def[_]): Option[Rep[Matrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MatrixElem[_, _]] && method.getName == "toNColl" =>
+          Some(receiver).asInstanceOf[Option[Rep[Matrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Matrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object columns {
       def unapply(d: Def[_]): Option[Rep[Matrix[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MatrixElem[_, _]] && method.getName == "columns" =>
@@ -1969,7 +2349,7 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
 }
 
 object Matrices_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAM1YTWwbRRSedeI4tiM3DS0EiYgQXEBA7ZQIFSlCVYgd1Mj5UTZtUahA492Ju2V2dtkdB5tDkTj0AJwQ4oDEoRKIS4WEuIFUVQIkhBASXDlx4FSKqh7oAfHzZvbHu846IZGJ6sNod+bN+/ne92bf+OpNlHYd9IirYYpZySQcl1T5POfyolpl3ODtJUtvUlIhmz8+cd3KvfnOcgqNbqChC9ituHQDZb2HassOn1Wu11AWM4243HJcjh6qSQtlzaKUaNywWNkwzSbHdUrKNcPlszU0WLf09qvoElJqaFSzmOYQTtR5il2XuP78MBEeGeF7Vr63V+yODVYWUZQjUaw72ODgPtgY9eTXiK22mcXaJkcF37UVW7gFMnnSsiGG06ZNpZmBGsoYpm05PLCaAQsXLD14HWQYJtBY7SLewmWw2iir3DFYQyizsfYKbpBlEBHigxCDS+jmetsmvvK8y/WYvZaNEIKsPCUdK3UwK4WYlQRmRZU4BqbG61gsrjpWq428nzKAUMsGFU/uoiLQQKpML751Xnvxjpo3U2JzS7iSkQ4NgaIHezBEpgew/XbtXff281dOplBuA+UMd67ucgdrPEoDH648Zszi0ucQQew0IINTvTIorcyBTBdNsppl2piBJh/LEUgUNTSDC2ExN+Knpwf2GW6TQFRp2UoY72SPeCWX5jGlqzfuP37st+oLKZSKm8iCShWKwQmUcjS0hIEPLV+5GA9xpKxLhMWQbXXGzA7GQxgevfG7/s00Op8KwfNt/bd8gYqxZz744hhZ/TSFhjckvRcobsjMCXQqxNU20LC1RRxvPrOFqXhKzF5GJ5u4SbmPaRSMAQCDo8melWkTgdSsZLwShJ/3SLtsMVJcWC3+oX733lXBSQeNeCteqf5tnPzr58Iml3TlaNgxz2LaJG4A8ABUeRzy3HxYB7vmQi6Nh26JYQI0sKYJSpomSzLjoId70cYmq45hwtG1RZ7+6sszt64tpyVzxnzspOveqeFD14FRRKdMg6XTjCfRJeeholomOTx123jpyttcEkNpxQ+llfpFCH5W7ntgB44E5+Vnly8fvfXRy/fImh6uG9zEdnF6DxUdFOD/WLEonsjCvP/dkDw/EV88VCHMJUBj7tVjJOehiLcyH3UyE0VbjEfDWY8WkJ7xLtUxBRORrRGPxpUucqXIeuDHYJUSc1eOJoc0EbJxojcbAcJ712pH6M1T11IovYjSm1Ddbg2l61aT6UFu4CvMSYs/F8wp8dxALrCDzTAX8jeJOjF3eS0F80o8rr0djttA7K7QQcd6bT9HwNBZmPUpvZsb+zodxHA8OaBpOc7shcsFwTCRlr5T+b645oNickJAE5Fti3cHuQzuB5NIru3+7JsiybszsHstkd/9ZVceFt3+n5JHImoPilfdodx9pCroBm5YDNN+ti99IEGh4vvV/yMmrvnAjpjtAe2NDZHohxLxHICuaf9c6YHaDvnLi8ZoAZsGbZ9ItLsTJ7fnJSmfHhB2TON+UBPjL53N09CelHq0JxWiUewQXdyIiQk3dq+znHn/1LnF8XNnZG87okshbyW8YST/v7CE7Vl5G35sh9swCBWrps3b4mHm62d/euP7Tz6WV4sOTnDJkCCI7hcd9r2nBjCqQeoODgOb6hGY6reywJJLdz5cfvyHz3+Vl4CcaIrhtsPCfxiizX88senaXMWlEXiB/6JFjrDkTzH88y9DZlRn2xEAAA=="
+  val dump = "H4sIAAAAAAAAAM1YT2gcVRh/s8lms7txm8ZUIxiMcWvF2t3UIBWClJjdSMNmEzJpK7Eob2detlPf/HHmbZz1UMFDD+pJxIPgoaB4KYJ4s1AEFURE0KtnT7VSerAnxe+9+bMzm53EhDVkDo+Z9+f78/t+3zfzzY07KO3Y6ElHwRQbJZ0wXJLF/bzDinLVYBprL5tqi5IK2fzl5Ddm7p336yk0uoGGLmOn4tANlPVuqq4V3stMraEsNhTiMNN2GHq8JjSUFZNSojDNNMqarrcYblBSrmkOm6uhwYaptt9AV5FUQ6OKaSg2YUReoNhxiOPPDxNukRY+Z8Vze8Xq6DDK3ItyxIt1G2sMzAcdo97+NWLJbcM02jpDBd+0FYubBXvyxLXAh3O6RYWagRrKaLpl2izQmgENl001eBw0MEygsdoVvIXLoLVZlpmtGU0uzMLK67hJ6rCFbx8EHxxCN9fbFvGF5x2mxvS5FkIIovKsMKzUwawUYlbimBVlYmuYam9hvrhqm24beZc0gJBrgYhndhERSCBVQy2+e0l55b6c11P8sMtNyQiDhkDQYwkMEeEBbH9Y+8C599L1MymU20A5zZlvOMzGCovSwIcrjw3DZMLmEEFsNyGC00kRFFrmYU8XTbKKqVvYAEk+liMQKKopGuOb+dyIH54E7DPMIsFWybWk0N+pBH8FlxYwpau3Hzl1/I/qyymUiqvIgkgZksEOhDI0tIyBD64vnI9HGJLWBcJ8yLqdMbOD8hCGE7f/VL+fQZdSIXi+rv8WLxAx9vzHXx8nq1+k0PCGoPcixU0ROY5OhTjKBho2t4jtzWe2MOV3PaOXUckmblHmYxoFYwDAYGgqMTMtwpGaE4yXAvfzHmnrpkGKi6vFv+QfP7zBOWmjEW/FS9V/tDN//1bYZIKuDA3b+gVMW8QJAB6ALI9DnlsI82DXWIilidAsPkyCBKOlg5CWbvRSY6MnkmhjkVVb06F0bZHnvr15/u6telowZ8zHTpjuVQ0fug6M3DtpBjSdM1gvuuQ8VGRTJ0en72mvXn+PCWJIbrworTSugPNz4tyjO3AkqJdfXrt27O6nrz0ocnq4oTEdW8WZPWR0kID/Y8aieCALC/57Q/D8dHzxSIUYDgEaMy8fIzEPt3grC1EjM1G0+XgsnPVoAeGZ6BIdEzAZORqxaELqIleKrAd2DFYp0XflaG+XJkM2TiazESB8aK02Tu+cvZVC6SWU3oTsdmoo3TBbhhrEBt7CjLjsxWBOiscGYoFtrIexENcU6vjcZbXYmJfifu2tOG4DsTtDM8ys8zRPrgKjdSAvUfdQC7oNmBHj7F64lxeB6jvvxiNiD4pz3a5MRs4sHQoODNrmm/t5DQxdgFm/rO3Oh328Ifhwqm+cKvCI89TsO60ejks+KGb1cOgQkktjvjM9ybXdnn1TJKHAwem1nvzuL7vysOj0/005HhF7YBWry5XDR6qCquGmaWDaz0/YPpCgUPHt6n+JiUs+sBKz3aG9sSHi/VBPPAfgy3n/XElAbYf45fnH8SLWNdo+3VPvTpzcHpde8fSAsGIS94MajNIDncMz8IlaSvhErRCFYpuo/K8I0YnhdxezH529uDRx8bzob0ZUsclbCbvM3v+YlrE1J/6IPLXDHxHYVKzqFmvzm9nvXvj17Z8+/0y0lx2coNEUIPAOCB31racaMKpJGjYOHZtOcEz22xlgydX7n9Sf/vmr30UjmOONEXS8RviXKdoAxgObrs1XHBqBF/jP26QOS6QTfDj5L84MiyPfEwAA"
 }
 }
 
