@@ -34,6 +34,9 @@ trait Transforming { self: Scalan =>
     constantPropagation: Boolean = true,
     shouldSlice: Boolean = false
     )
+  {
+    def withConstantPropagation(value: Boolean) = this.copy(constantPropagation = value)
+  }
 
   class DefaultPass(val name: String, override val config: PassConfig = PassConfig()) extends Pass
 
