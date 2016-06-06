@@ -70,7 +70,7 @@ class ConverterTests extends BaseCtxTests {
 
   def testConverter[A,B](ctx: ConvProgStaged, name: String, shouldConvert: Boolean = true)(implicit eA: ctx.Elem[A], eB: ctx.Elem[B]) = {
     import ctx._
-    val conv = hasConverter(eA,eB)
+    val conv = getConverter(eA,eB)
     if (shouldConvert) {
       assert(conv.isDefined, s"no converter $eA --> $eB")
       ctx.emit(name, conv.get)
@@ -82,7 +82,7 @@ class ConverterTests extends BaseCtxTests {
     }
   }
 
-  test("hasConverter") {
+  test("getConverter") {
     val ctx = new ConvProgStaged
     import ctx._
     testConverter[Int, Int](ctx, "convInt")

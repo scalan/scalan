@@ -86,7 +86,7 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
 //  }
 
   object HasConv {
-    def unapply[A,B](elems: (Elem[A], Elem[B])): Option[Conv[A,B]] = hasConverter(elems._1, elems._2)
+    def unapply[A,B](elems: (Elem[A], Elem[B])): Option[Conv[A,B]] = getConverter(elems._1, elems._2)
   }
 
   object IsConvertible {
@@ -98,7 +98,7 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
         yield (c1, c2)
   }
 
-  def hasConverter[A,B](eA: Elem[A], eB: Elem[B]): Option[Conv[A,B]] = {
+  def getConverter[A,B](eA: Elem[A], eB: Elem[B]): Option[Conv[A,B]] = {
     (eA, eB) match {
       case (e1, e2) if e1 == e2 =>
         implicit val ea = e1
@@ -109,8 +109,8 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
         implicit val ea2 = pA.eSnd
         implicit val eb2 = pB.eSnd
         for {
-          c1 <- hasConverter(ea1, eb1)
-          c2 <- hasConverter(ea2, eb2)
+          c1 <- getConverter(ea1, eb1)
+          c2 <- getConverter(ea2, eb2)
         }
           yield PairConverter(c1, c2)
       case (pA: SumElem[a1,a2], pB: SumElem[b1,b2]) =>
@@ -119,8 +119,8 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
         implicit val ea2 = pA.eRight
         implicit val eb2 = pB.eRight
         for {
-          c1 <- hasConverter(ea1, eb1)
-          c2 <- hasConverter(ea2, eb2)
+          c1 <- getConverter(ea1, eb1)
+          c2 <- getConverter(ea2, eb2)
         }
           yield SumConverter(c1, c2)
       case (e1: EntityElem1[a1,to1,_], e2: EntityElem1[a2,to2,_])
@@ -129,7 +129,7 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
         implicit val ea2 = e2.eItem
         type F[T] = T
         val F = e1.cont.asInstanceOf[Functor[F]]
-        for { c <- hasConverter(ea1, ea2) }
+        for { c <- getConverter(ea1, ea2) }
           yield FunctorConverter(c)(ea1, ea2, F).asRep[Converter[A,B]]
       case (eEntity: EntityElem[_], eClass: ConcreteElem[tData,tClass]) =>
         val convOpt = eClass.getConverterFrom(eEntity)

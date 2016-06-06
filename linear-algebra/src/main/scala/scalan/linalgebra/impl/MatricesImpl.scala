@@ -1460,6 +1460,18 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
   }
 
   object SparseMatrixCompanionMethods {
+    object apply_apply_from_sparse_array {
+      def unapply(d: Def[_]): Option[(Arr[Array[(Int, T)]], Rep[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(spRows, nCols, _*), _) if receiver.elem == SparseMatrixCompanionElem && method.getName == "apply" =>
+          Some((spRows, nCols)).asInstanceOf[Option[(Arr[Array[(Int, T)]], Rep[Int]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Arr[Array[(Int, T)]], Rep[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object fromColumns {
       def unapply(d: Def[_]): Option[Coll[Vector[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem == SparseMatrixCompanionElem && method.getName == "fromColumns" =>

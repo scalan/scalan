@@ -391,9 +391,18 @@ trait Matrices { self: LADsl =>
   }
 
   trait SparseMatrixCompanion extends ConcreteClass1[CompoundMatrix] with MatrixCompanion {
-    override def fromColumns[T: Elem](cols: Coll[Vector[T]]): Matr[T] = {
-      ???
+
+    @OverloadId("apply_from_sparse_array")
+    def apply[T: Elem](spRows: Arr[Array[(Int,T)]], nCols: Rep[Int])(implicit o1: Overloaded1): Rep[SparseMatrix[T]] = {
+      SparseMatrix(CompoundCollection(spRows), nCols)
     }
+
+    @OverloadId("apply_from_sparse_arraySOA")
+    def apply[T: Elem](spRows: Arr[(Array[Int], Array[T])], nCols: Rep[Int])(implicit o2: Overloaded2): Rep[SparseMatrix[T]] = {
+      SparseMatrix(CompoundCollection(spRows.map { case Pair(is, vs) => is zip vs }), nCols)
+    }
+
+    override def fromColumns[T: Elem](cols: Coll[Vector[T]]): Matr[T] = { ??? }
 
     override def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
                              (implicit elem: Elem[T], o: Overloaded1): Matr[T] = {
