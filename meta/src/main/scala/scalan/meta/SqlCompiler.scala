@@ -66,33 +66,21 @@ trait SqlCompiler extends SqlParser {
 
   def tablesInNestedSelects(e: Expression): Set[Table] = {
     e match {
-      case AndExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case OrExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case AddExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case SubExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case MulExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case DivExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case EqExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case NeExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case LeExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case LtExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case GtExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
-      case GeExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
+      case BinOpExpr(op, l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
       case ExistsExpr(q) => tablesInNestedSelects(q)
-      case LikeExpr(l, r) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
+      case LikeExpr(l, r, _) => tablesInNestedSelects(l) ++ tablesInNestedSelects(r)
       case NegExpr(opd) => tablesInNestedSelects(opd)
       case NotExpr(opd) => tablesInNestedSelects(opd)
       case CastExpr(exp, typ) => tablesInNestedSelects(exp)
       case SelectExpr(s) => tables(s.operator)
       case InExpr(s, q) => tablesInNestedSelects(s) ++ tables(q.operator)
-      case ExprAlias(expr, _) => tablesInNestedSelects(expr)
       case _ => Set()
     }
   }
 
   def tables(op: Operator): Set[Table] = {
     op match {
-      case Join(outer, inner, on) => tables(outer) ++ tables(inner)
+      case Join(outer, inner, _, _) => tables(outer) ++ tables(inner)
       case Scan(t) => Set(t)
       case OrderBy(p, by) => tables(p)
       case GroupBy(p, by) => tables(p)
@@ -144,30 +132,38 @@ trait SqlCompiler extends SqlParser {
   case class JoinContext(outer: Context, inner: Context) extends Context {
     def resolve(ref: ColumnRef): Option[Binding] = {
       (outer.resolve(ref), inner.resolve(ref)) match {
-        case (Some(b), None) => Some(Binding(b.scope, "head" :: b.path, b.column))
-        case (None, Some(b)) => Some(Binding(b.scope, "tail" :: b.path, b.column))
-        case (Some(_), Some(_)) => throw SqlException(s"""Ambiguous reference to ${ref.asString}""")
+        case (Some(b), None) =>
+          Some(Binding(b.scope, "head" :: b.path, b.column))
+        case (None, Some(b)) =>
+          Some(Binding(b.scope, "tail" :: b.path, b.column))
+        case (Some(_), Some(_)) =>
+          throw SqlException(s"""Ambiguous reference to ${ref.asString}""")
         case _ => None
       }
     }
   }
 
   case class AliasContext(parent: Context, alias: String) extends Context {
-    def resolve(ref: ColumnRef): Option[Binding] = {
-      if (ref.table == Some(alias)) {
-        parent.resolve(ColumnRef(None, ref.name))
-      } else
-        parent.resolve(ref)
-    }
+    def resolve(ref: ColumnRef): Option[Binding] =
+      ref.table match {
+        case None =>
+          parent.resolve(ref)
+        case Some(`alias`) =>
+          parent.resolve(ColumnRef(None, ref.name))
+        case _ =>
+          None
+      }
   }
 
-  case class ProjectContext(parent: Context, columns: ExprList) extends Context {
+  case class ProjectContext(parent: Context, columns: List[ProjectionColumn]) extends Context {
     def resolve(ref: ColumnRef): Option[Binding] = {
-      val i = columns.indexWhere(c => matchExpr(c, ref))
+      val i = columns.indexWhere {
+        case ProjectionColumn(c, alias) => matchExpr(c, alias, ref)
+      }
       if (i >= 0) {
         val saveScope = currScope
         currScope = Scope(parent, scope.outer, scope.nesting, scope.name)
-        val cType =  getExprType(columns(i))
+        val cType =  getExprType(columns(i).expr)
         currScope = saveScope
         Some(Binding(scope.name, indexToPath(i, columns.length), Column(ref.name, cType)))
       }
@@ -177,7 +173,7 @@ trait SqlCompiler extends SqlParser {
 
   def buildContext(op: Operator): Context = {
     op match {
-      case Join(outer, inner, on) => JoinContext(buildContext(outer), buildContext(inner))
+      case Join(outer, inner, _, _) => JoinContext(buildContext(outer), buildContext(inner))
       case Scan(t) => TableContext(t)
       case OrderBy(p, by) => buildContext(p)
       case GroupBy(p, by) => buildContext(p)
@@ -203,10 +199,11 @@ trait SqlCompiler extends SqlParser {
     } else from
   }
 
-  def patternMatch(text: Expression, pattern: Expression): String = {
+  def patternMatch(text: Expression, pattern: Expression, escape: Option[Expression]): String = {
     val left = generateExpr(text)
     pattern match {
       case Literal(v, t) if (t == StringType) =>
+        assert(escape.isEmpty, "escape currently not supported")
         val p = v.toString
         if (p.indexOf('%') < 0 && p.indexOf('_') < 0) "(" + left + " == \"" + p + "\")"
         else if (p.lastIndexOf('%') == 0 && p.indexOf('_') < 0) left + ".startsWith(\"" + p.substring(1) + "\")"
@@ -229,20 +226,30 @@ trait SqlCompiler extends SqlParser {
 
   def generateExpr(expr: Expression): String = {
     expr match {
-      case AndExpr(l, r) => "(" + generateExpr(l) + " && " + generateExpr(r) + ")"
-      case OrExpr(l, r) => "(" + generateExpr(l) + " || " + generateExpr(r) + ")"
-      case AddExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " + " + generateExpr(castTo(r, l)) + ")"
-      case SubExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " - " + generateExpr(castTo(r, l)) + ")"
-      case MulExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " * " + generateExpr(castTo(r, l)) + ")"
-      case DivExpr(l, r) => "(" + generateExpr(castTo(l, r)) + divOp(expr) + generateExpr(castTo(r, l)) + ")"
-      case EqExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " === " + generateExpr(castTo(r, l)) + ")"
-      case NeExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " !== " + generateExpr(castTo(r, l)) + ")"
-      case LeExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " <= " + generateExpr(castTo(r, l)) + ")"
-      case LtExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " < " + generateExpr(castTo(r, l)) + ")"
-      case GtExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " > " + generateExpr(castTo(r, l)) + ")"
-      case GeExpr(l, r) => "(" + generateExpr(castTo(l, r)) + " >= " + generateExpr(castTo(r, l)) + ")"
+      case BinOpExpr(op, l, r) =>
+        // Ignore behavior on nulls currently
+        val opStr = op match {
+          case And => "&&"
+          case Or => "||"
+          case Plus => "+"
+          case Minus => "-"
+          case Times => "*"
+          case Divide => divOp(expr)
+          case Modulo => "%"
+          case Is => "==="
+          case Eq => "==="
+          case Less => "<"
+          case LessEq => "<="
+          case Greater => ">"
+          case GreaterEq => ">="
+          case Concat => "concat"
+        }
+        val lCode = generateExpr(l)
+        val rCode = generateExpr(r)
+        s"($lCode $opStr $rCode)"
       case ExistsExpr(q) => "(" + generateExpr(q) + ".count !== 0)"
-      case LikeExpr(l, r) => patternMatch(l, r)
+      case LikeExpr(l, r, escape) =>
+        patternMatch(l, r, escape)
       case NegExpr(opd) => "-" + generateExpr(opd)
       case NotExpr(opd) => "!" + generateExpr(opd)
       case Literal(v, t) => "toRep(" + printValue(v, t) + ")"
@@ -258,13 +265,15 @@ trait SqlCompiler extends SqlParser {
         indent = saveIndent
         subselect
       }
-      case CountExpr() => "result.count"
-      case CountDistinctExpr(_) => "result.count" // TODO: exclude duplicates
-      case CountNotNullExpr(_) => "result.count"  // TODO: NULLs are not supported now
-      case AvgExpr(opd) => "result.avg(" + currScope.name + " => " + generateExpr(opd) + ")"
-      case SumExpr(opd) => "result.sum(" + currScope.name + " => " + generateExpr(opd) + ")"
-      case MaxExpr(opd) => "result.max(" + currScope.name + " => " + generateExpr(opd) + ")"
-      case MinExpr(opd) => "result.min(" + currScope.name + " => " + generateExpr(opd) + ")"
+      // TODO currently ignores distinct
+      case AggregateExpr(op, _, opd) =>
+        op match {
+          case Count => "result.count"
+          case Avg => "result.avg(" + currScope.name + " => " + generateExpr(opd) + ")"
+          case Sum => "result.sum(" + currScope.name + " => " + generateExpr(opd) + ")"
+          case Max => "result.max(" + currScope.name + " => " + generateExpr(opd) + ")"
+          case Min => "result.min(" + currScope.name + " => " + generateExpr(opd) + ")"
+        }
       case SubstrExpr(str, from, len) => generateExpr(str) + ".substring(" + generateExpr(from) + ", " + generateExpr(from) + " + " + generateExpr(len) + ")"
       case CaseWhenExpr(list) => generateCaseWhen(list, 0)
       case InListExpr(sel, lst) => "(" + lst.map(alt => (generateExpr(sel) + " === " + generateExpr(alt))).mkString(" || ") + ")"
@@ -276,57 +285,88 @@ trait SqlCompiler extends SqlParser {
         subselect
       }
       case FuncExpr(name, args) => name + "(" + args.map(p => generateExpr(p)).mkString(", ") + ")"
-      case ExprAlias(expr, _) => generateExpr(expr)
       case _ => throw new NotImplementedError(s"generateExpr($expr)")
     }
   }
 
-  implicit class TypeImplicitCasts(left: ColumnType) {
-    def |(right: ColumnType): ColumnType = {
-      if (left == right) left
-      else if (left == StringType || right == StringType) StringType
-      else if (left == DoubleType || right == DoubleType) DoubleType
-      else if (left == IntType || right == IntType) IntType
-      else throw SqlException("Incompatible types " + left.sqlName + " and " + right.sqlName)
-    }
+  def commonType(left: ColumnType, right: ColumnType): ColumnType = {
+    if (left == right)
+      left
+    else if (left == DoubleType || right == DoubleType)
+      DoubleType
+    else if (left == IntType || right == IntType)
+      IntType
+    else if (left == StringType || right == StringType)
+      StringType
+    else throw SqlException("Incompatible types " + left.sqlName + " and " + right.sqlName)
   }
 
   def getExprType(expr: Expression): ColumnType = {
     expr match {
-      case AndExpr(l, r) => BoolType
-      case OrExpr(l, r) => BoolType
-      case AddExpr(l, r) => getExprType(l) | getExprType(r)
-      case SubExpr(l, r) => getExprType(l) | getExprType(r)
-      case MulExpr(l, r) => getExprType(l) | getExprType(r)
-      case DivExpr(l, r) => getExprType(l) | getExprType(r)
-      case NeExpr(l, r) => BoolType
-      case EqExpr(l, r) => BoolType
-      case LeExpr(l, r) => BoolType
-      case LtExpr(l, r) => BoolType
-      case GtExpr(l, r) => BoolType
-      case GeExpr(l, r) => BoolType
-      case LikeExpr(l, r) => BoolType
+      case BinOpExpr(op, l, r) =>
+        op match {
+          case _: LogicOp | _: ComparisonOp =>
+            BoolType
+          case _: ArithOp =>
+            commonType(getExprType(l), getExprType(r))
+          case Concat => StringType
+        }
+      case LikeExpr(l, r, escape) => BoolType
       case InExpr(l, r) => BoolType
       case ExistsExpr(_) => BoolType
       case NegExpr(opd) => getExprType(opd)
       case NotExpr(_) => BoolType
-      case CountExpr() => IntType
-      case CountNotNullExpr(_) => IntType
-      case CountDistinctExpr(_) => IntType
-      case AvgExpr(_) => DoubleType
+      case AggregateExpr(Count, _, _) => IntType
+      case AggregateExpr(Avg, _, _) => DoubleType
+      case AggregateExpr(Sum | Max | Min, _, opd) => getExprType(opd)
       case SubstrExpr(str,from,len) => StringType
-      case SumExpr(agg) => getExprType(agg)
-      case MaxExpr(agg) => getExprType(agg)
-      case MinExpr(agg) => getExprType(agg)
       case CaseWhenExpr(list) => getExprType(list(1))
       case Literal(v, t) => t
       case CastExpr(e, t) => t
       case c: ColumnRef => lookup(c).column.ctype
-      case ExprAlias(expr, _) => getExprType(expr)
       case SelectExpr(s) => DoubleType
-      case FuncExpr(nume, args) => DoubleType
+      case FuncExpr(name, args) => funcType(name, args)
       case _ => throw new NotImplementedError(s"getExprType($expr)")
     }
+  }
+
+  /** Returns the type of `FuncExpr(name, args)`. Override if the type depends on args, use
+    * `registerFunctionType` otherwise. Default is `DoubleType`
+    */
+  def funcType(name: String, args: List[Expression]) = name match {
+    case "abs" | "trunc" | "truncate" | "round" | "power" | "mod" | "sign" | "ceiling" | "ceil" | "floor" | "nullif" =>
+      getExprType(args.head)
+    case "coalesce" =>
+      args.map(getExprType).reduce(commonType)
+    case _ =>
+      funcTypes.getOrElse(name,
+        throw new IllegalArgumentException(s"Unknown return type for $name(${args.mkString(", ")}). Override `SqlCompiler.funcType` or call `registerFunctionType` if the type doesn't depend on arguments"))
+  }
+
+  def registerFunctionType(name: String, tpe: ColumnType) =
+    funcTypes.update(name, tpe)
+
+  private val funcTypes = collection.mutable.Map.empty[String, ColumnType]
+
+  // https://en.wikibooks.org/wiki/SQL_Dialects_Reference
+  Seq(
+    IntType -> Seq(
+      "length", "bit_length", "char_length", "octet_length", "width_bucket", "ascii", "instr"
+    ),
+    DoubleType -> Seq(
+      "asin", "acos", "atan", "atan2", "sin", "cos", "tan", "cot", "sinh", "cosh", "tanh", "atanh",
+      "sqrt", "exp", "ln", "log", "log10", "rand"
+    ),
+    StringType -> Seq(
+      "chr", "char", "concat", "hex", "lower", "upper", "lcase", "ucase", "lpad", "rpad",
+      "trim", "ltrim", "rtrim", "left", "right", "repeat", "reverse", "space", "substring", "substr",
+      "replace", "initcap", "translate", "quote", "soundex", "md5", "sha1"
+    ),
+    DateType -> Seq("current_date", "date"),
+    TimeType -> Seq("current_time", "time"),
+    TimestampType -> Seq("current_timestamp", "now")
+  ).foreach {
+    case (tpe, funs) => funs.foreach(registerFunctionType(_, tpe))
   }
 
   def buildTree(elems: Seq[String], lpar: String = "(", rpar: String = ")", i: Int = 0): String = {
@@ -346,10 +386,15 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
+  def extractKey(spec: JoinSpec): String = spec match {
+    case On(on) => extractKey(on)
+    case _ => throw new NotImplementedError(s"extractKey($spec)")
+  }
+
   def extractKey(on: Expression): String = {
     on match {
-      case AndExpr(l, r) => "Pair(" + extractKey(l) + ", " + extractKey(r) + ")"
-      case EqExpr(l, r) => (resolveKey(l), resolveKey(r)) match {
+      case BinOpExpr(And, l, r) => "Pair(" + extractKey(l) + ", " + extractKey(r) + ")"
+      case BinOpExpr(Eq, l, r) => (resolveKey(l), resolveKey(r)) match {
         case (Some(_), Some(_)) => throw SqlException("Ambiguous reference to column")
         case (Some(b), None) => b.asScalaCode
         case (None, Some(b)) => b.asScalaCode
@@ -359,9 +404,9 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
-  def generateJoinKey(table: Operator, on: Expression): String = {
+  def generateJoinKey(table: Operator, spec: JoinSpec): String = {
     pushContext(table)
-    val result = currScope.name + " => " + extractKey(on)
+    val result = currScope.name + " => " + extractKey(spec)
     popContext()
     result
   }
@@ -380,93 +425,84 @@ trait SqlCompiler extends SqlParser {
     result
   }
 
+  def isAggregate(column: ProjectionColumn): Boolean = isAggregate(column.expr)
 
-  def isAggregate(agg: Expression): Boolean = {
-    agg match {
-      case CountExpr() => true
-      case CountNotNullExpr(_) => true
-      case CountDistinctExpr(_) => true
-      case AvgExpr(_) => true
-      case SumExpr(_) => true
-      case MaxExpr(_) => true
-      case MinExpr(_) => true
-      case AddExpr(l, r) => isAggregate(l) || isAggregate(r)
-      case SubExpr(l, r) => isAggregate(l) || isAggregate(r)
-      case MulExpr(l, r) => isAggregate(l) || isAggregate(r)
-      case DivExpr(l, r) => isAggregate(l) || isAggregate(r)
-      case NegExpr(opd) => isAggregate(opd)
-      case ExprAlias(expr, _) => isAggregate(expr)
+  def isAggregate(expr: Expression): Boolean =
+    expr match {
+      case _: AggregateExpr =>
+        true
+      case BinOpExpr(_, l, r) =>
+        isAggregate(l) || isAggregate(r)
+      case NegExpr(opd) =>
+        isAggregate(opd)
+      case NotExpr(opd) =>
+        isAggregate(opd)
       case _ => false
     }
-  }
-
 
   def generateAggOperand(agg: Expression): String = {
     agg match {
-      case CountExpr() => "1"
-      case CountNotNullExpr(_) => "1"
-      case CountDistinctExpr(_) => "1"
-      case AvgExpr(opd) => generateExpr(opd)
-      case SumExpr(opd) => generateExpr(opd)
-      case MaxExpr(opd) => generateExpr(opd)
-      case MinExpr(opd) => generateExpr(opd)
-      case ExprAlias(expr, _) => generateAggOperand(expr)
+      case AggregateExpr(op, _, opd) =>
+        op match {
+          case Count => "1"
+          case _ => generateExpr(opd)
+        }
       case _ => throw new NotImplementedError(s"generateAggOperand($agg)")
     }
   }
 
   def aggCombine(agg: Expression, s1: String, s2: String): String = {
     agg match {
-      case CountExpr() => s"""$s1 + $s2"""
-      case CountNotNullExpr(_) => s"""$s1 + $s2"""
-      case CountDistinctExpr(_) => s"""$s1 + $s2"""
-      case AvgExpr(opd) => s"""$s1 + $s2"""
-      case SumExpr(opd) => s"""$s1 + $s2"""
-      case MaxExpr(opd) => s"""if ($s1 > $s2) $s1 else $s2"""
-      case MinExpr(opd) => s"""if ($s1 < $s2) $s1 else $s2"""
-      case ExprAlias(expr, _) => aggCombine(expr, s1, s2)
+      case AggregateExpr(op, _, opd) =>
+        op match {
+          case Count | Avg | Sum =>
+            s"""$s1 + $s2"""
+          case Max =>
+            s"""if ($s1 > $s2) $s1 else $s2"""
+          case Min =>
+            s"""if ($s1 < $s2) $s1 else $s2"""
+        }
       case _ => throw new NotImplementedError(s"aggCombine($agg, $s1, $s2)")
     }
   }
 
-  def getAggPath(columns: ExprList, aggregates: ExprList, n: Int): String = {
+  def getAggPath(columns: List[ProjectionColumn], length: Int, n: Int): String = {
     var aggIndex = 0
     for (i <- 0 until n) {
       if (isAggregate(columns(i))) aggIndex += 1
     }
-    pathString("tail" :: indexToPath(aggIndex, aggregates.length))
+    pathString("tail" :: indexToPath(aggIndex, length))
   }
 
-  def matchExpr(col: Expression, exp: Expression): Boolean = {
-    col == exp || ((col, exp) match {
-      case (ExprAlias(_, alias), ColumnRef(None, name)) => name == alias
-      case (ColumnRef(None, name), ExprAlias(_, alias)) => name == alias
+  def matchExpr(col: Expression, alias: Option[String], exp: Expression): Boolean = {
+    col == exp || (exp match {
+      case ColumnRef(None, name) =>
+        alias == Some(name)
       case _ => false
     })
   }
 
-  def generateAggResult(columns: ExprList, aggregates: ExprList, gby: ExprList, i: Int, count: Int, expr: Expression): String = {
-    lazy val aggPath = getAggPath(columns, aggregates, i)
+  def generateAggResult(columns: List[ProjectionColumn], length: Int, gby: ExprList, i: Int, count: Int, expr: Expression): String = {
+    lazy val aggPath = getAggPath(columns, length, i)
     expr match {
-      case CountExpr() => aggPath
-      case CountNotNullExpr(_) => aggPath
-      case CountDistinctExpr(_) => aggPath
-      case AvgExpr(opd) =>
-        val countPath = pathString("tail" :: indexToPath(count, aggregates.length))
-        s"""($aggPath.toDouble / $countPath.toDouble)"""
-      case SumExpr(opd) => aggPath
-      case MaxExpr(opd) => aggPath
-      case MinExpr(opd) => aggPath
+      case AggregateExpr(op, _, opd) =>
+        op match {
+          case Count | Sum | Max | Min =>
+            aggPath
+          case Avg =>
+            val countPath = pathString("tail" :: indexToPath(count, length))
+            s"""($aggPath.toDouble / $countPath.toDouble)"""
+        }
       case c: ColumnRef => {
-        val keyIndex = gby.indexWhere(k => matchExpr(c, k))
+        val keyIndex = gby.indexWhere {
+          k => matchExpr(c, None, k)
+        }
         if (keyIndex < 0)
           throw SqlException("Unsupported group-by clause")
         else
           pathString("head" :: indexToPath(keyIndex, gby.length))
       }
-      case ExprAlias(expr, _) =>
-        generateAggResult(columns, aggregates, gby, i, count, expr)
-      case _ => throw new NotImplementedError(s"generateAggResult($columns, $aggregates, $gby, $i, $count)")
+      case _ => throw new NotImplementedError(s"generateAggResult($columns, $length, $gby, $i, $count)")
     }
   }
 
@@ -480,32 +516,31 @@ trait SqlCompiler extends SqlParser {
   def groupBy(agg: Operator, gby: ExprList): String = {
     agg match {
       case Project(p, columns)  => {
-        var aggregates = columns.filter(e => isAggregate(e))
+        var aggregates = columns.filter(isAggregate)
         var countIndex = aggregates.indexWhere {
-          case CountExpr() => true
-          case ExprAlias(CountExpr(), _) => true
+          case ProjectionColumn(CountAllExpr, _) => true
           case _ => false
         }
         if (countIndex < 0 && aggregates.exists {
-          case AvgExpr(_) => true
-          case ExprAlias(AvgExpr(_), _) => true
+          case ProjectionColumn(AggregateExpr(Avg, _, _), _) => true
           case _ => false
         }) {
           countIndex = aggregates.length
-          aggregates = aggregates :+ CountExpr()
+          aggregates = aggregates :+ ProjectionColumn(CountAllExpr, None)
         }
+        val numberOfAggregates = aggregates.length
         pushContext(p)
-        val aggTypes = buildTree(aggregates.map(agg => getExprType(agg).scalaName))
+        val aggTypes = buildTree(aggregates.map(agg => getExprType(agg.expr).scalaName))
         val groupBy = buildTree(gby.map(col => {
           val binding = lookup(ref(col))
           binding.asScalaCode
         }), "Pair(")
-        val map = buildTree(aggregates.map(agg => generateAggOperand(agg)), "Pair(")
-        val reduce = if (aggregates.length == 1)
-          aggCombine(aggregates(0), "s1", "s2")
+        val map = buildTree(aggregates.map(agg => generateAggOperand(agg.expr)), "Pair(")
+        val reduce = if (numberOfAggregates == 1)
+          aggCombine(aggregates(0).expr, "s1", "s2")
         else
-          aggregates.indices.map(i => aggCombine(aggregates(i), "s1._" + (i+1), "s2._" + (i+1))).mkString(",")
-        val aggResult = buildTree(columns.indices.map(i => generateAggResult(columns, aggregates, gby, i, countIndex, columns(i))), "Pair(")
+          aggregates.indices.map(i => aggCombine(aggregates(i).expr, "s1._" + (i+1), "s2._" + (i+1))).mkString(",")
+        val aggResult = buildTree(columns.indices.map(i => generateAggResult(columns, numberOfAggregates, gby, i, countIndex, columns(i).expr)), "Pair(")
         val result = s"""ReadOnlyTable(${generateOperator(p)}
            |$indent.mapReduce(${currScope.name} => Pair(${groupBy}, ${map}),
            |$indent\t(s1: Rep[${aggTypes}], s2: Rep[${aggTypes}]) => (${reduce})).toArray.map(${currScope.name} => ${aggResult}))""".stripMargin
@@ -516,26 +551,18 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
-  def isGrandAggregate(columns: ExprList): Boolean = {
-    !columns.exists(e => !isAggregate(e))
-  }
-
-  def and(left: Expression, right: Expression) = {
-    (left, right) match { 
-      case (l:Literal, r:Expression) => r
-      case (l:Expression, r:Literal) => l
-      case (l:Expression, r:Expression) => AndExpr(l, r)
-    }
+  def isGrandAggregate(columns: List[ProjectionColumn]): Boolean = {
+    columns.forall(isAggregate)
   }
 
   def depends(on: Operator, subquery: Operator): Boolean = {
-    subquery match { 
-      case Join(outer, inner, cond) => depends(on, outer) || depends(on, inner)
+    subquery match {
+      case Join(outer, inner, _, _) => depends(on, outer) || depends(on, inner)
       case Scan(t) => false
       case OrderBy(p, by) => depends(on, p) || using(on, by.map(_.expr))
       case GroupBy(p, by) => depends(on, p) || using(on, by)
       case Filter(p, predicate) => depends(on, p) || using(on, predicate)
-      case Project(p, columns) => depends(on, p) || using(on, columns)
+      case Project(p, columns) => depends(on, p) || using(on, columns.map(_.expr))
       case TableAlias(t, a) =>  depends(on, t)
       case SubSelect(p) => depends(on, p)
       case _ => false
@@ -546,34 +573,17 @@ trait SqlCompiler extends SqlParser {
 
   def using(op: Operator, predicate: Expression): Boolean = {
     predicate match {
-      case AndExpr(l, r) => using(op, l) || using(op, r)
-      case OrExpr(l, r) =>  using(op, l) || using(op, r)
-      case AddExpr(l, r) => using(op, l) || using(op, r)
-      case SubExpr(l, r) => using(op, l) || using(op, r)
-      case MulExpr(l, r) => using(op, l) || using(op, r)
-      case DivExpr(l, r) => using(op, l) || using(op, r)
-      case EqExpr(l, r) => using(op, l) || using(op, r)
-      case NeExpr(l, r) => using(op, l) || using(op, r)
-      case LeExpr(l, r) => using(op, l) || using(op, r)
-      case LtExpr(l, r) => using(op, l) || using(op, r)
-      case GtExpr(l, r) => using(op, l) || using(op, r)
-      case GeExpr(l, r) => using(op, l) || using(op, r)
+      case BinOpExpr(_, l, r) => using(op, l) || using(op, r)
       case ExistsExpr(q) => using(op, q)
-      case LikeExpr(l, r) => using(op, l) || using(op, r)
+      case LikeExpr(l, r, escape) =>
+        using(op, l) || using(op, r) || escape.exists(using(op, _))
       case NegExpr(opd) => using(op, opd)
       case NotExpr(opd) => using(op, opd)
       case Literal(v, t) => false
       case CastExpr(exp, typ) => using(op, exp)
       case ref: ColumnRef => buildContext(op).resolve(ref).isDefined
-      case ExprAlias(expr, _) => using(op, expr)
       case SelectExpr(s) => depends(op, s.operator)
-      case CountExpr() => false
-      case CountDistinctExpr(opd) => using(op, opd)
-      case CountNotNullExpr(opd) => using(op, opd)
-      case AvgExpr(opd) => using(op, opd)
-      case SumExpr(opd) => using(op, opd)
-      case MaxExpr(opd) => using(op, opd)
-      case MinExpr(opd) => using(op, opd)
+      case AggregateExpr(_, _, opd) => using(op, opd)
       case SubstrExpr(str, from, len) => using(op, str) || using(op, from) || using(op, len)
       case CaseWhenExpr(list) => using(op, list)
       case InListExpr(sel, lst) => using(op, sel) || using(op, lst)
@@ -583,27 +593,36 @@ trait SqlCompiler extends SqlParser {
     }
   }
 
+  def and(left: Expression, right: Expression) = {
+    if (left == Literal(true, BoolType) || right == Literal(false, BoolType))
+      right
+    else if (right == Literal(true, BoolType) || left == Literal(false, BoolType))
+      left
+    else
+      BinOpExpr(And, left, right)
+  }
 
-  def optimize(op: Operator, predicate: Expression): (Operator,Expression) = {
+  def optimize(op: Operator, predicate: Expression): (Operator, Expression) = {
     op match { 
-      case Join(outer, inner, on) => {
-        if (!using(inner, predicate)) (Join(Filter(outer, predicate), inner, on), Literal(true, BoolType))
-        else predicate match {
-          case AndExpr(l, r) => {
-            val (jr, cr) = optimize(op, r) 
-            val (jl, cl) = optimize(jr, l) 
-            (jl, and(cl, cr))
+      case Join(outer, inner, joinType, joinSpec) =>
+        if (!using(inner, predicate))
+          (Join(Filter(outer, predicate), inner, joinType, joinSpec), Literal(true, BoolType))
+        else
+          predicate match {
+            case BinOpExpr(And, l, r) =>
+              val (jr, cr) = optimize(op, r)
+              val (jl, cl) = optimize(jr, l)
+              (jl, and(cl, cr))
+            case _ => (op, predicate)
           }
-          case _ => (op, predicate)
-        }
-      }
-      case _ => (op, predicate)      
+      case _ => (op, predicate)
     }
   }
 
   def generateOperator(op:Operator): String = {
     op match {
-      case Join(outer, inner, on) => generateOperator(outer) + s"""\n$indent.join(${generateOperator(inner)})(${generateJoinKey(outer, on)}, ${generateJoinKey(inner, on)})"""
+      case Join(outer, inner, joinType, spec) =>
+        generateOperator(outer) + s"""\n$indent.join(${generateOperator(inner)}, $joinType)(${generateJoinKey(outer, spec)}, ${generateJoinKey(inner, spec)})"""
       case Scan(t) =>
         currMethod.explicitArgs.find(arg =>arg.tpe match { 
           case STraitCall(n1, List(STraitCall(n2, List(p)))) if n1 == "Rep" && n2 == "Table" && p.toString == t.name.capitalize => true
@@ -633,11 +652,11 @@ trait SqlCompiler extends SqlParser {
       case Project(p, columns) =>
         if (isGrandAggregate(columns)) {
           pushContext(p)
-          val agg = s"""{ val result = ${generateOperator(p)} ; (${generateExprList(columns)}) }"""
+          val agg = s"""{ val result = ${generateOperator(p)} ; (${generateExprList(columns.map(_.expr))}) }"""
           popContext()
           agg
         } else {
-          generateOperator(p) + s"""\n$indent.select(${generateLambdaExprList(p, columns)})"""
+          generateOperator(p) + s"""\n$indent.select(${generateLambdaExprList(p, columns.map(_.expr))})"""
         }
       case TableAlias(t, a) => generateOperator(t)
       case SubSelect(p) =>
@@ -653,21 +672,21 @@ trait SqlCompiler extends SqlParser {
   def tableToArray(op:Operator):String = {
     op match {
       case OrderBy(p, by) => ""
-      case Project(p, c) if (isGrandAggregate(c)) => ""
+      case Project(p, c) if isGrandAggregate(c) => ""
       case _ => ".toArray"
     }
   }
 
   def operatorType(op: Operator): String = {
     op match {
-      case Join(outer, inner, on) => "(" + operatorType(outer) + ", " + operatorType(inner) + ")"
+      case Join(outer, inner, _, _) => "(" + operatorType(outer) + ", " + operatorType(inner) + ")"
       case Scan(t) => buildTree(t.schema.map(c => c.ctype.scalaName))
       case OrderBy(p, by) => operatorType(p)
       case GroupBy(p, by) => operatorType(p)
       case Filter(p, predicate) => operatorType(p)
       case Project(p, columns) => {
         pushContext(p)
-        val projection = buildTree(columns.map(c => getExprType(c).scalaName))
+        val projection = buildTree(columns.map(c => getExprType(c.expr).scalaName))
         popContext()
         projection
       }
@@ -680,7 +699,7 @@ trait SqlCompiler extends SqlParser {
   def resultType(query: SelectStmt): String = {
     query.operator match {
       case OrderBy(p, by) => "Arr[" + operatorType(p) + "]"
-      case Project(p, c) if (isGrandAggregate(c)) => "Rep[" + operatorType(p) + "]"
+      case Project(p, c) if isGrandAggregate(c) => "Rep[" + operatorType(p) + "]"
       case _ => "Arr[" + operatorType(query.operator) + "]"
     }
   }

@@ -5,7 +5,7 @@ import scala.util.parsing.combinator.PackratParsers
 import scala.util.parsing.combinator.lexical.StdLexical
 import scala.util.parsing.combinator.syntactical.StandardTokenParsers
 import scala.util.parsing.input.CharArrayReader.EofCh
-import SqlAST._
+import scalan.meta.SqlAST._
 
 // see http://savage.net.au/SQL/sql-2003-2.bnf.html for full SQL grammar
 trait SqlParser {
@@ -94,7 +94,7 @@ trait SqlParser {
       }
 
     lazy val createIndexStmt: Parser[Statement] =
-      CREATE ~> INDEX ~> ident ~ ("on" ~> table) ~ ("(" ~> fieldList <~ ")") ^^ {
+      CREATE ~> INDEX ~> ident ~ (ON ~> table) ~ ("(" ~> fieldList <~ ")") ^^ {
         case name ~ table ~ key => CreateIndexStmt(name, table, key)
       }
 
@@ -112,8 +112,7 @@ trait SqlParser {
     //lazy val ident: Parser[String] = """[\w]+""".r
 
     lazy val fieldList: Parser[ColumnList] =
-      repsep(ident, ",") ^^ { fs => ColumnList(fs: _*)}
-
+      repsep(ident, ",")
 
     protected case class Keyword(str: String) {
       // TODO better case insensitivity (using RegexParsers?)
@@ -136,12 +135,14 @@ trait SqlParser {
     protected val CAST = Keyword("CAST")
     protected val COUNT = Keyword("COUNT")
     protected val CREATE = Keyword("CREATE")
+    protected val CROSS = Keyword("CROSS")
     protected val DECIMAL = Keyword("DECIMAL")
     protected val DESC = Keyword("DESC")
     protected val DISTINCT = Keyword("DISTINCT")
     protected val DOUBLE = Keyword("DOUBLE")
     protected val ELSE = Keyword("ELSE")
     protected val END = Keyword("END")
+    protected val ESCAPE = Keyword("ESCAPE")
     protected val EXCEPT = Keyword("EXCEPT")
     protected val EXISTS = Keyword("EXISTS")
     protected val FALSE = Keyword("FALSE")
@@ -166,6 +167,7 @@ trait SqlParser {
     protected val LOWER = Keyword("LOWER")
     protected val MAX = Keyword("MAX")
     protected val MIN = Keyword("MIN")
+    protected val NATURAL = Keyword("NATURAL")
     protected val NOT = Keyword("NOT")
     protected val NULL = Keyword("NULL")
     protected val NULLS = Keyword("NULLS")
@@ -190,6 +192,7 @@ trait SqlParser {
     protected val TRUE = Keyword("TRUE")
     protected val UNION = Keyword("UNION")
     protected val UPPER = Keyword("UPPER")
+    protected val USING = Keyword("USING")
     protected val WHEN = Keyword("WHEN")
     protected val WHERE = Keyword("WHERE")
 
@@ -212,14 +215,9 @@ trait SqlParser {
         EXCEPT ^^^ { Except(_, _) } |
         UNION ~ DISTINCT.? ^^^ { (q1, q2) => Distinct(Union(q1, q2)) }
 
-    def selectAll(columns: List[Expression]): Boolean = columns match {
-      case List(StarExpr()) => true
-      case _ => false
-    }
-
     protected lazy val select: Parser[Operator] =
       SELECT ~> DISTINCT.? ~
-        repsep(projection, ",") ~
+        selectList ~
         (FROM ~> relations) ~
         (WHERE ~> expression).? ~
         (GROUP ~ BY ~> rep1sep(expression, ",")).? ~
@@ -229,7 +227,11 @@ trait SqlParser {
         case d ~ p ~ r ~ f ~ g ~ h ~ o ~ l =>
           val base = r
           val withFilter = f.map(Filter(base, _)).getOrElse(base)
-          val withProjection = if (selectAll(p)) withFilter else Project(withFilter, p)
+          val withProjection = p match {
+            case None => withFilter
+            case Some(columns) =>
+              Project(withFilter, columns)
+          }
           val withGroupBy = g.map(GroupBy(withProjection, _)).getOrElse(withProjection)
           val withDistinct = d.map(_ => Distinct(withGroupBy)).getOrElse(withGroupBy)
           val withHaving = h.map(Filter(withDistinct, _)).getOrElse(withDistinct)
@@ -238,13 +240,12 @@ trait SqlParser {
           withLimit
       }
 
-    protected lazy val projection: Parser[Expression] =
+    protected lazy val selectList: Parser[Option[List[ProjectionColumn]]] =
+      ("*" ^^^ None) | (repsep(projectionColumn, ",") ^^ { Some(_) })
+
+    protected lazy val projectionColumn: Parser[ProjectionColumn] =
       expression ~ (AS.? ~> ident.?) ^^ {
-        case e ~ a =>
-          a match {
-            case None => e
-            case Some(alias) => ExprAlias(e, alias)
-          }
+        case e ~ a => ProjectionColumn(e, a)
       }
 
     // Based very loosely on the MySQL Grammar.
@@ -278,15 +279,34 @@ trait SqlParser {
         }
 
     protected lazy val joinedRelation: Parser[Operator] =
-      relationFactor ~ rep1(joinType.? ~ (JOIN ~> relationFactor) ~ joinConditions) ^^ {
+      relationFactor ~ rep1(joiner) ^^ {
         case r1 ~ joins =>
-          joins.foldLeft(r1) { case (lhs, jt ~ rhs ~ cond) =>
-            Join(lhs, rhs, cond)
+          joins.foldLeft(r1) { case (lhs, joiner) =>
+            joiner(lhs)
           }
-      }
+        }
 
-    protected lazy val joinConditions: Parser[Expression] =
-      ON ~> expression
+    protected lazy val joiner: Parser[Operator => Operator] =
+      (joinType.? ~ (JOIN ~> relationFactor) ~ joinSpec) ^^ {
+        case jtOpt ~ rhs ~ joinSpec =>
+          l: Operator => Join(l, rhs, jtOpt.getOrElse(Inner), joinSpec)
+      } |
+        (CROSS ~> JOIN ~> relation) ^^ {
+          rhs =>
+            l: Operator => CrossJoin(l, rhs)
+        } |
+        (NATURAL ~> joinType.? ~ (JOIN ~> relation)) ^^ {
+          case jtOpt ~ rhs =>
+            l: Operator => Join(l, rhs, jtOpt.getOrElse(Inner), Natural)
+        } |
+        (UNION ~> JOIN ~> relation) ^^ {
+          rhs =>
+            l: Operator => UnionJoin(l, rhs)
+        }
+
+    protected lazy val joinSpec: Parser[JoinSpec] =
+      ON ~> expression ^^ { On(_) } |
+      USING ~> fieldList ^^ { Using(_) }
 
     protected lazy val joinType: Parser[JoinType] =
       (INNER ^^^ Inner
@@ -308,78 +328,108 @@ trait SqlParser {
       orExpression
 
     protected lazy val orExpression: Parser[Expression] =
-      andExpression * (OR ^^^ { (e1: Expression, e2: Expression) => OrExpr(e1, e2)})
+      andExpression * (OR ^^^ { (e1: Expression, e2: Expression) => BinOpExpr(Or, e1, e2)})
 
     protected lazy val andExpression: Parser[Expression] =
-      comparisonExpression * (AND ^^^ { (e1: Expression, e2: Expression) => AndExpr(e1, e2)})
+      comparisonExpression * (AND ^^^ { (e1: Expression, e2: Expression) => BinOpExpr(And, e1, e2)})
+
+    private def notOpt(not: Option[_], expr: Expression) =
+      not match {
+        case None => expr
+        case Some(_) => NotExpr(expr)
+      }
+
+    protected lazy val comparisonOp: Parser[ComparisonOp ~ Boolean] =
+      ("=" | "==") ^^^ new ~(Eq, false) | ("<>" | "!=") ^^^ new ~(Eq, true) |
+        IS ~ NOT ^^^ new ~(Is, true) | IS ^^^ new ~(Is, false) |
+        ("<" ^^^ Less | "<=" ^^^ LessEq | ">" ^^^ Greater | ">=" ^^^ GreaterEq) ^^ { op => new ~(op, false) }
 
     protected lazy val comparisonExpression: Parser[Expression] =
-      (termExpression ~ ("=" ~> termExpression) ^^ { case e1 ~ e2 => EqExpr(e1, e2)}
-        | termExpression ~ ("<" ~> termExpression) ^^ { case e1 ~ e2 => LtExpr(e1, e2)}
-        | termExpression ~ ("<=" ~> termExpression) ^^ { case e1 ~ e2 => LeExpr(e1, e2)}
-        | termExpression ~ (">" ~> termExpression) ^^ { case e1 ~ e2 => GtExpr(e1, e2)}
-        | termExpression ~ (">=" ~> termExpression) ^^ { case e1 ~ e2 => GeExpr(e1, e2)}
-        | termExpression ~ ("!=" ~> termExpression) ^^ { case e1 ~ e2 => NeExpr(e1, e2)}
-        | termExpression ~ ("<>" ~> termExpression) ^^ { case e1 ~ e2 => NeExpr(e1, e2)}
-        | termExpression ~ NOT.? ~ (BETWEEN ~> termExpression) ~ (AND ~> termExpression) ^^ {
-        case e ~ not ~ el ~ eu =>
-          val betweenExpr: Expression = AndExpr(GeExpr(e, el), LeExpr(e, eu))
-          not.fold(betweenExpr)(f => NotExpr(betweenExpr))
-      }
-        | termExpression ~ (LIKE ~> termExpression) ^^ { case e1 ~ e2 => LikeExpr(e1, e2)}
-        | termExpression ~ (NOT ~ LIKE ~> termExpression) ^^ { case e1 ~ e2 => NotExpr(LikeExpr(e1, e2))}
-        | termExpression ~ (IN ~ "(" ~> rep1sep(termExpression, ",")) <~ ")" ^^ {
-        case e1 ~ e2 => InListExpr(e1, e2)
-      }
-        | termExpression ~ (NOT ~ IN ~ "(" ~> rep1sep(termExpression, ",")) <~ ")" ^^ {
-        case e1 ~ e2 => NotExpr(InListExpr(e1, e2))
-      }
-        | termExpression ~ (IN ~ "(" ~> selectStmt) <~ ")" ^^ {
-        case e1 ~ e2 => InExpr(e1, e2)
-      }
-        | termExpression ~ (NOT ~ IN ~ "(" ~> selectStmt) <~ ")" ^^ {
-        case e1 ~ e2 => NotExpr(InExpr(e1, e2))
-      }
-        | termExpression <~ IS ~ NULL ^^ { case e => IsNullExpr(e)}
-        | termExpression <~ IS ~ NOT ~ NULL ^^ { case e => NotExpr(IsNullExpr(e))}
-        | NOT ~> termExpression ^^ { e => NotExpr(e)}
-        | EXISTS ~> termExpression ^^ { e => ExistsExpr(e) }
-        | NOT ~ EXISTS ~> termExpression ^^ { e => NotExpr(ExistsExpr(e)) }
-        | termExpression
-        )
+      termExpression ~ comparisonOp ~ termExpression ^^ {
+        case e1 ~ (op ~ negate) ~ e2 =>
+          if (negate)
+            NotExpr(BinOpExpr(op, e1, e2))
+          else
+            BinOpExpr(op, e1, e2)
+      } |
+        termExpression ~ NOT.? ~ (BETWEEN ~> termExpression) ~ (AND ~> termExpression) ^^ {
+          case e ~ not ~ el ~ eu =>
+            val betweenExpr = BinOpExpr(And,
+              BinOpExpr(GreaterEq, e, el),
+              BinOpExpr(LessEq, e, eu))
+            notOpt(not, betweenExpr)
+        } |
+        termExpression ~ NOT.? ~ (LIKE ~> termExpression) ~ (ESCAPE ~> termExpression).? ^^ {
+          case e1 ~ not ~ e2 ~ escapeOpt =>
+            notOpt(not, LikeExpr(e1, e2, escapeOpt))
+        } |
+        termExpression ~ (NOT.? <~ IN) ~ ("(" ~> rep1sep(termExpression, ",") <~ ")") ^^ {
+          case e1 ~ not ~ e2 =>
+            notOpt(not, InListExpr(e1, e2))
+        } |
+        termExpression ~ (NOT.? <~ IN) ~ ("(" ~> selectStmt <~ ")") ^^ {
+          case e1 ~ not ~ e2 =>
+            notOpt(not, InExpr(e1, e2))
+        } |
+        (termExpression <~ IS) ~ (NOT.? <~ NULL) ^^ {
+          case e ~ not =>
+            notOpt(not, IsNullExpr(e))
+        } |
+        NOT ~> termExpression ^^ { e => NotExpr(e) } |
+        NOT.? ~ (EXISTS ~> termExpression) ^^ {
+          case not ~ e =>
+            notOpt(not, ExistsExpr(e))
+          } |
+        termExpression
+
+    protected lazy val plusPriorityOp: Parser[BinOp] =
+      "+" ^^^ Plus | "-" ^^^ Minus
 
     protected lazy val termExpression: Parser[Expression] =
       productExpression *
-        ("+" ^^^ { (e1: Expression, e2: Expression) => AddExpr(e1, e2)}
-          | "-" ^^^ { (e1: Expression, e2: Expression) => SubExpr(e1, e2)}
-          )
+        (plusPriorityOp ^^ { op =>
+          (e1: Expression, e2: Expression) => BinOpExpr(op, e1, e2)
+        })
+
+    // || actually has even higher priority, shouldn't mix up with the rest in actual SQL
+    protected lazy val timesPriorityOp: Parser[BinOp] =
+      "||" ^^^ Concat | "*" ^^^ Times | "/" ^^^ Divide | "%" ^^^ Modulo
 
     protected lazy val productExpression: Parser[Expression] =
       baseExpression *
-        ("*" ^^^ { (e1: Expression, e2: Expression) => MulExpr(e1, e2)}
-          | "/" ^^^ { (e1: Expression, e2: Expression) => DivExpr(e1, e2)}
-          )
+        (timesPriorityOp ^^ { op =>
+          (e1: Expression, e2: Expression) => BinOpExpr(op, e1, e2)
+        })
 
-    protected lazy val function: Parser[Expression] =
-      (SUM ~> "(" ~> expression <~ ")" ^^ { case exp => SumExpr(exp)}
-        | SUM ~> "(" ~> DISTINCT ~> expression <~ ")" ^^ { case exp => SumDistinctExpr(exp)}
-        | COUNT ~ "(" ~> "*" <~ ")" ^^ { case _ => CountExpr()}
-        | COUNT ~ "(" ~> expression <~ ")" ^^ { case exp => CountNotNullExpr(exp)}
-        | COUNT ~> "(" ~> DISTINCT ~> repsep(expression, ",") <~ ")" ^^ { case exps => CountDistinctExpr(exps)}
-        | AVG ~ "(" ~> expression <~ ")" ^^ { case exp => AvgExpr(exp)}
-        | MIN ~ "(" ~> expression <~ ")" ^^ { case exp => MinExpr(exp)}
-        | MAX ~ "(" ~> expression <~ ")" ^^ { case exp => MaxExpr(exp)}
-        | CASE ~> expression.? ~ (WHEN ~> expression ~ (THEN ~> expression)).* ~
-        ( ELSE ~> expression).? <~ END ^^ {
+    protected lazy val aggregateOp: Parser[AggregateOp] =
+      COUNT ^^^ Count | SUM ^^^ Sum | AVG ^^^ Avg | MAX ^^^ Max | MIN ^^^ Min
+
+    protected lazy val aggregateExpression =
+      COUNT ~ "(" ~> "*" <~ ")" ^^^ CountAllExpr |
+        // FILTER clause not supported for now
+        aggregateOp ~ ("(" ~> (DISTINCT | ALL).?) ~ expression <~ ")" ^^ {
+          case op ~ quantifier ~ value =>
+            val distinct = quantifier == Some(DISTINCT)
+            AggregateExpr(op, distinct, value)
+        }
+
+    protected lazy val caseExpression =
+      CASE ~> expression.? ~ (WHEN ~> expression ~ (THEN ~> expression)).* ~
+        (ELSE ~> expression).? <~ END ^^ {
         case casePart ~ altPart ~ elsePart =>
           val altExprs = altPart.flatMap { case whenExpr ~ thenExpr =>
-            Seq(casePart.fold(whenExpr)(EqExpr(_, whenExpr)), thenExpr)
+            Seq(casePart.fold(whenExpr)(BinOpExpr(Eq, _, whenExpr)), thenExpr)
           }
           CaseWhenExpr(altExprs ++ elsePart.toList)
       }
-        | (SUBSTR | SUBSTRING) ~ "(" ~> expression ~ ("," ~> expression) ~ ("," ~> expression) <~ ")" ^^ { case s ~ p ~ l => SubstrExpr(s, p, l)}
-        | ident ~ ("(" ~> repsep(expression, ",")) <~ ")" ^^ { case func ~ exprs => FuncExpr(func, exprs)}
-        )
+
+    protected lazy val function: Parser[Expression] =
+      aggregateExpression |
+        caseExpression |
+        (SUBSTR | SUBSTRING) ~ "(" ~> expression ~ ("," ~> expression) ~ ("," ~> expression) <~ ")" ^^ {
+          case s ~ p ~ l => SubstrExpr(s, p, l)
+        } |
+        ident ~ ("(" ~> repsep(expression, ",")) <~ ")" ^^ { case func ~ exprs => FuncExpr(func, exprs)}
 
     protected lazy val cast: Parser[Expression] =
       CAST ~ "(" ~> expression ~ (AS ~> fieldType) <~ ")" ^^ { case exp ~ t => CastExpr(exp, t)}
@@ -427,21 +477,16 @@ trait SqlParser {
         | elem("decimal", _.isInstanceOf[lexical.FloatLit]) ^^ (_.chars)
         )
 
-    protected lazy val baseExpression: Parser[Expression] =
-      ("*" ^^^ StarExpr()
-        | primary
-        )
+    protected lazy val signedExpression: Parser[Expression] =
+      sign ~ baseExpression ^^ { case s ~ e => if (s == "-") NegExpr(e) else e}
 
-    protected lazy val signedPrimary: Parser[Expression] =
-      sign ~ primary ^^ { case s ~ e => if (s == "-") NegExpr(e) else e}
-
-    protected lazy val primary: PackratParser[Expression] =
+    protected lazy val baseExpression: PackratParser[Expression] =
       (literal
         | cast
         | "(" ~> expression <~ ")"
         | function
         | (ident <~ ".").? ~ ident ^^ { case tableOpt ~ name => ColumnRef(tableOpt, name)}
-        | signedPrimary
+        | signedExpression
         | "(" ~> selectStmt <~ ")" ^^ { stmt => SelectExpr(stmt)}
         )
   }

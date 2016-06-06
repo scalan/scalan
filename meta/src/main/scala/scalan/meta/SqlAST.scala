@@ -27,6 +27,9 @@ object SqlAST {
   val CharType = ColumnType("char", "Char")
   val BoolType = ColumnType("bit", "Boolean")
   val DateType = ColumnType("date", "Int")
+  val TimeType = ColumnType("time", "Int")
+  val TimestampType = ColumnType("timestamp", "Long")
+  val BlobType = ColumnType("blob", "Array[Byte]")
   val NullType = ColumnType("null", "Any")
 
   sealed abstract class JoinType
@@ -47,7 +50,8 @@ object SqlAST {
 
   case class TableAlias(table: Operator, alias: String) extends Operator
 
-  case class Project(parent: Operator, columns: ExprList) extends Operator
+  case class ProjectionColumn(expr: Expression, alias: Option[String])
+  case class Project(parent: Operator, columns: List[ProjectionColumn]) extends Operator
 
   case class Filter(parent: Operator, predicate: Expression) extends Operator
 
@@ -70,50 +74,66 @@ object SqlAST {
 
   case class SubSelect(parent: Operator) extends Operator
 
-  case class Join(outer: Operator, inner: Operator, on: Expression) extends Operator
+  sealed trait JoinSpec
+  case class On(condition: Expression) extends JoinSpec
+  case class Using(columns: ColumnList) extends JoinSpec
+  case object Natural extends JoinSpec
+
+  case class Join(outer: Operator, inner: Operator, joinType: JoinType, spec: JoinSpec) extends Operator
   case class CrossJoin(outer: Operator, inner: Operator) extends Operator
+  case class UnionJoin(outer: Operator, inner: Operator) extends Operator
 
   case class SelectStmt(operator: Operator) extends Statement
-
 
   case class CreateTableStmt(table: Table) extends Statement
 
   case class CreateIndexStmt(name: String, table: Table, key: ColumnList) extends Statement
 
   sealed trait Expression
-  sealed trait NamedExpression extends Expression {
-    def name: String
-  }
-
-  case class StarExpr() extends Expression
 
   case class SelectExpr(stmt: SelectStmt) extends Expression
 
-  case class AddExpr(left: Expression, right: Expression) extends Expression
+  sealed trait BinOp
 
-  case class SubExpr(left: Expression, right: Expression) extends Expression
+  sealed trait ArithOp extends BinOp
+  case object Plus extends ArithOp
+  case object Minus extends ArithOp
+  case object Times extends ArithOp
+  case object Divide extends ArithOp
+  case object Modulo extends ArithOp
 
-  case class MulExpr(left: Expression, right: Expression) extends Expression
+  sealed trait LogicOp extends BinOp
+  case object And extends LogicOp
+  case object Or extends LogicOp
 
-  case class DivExpr(left: Expression, right: Expression) extends Expression
+  sealed trait ComparisonOp extends BinOp
+  case object Eq extends ComparisonOp
+  case object Greater extends ComparisonOp
+  case object GreaterEq extends ComparisonOp
+  case object Less extends ComparisonOp
+  case object LessEq extends ComparisonOp
+  case object Is extends ComparisonOp
 
-  case class EqExpr(left: Expression, right: Expression) extends Expression
+  case object Concat extends BinOp
 
-  case class NeExpr(left: Expression, right: Expression) extends Expression
+  case class BinOpExpr(op: BinOp, left: Expression, right: Expression) extends Expression
 
-  case class GtExpr(left: Expression, right: Expression) extends Expression
+  sealed trait AggregateOp
+  case object Count extends AggregateOp
+  case object Sum extends AggregateOp
+  case object Avg extends AggregateOp
+  case object Max extends AggregateOp
+  case object Min extends AggregateOp
+//  case object Every extends AggregateOp
+//  case object Any extends AggregateOp
+//  case object Some extends AggregateOp
 
-  case class GeExpr(left: Expression, right: Expression) extends Expression
+  case class AggregateExpr(op: AggregateOp, distinct: Boolean, value: Expression) extends Expression {
+    def isCountAll = this == CountAllExpr
+  }
+  val CountAllExpr = AggregateExpr(Count, false, Literal(1, IntType))
 
-  case class LtExpr(left: Expression, right: Expression) extends Expression
-
-  case class LeExpr(left: Expression, right: Expression) extends Expression
-
-  case class LikeExpr(left: Expression, right: Expression) extends Expression
-
-  case class AndExpr(left: Expression, right: Expression) extends Expression
-
-  case class OrExpr(left: Expression, right: Expression) extends Expression
+  case class LikeExpr(left: Expression, right: Expression, escape: Option[Expression]) extends Expression
 
   case class InListExpr(left: Expression, right: ExprList) extends Expression
 
@@ -125,23 +145,7 @@ object SqlAST {
 
   case class NotExpr(opd: Expression) extends Expression
 
-  case class AvgExpr(opd: Expression) extends Expression
-
-  case class SumExpr(opd: Expression) extends Expression
-
-  case class SumDistinctExpr(opd: Expression) extends Expression
-
-  case class MaxExpr(opd: Expression) extends Expression
-
-  case class MinExpr(opd: Expression) extends Expression
-
   case class SubstrExpr(str: Expression, from: Expression, len: Expression) extends Expression
-
-  case class CountExpr() extends Expression
-
-  case class CountNotNullExpr(exp: Expression) extends Expression
-
-  case class CountDistinctExpr(exps: ExprList) extends Expression
 
   case class IsNullExpr(opd: Expression) extends Expression
 
@@ -151,18 +155,15 @@ object SqlAST {
 
   case class Literal(value: Any, tp: ColumnType) extends Expression
 
+  // FIXME CaseWhenExpr(operand: Option[Expression], cases: List[(Expression, Expression)], default: Option[Expression])
   case class CaseWhenExpr(list: ExprList) extends Expression
 
-  case class ColumnRef(table: Option[String], name: String) extends NamedExpression {
+  case class ColumnRef(table: Option[String], name: String) extends Expression {
     def asString = (table match {
       case Some(table) => table + "."
       case None => ""
     }) + name
   }
-
-  case class ExprAlias(expr: Expression, name: String) extends NamedExpression
-
-  def ColumnList(list: String*): ColumnList = list.toList
 
   def Schema(list: Column*): Schema = list.toList
 
