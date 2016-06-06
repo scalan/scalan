@@ -27,10 +27,6 @@ trait ArrayBuffers extends Base { self: Scalan =>
     def make[T](name: Rep[String])(implicit e:Elem[T]) = makeArrayBuffer[T](name)(e)
     def empty[T: Elem] = emptyArrayBuffer[T]
     def fromArray[T: Elem](arr: Arr[T]) = createArrayBufferFromArray(arr)
-//    {
-//      val buf = empty[T]
-//      buf ++= arr
-//    }
   }
 
   implicit val arrayBufferFunctor = new Functor[ArrayBuffer] {
@@ -49,9 +45,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
     extends EntityElem1[A, ArrayBuffer[A], ArrayBuffer](eItem, container[ArrayBuffer]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("A" -> Left(eItem))
-    }
+    override lazy val typeArgs = TypeArgs("A" -> eItem)
     lazy val tag = {
       implicit val tag1 = eItem.tag
       weakTypeTag[ArrayBuffer[A]]

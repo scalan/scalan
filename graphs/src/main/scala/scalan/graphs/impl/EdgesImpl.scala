@@ -21,9 +21,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     def eV = _eV
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
-    lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("V" -> Left(eV), "E" -> Left(eE))
-    }
+    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -72,9 +70,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     extends EdgeElem[V, E, AdjEdge[V, E]]
     with ConcreteElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("V" -> Left(eV), "E" -> Left(eE))
-    }
+    override lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
 
     override def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
     override def getDefaultRep = AdjEdge(0, 0, element[Graph[V, E]].defaultRepValue)
@@ -161,9 +157,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     extends EdgeElem[V, E, IncEdge[V, E]]
     with ConcreteElem[IncEdgeData[V, E], IncEdge[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("V" -> Left(eV), "E" -> Left(eE))
-    }
+    override lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
 
     override def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
     override def getDefaultRep = IncEdge(0, 0, element[Graph[V, E]].defaultRepValue)
@@ -544,7 +538,7 @@ trait EdgesExp extends scalan.ScalanDslExp with EdgesDsl {
 }
 
 object Edges_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXS2wbRRiedeI4jkMI5V0JEoLLGztqhaoqoCgkTpXKTaJsm1amAo13x86G2dlhdxytORSJQw/ACSFuCFUCcekFcUStQICEEKpUhBASZ06lqOqBnkD8M/vwOvG6pJADexjtvP7H9/3/PzMXrqGs56LHPANTzEo2Ebikq/85TxT1ChOWaB93zBYlC6Rx5ekvnJE331nOoPEaGtrA3oJHaygf/FR8Hv/rwqyiPGYG8YTjegI9UlUayoZDKTGE5bCyZdstgeuUlKuWJ2aqaLDumO3X0FmkVdG44TDDJYLo8xR7HvHC8WEiLbLifl712yu8o4OVpRflhBcnXGwJMB90jAfr1wjX28xhbVugsdC0FS7NgjUF4nPwYcnmVKkZqKKcZXPHFZHWHGjYcMyoO8gwDKB91U28hcugtVnWhWuxphTGsfEqbpJlWCKXD4IPHqGNE21OQuEFT5hd+nyOEAJWDirDSh3MSjFmJYlZUSeuhan1OpaTq67jt1HwaQMI+RxEPHMLEZEEUmFm8a0zxks39YKdkZt9aUpOGTQEgiZSIkTRA9h+u/aud+Po+cMZNFJDI5Y3V/eEiw2RDIMQrgJmzBHK5hhB7DaBwak0BpWWOVizLUzyhmNzzEBSiOUoEEUtwxJysRwbDelJwT4nOImWaj7XYn8nU/xVsTSPKV29+uCzB36rnM6gTLeKPIjUIRncSKhAgxWzSULRsr1TIG29g6/sVlRXNnm/0+b6WBJj8vjV381vptGZTIxkqPifkQcist7PPxV+fHI2g4ZrKtYXKW7WAEyvQom94s47TNTQsLNF3GAmt4Wp/OtJZs4kDdyiIoQ4ic0AYCPQZGqiciKBm1EJoEUAFIIYXnYYKS6uFv/Qv3vvggxRF40GM0Hm/mUd/vOXsYZQ0SvQUMN17CUzAngAUj7G49E0cjlZdS0bCswWee6rz09ev7ScVfzuC11ax7RFgtwOPep4J5Vq06BpiYmAQaVvf+yKbCYEwNgSS8wk/k7TZHOg395s08V8o4dP4Uj2aDy/y0jrxNtIAKru2OSuqRvWy+ffFiqyNL+7xK3UN6GkzKh9D/cJsqj6fnru3L3XP3rlblUhhuuWsDEvTu+iPkTpvIf5j7qhG5sPTyGVKAe7J1VSp2StbO+P5wL2IDzG58xNuWs+afVEYktCw35tG/cZst5RDWnZk+Vk8OwUUOknYGdcCJQLDVYS4vR5KD19AMv71qr30GuzlzIoewxlG1AlvCrK1p0WMyOS4HAXxBcvRmNaN0lACnaxHZOivknUAas7qE/3XFDZjkdB68Hf7RXlHVxtz9PU4nPLDB8Uzm3t2/vKINsjqn1+r9NkiRn/rzQJDU6mSXpk7ip0E5YO9QR/AErrfxTYKbT0Yb4gS+kiti3a/ve035HCOU9I2xN0ZfthR/oRKHGllBK3QAyKXWLKyzqx4TERHFOH3p89deyBUyfVQTlqqkXBTHzb6f30OY75jLqoP9Hnog6LihWbw0MMfg59/cIPb3z/ycfqmtMBETJc0Q4whqYHBSH2aCrFIz08ECGMzt78YPmpy5/9qq48I/JohSsXi189yatON9n5oLjAIyaBLbAmD9tE9FyUzZd/A9xeUZhzDgAA"
+  val dump = "H4sIAAAAAAAAANVXS2wbRRiedew4jkMI4V0JEoIDiIcdtUKlCqgKiVO5cpMo26aVqUDj3bGzYXZ32B1Haw5F4tADcEKIAxJClUBcKiTUG4gKBEgIISS4cuZUiqoe6AnEP7NPJ16XFHJgD6Od1//4vv//Z+biVZRzHfSIq2GKrbJJOC6r8n/B5SW1anGDd0/YeoeSJdL66Ykv7dHX31rJoIkGGt7E7pJLG6jg/1Q9Fv2rXK+jArY04nLbcTl6qC41VDSbUqJxw7Yqhml2OG5SUqkbLp+vo2zT1ruvoHNIqaMJzbY0h3CiLlLsusQNxkeIsMiI+gXZ766yWIdVEV5UEl6cdLDBwXzQMeGvXydM7Vq21TU5Gg9MW2XCLFhTJB4DH2omo1LNUB3lDZPZDg+15kHDpq2H3ayFYQBN1rfwNq6A1nZF5Y5htYUwhrWXcZuswBKxPAs+uIS2TnYZCYQXXa736PMYQghYOSgNK8eYlSPMygKzkkocA1PjVSwm1xzb6yL/U4YQ8hiIePImIkIJpGrppTfOai/cUItmRmz2hCl5adAwCJpKiRBJD2D73frb7vVjFw5n0GgDjRruQtPlDtZ4MgwCuIrYsmwubY4QxE4bGJxJY1BqWYA1O8KkoNkmwxZICrAcA6KooRlcLBZjYwE9KdjnOSPhUsVjSuTvdIq/MpYWMaVrV+5/ava36pkMyvSqKIBIFZLBCYVylK3qbRKIFu3tHCkbMb6iW5Vd0RS8uM0PsCTC5NErv+vfzqGzmQjJQPE/Iw9ETD7z3mezZO2TDBppyFhfprgtaRRQLRFXa6ARe5s4/nh+G1Px15fKvE5auEN5AHASmSFAhqPp1DRlRMA2L8NfCd0v+hG8YluktLxW+kP9/p2LIkAdNObP+Hn7l3H4z1/GW1zGLkfDLcc2a3oI7xAkfITGw2nUMrLmGCaUl23y9Nefn7p2eSUn2Z0MXNrAtEP8zA48ir0TSpU50FSzuM+f1HcgckU0Uxxg7PCapRNvt2mimR20N9d2MNvs41MwkjsWze8xzuJoG/VBVW2T3DFz3XjxwptcxpXi9Ra41eYWFJR5ue/BASEW1t5Pz5+/+9qHL90p68NI0+AmZqW5PVSHMJn3MftRL3Tji8EZJNPkYO+kTOmUnBXtvdGczx6Ex8SCviV2LSatnkpsSWg4oOzgPkM2YtWUmH1ZTgbPbgHVQQJ2xwVH+cBgKSFKnwfS0wewvGe9fhe9evRyBuWOo1wLqoRbR7mm3bH0kCQ42jnx+PPhmNJLEpCCHWxGpMhvGsVg9Qb1mb4LqjvxKCp9+Lu1kryLq515mlp8bprhWW7f0r79rwyiPSLbZ/c7TWqW9v9Kk8DgZJqkR+aeQjdh6XBf8IegtP5HgZ1CywDmi6KULmPToN1/T/ttKZyzhLR9QVe0H8TSj0CJK6eUuCWiUewQXVzViQlPCf+YOvTu0dPH7zt9Sh6UY7pc5M9Et53+D58TmM3La/pjA67psKhUNRk8w+Dn0DfP/fzaDx9/JK85MYiQ4ZJ2gDEw3S8IkUczKR6pwYEIYXTuxvsrj/946Vd55RkVRytcuazozZO86vSSXfCLCzxhEtgCa+KwTUTPF6L56m+aY34kcQ4AAA=="
 }
 }
 

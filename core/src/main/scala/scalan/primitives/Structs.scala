@@ -486,7 +486,8 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
   }
 
   case class SimpleStruct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]) extends AbstractStruct[T]
-  case class FieldApply[T](struct: Rep[Struct], fieldName: String)(implicit selfType: Elem[T]) extends BaseDef[T]
+  case class FieldApply[T](struct: Rep[Struct], fieldName: String)
+    extends BaseDef[T]()(struct.elem(fieldName).asElem[T])
 
   case class FieldUpdate[S <: Struct, T](struct: Rep[S], fieldName: String, value: Rep[T]) extends AbstractStruct[S] {
     val tag = struct.elem.structTag
@@ -506,9 +507,9 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
   def struct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]): Rep[T] = SimpleStruct(tag, fields)
   def field(struct: Rep[Struct], field: String): Rep[_] = {
     struct.elem match {
-      case se: StructElem[_] =>
-        val fieldElem = se(field)
-        FieldApply(struct, field)(fieldElem)
+      case se: StructElem[a] =>
+//        val fieldElem = se(field)
+        FieldApply[a](struct, field)
       case _ =>
         !!!(s"Attempt to get field $field from a non-struct ${struct.toStringWithType}", struct)
     }

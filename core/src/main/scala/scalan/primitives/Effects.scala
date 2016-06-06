@@ -83,9 +83,9 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
 
   // --- class defs
 
-  case class Reflect[+A:Elem](x: Def[A], summary: Summary, deps: List[Exp[Any]]) extends BaseDef[A]
+  case class Reflect[+A](x: Def[A], summary: Summary, deps: List[Exp[Any]]) extends BaseDef[A]()(x.selfType)
 
-  case class Reify[A:Elem](x: Exp[A], summary: Summary, effects: List[Exp[Any]]) extends BaseDef[A]
+  case class Reify[A](x: Exp[A], summary: Summary, effects: List[Exp[Any]]) extends BaseDef[A]()(x.elem)
 
   override def transformDef[A](d: Def[A], t: Transformer) = d match {
     case Reflect(x, summary, deps) =>

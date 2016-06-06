@@ -3,7 +3,7 @@ package scalan.primitives
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.{ViewsDslExp, ScalanExp, ScalanStd, Scalan}
+import scalan.{Scalan, ScalanExp, ScalanStd, ViewsDslExp}
 import scala.reflect.runtime.universe._
 
 trait Thunks { self: Scalan =>
@@ -34,9 +34,7 @@ trait Thunks { self: Scalan =>
     extends EntityElem1[A, Thunk[A], Thunk](eItem, container[Thunk]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("A" -> Left(eItem))
-    }
+    override lazy val typeArgs = TypeArgs("A" -> eItem)
     lazy val tag = {
       implicit val rt = eItem.tag
       weakTypeTag[Thunk[A]]
@@ -60,9 +58,8 @@ trait ThunksStd extends Thunks { self: ScalanStd =>
 trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>
 
   case class ThunkDef[A](val root: Exp[A], override val schedule: Schedule)
-                        (implicit val eA: Elem[A] = root.elem)
-    extends BaseDef[Thunk[A]] with AstGraph with Product {
-
+    extends BaseDef[Thunk[A]]()(thunkElement(root.elem)) with AstGraph with Product {
+    implicit val eA: Elem[A] = root.elem
     // structural equality pattern implementation
     override lazy val hashCode: Int = 41 * (41 + root.hashCode) + schedule.hashCode
     override def equals(other: Any) =

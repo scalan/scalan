@@ -23,9 +23,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     def eV = _eV
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
-    lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("V" -> Left(eV), "E" -> Left(eE))
-    }
+    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -74,9 +72,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
     with ConcreteElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("V" -> Left(eV), "E" -> Left(eE))
-    }
+    override lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
 
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
     override def getDefaultRep = AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue)
@@ -163,9 +159,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     extends GraphElem[V, E, IncidenceGraph[V, E]]
     with ConcreteElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("V" -> Left(eV), "E" -> Left(eE))
-    }
+    override lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
 
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
     override def getDefaultRep = IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0)
@@ -1193,7 +1187,7 @@ trait GraphsExp extends scalan.ScalanDslExp with GraphsDsl {
 }
 
 object Graphs_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXS2wbRRieteM4tkNIy6NQCRKCeYMdJaIVilAUHKdK5ThRtkmQqUDj3bGz6e7ssjuObA5F4tADcEIIiQOHSiAuvSAOHCpVSICEEEICIYTEmVMpqnqgJxD/zD68m+w6BNoDexjtvP7H93//PzOXrqGMY6NHHQXrmJYMwnBJFv8LDivKVco01lsx1Y5OFknr+6c+N/NvvF1PofEGGt7GzqKjN1DO/al2reBfZmoN5TBViMNM22HooZrQUFZMXScK00xa1gyjw3BTJ+Wa5rC5GhpqmmrvVXQeSTU0rphUsQkjckXHjkMcb3yEcIu0oJ8T/d6q1ddBy9yLcsiLMzbWGJgPOsbd9evEknvUpD2DoTHPtFWLmwVrCqRrgQ/LhqULNekaymqGZdrM15oFDdum6neHKIYBdLS2g3dxGbS2yzKzNdrmwiysnMNtUoclfPkQ+OAQvXWmZxFPeMFhakRf10IIQVRmhGGlPmalALMSx6woE1vDuvYa5pNrttntIfeT0gh1LRDx9AEifAmkStXim2eVl27KBSPFN3e5KVlh0DAImkhgiAgPYPv1+jvOjVMXT6ZQvoHymrPQdJiNFRamgQdXAVNqMmFzgCC22xDBqaQICi0LsGYPTXKKaViYgiQPy1EIlK4pGuOL+dioF54E7LPMIv5SqWtJgb+TCf4KLlWwrq9dvf+ZR36rvphCqaiKHIiUIRlsXyhDmVM2trY92by9kyFpsw8w71ZFlze5br/NDjAlAOWxq7+rX02js6kASk/zP4seiMg4P/9U+PGJ+RQaaQiyL+m43QA0napOjFW7YlLWQCPmLrHdmewu1vlfbDSzKmnhjs48jMPgpAEchiYTM9UiHLk5kQGSD0DBJXHdpKS4tFb8Q/7m3UucozYadWfc1P1LO/nnL2MtJujL0CgYy0h3E+sd4vgwD1UgE2ID4WIuBo8HynkzwVCeqG0SFZSpx0iqHigpo2v0XLwQGz2cxDmLrNmaAXVvlzz7xeWN61fqGUG7ox7QwjS35Hg49zHnUEjTDKWXKYtjV96FUDYNcmTqhvbyxbeY4JHUjVa01eYOVJA5se/BAZTyi+0nFy7cc/3DV+4SBWGkqTEDW8XpQ5QDP3tvY7qjaPzGKt6hI9JiZs/kgrqDFUKVnkjmhGzl7bFgzo06BOBYdHMl7MZEaGdI5XFpD3VSZDNgMc/KA1m8X0B1kID9BSjW6YmArg8k0xUwvne9drd+bf5KCmVOo0wLaoVTQ5mm2aGqHzw44yFB2Qv+mBQNHgQL29gIgiW+SdTHLFpEN2IX7EvJghT1+7/U5n0x25vut7AGHdGosoIhx7tbGtsGiQPlHVyJcq5p9Y7hb0rDrcgVw5vZeHdPiPa5Q2XOMlU0FUhE/k3mRDf/fzJnv9MToW3xZD0Um0MGD8cGJQ1V+FZxPSFKAyhR4GV3CRua3puJs+JwNBhLir4VlndbEObt+33pJ6DylRIq3yJRdGwTlV/liQFPDfdUm31vfuv0fVsb4lwdVcUidya4CsU/jFawNSeu8Y8PuMbDomLVsOCZBj+zXz7/w+vffvyRuAP1YWRo2A09Q3d4trdFP3BpKsEl2TtAgUvnb35Qf/K7T38VV488P4rhQkaDR1H4yhENeM7VDW+cELiQSvxwDjHoM95c/hsJcX9Fkg4AAA=="
+  val dump = "H4sIAAAAAAAAANVXTWgcVRx/s5vNZndjmsaPakET41bFj92QYKsEKTHZlJTNJmSaRGJR3s68bF46X868DbMeKnjoQT2JCAoeCoqXIkgPgoUiaEFEBL169lQrpQd7Uvy/Nx87k8xsjLYH5/CYj/f+H7/f7/9/by7dQDnHRo87CtawUdEJwxVZ3M84rCzXDEZZZ9FU2xqZI5s/Pf21WXzr3UYGDW+g/i3szDnaBip4NzXXCu9lptZRARsKcZhpOww9WhceqoqpaURh1DSqVNfbDDc1Uq1Th03XUV/TVDuvo/NIqqNhxTQUmzAiz2rYcYjjvx8gPCIaPhfEc2fJ6vowqjyLaiSLMzamDMIHH8Pe/BViyR3DNDo6Q0N+aEsWDwvmlIhrQQ4LuqUJN9k6ylPdMm0WeM2Dhy1TDR77DAwv0Eh9G+/gKnhtVWVmU6PFjVlYOYdbpAFT+PQ+yMEh2uaZjkV84yWHqTF/roUQAlYmRWCVLmaVELMKx6wsE5tijb6B+cdl23Q7yLukLEKuBSae2cdEYIHUDLX89lnlldtySc/wxS4PJS8C6gdDoykKEfQAtt+tvOfcOnXxRAYVN1CROjNNh9lYYVEZ+HCVsGGYTMQcIojtFjA4nsag8DIDc3bJpKCYuoUNsORjOQhEaVShjE/m7wZ9elKwzzOLBFMl15LCfMdS8hVamsWatnz9oWeP/VZ7OYMycRcFMClDMdiBUYZyp2xsbfm2+XiIIWmtCzB/rIlHPhTc7pjvEUoIyhPXf1evTaCzmRBK3/M/Yw9MjDz/0VfHyPLnGTSwIcQ+r+GW4JFjNUccZQMNmDvE9t7nd7DG7xK5zKtkE7c15iMchSYL0DA0llqnFuG4TQv9S0H6JU/CDdMg5fnl8h/y9+9f4gq10aD3xSvcv+iJP38Z2mRCvAwNQrCMuGtYaxMnALlvFuogkQYPcfHyaOicD6MMFYnaInFDuUaCpdq+lnIaNc4lG7HRY2mKs8iyTXXoejvkuW+urN682sgJ0Y34QIvQvIbj49zFnEMhTTCUXTBYkraKHoSyqZPD47foqxffYUJFkhvvZ0vNbegf02LdIz0EFbTaLy5cuP/mJ6/dK9rBQJMyHVvliQM0g6B272Kxozh/Q7P+liOKYnLXxxl1GyvEUDqilFNqlY9Hwm8e60DAkfji2Wgao5GVEZdHpV3SyZC1UMU1jej7qnivgVovA3vbT2LSo6FcH06XK2D8wEr9Pu3GyasZlDuNcpvQK5w6yjXNtqEG5MEODwXKXgreSXHygCxsYz0kS1xjqItZvIWuJk7YU5IlKZ73f+nMezjbXe53sAcdpoayiKHG3XXKtsBiT3v7d6KCF1qjrQeLsnAm8szwYSo53eNifOFAlbNgKFQFEZF/Uznxxf+fytmb9GhkWbJYD6TmSMD9iaRkoQvfKa2nsNRDEiXeduexTrXOZFIUB5PBUBr7VtTeXUGYjx92rR+HzldJ6XxzRNGwTVR+kCc6/Gh4u9rUByfXTz+4vir21UFVTPK+hEeh5N+iRWxNi0P8kz0O8TCpXNMt+EmDm6lvX/z5zR8++1ScgbowMtTvUc/QPX7sLfEcpjSekpLsb6CgpfO3P2489ePlX8XRo8i3YjiQGeEvUfTIESe84PmGP5wIuFBKfHOOKOhLPlz5G+3BX1WQDgAA"
 }
 }
 

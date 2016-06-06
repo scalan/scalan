@@ -113,11 +113,7 @@ trait LoopsStd extends Loops { self: ScalanStd =>
 trait LoopsExp extends Loops with BaseExp { self: ScalanExp =>
   def loopUntil[A: Elem](s1: Rep[A])(isMatch: Rep[A => Boolean], step: Rep[A => A]): Rep[A] = LoopUntil(s1, step, isMatch)
 
-  case class LoopUntil[A](s1: Rep[A], step: Rep[A => A], isMatch: Rep[A => Boolean])(implicit selfType: Elem[A]) extends BaseDef[A] {
+  case class LoopUntil[A](s1: Rep[A], step: Rep[A => A], isMatch: Rep[A => Boolean]) extends BaseDef[A]()(s1.elem) {
     override def productIterator = List(step, isMatch, s1).toIterator
-    //    override def decompose = {
-    //      val states = generate(s1)(step)
-    //      Some(states.withFilter(isMatch).first)
-    //    }
   }
 }

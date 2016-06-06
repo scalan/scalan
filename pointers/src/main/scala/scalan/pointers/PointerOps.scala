@@ -1,7 +1,7 @@
 package scalan.pointers
 
 import scala.reflect.runtime.universe._
-import scalan.{ScalanExp, Base, Scalan}
+import scalan.{Base, Scalan, ScalanExp}
 
 trait PointerOps extends Base { self: Scalan =>
   class Pointer[A](implicit val eA: Elem[A])
@@ -13,9 +13,7 @@ trait PointerOps extends Base { self: Scalan =>
 
   case class PointerElem[A, To <: Pointer[A]](eItem: Elem[A]) extends EntityElem[To] {
     def parent: Option[Elem[_]] = None
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("A" -> Left(eItem))
-    }
+    override lazy val typeArgs = TypeArgs("A" -> eItem)
     override lazy val tag = {
       implicit val ttag = eItem.tag
       weakTypeTag[Pointer[A]].asInstanceOf[WeakTypeTag[To]]
@@ -29,9 +27,7 @@ trait PointerOps extends Base { self: Scalan =>
   
   case class ScalarElem[A: Elem, To <: Scalar[A]](eItem: Elem[A]) extends EntityElem[To] {
     def parent: Option[Elem[_]] = None
-    override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("A" -> Left(eItem))
-    }
+    override lazy val typeArgs = TypeArgs("A" -> eItem)
     override lazy val tag = {
       implicit val ttag = eItem.tag
       weakTypeTag[Scalar[A]].asInstanceOf[WeakTypeTag[To]]
