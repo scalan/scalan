@@ -5,7 +5,7 @@ import java.lang.reflect.Method
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.arrays.ArrayOps
-import scalan.common.OverloadHack.Overloaded1
+import scalan.common.OverloadHack.{Overloaded1, Overloaded2}
 import scala.collection.mutable
 import scala.annotation.tailrec
 import scala.reflect.runtime.universe._
@@ -314,6 +314,7 @@ trait Collections { self: CollectionsDsl =>
     def fromArray[A: Elem, B: Elem](arr: Arr[(A, B)]) = PairCollectionAOS(CollectionOverArray(arr))
   }
 
+  type NColl[A] = Rep[NestedCollection[A]]
   trait NestedCollection[A] extends Collection[Collection[A]] {
     implicit def eA: Elem[A]
     def values: Rep[Collection[A]]
@@ -324,8 +325,12 @@ trait Collections { self: CollectionsDsl =>
     @OverloadId("many")
     override def apply(indices: Coll[Int])(implicit o: Overloaded1): Rep[NestedCollection[A]]
   }
-  //type NColl[A] = Rep[NestedCollectionFlat[A]]
-  type NColl[A] = Rep[NestedCollection[A]]
+  trait NestedCollectionCompanion {
+    @OverloadId("apply_from_jugged_array")
+    def apply[T: Elem](arr: Rep[Array[Array[T]]])(implicit o2: Overloaded2): Rep[NestedCollection[T]] = {
+      CompoundCollection(arr)
+    }
+  }
 
   abstract class NestedCollectionFlat[A](val values: Coll[A], val segments: PairColl[Int, Int])(implicit val eA: Elem[A])
     extends NestedCollection[A] {
@@ -368,8 +373,10 @@ trait Collections { self: CollectionsDsl =>
     def append(value: Rep[Collection[A @uncheckedVariance]]): NColl[A]  = ??? //Collection(arr.append(value))
     def sortBy[O: Elem](by: Rep[Collection[A] => O])(implicit o: Ordering[O]): NColl[A] = ???
   }
-  trait NestedCollectionFlatCompanion extends ConcreteClass1[NestedCollectionFlat] {
-    def fromJuggedArray[T: Elem](arr: Rep[Array[Array[T]]]): Rep[NestedCollectionFlat[T]] = {
+  trait NestedCollectionFlatCompanion
+        extends ConcreteClass1[NestedCollectionFlat] with NestedCollectionCompanion {
+    @OverloadId("apply_from_jugged_array")
+    override def apply[T: Elem](arr: Rep[Array[Array[T]]])(implicit o2: Overloaded2): Rep[NestedCollectionFlat[T]] = {
       val lens: Arr[Int] = arr.map(i => i.length)
       val positions = lens.scan._1
       val segments = Collection.fromArray(positions).zip(Collection.fromArray(lens))
@@ -409,9 +416,11 @@ trait Collections { self: CollectionsDsl =>
     def append(value: Rep[Collection[A @uncheckedVariance]]): NColl[A]  = ??? //Collection(arr.append(value))
     def sortBy[O: Elem](by: Rep[Collection[A] => O])(implicit o: Ordering[O]): NColl[A] = ???
   }
-  trait CompoundCollectionCompanion extends ConcreteClass1[CompoundCollection] {
-    def fromJuggedArray[T: Elem](xss: Rep[Array[Array[T]]]): Rep[CompoundCollection[T]] = {
-      val nestedValues = Collection(xss.map(xs => Collection(xs)))
+  trait CompoundCollectionCompanion
+        extends ConcreteClass1[CompoundCollection] with NestedCollectionCompanion {
+    @OverloadId("apply_from_jugged_array")
+    override def apply[T: Elem](arr: Rep[Array[Array[T]]])(implicit o2: Overloaded2): Rep[CompoundCollection[T]] = {
+      val nestedValues = Collection(arr.map(xs => Collection(xs)))
       CompoundCollection(nestedValues)
     }
   }

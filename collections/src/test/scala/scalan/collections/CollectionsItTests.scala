@@ -51,7 +51,7 @@ trait CollectionsProg extends CollectionsDsl with CollectionExamples {
   }
 
   lazy val convertPairCollectionSOA = fun { in: Rep[Array[Array[(Int, Double)]]] =>
-    val items = NestedCollectionFlat.fromJuggedArray(in)
+    val items = NestedCollectionFlat(in)
     items.map { coll =>
       // FIXME: convertTo does nor work
       val collPair = coll.convertTo[PairCollectionSOA[Int, Double]]

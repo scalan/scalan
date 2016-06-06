@@ -6,9 +6,6 @@ import java.lang.reflect.Method
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.{BaseShouldTests, ScalanDslExp, ScalanDslStd}
 
-/**
- * Created by afilippov on 2/17/15.
- */
 class GraphExamplesSuite extends BaseShouldTests{
   val graph = Array(
     Array(1, 8),
@@ -52,9 +49,10 @@ class GraphExamplesSuite extends BaseShouldTests{
 
   "in seq context1" should "execute functions" in {
     val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
-    val in1 = ctx.NestedCollectionFlat.fromJuggedArray(Array(Array(1,2), Array(3,4), Array(5,6)))(ctx.IntElement)
-    val in2 = ctx.NestedCollectionFlat.fromJuggedArray(Array(Array(1.0,2.0), Array(3.0,4.0), Array(5.0,6.0)))(ctx.DoubleElement)
-    val res = ctx.fromAndToAdj((in1,in2))
+    import ctx._
+    val in1 = NestedCollectionFlat(Array(Array(1,2), Array(3,4), Array(5,6)))
+    val in2 = NestedCollectionFlat(Array(Array(1.0,2.0), Array(3.0,4.0), Array(5.0,6.0)))
+    val res = fromAndToAdj((in1,in2))
     println(res)
     res should be(in1.length)
   }
@@ -69,12 +67,11 @@ class GraphExamplesSuite extends BaseShouldTests{
 
   "in seq context3" should "execute functions" in {
     val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
-
-    val in1 = ctx.NestedCollectionFlat.fromJuggedArray(graph)(ctx.IntElement)
-    val in2 = ctx.NestedCollectionFlat.fromJuggedArray(graphValues)(ctx.DoubleElement)
-    val res = ctx.mstFunAdj((in1,in2))
+    import ctx._
+    val in1 = NestedCollectionFlat(graph)
+    val in2 = NestedCollectionFlat(graphValues)
+    val res = mstFunAdj((in1,in2))
     println(res)
-    //res should be(in1.length)
   }
 
   "in seq context4" should "execute functions" in {
@@ -97,11 +94,11 @@ class GraphExamplesSuite extends BaseShouldTests{
 
   "in seq context5" should "execute functions" in {
     val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
+    import ctx._
+    val in1 = NestedCollectionFlat(graph)
+    val in2 = NestedCollectionFlat(graphValues)
 
-    val in1 = ctx.NestedCollectionFlat.fromJuggedArray(graph)(ctx.IntElement)
-    val in2 = ctx.NestedCollectionFlat.fromJuggedArray(graphValues)(ctx.DoubleElement)
-
-    val res = ctx.mstFun1Adj((in1.values.arr,(in2.values.arr, (in1.segOffsets.arr, in1.segLens.arr))) )
+    val res = mstFun1Adj((in1.values.arr,(in2.values.arr, (in1.segOffsets.arr, in1.segLens.arr))) )
     println(res.mkString(","))
     //res should be(in1.length)
   }
@@ -124,10 +121,10 @@ class GraphExamplesSuite extends BaseShouldTests{
   }
   "in seq context7" should "execute functions" in {
     val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
-
-    val in1 = ctx.NestedCollectionFlat.fromJuggedArray(graph)(ctx.IntElement)
-    val in2 = ctx.NestedCollectionFlat.fromJuggedArray(graphValues)(ctx.DoubleElement)
-    val res = ctx.mstFunAdjMap((in1,in2))
+    import ctx._
+    val in1 = NestedCollectionFlat(graph)
+    val in2 = NestedCollectionFlat(graphValues)
+    val res = mstFunAdjMap((in1,in2))
     println(res)
     //res should be(in1.length)
   }
@@ -151,11 +148,11 @@ class GraphExamplesSuite extends BaseShouldTests{
 
   "in seq context9" should "execute functions" in {
     val ctx = new ScalanDslStd with GraphsDslStd with GraphExamples {}
+    import ctx._
+    val in1 = NestedCollectionFlat(graph)
+    val in2 = NestedCollectionFlat(graphValues)
 
-    val in1 = ctx.NestedCollectionFlat.fromJuggedArray(graph)(ctx.IntElement)
-    val in2 = ctx.NestedCollectionFlat.fromJuggedArray(graphValues)(ctx.DoubleElement)
-
-    val res = ctx.mstFun1AdjMap((in1.values.arr,(in2.values.arr, (in1.segOffsets.arr, in1.segLens.arr))) )
+    val res = mstFun1AdjMap((in1.values.arr,(in2.values.arr, (in1.segOffsets.arr, in1.segLens.arr))) )
     println(res.mkString(","))
     //res should be(in1.length)
   }

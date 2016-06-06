@@ -733,6 +733,18 @@ trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
         case _ => None
       }
     }
+
+    object apply_apply_from_array {
+      def unapply(d: Def[_]): Option[Rep[Array[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(items, _*), _) if receiver.elem == DenseVectorCompanionElem && method.getName == "apply" =>
+          Some(items).asInstanceOf[Option[Rep[Array[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Array[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   def mkDenseVector[T]
