@@ -1,6 +1,7 @@
 package scalan.util
 
 import java.io._
+import java.net.URL
 import java.nio.channels.Channels
 import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
@@ -191,6 +192,17 @@ object FileUtil {
     val newName = f(name)
     new File(parent, newName)
   }
+
+  def urlToFile(url: URL) = Paths.get(url.toURI).toFile
+
+  /** Accepts an arbitrary (printable) string and returns a similar string
+    * which can be used as a file name. For convenience, replaces spaces with hyphens.
+    */
+  def cleanFileName(string: String) = string.
+    replaceAll("""[ /\\:;<>|?*^]""", "_").
+    replaceAll("""['"]""", "")
+
+  def isBadFileName(string: String) = cleanFileName(string) != string
 }
 
 case class ExtensionFilter(extension: String) extends FilenameFilter {

@@ -13,8 +13,14 @@ abstract class Compiler[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) ext
   import scalan._
 
   type CompilerConfig
+  // TODO implicit Configs[CompilerConfig], defaultCompilerConfig/compilerConfigFrom should work like GraphVizConfig
 
   def defaultCompilerConfig: CompilerConfig
+  def compilerConfigFrom(config: Config) = config.entrySet.iterator.asScala.foldLeft(defaultCompilerConfig) {
+    case (configAcc, entry) => modifyConfig(entry.getKey, entry.getValue, configAcc)
+  }
+  // override to handle specific keys this config cares about
+  protected def modifyConfig(key: String, value: Any, config: CompilerConfig): CompilerConfig = config
 
   type CustomCompilerOutput
 
