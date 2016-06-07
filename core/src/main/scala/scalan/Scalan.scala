@@ -107,6 +107,7 @@ abstract class ScalanExp
   with NumericOpsExp
   with UnBinOpsExp
   with LogicalOpsExp
+  with OrderingOpsExp
   with EqualExp
   with UniversalOpsExp
   with FunctionsExp

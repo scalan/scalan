@@ -130,7 +130,7 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     case seq: Seq[_] => seq.map(transformProductParam(_, t))
     case arr: Array[_] => arr.map(transformProductParam(_, t))
     case opt: Option[_] => opt.map(transformProductParam(_, t))
-    case p: Product => transformProduct(p, t)
+    case p: Product if p.productArity != 0 => transformProduct(p, t)
     case x => x
   }
 

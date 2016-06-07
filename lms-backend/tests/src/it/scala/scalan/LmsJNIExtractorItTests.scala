@@ -1,6 +1,6 @@
 package scalan
 
-import scalan.compilation.lms.JNIBridge
+import scalan.compilation.lms.JNILmsBridge
 import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.graphs.MST_example
 import scalan.it.BaseCtxItTests
@@ -22,7 +22,7 @@ trait JNIMst extends MST_example with JNIExamples with JNIExtractorOps {
 class LmsJNIExtractorItTests extends BaseCtxItTests[JNIMst](???) {
   class ProgExp extends ScalanDslExp with JNIExtractorOpsExp with JNIMst
 
-  val compiler = new LmsCompilerCxx(new ProgExp) with JNIBridge
+  val compiler = new LmsCompilerCxx(new ProgExp) with JNILmsBridge
 
   val defaultCompilers = compilers(compiler)
 

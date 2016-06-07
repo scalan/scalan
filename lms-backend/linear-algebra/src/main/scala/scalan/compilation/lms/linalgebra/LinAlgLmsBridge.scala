@@ -1,10 +1,10 @@
 package scalan.compilation.lms.linalgebra
 
-import scalan.compilation.lms.collections.CollectionsBridgeScala
-import scalan.compilation.lms.{CoreBridge, CoreLmsBackend}
+import scalan.compilation.lms.collections.CollectionsLmsBridgeScala
+import scalan.compilation.lms.{CoreLmsBridge, CoreLmsBackend}
 import scalan.linalgebra.LADslExp
 
-trait LinAlgBridge extends CoreBridge {
+trait LinAlgLmsBridge extends CoreLmsBridge {
   override val scalan: LADslExp
   import scalan._
 
@@ -16,4 +16,4 @@ trait LinAlgBridge extends CoreBridge {
   }
 }
 
-trait LinAlgBridgeScala extends CollectionsBridgeScala with LinAlgBridge
+trait LinAlgLmsBridgeScala extends CollectionsLmsBridgeScala with LinAlgLmsBridge

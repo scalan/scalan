@@ -82,7 +82,7 @@ trait SeqsDslExp extends impl.SeqsExp {
   import SSeqMethods._
   override def rewriteDef[T](d: Def[T]) = d match {
     // Rule: xs.map(f)(i) ==> f(xs(i))
-    case apply(Def(map(xs: RSeq[a], f: Rep[Function1[_, b]] @unchecked)), i) =>
+    case apply(Def(map(xs: RSeq[a], f: RFunc[_, b] @unchecked)), i) =>
       implicit val eT = xs.elem.eItem
       f.asRep[a => b](xs(i))
 

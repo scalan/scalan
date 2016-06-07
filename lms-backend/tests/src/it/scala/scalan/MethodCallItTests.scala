@@ -5,7 +5,7 @@ import org.scalatest.BeforeAndAfterAll
 import scalan.collections.{CollectionsDsl, CollectionsDslExp, CollectionsDslStd}
 import scalan.compilation.language.MethodMappingDSL
 import scalan.compilation.language.Scala._
-import scalan.compilation.lms.collections.CollectionsBridgeScala
+import scalan.compilation.lms.collections.CollectionsLmsBridgeScala
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.source2bin.SbtConfig
 import scalan.it.BaseItTests
@@ -92,7 +92,7 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new CollectionsD
 
   class ProgStaged extends CollectionsDslExp with MethodCallTestProg
 
-  val progStaged = new LmsCompilerScala(new ProgStaged) with CollectionsBridgeScala
+  val progStaged = new LmsCompilerScala(new ProgStaged) with CollectionsLmsBridgeScala
   val defaultCompilers = compilers(progStaged)
 
   test("emptyIfTrue") {

@@ -86,8 +86,8 @@ trait LanguageMapping {
 
       supertypesIncluding(method.getDeclaringClass).
         map(clazz => getMethod(clazz.getName, methodName, overloadId)).collectFirst {
-        case Some(x) => x
-      }
+          case Some(x) => x
+        }
     }
     def getMethod(className: String, methodName: String, overloadId: Option[String]): Option[MethodMapping] = {
       val typeMapping = types.get(className)

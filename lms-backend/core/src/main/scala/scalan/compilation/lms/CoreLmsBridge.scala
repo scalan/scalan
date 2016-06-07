@@ -7,7 +7,7 @@ import scala.reflect.runtime.universe._
 
 import scalan.util.{ParamMirror, StringUtil}
 
-trait CoreBridge extends StructBridge {
+trait CoreLmsBridge extends StructLmsBridge {
   import scalan._
 
   val lms: CoreLmsBackend
@@ -303,6 +303,7 @@ trait CoreBridge extends StructBridge {
       case HashCode() => lms.hash_code(_arg)
       case StringToInt => lms.string_toint(_arg)
       case BooleanToInt => lms.boolean_to_int(_arg)
+      case StringLength => lms.string_length(_arg)
       case StringToDouble => lms.string_todouble(_arg)
       case MathExp => lms.math_exp(_arg)
       case MathSin => lms.math_sin(_arg)

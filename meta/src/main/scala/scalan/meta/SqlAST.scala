@@ -1,8 +1,5 @@
 package scalan.meta
 
-/**
- * Created by knizhnik on 1/13/15.
- */
 object SqlAST {
 
   abstract sealed class Statement

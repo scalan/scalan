@@ -603,7 +603,7 @@ trait SeqsExp extends scalan.ScalanDslExp with SeqsDsl {
         val s = xs.map(f1 >> iso.fromFun)
         val res = ViewSSeq(s, iso)
         res
-      case (HasViews(source, Def(contIso: SSeqIso[a, b])), f: Rep[Function1[_, c] @unchecked]) =>
+      case (HasViews(source, Def(contIso: SSeqIso[a, b])), f: RFunc[_, c]@unchecked) =>
         val f1 = f.asRep[b => c]
         val iso = contIso.innerIso
         implicit val eC = f1.elem.eRange

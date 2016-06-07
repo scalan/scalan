@@ -6,7 +6,7 @@ import scalan._
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.compilation.lms.cxx.sharedptr.{CxxCoreCodegen, CoreCxxShptrLmsBackend}
-import scalan.compilation.lms.pointers.{CxxShptrGenPointer, PointerLmsOpsExp, PointerBridge}
+import scalan.compilation.lms.pointers.{CxxShptrGenPointer, PointerLmsOpsExp, PointerLmsBridge}
 import scalan.it.BaseItTests
 
 trait PointerProg extends ScalanDsl with PointerOps {
@@ -43,7 +43,7 @@ class PointerItTests extends BaseItTests[PointerProg](???) {
 
   class ProgExp extends ScalanDslExp with PointerOpsExp with PointerProg
 
-  val progExp = new LmsCompilerCxx(new ProgExp) with PointerBridge {
+  val progExp = new LmsCompilerCxx(new ProgExp) with PointerLmsBridge {
     override val lms = new CoreCxxShptrLmsBackend with PointerLmsOpsExp { self =>
       override val codegen = new CxxCoreCodegen[self.type](self) with CxxShptrGenPointer
     }

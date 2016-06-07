@@ -31,3 +31,21 @@ trait OrderingOps { self: Scalan =>
 
   case class OrderingCompare[T: Elem](ord: Ordering[T]) extends BinOp[T, Int]("compare", ord.compare)
 }
+
+trait OrderingOpsExp extends OrderingOps with BaseExp { self: ScalanExp =>
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case ApplyUnOp(not, Def(ApplyBinOp(op, x, y))) if not == Not =>
+      op.asInstanceOf[BinOp[_, _]] match {
+        case OrderingLT(ord) =>
+          OrderingGTEQ(ord)(x, y)
+        case OrderingLTEQ(ord) =>
+          OrderingGT(ord)(x, y)
+        case OrderingGT(ord) =>
+          OrderingLTEQ(ord)(x, y)
+        case OrderingGTEQ(ord) =>
+          OrderingLT(ord)(x, y)
+        case _ => super.rewriteDef(d)
+      }
+    case _ => super.rewriteDef(d)
+  }
+}

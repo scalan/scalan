@@ -2,10 +2,10 @@ package scalan.compilation.lms.cxx.sharedptr
 
 import java.io.File
 
-import scalan.compilation.lms.linalgebra.{LinAlgBridge, LinAlgCxxShptrLmsBackend}
+import scalan.compilation.lms.linalgebra.{LinAlgLmsBridge, LinAlgCxxShptrLmsBackend}
 import scalan.{JNIExtractorOps, JNIExtractorOpsExp}
 import scalan.compilation.GraphVizConfig
-import scalan.compilation.lms.JNIBridge
+import scalan.compilation.lms.JNILmsBridge
 import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.it.BaseItTests
 import scalan.linalgebra._
@@ -28,7 +28,7 @@ class JNILinAlgItTests extends BaseItTests[JNILinAlgProg](???) {
 
   class ProgExp extends LADslExp with JNILinAlgProg with JNIExtractorOpsExp
 
-  val prog = new LmsCompilerCxx(new ProgExp) with JNIBridge with LinAlgBridge {
+  val prog = new LmsCompilerCxx(new ProgExp) with JNILmsBridge with LinAlgLmsBridge {
     override val lms = new LinAlgCxxShptrLmsBackend
   }
   implicit val cfg = prog.defaultCompilerConfig
