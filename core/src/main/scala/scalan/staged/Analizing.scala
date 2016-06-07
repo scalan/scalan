@@ -14,6 +14,8 @@ trait AnalyzingExp extends Analyzing { self: ScalanExp =>
   }
 
   implicit object LevelCountLattice extends Lattice[LevelCount] {
+    def maximal[T:Elem] = Some(LevelCount(Int.MaxValue))
+    def minimal[T:Elem] = Some(LevelCount(0))
     def join[T](a: LevelCount[T], b: LevelCount[T]) = {
       implicit val eT = a.elem
       LevelCount(a.level max b.level)
@@ -29,6 +31,9 @@ trait AnalyzingExp extends Analyzing { self: ScalanExp =>
     def updateMark[T](s: Exp[T], level: Int): (Exp[T], LevelCount[T]) = {
       updateMark(s, mkLevelMark(level)(s.elem))
     }
+
+    def getLambdaMarking[A, B](lam: Lambda[A, B], mDom: LevelCount[A], mRange: LevelCount[B]): LevelCount[(A) => B] =
+      mkLevelMark(0)(lam.elem)
 
     def getInboundMarkings[T](te: TableEntry[T], outMark: LevelCount[T]): MarkedSyms = {
       val l = outMark.level
@@ -60,6 +65,8 @@ trait AnalyzingExp extends Analyzing { self: ScalanExp =>
   }
 
   implicit object UsageCountLattice extends Lattice[UsageCount] {
+    def maximal[T:Elem] = None
+    def minimal[T:Elem] = Some(UsageCount(Map()))
     def join[T](a: UsageCount[T], b: UsageCount[T]) = {
       implicit val eT = a.elem
       UsageCount[T](
@@ -80,6 +87,9 @@ trait AnalyzingExp extends Analyzing { self: ScalanExp =>
     }
 
     def getLevel[T](s: Exp[T]): Int = levelAnalyzer.getMark(s).level
+
+    def getLambdaMarking[A, B](lam: Lambda[A, B], mDom: UsageCount[A], mRange: UsageCount[B]): UsageCount[(A) => B] =
+      mkUsageMark(Map())(lam.elem)
 
     def getInboundMarkings[T](te: TableEntry[T], outMark: UsageCount[T]): MarkedSyms = {
       te.rhs match {

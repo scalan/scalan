@@ -52,21 +52,21 @@ trait Transforming { self: Scalan =>
   case class SingletonElem[T: WeakTypeTag](value: T)
     extends BaseElem[T]()(weakTypeTag[T], Default.defaultVal(value))
 
-  case class KeyPath(path: String) {
-    def +(other: KeyPath) = KeyPath(s"$path+${other.path}")
-    def +(other: String) = KeyPath(s"$path+${other}")
-    def isAll = path == KeyPath.All.path
-    def isNone = path == null || path == KeyPath.None.path
+  sealed trait KeyPath {
+    def isNone = this == KeyPath.None
+    def isAll = this == KeyPath.All
   }
   object KeyPath {
-    val Root = KeyPath("/")
-    val This = KeyPath(".")
-    val All = KeyPath("*")
-    val None = KeyPath("")
+    case object Root extends KeyPath
+    case object This extends KeyPath
+    case object All extends KeyPath
+    case object None extends KeyPath
+    case object First extends KeyPath
+    case object Second extends KeyPath
+    case class Field(name: String) extends KeyPath
   }
 
   def keyPathElem(kp: KeyPath): Elem[KeyPath] = SingletonElem(kp)
-  def keyPathElem(path: String): Elem[KeyPath] = keyPathElem(KeyPath(path))
 
   implicit class KeyPathElemOps(eKeyPath: Elem[KeyPath]) {
     def keyPath = eKeyPath.asInstanceOf[SingletonElem[KeyPath]].value
@@ -172,17 +172,21 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       (t1 + (v -> newVar), newVar)
     }
 
+    protected def rewriteUntilFixPoint[T](start: Exp[T], mn: MetaNode, rw: Rewriter): Exp[T] = {
+      var res = start
+      var curr: Exp[T] = res
+      do {
+        curr = res
+        setAllMetadata(curr, mn)
+        res = rw(curr)
+      } while (res != curr)
+      res
+    }
+
     protected def mirrorDef[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = {
       val (t1, mirrored) = apply(t, rewriter, node, d)
       val (t2, mirroredMetadata) = mirrorMetadata(t1, node, mirrored)
-      var res = mirrored
-      var curr = res
-      do {
-        curr = res
-        setAllMetadata(curr, mirroredMetadata)
-        res = rewriter(curr)
-      } while (res != curr)
-
+      val res = rewriteUntilFixPoint(mirrored, mirroredMetadata, rewriter)
       (t2 + (node -> res), res)
     }
 
@@ -220,7 +224,10 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       createDefinition(thunkStack.top, newLambdaSym, newLambda)
       val newLambdaExp = toExp(newLambda, newLambdaSym)
 
-      (tRes + (node -> newLambdaExp), newLambdaExp)
+      val (tRes2, mirroredMetadata) = mirrorMetadata(tRes, node, newLambdaExp)
+      val resLam = rewriteUntilFixPoint(newLambdaExp, mirroredMetadata, rewriter)
+
+      (tRes2 + (node -> resLam), resLam)
     }
 
     protected def mirrorBranch[A](t: Ctx, rewriter: Rewriter, g: AstGraph, branch: ThunkDef[A]): (Ctx, Exp[_]) = {
@@ -439,6 +446,8 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
   }
 
   trait Lattice[M[_]] {
+    def maximal[T:Elem]: Option[M[T]]
+    def minimal[T:Elem]: Option[M[T]]
     def join[T](a: M[T], b: M[T]): M[T]
   }
 
@@ -454,7 +463,11 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       s -> lattice.join(getMark(s), other)
     }
 
+    def beforeAnalyze[A,B](l: Lambda[A,B]): Unit = {}
+
     def getInboundMarkings[T](te: TableEntry[T], outMark: M[T]): MarkedSyms
+
+    def getLambdaMarking[A,B](lam: Lambda[A,B], mDom: M[A], mRange: M[B]): M[A => B]
 
     def getMarkingKey[T](implicit eT:Elem[T]): MetaKey[M[T]] = markingKey[T](keyPrefix).asInstanceOf[MetaKey[M[T]]]
 
@@ -469,12 +482,45 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       mark
     }
 
+    def hasMark[T](s: Exp[T]): Boolean = {
+      implicit val eT = s.elem
+      s.getMetadata(getMarkingKey[T]).isDefined
+    }
+
     def updateOutboundMarking[T](s: Exp[T], mark: M[T]): Unit = {
       implicit val eT = s.elem
       val current = getMark(s)
       val updated = lattice.join(current, mark)
       val key = getMarkingKey[T]
       s.setMetadata(key)(updated, Some(true))
+    }
+
+    def backwardAnalyzeRec(g: AstGraph): Unit = {
+      val revSchedule = g.schedule.reverseIterator
+      for (te <- revSchedule) te match { case te: TableEntry[t] =>
+        val s = te.sym
+        val d = te.rhs
+        // back-propagate analysis information (including from Lambda to Lambda.y, see LevelAnalyzer)
+        val outMark = getMark(s)
+        val inMarks = getInboundMarkings[t](te, outMark)
+        for ((s, mark) <- inMarks) {
+          updateOutboundMarking(s, mark)
+        }
+        d match {
+          // additionally if it is Lambda
+          case l: Lambda[a,b] =>
+            // analyze lambda after the markings were assigned to the l.y during previous propagation step
+            backwardAnalyzeRec(l)
+            // markings were propagated up to the lambda variable
+            val mDom = getMark(l.x)
+            val mRange = getMark(l.y)
+
+            // update markings attached to l
+            val lMark = getLambdaMarking(l, mDom, mRange)
+            updateOutboundMarking(l.self, lMark)
+          case _ =>
+        }
+      }
     }
   }
 
