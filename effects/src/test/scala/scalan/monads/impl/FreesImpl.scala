@@ -105,6 +105,7 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
       implicit val tagA = eA.tag
       weakTypeTag[ReturnIso[F, A]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "A" -> eA)
   }
   // 4) constructor and deconstructor
   class ReturnCompanionAbs extends CompanionDef[ReturnCompanionAbs] with ReturnCompanion {
@@ -189,6 +190,7 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
       implicit val tagA = eA.tag
       weakTypeTag[SuspendIso[F, A]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "A" -> eA)
   }
   // 4) constructor and deconstructor
   class SuspendCompanionAbs extends CompanionDef[SuspendCompanionAbs] with SuspendCompanion {
@@ -275,6 +277,7 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
       implicit val tagB = eA.tag
       weakTypeTag[BindIso[F, S, B]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "S" -> eS, "B" -> eA)
   }
   // 4) constructor and deconstructor
   class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {

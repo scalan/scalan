@@ -177,6 +177,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val tag = {
       weakTypeTag[UnitCollectionIso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class UnitCollectionCompanionAbs extends CompanionDef[UnitCollectionCompanionAbs] with UnitCollectionCompanion {
@@ -260,6 +261,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       implicit val tagItem = eItem.tag
       weakTypeTag[CollectionOverArrayIso[Item]]
     }
+    lazy val typeArgs = TypeArgs("Item" -> eItem)
   }
   // 4) constructor and deconstructor
   class CollectionOverArrayCompanionAbs extends CompanionDef[CollectionOverArrayCompanionAbs] with CollectionOverArrayCompanion {
@@ -343,6 +345,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       implicit val tagItem = eItem.tag
       weakTypeTag[CollectionOverListIso[Item]]
     }
+    lazy val typeArgs = TypeArgs("Item" -> eItem)
   }
   // 4) constructor and deconstructor
   class CollectionOverListCompanionAbs extends CompanionDef[CollectionOverListCompanionAbs] with CollectionOverListCompanion {
@@ -426,6 +429,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       implicit val tagItem = eItem.tag
       weakTypeTag[CollectionOverSeqIso[Item]]
     }
+    lazy val typeArgs = TypeArgs("Item" -> eItem)
   }
   // 4) constructor and deconstructor
   class CollectionOverSeqCompanionAbs extends CompanionDef[CollectionOverSeqCompanionAbs] with CollectionOverSeqCompanion {
@@ -511,6 +515,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       implicit val tagB = eB.tag
       weakTypeTag[PairCollectionSOAIso[A, B]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB)
   }
   // 4) constructor and deconstructor
   class PairCollectionSOACompanionAbs extends CompanionDef[PairCollectionSOACompanionAbs] with PairCollectionSOACompanion {
@@ -598,6 +603,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       implicit val tagB = eB.tag
       weakTypeTag[PairCollectionAOSIso[A, B]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB)
   }
   // 4) constructor and deconstructor
   class PairCollectionAOSCompanionAbs extends CompanionDef[PairCollectionAOSCompanionAbs] with PairCollectionAOSCompanion {
@@ -681,6 +687,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       implicit val tagA = eA.tag
       weakTypeTag[NestedCollectionFlatIso[A]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA)
   }
   // 4) constructor and deconstructor
   class NestedCollectionFlatCompanionAbs extends CompanionDef[NestedCollectionFlatCompanionAbs] with NestedCollectionFlatCompanion {
@@ -766,6 +773,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       implicit val tagA = eA.tag
       weakTypeTag[CompoundCollectionIso[A]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA)
   }
   // 4) constructor and deconstructor
   class CompoundCollectionCompanionAbs extends CompanionDef[CompoundCollectionCompanionAbs] with CompoundCollectionCompanion {
@@ -854,6 +862,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       implicit val tagEnv = eEnv.tag
       weakTypeTag[FuncCollectionIso[A, B, Env]]
     }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB, "Env" -> eEnv)
   }
   // 4) constructor and deconstructor
   class FuncCollectionCompanionAbs extends CompanionDef[FuncCollectionCompanionAbs] {
@@ -942,6 +951,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
       implicit val tagSchema = eSchema.tag
       weakTypeTag[StructItemCollectionIso[Val, Schema]]
     }
+    lazy val typeArgs = TypeArgs("Val" -> eVal, "Schema" -> eSchema)
   }
   // 4) constructor and deconstructor
   class StructItemCollectionCompanionAbs extends CompanionDef[StructItemCollectionCompanionAbs] {

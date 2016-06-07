@@ -109,6 +109,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
       implicit val tagE = eE.tag
       weakTypeTag[AdjacencyGraphIso[V, E]]
     }
+    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
   }
   // 4) constructor and deconstructor
   class AdjacencyGraphCompanionAbs extends CompanionDef[AdjacencyGraphCompanionAbs] with AdjacencyGraphCompanion {
@@ -196,6 +197,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
       implicit val tagE = eE.tag
       weakTypeTag[IncidenceGraphIso[V, E]]
     }
+    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
   }
   // 4) constructor and deconstructor
   class IncidenceGraphCompanionAbs extends CompanionDef[IncidenceGraphCompanionAbs] with IncidenceGraphCompanion {

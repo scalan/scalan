@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{Scalan, ScalanStd, ScalanExp}
+import scalan.{Scalan, ScalanExp, ScalanStd}
 import scala.reflect.runtime.universe._
 
 trait RewriteRules { self: Scalan =>
@@ -20,6 +20,7 @@ trait RewriteRules { self: Scalan =>
       implicitly[WeakTypeTag[Rewrite[A]]]
     }
     def isEntityType = eA.isEntityType
+    lazy val typeArgs = TypeArgs("A" -> eA)
   }
 
   implicit def rewrElement[A](implicit eA: Elem[A]): Elem[Rewrite[A]] =

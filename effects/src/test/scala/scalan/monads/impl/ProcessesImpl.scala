@@ -108,6 +108,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
       implicit val tagO = eO.tag
       weakTypeTag[AwaitIso[F, A, O]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "A" -> eA, "O" -> eO)
   }
   // 4) constructor and deconstructor
   class AwaitCompanionAbs extends CompanionDef[AwaitCompanionAbs] with AwaitCompanion {
@@ -194,6 +195,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
       implicit val tagO = eO.tag
       weakTypeTag[EmitIso[F, O]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "O" -> eO)
   }
   // 4) constructor and deconstructor
   class EmitCompanionAbs extends CompanionDef[EmitCompanionAbs] with EmitCompanion {
@@ -280,6 +282,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
       implicit val tagO = eO.tag
       weakTypeTag[HaltIso[F, O]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "O" -> eO)
   }
   // 4) constructor and deconstructor
   class HaltCompanionAbs extends CompanionDef[HaltCompanionAbs] with HaltCompanion {

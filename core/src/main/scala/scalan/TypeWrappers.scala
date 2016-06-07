@@ -23,7 +23,8 @@ trait TypeWrappers extends Base { self: Scalan =>
       val wrapperDefaultValue = wrapperElem.defaultRepValue
       unwrapTypeWrapperRep(wrapperDefaultValue)
     }
-    override protected def getName = s"${super.getName}{base type, wrapper: ${wrapperElem.name}}"
+    override def getName(f: TypeDesc => String) =
+      s"${super.getName(f)}{base type, wrapper: ${f(wrapperElem)}}"
   }
 
   class BaseTypeElem1[A, CBase[_], TWrapper <: TypeWrapper[CBase[A], TWrapper]]
@@ -79,9 +80,9 @@ trait TypeWrappersExp extends TypeWrappers with GraphVizExport { scalan: ScalanE
   protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase] =
     x.asInstanceOf[Rep[TBase]]
 
-  override protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig) = sym.elem match {
+  override protected def nodeColor(td: TypeDesc)(implicit config: GraphVizConfig) = td match {
     case _: BaseTypeElem[_, _] => "blue"
-    case _ => super.nodeColor(sym)
+    case _ => super.nodeColor(td)
   }
 
   def unwrapSyms(syms: List[AnyRef]): List[AnyRef] = {

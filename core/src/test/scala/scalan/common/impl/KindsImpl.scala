@@ -104,6 +104,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
       implicit val tagA = eA.tag
       weakTypeTag[ReturnIso[F, A]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "A" -> eA)
   }
   // 4) constructor and deconstructor
   class ReturnCompanionAbs extends CompanionDef[ReturnCompanionAbs] with ReturnCompanion {
@@ -190,6 +191,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
       implicit val tagB = eA.tag
       weakTypeTag[BindIso[F, S, B]]
     }
+    lazy val typeArgs = TypeArgs("F" -> cF, "S" -> eS, "B" -> eA)
   }
   // 4) constructor and deconstructor
   class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {

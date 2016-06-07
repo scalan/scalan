@@ -221,8 +221,8 @@ trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizE
     case _ => super.formatDef(d)
   }
 
-  override protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig) = sym.elem match {
+  override protected def nodeColor(td: TypeDesc)(implicit config: GraphVizConfig) = td match {
     case _: ThunkElem[_] => "red"
-    case _ => super.nodeColor(sym)
+    case _ => super.nodeColor(td)
   }
 }

@@ -21,20 +21,20 @@ class RewriteRulesSuite extends BaseShouldTests {
 
   "ScalanStaged" should "created Lemma" in {
     val ctx = getCtx
-    ctx.emitDepGraph(ctx.testLemma, new File(prefix, "testLemma.dot"))(GraphVizConfig.default)
+    ctx.emitDepGraph(ctx.testLemma, prefix, "testLemma")(GraphVizConfig.default)
   }
 
   it should "create LemmaRule" in {
     val ctx = getCtx
     import ctx._
-    ctx.emitDepGraph(Seq[Exp[_]](testLemma, rule.lhs, rule.rhs), new File(prefix, "testRule.dot"))(GraphVizConfig.default)
+    ctx.emitDepGraph(Seq[Exp[_]](testLemma, rule.lhs, rule.rhs), prefix, "testRule")(GraphVizConfig.default)
   }
 
   it should "recognize pattern" in {
     val ctx = getCtx
     import ctx._
     val lam = testFunc.getLambda
-    ctx.emitDepGraph(List(rule.lhs, testFunc), new File(prefix, "LemmaRule/patternAndTestFunc.dot"))(GraphVizConfig.default)
+    ctx.emitDepGraph(List(rule.lhs, testFunc), prefix, "LemmaRule/patternAndTestFunc")(GraphVizConfig.default)
     patternMatch(rule.lhs, lam.y) match {
       case Some(subst) =>
         subst should not be(Map.empty)
@@ -51,7 +51,7 @@ class RewriteRulesSuite extends BaseShouldTests {
     val rewritten = rule(lam.y)
     rewritten match {
       case Some(res) => 
-        ctx.emitDepGraph(List(Pair(lam.y, res)), new File(prefix, "LemmaRule/originalAndRewritten.dot"))(GraphVizConfig.default)
+        ctx.emitDepGraph(List(Pair(lam.y, res)), prefix, "LemmaRule/originalAndRewritten")(GraphVizConfig.default)
       case _ => 
         fail("should apply pattern")
     }
@@ -64,14 +64,14 @@ class RewriteRulesSuite extends BaseShouldTests {
     addRewriteRules(rule)
     val withRule = fun(test)
     removeRewriteRules(rule)
-    ctx.emitDepGraph(List(withoutRule, withRule), new File(prefix, "LemmaRule/ruleRewriting.dot"))(GraphVizConfig.default)
+    ctx.emitDepGraph(List(withoutRule, withRule), prefix, "LemmaRule/ruleRewriting")(GraphVizConfig.default)
     
     val expected = fun[Int,Int] {x => x * 30}
     alphaEqual(withRule, expected) should be(true)
     alphaEqual(withoutRule, expected) should be(false)
 
     val afterRemoval = fun(test)
-    ctx.emitDepGraph(List(withoutRule, withRule, afterRemoval), new File(prefix, "LemmaRule/ruleRewriting.dot"))(GraphVizConfig.default)
+    ctx.emitDepGraph(List(withoutRule, withRule, afterRemoval), prefix, "LemmaRule/ruleRewriting")(GraphVizConfig.default)
     alphaEqual(afterRemoval, withoutRule) should be(true)
   }
 }

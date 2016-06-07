@@ -99,6 +99,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     lazy val tag = {
       weakTypeTag[MT0Iso]
     }
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class MT0CompanionAbs extends CompanionDef[MT0CompanionAbs] with MT0Companion {
@@ -183,6 +184,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
       implicit val tagT = elem.tag
       weakTypeTag[MT1Iso[T]]
     }
+    lazy val typeArgs = TypeArgs("T" -> elem)
   }
   // 4) constructor and deconstructor
   class MT1CompanionAbs extends CompanionDef[MT1CompanionAbs] {
@@ -271,6 +273,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
       implicit val tagR = eR.tag
       weakTypeTag[MT2Iso[T, R]]
     }
+    lazy val typeArgs = TypeArgs("T" -> eT, "R" -> eR)
   }
   // 4) constructor and deconstructor
   class MT2CompanionAbs extends CompanionDef[MT2CompanionAbs] {

@@ -107,6 +107,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
       implicit val tagE = eE.tag
       weakTypeTag[AdjEdgeIso[V, E]]
     }
+    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
   }
   // 4) constructor and deconstructor
   class AdjEdgeCompanionAbs extends CompanionDef[AdjEdgeCompanionAbs] with AdjEdgeCompanion {
@@ -194,6 +195,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
       implicit val tagE = eE.tag
       weakTypeTag[IncEdgeIso[V, E]]
     }
+    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
   }
   // 4) constructor and deconstructor
   class IncEdgeCompanionAbs extends CompanionDef[IncEdgeCompanionAbs] with IncEdgeCompanion {
