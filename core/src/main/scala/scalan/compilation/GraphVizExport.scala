@@ -5,7 +5,6 @@ import java.io.{File, PrintWriter}
 
 import _root_.scalan.{Base, ScalanExp}
 import scalan.util.{FileUtil, ProcessUtil, ScalaNameUtil, StringUtil}
-import GraphVizExport.lineBreak
 
 case class GraphFile(file: File, fileType: String) {
   def open() = {
@@ -44,26 +43,26 @@ trait GraphVizExport { self: ScalanExp =>
     val acc1 = acc.addNode(x, d)
     val xElem = x.elem
     val label = acc1.typeString(xElem)
-    val xStr = s"$x: $label" + (if (d.isDefined) " =" else "")
     val xAndD = d match {
       case Some(rhs) =>
+        val lhsStr = s"$x: $label ="
         val rhsStr = formatDef(rhs)
         val rhsElem = rhs.selfType
         if (rhsElem != xElem) {
-          List(xStr, s"$rhsStr:", acc1.typeString(rhsElem))
+          List(lhsStr, s"$rhsStr:", acc1.typeString(rhsElem))
         } else {
-          List(xStr, rhsStr)
+          List(lhsStr, rhsStr)
         }
       case None =>
-        List(xStr)
+        List(s"$x: $label")
     }
-    val metadata = if (config.emitMetadata) List(formatMetadata(x)) else Nil
+    val metadata = if (config.emitMetadata) formatMetadata(x) else Nil
     val allParts = xAndD ++ metadata
     stream.println(nodeLabel(allParts: _*))
 
     val (shape, color) = d match {
-      case Some(d) =>
-        ("box", nodeColor(xElem, d))
+      case Some(rhs) =>
+        ("box", nodeColor(xElem, rhs))
       case None =>
         ("oval", nodeColor(xElem))
     }
@@ -83,9 +82,12 @@ trait GraphVizExport { self: ScalanExp =>
     emitNode0(sym, Some(rhs), acc1)
   }
 
-  protected def formatMetadata(s: Exp[_]): String = {
-    val metaNode = s.allMetadata
-    metaNode.meta.map { case (k, v) => s"$k:${formatConst(v.value)}" }.mkString("{", "; ", "}")
+  protected def formatMetadata(s: Exp[_]): List[String] = {
+    val metadata = s.allMetadata.meta
+    if (metadata.nonEmpty)
+      "Metadata:" :: metadata.map { case (k, v) => s"$k:${formatConst(v.value)}" }.toList
+    else
+      Nil
   }
 
   protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
@@ -123,16 +125,17 @@ trait GraphVizExport { self: ScalanExp =>
 
   protected def formatConst(x: Any): String = x match {
     case str: String =>
-      val escQuote = """\""""
-      str.lines.map(_.replace("\"", escQuote).replace("""\""", """\\""")).toSeq match {
+      val tripleQuote = "\"\"\""
+      str.lines.toSeq match {
         case Seq() =>
-          // should be impossible, but see SI-9773
-          escQuote + escQuote
+          "\"\""
         case Seq(line) =>
-          escQuote + line + escQuote
+          if (line.contains("\""))
+            tripleQuote + line + tripleQuote
+          else
+            StringUtil.quote(line)
         case lines =>
-          val tripleQuote = escQuote * 3
-          (tripleQuote +: lines :+ tripleQuote).mkString(lineBreak)
+          (tripleQuote +: lines :+ tripleQuote).mkString("\n")
       }
     case c: Char => s"'$c'"
     case f: Float => s"${f}f"
@@ -449,10 +452,6 @@ trait GraphVizExport { self: ScalanExp =>
   }
 }
 
-object GraphVizExport {
-  final val lineBreak = """\l"""
-}
-
 sealed trait Orientation
 object Portrait extends Orientation
 object Landscape extends Orientation
@@ -472,26 +471,40 @@ case class GraphVizConfig(emitGraphs: Option[String],
                          ) {
 
   // ensures nice line wrapping
-  def nodeLabel(parts: Seq[String]):String = {
+  def nodeLabel(parts: Seq[String]): String = {
+    def escape(s: String) = s.replace("""\""", """\\""").replace("\"", """\"""")
+    val lineBreak = """\l"""
+
     var lineLength = 0
     val sb = new StringBuilder()
     var isFirst = true
     parts.foreach { part =>
+      val lines = part.lines.toSeq
       if (isFirst) {
         isFirst = false
-      } else if (lineLength + part.length + 1 <= maxLabelLineLength) {
-        sb.append(" ")
-        lineLength += 1
       } else {
-        sb.append(lineBreak)
-        lineLength = 0
+        lines match {
+          case Seq() =>
+            // do nothing
+          case Seq(line) =>
+            val lineLengthIfNoNewLine = lineLength + 1 + line.length
+            lineLength = if (lineLengthIfNoNewLine <= maxLabelLineLength) {
+              sb.append(" ")
+              lineLengthIfNoNewLine
+            } else {
+              sb.append(lineBreak)
+              line.length
+            }
+          case _ =>
+            sb.append(lineBreak)
+            lineLength = lines.last.length
+        }
       }
-      sb.append(part)
-      lineLength += part.length
+      sb.append(lines.map(escape).mkString(lineBreak))
     }
     val label0 = sb.result()
     // left-justify the last line if there are multiple lines
-    val label = if (label0.contains(lineBreak))
+    val label = if (label0.contains(lineBreak) && !label0.endsWith(lineBreak))
       label0 + lineBreak
     else
       label0
