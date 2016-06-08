@@ -128,6 +128,10 @@ trait Base extends LazyLogging { self: Scalan =>
             }
           }
           sb.append(")")
+        case s: String =>
+          sb.append("\"")
+          sb.append(s)
+          sb.append("\"")
         case _ => sb.append(x)
       }
     }
