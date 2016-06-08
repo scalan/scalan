@@ -97,6 +97,33 @@ class ConverterTests extends BaseCtxTests {
     testConverter[(Array[Interval],Array[Slice]), (Array[Slice],Array[Interval])](ctx, "convPairOfArrays")
     testConverter[Array[Array[Interval]], Array[Array[Slice]]](ctx, "convNArray")
     testConverter[Array[Array[Interval]], Array[Slice]](ctx, "convNArrayToArray", false)
-
   }
+
+  test("identityConv") {
+    val ctx = new ConvProgStaged
+    import ctx._
+    val idInt = identityConv[Int]
+    val idDouble = identityConv[Double]
+    assert(idInt.isIdentity && idDouble.isIdentity)
+    val pair = pairConv(idInt, idDouble)
+    emit("pair", pair)
+    assert(pair.isIdentity)
+    val comp = composeConv(pair, pair)
+    emit("comp", comp)
+    assert(comp.isIdentity)
+
+    val baseInt = baseConv(fun { x: Rep[Int] => x + 1 })
+    emit("baseInt", baseInt)
+    assert(!baseInt.isIdentity)
+    val pairNon = pairConv(baseInt, idDouble)
+    emit("pairNon", pairNon)
+    assert(!pairNon.isIdentity)
+    val compNon = composeConv(pairNon, pair)
+    emit("compNon", compNon)
+    assert(!compNon.isIdentity)
+    val compNon2 = composeConv(pair, pairNon)
+    emit("compNon2", compNon2)
+    assert(!compNon2.isIdentity)
+  }
+
 }
