@@ -7,12 +7,12 @@ import scala.annotation.tailrec
 import scala.util.control.NonFatal
 
 /**
- * To collect debugging data, run with -Dscalan.debug or set scalan.debug to something
- * in `scalan.properties` file. To print it, call `printDebugData()`. Debug data is everything
+ * To collect debugging data, run with -Dscalan.debug=true or set scalan.debug to `true`
+ * in `application.conf`. To print it, call `printDebugData()`. Debug data is everything
  * stored in fields whose names start with (or contain) "debug$".
  */
 trait Debugging { self: Scalan =>
-  var isDebug: Boolean = Base.config.getProperty("scalan.debug") != null
+  var isDebug: Boolean = config.getBoolean("debug")
 
   private lazy val fields = {
     val buffer = scala.collection.mutable.ArrayBuffer.empty[Field]

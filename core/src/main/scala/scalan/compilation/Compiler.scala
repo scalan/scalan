@@ -2,6 +2,10 @@ package scalan.compilation
 
 import java.io.File
 
+import scala.collection.JavaConverters._
+
+import com.typesafe.config.Config
+
 import scalan.ScalanDslExp
 import scalan.util.ReflectionUtil
 

@@ -3,6 +3,7 @@ package scalan.compilation.lms.uni
 import java.io.File
 import java.net.URL
 
+import com.github.kxbmap.configs.syntax._
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms._
 import scalan.compilation.lms.common._
@@ -17,9 +18,6 @@ class LmsBackendUni extends ScalaCoreLmsBackend with JNILmsOpsExp { self =>
   // todo cppFunctionName and cppLibraryName should be moved from jniCallCodegen for use base codegen below (in doBuildExecutable), without information about subtype of codegen (native or jniCall)
 }
 
-/**
- * Created by adel on 5/12/15.
- */
 class LmsCompilerUni[+ScalanCake <: ScalanDslExp with JNIExtractorOpsExp](_scalan: ScalanCake) extends LmsCompilerScala[ScalanCake](_scalan) with JNILmsBridge {
   import scalan._
 
@@ -58,10 +56,8 @@ class LmsCompilerUni[+ScalanCake <: ScalanDslExp with JNIExtractorOpsExp](_scala
     new PGraph(roots)
   }
 
-  val runtimeTargetDir = Base.config.getProperty("runtime.target")
-
   override def getClassLoader(jarUrls: Array[URL]): ClassLoader =
-    new NativeCopyLoader(Seq.empty, Seq(new File(runtimeTargetDir)), jarUrls, getClass.getClassLoader)
+    new NativeCopyLoader(Seq.empty, Seq(LmsCompilerUni.runtimeTarget), jarUrls, getClass.getClassLoader)
 
   override def emitSource[A, B](sourcesDir: File, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B], graphVizConfig: GraphVizConfig) = {
     (elemToManifest(eInput), elemToManifest(eOutput)) match {
@@ -109,8 +105,28 @@ class LmsCompilerUni[+ScalanCake <: ScalanDslExp with JNIExtractorOpsExp](_scala
 
         val lmsFuncC = finalMirror.funcMirror[a, b](f)
         val cxxFile = lms.nativeCodegen.createFile(lmsFuncC, lms.jniCallCodegen.cppFunctionName(functionName), sourcesDir)(mA, mB)
-        Gcc.compile(runtimeTargetDir, sourcesDir, cxxFile, lms.jniCallCodegen.cppLibraryName(functionName))
+        Gcc.compile(LmsCompilerUni.runtimeTarget, sourcesDir, cxxFile, lms.jniCallCodegen.cppLibraryName(functionName))
       //todo make one library for all functions
     }
+  }
+}
+
+object LmsCompilerUni {
+  val runtimeTarget = Base.config.get[File]("backend.cpp.runtime.target").getAbsoluteFile
+
+  {
+    // We need to add runtimeTarget to java.library.path
+    // create the dir if it doesn't exist, and check access to it
+    runtimeTarget.mkdirs()
+    val absolutePath = runtimeTarget.getAbsolutePath
+    assert(runtimeTarget.canWrite, s"Unable to write to $absolutePath")
+
+    val newPath = absolutePath + File.pathSeparator + System.getProperty("java.library.path")
+    System.setProperty("java.library.path", newPath)
+
+    // hack from http://nicklothian.com/blog/2008/11/19/modify-javalibrarypath-at-runtime/ for reloading java.library.path
+    val fieldSysPath = classOf[ClassLoader].getDeclaredField("usr_paths")
+    fieldSysPath.setAccessible(true)
+    fieldSysPath.set(null, null)
   }
 }

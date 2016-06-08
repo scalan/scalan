@@ -34,7 +34,7 @@ class LmsCompilerCxx[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends L
   protected def makefileContents(sourceFile: File, executableDir: File, functionName: String, compilerConfig: CompilerConfig): String = {
     val libFileName = System.mapLibraryName(functionName)
     val sourceFileName = sourceFile.getName
-    val compileCommand = Gcc.compileCommand(executableDir.getAbsolutePath, sourceFile.getParentFile, sourceFile, functionName)
+    val compileCommand = Gcc.compileCommand(executableDir, sourceFile.getParentFile, sourceFile, functionName).mkString(" ")
     s"""all: $libFileName
         |
         |$libFileName: $sourceFileName

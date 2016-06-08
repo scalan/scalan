@@ -1,8 +1,9 @@
 package scalan
 
-import java.util.{Arrays, Objects, Properties}
-import java.io.FileReader
+import java.util.{Arrays, Objects}
 
+import com.github.kxbmap.configs.syntax._
+import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 import scala.annotation.unchecked.uncheckedVariance
@@ -161,58 +162,14 @@ trait Base extends LazyLogging { self: Scalan =>
 
   def reifyObject[A](d: Def[A]): Rep[A]
 
+  // Allows using ConfigOps without importing com.github.kxbmap.configs.syntax._
+  implicit def ConfigOps(x: Config) = new ConfigOps(x)
+  def config = Base.config
+
   val cacheElems = true
   val cachePairs = true
 }
 
 object Base {
-  val config = {
-    val prop = new Properties
-    try {
-      val propertiesFileName = System.getProperty("scalan.properties.file", "scalan.properties")
-      val propertiesStreams = util.FileUtil.getResources(propertiesFileName)
-      try {
-        propertiesStreams.foreach(prop.load)
-
-        val pathToAdd = prop.getProperty("runtime.target")
-        if(pathToAdd != null) {
-          val fullPathToAdd = pathToAdd.charAt(0) match {
-            case '/' => pathToAdd
-            case _ => System.getProperty("user.dir") + "/" + pathToAdd
-          }
-
-          // create the dir if it not exists, and check access to one.
-          val touchFile = scalan.util.FileUtil.file(fullPathToAdd, "touch.tmp")
-          touchFile.getParentFile.mkdirs()
-          touchFile.createNewFile()
-          touchFile.delete()
-
-          val newPath = fullPathToAdd + java.io.File.pathSeparator + System.getProperty("java.library.path")
-                        //System.getProperty("java.library.path") + java.io.File.pathSeparator + fullPathToAdd
-          System.setProperty( "java.library.path", newPath)
-
-          // hack from http://nicklothian.com/blog/2008/11/19/modify-javalibrarypath-at-runtime/ for reload java.library.path
-          val fieldSysPath = classOf[ClassLoader].getDeclaredField( "sys_paths" );
-          fieldSysPath.setAccessible( true );
-          fieldSysPath.set( null, null );
-
-          prop.setProperty( "java.library.path", newPath)
-          prop.setProperty("runtime.target", fullPathToAdd)
-
-        }
-
-      } finally {
-        propertiesStreams.foreach(_.close())
-      }
-    } catch {
-      case e: Throwable => print("WARNING: config not readed: " + e.toString+"\n")
-    }
-
-    // propSum filled from system, then from user properties for allow user properties to override system properties
-    // separate value prop important for correct replace "java.library.path"
-    val propSum = new Properties
-    propSum.putAll(System.getProperties)
-    propSum.putAll(prop)
-    propSum
-  }
+  val config = ConfigFactory.load().getConfig("scalan")
 }

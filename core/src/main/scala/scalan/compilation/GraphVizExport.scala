@@ -3,15 +3,19 @@ package scalan.compilation
 import java.awt.Desktop
 import java.io.{File, PrintWriter}
 
-import _root_.scalan.{Base, ScalanExp}
+import com.github.kxbmap.configs.Configs
+import com.github.kxbmap.configs.syntax._
+import com.typesafe.config.{Config, ConfigUtil}
+
+import scalan.{Base, ScalanExp}
 import scalan.util.{FileUtil, ProcessUtil, ScalaNameUtil, StringUtil}
 
 case class GraphFile(file: File, fileType: String) {
   def open() = {
-    Base.config.getProperty(s"scalan.graphviz.viewer.$fileType") match {
-      case null =>
+    Base.config.getOpt[String](ConfigUtil.joinPath("graphviz", "viewer", fileType)) match {
+      case None =>
         Desktop.getDesktop.open(file)
-      case command =>
+      case Some(command) =>
         ProcessUtil.launch(file.getParentFile, command, file.getAbsolutePath)
     }
   }
@@ -183,7 +187,7 @@ trait GraphVizExport { self: ScalanExp =>
     emitGraphFile(directory, fileName)(_.println(dotText))
 
   private def emitGraphFile(directory: File, fileName: String)(f: PrintWriter => Unit)(implicit config: GraphVizConfig): Option[GraphFile] = {
-    config.emitGraphs.map { format =>
+    if (config.emitGraphs) {
       val dotFileName = s"$fileName.dot"
       val file = new File(directory, dotFileName)
       FileUtil.withFile(file)(f)
@@ -191,19 +195,21 @@ trait GraphVizExport { self: ScalanExp =>
       val dotFile = new File(directory, dotFileName)
       val dotGraphFile = GraphFile(dotFile, "dot")
 
-      if (format != "dot") {
-        val convertedFileName = FileUtil.withExtension(dotFileName, format)
-        try {
-          ProcessUtil.launch(directory, "dot", s"-T$format", "-o", convertedFileName, dotFileName)
-          GraphFile(new File(directory, convertedFileName), format)
-        } catch {
-          case e: Exception =>
-            logger.warn(s"Failed to convert ${dotFile.getAbsolutePath} to $format: ${e.getMessage}")
-            dotGraphFile
-        }
-      } else
-        dotGraphFile
-    }
+      Some(config.format match {
+        case "dot" =>
+          dotGraphFile
+        case format =>
+          val convertedFileName = FileUtil.withExtension(dotFileName, format)
+          try {
+            ProcessUtil.launch(directory, "dot", s"-T$format", "-o", convertedFileName, dotFileName)
+            GraphFile(new File(directory, convertedFileName), format)
+          } catch {
+            case e: Exception =>
+              logger.warn(s"Failed to convert ${dotFile.getAbsolutePath} to $format: ${e.getMessage}")
+              dotGraphFile
+          }
+      })
+    } else None
   }
 
   implicit class SeqExpExtensionsForEmitGraph(symbols: Seq[Exp[_]]) {
@@ -330,7 +336,7 @@ trait GraphVizExport { self: ScalanExp =>
 
   private case class GraphData(nodes: Map[Exp[_], Option[Def[_]]], labels: Map[TypeDesc, Label], aliases: List[Alias], aliasCounter: Int)(implicit config: GraphVizConfig) {
     def addNode(s: Exp[_], d: Option[Def[_]]): GraphData = {
-      val withType = config.aliasLongTypes match {
+      val withType = config.maxTypeNameLength match {
         case Some(maxLength) =>
           val elems = d.map(_.selfType).toSet + s.elem
           elems.foldLeft(this)(_.registerType(_, maxLength))
@@ -453,19 +459,24 @@ trait GraphVizExport { self: ScalanExp =>
 }
 
 sealed trait Orientation
-object Portrait extends Orientation
-object Landscape extends Orientation
+case object Portrait extends Orientation
+case object Landscape extends Orientation
+
+object Orientation {
+  implicit val orientationC: Configs[Orientation] = Configs.of[Orientation]
+}
 
 sealed trait ControlFlowStyle
-object ControlFlowWithBoxes extends ControlFlowStyle
-object ControlFlowWithArrows extends ControlFlowStyle
+case object ControlFlowWithBoxes extends ControlFlowStyle
+case object ControlFlowWithArrows extends ControlFlowStyle
 
 // outside the cake to be usable from ItTestsUtil
-case class GraphVizConfig(emitGraphs: Option[String],
+case class GraphVizConfig(emitGraphs: Boolean,
+                          format: String,
                           orientation: Orientation,
                           maxLabelLineLength: Int,
                           subgraphClusters: Boolean,
-                          aliasLongTypes: Option[Int],
+                          maxTypeNameLength: Option[Int],
                           typeAliasEdges: Boolean,
                           emitMetadata: Boolean
                          ) {
@@ -512,21 +523,16 @@ case class GraphVizConfig(emitGraphs: Option[String],
   }
 
   def orientationString = if (orientation == Landscape) "rankdir=LR" else ""
-
 }
 
 object GraphVizConfig {
+  val config = Base.config.getConfig("graphviz")
   // not made implicit because it would be too easy to use
   // it accidentally instead of passing up
-  def default = GraphVizConfig(
-    emitGraphs = Some("dot"),
-    orientation = Portrait,
-    maxLabelLineLength = 50,
-    subgraphClusters = true,
-    aliasLongTypes = None,
-    typeAliasEdges = false,
-    emitMetadata = false
-  )
+  // For some reason, return type has to be given explicitly
+  val default: GraphVizConfig = config.extract[GraphVizConfig]
 
-  def none = default.copy(emitGraphs = None)
+  val none: GraphVizConfig = default.copy(emitGraphs = false)
+
+  def from(config: Config): GraphVizConfig = config.withFallback(this.config).extract[GraphVizConfig]
 }

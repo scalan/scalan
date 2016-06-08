@@ -3,34 +3,32 @@ package scalan.compilation.lms.source2bin
 import java.io.File
 
 import scalan.util.ProcessUtil
+import com.github.kxbmap.configs.syntax._
 
 /**
  * Created by adel on 5/26/15.
  */
 object Gcc {
-  def compile(targetDir: String, sourceDir: File, sourceFile: File, libName: String): Array[String] = {
+  def compile(targetDir: File, sourceDir: File, sourceFile: File, libName: String): Array[String] = {
     val command = compileCommand(targetDir, sourceDir, sourceFile, libName)
-    ProcessUtil.launch(sourceDir, command.split("\\s+"): _*)
+    ProcessUtil.launch(sourceDir, command: _*)
   }
 
-  def compileCommand(targetDir: String, sourceDir: File, sourceFile: File, libName: String) = {
-    val sourceName = sourceFile.getAbsolutePath
-    val targetFile = targetDir+fileSeparator+System.mapLibraryName(libName)
-    val include = s"$includeJavaFlag $includeRuntimeDirFlag $includeFlags"
-    s"$cxx $sourceName $include -fPIC -shared -pthread $commonFlags $optFlags -o $targetFile"
+  def compileCommand(targetDir: File, sourceDir: File, sourceFile: File, libName: String) = {
+    val sourcePath = sourceFile.getAbsolutePath
+    val targetPath = new File(targetDir, System.mapLibraryName(libName)).getAbsolutePath
+    val includeArgs = (List(new File(javaHome, "include"), new File(javaHome, "include/linux"), new File(javaHome, "include/darwin"), config.get[File]("boost"), config.get[File]("runtime.include")) ++ config.get[List[File]]("otherIncludes")).map {
+      file => s"-I${file.getAbsolutePath}"
+    }
+    List(cxx, sourcePath) ++ includeArgs ++ s"$commonFlags $optFlags -o $targetPath".split(" ")
   }
 
-  def includeRuntimeDirFlag: String = {
-    "-I"+System.getProperty("user.dir") + fileSeparator + scalan.Base.config.getProperty("runtime.include")
-  }
+  val javaHome = new File(System.getProperty("java.home")).getAbsoluteFile.getParentFile
+  val config = scalan.Base.config.getConfig("backend.cpp")
+  val gccConfig = config.getConfig("gcc")
 
-  val javaHome = scalan.Base.config.getProperty("java.home")+"/.."
-  val includeJavaFlag = s"-I$javaHome/include -I$javaHome/include/linux -I$javaHome/include/darwin -I/usr/local/Cellar/boost/1.58.0/include"
-  val fileSeparator = scalan.Base.config.getProperty("file.separator")
-  val osName = scalan.Base.config.getProperty("os.name")
-  val cxx = sys.env.getOrElse("CXX", "g++")
-  val commonFlags = scalan.Base.config.getProperty("gcc.commonFlags", "-std=c++11 -Wall -pedantic")
-  val includeFlags = scalan.Base.config.getProperty("gcc.includeFlags", "")
-  val optFlags = scalan.Base.config.getProperty("gcc.optFlags", "-O3")
-  val debugFlags = scalan.Base.config.getProperty("gcc.debugFlags", "-g -O0")
+  val cxx = gccConfig.getString("cxx")
+  val commonFlags = gccConfig.getString("commonFlags")
+  val optFlags = gccConfig.getString("optFlags")
+  val debugFlags = gccConfig.getString("debugFlags")
 }

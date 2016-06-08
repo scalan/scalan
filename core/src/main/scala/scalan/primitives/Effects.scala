@@ -209,6 +209,8 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     out.result()
   }
 
+  val addControlDeps = config.getBoolean("addControlDeps")
+
   override def syms(e: Any): List[Exp[Any]] = e match {
     case s: Summary => Nil // don't count effect summaries as dependencies!
 

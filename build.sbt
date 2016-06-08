@@ -88,7 +88,9 @@ lazy val core = Project("scalan-core", file("core"))
     libraryDependencies ++= Seq(
       "com.chuusai" %% "shapeless" % "2.2.5",
       "cglib" % "cglib" % "3.2.0",
-      "org.objenesis" % "objenesis" % "2.2"))
+      "org.objenesis" % "objenesis" % "2.2",
+      "com.github.kxbmap" %% "configs-java7" % "0.3.0"
+    ))
 
 lazy val collections = Project("scalan-collections", file("collections"))
   .dependsOn(core % allConfigDependency)
