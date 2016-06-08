@@ -26,7 +26,19 @@ object ProcessUtil {
     val exitCode = proc.waitFor()
     exitCode match {
       case 0 => ar.toArray
-      case _ => throw new RuntimeException(s"Executing '${command.mkString(" ")}' in directory $absoluteWorkingDir returned exit code $exitCode with following output:\n${ar.mkString("\n")}")
+      case _ =>
+        val commandString = command.map(escapeCommandLineArg).mkString(" ")
+        throw new RuntimeException(s"Executing `$commandString` in directory $absoluteWorkingDir returned exit code $exitCode with following output:\n${ar.mkString("\n")}")
+    }
+  }
+
+  private def escapeCommandLineArg(arg: String) = {
+    if (arg.contains(" ") && !arg.contains("'"))
+      "'" + arg + "'"
+    else {
+      val escaped = arg.replace("""\""", """\\""").replace("$", """\$""").
+        replace("`", """\`""").replace("\"", """\"""").replace("\n", "\\\n")
+      if (escaped.contains(" ") || escaped != arg) StringUtil.quote(escaped) else arg
     }
   }
 }
