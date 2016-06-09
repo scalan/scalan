@@ -48,7 +48,7 @@ lazy val scalaVirtualizedSettings = Seq(
   )
 )
 
-lazy val backendSettings = commonSettings ++ Defaults.itSettings ++
+lazy val itSettings = commonSettings ++ Defaults.itSettings ++
   Seq(
     libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "it",
     javaOptions in IntegrationTest ++=
@@ -56,7 +56,7 @@ lazy val backendSettings = commonSettings ++ Defaults.itSettings ++
     parallelExecution in IntegrationTest := false,
     fork in IntegrationTest := true)
 
-lazy val lmsBackendSettings = backendSettings ++ scalaVirtualizedSettings ++ Seq(
+lazy val lmsBackendSettings = itSettings ++ scalaVirtualizedSettings ++ Seq(
     libraryDependencies += "org.scala-lang.lms" %% "lms-core" % "0.9.1-SNAPSHOT",
     // we know we use LMS snapshot here, ignore it
     releaseSnapshotDependencies := Seq.empty)
@@ -136,13 +136,40 @@ lazy val lmsBackendIT = Project("scalan-lms-backend-tests", file("lms-backend") 
 
 lazy val luaBackendCore = Project("scalan-lua-backend-core", file("lua-backend") / "core").
   dependsOn(core % "compile->compile;it->test").
-  configs(IntegrationTest).settings(backendSettings).settings(
+  configs(IntegrationTest).settings(itSettings).settings(
     libraryDependencies += "org.luaj" % "luaj-jse" % "3.0.1"
   )
+
+lazy val extraClassPathTask = TaskKey[String]("extraClassPath") // scalan.plugins.extraClassPath
+
+// Requires luaBackendCore and lmsBackendLinAlg to be compiled but not on classpath,
+// to demonstrate plugin system
+// FIXME generates application.scala, not .conf, see https://github.com/sbt/sbt-buildinfo/issues/95
+lazy val examples = Project("scalan-examples", file("examples")).
+  dependsOn(core % "compile->compile;test->test;it->test", linalg).configs(IntegrationTest).settings(itSettings).
+  enablePlugins(BuildInfoPlugin).settings(
+    buildInfoObject := "application",
+    // buildInfoPackage := "", uncomment after sbt-buildinfo includes https://github.com/sbt/sbt-buildinfo/pull/94
+    buildInfoUsePackageAsPath := true,
+    buildInfoKeys := Seq(extraClassPathTask),
+    buildInfoRenderer := ConfBuildInfoRenderer(buildInfoOptions.value)
+  ).
+  settings {
+    (compile in Compile) <<= (compile in Compile).dependsOn(compile in (lmsBackendCore, Compile), compile in (luaBackendCore, Compile))
+  }
+
+// TODO need to also handle internal dependencies
+extraClassPathTask in examples := (externalDependencyClasspath in (core, Compile), externalDependencyClasspath in (luaBackendCore, Compile), packageBin in (luaBackendCore, Compile), externalDependencyClasspath in (lmsBackendCore, Compile), packageBin in (lmsBackendCore, Compile)).map {
+  (coreDeps, luaBackendDeps, luaBackendJar, lmsBackendDeps, lmsBackendJar) =>
+    val luaDeps = luaBackendDeps.diff(coreDeps).map(_.data)
+    val lmsDeps = lmsBackendDeps.diff(coreDeps).map(_.data)
+    val files = (luaDeps ++ lmsDeps ++ List(luaBackendJar, lmsBackendJar)).map(_.getAbsolutePath).distinct
+    files.mkString(java.io.File.pathSeparator)
+}.value
 
 lazy val root = Project("scalan", file("."))
   .aggregate(common, meta, core,
     collections, linalg, graphs, pointers, effects,
     lmsBackendCore, lmsBackendCollections, lmsBackendLinAlg, lmsBackendPointers, lmsBackendIT,
-    luaBackendCore)
+    luaBackendCore, examples)
   .settings(buildSettings, publishArtifact := false)
