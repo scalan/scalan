@@ -41,11 +41,11 @@ abstract class KernelStore[+ScalanCake <: ScalanDslExp] {
   private val compilers = collection.mutable.Map.empty[KernelType, Compiler[scalan.type]]
 
   private def compiler(kernelType: KernelType): Compiler[scalan.type] = compilers.getOrElseUpdate(kernelType, {
-    val confKey = s"scalan.backend.${kernelType.confKey}.compilerClass"
+    val confKey = s"backend.${kernelType.confKey}.compilerClass"
     configWithPlugins.getOpt[String](confKey) match {
       case None =>
         val msg =
-          s"""Compiler class for kernel type ${kernelType.name} not found under $confKey in config including plugins.
+          s"""Compiler class for kernel type ${kernelType.name} not found under scalan.$confKey in config including plugins.
               |Class path: ${ClassLoaderUtil.classPath(pluginClassLoader).map(_.getAbsolutePath).mkString(File.pathSeparator)}.
               |If necessary directory or jar file is missing, add it to ${Plugins.extraClassPathKey} property in application.conf or -D command line argument.""".stripMargin
         throw new CompilationException(msg, null)

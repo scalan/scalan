@@ -11,7 +11,7 @@ object Plugins {
 
   val pluginClassLoader = {
     val thisClassLoader = getClass.getClassLoader
-    Base.config.getString(extraClassPathKey) match {
+    Base.config0.getString(extraClassPathKey) match {
       case "" =>
         thisClassLoader
       case path =>
@@ -19,7 +19,7 @@ object Plugins {
         ClassLoaderUtil.URLClassLoader(files, thisClassLoader)
     }
   }
-  val configWithPlugins = ConfigFactory.load(pluginClassLoader)
+  val configWithPlugins = ConfigFactory.load(pluginClassLoader).getConfig("scalan")
 
   def loadClass(name: String) = pluginClassLoader.loadClass(name)
 }
