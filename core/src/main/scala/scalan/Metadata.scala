@@ -40,6 +40,13 @@ trait Metadata { self: Scalan =>
       self.setMetadata(target, key)(value, mirrorWithDef)
     }
   }
+
+  // TODO better do it with UnboxedTuple, similar to LMS
+  val MultipleArgsKey = MetaKey[Int]("emitMuplipleArgs")
+
+  implicit class MultipleArgs(f: Rep[_ => _]) {
+    def multipleArgs(n: Int) = f.setMetadata(MultipleArgsKey)(n)
+  }
 }
 
 trait MetadataStd extends Metadata { self: ScalanStd =>
