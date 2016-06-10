@@ -101,7 +101,12 @@ trait GraphVizExport { self: ScalanExp =>
     case l: Lambda[_, _] =>
       val y = l.y
       val bodyStr = y match {
-        case Def(b) => s"$y = ${formatDef(b)}"
+        case Def(b) =>
+          val rhs = formatDef(b)
+          if (config.showLambdaReturnSym)
+            s"$y = $rhs"
+          else
+            rhs
         case _ => y.toString
       }
       s"${l.x} => $bodyStr"
@@ -478,7 +483,8 @@ case class GraphVizConfig(emitGraphs: Boolean,
                           subgraphClusters: Boolean,
                           maxTypeNameLength: Option[Int],
                           typeAliasEdges: Boolean,
-                          emitMetadata: Boolean
+                          emitMetadata: Boolean,
+                          showLambdaReturnSym: Boolean
                          ) {
 
   // ensures nice line wrapping
