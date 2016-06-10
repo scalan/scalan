@@ -73,7 +73,9 @@ lazy val common = Project("scalan-common", file("common"))
     "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
     // otherwise scala-logging-slf4j pulls 2.11.0
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-    "ch.qos.logback" % "logback-classic" % "1.1.3"))
+    "ch.qos.logback" % "logback-classic" % "1.1.3",
+    "commons-io" % "commons-io" % "2.5"
+  ))
 
 lazy val meta = Project("scalan-meta", file("meta"))
   .dependsOn(common % allConfigDependency)

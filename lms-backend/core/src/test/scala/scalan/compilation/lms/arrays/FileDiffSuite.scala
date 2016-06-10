@@ -35,7 +35,9 @@ trait FileDiffSuite extends FunSuite {
 
   def assertFileEqualsCheck(name: String): Unit = {
     val file = new File(dir, name)
-    assert(FileUtil.read(file) == FileUtil.readInputStream(FileUtil.getResource(name+".check")), name) // TODO: diff output
+    val fileContents = FileUtil.read(file)
+    val expectedContents = FileUtil.readAndCloseStream(getClass.getClassLoader.getResourceAsStream(name + ".check"))
+    assert(fileContents == expectedContents, name)
   }
   def withOutFileChecked(name: String)(func: => Unit): Unit = {
     withOutFile(name)(func)

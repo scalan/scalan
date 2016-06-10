@@ -21,3 +21,5 @@ benchmark/mvm-staged
 /lms-backend/**/data/
 /data/
 *.log
+# Path to which runtime headers will be unpacked
+scalan-runtime/
