@@ -82,6 +82,11 @@ class LuaCodegen[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends BaseC
     }
   }
 
+  def functionHeader(sym: Exp[_], args: List[Exp[_]]): String =
+    src"local function $sym($args)"
+  def functionReturn(y: Exp[_]): String = src"return $y"
+  def functionFooter(): Option[String] = Some("end")
+
   override def rhs(d: Def[_]) = d match {
     case Tup(x, y) => src"{$x, $y}"
     case First(pair) => src"$pair[1]"
@@ -94,28 +99,83 @@ class LuaCodegen[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends BaseC
     case FieldApply(struct, key) => src"""$struct["$key"]"""
     case SymsArray(syms) =>
       tableLit(syms.zipWithIndex.map { case (s, i) => src"""[${(i + 1).toString}] = $s""" })
+    case StringCharAt(str, index) =>
+      src"$str[$index + 1]"
+    case StringSubstring(str, start, end) =>
+      // indices start with 1. Also, end in Java/Scalan is exclusive, in Lua it's inclusive,
+      // so the last argument isn't `$end + 1`
+      src"string.sub($str, $start + 1, $end)"
+    case MethodCall(receiver, method, args, _) =>
+      // TODO "static" methods
+      val args1 = args.collect {
+        case exp: Exp[_] => exp
+      }
+      src"$receiver:${method.getName}($args1)"
     case Semicolon(_,b) => src"$b"
-    case SemicolonMulti(_,b) => src"$b"
     case _ => super.rhs(d)
   }
 
   override def literal(value: Any): String = value match {
     // No F or L suffixes for literals in Lua
     case (_: Float) | (_: Long) => value.toString
+    case () => "nil"
     case null => "nil"
     case xs: Array[_] => tableLit(xs.map(literal))
     case xs: Seq[_] => tableLit(xs.map(literal))
     case map: Map[_, _] => tableLit(map.map { case (k, v) => s"""[$k] = $v""" })
-    case _: Unit => "{}"
+    case str: String if str.contains("\n") =>
+      val delimitersInString = """(\[=*\[)|(\]=*\])""".r.findAllMatchIn(str)
+      val equalSigns =
+        "=" * (if (delimitersInString.isEmpty) 0 else delimitersInString.map(x => x.end - x.start - 2).max + 1)
+      s"[$equalSigns[\n$str\n]$equalSigns]"
     case _ => super.literal(value)
   }
 
+  override def specialNumericLiteral(x: SpecialNumericValue, t: BaseNumericType): String = x match {
+    case PosInf => "1/0"
+    case NegInf => "-1/0"
+    case NaN => "0/0"
+  }
+
   override def unOp(op: UnOp[_, _], x: Exp[_]): String = op match {
+    case ToString() => src"tostring($x)"
+    case StringToDouble =>
+      src"tonumber($x)"
+    case StringToInt =>
+      src"math.floor(tonumber($x))"
+    case StringLength =>
+      src"string.len($x)"
+    case NumericToDouble(_) | NumericToFloat(_) =>
+      src"$x"
+    case NumericToInt(_) | NumericToLong(_) =>
+      src"math.floor($x)"
     case Not => src"not $x"
     case _ => super.unOp(op, x)
   }
 
   override def binOp(op: BinOp[_, _], x: Exp[_], y: Exp[_]): String = op match {
+    case StringConcat =>
+      src"$x .. $y"
+    case StringContains =>
+      // true for non-pattern search
+      src"string.find($x, $y, 1, true) ~= nil"
+    case StringMatches =>
+      // TODO Lua has some differences from standard regexes, check what we use
+      src"string.find($x, $y) ~= nil"
+    case StringEndsWith =>
+      // TODO escape special characters in y (next case as well)
+      src"""string.match($x, $y .. "$$")"""
+    case StringStartsWith =>
+      src"""string.match($x, "^" .. $y)"""
+    case IntegralDivide(_) =>
+      src"""math.floor($x / $y)"""
+    case OrderingCompare(_) =>
+      // see http://lua-users.org/wiki/TernaryOperator
+      src"$x < $y and -1 or ($x > $y and 1 or 0)"
+    case OrderingMax(_) =>
+      s"$x < $y and $y or $x"
+    case OrderingMin(_) =>
+      s"$x < $y and $x or $y"
     case And => src"$x and $y"
     case Or => src"$x or $y"
     case _ => super.binOp(op, x, y)

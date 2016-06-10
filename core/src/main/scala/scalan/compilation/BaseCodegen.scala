@@ -82,8 +82,46 @@ abstract class BaseCodegen[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) 
 
   /** Emits a node in the schedule. Override this for nodes which need more than one line, and
     * `rhs` for the simple cases. */
-  def emitNode(sym: Exp[_], d: Def[_], graph: AstGraph)(implicit stream: PrintWriter, indentLevel: IndentLevel) =
-    emit(simpleNode(sym, d))
+  def emitNode(sym: Exp[_], d: Def[_], graph: AstGraph)(implicit stream: PrintWriter, indentLevel: IndentLevel) = d match {
+    case Lambda(lam, _, x, y) =>
+      val args = argList(sym, x)
+      emitFunction(sym, args, y, lam)
+    case th @ ThunkDef(root, schedule) =>
+      emitFunction(sym, Nil, root, th)
+    case _ => emit(simpleNode(sym, d))
+  }
+
+  def argList(f: Exp[_], x: Exp[_]): List[Exp[_]] = {
+    def argList(x: Exp[_], n: Int): List[Exp[_]] =
+      n match {
+        case 1 =>
+          x :: Nil
+        case _ =>
+          x.elem match {
+            case _: PairElem[a, b] =>
+              val Pair(head, tail) = x.asRep[(a, b)]
+              head :: argList(tail, n -1)
+            case _ =>
+              !!!(s"$n arguments expected, but ${x.toStringWithDefinition} is not a nested tuple")
+          }
+      }
+
+    val numArgs = getMetadata(f, MultipleArgsKey).getOrElse(1)
+    argList(x, numArgs)
+  }
+
+  def emitFunction(sym: Exp[_], args: List[Exp[_]], returnValue: Exp[Any], lambdaOrThunk: AstGraph)(implicit stream: PrintWriter, indentLevel: IndentLevel): Unit = {
+    emit(functionHeader(sym, args))
+    indented { implicit indentLevel =>
+      emitSchedule(lambdaOrThunk, _.filterNot(te => args.contains(te.sym)))
+      emit(functionReturn(returnValue))
+    }
+    functionFooter().foreach(emit(_))
+  }
+
+  def functionHeader(sym: Exp[_], args: List[Exp[_]]): String
+  def functionReturn(y: Exp[_]): String
+  def functionFooter(): Option[String]
 
   /** Translation of a simple (non-complex) node. Normally calls `tpe(sym.elem)` (in typed languages),
     * `id(sym)` and `rhs(d)`. Example for C: `src"${sym.elem} $sym = $d;`.
@@ -99,6 +137,12 @@ abstract class BaseCodegen[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) 
 
   /** Translation of a literal. The default is C/Java literals for primitives and `null`. */
   def literal(value: Any): String = value match {
+    case Double.PositiveInfinity => specialNumericLiteral(PosInf, DOUBLE)
+    case Float.PositiveInfinity => specialNumericLiteral(PosInf, FLOAT)
+    case Double.NegativeInfinity => specialNumericLiteral(NegInf, DOUBLE)
+    case Float.NegativeInfinity => specialNumericLiteral(NegInf, FLOAT)
+    case d: Double if d.isNaN => specialNumericLiteral(NaN, DOUBLE)
+    case f: Float if f.isNaN => specialNumericLiteral(NaN, FLOAT)
     case (_: Int) | (_: Double) | (_: Boolean) => value.toString
     case f: Float => "%1.10f".format(f) + "F"
     case l: Long => l.toString + "L"
@@ -109,6 +153,17 @@ abstract class BaseCodegen[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) 
     case null => "null"
     case _ => !!!(s"$codegenName doesn't know literals for ${value.getClass} in $languageName")
   }
+
+  sealed trait SpecialNumericValue
+  case object PosInf extends SpecialNumericValue
+  case object NegInf extends SpecialNumericValue
+  case object NaN extends SpecialNumericValue
+
+  sealed trait BaseNumericType
+  case object FLOAT extends BaseNumericType
+  case object DOUBLE extends BaseNumericType
+
+  def specialNumericLiteral(x: SpecialNumericValue, t: BaseNumericType): String
 
   def unOp(op: UnOp[_, _], x: Exp[_]): String =
     src"${op.opName} $x"
@@ -121,8 +176,15 @@ abstract class BaseCodegen[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) 
     case Const(x) => literal(x)
     case ApplyUnOp(op, x) => unOp(op, x)
     case ApplyBinOp(op, x, y) => binOp(op, x, y)
+    case Apply(f, x) =>
+      val args = argList(f, x)
+      applyFunction(f, args)
+    case ThunkForce(th) =>
+      applyFunction(th, Nil)
     case _ => !!!(s"$codegenName can't translate definition $d (type ${d.selfType.name}) to $languageName")
   }
+
+  def applyFunction(f: Exp[_], args: Seq[Exp[_]]): String = src"$f($args)"
 
   protected def translate(arg: Any): String = arg match {
     case elem: Elem[_] => tpe(elem)
