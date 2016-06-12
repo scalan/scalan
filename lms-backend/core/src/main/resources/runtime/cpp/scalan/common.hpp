@@ -8,6 +8,13 @@ namespace scalan
 
 const boost::blank unit_value = boost::blank();
 
+template<class To, class What>
+struct Assign {
+    static void doIt(To& to, const What& what) {
+        to = what;
+    }
+};
+
 } //namespace scalan
 
 #endif // __SCALAN_COMMON_HPP__
