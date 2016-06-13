@@ -40,7 +40,7 @@ trait ReadersDsl extends impl.ReadersAbs { self: MonadsDsl =>
   implicit def readerMonad[R:Elem]: Monad[({type f[x] = Reader[R,x]})#f] = new ReaderCont[R] with Monad[({type f[x] = Reader[R,x]})#f] {
     def eR = element[R]
     def unit[A:Elem](a: Rep[A]): RepReader[R, A] = {
-      ReaderBase(fun {_ => a})
+      ReaderBase[R,A](fun {_: Rep[R] => a})
     }
     override def flatMap[A:Elem,B:Elem](st: RepReader[R, A])(f: Rep[A] => RepReader[R, B]): RepReader[R, B] =
       ReaderBase(fun {r => f(st.run(r)).run(r)})
