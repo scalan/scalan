@@ -105,8 +105,8 @@ trait CxxShptrGenArrayLoopsFat extends CxxShptrGenArrayLoops with CLikeGenLoopsF
             val q = getBlockResult(y)
             stream.println(src"(*$x)[$ii] = $q; /*JNIArrayElem*/")
           case ae @ ArrayElem(y) =>
-//            stream.println(src"(*$l)[$ii] = ${getBlockResult(y)};")
-            stream.println(src"scalan::Assign<${remap(wrapSharedPtr(l.tp.typeArguments(0)))},${remap(wrapSharedPtr(y.tp))}>::doIt((*$l)[$ii],${getBlockResult(y)});")
+            stream.println(src"(*$l)[$ii] = ${getBlockResult(y)};")
+//            stream.println(src"scalan::Assign<${remap(wrapSharedPtr(l.tp.typeArguments(0)))},${remap(wrapSharedPtr(y.tp))}>::doIt((*$l)[$ii],${getBlockResult(y)});")
           case ReduceElem(y) =>
             stream.println(src"$l += ${getBlockResult(y)};")
           case ArrayIfElem(c,y) =>
