@@ -36,7 +36,7 @@ object Gcc {
 
   // TODO unpack relative to KernelStore?
   private val cppRuntimePath = "runtime/cpp/"
-  if (!runtimeIncludeDir.exists() || runtimeIncludeDir.lastModified() <= FileUtil.classPathLastModified(cppRuntimePath, Plugins.pluginClassLoader)) {
-    FileUtil.copyFromClassPath(cppRuntimePath, runtimeIncludeDir, Plugins.pluginClassLoader)
-  }
+//  if (!runtimeIncludeDir.exists() || runtimeIncludeDir.lastModified() <= FileUtil.classPathLastModified(cppRuntimePath, Plugins.pluginClassLoader)) {
+  FileUtil.copyFromClassPath(cppRuntimePath, runtimeIncludeDir, Plugins.pluginClassLoader)
+//  }
 }
