@@ -284,6 +284,14 @@ abstract class LmsBackendFacade extends
     result
   }
 
+  def rangeFold[S: Manifest](n: Rep[Int], init: Rep[S], step: Rep[(S,Int)] => Rep[S]): Exp[S] = {
+    val res = loop_until[(Int,S)](
+      tuple2(unit(0), init),
+      { in => (in._1 + 1, step((in._2,in._1))) },
+      { in => equals(in._1, n) })
+    res._2
+  }
+
   def rangeMapReduce[K: Manifest, V: Manifest](n: Rep[Int], map: Rep[Int] => Rep[(K, V)], reduce: Rep[(V, V)] => Rep[V]): Exp[HashMap[K, V]] = {
     val result = HashMap[K, V]()
     for (i <- 0 until n) {

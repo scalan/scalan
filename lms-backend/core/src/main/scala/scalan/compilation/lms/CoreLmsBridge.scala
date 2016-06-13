@@ -203,6 +203,21 @@ trait CoreLmsBridge extends StructLmsBridge {
           m.addSym(sym, exp)
       }
 
+    case ArrayFold(Def(range: ArrayRangeFrom0), init: Rep[s], f) =>
+      val f_ = m.funcMirror[(s, Int), s](f)
+      val n_ = m.symMirror[Int](range.n)
+      val init_ = m.symMirror[s](init)
+      val mS = elemToManifest(init.elem).asInstanceOf[Manifest[s]]
+      val exp = lms.rangeFold(n_, init_, f_)(mS)
+      m.addSym(sym, exp)
+
+    case ArrayMap(Def(range: ArrayRangeFrom0), f: RFunc[_,a]@unchecked) =>
+      val f_ = m.funcMirror[Int, a](f)
+      val n_ = m.symMirror[Int](range.n)
+      val mA = elemToManifest(f.elem.eRange).asInstanceOf[Manifest[a]]
+      val exp = lms.array(n_)(f_)(mA)
+      m.addSym(sym, exp)
+
     case ArrayReduce(source, monoid) =>
       elemToManifest(source.elem.eItem) match {
         case (mA: Manifest[a]) =>
