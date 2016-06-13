@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <jni.h>
 #include <iostream>
+#include <scalan/common.hpp>
 
 template<class JNIType>
 struct jni_type_traits
@@ -188,5 +189,20 @@ private:
         const_cast<T*&>(raw_array) = const_cast<T*>(raw_array0);
     }
 };
+
+namespace scalan {
+
+template<>
+struct Assign<std::shared_ptr<boost::container::vector<double>>,std::shared_ptr<jni_array<double>>> {
+    static void doIt(std::shared_ptr<boost::container::vector<double>>& to, std::shared_ptr<jni_array<double>> what)
+    {
+        to.reset(new boost::container::vector<double>(what->size(), boost::container::default_init));
+        for(size_t i = 0; i < to->size(); ++i) {
+            (*to)[i] = (*what)[i];
+        }
+    }
+};
+
+} // namespace scalan
 
 #endif // __JNI_ARRAY_WRAPPER_HPP___

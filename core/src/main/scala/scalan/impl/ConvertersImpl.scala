@@ -60,6 +60,92 @@ trait ConvertersAbs extends Converters {
   implicit def proxyConverterCompanionAbs(p: Rep[ConverterCompanionAbs]): ConverterCompanionAbs =
     proxyOps[ConverterCompanionAbs](p)
 
+  abstract class AbsIdentityConv[A]
+      ()(implicit eA: Elem[A])
+    extends IdentityConv[A]() with Def[IdentityConv[A]] {
+    lazy val selfType = element[IdentityConv[A]]
+  }
+  // elem for concrete class
+  class IdentityConvElem[A](val iso: Iso[IdentityConvData[A], IdentityConv[A]])(implicit val eA: Elem[A])
+    extends ConverterElem[A, A, IdentityConv[A]]
+    with ConcreteElem[IdentityConvData[A], IdentityConv[A]] {
+    override lazy val parent: Option[Elem[_]] = Some(converterElement(element[A], element[A]))
+    override lazy val typeArgs = TypeArgs("A" -> eA)
+
+    override def convertConverter(x: Rep[Converter[A, A]]) = IdentityConv()
+    override def getDefaultRep = IdentityConv()
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[IdentityConv[A]]
+    }
+  }
+
+  // state representation type
+  type IdentityConvData[A] = Unit
+
+  // 3) Iso for concrete class
+  class IdentityConvIso[A](implicit eA: Elem[A])
+    extends EntityIso[IdentityConvData[A], IdentityConv[A]] with Def[IdentityConvIso[A]] {
+    override def from(p: Rep[IdentityConv[A]]) =
+      ()
+    override def to(p: Rep[Unit]) = {
+      val unit = p
+      IdentityConv()
+    }
+    lazy val eFrom = UnitElement
+    lazy val eTo = new IdentityConvElem[A](self)
+    lazy val selfType = new IdentityConvIsoElem[A](eA)
+    def productArity = 1
+    def productElement(n: Int) = eA
+  }
+  case class IdentityConvIsoElem[A](eA: Elem[A]) extends Elem[IdentityConvIso[A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new IdentityConvIso[A]()(eA))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[IdentityConvIso[A]]
+    }
+    lazy val typeArgs = TypeArgs("A" -> eA)
+  }
+  // 4) constructor and deconstructor
+  class IdentityConvCompanionAbs extends CompanionDef[IdentityConvCompanionAbs] {
+    def selfType = IdentityConvCompanionElem
+    override def toString = "IdentityConv"
+    @scalan.OverloadId("fromData")
+    def apply[A](p: Rep[IdentityConvData[A]])(implicit eA: Elem[A]): Rep[IdentityConv[A]] =
+      isoIdentityConv(eA).to(p)
+    @scalan.OverloadId("fromFields")
+    def apply[A]()(implicit eA: Elem[A]): Rep[IdentityConv[A]] =
+      mkIdentityConv()
+
+    def unapply[A](p: Rep[Converter[A, A]]) = unmkIdentityConv(p)
+  }
+  lazy val IdentityConvRep: Rep[IdentityConvCompanionAbs] = new IdentityConvCompanionAbs
+  lazy val IdentityConv: IdentityConvCompanionAbs = proxyIdentityConvCompanion(IdentityConvRep)
+  implicit def proxyIdentityConvCompanion(p: Rep[IdentityConvCompanionAbs]): IdentityConvCompanionAbs = {
+    proxyOps[IdentityConvCompanionAbs](p)
+  }
+
+  implicit case object IdentityConvCompanionElem extends CompanionElem[IdentityConvCompanionAbs] {
+    lazy val tag = weakTypeTag[IdentityConvCompanionAbs]
+    protected def getDefaultRep = IdentityConv
+  }
+
+  implicit def proxyIdentityConv[A](p: Rep[IdentityConv[A]]): IdentityConv[A] =
+    proxyOps[IdentityConv[A]](p)
+
+  implicit class ExtendedIdentityConv[A](p: Rep[IdentityConv[A]])(implicit eA: Elem[A]) {
+    def toData: Rep[IdentityConvData[A]] = isoIdentityConv(eA).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoIdentityConv[A](implicit eA: Elem[A]): Iso[IdentityConvData[A], IdentityConv[A]] =
+    reifyObject(new IdentityConvIso[A]()(eA))
+
+  // 6) smart constructor and deconstructor
+  def mkIdentityConv[A]()(implicit eA: Elem[A]): Rep[IdentityConv[A]]
+  def unmkIdentityConv[A](p: Rep[Converter[A, A]]): Option[(Rep[Unit])]
+
   abstract class AbsBaseConverter[T, R]
       (convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R])
     extends BaseConverter[T, R](convFun) with Def[BaseConverter[T, R]] {
@@ -332,6 +418,97 @@ trait ConvertersAbs extends Converters {
   def mkSumConverter[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]]
   def unmkSumConverter[A1, A2, B1, B2](p: Rep[Converter[$bar[A1, A2], $bar[B1, B2]]]): Option[(Rep[Converter[A1, B1]], Rep[Converter[A2, B2]])]
 
+  abstract class AbsComposeConverter[A, B, C]
+      (conv2: Conv[B, C], conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
+    extends ComposeConverter[A, B, C](conv2, conv1) with Def[ComposeConverter[A, B, C]] {
+    lazy val selfType = element[ComposeConverter[A, B, C]]
+  }
+  // elem for concrete class
+  class ComposeConverterElem[A, B, C](val iso: Iso[ComposeConverterData[A, B, C], ComposeConverter[A, B, C]])(implicit val eA: Elem[A], val eB: Elem[B], val eC: Elem[C])
+    extends ConverterElem[A, C, ComposeConverter[A, B, C]]
+    with ConcreteElem[ComposeConverterData[A, B, C], ComposeConverter[A, B, C]] {
+    override lazy val parent: Option[Elem[_]] = Some(converterElement(element[A], element[C]))
+    override lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB, "C" -> eC)
+
+    override def convertConverter(x: Rep[Converter[A, C]]) = // Converter is not generated by meta
+!!!("Cannot convert from Converter to ComposeConverter: missing fields List(conv2, conv1)")
+    override def getDefaultRep = ComposeConverter(element[Converter[B, C]].defaultRepValue, element[Converter[A, B]].defaultRepValue)
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
+      implicit val tagC = eC.tag
+      weakTypeTag[ComposeConverter[A, B, C]]
+    }
+  }
+
+  // state representation type
+  type ComposeConverterData[A, B, C] = (Converter[B, C], Converter[A, B])
+
+  // 3) Iso for concrete class
+  class ComposeConverterIso[A, B, C](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
+    extends EntityIso[ComposeConverterData[A, B, C], ComposeConverter[A, B, C]] with Def[ComposeConverterIso[A, B, C]] {
+    override def from(p: Rep[ComposeConverter[A, B, C]]) =
+      (p.conv2, p.conv1)
+    override def to(p: Rep[(Converter[B, C], Converter[A, B])]) = {
+      val Pair(conv2, conv1) = p
+      ComposeConverter(conv2, conv1)
+    }
+    lazy val eFrom = pairElement(element[Converter[B, C]], element[Converter[A, B]])
+    lazy val eTo = new ComposeConverterElem[A, B, C](self)
+    lazy val selfType = new ComposeConverterIsoElem[A, B, C](eA, eB, eC)
+    def productArity = 3
+    def productElement(n: Int) = (eA, eB, eC).productElement(n)
+  }
+  case class ComposeConverterIsoElem[A, B, C](eA: Elem[A], eB: Elem[B], eC: Elem[C]) extends Elem[ComposeConverterIso[A, B, C]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new ComposeConverterIso[A, B, C]()(eA, eB, eC))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
+      implicit val tagC = eC.tag
+      weakTypeTag[ComposeConverterIso[A, B, C]]
+    }
+    lazy val typeArgs = TypeArgs("A" -> eA, "B" -> eB, "C" -> eC)
+  }
+  // 4) constructor and deconstructor
+  class ComposeConverterCompanionAbs extends CompanionDef[ComposeConverterCompanionAbs] {
+    def selfType = ComposeConverterCompanionElem
+    override def toString = "ComposeConverter"
+    @scalan.OverloadId("fromData")
+    def apply[A, B, C](p: Rep[ComposeConverterData[A, B, C]])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] =
+      isoComposeConverter(eA, eB, eC).to(p)
+    @scalan.OverloadId("fromFields")
+    def apply[A, B, C](conv2: Conv[B, C], conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] =
+      mkComposeConverter(conv2, conv1)
+
+    def unapply[A, B, C](p: Rep[Converter[A, C]]) = unmkComposeConverter(p)
+  }
+  lazy val ComposeConverterRep: Rep[ComposeConverterCompanionAbs] = new ComposeConverterCompanionAbs
+  lazy val ComposeConverter: ComposeConverterCompanionAbs = proxyComposeConverterCompanion(ComposeConverterRep)
+  implicit def proxyComposeConverterCompanion(p: Rep[ComposeConverterCompanionAbs]): ComposeConverterCompanionAbs = {
+    proxyOps[ComposeConverterCompanionAbs](p)
+  }
+
+  implicit case object ComposeConverterCompanionElem extends CompanionElem[ComposeConverterCompanionAbs] {
+    lazy val tag = weakTypeTag[ComposeConverterCompanionAbs]
+    protected def getDefaultRep = ComposeConverter
+  }
+
+  implicit def proxyComposeConverter[A, B, C](p: Rep[ComposeConverter[A, B, C]]): ComposeConverter[A, B, C] =
+    proxyOps[ComposeConverter[A, B, C]](p)
+
+  implicit class ExtendedComposeConverter[A, B, C](p: Rep[ComposeConverter[A, B, C]])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]) {
+    def toData: Rep[ComposeConverterData[A, B, C]] = isoComposeConverter(eA, eB, eC).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoComposeConverter[A, B, C](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Iso[ComposeConverterData[A, B, C], ComposeConverter[A, B, C]] =
+    reifyObject(new ComposeConverterIso[A, B, C]()(eA, eB, eC))
+
+  // 6) smart constructor and deconstructor
+  def mkComposeConverter[A, B, C](conv2: Conv[B, C], conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]]
+  def unmkComposeConverter[A, B, C](p: Rep[Converter[A, C]]): Option[(Rep[Converter[B, C]], Rep[Converter[A, B]])]
+
   abstract class AbsFunctorConverter[A, B, F[_]]
       (itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
     extends FunctorConverter[A, B, F](itemConv) with Def[FunctorConverter[A, B, F]] {
@@ -512,6 +689,20 @@ trait ConvertersStd extends ConvertersDsl {
   lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs {
   }
 
+  case class StdIdentityConv[A]
+      ()(implicit eA: Elem[A])
+    extends AbsIdentityConv[A]() {
+  }
+
+  def mkIdentityConv[A]
+    ()(implicit eA: Elem[A]): Rep[IdentityConv[A]] =
+    new StdIdentityConv[A]()
+  def unmkIdentityConv[A](p: Rep[Converter[A, A]]) = p match {
+    case p: IdentityConv[A] @unchecked =>
+      Some(())
+    case _ => None
+  }
+
   case class StdBaseConverter[T, R]
       (override val convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R])
     extends AbsBaseConverter[T, R](convFun) {
@@ -554,6 +745,20 @@ trait ConvertersStd extends ConvertersDsl {
     case _ => None
   }
 
+  case class StdComposeConverter[A, B, C]
+      (override val conv2: Conv[B, C], override val conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
+    extends AbsComposeConverter[A, B, C](conv2, conv1) {
+  }
+
+  def mkComposeConverter[A, B, C]
+    (conv2: Conv[B, C], conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] =
+    new StdComposeConverter[A, B, C](conv2, conv1)
+  def unmkComposeConverter[A, B, C](p: Rep[Converter[A, C]]) = p match {
+    case p: ComposeConverter[A, B, C] @unchecked =>
+      Some((p.conv2, p.conv1))
+    case _ => None
+  }
+
   case class StdFunctorConverter[A, B, F[_]]
       (override val itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
     extends AbsFunctorConverter[A, B, F](itemConv) {
@@ -587,6 +792,48 @@ trait ConvertersStd extends ConvertersDsl {
 trait ConvertersExp extends ConvertersDsl {
   self: ScalanExp =>
   lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs {
+  }
+
+  case class ExpIdentityConv[A]
+      ()(implicit eA: Elem[A])
+    extends AbsIdentityConv[A]()
+
+  object IdentityConvMethods {
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[IdentityConv[A]], Rep[A]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(x, _*), _) if receiver.elem.isInstanceOf[IdentityConvElem[_]] && method.getName == "apply" =>
+          Some((receiver, x)).asInstanceOf[Option[(Rep[IdentityConv[A]], Rep[A]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IdentityConv[A]], Rep[A]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object isIdentity {
+      def unapply(d: Def[_]): Option[Rep[IdentityConv[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IdentityConvElem[_]] && method.getName == "isIdentity" =>
+          Some(receiver).asInstanceOf[Option[Rep[IdentityConv[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[IdentityConv[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
+  }
+
+  def mkIdentityConv[A]
+    ()(implicit eA: Elem[A]): Rep[IdentityConv[A]] =
+    new ExpIdentityConv[A]()
+  def unmkIdentityConv[A](p: Rep[Converter[A, A]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: IdentityConvElem[A] @unchecked =>
+      Some(())
+    case _ =>
+      None
   }
 
   case class ExpBaseConverter[T, R]
@@ -638,6 +885,18 @@ trait ConvertersExp extends ConvertersDsl {
         case _ => None
       }
     }
+
+    object isIdentity {
+      def unapply(d: Def[_]): Option[Rep[PairConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[PairConverterElem[_, _, _, _]] && method.getName == "isIdentity" =>
+          Some(receiver).asInstanceOf[Option[Rep[PairConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PairConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object PairConverterCompanionMethods {
@@ -669,6 +928,18 @@ trait ConvertersExp extends ConvertersDsl {
         case _ => None
       }
     }
+
+    object isIdentity {
+      def unapply(d: Def[_]): Option[Rep[SumConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SumConverterElem[_, _, _, _]] && method.getName == "isIdentity" =>
+          Some(receiver).asInstanceOf[Option[Rep[SumConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SumConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object SumConverterCompanionMethods {
@@ -680,6 +951,48 @@ trait ConvertersExp extends ConvertersDsl {
   def unmkSumConverter[A1, A2, B1, B2](p: Rep[Converter[$bar[A1, A2], $bar[B1, B2]]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SumConverterElem[A1, A2, B1, B2] @unchecked =>
       Some((p.asRep[SumConverter[A1, A2, B1, B2]].conv1, p.asRep[SumConverter[A1, A2, B1, B2]].conv2))
+    case _ =>
+      None
+  }
+
+  case class ExpComposeConverter[A, B, C]
+      (override val conv2: Conv[B, C], override val conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
+    extends AbsComposeConverter[A, B, C](conv2, conv1)
+
+  object ComposeConverterMethods {
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[ComposeConverter[A, B, C]], Rep[A]) forSome {type A; type B; type C}] = d match {
+        case MethodCall(receiver, method, Seq(a, _*), _) if receiver.elem.isInstanceOf[ComposeConverterElem[_, _, _]] && method.getName == "apply" =>
+          Some((receiver, a)).asInstanceOf[Option[(Rep[ComposeConverter[A, B, C]], Rep[A]) forSome {type A; type B; type C}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ComposeConverter[A, B, C]], Rep[A]) forSome {type A; type B; type C}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object isIdentity {
+      def unapply(d: Def[_]): Option[Rep[ComposeConverter[A, B, C]] forSome {type A; type B; type C}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ComposeConverterElem[_, _, _]] && method.getName == "isIdentity" =>
+          Some(receiver).asInstanceOf[Option[Rep[ComposeConverter[A, B, C]] forSome {type A; type B; type C}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[ComposeConverter[A, B, C]] forSome {type A; type B; type C}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
+  }
+
+  def mkComposeConverter[A, B, C]
+    (conv2: Conv[B, C], conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] =
+    new ExpComposeConverter[A, B, C](conv2, conv1)
+  def unmkComposeConverter[A, B, C](p: Rep[Converter[A, C]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: ComposeConverterElem[A, B, C] @unchecked =>
+      Some((p.asRep[ComposeConverter[A, B, C]].conv2, p.asRep[ComposeConverter[A, B, C]].conv1))
     case _ =>
       None
   }
@@ -708,6 +1021,18 @@ trait ConvertersExp extends ConvertersDsl {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[FunctorConverter[A, B, F]], Rep[F[A]]) forSome {type A; type B; type F[_]}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object isIdentity {
+      def unapply(d: Def[_]): Option[Rep[FunctorConverter[A, B, F]] forSome {type A; type B; type F[_]}] = d match {
+        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FunctorConverterElem[_, _, _] => true; case _ => false }) && method.getName == "isIdentity" =>
+          Some(receiver).asInstanceOf[Option[Rep[FunctorConverter[A, B, F]] forSome {type A; type B; type F[_]}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[FunctorConverter[A, B, F]] forSome {type A; type B; type F[_]}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -784,6 +1109,8 @@ trait ConvertersExp extends ConvertersDsl {
       }
     }
 
+    // WARNING: Cannot generate matcher for method `isIdentity`: Method's return type Boolean is not a Rep
+
     // WARNING: Cannot generate matcher for method `toString`: Overrides Object method
   }
 
@@ -792,7 +1119,7 @@ trait ConvertersExp extends ConvertersDsl {
 }
 
 object Converters_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAO1YTYgbVRx/k+xuNsnarltbraXddUlV1jZpU6HCIiXZza4t2Q8yK5W1dHmZebudOl/OvCyJhyoeilTxICIoeCgoXoog3hTEg4KICIo3Tx481Yr0YPGg+N6b78xHkq57kebwmJn85/f+/9//93vMezdugWHTAI+aApShWlQQhkWeXVdMXOBrKpZwZ0kTWzKaR5s/PPGllnv1jeUUGF8HI5egOW/K6yBrXdTaunvNY7EOslAVkIk1w8TgkTqboSRosowELGlqSVKUFoZNGZXqkoln62CoqYmdF8EVwNXBuKCpgoEw4udkaJrItJ+PIpqR5N5n2X1nRffmUEu0ipKvijUDSpikT+YYt+IbSOc7qqZ2FAz22Kmt6DQtEpNHbZ3UcFbRZTZNug4ykqJrBnZmzZAZLmmiczukQvIATNQvw21YIrNulXhsSOoWBdOh8ALcQsskhIYPkRpMJG+udXRkg+dNLAbma+sAANKVMkus6HFWdDkrUs4KPDIkKEsvQfrnqqG1O8D6cWkA2jqBONYDwkFANVUsXLsgPH+Hzysp+nKbppJhCY0QoMkYhbD2EG6/abxl3l68fjoFcusgJ5mVpokNKGC/DGy68lBVNcxydhmExhbp4HRcB9ksFRLTJZOsoCk6VAmSzeUYaZQsCRKmwfTZmN2eGO4zWEdOKNfWObfeqZh6mZbmoCyv3jx4/OhvtedSIBWcIksgeWIGwwHFIDunqdvIwMiw8em4FwNuzSOZ3jbYLR2ybW/MJKTjEvPYzd/Fr0+ACymXTnv2/jpIICaeeu+zo2j14xQYXWeCX5DhFusl5WsemcI6GNVIGdbzzDaU6VVkPzMi2oQtGdss++lJE3owmIr1qo4od7PMA5xTft6S8bKmosLCauFP/tu3b1CVGmDM+scy7z/S6b9/3rOJmYAxyJBFZHuhpTr8pontXTqOxDVYR+QV4aez7+7be3jjF9beEVFToMQ0dqgOhg3icFbOIZvegVqZszLmNQXdP31bunj9dcyaxrWDS8hK8zKx7Cx770hC/5zV7ZOrV/f/8cHGPubA0aaEFagXTgzgP8cuu+gv4LJiMfWgd0+HSdK0A1VoItcvc/75J30v+oz0MOcohQVhkEJrTh+GajJSIk1nNSUOoJEEEO4tBvcF0mY4rtQOx0uNcHOgUX9AvnXmixQYPgeGN4mlTKKxptZSRYd0omOM2rjqPOOCpBOSoQEVl2T2mwIeZUF5zkUGNLpZyXPBskOLWIIkdbTW0mX05Od/XXztlWd0pu/QuhiET1VOBhyUqpS7M1rqeqPa9UbV/0bYeiHdgK62D9P14qTbeVpvjxztDPxaigQtJ4KW+yrDCphh4/F+jLQKJWNnRkqjikdH2AgOHUlWIhDlRIhQlyMgqolZRDQhAiIxiwjKiaUDBPotHeuigEBiIsq9Iqo9Maoh0nqa1Sm+0IRGdBcTWhLz4j3/JflvP99S7tnv7u035ufv/+E+bqHrvhLhtFBQdWeuGpUwUlzZR3vATqTHlIM64CD9kCYfnjv9mqskaCdMYQRANQmg2hPA7ggJztgVdbc1Qr7j3cX3JWF/I6IDqr0CFnrOsRFKdxdUvJgQdBcqTtjL0bGwi8l5jdtlnQquzqhFcYLI4gAWkwAWo1S6DHHLgPJ/rdIeIiQDd6y7nmikxcGQQqoesZerIBlpsmHuU+19bewDOnYjBl0wJ5JWysA5Un9tGmjT546cD32G7PKKMbu8eSTI0EAiPbhEClLtI4VT75w5f+6h88+yTd+YyIKsf9xjn+hj4CWoz7JDy8cTDi1JUKGm6LhDL0599fSPL3/30YfsvMejE4Oc10xMGGI5u/VMx9TD20cXRBpX7ry/PPP9p7+y058cPQTRVKS657/e5rt7Fzti4floJV6kZyKeErhrdHjzX+s4T7J6FwAA"
+  val dump = "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"
 }
 }
 

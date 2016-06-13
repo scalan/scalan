@@ -201,10 +201,8 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new CollectionsD
 
   // TODO: Slow test
   test("Class Mapping") {
-    if (isCI) {
-      // takes extremely long to run on TeamCity
-      pending
-    }
+    // takes extremely long to run on TeamCity
+    pendingOnCI()
     val sbtConfig = SbtConfig(scalaVersion = "2.11.7", mainPack = Some("scalan.imp"),
       extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("package"))
     val conf = replaceMethExp.defaultCompilerConfig.withSbtConfig(sbtConfig)
@@ -221,10 +219,8 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new CollectionsD
 
   // TODO: Slow test
   test("Mapping Method From Jar") {
-    if (isCI) {
-      // takes extremely long to run on TeamCity
-      pending
-    }
+    // takes extremely long to run on TeamCity
+    pendingOnCI()
     val sbtConfig = SbtConfig(scalaVersion = "2.11.7", mainPack = Some("scalan.imp"),
       extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("package"))
     val conf = jarReplaceExp.defaultCompilerConfig.withSbtConfig(sbtConfig)

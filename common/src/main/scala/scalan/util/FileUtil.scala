@@ -1,27 +1,19 @@
 package scalan.util
 
 import java.io._
-import java.nio.channels.Channels
+import java.net.{JarURLConnection, URL}
+import java.nio.charset.Charset
 import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
+import java.util.jar.JarFile
+
+import org.apache.commons.io.{FileUtils, IOUtils}
 
 import scala.Console
-import scala.io.{Codec, Source}
+import scala.collection.JavaConverters._
 
 object FileUtil {
-  def read(file: File, codec: Codec = Codec.UTF8): String = {
-    val source = Source.fromFile(file)(codec)
-    try {
-      source.mkString
-    } finally {
-      source.close()
-    }
-  }
-
-  // default arguments can't be used when another overload has them
-  def read(path: String, codec: Codec): String = read(new File(path), codec)
-
-  def read(path: String): String = read(new File(path), Codec.UTF8)
+  def read(file: File): String = FileUtils.readFileToString(file, Charset.defaultCharset())
 
   def withFile(file: File)(f: PrintWriter => Unit): Unit = {
     if (file.isDirectory && !file.delete()) {
@@ -38,8 +30,6 @@ object FileUtil {
   }
 
   def write(file: File, text: String):Unit = withFile(file) { _.print(text) }
-
-  def write(path: String, text: String):Unit = write(new File(path), text)
 
   def captureStdOutAndErr(func: => Unit): String = {
     val out = new ByteArrayOutputStream
@@ -62,18 +52,90 @@ object FileUtil {
     }
   }
 
-  def copy(source: File, target: File): Unit = {
+  def copy(source: File, target: File): Unit =
+    if (source.isFile)
+      FileUtils.copyFile(source, target, false)
+    else
+      FileUtils.copyDirectory(source, target, false)
+
+  def copyFromClassPath(source: String, target: File, classLoader: ClassLoader = getClass.getClassLoader): Unit = {
     target.getParentFile.mkdirs()
-    new FileOutputStream(target).getChannel.transferFrom(new FileInputStream(source).getChannel, 0, Long.MaxValue)
+    val urls = classLoader.getResources(source)
+    if (urls.hasMoreElements) {
+      if (source.endsWith("/")) {
+        urls.asScala.foreach { url =>
+          url.getProtocol match {
+            case "file" =>
+              FileUtils.copyDirectory(urlToFile(url), target, false)
+            case "jar" =>
+              val jarFile = new JarFile(jarUrlToJarFile(url))
+              jarFile.entries().asScala.foreach { entry =>
+                val entryPath = entry.getName
+                if (entryPath.startsWith(source)) {
+                  val entryTarget = new File(target, entryPath.stripPrefix(source))
+                  if (entry.isDirectory)
+                    entryTarget.mkdirs()
+                  else {
+                    // copyInputStreamToFile closes stream
+                    FileUtils.copyInputStreamToFile(jarFile.getInputStream(entry), entryTarget)
+                  }
+                }
+              }
+          }
+        }
+      } else {
+        val url = urls.nextElement()
+        if (urls.hasMoreElements) {
+          throw new IllegalArgumentException(s"Multiple $source resources found on classpath")
+        } else {
+          // copyInputStreamToFile closes stream
+          FileUtils.copyInputStreamToFile(url.openStream(), target)
+        }
+      }
+    } else
+      throw new IllegalArgumentException(s"Resource $source not found on classpath")
   }
 
-  def copyFromClassPath(source: String, target: File): Unit = {
-    target.getParentFile.mkdirs()
-    val stream = getClass.getClassLoader.getResourceAsStream(source)
-    if (stream != null)
-      new FileOutputStream(target).getChannel.transferFrom(Channels.newChannel(stream), 0, Long.MaxValue)
-    else
+  def classPathLastModified(source: String, classLoader: ClassLoader = getClass.getClassLoader) = {
+    def urlLastModified(url: URL): Long = {
+      url.getProtocol match {
+        case "file" =>
+          val file = urlToFile(url)
+          if (file.isDirectory) {
+            var result = file.lastModified()
+            Files.walkFileTree(file.toPath, new SimpleFileVisitor[Path]() {
+              override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
+                result = math.max(result, file.toFile.lastModified())
+                FileVisitResult.CONTINUE
+              }
+
+              override def postVisitDirectory(dir: Path, exc: IOException): FileVisitResult = {
+                if (exc == null) {
+                  result = math.max(result, dir.toFile.lastModified())
+                  FileVisitResult.CONTINUE
+                } else {
+                  throw exc
+                }
+              }
+            })
+            result
+          } else
+            file.lastModified()
+        case "jar" =>
+          jarUrlToJarFile(url).lastModified()
+      }
+    }
+
+    val urls = classLoader.getResources(source)
+    if (urls.hasMoreElements) {
+      urls.asScala.map(urlLastModified).max
+    } else
       throw new IllegalArgumentException(s"Resource $source not found on classpath")
+  }
+
+  def jarUrlToJarFile(url: URL) = {
+    val jarFileUrl = url.openConnection().asInstanceOf[JarURLConnection].getJarFileURL
+    urlToFile(jarFileUrl)
   }
 
   /**
@@ -82,10 +144,11 @@ object FileUtil {
   def copyToDir(source: File, targetDir: File): Unit =
     copy(source, new File(targetDir, source.getName))
 
-  def move(source: File, target: File): Unit = {
-    copy(source, target)
-    delete(source)
-  }
+  def move(source: File, target: File): Unit =
+    if (source.isFile)
+      FileUtils.moveFile(source, target)
+    else
+      FileUtils.moveDirectory(source, target)
 
   /**
    * Add header into the file
@@ -97,14 +160,14 @@ object FileUtil {
    * and throws exceptions instead of returning false on failure
    */
   def delete(fileOrDirectory: File): Unit = {
-    removeRecursive(fileOrDirectory.toPath)
+    deleteRecursive(fileOrDirectory.toPath)
   }
 
   def deleteIfExist(fileOrDirectory: File): Unit = {
     if (fileOrDirectory.exists()) delete(fileOrDirectory)
   }
 
-  def removeRecursive(path: Path) {
+  def deleteRecursive(path: Path) {
     Files.walkFileTree(path, new SimpleFileVisitor[Path]() {
       override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
         Files.delete(file)
@@ -128,8 +191,6 @@ object FileUtil {
 
   def currentWorkingDir = Paths.get("").toAbsolutePath.toFile
 
-  def currentClassDir = getClass.getClassLoader.getResource("").getFile
-
   def file(first: String, rest: String*): File =
     file(new File(first), rest: _*)
 
@@ -145,32 +206,11 @@ object FileUtil {
     case array => array
   }
 
-  /**
-    * Read resource from classpath
-    */
-  def getResource(file: String): InputStream =
-    getResource(file, getClass.getClassLoader)
-
-  def getResource(file: String, cl: ClassLoader): InputStream =
-    cl.getResourceAsStream(file)
-
-  /**
-    * Read multiple resources from classpath
-    */
-  def getResources(file: String): Seq[InputStream] =
-    getResources(file, getClass.getClassLoader)
-
-  def getResources(file: String, cl: ClassLoader): Seq[InputStream] = {
-    import collection.JavaConverters._
-    cl.getResources(file).asScala.map(_.openStream()).toSeq.reverse
-  }
-
-  def readInputStream(stream: InputStream) = {
-    val source = Source.fromInputStream(stream)
+  def readAndCloseStream(stream: InputStream) = {
     try {
-      source.mkString
+      IOUtils.toString(stream, Charset.defaultCharset())
     } finally {
-      source.close()
+      IOUtils.closeQuietly(stream)
     }
   }
 
@@ -191,6 +231,17 @@ object FileUtil {
     val newName = f(name)
     new File(parent, newName)
   }
+
+  def urlToFile(url: URL) = Paths.get(url.toURI).toFile
+
+  /** Accepts an arbitrary (printable) string and returns a similar string
+    * which can be used as a file name. For convenience, replaces spaces with hyphens.
+    */
+  def cleanFileName(string: String) = string.
+    replaceAll("""[ /\\:;<>|?*^]""", "_").
+    replaceAll("""['"]""", "")
+
+  def isBadFileName(string: String) = cleanFileName(string) != string
 }
 
 case class ExtensionFilter(extension: String) extends FilenameFilter {

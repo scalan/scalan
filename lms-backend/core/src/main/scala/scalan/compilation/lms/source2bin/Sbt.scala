@@ -3,10 +3,12 @@ package scalan.compilation.lms.source2bin
 import java.io.File
 import java.io.File.separator
 
+import org.apache.commons.io.FileUtils
+
 import scalan.ScalanDslExp
 import scalan.compilation.lms.scalac.LmsCompilerScalaConfig
 import scalan.util.FileUtil._
-import scalan.util.{FileUtil, ExtensionFilter, ProcessUtil, StringUtil}
+import scalan.util.{ExtensionFilter, FileUtil, ProcessUtil, StringUtil}
 
 object Sbt {
 
@@ -90,9 +92,8 @@ object Sbt {
         val output: Array[String] = ProcessUtil.launch(sourcesDir, "sbt", sbtConfig.commands.last)
 
         val jarFile = file(executableDir, "target", s"scala-${sbtConfig.scalaBinaryVersion}", jar)
-        jarFile.exists() match {
-          case true => move(jarFile, file(executableDir, jar))
-          case false =>
+        if (jarFile.exists()) {
+          FileUtils.moveToDirectory(jarFile, executableDir, false)
         }
         output
 

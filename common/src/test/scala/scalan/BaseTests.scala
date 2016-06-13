@@ -22,6 +22,7 @@ trait TestsUtil extends Suite with Matchers with Inside with TripleEquals {
   def isCI = sys.env.get("CI").flatMap(toBoolean).getOrElse(false)
   private def toBoolean(s: String): Option[Boolean] =
     scala.util.Try(s.toBoolean).toOption
+  def pendingOnCI(): Unit = if (isCI) { pending }
 
   private val _currentTestName = new ThreadLocal[String]
 
@@ -38,8 +39,7 @@ trait TestsUtil extends Suite with Matchers with Inside with TripleEquals {
     testName
   }
 
-  protected def currentTestNameAsFileName: String =
-    currentTestName.replaceAll("""[ /\\.:;]""", "_").replaceAll("""['"]""", "")
+  protected def currentTestNameAsFileName: String = FileUtil.cleanFileName(currentTestName)
 }
 
 /**

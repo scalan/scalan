@@ -125,7 +125,8 @@ object LmsCompilerUni {
     System.setProperty("java.library.path", newPath)
 
     // hack from http://nicklothian.com/blog/2008/11/19/modify-javalibrarypath-at-runtime/ for reloading java.library.path
-    val fieldSysPath = classOf[ClassLoader].getDeclaredField("usr_paths")
+    // sys_paths is set to null, because
+    val fieldSysPath = classOf[ClassLoader].getDeclaredField("sys_paths")
     fieldSysPath.setAccessible(true)
     fieldSysPath.set(null, null)
   }
