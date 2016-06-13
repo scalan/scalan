@@ -728,89 +728,89 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   def mkNestedCollectionFlat[A](values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]]
   def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[A]], Rep[PairCollection[Int, Int]])]
 
-  abstract class AbsCompoundCollection[A]
+  abstract class AbsJuggedCollection[A]
       (nestedValues: Coll[Collection[A]])(implicit eA: Elem[A])
-    extends CompoundCollection[A](nestedValues) with Def[CompoundCollection[A]] {
-    lazy val selfType = element[CompoundCollection[A]]
+    extends JuggedCollection[A](nestedValues) with Def[JuggedCollection[A]] {
+    lazy val selfType = element[JuggedCollection[A]]
   }
   // elem for concrete class
-  class CompoundCollectionElem[A](val iso: Iso[CompoundCollectionData[A], CompoundCollection[A]])(implicit override val eA: Elem[A])
-    extends NestedCollectionElem[A, CompoundCollection[A]]
-    with ConcreteElem[CompoundCollectionData[A], CompoundCollection[A]] {
+  class JuggedCollectionElem[A](val iso: Iso[JuggedCollectionData[A], JuggedCollection[A]])(implicit override val eA: Elem[A])
+    extends NestedCollectionElem[A, JuggedCollection[A]]
+    with ConcreteElem[JuggedCollectionData[A], JuggedCollection[A]] {
     override lazy val parent: Option[Elem[_]] = Some(nestedCollectionElement(element[A]))
     override lazy val typeArgs = TypeArgs("A" -> eA)
 
-    override def convertNestedCollection(x: Rep[NestedCollection[A]]) = CompoundCollection(x.nestedValues)
-    override def getDefaultRep = CompoundCollection(element[Collection[Collection[A]]].defaultRepValue)
+    override def convertNestedCollection(x: Rep[NestedCollection[A]]) = JuggedCollection(x.nestedValues)
+    override def getDefaultRep = JuggedCollection(element[Collection[Collection[A]]].defaultRepValue)
     override lazy val tag = {
       implicit val tagA = eA.tag
-      weakTypeTag[CompoundCollection[A]]
+      weakTypeTag[JuggedCollection[A]]
     }
   }
 
   // state representation type
-  type CompoundCollectionData[A] = Collection[Collection[A]]
+  type JuggedCollectionData[A] = Collection[Collection[A]]
 
   // 3) Iso for concrete class
-  class CompoundCollectionIso[A](implicit eA: Elem[A])
-    extends EntityIso[CompoundCollectionData[A], CompoundCollection[A]] with Def[CompoundCollectionIso[A]] {
-    override def from(p: Rep[CompoundCollection[A]]) =
+  class JuggedCollectionIso[A](implicit eA: Elem[A])
+    extends EntityIso[JuggedCollectionData[A], JuggedCollection[A]] with Def[JuggedCollectionIso[A]] {
+    override def from(p: Rep[JuggedCollection[A]]) =
       p.nestedValues
     override def to(p: Rep[Collection[Collection[A]]]) = {
       val nestedValues = p
-      CompoundCollection(nestedValues)
+      JuggedCollection(nestedValues)
     }
     lazy val eFrom = element[Collection[Collection[A]]]
-    lazy val eTo = new CompoundCollectionElem[A](self)
-    lazy val selfType = new CompoundCollectionIsoElem[A](eA)
+    lazy val eTo = new JuggedCollectionElem[A](self)
+    lazy val selfType = new JuggedCollectionIsoElem[A](eA)
     def productArity = 1
     def productElement(n: Int) = eA
   }
-  case class CompoundCollectionIsoElem[A](eA: Elem[A]) extends Elem[CompoundCollectionIso[A]] {
+  case class JuggedCollectionIsoElem[A](eA: Elem[A]) extends Elem[JuggedCollectionIso[A]] {
     def isEntityType = true
-    def getDefaultRep = reifyObject(new CompoundCollectionIso[A]()(eA))
+    def getDefaultRep = reifyObject(new JuggedCollectionIso[A]()(eA))
     lazy val tag = {
       implicit val tagA = eA.tag
-      weakTypeTag[CompoundCollectionIso[A]]
+      weakTypeTag[JuggedCollectionIso[A]]
     }
     lazy val typeArgs = TypeArgs("A" -> eA)
   }
   // 4) constructor and deconstructor
-  class CompoundCollectionCompanionAbs extends CompanionDef[CompoundCollectionCompanionAbs] with CompoundCollectionCompanion {
-    def selfType = CompoundCollectionCompanionElem
-    override def toString = "CompoundCollection"
+  class JuggedCollectionCompanionAbs extends CompanionDef[JuggedCollectionCompanionAbs] with JuggedCollectionCompanion {
+    def selfType = JuggedCollectionCompanionElem
+    override def toString = "JuggedCollection"
 
     @scalan.OverloadId("fromFields")
-    def apply[A](nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[CompoundCollection[A]] =
-      mkCompoundCollection(nestedValues)
+    def apply[A](nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[JuggedCollection[A]] =
+      mkJuggedCollection(nestedValues)
 
-    def unapply[A](p: Rep[NestedCollection[A]]) = unmkCompoundCollection(p)
+    def unapply[A](p: Rep[NestedCollection[A]]) = unmkJuggedCollection(p)
   }
-  lazy val CompoundCollectionRep: Rep[CompoundCollectionCompanionAbs] = new CompoundCollectionCompanionAbs
-  lazy val CompoundCollection: CompoundCollectionCompanionAbs = proxyCompoundCollectionCompanion(CompoundCollectionRep)
-  implicit def proxyCompoundCollectionCompanion(p: Rep[CompoundCollectionCompanionAbs]): CompoundCollectionCompanionAbs = {
-    proxyOps[CompoundCollectionCompanionAbs](p)
-  }
-
-  implicit case object CompoundCollectionCompanionElem extends CompanionElem[CompoundCollectionCompanionAbs] {
-    lazy val tag = weakTypeTag[CompoundCollectionCompanionAbs]
-    protected def getDefaultRep = CompoundCollection
+  lazy val JuggedCollectionRep: Rep[JuggedCollectionCompanionAbs] = new JuggedCollectionCompanionAbs
+  lazy val JuggedCollection: JuggedCollectionCompanionAbs = proxyJuggedCollectionCompanion(JuggedCollectionRep)
+  implicit def proxyJuggedCollectionCompanion(p: Rep[JuggedCollectionCompanionAbs]): JuggedCollectionCompanionAbs = {
+    proxyOps[JuggedCollectionCompanionAbs](p)
   }
 
-  implicit def proxyCompoundCollection[A](p: Rep[CompoundCollection[A]]): CompoundCollection[A] =
-    proxyOps[CompoundCollection[A]](p)
+  implicit case object JuggedCollectionCompanionElem extends CompanionElem[JuggedCollectionCompanionAbs] {
+    lazy val tag = weakTypeTag[JuggedCollectionCompanionAbs]
+    protected def getDefaultRep = JuggedCollection
+  }
 
-  implicit class ExtendedCompoundCollection[A](p: Rep[CompoundCollection[A]])(implicit eA: Elem[A]) {
-    def toData: Rep[CompoundCollectionData[A]] = isoCompoundCollection(eA).from(p)
+  implicit def proxyJuggedCollection[A](p: Rep[JuggedCollection[A]]): JuggedCollection[A] =
+    proxyOps[JuggedCollection[A]](p)
+
+  implicit class ExtendedJuggedCollection[A](p: Rep[JuggedCollection[A]])(implicit eA: Elem[A]) {
+    def toData: Rep[JuggedCollectionData[A]] = isoJuggedCollection(eA).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoCompoundCollection[A](implicit eA: Elem[A]): Iso[CompoundCollectionData[A], CompoundCollection[A]] =
-    reifyObject(new CompoundCollectionIso[A]()(eA))
+  implicit def isoJuggedCollection[A](implicit eA: Elem[A]): Iso[JuggedCollectionData[A], JuggedCollection[A]] =
+    reifyObject(new JuggedCollectionIso[A]()(eA))
 
   // 6) smart constructor and deconstructor
-  def mkCompoundCollection[A](nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[CompoundCollection[A]]
-  def unmkCompoundCollection[A](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[Collection[A]]])]
+  def mkJuggedCollection[A](nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[JuggedCollection[A]]
+  def unmkJuggedCollection[A](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[Collection[A]]])]
 
   abstract class AbsFuncCollection[A, B, Env]
       (env1: Coll[Env], indexedFunc: Rep[((Int, A)) => B])(implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env])
@@ -1097,16 +1097,16 @@ trait CollectionsStd extends scalan.ScalanDslStd with CollectionsDsl {
     case _ => None
   }
 
-  case class StdCompoundCollection[A]
+  case class StdJuggedCollection[A]
       (override val nestedValues: Coll[Collection[A]])(implicit eA: Elem[A])
-    extends AbsCompoundCollection[A](nestedValues) {
+    extends AbsJuggedCollection[A](nestedValues) {
   }
 
-  def mkCompoundCollection[A]
-    (nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[CompoundCollection[A]] =
-    new StdCompoundCollection[A](nestedValues)
-  def unmkCompoundCollection[A](p: Rep[NestedCollection[A]]) = p match {
-    case p: CompoundCollection[A] @unchecked =>
+  def mkJuggedCollection[A]
+    (nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[JuggedCollection[A]] =
+    new StdJuggedCollection[A](nestedValues)
+  def unmkJuggedCollection[A](p: Rep[NestedCollection[A]]) = p match {
+    case p: JuggedCollection[A] @unchecked =>
       Some((p.nestedValues))
     case _ => None
   }
@@ -2645,220 +2645,220 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
       None
   }
 
-  case class ExpCompoundCollection[A]
+  case class ExpJuggedCollection[A]
       (override val nestedValues: Coll[Collection[A]])(implicit eA: Elem[A])
-    extends AbsCompoundCollection[A](nestedValues)
+    extends AbsJuggedCollection[A](nestedValues)
 
-  object CompoundCollectionMethods {
+  object JuggedCollectionMethods {
     object segments {
-      def unapply(d: Def[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "segments" =>
-          Some(receiver).asInstanceOf[Option[Rep[CompoundCollection[A]] forSome {type A}]]
+      def unapply(d: Def[_]): Option[Rep[JuggedCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "segments" =>
+          Some(receiver).asInstanceOf[Option[Rep[JuggedCollection[A]] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[JuggedCollection[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object values {
-      def unapply(d: Def[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "values" =>
-          Some(receiver).asInstanceOf[Option[Rep[CompoundCollection[A]] forSome {type A}]]
+      def unapply(d: Def[_]): Option[Rep[JuggedCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "values" =>
+          Some(receiver).asInstanceOf[Option[Rep[JuggedCollection[A]] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[JuggedCollection[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object length {
-      def unapply(d: Def[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "length" =>
-          Some(receiver).asInstanceOf[Option[Rep[CompoundCollection[A]] forSome {type A}]]
+      def unapply(d: Def[_]): Option[Rep[JuggedCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "length" =>
+          Some(receiver).asInstanceOf[Option[Rep[JuggedCollection[A]] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[JuggedCollection[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, i)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Int]) forSome {type A}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[JuggedCollection[A]], Rep[Int]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], Rep[Int]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object arr {
-      def unapply(d: Def[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "arr" =>
-          Some(receiver).asInstanceOf[Option[Rep[CompoundCollection[A]] forSome {type A}]]
+      def unapply(d: Def[_]): Option[Rep[JuggedCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "arr" =>
+          Some(receiver).asInstanceOf[Option[Rep[JuggedCollection[A]] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[JuggedCollection[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object lst {
-      def unapply(d: Def[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "lst" =>
-          Some(receiver).asInstanceOf[Option[Rep[CompoundCollection[A]] forSome {type A}]]
+      def unapply(d: Def[_]): Option[Rep[JuggedCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "lst" =>
+          Some(receiver).asInstanceOf[Option[Rep[JuggedCollection[A]] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CompoundCollection[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[JuggedCollection[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object slice {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "slice" =>
-          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Int]) forSome {type A}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "slice" =>
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[JuggedCollection[A]], Rep[Int], Rep[Int]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply_many {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Coll[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
-          Some((receiver, indices)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Coll[Int]) forSome {type A}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], Coll[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[JuggedCollection[A]], Coll[Int]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Coll[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], Coll[Int]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => B @uncheckedVariance]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => B @uncheckedVariance]) forSome {type A; type B}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], Rep[Collection[A] => B @uncheckedVariance]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "mapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[JuggedCollection[A]], Rep[Collection[A] => B @uncheckedVariance]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => B @uncheckedVariance]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], Rep[Collection[A] => B @uncheckedVariance]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object reduce {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], RepMonoid[Collection[A @uncheckedVariance]]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "reduce" =>
-          Some((receiver, m)).asInstanceOf[Option[(Rep[CompoundCollection[A]], RepMonoid[Collection[A @uncheckedVariance]]) forSome {type A}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], RepMonoid[Collection[A @uncheckedVariance]]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "reduce" =>
+          Some((receiver, m)).asInstanceOf[Option[(Rep[JuggedCollection[A]], RepMonoid[Collection[A @uncheckedVariance]]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], RepMonoid[Collection[A @uncheckedVariance]]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], RepMonoid[Collection[A @uncheckedVariance]]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object zip {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Coll[B]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "zip" =>
-          Some((receiver, ys)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Coll[B]) forSome {type A; type B}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], Coll[B]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "zip" =>
+          Some((receiver, ys)).asInstanceOf[Option[(Rep[JuggedCollection[A]], Coll[B]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Coll[B]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], Coll[B]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object update {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Collection[A]]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "update" =>
-          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Collection[A]]) forSome {type A}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], Rep[Int], Rep[Collection[A]]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "update" =>
+          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[JuggedCollection[A]], Rep[Int], Rep[Collection[A]]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Int], Rep[Collection[A]]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], Rep[Int], Rep[Collection[A]]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object updateMany {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Coll[Int], Coll[Collection[A]]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "updateMany" =>
-          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Coll[Int], Coll[Collection[A]]) forSome {type A}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], Coll[Int], Coll[Collection[A]]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "updateMany" =>
+          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[JuggedCollection[A]], Coll[Int], Coll[Collection[A]]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Coll[Int], Coll[Collection[A]]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], Coll[Int], Coll[Collection[A]]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object filterBy {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Boolean]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "filterBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Boolean]) forSome {type A}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], Rep[Collection[A @uncheckedVariance] => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[JuggedCollection[A]], Rep[Collection[A @uncheckedVariance] => Boolean]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Boolean]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], Rep[Collection[A @uncheckedVariance] => Boolean]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object flatMapBy {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Collection[B]]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "flatMapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Collection[B]]) forSome {type A; type B}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], Rep[Collection[A @uncheckedVariance] => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[JuggedCollection[A]], Rep[Collection[A @uncheckedVariance] => Collection[B]]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance] => Collection[B]]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], Rep[Collection[A @uncheckedVariance] => Collection[B]]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object append {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance]]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "append" =>
-          Some((receiver, value)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance]]) forSome {type A}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], Rep[Collection[A @uncheckedVariance]]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "append" =>
+          Some((receiver, value)).asInstanceOf[Option[(Rep[JuggedCollection[A]], Rep[Collection[A @uncheckedVariance]]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A @uncheckedVariance]]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], Rep[Collection[A @uncheckedVariance]]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object sortBy {
-      def unapply(d: Def[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => O], Ordering[O]) forSome {type A; type O}] = d match {
-        case MethodCall(receiver, method, Seq(by, o, _*), _) if receiver.elem.isInstanceOf[CompoundCollectionElem[_]] && method.getName == "sortBy" =>
-          Some((receiver, by, o)).asInstanceOf[Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => O], Ordering[O]) forSome {type A; type O}]]
+      def unapply(d: Def[_]): Option[(Rep[JuggedCollection[A]], Rep[Collection[A] => O], Ordering[O]) forSome {type A; type O}] = d match {
+        case MethodCall(receiver, method, Seq(by, o, _*), _) if receiver.elem.isInstanceOf[JuggedCollectionElem[_]] && method.getName == "sortBy" =>
+          Some((receiver, by, o)).asInstanceOf[Option[(Rep[JuggedCollection[A]], Rep[Collection[A] => O], Ordering[O]) forSome {type A; type O}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundCollection[A]], Rep[Collection[A] => O], Ordering[O]) forSome {type A; type O}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[JuggedCollection[A]], Rep[Collection[A] => O], Ordering[O]) forSome {type A; type O}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
   }
 
-  object CompoundCollectionCompanionMethods {
+  object JuggedCollectionCompanionMethods {
     object apply_apply_from_jugged_array {
       def unapply(d: Def[_]): Option[Rep[Array[Array[T]]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == CompoundCollectionCompanionElem && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == JuggedCollectionCompanionElem && method.getName == "apply" =>
           Some(arr).asInstanceOf[Option[Rep[Array[Array[T]]] forSome {type T}]]
         case _ => None
       }
@@ -2869,12 +2869,12 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
     }
   }
 
-  def mkCompoundCollection[A]
-    (nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[CompoundCollection[A]] =
-    new ExpCompoundCollection[A](nestedValues)
-  def unmkCompoundCollection[A](p: Rep[NestedCollection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
-    case _: CompoundCollectionElem[A] @unchecked =>
-      Some((p.asRep[CompoundCollection[A]].nestedValues))
+  def mkJuggedCollection[A]
+    (nestedValues: Coll[Collection[A]])(implicit eA: Elem[A]): Rep[JuggedCollection[A]] =
+    new ExpJuggedCollection[A](nestedValues)
+  def unmkJuggedCollection[A](p: Rep[NestedCollection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: JuggedCollectionElem[A] @unchecked =>
+      Some((p.asRep[JuggedCollection[A]].nestedValues))
     case _ =>
       None
   }
@@ -3593,7 +3593,7 @@ trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
 }
 
 object Collections_Module extends scalan.ModuleInfo {
-  val dump = "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"
+  val dump = "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"
 }
 }
 

@@ -328,7 +328,7 @@ trait Collections { self: CollectionsDsl =>
   trait NestedCollectionCompanion {
     @OverloadId("apply_from_jugged_array")
     def apply[T: Elem](arr: Rep[Array[Array[T]]])(implicit o2: Overloaded2): Rep[NestedCollection[T]] = {
-      CompoundCollection(arr)
+      JuggedCollection(arr)
     }
   }
 
@@ -385,7 +385,7 @@ trait Collections { self: CollectionsDsl =>
     }
   }
 
-  abstract class CompoundCollection[A](val nestedValues: Coll[Collection[A]])(implicit val eA: Elem[A])
+  abstract class JuggedCollection[A](val nestedValues: Coll[Collection[A]])(implicit val eA: Elem[A])
     extends NestedCollection[A] {
     lazy val eItem = collectionElement(eA)
     def segments = {
@@ -400,15 +400,15 @@ trait Collections { self: CollectionsDsl =>
     def apply(i: Rep[Int]) = nestedValues(i)
     def arr = nestedValues.arr
     def lst = arr.toList
-    def slice(offset: Rep[Int], length: Rep[Int]): NColl[A] = CompoundCollection(nestedValues.slice(offset, length))
+    def slice(offset: Rep[Int], length: Rep[Int]): NColl[A] = JuggedCollection(nestedValues.slice(offset, length))
     @OverloadId("many")
     def apply(indices: Coll[Int])(implicit o: Overloaded1): NColl[A] = {
-      CompoundCollection(nestedValues(indices))
+      JuggedCollection(nestedValues(indices))
     }
     def mapBy[B: Elem](f: Rep[Collection[A] => B @uncheckedVariance]): Coll[B] = Collection(arr.mapBy(f))
     def reduce(implicit m: RepMonoid[Collection[A @uncheckedVariance]]): Coll[A] = arr.reduce(m)
     def zip[B: Elem](ys: Coll[B]): PairColl[Collection[A], B] = PairCollectionSOA(self, ys)
-    def update (idx: Rep[Int], value: Rep[Collection[A]]): NColl[A] = CompoundCollection(nestedValues.update(idx, value))
+    def update (idx: Rep[Int], value: Rep[Collection[A]]): NColl[A] = JuggedCollection(nestedValues.update(idx, value))
     def updateMany (idxs: Coll[Int], vals: Coll[Collection[A]]): NColl[A] = ???
     def filterBy(f: Rep[Collection[A @uncheckedVariance] => Boolean]): NColl[A] = ???
     def flatMapBy[B: Elem](f: Rep[Collection[A @uncheckedVariance] => Collection[B]]): Coll[B] =
@@ -416,12 +416,12 @@ trait Collections { self: CollectionsDsl =>
     def append(value: Rep[Collection[A @uncheckedVariance]]): NColl[A]  = ??? //Collection(arr.append(value))
     def sortBy[O: Elem](by: Rep[Collection[A] => O])(implicit o: Ordering[O]): NColl[A] = ???
   }
-  trait CompoundCollectionCompanion
-        extends ConcreteClass1[CompoundCollection] with NestedCollectionCompanion {
+  trait JuggedCollectionCompanion
+        extends ConcreteClass1[JuggedCollection] with NestedCollectionCompanion {
     @OverloadId("apply_from_jugged_array")
-    override def apply[T: Elem](arr: Rep[Array[Array[T]]])(implicit o2: Overloaded2): Rep[CompoundCollection[T]] = {
+    override def apply[T: Elem](arr: Rep[Array[Array[T]]])(implicit o2: Overloaded2): Rep[JuggedCollection[T]] = {
       val nestedValues = Collection(arr.map(xs => Collection(xs)))
-      CompoundCollection(nestedValues)
+      JuggedCollection(nestedValues)
     }
   }
 

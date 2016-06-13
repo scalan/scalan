@@ -13,8 +13,8 @@ trait Matrices { self: LADsl =>
     def numRows: Rep[Int]
     implicit def eT: Elem[T]
     def rows: Rep[Collection[Vector[T]]]
-    def sparseRows: Rep[NestedCollection[(Int, T)]] = CompoundCollection(rows.map(_.nonZeroItems))
-    def toNColl: Rep[NestedCollection[T]] = CompoundCollection(rows.map(_.items))
+    def sparseRows: Rep[NestedCollection[(Int, T)]] = JuggedCollection(rows.map(_.nonZeroItems))
+    def toNColl: Rep[NestedCollection[T]] = JuggedCollection(rows.map(_.items))
     def columns: Rep[Collection[Vector[T]]]
     def rmValues: Rep[Collection[T]]
 
@@ -92,7 +92,7 @@ trait Matrices { self: LADsl =>
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = apply(row)(column)
 
     def mapBy[R: Elem](f: Rep[Vector[T] => Vector[R] @uncheckedVariance]): Matr[R] = {
-      DenseMatrix(CompoundCollection(toNColl.map(row => f(DenseVector(row)).items)))
+      DenseMatrix(JuggedCollection(toNColl.map(row => f(DenseVector(row)).items)))
     }
 
     def transpose(implicit n: Numeric[T]): Matr[T] = transposeDirect(self)
@@ -155,7 +155,7 @@ trait Matrices { self: LADsl =>
     }
 
     def *^^(value: Rep[T])(implicit n: Numeric[T], o: Overloaded1): Matr[T] = {
-      DenseMatrix(CompoundCollection(toNColl.map(row => (DenseVector(row) *^ value).items)))
+      DenseMatrix(JuggedCollection(toNColl.map(row => (DenseVector(row) *^ value).items)))
     }
 
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
@@ -171,7 +171,7 @@ trait Matrices { self: LADsl =>
 
     override def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
                              (implicit elem: Elem[T], o: Overloaded1): Matr[T] = {
-      DenseMatrix(CompoundCollection(items.map { coll => SparseVector(coll.as, coll.bs, numColumns).items }))
+      DenseMatrix(JuggedCollection(items.map { coll => SparseVector(coll.as, coll.bs, numColumns).items }))
     }
 
     @OverloadId("dense1")
@@ -181,17 +181,17 @@ trait Matrices { self: LADsl =>
     }
 
     override def fromRows[T: Elem](rows: Coll[Vector[T]], numCols: IntRep): Matr[T] = {
-      DenseMatrix(CompoundCollection(rows.map { vec => vec.items }))
+      DenseMatrix(JuggedCollection(rows.map { vec => vec.items }))
     }
 
     @OverloadId("apply_from_jugged_collection")
     def apply[T: Elem](rows: Coll[Collection[T]])(implicit o1: Overloaded1): Matr[T] = {
-      DenseMatrix(CompoundCollection(rows))
+      DenseMatrix(JuggedCollection(rows))
     }
 
     @OverloadId("apply_from_jugged_array")
     def apply[T: Elem](rows: Arr[Array[T]])(implicit o1: Overloaded2): Matr[T] = {
-      DenseMatrix(CompoundCollection(rows))
+      DenseMatrix(JuggedCollection(rows))
     }
   }
 
@@ -394,12 +394,12 @@ trait Matrices { self: LADsl =>
 
     @OverloadId("apply_from_sparse_array")
     def apply[T: Elem](spRows: Arr[Array[(Int,T)]], nCols: Rep[Int])(implicit o1: Overloaded1): Rep[SparseMatrix[T]] = {
-      SparseMatrix(CompoundCollection(spRows), nCols)
+      SparseMatrix(JuggedCollection(spRows), nCols)
     }
 
     @OverloadId("apply_from_sparse_arraySOA")
     def apply[T: Elem](spRows: Arr[(Array[Int], Array[T])], nCols: Rep[Int])(implicit o2: Overloaded2): Rep[SparseMatrix[T]] = {
-      SparseMatrix(CompoundCollection(spRows.map { case Pair(is, vs) => is zip vs }), nCols)
+      SparseMatrix(JuggedCollection(spRows.map { case Pair(is, vs) => is zip vs }), nCols)
     }
 
     override def fromColumns[T: Elem](cols: Coll[Vector[T]]): Matr[T] = { ??? }
@@ -412,7 +412,7 @@ trait Matrices { self: LADsl =>
     @OverloadId("dense1")
     override def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
                              (implicit elem: Elem[T], o: Overloaded2): Matr[T] = {
-      SparseMatrix(CompoundCollection(items.map { coll => DenseVector(coll).nonZeroItems }), numColumns)
+      SparseMatrix(JuggedCollection(items.map { coll => DenseVector(coll).nonZeroItems }), numColumns)
     }
 
     @OverloadId("dense2")
@@ -428,7 +428,7 @@ trait Matrices { self: LADsl =>
     }
 
     override def fromRows[T: Elem](rows: Coll[Vector[T]], numCols: IntRep): Matr[T] = {
-      SparseMatrix(CompoundCollection(rows.map(_.nonZeroItems)), numCols)
+      SparseMatrix(JuggedCollection(rows.map(_.nonZeroItems)), numCols)
     }
   }
 

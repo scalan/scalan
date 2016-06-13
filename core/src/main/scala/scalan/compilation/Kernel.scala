@@ -9,7 +9,12 @@ import scalan.util.{ClassLoaderUtil, FileUtil}
 import scalan.{Plugins, ScalanDslExp}
 
 // TODO Split into AbstractKernel and FileSystemKernel?
-class Kernel[+ScalanCake <: ScalanDslExp, A, B](val kernelName: String, val kernelType: KernelType, _kernelFunc: => ScalanCake#Exp[A => B], val compiler: Compiler[ScalanCake], dir: File, _config: Config) extends (A => B) {
+class Kernel[+ScalanCake <: ScalanDslExp, A, B](
+      val kernelName: String,
+      val kernelType: KernelType,
+      _kernelFunc: => ScalanCake#Exp[A => B],
+      val compiler: Compiler[ScalanCake], dir: File, _config: Config)
+  extends (A => B) {
   val scalan: compiler.scalan.type = compiler.scalan
   lazy val kernelFunc = _kernelFunc.asInstanceOf[scalan.Exp[A => B]]
   lazy val compilerConfig = _config.get[Option[Config]]("compiler") match {
@@ -72,7 +77,7 @@ abstract class KernelStore[+ScalanCake <: ScalanDslExp] {
     }
   }
 
-  def createKernel[A,B](kernelId: String, kernelType: KernelType, f: => scalan.Exp[A => B], kernelConfig: Config = ConfigFactory.empty()): Kernel[scalan.type, A, B] = {
+  def createKernel[A,B](kernelId: String, kernelType: KernelType, f: => scalan.Rep[A => B], kernelConfig: Config = ConfigFactory.empty()): Kernel[scalan.type, A, B] = {
     val allConfig = kernelConfig.withFallback(storeConfig)
     val compiler = this.compiler(kernelType)
     internalCreateKernel(kernelId, kernelType, f, compiler, allConfig)

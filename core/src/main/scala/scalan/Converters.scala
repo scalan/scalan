@@ -163,17 +163,13 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
     (eA, eB) match {
       case (e1, e2) if e1 == e2 =>
         implicit val ea = e1
-        Some(BaseConverter(identityFun[A]).asRep[Converter[A,B]])
+        Some(identityConv[A].asConv[A,B])
       case (pA: PairElem[a1,a2], pB: PairElem[b1,b2]) =>
-        implicit val ea1 = pA.eFst
-        implicit val eb1 = pB.eFst
-        implicit val ea2 = pA.eSnd
-        implicit val eb2 = pB.eSnd
         for {
-          c1 <- getConverter(ea1, eb1)
-          c2 <- getConverter(ea2, eb2)
+          c1 <- getConverter(pA.eFst, pB.eFst)
+          c2 <- getConverter(pA.eSnd, pB.eSnd)
         }
-          yield PairConverter(c1, c2)
+        yield pairConv(c1, c2)
       case (pA: SumElem[a1,a2], pB: SumElem[b1,b2]) =>
         implicit val ea1 = pA.eLeft
         implicit val eb1 = pB.eLeft
@@ -183,7 +179,7 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
           c1 <- getConverter(ea1, eb1)
           c2 <- getConverter(ea2, eb2)
         }
-          yield SumConverter(c1, c2)
+        yield SumConverter(c1, c2)
       case (e1: EntityElem1[a1,to1,_], e2: EntityElem1[a2,to2,_])
         if e1.cont.name == e2.cont.name && e1.cont.isFunctor =>
         implicit val ea1 = e1.eItem
