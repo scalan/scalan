@@ -1,6 +1,6 @@
 package scalan.meta
 
-import com.typesafe.scalalogging.slf4j.StrictLogging
+import com.typesafe.scalalogging.StrictLogging
 
 class BoilerplateTool extends StrictLogging {
   val scalanTypeSynonyms = Map(

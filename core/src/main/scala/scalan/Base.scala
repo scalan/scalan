@@ -4,7 +4,7 @@ import java.util.{Arrays, Objects}
 
 import com.github.kxbmap.configs.syntax._
 import com.typesafe.config.{Config, ConfigFactory}
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.annotation.unchecked.uncheckedVariance
 

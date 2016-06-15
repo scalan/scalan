@@ -27,6 +27,7 @@ lazy val buildSettings = Seq(
 lazy val testSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "2.2.6" % Test,
+    "ch.qos.logback" % "logback-classic" % "1.1.7",
     // TODO separate benchmark configuration, see https://github.com/scalameter/scalameter-examples/blob/master/basic-with-separate-config/build.sbt
     "com.storm-enroute" %% "scalameter" % "0.6" % Test),
   parallelExecution in Test := false,
@@ -70,10 +71,9 @@ cancelable in Global := true
 lazy val common = Project("scalan-common", file("common"))
   .settings(commonSettings,
   libraryDependencies ++= Seq(
-    "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
+    "com.typesafe.scala-logging" %% "scala-logging" % "3.4.0",
     // otherwise scala-logging-slf4j pulls 2.11.0
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-    "ch.qos.logback" % "logback-classic" % "1.1.3",
     "commons-io" % "commons-io" % "2.5"
   ))
 
@@ -88,9 +88,9 @@ lazy val core = Project("scalan-core", file("core"))
   .dependsOn(common % allConfigDependency, meta)
   .settings(commonSettings,
     libraryDependencies ++= Seq(
-      "com.chuusai" %% "shapeless" % "2.2.5",
-      "cglib" % "cglib" % "3.2.0",
-      "org.objenesis" % "objenesis" % "2.2",
+      // "com.chuusai" %% "shapeless" % "2.3.1",
+      "cglib" % "cglib" % "3.2.3",
+      "org.objenesis" % "objenesis" % "2.4",
       "com.github.kxbmap" %% "configs-java7" % "0.3.0"
     ))
 
