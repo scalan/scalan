@@ -42,8 +42,9 @@ trait TypeDescs extends Base { self: Scalan =>
     lazy val defaultRepValue = getDefaultRep
 
     override def getName(f: TypeDesc => String) = {
+      import ClassTag._
       val className = classTag match {
-        case anyValTag: AnyValManifest[_] => anyValTag.toString
+        case _: AnyValManifest[_] | Any | AnyVal | AnyRef | Object | Nothing | Null => classTag.toString
         case objectTag => objectTag.runtimeClass.getSimpleName
       }
       if (typeArgs.isEmpty)
