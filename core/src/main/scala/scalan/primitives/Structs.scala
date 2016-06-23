@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scalan.util.CollectionUtil._
+import scalan.util.CollectionUtil
 import scalan.common.OverloadHack._
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
@@ -128,7 +128,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
       struct(tupleFN(0) -> iso1.from(p._1), tupleFN(1) -> iso2.from(p._2))
 
     override def to(struct: Rep[Struct]) = {
-      Pair(iso1.to(struct(tupleFN(0)).asRep[A1]), iso2.to(struct(tupleFN(1)).asRep[A2]))
+      Pair(iso1.to(struct.getUnchecked[A1](tupleFN(0))), iso2.to(struct.getUnchecked[A2](tupleFN(1))))
     }
   }
 
@@ -152,14 +152,14 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     override def from(y: Rep[T]) = {
       val items = eFrom.fields.zip(eTo.fields).zip(itemIsos).map {
         case (((fnS, feS), (fnT, feT)), iso: Iso[s,t] @unchecked) =>
-          fnS -> iso.from(y(fnT).asRep[t])
+          fnS -> iso.from(y.getUnchecked[t](fnT))
       }
       struct(items).asRep[S]
     }
     override def to(x: Rep[S]) = {
       val items = eFrom.fields.zip(eTo.fields).zip(itemIsos).map {
         case (((fnS, feS), (fnT, feT)), iso: Iso[s,t] @unchecked) =>
-          fnT -> iso.to(x(fnS).asRep[s])
+          fnT -> iso.to(x.getUnchecked[s](fnS))
       }
       struct(items).asRep[T]
     }
@@ -171,18 +171,14 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     reifyObject(StructIso(eFrom, eTo, itemIsos))
 
   implicit class StructOps(s: Rep[Struct]) {
-    def apply(iField: Int): Rep[_] = field(s, iField)
-    def apply(fieldName: String): Rep[_] = field(s, fieldName)
-    def getChar(fieldName: String): Rep[Char] = field(s, fieldName).asRep[Char]
-    def getFloat(fieldName: String): Rep[Float] = field(s, fieldName).asRep[Float]
-    def getDouble(fieldName: String): Rep[Double] = field(s, fieldName).asRep[Double]
-    def getInt(fieldName: String): Rep[Int] = field(s, fieldName).asRep[Int]
-    def getLong(fieldName: String): Rep[Long] = field(s, fieldName).asRep[Long]
-    def getString(fieldName: String): Rep[String] = field(s, fieldName).asRep[String]
-    def getBoolean(fieldName: String): Rep[Boolean] = field(s, fieldName).asRep[Boolean]
-    def getByte(fieldName: String): Rep[Byte] = field(s, fieldName).asRep[Byte]
-    def getUnit(fieldName: String): Rep[Unit] = field(s, fieldName).asRep[Unit]
-    def getShort(fieldName: String): Rep[Short] = field(s, fieldName).asRep[Short]
+    def getUntyped(index: Int): Rep[_] = field(s, index)
+    def getUntyped(fieldName: String): Rep[_] = field(s, fieldName)
+    def getUnchecked[A](fieldName: String): Rep[A] = field(s, fieldName).asRep[A]
+    def get[A: Elem](fieldName: String): Rep[A] = {
+      val value = getUnchecked[A](fieldName)
+      assertElem(value, element[A])
+      value
+    }
   }
 
   def struct(fields: StructField*)(implicit o: Overloaded1): Rep[Struct] = struct(fields)
@@ -220,12 +216,14 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
         val g = groups(fn)
         flatIsos.get(fn) match {
           case Some(iso: Iso[a, _] @unchecked) =>
-            val projectedStruct = struct(g.map(link => (link.nestedField -> x(link.flatName))): _*)
+            val projectedStruct = struct(g.map {
+              link => link.nestedField -> x.getUntyped(link.flatName)
+            }: _*)
             val s = iso.to(projectedStruct.asRep[a])
-            (fn -> s)
+            (fn, s)
           case _ =>
             assert(g.length == 1, s"Many fields $g can't relate to the single field $fn without iso")
-            (fn -> x(g(0).flatName))
+            (fn, x.getUntyped(g(0).flatName))
         }
       }
       struct(eTo.structTag, items: _*)
@@ -236,13 +234,13 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
         val g = groups(fn)
         flatIsos.get(fn) match {
           case Some(iso: Iso[_, a] @unchecked) =>
-            val nestedStruct = iso.from(y(fn).asRep[a]).asRep[Struct]
+            val nestedStruct = iso.from(y.getUnchecked[a](fn)).asRep[Struct]
             // nestedStruct is guaranteed to be a Rep[Struct], because iso can be either IdentityIso on a struct or FlatteningIso
             g.map { link =>
-              link.flatName -> nestedStruct(link.nestedField)
+              link.flatName -> nestedStruct.getUntyped(link.nestedField)
             }
           case _ =>
-            List(g(0).flatName -> y(fn))
+            List(g(0).flatName -> y.getUntyped(fn))
         }
       }
       struct(items: _*)
@@ -346,7 +344,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
 
     def to(x: Rep[Struct]) = {
       val items = eTo.fields.map { case (outerN, outerE: StructElem[_]) =>
-        val s = struct(outerE.fields.map { case (innerN, innerE) => innerN -> x(innerN) })
+        val s = struct(outerE.fields.map { case (innerN, innerE) => innerN -> x.getUntyped(innerN) })
         outerN -> s
       }
       struct(eTo.structTag, items: _*)
@@ -354,8 +352,8 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
 
     def from(y: Rep[T]) = {
       val items = eTo.fields.flatMap { case (outerN, outerE: StructElem[_]) =>
-        val s = y(outerN)
-        outerE.fields.map { case (innerN, innerE) => innerN -> s.asRep[Struct](innerN) }
+        val s = y.getUntyped(outerN).asRep[Struct]
+        outerE.fields.map { case (innerN, innerE) => innerN -> s.getUntyped(innerN) }
       }
       struct(items: _*)
     }
@@ -369,8 +367,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
   }).asInstanceOf[Iso[_,T]]
 
   def tuplifyStruct[A <: Struct](se: Elem[A]): Elem[_] = {
-    val res = foldRight[(String,Elem[_]), Elem[_]](se.fields)(_._2) { case ((fn,fe), e) => pairElement(fe, e) }
-    res
+    CollectionUtil.foldRight[(String, Elem[_]), Elem[_]](se.fields)(_._2) { case ((fn,fe), e) => pairElement(fe, e) }
   }
 
   def unzipMany[T](tuple: Rep[_], list: List[T]): List[Rep[_]] = {
@@ -388,8 +385,8 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     val eFrom: Elem[A] = tuplifyStruct(eTo).asElem[A]
 
     def from(y: Rep[AS]) =  {
-      val res = foldRight[String, Rep[_]](eTo.fieldNames)(fn => y(fn)) {
-        case (fn, s) => Pair(y(fn), s)
+      val res = CollectionUtil.foldRight[String, Rep[_]](eTo.fieldNames)(y.getUntyped(_)) {
+        case (fn, s) => Pair(y.getUntyped(fn), s)
       }
       res.asRep[A]
     }

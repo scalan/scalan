@@ -26,8 +26,7 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
   def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int])(implicit eS: Elem[S]): Rep[StructItem[_,S]]
 
   def struct_getItem[S <: Struct](s: Rep[S], i: Int)(implicit eS: Elem[S], o1: Overloaded1): Rep[StructItem[_,S]] = {
-    val names = eS.fieldNames
-    val value = s(names(i))
+    val value = s.getUntyped(i)
     val key = IndexStructKey[S](i)
     StructItemBase(key, value)(eS.fields(i)._2.asElem[Any], eS)
   }

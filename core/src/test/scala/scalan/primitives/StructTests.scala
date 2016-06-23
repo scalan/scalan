@@ -14,21 +14,21 @@ trait StructExamples extends Scalan with SegmentsDsl with MetaTestsDsl {
   })(Lazy(element[Int]), structElement(Seq("in" -> eInt)))
 
   lazy val singleFieldStructIn = fun({ (in: Rep[Struct]) =>
-    field(in, "in").asRep[Int]
+    in.get[Int]("in")
   })(Lazy(structElement(Seq("in" -> eInt))), eInt)
 
   lazy val manyFieldsStructIn = fun({ (in: Rep[Struct]) =>
-    field(in, "in1").asRep[Int] - field(in, "in2").asRep[Int]
+    in.get[Int]("in1") - in.get[Int]("in2")
   })(Lazy(structElement(Seq("in1" -> eInt, "in2" -> eInt))), eInt)
 
   lazy val structInOut = fun({ (in: Rep[Struct]) =>
-    val outVal = field(in, "in").asRep[Int] - 1
+    val outVal = in.get[Int]("in") - 1
     struct("out" -> outVal)
   })(Lazy(structElement(Seq("in" -> eInt))), structElement(Seq("out" -> eInt)))
 
   lazy val crossFields = fun({ (in: Rep[Struct]) =>
-    val in1 = field(in, "in1").asRep[Int]
-    val in2 = field(in, "in2").asRep[Int]
+    val in1 = in.get[Int]("in1")
+    val in2 = in.get[Int]("in2")
     struct("out1" -> in2, "out2" -> in1)
   })(Lazy(structElement(Seq("in1" -> eInt, "in2" -> eInt))), structElement(Seq("out1" -> eInt, "out2" -> eInt)))
 
@@ -38,11 +38,11 @@ trait StructExamples extends Scalan with SegmentsDsl with MetaTestsDsl {
     val s1 = struct("a" -> n, "b" -> n)
     val s2 = struct("a" -> (n + 1), "b" -> (n + 2))
     val s3 = IF (n > 0) THEN s1 ELSE s2
-    field(s3, "a").asRep[Int] + field(s3, "b").asRep[Int]
+    s3.get[Int]("a") + s3.get[Int]("b")
   }
 
   lazy val t2 = fun({ (in: Rep[Int]) =>
-    field(struct("in" -> in), "in").asRep[Int]
+    struct("in" -> in).get[Int]("in")
   })
 
   lazy val t3 = fun({ (in: Rep[Int]) =>
@@ -278,19 +278,19 @@ class StructTests extends BaseViewTests {
     val eStruct3 = structElement(Seq("in1" -> eInt))
 
     val f1 = fun[Struct, Struct] {
-      x => struct("in1" -> field(x, "in1"), "in2" -> field(x, "in2"))
+      x => struct("in1" -> x.getUntyped("in1"), "in2" -> x.getUntyped("in2"))
     }(Lazy(eStruct1), eStruct1)
 
     val f2 = fun[Struct, Struct] {
-      x => struct("in1" -> field(x, "in2"), "in2" -> field(x, "in1"))
+      x => struct("in1" -> x.getUntyped("in2"), "in2" -> x.getUntyped("in1"))
     }(Lazy(eStruct1), eStruct1)
 
     val f3 = fun[Struct, Struct] {
-      x => struct("in2" -> field(x, "in2"), "in1" -> field(x, "in1"))
+      x => struct("in2" -> x.getUntyped("in2"), "in1" -> x.getUntyped("in1"))
     }(Lazy(eStruct1), eStruct2)
 
     val f4 = fun[Struct, Struct] {
-      x => struct("in1" -> field(x, "in1"))
+      x => struct("in1" -> x.getUntyped("in1"))
     }(Lazy(eStruct1), eStruct3)
 
     f1 should matchPattern { case Def(IdentityLambda()) => }

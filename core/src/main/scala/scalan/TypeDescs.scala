@@ -215,6 +215,10 @@ trait TypeDescs extends Base { self: Scalan =>
     case _ => e
   }
 
+  // can be removed and replaced with assert(value.elem == elem) after #72
+  def assertElem(value: Rep[_], elem: Elem[_]): Unit = assertElem(value, elem, "")
+  def assertElem(value: Rep[_], elem: Elem[_], hint: => String): Unit
+
   def assertEqualElems[A](e1: Elem[A], e2: Elem[A], m: => String) =
     assert(e1 == e2, s"Element $e1 != $e2: $m")
 
@@ -254,10 +258,22 @@ trait TypeDescs extends Base { self: Scalan =>
 }
 
 trait TypeDescsStd extends TypeDescs { self: ScalanStd =>
-
+  override def assertElem(value: Rep[_], elem: Elem[_], hint: => String) =
+    (value, elem) match {
+      case (_: Boolean, BooleanElement) | (_: Byte, ByteElement) | (_: Short, ShortElement) |
+           (_: Int, IntElement) | (_: Long, LongElement) | (_: Float, FloatElement) |
+           (_: Double, DoubleElement) | ((), UnitElement) | (_: Char, CharElement) => // do nothing
+      case _ =>
+        assert(elem.runtimeClass.isInstance(value),
+          s"$value has class ${value.getClass}, expected ${elem.runtimeClass}" + (if (hint.isEmpty) "" else s"; $hint"))
+    }
 }
 
 trait TypeDescsExp extends TypeDescs with BaseExp { self: ScalanExp =>
+
+  override def assertElem(value: Rep[_], elem: Elem[_], hint: => String) =
+    assert(value.elem == elem,
+      s"${value.toStringWithType} doesn't have type ${elem.name}" + (if (hint.isEmpty) "" else s"; $hint"))
 
   def withElemOf[A, R](x: Rep[A])(block: Elem[A] => R) = block(x.elem)
   def withResultElem[A, B, R](f: Rep[A => B])(block: Elem[B] => R) = block(withElemOf(f) { e => e.eRange })
