@@ -21,7 +21,7 @@ object Sbt {
     dir.foreach(f => FileUtil.copyToDir(f, executableLibsDir))
   }
 
-  def compile(sourcesDir: File, executableDir: File, functionName: String, extraCompilerOptions: Seq[String], sbtConfig: SbtConfig, dependencies: Array[String], sourceFile: File, jarPath: String): Array[String] = {
+  def compile(sourcesDir: File, executableDir: File, functionName: String, extraCompilerOptions: Seq[String], sbtConfig: SbtConfig, dependencies: Array[String], sourceFile: File, jarPath: String) = {
     val buildSbtFile = new File(sourcesDir, "build.sbt")
     val libsDir = libDir(currentWorkingDir)
     val executableLibsDir = libDir(executableDir)
@@ -89,13 +89,12 @@ object Sbt {
         writeSbtVersion()
 
         sbtConfig.commands.dropRight(1).foreach(com => ProcessUtil.launch(sourcesDir, "sbt", com))
-        val output: Array[String] = ProcessUtil.launch(sourcesDir, "sbt", sbtConfig.commands.last)
+        ProcessUtil.launch(sourcesDir, "sbt", sbtConfig.commands.last)
 
         val jarFile = file(executableDir, "target", s"scala-${sbtConfig.scalaBinaryVersion}", jar)
         if (jarFile.exists()) {
           FileUtils.moveToDirectory(jarFile, executableDir, false)
         }
-        output
 
       case _ =>
         write(buildSbtFile,

@@ -28,7 +28,7 @@ class LmsCompilerScala[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends
     def invoke(args: AnyRef*) = method.invoke(instance, args: _*)
   }
 
-  case class CustomCompilerOutput(objMethod: ObjMethodPair, sources: List[File], jar: File, mainClass: String, output: Option[Array[String]])
+  case class CustomCompilerOutput(objMethod: ObjMethodPair, sources: List[File], jar: File, mainClass: String)
 
   type CompilerConfig = LmsCompilerScalaConfig
   implicit val defaultCompilerConfig = LmsCompilerScalaConfig()
@@ -42,17 +42,16 @@ class LmsCompilerScala[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends
     FileUtil.deleteIfExist(jarFile)
     val jarPath = jarFile.getAbsolutePath
     val mainClass = mainClassName(functionName, compilerConfig)
-    val output: Option[Array[String]] = compilerConfig.sbtConfigOpt match {
+    compilerConfig.sbtConfigOpt match {
       case Some(sbtConfig) =>
         val dependencies: Array[String] = Array() // TODO methodReplaceConf.flatMap(conf => conf.dependencies).toArray
-        Some(Sbt.compile(sourcesDir, executableDir, functionName, compilerConfig.extraCompilerOptions, sbtConfig, dependencies, sourceFile, jarPath))
+        Sbt.compile(sourcesDir, executableDir, functionName, compilerConfig.extraCompilerOptions, sbtConfig, dependencies, sourceFile, jarPath)
       case None =>
         Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, sourceFile, jarPath)
-        None
     }
     val objMethod = loadMethod(jarFile, eInput, mainClass)
 
-    CustomCompilerOutput(objMethod, List(sourceFile), jarFile, mainClass, output)
+    CustomCompilerOutput(objMethod, List(sourceFile), jarFile, mainClass)
   }
 
   def mainClassName(functionName: String, compilerConfig: LmsCompilerScalaConfig): String =

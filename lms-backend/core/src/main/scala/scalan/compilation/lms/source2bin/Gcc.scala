@@ -8,7 +8,7 @@ import com.github.kxbmap.configs.syntax._
 import scalan.Plugins
 
 object Gcc {
-  def compile(targetDir: File, sourceDir: File, sourceFile: File, libName: String): Array[String] = {
+  def compile(targetDir: File, sourceDir: File, sourceFile: File, libName: String) = {
     val command = compileCommand(targetDir, sourceDir, sourceFile, libName)
     ProcessUtil.launch(sourceDir, command: _*)
   }
