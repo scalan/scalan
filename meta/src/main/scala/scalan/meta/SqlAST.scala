@@ -1,5 +1,7 @@
 package scalan.meta
 
+import scala.reflect.{ClassTag, classTag}
+
 object SqlAST {
 
   abstract sealed class Statement
@@ -32,19 +34,42 @@ object SqlAST {
 
   case class Column(name: String, ctype: ColumnType, constraints: List[ColumnConstraint])
 
-  case class ColumnType(sqlName: String, scalaName: String)
+  trait ColumnType {
+    def sqlName: String
+    def scalaName: String
+  }
 
-  val IntType = ColumnType("integer", "Int")
-  val DoubleType = ColumnType("real", "Double")
-  val LongType = ColumnType("bigint", "Long")
-  val StringType = ColumnType("varchar", "String")
-  val CharType = ColumnType("char", "Char")
-  val BoolType = ColumnType("bit", "Boolean")
-  val DateType = ColumnType("date", "Int")
-  val TimeType = ColumnType("time", "Int")
-  val TimestampType = ColumnType("timestamp", "Long")
-  val BlobType = ColumnType("blob", "Array[Byte]")
-  val NullType = ColumnType("null", "Any")
+  abstract class SimpleColumnType[A](val sqlName: String)(implicit tag: ClassTag[A]) extends ColumnType {
+    val scalaName = tag.toString
+  }
+
+  case object IntType extends SimpleColumnType[Int]("integer")
+  case object BigIntType extends SimpleColumnType[Long]("bigint")
+  case object SmallIntType extends SimpleColumnType[Short]("smallint")
+  case object TinyIntType extends SimpleColumnType[Short]("tinyint")
+
+  case object FloatType extends SimpleColumnType[Float]("float")
+  case object DoubleType extends SimpleColumnType[Double]("double")
+  case class DecimalType(totalDigits: Option[Int], fractionalDigits: Option[Int]) extends ColumnType {
+    def sqlName = "decimal"
+    val scalaName = classTag[BigDecimal].toString
+  }
+
+  case object BoolType extends SimpleColumnType[Boolean]("bool")
+
+  case class StringType(fixed: Boolean, length: Option[Int]) extends SimpleColumnType[String](if (fixed) "char" else "varchar")
+  val BasicStringType = StringType(false, None)
+
+  case object BlobType extends SimpleColumnType[Array[Byte]]("blob")
+
+  case object DateType extends SimpleColumnType[java.sql.Date]("date")
+  case object TimeType extends SimpleColumnType[java.sql.Time]("time")
+  case object TimestampType extends SimpleColumnType[java.sql.Timestamp]("timestamp")
+
+  case class EnumType(values: List[String]) extends ColumnType {
+    def sqlName = "enum"
+    val scalaName = classTag[String].toString
+  }
 
   sealed trait TableConstraint
   case class PrimaryKeyT(columns: List[IndexedColumn], onConflict: OnConflict) extends TableConstraint
@@ -196,6 +221,7 @@ object SqlAST {
   case class CastExpr(expr: Expression, to: ColumnType) extends Expression
 
   case class Literal(value: Any, tp: ColumnType) extends Expression
+  case object NullLiteral extends Expression
 
   // FIXME CaseWhenExpr(operand: Option[Expression], cases: List[(Expression, Expression)], default: Option[Expression])
   case class CaseWhenExpr(list: ExprList) extends Expression

@@ -1,6 +1,6 @@
 package scalan.meta
 
-import scala.collection.mutable.Map
+import scala.collection.mutable
 import scala.util.parsing.combinator.PackratParsers
 import scala.util.parsing.combinator.lexical.StdLexical
 import scala.util.parsing.combinator.syntactical.StandardTokenParsers
@@ -60,9 +60,7 @@ trait SqlParser {
   }
 
   object Grammar extends StandardTokenParsers with PackratParsers {
-    val builtinTypes = Array(IntType, DoubleType, LongType, StringType, CharType, BoolType, DateType)
-    val types = builtinTypes.map(t => (t.sqlName, t)).toMap
-    val tables = Map.empty[String, Table]
+    val tables = mutable.Map.empty[String, Table]
 
     def schema(sql: String): Script = phrase(script)(new lexical.Scanner(sql)) match {
       case Success(res, _) => res
@@ -115,10 +113,31 @@ trait SqlParser {
     lazy val table: Parser[Table] =
       ident ^^ { name => if (tables.contains(name)) tables(name) else throw SqlException("Unknown table " + name)}
 
+    // fieldType is optional in SQLite only
     lazy val columnDef: Parser[Column] =
-      ident ~ fieldType.? ~ repsep(columnConstraint, ",") ^^ { case i ~ t ~ cs => Column(i, t.getOrElse(StringType), cs) }
+      ident ~ columnType.? ~ repsep(columnConstraint, ",") ^^ { case i ~ t ~ cs => Column(i, t.getOrElse(BasicStringType), cs) }
 
-    lazy val fieldType: Parser[ColumnType] = ident ^^ { t => if (!types.contains(t)) throw SqlException("Not supported type " + t) else types(t)}
+    lazy val columnType: Parser[ColumnType] =
+      (TINYINT | BYTE) ^^^ TinyIntType |
+        SMALLINT ^^^ SmallIntType |
+        (INTEGER | INT) ^^^ IntType |
+        BIGINT ^^^ BigIntType |
+        (DECIMAL | NUMERIC) ~> ("(" ~> (int <~ ",") ~ int <~ ")").? ^^ {
+          case None => DecimalType(None, None)
+          case Some(p1 ~ p2) => DecimalType(Some(p1), Some(p2))
+        } |
+        (REAL | DOUBLE | DOUBLE_PRECISION) ^^^ DoubleType |
+        (BOOL | BIT) ^^^ BoolType |
+        (CHAR | VARCHAR | TEXT) ~ ("(" ~> int <~ ")").? ^^ {
+          case kw ~ optLength => StringType(kw == CHAR, optLength)
+        } |
+        DATE ^^^ DateType | TIME ^^^ TimeType | TIMESTAMP ^^^ TimestampType |
+        ENUM ~> ("(" ~> rep1sep(stringLit, ",") <~ ")") ^^ { EnumType(_) } |
+        ident ^^ {
+          t => throw SqlException("Unsupported type " + t)
+        }
+
+    lazy val int = numericLit ^^ { s => s.toInt }
 
     lazy val columnConstraint: Parser[ColumnConstraint] =
       PRIMARY ~> KEY ~> direction ~ conflictClause ~ AUTOINCREMENT.? ^^ { case direction ~ onConflict ~ autoIncrOpt =>
@@ -163,6 +182,23 @@ trait SqlParser {
 
     protected implicit def asParser(k: Keyword): Parser[Keyword] = k.parser
 
+    protected val TINYINT = Keyword("TINYINT")
+    protected val SMALLINT = Keyword("SMALLINT")
+    protected val INT = Keyword("INT")
+    protected val INTEGER = Keyword("INTEGER")
+    protected val BIGINT = Keyword("BIGINT")
+    protected val NUMERIC = Keyword("NUMERIC")
+    protected val REAL = Keyword("REAL")
+    protected val DOUBLE_PRECISION = Keyword("DOUBLE_PRECISION")
+    protected val BIT = Keyword("BIT")
+    protected val BYTE = Keyword("BYTE")
+    protected val BOOL = Keyword("BOOL")
+    protected val CHAR = Keyword("CHAR")
+    protected val TEXT = Keyword("TEXT")
+    protected val VARCHAR = Keyword("VARCHAR")
+    protected val TIME = Keyword("TIME")
+    protected val DATE = Keyword("DATE")
+    protected val ENUM = Keyword("ENUM")
     protected val ABORT = Keyword("ABORT")
     protected val ABS = Keyword("ABS")
     protected val ALL = Keyword("ALL")
@@ -499,13 +535,13 @@ trait SqlParser {
         ident ~ ("(" ~> repsep(expression, ",")) <~ ")" ^^ { case func ~ exprs => FuncExpr(func, exprs)}
 
     protected lazy val cast: Parser[Expression] =
-      CAST ~ "(" ~> expression ~ (AS ~> fieldType) <~ ")" ^^ { case exp ~ t => CastExpr(exp, t)}
+      CAST ~ "(" ~> expression ~ (AS ~> columnType) <~ ")" ^^ { case exp ~ t => CastExpr(exp, t)}
 
     protected lazy val literal: Parser[Expression] =
       (numericLiteral
         | booleanLiteral
-        | stringLit ^^ { case s => Literal(s, StringType) }
-        | NULL ^^^ Literal(null, NullType)
+        | stringLit ^^ { case s => Literal(s, BasicStringType) }
+        | NULL ^^^ NullLiteral
         | (CURRENT_DATE | CURRENT_TIME | CURRENT_TIMESTAMP) ^^ { kw => FuncExpr(kw.str.toLowerCase, Nil) }
         )
 
