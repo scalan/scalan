@@ -11,9 +11,26 @@ object SqlAST {
   type ColumnList = List[String]
   type ExprList = List[Expression]
 
-  case class Table(name: String, schema: Schema)
+  case class Table(name: String, schema: Schema, constraints: List[TableConstraint], withoutRowId: Boolean) {
+    lazy val primaryKey: List[String] = {
+      constraints.collectFirst {
+        case PrimaryKeyT(columns, _) => columns.map(_.name)
+      }.getOrElse {
+        schema.filter { _.constraints.exists(_.isInstanceOf[PrimaryKeyC]) } match {
+          case Seq(col) => List(col.name)
+          case columns =>
+            val msg =
+              if (columns.isEmpty)
+                s"No PRIMARY KEY column in table $name"
+              else
+                s"Multiple PRIMARY KEY column in table $name: ${columns.map(_.name).mkString(", ")}"
+            throw new SqlException(msg)
+        }
+      }
+    }
+  }
 
-  case class Column(name: String, ctype: ColumnType)
+  case class Column(name: String, ctype: ColumnType, constraints: List[ColumnConstraint])
 
   case class ColumnType(sqlName: String, scalaName: String)
 
@@ -28,6 +45,34 @@ object SqlAST {
   val TimestampType = ColumnType("timestamp", "Long")
   val BlobType = ColumnType("blob", "Array[Byte]")
   val NullType = ColumnType("null", "Any")
+
+  sealed trait TableConstraint
+  case class PrimaryKeyT(columns: List[IndexedColumn], onConflict: OnConflict) extends TableConstraint
+  case class UniqueT(columns: List[IndexedColumn], onConflict: OnConflict) extends TableConstraint
+  case class ForeignKeyT(parent: Table, columnNames: List[(String, String)]) extends TableConstraint
+
+  // TODO first parameter should be expr: Expression, but name resolution inside table defs would need to be
+  // fixed first
+  case class IndexedColumn(name: String, collationSequence: String, direction: SortDirection)
+
+  sealed trait ColumnConstraint
+  case class PrimaryKeyC(direction: SortDirection, onConflict: OnConflict, isAutoIncrement: Boolean) extends ColumnConstraint
+  case class NotNull(onConflict: OnConflict) extends ColumnConstraint
+  case class UniqueC(onConflict: OnConflict) extends ColumnConstraint
+  case class Default(expr: Expression) extends ColumnConstraint
+  case class ForeignKeyC(parent: Table, parentKey: String) extends ColumnConstraint
+  case class Collate(collationSequence: String) extends ColumnConstraint
+
+  case class Check(expr: Expression) extends ColumnConstraint with TableConstraint
+
+  sealed trait OnConflict
+  object OnConflict {
+    case object Abort extends OnConflict
+    case object Rollback extends OnConflict
+    case object Fail extends OnConflict
+    case object Ignore extends OnConflict
+    case object Replace extends OnConflict
+  }
 
   sealed abstract class JoinType
   case object Inner extends JoinType

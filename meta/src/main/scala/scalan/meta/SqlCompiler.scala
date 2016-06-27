@@ -165,7 +165,7 @@ trait SqlCompiler extends SqlParser {
         currScope = Scope(parent, scope.outer, scope.nesting, scope.name)
         val cType =  getExprType(columns(i).expr)
         currScope = saveScope
-        Some(Binding(scope.name, indexToPath(i, columns.length), Column(ref.name, cType)))
+        Some(Binding(scope.name, indexToPath(i, columns.length), Column(ref.name, cType, Nil)))
       }
       else None
     }

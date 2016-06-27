@@ -80,32 +80,82 @@ trait SqlParser {
     lazy val statement: Parser[Statement] = createTableStmt | createIndexStmt | selectStmt
 
     lazy val createTableStmt: Parser[Statement] =
-      CREATE ~> TABLE ~> ident ~ ("(" ~> columns <~ ")") ^^ {
-        case name ~ schema => {
-          val table = Table(name, schema)
+      CREATE ~> (TEMP | TEMPORARY).? ~> TABLE ~> (IF ~ NOT ~ EXISTS).? ~> ident ~ ("(" ~> repsep(columnDef, ",") ~ ("," ~> tableConstraint).* <~ ")") ~ (WITHOUT ~ ROWID).? ^^ {
+        case name ~ (columns ~ constraints) ~ withoutRowidOpt =>
+          val table = Table(name, columns, constraints, withoutRowidOpt.isDefined)
           tables.update(name, table)
           CreateTableStmt(table)
-        }
       }
 
+    lazy val tableConstraint: Parser[TableConstraint] =
+      PRIMARY ~> KEY ~> ("(" ~> repsep(indexedColumn, ",") <~ ")") ~ conflictClause ^^ {
+        case cols ~ onConflict => PrimaryKeyT(cols, onConflict)
+      } |
+        UNIQUE ~> ("(" ~> repsep(indexedColumn, ",") <~ ")") ~ conflictClause ^^ {
+          case cols ~ onConflict => UniqueT(cols, onConflict)
+        } |
+        checkClause |
+        FOREIGN ~> KEY ~> fieldList ~ foreignKeyClause ^^ {
+          case key ~ ((parentTable, parentKey)) =>
+            if (key.length == parentKey.length)
+              ForeignKeyT(parentTable, key.zip(parentKey))
+            else
+              throw new SqlException(s"Different number of columns in parent key ${parentKey.mkString("(", ",", ")")} and child key ${key.mkString("(", ",", ")")}")
+        }
+
+    lazy val indexedColumn = ident ~ collationClause.? ~ direction ^^ {
+      case name ~ optCollSeq ~ dir => IndexedColumn(name, optCollSeq.getOrElse("BINARY"), dir)
+    }
+
     lazy val createIndexStmt: Parser[Statement] =
-      CREATE ~> INDEX ~> ident ~ (ON ~> table) ~ ("(" ~> fieldList <~ ")") ^^ {
+      CREATE ~> INDEX ~> ident ~ (ON ~> table) ~ fieldList ^^ {
         case name ~ table ~ key => CreateIndexStmt(name, table, key)
       }
 
     lazy val table: Parser[Table] =
       ident ^^ { name => if (tables.contains(name)) tables(name) else throw SqlException("Unknown table " + name)}
 
-    lazy val columns: Parser[Schema] =
-      repsep(column, ",") ^^ (list => Schema(list: _*))
-
-    lazy val column: Parser[Column] =
-      ident ~ fieldType ^^ { case i ~ t => Column(i, t)}
+    lazy val columnDef: Parser[Column] =
+      ident ~ fieldType.? ~ repsep(columnConstraint, ",") ^^ { case i ~ t ~ cs => Column(i, t.getOrElse(StringType), cs) }
 
     lazy val fieldType: Parser[ColumnType] = ident ^^ { t => if (!types.contains(t)) throw SqlException("Not supported type " + t) else types(t)}
 
+    lazy val columnConstraint: Parser[ColumnConstraint] =
+      PRIMARY ~> KEY ~> direction ~ conflictClause ~ AUTOINCREMENT.? ^^ { case direction ~ onConflict ~ autoIncrOpt =>
+        PrimaryKeyC(direction, onConflict, autoIncrOpt.isDefined)
+      } |
+        NOT ~> NULL ~> conflictClause ^^ { case onConflict => NotNull(onConflict) } |
+        UNIQUE ~> conflictClause ^^ { case onConflict => UniqueC(onConflict) } |
+        DEFAULT ~> defaultValue ^^ { case expr => Default(expr) } |
+        checkClause |
+        collationClause ^^ { case collSeq => Collate(collSeq) } |
+        foreignKeyClause ^^ { case (parent, key) =>
+          key match {
+            case List(column) =>
+              ForeignKeyC(parent, column)
+            case _ =>
+              throw new SqlException(s"Foreign key for a single column references multiple columns ${key.mkString(",")}")
+          }
+        }
+
+    lazy val checkClause = CHECK ~> "(" ~> expression <~ ")" ^^ { Check(_) }
+
+    lazy val conflictClause: Parser[OnConflict] =
+      (ON ~> CONFLICT ~> (ROLLBACK ^^^ OnConflict.Rollback | ABORT ^^^ OnConflict.Abort | FAIL ^^^ OnConflict.Fail | IGNORE ^^^ OnConflict.Ignore | REPLACE ^^^ OnConflict.Replace)).? ^^ { _.getOrElse(OnConflict.Abort) }
+
+    lazy val defaultValue: Parser[Expression] = literal | "(" ~> expression <~ ")"
+
+    lazy val collationClause = COLLATE ~> ident
+
+    // TODO support ON DELETE/UPDATE, MATCH, DEFERRABLE
+    // see https://www.sqlite.org/syntax/foreign-key-clause.html
+    lazy val foreignKeyClause: Parser[(Table, List[String])] =
+      REFERENCES ~> table ~ fieldList.? ^^ { case table ~ optKey =>
+        (table, optKey.getOrElse(table.primaryKey))
+      }
+
     lazy val fieldList: Parser[ColumnList] =
-      repsep(ident, ",")
+      "(" ~> repsep(ident, ",") <~ ")"
 
     protected case class Keyword(str: String) {
       lazy val parser = str ^^^ this
@@ -113,22 +163,31 @@ trait SqlParser {
 
     protected implicit def asParser(k: Keyword): Parser[Keyword] = k.parser
 
+    protected val ABORT = Keyword("ABORT")
     protected val ABS = Keyword("ABS")
     protected val ALL = Keyword("ALL")
     protected val AND = Keyword("AND")
     protected val APPROXIMATE = Keyword("APPROXIMATE")
     protected val AS = Keyword("AS")
     protected val ASC = Keyword("ASC")
+    protected val AUTOINCREMENT = Keyword("AUTOINCREMENT")
     protected val AVG = Keyword("AVG")
     protected val BETWEEN = Keyword("BETWEEN")
     protected val BY = Keyword("BY")
     protected val CACHE = Keyword("CACHE")
     protected val CASE = Keyword("CASE")
     protected val CAST = Keyword("CAST")
+    protected val CHECK = Keyword("CHECK")
+    protected val COLLATE = Keyword("COLLATE")
+    protected val CONFLICT = Keyword("CONFLICT")
     protected val COUNT = Keyword("COUNT")
     protected val CREATE = Keyword("CREATE")
     protected val CROSS = Keyword("CROSS")
+    protected val CURRENT_DATE = Keyword("CURRENT_DATE")
+    protected val CURRENT_TIME = Keyword("CURRENT_TIME")
+    protected val CURRENT_TIMESTAMP = Keyword("CURRENT_TIMESTAMP")
     protected val DECIMAL = Keyword("DECIMAL")
+    protected val DEFAULT = Keyword("DEFAULT")
     protected val DESC = Keyword("DESC")
     protected val DISTINCT = Keyword("DISTINCT")
     protected val DOUBLE = Keyword("DOUBLE")
@@ -137,13 +196,16 @@ trait SqlParser {
     protected val ESCAPE = Keyword("ESCAPE")
     protected val EXCEPT = Keyword("EXCEPT")
     protected val EXISTS = Keyword("EXISTS")
+    protected val FAIL = Keyword("FAIL")
     protected val FALSE = Keyword("FALSE")
     protected val FIRST = Keyword("FIRST")
+    protected val FOREIGN = Keyword("FOREIGN")
     protected val FROM = Keyword("FROM")
     protected val FULL = Keyword("FULL")
     protected val GROUP = Keyword("GROUP")
     protected val HAVING = Keyword("HAVING")
     protected val IF = Keyword("IF")
+    protected val IGNORE = Keyword("IGNORE")
     protected val IN = Keyword("IN")
     protected val INNER = Keyword("INNER")
     protected val INSERT = Keyword("INSERT")
@@ -152,6 +214,7 @@ trait SqlParser {
     protected val INDEX = Keyword("INDEX")
     protected val IS = Keyword("IS")
     protected val JOIN = Keyword("JOIN")
+    protected val KEY = Keyword("KEY")
     protected val LAST = Keyword("LAST")
     protected val LEFT = Keyword("LEFT")
     protected val LIKE = Keyword("LIKE")
@@ -168,9 +231,14 @@ trait SqlParser {
     protected val ORDER = Keyword("ORDER")
     protected val OUTER = Keyword("OUTER")
     protected val OVERWRITE = Keyword("OVERWRITE")
+    protected val PRIMARY = Keyword("PRIMARY")
+    protected val REFERENCES = Keyword("REFERENCES")
     protected val REGEXP = Keyword("REGEXP")
+    protected val REPLACE = Keyword("REPLACE")
     protected val RIGHT = Keyword("RIGHT")
     protected val RLIKE = Keyword("RLIKE")
+    protected val ROLLBACK = Keyword("ROLLBACK")
+    protected val ROWID = Keyword("ROWID")
     protected val SELECT = Keyword("SELECT")
     protected val SEMI = Keyword("SEMI")
     protected val SQRT = Keyword("SQRT")
@@ -179,14 +247,18 @@ trait SqlParser {
     protected val SUBSTRING = Keyword("SUBSTRING")
     protected val SUM = Keyword("SUM")
     protected val TABLE = Keyword("TABLE")
+    protected val TEMP = Keyword("TEMP")
+    protected val TEMPORARY = Keyword("TEMPORARY")
     protected val THEN = Keyword("THEN")
     protected val TIMESTAMP = Keyword("TIMESTAMP")
     protected val TRUE = Keyword("TRUE")
     protected val UNION = Keyword("UNION")
+    protected val UNIQUE = Keyword("UNIQUE")
     protected val UPPER = Keyword("UPPER")
     protected val USING = Keyword("USING")
     protected val WHEN = Keyword("WHEN")
     protected val WHERE = Keyword("WHERE")
+    protected val WITHOUT = Keyword("WITHOUT")
 
     // Use reflection to find the reserved words defined in this class.
     protected val reservedWords =
@@ -312,9 +384,12 @@ trait SqlParser {
       rep1sep(sortSpec, ",")
 
     protected lazy val sortSpec: Parser[SortSpec] =
-      expression ~ (ASC ^^^ Ascending | DESC ^^^ Descending).? ~ (NULLS ~> (FIRST ^^^ NullsFirst | LAST ^^^ NullsLast)).? ^^ {
-        case e ~ o ~ n => SortSpec(e, o.getOrElse(Ascending), n.getOrElse(NullsOrderingUnspecified))
+      expression ~ direction ~ (NULLS ~> (FIRST ^^^ NullsFirst | LAST ^^^ NullsLast)).? ^^ {
+        case e ~ d ~ n => SortSpec(e, d, n.getOrElse(NullsOrderingUnspecified))
       }
+
+    protected lazy val direction: Parser[SortDirection] =
+      (ASC ^^^ Ascending | DESC ^^^ Descending).? ^^ { _.getOrElse(Ascending) }
 
     protected lazy val expression: Parser[Expression] =
       orExpression
@@ -426,11 +501,12 @@ trait SqlParser {
     protected lazy val cast: Parser[Expression] =
       CAST ~ "(" ~> expression ~ (AS ~> fieldType) <~ ")" ^^ { case exp ~ t => CastExpr(exp, t)}
 
-    protected lazy val literal: Parser[Literal] =
+    protected lazy val literal: Parser[Expression] =
       (numericLiteral
         | booleanLiteral
-        | stringLit ^^ { case s => Literal(s, StringType)}
+        | stringLit ^^ { case s => Literal(s, StringType) }
         | NULL ^^^ Literal(null, NullType)
+        | (CURRENT_DATE | CURRENT_TIME | CURRENT_TIMESTAMP) ^^ { kw => FuncExpr(kw.str.toLowerCase, Nil) }
         )
 
     protected lazy val booleanLiteral: Parser[Literal] =
