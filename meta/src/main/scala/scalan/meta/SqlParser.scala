@@ -181,15 +181,15 @@ class SqlParser {
     protected val WHERE = Keyword("WHERE")
     protected val WITHOUT = Keyword("WITHOUT")
 
-    // Use reflection to find the reserved words defined in this class.
-    protected val reservedWords =
-      this
-        .getClass
-        .getMethods
-        .filter(_.getReturnType == classOf[Keyword])
-        .map(_.invoke(this).asInstanceOf[Keyword].str)
+    override val lexical = {
+      // Use reflection to find the reserved words defined in this class.
+      val keywords =
+        SqlGrammar.this.getClass.getMethods
+          .filter(_.getReturnType == classOf[Keyword])
+          .map(_.invoke(SqlGrammar.this).asInstanceOf[Keyword].str)
 
-    override val lexical = new SqlLexical(reservedWords)
+      new SqlLexical(keywords)
+    }
 
     val tables = mutable.Map.empty[String, Table]
 
