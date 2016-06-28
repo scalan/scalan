@@ -19,10 +19,15 @@ trait SqlParser {
       override def toString = chars
     }
 
-    reserved ++= keywords.flatMap(w => allCaseVersions(w))
+    reserved ++= keywords
+
+    // SQL identifiers and keywords are case-insensitive, thus convert them to a specific case
+    // TODO support quoted identifiers
+    override protected def processIdent(name: String) =
+      if (reserved contains name.toUpperCase) Keyword(name.toUpperCase) else Identifier(name.toLowerCase)
 
     delimiters +=(
-      "@", "*", "+", "-", "<", "=", "<>", "!=", "<=", ">=", ">", "/", "(", ")",
+      "@", "*", "+", "-", "<", "=", "==", "<>", "!=", "<=", ">=", ">", "/", "(", ")",
       ",", ";", "%", "{", "}", ":", "[", "]", ".", "&", "|", "^", "~", "<=>"
       )
 
@@ -52,16 +57,6 @@ trait SqlParser {
         | '-' ~ '-' ~ chrExcept(EofCh, '\n').*
         | '/' ~ '*' ~ failure("unclosed comment")
         ).*
-
-    /** Generate all variations of upper and lower case of a given string */
-    def allCaseVersions(s: String, prefix: String = ""): Stream[String] = {
-      if (s == "") {
-        Stream(prefix)
-      } else {
-        allCaseVersions(s.tail, prefix + s.head.toLower) ++
-          allCaseVersions(s.tail, prefix + s.head.toUpper)
-      }
-    }
   }
 
   object Grammar extends StandardTokenParsers with PackratParsers {
@@ -109,14 +104,11 @@ trait SqlParser {
 
     lazy val fieldType: Parser[ColumnType] = ident ^^ { t => if (!types.contains(t)) throw SqlException("Not supported type " + t) else types(t)}
 
-    //lazy val ident: Parser[String] = """[\w]+""".r
-
     lazy val fieldList: Parser[ColumnList] =
       repsep(ident, ",")
 
     protected case class Keyword(str: String) {
-      // TODO better case insensitivity (using RegexParsers?)
-      lazy val parser = lexical.allCaseVersions(str).map(x => x: Parser[String]).reduce(_ | _) ^^^ this
+      lazy val parser = str ^^^ this
     }
 
     protected implicit def asParser(k: Keyword): Parser[Keyword] = k.parser
