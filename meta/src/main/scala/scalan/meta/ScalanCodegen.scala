@@ -6,7 +6,7 @@ import scalan.meta.PrintExtensions._
 import scalan.meta.ScalanAst._
 import scalan.util.{Serialization, ScalaNameUtil, StringUtil}
 
-trait MetaCodegen extends SqlCompiler with ScalanAstExtensions {
+class MetaCodegen extends SqlCompiler with ScalanAstExtensions {
 
   abstract class TemplateData(val module: SEntityModuleDef, val entity: STraitOrClassDef) {
     val name = entity.name
