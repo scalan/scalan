@@ -8,10 +8,11 @@ import scala.util.parsing.input.CharArrayReader.EofCh
 import scalan.meta.SqlAST._
 
 // see http://savage.net.au/SQL/sql-2003-2.bnf.html for full SQL grammar
-trait SqlParser {
+class SqlParser {
+  val grammar = new SqlGrammar
 
-  def parseDDL(sql: String) = Grammar.schema(sql)
-  def parseSelect(sql: String) = Grammar.select(sql)
+  def parseDDL(sql: String) = grammar.schema(sql)
+  def parseSelect(sql: String) = grammar.select(sql)
 
   class SqlLexical(val keywords: Seq[String]) extends StdLexical {
 
@@ -59,123 +60,7 @@ trait SqlParser {
         ).*
   }
 
-  object Grammar extends StandardTokenParsers with PackratParsers {
-    val tables = mutable.Map.empty[String, Table]
-
-    def schema(sql: String): Script = phrase(script)(new lexical.Scanner(sql)) match {
-      case Success(res, _) => res
-      case res => throw SqlException(res.toString)
-    }
-
-    def select(sql: String): SelectStmt = phrase(selectStmt)(new lexical.Scanner(sql)) match {
-      case Success(res, _) => res
-      case res => throw SqlException(res.toString)
-    }
-
-    lazy val script: Parser[Script] =
-      rep(statement <~ ";") ^^ (list => Script(list: _*))
-
-    lazy val statement: Parser[Statement] = createTableStmt | createIndexStmt | selectStmt
-
-    lazy val createTableStmt: Parser[Statement] =
-      CREATE ~> (TEMP | TEMPORARY).? ~> TABLE ~> (IF ~ NOT ~ EXISTS).? ~> ident ~ ("(" ~> repsep(columnDef, ",") ~ ("," ~> tableConstraint).* <~ ")") ~ (WITHOUT ~ ROWID).? ^^ {
-        case name ~ (columns ~ constraints) ~ withoutRowidOpt =>
-          val table = Table(name, columns, constraints, withoutRowidOpt.isDefined)
-          tables.update(name, table)
-          CreateTableStmt(table)
-      }
-
-    lazy val tableConstraint: Parser[TableConstraint] =
-      PRIMARY ~> KEY ~> ("(" ~> repsep(indexedColumn, ",") <~ ")") ~ conflictClause ^^ {
-        case cols ~ onConflict => PrimaryKeyT(cols, onConflict)
-      } |
-        UNIQUE ~> ("(" ~> repsep(indexedColumn, ",") <~ ")") ~ conflictClause ^^ {
-          case cols ~ onConflict => UniqueT(cols, onConflict)
-        } |
-        checkClause |
-        FOREIGN ~> KEY ~> fieldList ~ foreignKeyClause ^^ {
-          case key ~ ((parentTable, parentKey)) =>
-            if (key.length == parentKey.length)
-              ForeignKeyT(parentTable, key.zip(parentKey))
-            else
-              throw new SqlException(s"Different number of columns in parent key ${parentKey.mkString("(", ",", ")")} and child key ${key.mkString("(", ",", ")")}")
-        }
-
-    lazy val indexedColumn = ident ~ collationClause.? ~ direction ^^ {
-      case name ~ optCollSeq ~ dir => IndexedColumn(name, optCollSeq.getOrElse("BINARY"), dir)
-    }
-
-    lazy val createIndexStmt: Parser[Statement] =
-      CREATE ~> INDEX ~> ident ~ (ON ~> table) ~ fieldList ^^ {
-        case name ~ table ~ key => CreateIndexStmt(name, table, key)
-      }
-
-    lazy val table: Parser[Table] =
-      ident ^^ { name => if (tables.contains(name)) tables(name) else throw SqlException("Unknown table " + name)}
-
-    // fieldType is optional in SQLite only
-    lazy val columnDef: Parser[Column] =
-      ident ~ columnType.? ~ repsep(columnConstraint, ",") ^^ { case i ~ t ~ cs => Column(i, t.getOrElse(BasicStringType), cs) }
-
-    lazy val columnType: Parser[ColumnType] =
-      (TINYINT | BYTE) ^^^ TinyIntType |
-        SMALLINT ^^^ SmallIntType |
-        (INTEGER | INT) ^^^ IntType |
-        BIGINT ^^^ BigIntType |
-        (DECIMAL | NUMERIC) ~> ("(" ~> (int <~ ",") ~ int <~ ")").? ^^ {
-          case None => DecimalType(None, None)
-          case Some(p1 ~ p2) => DecimalType(Some(p1), Some(p2))
-        } |
-        (REAL | DOUBLE | DOUBLE_PRECISION) ^^^ DoubleType |
-        (BOOL | BIT) ^^^ BoolType |
-        (CHAR | VARCHAR | TEXT) ~ ("(" ~> int <~ ")").? ^^ {
-          case kw ~ optLength => StringType(kw == CHAR, optLength)
-        } |
-        DATE ^^^ DateType | TIME ^^^ TimeType | TIMESTAMP ^^^ TimestampType |
-        ENUM ~> ("(" ~> rep1sep(stringLit, ",") <~ ")") ^^ { EnumType(_) } |
-        ident ^^ {
-          t => throw SqlException("Unsupported type " + t)
-        }
-
-    lazy val int = numericLit ^^ { s => s.toInt }
-
-    lazy val columnConstraint: Parser[ColumnConstraint] =
-      PRIMARY ~> KEY ~> direction ~ conflictClause ~ AUTOINCREMENT.? ^^ { case direction ~ onConflict ~ autoIncrOpt =>
-        PrimaryKeyC(direction, onConflict, autoIncrOpt.isDefined)
-      } |
-        NOT ~> NULL ~> conflictClause ^^ { case onConflict => NotNull(onConflict) } |
-        UNIQUE ~> conflictClause ^^ { case onConflict => UniqueC(onConflict) } |
-        DEFAULT ~> defaultValue ^^ { case expr => Default(expr) } |
-        checkClause |
-        collationClause ^^ { case collSeq => Collate(collSeq) } |
-        foreignKeyClause ^^ { case (parent, key) =>
-          key match {
-            case List(column) =>
-              ForeignKeyC(parent, column)
-            case _ =>
-              throw new SqlException(s"Foreign key for a single column references multiple columns ${key.mkString(",")}")
-          }
-        }
-
-    lazy val checkClause = CHECK ~> "(" ~> expression <~ ")" ^^ { Check(_) }
-
-    lazy val conflictClause: Parser[OnConflict] =
-      (ON ~> CONFLICT ~> (ROLLBACK ^^^ OnConflict.Rollback | ABORT ^^^ OnConflict.Abort | FAIL ^^^ OnConflict.Fail | IGNORE ^^^ OnConflict.Ignore | REPLACE ^^^ OnConflict.Replace)).? ^^ { _.getOrElse(OnConflict.Abort) }
-
-    lazy val defaultValue: Parser[Expression] = literal | "(" ~> expression <~ ")"
-
-    lazy val collationClause = COLLATE ~> ident
-
-    // TODO support ON DELETE/UPDATE, MATCH, DEFERRABLE
-    // see https://www.sqlite.org/syntax/foreign-key-clause.html
-    lazy val foreignKeyClause: Parser[(Table, List[String])] =
-      REFERENCES ~> table ~ fieldList.? ^^ { case table ~ optKey =>
-        (table, optKey.getOrElse(table.primaryKey))
-      }
-
-    lazy val fieldList: Parser[ColumnList] =
-      "(" ~> repsep(ident, ",") <~ ")"
-
+  class SqlGrammar extends StandardTokenParsers with PackratParsers {
     protected case class Keyword(str: String) {
       lazy val parser = str ^^^ this
     }
@@ -305,6 +190,122 @@ trait SqlParser {
         .map(_.invoke(this).asInstanceOf[Keyword].str)
 
     override val lexical = new SqlLexical(reservedWords)
+
+    val tables = mutable.Map.empty[String, Table]
+
+    def schema(sql: String): Script = phrase(script)(new lexical.Scanner(sql)) match {
+      case Success(res, _) => res
+      case res => throw SqlException(res.toString)
+    }
+
+    def select(sql: String): SelectStmt = phrase(selectStmt)(new lexical.Scanner(sql)) match {
+      case Success(res, _) => res
+      case res => throw SqlException(res.toString)
+    }
+
+    lazy val script: Parser[Script] =
+      rep(statement <~ ";") ^^ (list => Script(list: _*))
+
+    lazy val statement: Parser[Statement] = createTableStmt | createIndexStmt | selectStmt
+
+    lazy val createTableStmt: Parser[Statement] =
+      CREATE ~> (TEMP | TEMPORARY).? ~> TABLE ~> (IF ~ NOT ~ EXISTS).? ~> ident ~ ("(" ~> repsep(columnDef, ",") ~ ("," ~> tableConstraint).* <~ ")") ~ (WITHOUT ~ ROWID).? ^^ {
+        case name ~ (columns ~ constraints) ~ withoutRowidOpt =>
+          val table = Table(name, columns, constraints, withoutRowidOpt.isDefined)
+          tables.update(name, table)
+          CreateTableStmt(table)
+      }
+
+    lazy val tableConstraint: Parser[TableConstraint] =
+      PRIMARY ~> KEY ~> ("(" ~> repsep(indexedColumn, ",") <~ ")") ~ conflictClause ^^ {
+        case cols ~ onConflict => PrimaryKeyT(cols, onConflict)
+      } |
+        UNIQUE ~> ("(" ~> repsep(indexedColumn, ",") <~ ")") ~ conflictClause ^^ {
+          case cols ~ onConflict => UniqueT(cols, onConflict)
+        } |
+        checkClause |
+        FOREIGN ~> KEY ~> fieldList ~ foreignKeyClause ^^ {
+          case key ~ ((parentTable, parentKey)) =>
+            if (key.length == parentKey.length)
+              ForeignKeyT(parentTable, key.zip(parentKey))
+            else
+              throw new SqlException(s"Different number of columns in parent key ${parentKey.mkString("(", ",", ")")} and child key ${key.mkString("(", ",", ")")}")
+        }
+
+    lazy val indexedColumn = ident ~ collationClause.? ~ direction ^^ {
+      case name ~ optCollSeq ~ dir => IndexedColumn(name, optCollSeq.getOrElse("BINARY"), dir)
+    }
+
+    lazy val createIndexStmt: Parser[Statement] =
+      CREATE ~> INDEX ~> ident ~ (ON ~> table) ~ fieldList ^^ {
+        case name ~ table ~ key => CreateIndexStmt(name, table, key)
+      }
+
+    lazy val table: Parser[Table] =
+      ident ^^ { name => if (tables.contains(name)) tables(name) else throw SqlException("Unknown table " + name)}
+
+    // fieldType is optional in SQLite only
+    lazy val columnDef: Parser[Column] =
+      ident ~ columnType.? ~ repsep(columnConstraint, ",") ^^ { case i ~ t ~ cs => Column(i, t.getOrElse(BasicStringType), cs) }
+
+    lazy val columnType: Parser[ColumnType] =
+      (TINYINT | BYTE) ^^^ TinyIntType |
+        SMALLINT ^^^ SmallIntType |
+        (INTEGER | INT) ^^^ IntType |
+        BIGINT ^^^ BigIntType |
+        (DECIMAL | NUMERIC) ~> ("(" ~> (int <~ ",") ~ int <~ ")").? ^^ {
+          case None => DecimalType(None, None)
+          case Some(p1 ~ p2) => DecimalType(Some(p1), Some(p2))
+        } |
+        (REAL | DOUBLE | DOUBLE_PRECISION) ^^^ DoubleType |
+        (BOOL | BIT) ^^^ BoolType |
+        (CHAR | VARCHAR | TEXT) ~ ("(" ~> int <~ ")").? ^^ {
+          case kw ~ optLength => StringType(kw == CHAR, optLength)
+        } |
+        DATE ^^^ DateType | TIME ^^^ TimeType | TIMESTAMP ^^^ TimestampType |
+        ENUM ~> ("(" ~> rep1sep(stringLit, ",") <~ ")") ^^ { EnumType(_) } |
+        ident ^^ {
+          t => throw SqlException("Unsupported type " + t)
+        }
+
+    lazy val int = numericLit ^^ { s => s.toInt }
+
+    lazy val columnConstraint: Parser[ColumnConstraint] =
+      PRIMARY ~> KEY ~> direction ~ conflictClause ~ AUTOINCREMENT.? ^^ { case direction ~ onConflict ~ autoIncrOpt =>
+        PrimaryKeyC(direction, onConflict, autoIncrOpt.isDefined)
+      } |
+        NOT ~> NULL ~> conflictClause ^^ { case onConflict => NotNull(onConflict) } |
+        UNIQUE ~> conflictClause ^^ { case onConflict => UniqueC(onConflict) } |
+        DEFAULT ~> defaultValue ^^ { case expr => Default(expr) } |
+        checkClause |
+        collationClause ^^ { case collSeq => Collate(collSeq) } |
+        foreignKeyClause ^^ { case (parent, key) =>
+          key match {
+            case List(column) =>
+              ForeignKeyC(parent, column)
+            case _ =>
+              throw new SqlException(s"Foreign key for a single column references multiple columns ${key.mkString(",")}")
+          }
+        }
+
+    lazy val checkClause = CHECK ~> "(" ~> expression <~ ")" ^^ { Check(_) }
+
+    lazy val conflictClause: Parser[OnConflict] =
+      (ON ~> CONFLICT ~> (ROLLBACK ^^^ OnConflict.Rollback | ABORT ^^^ OnConflict.Abort | FAIL ^^^ OnConflict.Fail | IGNORE ^^^ OnConflict.Ignore | REPLACE ^^^ OnConflict.Replace)).? ^^ { _.getOrElse(OnConflict.Abort) }
+
+    lazy val defaultValue: Parser[Expression] = literal | "(" ~> expression <~ ")"
+
+    lazy val collationClause = COLLATE ~> ident
+
+    // TODO support ON DELETE/UPDATE, MATCH, DEFERRABLE
+    // see https://www.sqlite.org/syntax/foreign-key-clause.html
+    lazy val foreignKeyClause: Parser[(Table, List[String])] =
+      REFERENCES ~> table ~ fieldList.? ^^ { case table ~ optKey =>
+        (table, optKey.getOrElse(table.primaryKey))
+      }
+
+    lazy val fieldList: Parser[ColumnList] =
+      "(" ~> repsep(ident, ",") <~ ")"
 
     protected lazy val selectStmt: Parser[SelectStmt] =
       (select * setOp) ^^ { o => SelectStmt(o)}
