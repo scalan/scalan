@@ -1,11 +1,8 @@
 package scalan.meta
-/**
- * Created by knizhnik on 1/14/15.
- */
 import ScalanAst._
 import SqlAST._
 
-trait SqlCompiler extends SqlParser {
+class SqlCompiler extends SqlParser {
   case class Scope(var ctx: Context, outer: Option[Scope], nesting: Int, name: String) {
     def lookup(col: ColumnRef): Binding = {
       ctx.resolve(col) match {
@@ -165,7 +162,7 @@ trait SqlCompiler extends SqlParser {
         currScope = Scope(parent, scope.outer, scope.nesting, scope.name)
         val cType =  getExprType(columns(i).expr)
         currScope = saveScope
-        Some(Binding(scope.name, indexToPath(i, columns.length), Column(ref.name, cType)))
+        Some(Binding(scope.name, indexToPath(i, columns.length), Column(ref.name, cType, Nil)))
       }
       else None
     }
@@ -191,7 +188,7 @@ trait SqlCompiler extends SqlParser {
   def castTo(from: Expression, to: Expression): Expression = {
     val fromType = getExprType(from)
     val toType = getExprType(to)
-    if (fromType != toType && (toType == StringType || toType == DoubleType)) {
+    if (fromType != toType && (toType.isInstanceOf[StringType] || toType == DoubleType)) {
       from match {
         case Literal(v,t) => Literal(v.asInstanceOf[java.lang.Number].doubleValue(), DoubleType)
         case _ => CastExpr(from, toType)
@@ -202,7 +199,7 @@ trait SqlCompiler extends SqlParser {
   def patternMatch(text: Expression, pattern: Expression, escape: Option[Expression]): String = {
     val left = generateExpr(text)
     pattern match {
-      case Literal(v, t) if (t == StringType) =>
+      case Literal(v, t) if (t.isInstanceOf[StringType]) =>
         assert(escape.isEmpty, "escape currently not supported")
         val p = v.toString
         if (p.indexOf('%') < 0 && p.indexOf('_') < 0) "(" + left + " == \"" + p + "\")"
@@ -220,7 +217,7 @@ trait SqlCompiler extends SqlParser {
   }
 
   def printValue(value: Any, tp: ColumnType): String = {
-    if (tp == StringType) "\"" + value.toString + "\""
+    if (tp.isInstanceOf[StringType]) "\"" + value.toString + "\""
     else value.toString
   }
 
@@ -253,7 +250,7 @@ trait SqlCompiler extends SqlParser {
       case NegExpr(opd) => "-" + generateExpr(opd)
       case NotExpr(opd) => "!" + generateExpr(opd)
       case Literal(v, t) => "toRep(" + printValue(v, t) + ")"
-      case CastExpr(exp, typ) => generateExpr(exp) + (if (typ == StringType) ".toStr" else ".to" + typ.scalaName)
+      case CastExpr(exp, typ) => generateExpr(exp) + (if (typ.isInstanceOf[StringType]) ".toStr" else ".to" + typ.scalaName)
       case c: ColumnRef => {
         val binding = lookup(c)
         binding.asScalaCode
@@ -294,10 +291,12 @@ trait SqlCompiler extends SqlParser {
       left
     else if (left == DoubleType || right == DoubleType)
       DoubleType
+    else if (left == BigIntType || right == BigIntType)
+      BigIntType
     else if (left == IntType || right == IntType)
       IntType
-    else if (left == StringType || right == StringType)
-      StringType
+    else if (left.isInstanceOf[StringType] || right.isInstanceOf[StringType])
+      BasicStringType
     else throw SqlException("Incompatible types " + left.sqlName + " and " + right.sqlName)
   }
 
@@ -309,7 +308,7 @@ trait SqlCompiler extends SqlParser {
             BoolType
           case _: ArithOp =>
             commonType(getExprType(l), getExprType(r))
-          case Concat => StringType
+          case Concat => BasicStringType
         }
       case LikeExpr(l, r, escape) => BoolType
       case InExpr(l, r) => BoolType
@@ -319,7 +318,7 @@ trait SqlCompiler extends SqlParser {
       case AggregateExpr(Count, _, _) => IntType
       case AggregateExpr(Avg, _, _) => DoubleType
       case AggregateExpr(Sum | Max | Min, _, opd) => getExprType(opd)
-      case SubstrExpr(str,from,len) => StringType
+      case SubstrExpr(str,from,len) => BasicStringType
       case CaseWhenExpr(list) => getExprType(list(1))
       case Literal(v, t) => t
       case CastExpr(e, t) => t
@@ -357,7 +356,7 @@ trait SqlCompiler extends SqlParser {
       "asin", "acos", "atan", "atan2", "sin", "cos", "tan", "cot", "sinh", "cosh", "tanh", "atanh",
       "sqrt", "exp", "ln", "log", "log10", "rand"
     ),
-    StringType -> Seq(
+    BasicStringType -> Seq(
       "chr", "char", "concat", "hex", "lower", "upper", "lcase", "ucase", "lpad", "rpad",
       "trim", "ltrim", "rtrim", "left", "right", "repeat", "reverse", "space", "substring", "substr",
       "replace", "initcap", "translate", "quote", "soundex", "md5", "sha1"
@@ -706,7 +705,7 @@ trait SqlCompiler extends SqlParser {
 
   def parseType(t: ColumnType): String = {
     t match {
-      case StringType => ""
+      case StringType(_, _) => ""
       case DateType => ".toDate"
       case _ => ".to" + t.scalaName
     }

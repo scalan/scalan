@@ -686,7 +686,7 @@ class SqlParserTests extends BaseNestedTests {
         |    cntrycode;
       """.stripMargin.split(";").map(_.trim).filter(_.nonEmpty)
 
-    val parser = new SqlParser {}
+    val parser = new SqlParser
     parser.parseDDL(schema)
 
     // just verifies that queries can be parsed
