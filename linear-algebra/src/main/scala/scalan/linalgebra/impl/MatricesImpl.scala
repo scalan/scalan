@@ -1462,11 +1462,23 @@ trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
   object SparseMatrixCompanionMethods {
     object apply_apply_from_sparse_array {
       def unapply(d: Def[_]): Option[(Arr[Array[(Int, T)]], Rep[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(spRows, nCols, _*), _) if receiver.elem == SparseMatrixCompanionElem && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(spRows, nCols, _*), _) if receiver.elem == SparseMatrixCompanionElem && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "apply_from_sparse_array" } =>
           Some((spRows, nCols)).asInstanceOf[Option[(Arr[Array[(Int, T)]], Rep[Int]) forSome {type T}]]
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Arr[Array[(Int, T)]], Rep[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_apply_from_sparse_arraySOA {
+      def unapply(d: Def[_]): Option[(Arr[(Array[Int], Array[T])], Rep[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(spRows, nCols, _*), _) if receiver.elem == SparseMatrixCompanionElem && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "apply_from_sparse_arraySOA" } =>
+          Some((spRows, nCols)).asInstanceOf[Option[(Arr[(Array[Int], Array[T])], Rep[Int]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Arr[(Array[Int], Array[T])], Rep[Int]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

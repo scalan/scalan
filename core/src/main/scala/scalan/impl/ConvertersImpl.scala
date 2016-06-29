@@ -1,7 +1,8 @@
 package scalan
 
 import scalan.staged.Expressions
-import scalan.common.Lazy
+import scalan.common.{Lazy, OverloadHack}
+import OverloadHack.Overloaded2
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
 
