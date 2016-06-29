@@ -10,7 +10,7 @@ import scalan.Plugins
 object Gcc {
   def compile(targetDir: File, sourceDir: File, sourceFile: File, libName: String) = {
     val command = compileCommand(targetDir, sourceDir, sourceFile, libName)
-    ProcessUtil.launch(sourceDir, command: _*)
+    ProcessUtil.launch(command, sourceDir)
   }
 
   def compileCommand(targetDir: File, sourceDir: File, sourceFile: File, libName: String) = {

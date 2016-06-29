@@ -16,7 +16,7 @@ case class GraphFile(file: File, fileType: String) {
       case None =>
         Desktop.getDesktop.open(file)
       case Some(command) =>
-        ProcessUtil.launch(file.getParentFile, command, file.getAbsolutePath)
+        ProcessUtil.launch(Seq(command, file.getAbsolutePath))
     }
   }
 }
@@ -206,7 +206,7 @@ trait GraphVizExport { self: ScalanExp =>
         case format =>
           val convertedFileName = FileUtil.withExtension(dotFileName, format)
           try {
-            ProcessUtil.launch(directory, "dot", s"-T$format", "-o", convertedFileName, dotFileName)
+            ProcessUtil.launch(Seq("dot", s"-T$format", "-o", convertedFileName, dotFileName), directory)
             GraphFile(new File(directory, convertedFileName), format)
           } catch {
             case e: Exception =>
