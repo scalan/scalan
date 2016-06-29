@@ -27,7 +27,7 @@ class LmsCompilerCxx[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends L
     FileUtil.write(makefile, makefileContents)
 
     val command = Seq("make")
-    ProcessUtil.launch(sourcesDir, command: _*)
+    ProcessUtil.launch(command, sourcesDir)
   }
 
   // Any other arguments?

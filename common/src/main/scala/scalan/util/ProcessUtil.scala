@@ -1,49 +1,44 @@
 package scalan.util
 
-import java.io.{InputStreamReader, BufferedReader, File}
+import java.io.{BufferedReader, File, InputStreamReader}
 
 import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.sys.process.ProcessLogger
+
+case class ProcessOutput(stdOutLines: Seq[String], stdErrLines: Seq[String], interleavedLines: Seq[String]) {
+  lazy val stdOutAll = stdOutLines.mkString("\n")
+  lazy val stdErrAll = stdErrLines.mkString("\n")
+  lazy val interleavedAll = interleavedLines.mkString("\n")
+}
 
 object ProcessUtil {
-  /** Same as `launch(File, Map[String, String], String*)` with empty `extraEnv`. */
-  def launch(workingDir: File, command: String*): Seq[String] =
-    launch(workingDir, Map.empty[String, String], command: _*)
-
-  /** Launches the process given by the command line `command` in directory `workingDir`. `extraEnv` is used
-    * to modify the environment variables of the process. `null` values are allowed in `extraEnv`
-    * and mean the variable should be deleted. */
-  def launch(workingDir: File, extraEnv: Map[String, String], command: String*): Seq[String] = {
-    // TODO use scala.sys.process.ProcessBuilder
+  /** Similar to scala.sys.process.ProcessBuilder.!!, but collects both error and output streams and includes
+    * the complete output into the exception message on failure */
+  def launch(command: Seq[String], workingDir: File = FileUtil.currentWorkingDir, extraEnv: Map[String, String] = Map.empty, printToConsole: Boolean = false): ProcessOutput = {
     val absoluteWorkingDir = workingDir.getAbsoluteFile
-    val builder = new ProcessBuilder(command: _*).
-      directory(absoluteWorkingDir).
-      redirectErrorStream(true)
-    val env = builder.environment()
-    val (toAdd, toRemove) = extraEnv.partition(_._2 != null)
-    env.putAll(toAdd.asJava)
-    for ((key, null) <- toRemove) {
-      env.remove(key)
-    }
-    val proc = builder.start()
-    val reader = new BufferedReader(new InputStreamReader(proc.getInputStream))
-    val ar = mutable.ArrayBuffer[String]()
-    var notDone = true
-    while (notDone) {
-      notDone = reader.readLine() match {
-        case null => false
-        case s2: String =>
-          ar += s2
-          true
+    val builder = scala.sys.process.Process(command, absoluteWorkingDir, extraEnv.toSeq: _*)
+    val stdOutBuffer = mutable.ArrayBuffer.empty[String]
+    val stdErrBuffer = mutable.ArrayBuffer.empty[String]
+    val interleavedBuffer = mutable.ArrayBuffer.empty[String]
+    val logger = ProcessLogger(
+      outLine => {
+        if (printToConsole) { Console.out.println(outLine) }
+        stdOutBuffer += outLine
+        interleavedBuffer += outLine
+      },
+      errLine => {
+        if (printToConsole) { Console.err.println(errLine) }
+        stdErrBuffer += errLine
+        interleavedBuffer += errLine
       }
-    }
-    reader.close()
-    val exitCode = proc.waitFor()
-    exitCode match {
-      case 0 => ar
-      case _ =>
+    )
+    (builder ! logger) match {
+      case 0 =>
+        ProcessOutput(stdOutBuffer, stdErrBuffer, interleavedBuffer)
+      case exitCode =>
         val commandString = command.map(escapeCommandLineArg).mkString(" ")
-        throw new RuntimeException(s"Executing `$commandString` in directory $absoluteWorkingDir returned exit code $exitCode with following output:\n${ar.mkString("\n")}")
+        throw new RuntimeException(s"Executing `$commandString` in directory $absoluteWorkingDir returned exit code $exitCode with following output:\n${interleavedBuffer.mkString("\n")}")
     }
   }
 
