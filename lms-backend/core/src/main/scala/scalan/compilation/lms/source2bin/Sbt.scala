@@ -88,8 +88,7 @@ object Sbt {
 
         writeSbtVersion()
 
-        sbtConfig.commands.dropRight(1).foreach(com => ProcessUtil.launch(sourcesDir, "sbt", com))
-        ProcessUtil.launch(sourcesDir, "sbt", sbtConfig.commands.last)
+        sbtConfig.commands.foreach(ProcessUtil.launch(sourcesDir, "sbt", _))
 
         val jarFile = file(executableDir, "target", s"scala-${sbtConfig.scalaBinaryVersion}", jar)
         if (jarFile.exists()) {
