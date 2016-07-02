@@ -27,6 +27,10 @@ trait Functions { self: Scalan =>
   def identityFun[A: Elem]: Rep[A => A]
   def constFun[A: Elem, B](x: Rep[B]): Rep[A => B]
   def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C]
+  def inferredFun[A, B](fun: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B]
+  // more convenient to call with explicit eA
+  def inferredFun[A, B](eA: Elem[A])(fun: Rep[A] => Rep[B]): Rep[A => B] =
+    inferredFun(fun)(Lazy(eA))
 }
 
 trait FunctionsStd extends Functions { self: ScalanStd =>
@@ -51,6 +55,7 @@ trait FunctionsStd extends Functions { self: ScalanStd =>
   def identityFun[A: Elem]: Rep[A => A] = x => x
   def constFun[A: Elem, B](x: Rep[B]): Rep[A => B] = _ => x
   def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C] = x => f(g(x))
+  def inferredFun[A, B](fun: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = fun
 }
 
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanExp =>
@@ -391,6 +396,35 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     implicit val eA = g.elem.eDom
     implicit val eC = f.elem.eRange
     fun { x => f(g(x)) }
+  }
+
+  // variant of fun which doesn't take eB
+  // useful e.g. when taking and returning structs
+  def inferredFun[A, B](fun: Rep[A] => Rep[B])(implicit leA: LElem[A]): Rep[A => B] = {
+    val x = fresh[A]
+    val Block(y) = reifyEffects(fun(x))
+    implicit val eA = leA.value
+    implicit val eB: Elem[B] = y.elem
+    val fSym = fresh[A => B]
+
+    // copied from Functions.reifyFunction, abstract later!
+    val lam = new Lambda(Some(fun), x, y, fSym, mayInline = true)
+
+    val optScope = thunkStack.top
+    val optSym = optScope match {
+      case Some(scope) =>
+        scope.findDef(lam)
+      case None =>
+        findDefinition(globalThunkSym, lam)
+    }
+
+    optSym match {
+      case Some(TableEntry(sym, _)) =>
+        sym.asRep[A=>B]
+      case None =>
+        val te = createDefinition(optScope, fSym, lam)
+        te.sym
+    }
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {

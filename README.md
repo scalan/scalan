@@ -8,7 +8,7 @@
 
 Scalan is a framework for domain-specific compilation in Scala. It allows you to write high-level Scala programs and compile them to efficient low-level code (in any language supported by the existing backends) by applying domain-specific compilation techniques.
 
-Scalan is based on [Polymorphic Embedding](http://dl.acm.org/citation.cfm?id=1449935) and [LMS-like](http://scala-lms.github.io/) staging. However, is contrast to LMS, Scalan doesn't rely on `Scala-virtualized` and works with `Scala 2.10+` compiler.
+Scalan is based on [Polymorphic Embedding](http://dl.acm.org/citation.cfm?id=1449935) and [LMS-like](http://scala-lms.github.io/) staging. However, in contrast to LMS, Scalan doesn't rely on `Scala-virtualized` and works with `Scala 2.10+` compiler.
 
 In conjunction with [Scalanizer](https://github.com/scalan/scalanizer) Scalan can be used to develop domain-specific JIT compilers for hot-spot optimization in Scala. (To get started checkout Scala Days [video](https://www.parleys.com/tutorial/program-functionally-execute-imperatively-peeling-abstraction-overhead-from-functional-programs) and [demonstration project](https://github.com/scalan/scalanizer-demo))
 
