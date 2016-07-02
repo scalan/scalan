@@ -20,6 +20,15 @@ trait TypeDescs extends Base { self: Scalan =>
     override def toString = s"${getClass.getSimpleName}<$name>"
   }
 
+  implicit class TypeDescOps(d: TypeDesc) {
+    def asElem[B]: Elem[B] = d.asInstanceOf[Elem[B]]
+    def asElemOption[B]: Option[Elem[B]] = if (isElem) Some(d.asInstanceOf[Elem[B]]) else None
+    def asCont[C[_]]: Cont[C] = d.asInstanceOf[Cont[C]]
+    def asContOption[C[_]]: Option[Cont[C]] = if (isCont) Some(d.asInstanceOf[Cont[C]]) else None
+    def isElem: Boolean = d.isInstanceOf[Elem[_]]
+    def isCont: Boolean = d.isInstanceOf[Cont[Any] @unchecked]
+  }
+
   type LElem[A] = Lazy[Elem[A]] // lazy element
 
   /**
@@ -57,8 +66,6 @@ trait TypeDescs extends Base { self: Scalan =>
 
     def <:<(e: Elem[_]) = tag.tpe <:< e.tag.tpe
     def >:>(e: Elem[_]) = e <:< this
-
-    def asElem[B]: Elem[B] = this.asInstanceOf[Elem[B]]
 
     if (isDebug) {
       debug$ElementCounter(this) += 1
