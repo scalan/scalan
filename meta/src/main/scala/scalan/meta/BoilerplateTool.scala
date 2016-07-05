@@ -193,11 +193,13 @@ class BoilerplateTool extends StrictLogging {
     } else {
       for (c <- configs) {
         println(s"Processing ${c.srcPath}")
-        new EntityManagement(c).generateAll()
+        entityManagement(c).generateAll()
         println(s"Ok\n")
       }
     }
   }
+
+  def entityManagement(c: CodegenConfig): EntityManagement = new EntityManagement(c)
 }
 
 object BoilerplateToolRun extends BoilerplateTool {

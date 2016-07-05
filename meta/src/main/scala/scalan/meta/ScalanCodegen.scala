@@ -4,9 +4,9 @@ import scala.annotation.tailrec
 import scalan.meta.Base.!!!
 import scalan.meta.PrintExtensions._
 import scalan.meta.ScalanAst._
-import scalan.util.{Serialization, ScalaNameUtil, StringUtil}
+import scalan.util.{ScalaNameUtil, Serialization, StringUtil}
 
-class MetaCodegen extends SqlCompiler with ScalanAstExtensions {
+class MetaCodegen extends ScalanAstExtensions {
 
   abstract class TemplateData(val module: SEntityModuleDef, val entity: STraitOrClassDef) {
     val name = entity.name
@@ -273,37 +273,16 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
        |""".stripAndTrim
   }
 
-  def extractSqlQueries(body: List[SBodyItem]): String = {
-    body.collect { case m: SMethodDef =>
-      m.body match {
-        case Some(SqlExpr(op, _)) =>
-          generateQuery(m)
-        case _ => ""
-      }
-    }.mkString("\n\n")
-  }
-
   def selfTypeString(suffix: String) =
     module.selfType.opt(t => s"self: ${t.tpe}${suffix} =>")
 
   private val classes = module.concreteSClasses
 
+  def extraBody(entity: STraitOrClassDef): String = ""
+
+  def extraTraitAbs: String = ""
+
   def getTraitAbs = {
-    val sqlDDL = module.methods.map(m =>
-      m.body match {
-        case Some(SqlExpr(op, sql)) if op == "ddl" => sql
-        case _ => ""
-      }
-    ).mkString
-    val sqlSchema = if (sqlDDL.isEmpty) "" else generateSchema(sqlDDL)
-
-    val sqlQueries = module.methods.filter(m =>
-      m.body match {
-        case Some(SqlExpr(op, sql)) if op == "sql" => true
-        case _ => false
-      }
-    ).map(m => generateQuery(m)).mkString("\n\n")
-
     val entityCompOpt = entity.companion
     val hasCompanion = entityCompOpt.isDefined
     val proxyBT = optBaseType.opt { bt =>
@@ -496,8 +475,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |""".stripAndTrim
     }
 
-    val companionSql = entityCompOpt.opt(comp => extractSqlQueries(comp.body))
-    import e.companionAbsName
+    val companionExtraBody = entityCompOpt.opt(extraBody)
     val companionAbs =
       s"""
          |  implicit case object ${companionName}Elem extends CompanionElem[$companionAbsName] {
@@ -508,7 +486,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |  abstract class $companionAbsName extends CompanionDef[$companionAbsName]${hasCompanion.opt(s" with ${companionName}")} {
          |    def selfType = ${companionName}Elem
          |    override def toString = "${e.name}"
-         |    $companionSql
+         |    $companionExtraBody
          |  }
          |  def ${e.name}: Rep[$companionAbsName]
          |${hasCompanion.opt
@@ -525,7 +503,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
       s"""
          |${entityProxy(templateData)}
          |${familyElem(templateData)}
-         |${extractSqlQueries(entity.body)}
+         |${extraBody(entity)}
          |""".stripMargin
     }
 
@@ -688,7 +666,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    @scalan.OverloadId("fromFields")
          |    def apply${tpeArgsDecl}(${fieldsWithType.rep()})${implicitArgsDecl}: Rep[${c.typeUse}] =
          |      mk$className(${fields.rep()})
-         |    ${extractSqlQueries(clazz.body)}
+         |    ${extraBody(clazz)}
          |    def unapply${tpeArgsDecl}(p: Rep[$parent]) = unmk$className(p)
          |  }
          |  lazy val ${c.name}Rep: Rep[${c.companionAbsName}] = new ${c.companionAbsName}
@@ -733,9 +711,8 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
        |${if (e.isCont) familyCont(e) else ""}
        |
        |${familyElem(e)}
-       |$sqlSchema
        |
-       |$sqlQueries
+       |$extraTraitAbs
        |
        |$companionAbs
        |
