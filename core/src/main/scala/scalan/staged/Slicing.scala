@@ -480,51 +480,80 @@ trait Slicing extends ScalanExp {
     }
   }
 
-  abstract class SliceMarking1[T, F[_]]
-      (val innerMark: SliceMarking[T])(implicit val cF: Cont[F]) extends SliceMarking[F[T]] { _: Product =>
+  abstract class SliceMarking1[T, F[_]](implicit val cF: Cont[F]) extends SliceMarking[F[T]] { _: Product =>
+    val innerMark: SliceMarking[T]
+    implicit val eItem = innerMark.elem
+    val elem = cF.lift(eItem)
+    val projectedElem = cF.lift(innerMark.projectedElem)
+    def children: Seq[SliceMarking[_]] = Seq(innerMark)
   }
 
-  case class ArrayMarking[T]
-      (itemsPath: KeyPath, override val innerMark: SliceMarking[T]) extends SliceMarking1[T,Array](innerMark) {
-    implicit val eItem = innerMark.elem
-    val elem = element[Array[T]]
-    def children: Seq[SliceMarking[_]] = Seq(innerMark)
-    def meet(other: SliceMarking[Array[T]]) = ???
-    def >>[R](m2: SliceMarking[R]): SliceMarking[Array[T]] = ???
-    def join(other: SliceMarking[Array[T]]) = other match {
-      case am: ArrayMarking[T] @unchecked if am.itemsPath == itemsPath =>
-        ArrayMarking(itemsPath, innerMark.join(am.innerMark))
+  case class TraversableMarking[T, F[_]](itemsPath: KeyPath, innerMark: SliceMarking[T], override val cF: Cont[F]) extends SliceMarking1[T, F]()(cF) {
+    def >>[R](other: SliceMarking[R]): SliceMarking[F[T]] = other match {
+      case TraversableMarking(KeyPath.None, innerMark1, _) =>
+        copy(itemsPath = KeyPath.None, innerMark = innerMark >> innerMark1)
+      case TraversableMarking(`itemsPath`, innerMark1, _) =>
+        copy(innerMark = innerMark >> innerMark1)
     }
-    def nonEmpty = innerMark.nonEmpty && (!itemsPath.isNone)
+
+    def meet(other: SliceMarking[F[T]]) = ???
+
+    def join(other: SliceMarking[F[T]]) = other match {
+      case _ if this.itemsPath == KeyPath.None =>
+        other
+      case TraversableMarking(KeyPath.None, _, _) =>
+        this
+      case TraversableMarking(`itemsPath`, innerMark1, _) =>
+        copy(innerMark = innerMark.join(innerMark1))
+    }
+
+    def nonEmpty = !itemsPath.isNone && innerMark.nonEmpty
     def isIdentity = itemsPath.isAll && innerMark.isIdentity
+
     def |/|[R](key: KeyPath, inner: SliceMarking[R]) = key match {
       case KeyPath.All if inner.elem == eItem =>
-        ArrayMarking[T](key, inner.asMark[T])
+        copy(key, inner.asMark[T])
     }
-    def projectToExp(xs: Exp[Array[T]]): Exp[_] = itemsPath match {
+
+    def projectToExp(xs: Exp[F[T]]): Exp[_] = itemsPath match {
       case KeyPath.All =>
-        xs.map(x => innerMark.projectToExp(x))(innerMark.projectedElem.asElem[Any])
+        assert(xs.elem == this.elem)
+        reifyObject(UnpackSliced(xs, this))
       case KeyPath.None =>
-        SArray.empty[T]
+        projectedElem.defaultRepValue
       case _ =>
-        !!!(s"itemsPath = $itemsPath")
+        !!!(s"Expect itemsPath to be All or None, but got $itemsPath")
     }
-    val projectedElem = arrayElement(innerMark.projectedElem)
-    def makeSlot = fresh[Array[T]]
-    def set(slot: Exp[Array[T]], value: Exp[_]) = setInvalid(slot, value)
-//    itemsPath match {
-//      case KeyPath.All => value.asRep[Array[T]]
-//      case KeyPath.None => slot
-//    }
-  }
-  object ArrayMarking {
-    def apply[T](mItem: SliceMarking[T]): ArrayMarking[T] = ArrayMarking(KeyPath.All, mItem)
+
+    def makeSlot =
+      SlicedTraversable(fresh(Lazy(projectedElem)), innerMark, cF)
+
+    def set(slot: Exp[F[T]], value: Exp[_]) = slot match {
+      case Def(sliced: SlicedTraversable[T, a, F] @unchecked) =>
+        sliced.copy(value.asRep[F[a]])
+      case _ =>
+        setInvalid(slot, value)
+    }
   }
 
-  case class ThunkMarking[A](override val innerMark: SliceMarking[A]) extends SliceMarking1[A, Thunk](innerMark) {
-    implicit val eItem = innerMark.elem
-    val elem = element[Thunk[A]]
-    def children: Seq[SliceMarking[_]] = Seq(innerMark)
+  class TraversableMarkingFor[F[_]](implicit cF: Cont[F]) {
+    def apply[A](innerMark: SliceMarking[A]): TraversableMarking[A, F] =
+      TraversableMarking(KeyPath.All, innerMark, cF)
+    def apply[A](keyPath: KeyPath, innerMark: SliceMarking[A]): TraversableMarking[A, F] =
+      TraversableMarking(keyPath, innerMark, cF)
+    // Could take SliceMarking[F[A]], but this leads to a lot of unchecked warnings
+    def unapply(mark: SliceMarking[_]) = mark match {
+      case TraversableMarking(keyPath, innerMark, cF1) if cF == cF1 => Some((keyPath, innerMark))
+      case _ => None
+    }
+
+    override def toString = s"TraversableMarkingFor[${cF.name}]"
+  }
+
+  val ArrayMarking = new TraversableMarkingFor[Array]
+  val ListMarking = new TraversableMarkingFor[List]
+
+  case class ThunkMarking[A](innerMark: SliceMarking[A]) extends SliceMarking1[A, Thunk] {
     def meet(other: SliceMarking[Thunk[A]]) = other match {
       case am: ThunkMarking[A] @unchecked =>
         ThunkMarking(innerMark.meet(am.innerMark))
@@ -557,7 +586,6 @@ trait Slicing extends ScalanExp {
         }
     }
 
-    val projectedElem = thunkElement(innerMark.projectedElem)
     def makeSlot = SlicedThunk(fresh(Lazy(projectedElem)), this)
     def set(slot: Exp[Thunk[A]], value: Exp[_]) = slot match {
       case Def(sf: SlicedThunk[a, a1]) =>
@@ -696,17 +724,9 @@ trait Slicing extends ScalanExp {
     implicit def selfType = mark.projectedElem.asElem[To]
   }
 
-  abstract class Sliced1[A, B, C[_]](val mark: SliceMarking1[A,C]) extends Sliced[C[A], C[B]] {
-    def innerMark: SliceMarking[A] = mark.innerMark
-  }
-
-  case class SlicedArray[A, B](source: Arr[B], override val innerMark: SliceMarking[A])
-    extends Sliced1[A, B, Array](ArrayMarking[A](KeyPath.All, innerMark)) {
-    override def toString = s"SlicedArray[${innerMark.elem.name}]($source)"
-    override def equals(other: Any) = other match {
-      case s: SlicedArray[_, _] => source == s.source && innerMark.elem == s.innerMark.elem
-      case _ => false
-    }
+  case class SlicedTraversable[A, B, F[_]](source: Rep[F[B]], innerMark: SliceMarking[A], cF: Cont[F]) extends Sliced[F[A], F[B]] {
+    val mark = TraversableMarking(KeyPath.All, innerMark, cF)
+    override def toString = s"SlicedTraversable[${cF.name}][${innerMark.elem.name}]($source)"
   }
 
   case class SlicedStruct[From <: Struct, To <: Struct](source: Rep[To], mark: StructMarking[From])
