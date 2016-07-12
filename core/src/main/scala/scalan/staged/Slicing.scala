@@ -6,20 +6,29 @@ import scalan.common.Lazy
 
 trait Slicing extends ScalanExp {
 
-  class SliceAnalyzer extends BackwardAnalyzer[SliceMarking] {
-    val name = SliceMarking.KeyPrefix
-    def lattice = SliceLattice
-    def defaultMarking[T:Elem]: SliceMarking[T] = EmptyMarking[T](element[T])
+  implicit object SliceLattice extends JoinSemiLattice[SliceMarking[_]] {
+    def bottom = ???("Bottom of SliceLattice is undefined")
+    def join(a: SliceMarking[_], b: SliceMarking[_]) = a match {
+      case a: SliceMarking[t] => a.join(b.asMark[t])
+    }
+  }
 
-    def getLambdaMarking[A, B](lam: Lambda[A, B], mDom: SliceMarking[A], mRange: SliceMarking[B]): SliceMarking[(A) => B] = {
-      implicit val eA = lam.eA
-      implicit val eB = lam.eB
+  class SliceAnalyzer extends BackwardAnalyzer[SliceMarking[_]] {
+    val name = SliceMarking.KeyPrefix
+    override def defaultMark[T](s: Exp[T]): SliceMarking[T] = EmptyMarking[T](s.elem)
+    override def getMark[T](s: Exp[T]): SliceMarking[T] = {
+      val mark = super.getMark(s)
+      assert(mark.elem == s.elem)
+      mark.asInstanceOf[SliceMarking[T]]
+    }
+
+    def getLambdaMarking[A, B](lam: Lambda[A, B], mDom: SliceMarking[_], mRange: SliceMarking[_]): SliceMarking[_] = {
       FuncMarking(mDom, mRange)
     }
 
     override def backwardAnalyzeRec(g: AstGraph): Unit = {
       val revSchedule = g.schedule.reverseIterator
-      for (te <- revSchedule) te match { case te: TableEntry[t] =>
+      for (te <- revSchedule) {
         val s = te.sym
         val d = te.rhs
         d match {
@@ -28,7 +37,7 @@ trait Slicing extends ScalanExp {
           case _ =>
             // back-propagate analysis information
             val outMark = getMark(s)
-            val inMarks = getInboundMarkings[t](te, outMark)
+            val inMarks = getInboundMarkings(te, outMark)
             for ((s, mark) <- inMarks) {
               updateOutboundMarking(s, mark)
             }
@@ -39,8 +48,6 @@ trait Slicing extends ScalanExp {
     def analyzeFunc[A,B](f: Rep[A => B], mRes: SliceMarking[B]): FuncMarking[A,B] = {
       val mX = f match {
         case Def(l: Lambda[A,B]@unchecked) =>
-          implicit val eA = l.eA
-          implicit val eB = l.eB
           updateOutboundMarking(l.y, mRes)
           backwardAnalyzeRec(l)
           getMark(l.x)
@@ -54,7 +61,6 @@ trait Slicing extends ScalanExp {
 
     def analyzeThunk[A](thunk: Th[A], mRes: SliceMarking[A]): ThunkMarking[A] = {
       val Def(th: ThunkDef[A @unchecked]) = thunk
-      implicit val eA = th.selfType.eItem
       updateOutboundMarking(th.root, mRes)
       backwardAnalyzeRec(th)
       val thunkMarking = ThunkMarking(mRes)
@@ -62,11 +68,7 @@ trait Slicing extends ScalanExp {
       thunkMarking
     }
 
-    implicit class ExpOpsForSlicing[T](s: Exp[T]) {
-      def marked(m: SliceMarking[T]): MarkedSym = (s, m).asInstanceOf[MarkedSym]
-    }
-
-    def getInboundMarkings[T](te: TableEntry[T], outMark: SliceMarking[T]): MarkedSyms = {
+    def getInboundMarkings[T](te: TableEntry[T], outMark: SliceMarking[_]): Seq[MarkedSym] = {
       val thisSym = te.sym
       val d = te.rhs
       d match {
@@ -85,25 +87,23 @@ trait Slicing extends ScalanExp {
           Seq((s, StructMarking(Seq(fn -> outMark))(s.elem)))
 
         case p: First[a,b] =>
-          implicit val eA = p.pair.elem.eFst
-          implicit val eB = p.pair.elem.eSnd
+          val eB = p.pair.elem.eSnd
           Seq(p.pair.marked(PairMarking(outMark.asMark[a], EmptyMarking(eB))))
 
         case p: Second[a,b] =>
-          implicit val eA = p.pair.elem.eFst
-          implicit val eB = p.pair.elem.eSnd
+          val eA = p.pair.elem.eFst
           Seq(p.pair.marked(PairMarking(EmptyMarking(eA), outMark.asMark[b])))
 
         case Tup(a: Rep[a], b: Rep[b]) =>
           outMark match {
             case PairMarking(ma, mb) =>
-              Seq[MarkedSym](a.marked(ma.asMark[a]), b.marked(mb.asMark[b]))
+              Seq(a.marked(ma.asMark[a]), b.marked(mb.asMark[b]))
           }
 
         case Apply(f: RFunc[a, b], x) =>
           val mB = outMark.asMark[b]
           val FuncMarking(mA, _) = analyzeFunc(f, mB)
-          Seq[MarkedSym](x.marked(mA))
+          Seq(x.marked(mA))
 
         case _ if outMark.isEmpty =>
           Seq()
@@ -118,12 +118,6 @@ trait Slicing extends ScalanExp {
   val sliceAnalyzer: SliceAnalyzer = createSliceAnalyzer
   protected def createSliceAnalyzer: SliceAnalyzer
 
-  implicit object SliceLattice extends Lattice[SliceMarking] {
-    def maximal[T:Elem]: Option[SliceMarking[T]] = Some(AllMarking(element[T]))
-    def minimal[T:Elem]: Option[SliceMarking[T]] = Some(EmptyMarking(element[T]))
-    def join[T](a: SliceMarking[T], b: SliceMarking[T]) = a.join(b)
-  }
-
   /**
     * Defines a subset of type `T`
     *
@@ -131,7 +125,7 @@ trait Slicing extends ScalanExp {
     *
     * @tparam T
     */
-  trait SliceMarking[T] extends Marking[T] { _: Product =>
+  trait SliceMarking[T] extends Marking { _: Product =>
     def children: Seq[SliceMarking[_]]
 
     /**
@@ -172,6 +166,7 @@ trait Slicing extends ScalanExp {
     def |/|[R](key: KeyPath, inner: SliceMarking[R]): SliceMarking[T]
     def projectToExp(x: Exp[T]): Exp[_]
     def projectedElem: Elem[_]
+    def elem: Elem[T]
     def makeSlot: Exp[T]
     def set(slot: Exp[T], value: Exp[_]): Exp[T]
 
@@ -185,8 +180,8 @@ trait Slicing extends ScalanExp {
     val KeyPrefix = "slicing"
   }
 
-  case class EmptyBaseMarking[T](override val elem: Elem[T])
-        extends EmptyMarking[T](elem) with SliceMarking[T] {
+  case class EmptyBaseMarking[T](elem: Elem[T]) extends SliceMarking[T] {
+    def nonEmpty = false
     def children: Seq[SliceMarking[_]] = Seq()
     def meet(other: SliceMarking[T]) = this
     def join(other: SliceMarking[T]) = other
@@ -202,8 +197,7 @@ trait Slicing extends ScalanExp {
     }
   }
 
-  case class AllBaseMarking[T](override val elem: Elem[T])
-        extends SliceMarking[T] {
+  case class AllBaseMarking[T](elem: Elem[T]) extends SliceMarking[T] {
     def nonEmpty = true
     def children: Seq[SliceMarking[_]] = Seq()
     def meet(other: SliceMarking[T]) = other
@@ -233,15 +227,15 @@ trait Slicing extends ScalanExp {
 
   def createEmptyMarking[T](eT: Elem[T]): SliceMarking[T] = eT match {
     case pe: PairElem[a,b] =>
-      implicit val eA = pe.eFst
-      implicit val eB = pe.eSnd
+      val eA = pe.eFst
+      val eB = pe.eSnd
       PairMarking(EmptyMarking(eA), EmptyMarking(eB))
     case pe: FuncElem[a,b] =>
-      implicit val eA = pe.eDom
-      implicit val eB = pe.eRange
+      val eA = pe.eDom
+      val eB = pe.eRange
       FuncMarking(EmptyMarking(eA), EmptyMarking(eB))
     case se: StructElem[Struct]@unchecked =>
-      StructMarking[Struct](Seq())(se)
+      StructMarking(Seq())(se)
     case be: BaseElem[a] =>
       EmptyBaseMarking(be)
     case te: ThunkElem[a] =>
@@ -260,22 +254,22 @@ trait Slicing extends ScalanExp {
 
   def createAllMarking[T](e: Elem[T]): SliceMarking[T] = e match {
     case ae: ArrayElem[a] =>
-      implicit val eA = ae.eItem
-      ArrayMarking[a](KeyPath.All, AllMarking(eA)).asMark[T]
+      val eA = ae.eItem
+      ArrayMarking[a](KeyPath.All, AllMarking(eA))
     case pe: PairElem[a,b] =>
-      implicit val eA = pe.eFst
-      implicit val eB = pe.eSnd
-      PairMarking[a,b](AllMarking(eA), AllMarking(eB)).asMark[T]
+      val eA = pe.eFst
+      val eB = pe.eSnd
+      PairMarking[a,b](AllMarking(eA), AllMarking(eB))
     case fe: FuncElem[a,b] =>
-      FuncMarking[a,b](AllMarking(fe.eDom), AllMarking(fe.eRange)).asMark[T]
-    case se: StructElem[s] =>
+      FuncMarking[a,b](AllMarking(fe.eDom), AllMarking(fe.eRange))
+    case se: StructElem[Struct] @unchecked =>
       val fields = se.fields.map { case (fn, e) => (fn, AllMarking(e)) }
-      StructMarking[Struct](fields)(se.asElem[Struct]).asMark[T]
+      StructMarking(fields)(se)
     case be: BaseElem[a] =>
-      AllBaseMarking[a](be).asMark[T]
+      AllBaseMarking[a](be)
     case te: ThunkElem[a] =>
-      implicit val eA = te.eItem
-      ThunkMarking(AllMarking(eA)).asMark[T]
+      val eA = te.eItem
+      ThunkMarking(AllMarking(eA))
     case _ =>
       ???(s"Elem $e cannnot be root of SliceMarking")
   }
@@ -605,10 +599,6 @@ trait Slicing extends ScalanExp {
 
   implicit class StructElemOpsForSlicing[T <: Struct](e: Elem[T]) {
     def toStructMarking: StructMarking[T] = e.toMarking.asInstanceOf[StructMarking[T]]
-  }
-
-  implicit class ExpOpsForSlicing(e: Exp[_]) {
-    def marked(m: SliceMarking[_]): MarkedSym = (e, m).asInstanceOf[MarkedSym]
   }
 
   def sliceIn[A,B,C](f: Exp[A => B], m: SliceMarking[A]): Exp[C => B] = f match {

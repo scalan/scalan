@@ -5,7 +5,7 @@ import scalan.collections._
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
 import scalan.seq.BaseStd
-import scalan.staged.{BaseExp, Expressions, Transforming, TransformingExp}
+import scalan.staged._
 import scalan.util.{ExceptionsDsl, ExceptionsDslExp, ExceptionsDslStd}
 
 abstract class Scalan
@@ -35,7 +35,6 @@ abstract class Scalan
   with MapOps
   with MapViews
   with Transforming
-  with Analyzing
   with ArrayOps
   with ArrayBuffers
   with Exceptions
@@ -73,7 +72,6 @@ extends Scalan
   with MapOpsStd
   with MapViewsStd
   with MonoidsStd
-  with AnalyzingStd
   with ArrayOpsStd
   with ArrayBuffersStd
   with ExceptionsStd
@@ -117,7 +115,7 @@ abstract class ScalanExp
   with MapOpsExp
   with MapViewsExp
   with TransformingExp
-  with AnalyzingExp
+  with Analysis
   with ArrayOpsExp
   with ArrayBuffersExp
   with ExceptionsExp

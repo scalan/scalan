@@ -1,8 +1,8 @@
 package scalan.staged
 
-import java.lang.reflect.{Method, InvocationTargetException}
+import java.lang.reflect.Method
 
-import scala.collection.{mutable, Seq}
+import scala.collection.mutable
 import scalan.{Scalan, ScalanExp}
 import scalan.common.Lazy
 import scala.reflect.runtime.universe._
@@ -449,70 +449,69 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
     override def toString = s"Analysis($name)"
   }
 
-  trait Lattice[M[_]] {
-    def maximal[T:Elem]: Option[M[T]]
-    def minimal[T:Elem]: Option[M[T]]
-    def join[T](a: M[T], b: M[T]): M[T]
+  trait JoinSemiLattice[M] {
+    def bottom: M
+    def join(a: M, b: M): M
   }
 
-  trait BackwardAnalyzer[M[_]] extends Analyzer {
-    type MarkedSym = (Exp[T], M[T]) forSome {type T}
-    type MarkedSyms = Seq[MarkedSym]
-    def keyPrefix: String = name
+  abstract class BackwardAnalyzer[M](implicit val lattice: JoinSemiLattice[M]) extends Analyzer {
+    type MarkedSym = (Exp[_], M)
 
-    def lattice: Lattice[M]
-    def defaultMarking[T:Elem]: M[T]
-
-    def updateMark[T](s: Exp[T], other: M[T]): (Exp[T], M[T]) = {
-      s -> lattice.join(getMark(s), other)
+    implicit class ExpMarking(s: Exp[_]) {
+      def marked(m: M) = (s, m)
     }
 
-    def beforeAnalyze[A,B](l: Lambda[A,B]): Unit = {}
+    def keyPrefix: String = name
 
-    def getInboundMarkings[T](te: TableEntry[T], outMark: M[T]): MarkedSyms
+    def beforeAnalyze[A, B](l: Lambda[A, B]): Unit = {}
 
-    def getLambdaMarking[A,B](lam: Lambda[A,B], mDom: M[A], mRange: M[B]): M[A => B]
+    def getInboundMarkings[T](te: TableEntry[T], outMark: M): Seq[MarkedSym]
 
-    def getMarkingKey[T](implicit eT:Elem[T]): MetaKey[M[T]] = markingKey[T](keyPrefix).asInstanceOf[MetaKey[M[T]]]
+    def getLambdaMarking[A, B](lam: Lambda[A, B], mDom: M, mRange: M): M
+
+    // Note: MetaKey[Marking] is used as a cheat to avoid requiring Elem[M]
+    // This is currently safe
+    val markingKey: MetaKey[M] =
+      markingKeys.getOrElseUpdate(keyPrefix, MetaKey[Marking](s"marking_${keyPrefix}")).asInstanceOf[MetaKey[M]]
 
     def clearMark[T](s: Exp[T]): Unit = {
       implicit val eT = s.elem
-      s.removeMetadata(getMarkingKey[T])
+      s.removeMetadata(markingKey)
     }
 
-    def getMark[T](s: Exp[T]): M[T] = {
-      implicit val eT = s.elem
-      val mark = s.getMetadata(getMarkingKey[T]).getOrElse(defaultMarking[T])
+    def defaultMark[T](s: Exp[T]): M = lattice.bottom
+
+    def getMark[T](s: Exp[T]): M = {
+      val mark = s.getMetadata(markingKey).getOrElse(defaultMark(s))
       mark
     }
 
     def hasMark[T](s: Exp[T]): Boolean = {
       implicit val eT = s.elem
-      s.getMetadata(getMarkingKey[T]).isDefined
+      s.getMetadata(markingKey).isDefined
     }
 
-    def updateOutboundMarking[T](s: Exp[T], mark: M[T]): Unit = {
+    def updateOutboundMarking[T](s: Exp[T], mark: M): Unit = {
       implicit val eT = s.elem
       val current = getMark(s)
       val updated = lattice.join(current, mark)
-      val key = getMarkingKey[T]
-      s.setMetadata(key)(updated, Some(true))
+      s.setMetadata(markingKey)(updated, Some(true))
     }
 
     def backwardAnalyzeRec(g: AstGraph): Unit = {
       val revSchedule = g.schedule.reverseIterator
-      for (te <- revSchedule) te match { case te: TableEntry[t] =>
+      for (te <- revSchedule) {
         val s = te.sym
         val d = te.rhs
         // back-propagate analysis information (including from Lambda to Lambda.y, see LevelAnalyzer)
         val outMark = getMark(s)
-        val inMarks = getInboundMarkings[t](te, outMark)
+        val inMarks = getInboundMarkings(te, outMark)
         for ((s, mark) <- inMarks) {
           updateOutboundMarking(s, mark)
         }
         d match {
           // additionally if it is Lambda
-          case l: Lambda[a,b] =>
+          case l: Lambda[a, b] =>
             // analyze lambda after the markings were assigned to the l.y during previous propagation step
             backwardAnalyzeRec(l)
             // markings were propagated up to the lambda variable
@@ -528,26 +527,13 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
     }
   }
 
-  trait Marking[T] {
-    def elem: Elem[T]
-    def basePath: KeyPath = KeyPath.Root
-    def nonEmpty: Boolean
+  // marker trait
+  trait Marking {}
+
+  private val defaultMarking = new Marking {
+    override def toString = "Default Marking"
   }
+  implicit val MarkingElem: Elem[Marking] = new BaseElem[Marking](defaultMarking)
 
-  class EmptyMarking[T](val elem: Elem[T]) extends Marking[T] {
-    def nonEmpty = false
-  }
-
-  type MarkedSym = (Exp[T], Marking[T]) forSome {type T}
-  type MarkedSyms = Seq[MarkedSym]
-
-  class MarkingElem[T:Elem] extends BaseElem[Marking[T]](new EmptyMarking[T](element[T]))
-  implicit def markingElem[T:Elem] = new MarkingElem[T]
-
-  private val markingKeys = mutable.Map.empty[(String, Elem[_]), MetaKey[_]]
-
-  def markingKey[T](prefix: String)(implicit eT:Elem[T]): MetaKey[Marking[T]] = {
-    val key = markingKeys.getOrElseUpdate((prefix, eT), MetaKey[Marking[T]](s"${prefix}_marking[${eT.name}]"))
-    key.asInstanceOf[MetaKey[Marking[T]]]
-  }
+  private val markingKeys = mutable.Map.empty[String, MetaKey[_]]
 }

@@ -23,26 +23,26 @@ trait Passes {
 
   trait PassBuilder[+P <: Pass] extends (PGraph => P) {
     def name: String
-    type Analyzer = BackwardAnalyzer[M] forSome {type M[_]}
-    val backwardAnalyses = mutable.ArrayBuffer[Analyzer]()
-    def addAnalysis[M[_]](a: BackwardAnalyzer[M]) = {
+    val backwardAnalyses = mutable.ArrayBuffer[BackwardAnalyzer[_]]()
+    def addAnalysis[M](a: BackwardAnalyzer[M]) = {
       if (backwardAnalyses.exists(_.name == a.name))
         !!!(s"Duplicate analysis ${a.name} for the phase ${this.name}, existing analyses: $backwardAnalyses")
-      backwardAnalyses += a.asInstanceOf[Analyzer]
+      backwardAnalyses += a.asInstanceOf[BackwardAnalyzer[_]]
     }
 
     def clearMarkings(g: AstGraph): Unit = {
       // first clear markings for all analyzers
-      g.scheduleAll.foreach(te => {
-        for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
-          a.clearMark(te.sym)
-        }
-      })
+      for {
+        a <- backwardAnalyses
+        te <- g.scheduleAll
+      } {
+        a.clearMark(te.sym)
+      }
     }
 
     def backwardAnalyze(g: AstGraph): Unit = {
       // assign new markings
-      for ((a: BackwardAnalyzer[m]) <- backwardAnalyses) {
+      for (a <- backwardAnalyses) {
         a.backwardAnalyzeRec(g)
       }
     }
