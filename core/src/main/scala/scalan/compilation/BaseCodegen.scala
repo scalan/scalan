@@ -110,10 +110,10 @@ abstract class BaseCodegen[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) 
     argList(x, numArgs)
   }
 
-  def emitFunction(sym: Exp[_], args: List[Exp[_]], returnValue: Exp[Any], lambdaOrThunk: AstGraph)(implicit stream: PrintWriter, indentLevel: IndentLevel): Unit = {
+  def emitFunction(sym: Exp[_], args: List[Exp[_]], returnValue: Exp[Any], lambdaOrThunk: AstGraph, f: Schedule => Schedule = identity)(implicit stream: PrintWriter, indentLevel: IndentLevel): Unit = {
     emit(functionHeader(sym, args))
     indented { implicit indentLevel =>
-      emitSchedule(lambdaOrThunk, _.filterNot(te => args.contains(te.sym)))
+      emitSchedule(lambdaOrThunk, (s: Schedule) => f(s.filterNot(te => args.contains(te.sym))))
       emit(functionReturn(returnValue))
     }
     functionFooter().foreach(emit(_))
