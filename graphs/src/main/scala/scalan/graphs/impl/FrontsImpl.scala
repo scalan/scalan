@@ -83,7 +83,7 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
   class BaseFrontIso
     extends EntityIso[BaseFrontData, BaseFront] with Def[BaseFrontIso] {
     override def from(p: Rep[BaseFront]) =
-      (p.set, p.bits)
+      Pair(p.set, p.bits)
     override def to(p: Rep[(CollectionOverArray[Int], BitSet)]) = {
       val Pair(set, bits) = p
       BaseFront(set, bits)
@@ -168,7 +168,7 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
   class ListFrontIso
     extends EntityIso[ListFrontData, ListFront] with Def[ListFrontIso] {
     override def from(p: Rep[ListFront]) =
-      (p.set, p.bits)
+      Pair(p.set, p.bits)
     override def to(p: Rep[(CollectionOverList[Int], BitSet)]) = {
       val Pair(set, bits) = p
       ListFront(set, bits)
@@ -253,7 +253,7 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
   class CollectionFrontIso
     extends EntityIso[CollectionFrontData, CollectionFront] with Def[CollectionFrontIso] {
     override def from(p: Rep[CollectionFront]) =
-      (p.set, p.bits)
+      Pair(p.set, p.bits)
     override def to(p: Rep[(Collection[Int], BitSet)]) = {
       val Pair(set, bits) = p
       CollectionFront(set, bits)

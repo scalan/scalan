@@ -177,7 +177,7 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
   class StatePutIso[S, A](implicit eS: Elem[S], eA: Elem[A])
     extends EntityIso[StatePutData[S, A], StatePut[S, A]] with Def[StatePutIso[S, A]] {
     override def from(p: Rep[StatePut[S, A]]) =
-      (p.s, p.a)
+      Pair(p.s, p.a)
     override def to(p: Rep[(S, A)]) = {
       val Pair(s, a) = p
       StatePut(s, a)

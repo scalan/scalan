@@ -90,7 +90,7 @@ trait StructItemsAbs extends StructItems {
   class StructItemBaseIso[Val, Schema <: Struct](implicit eVal: Elem[Val], eSchema: Elem[Schema])
     extends EntityIso[StructItemBaseData[Val, Schema], StructItemBase[Val, Schema]] with Def[StructItemBaseIso[Val, Schema]] {
     override def from(p: Rep[StructItemBase[Val, Schema]]) =
-      (p.key, p.value)
+      Pair(p.key, p.value)
     override def to(p: Rep[(StructKey[Schema], Val)]) = {
       val Pair(key, value) = p
       StructItemBase(key, value)

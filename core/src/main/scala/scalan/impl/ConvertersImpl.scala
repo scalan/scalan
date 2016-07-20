@@ -88,9 +88,9 @@ trait ConvertersAbs extends Converters {
   class IdentityConvIso[A](implicit eA: Elem[A])
     extends EntityIso[IdentityConvData[A], IdentityConv[A]] with Def[IdentityConvIso[A]] {
     override def from(p: Rep[IdentityConv[A]]) =
-      ()
+      UNIT
     override def to(p: Rep[Unit]) = {
-      val unit = p
+      val UNIT = p
       IdentityConv()
     }
     lazy val eFrom = UnitElement
@@ -264,7 +264,7 @@ trait ConvertersAbs extends Converters {
   class PairConverterIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends EntityIso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] with Def[PairConverterIso[A1, A2, B1, B2]] {
     override def from(p: Rep[PairConverter[A1, A2, B1, B2]]) =
-      (p.conv1, p.conv2)
+      Pair(p.conv1, p.conv2)
     override def to(p: Rep[(Converter[A1, B1], Converter[A2, B2])]) = {
       val Pair(conv1, conv2) = p
       PairConverter(conv1, conv2)
@@ -357,7 +357,7 @@ trait ConvertersAbs extends Converters {
   class SumConverterIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends EntityIso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] with Def[SumConverterIso[A1, A2, B1, B2]] {
     override def from(p: Rep[SumConverter[A1, A2, B1, B2]]) =
-      (p.conv1, p.conv2)
+      Pair(p.conv1, p.conv2)
     override def to(p: Rep[(Converter[A1, B1], Converter[A2, B2])]) = {
       val Pair(conv1, conv2) = p
       SumConverter(conv1, conv2)
@@ -449,7 +449,7 @@ trait ConvertersAbs extends Converters {
   class ComposeConverterIso[A, B, C](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
     extends EntityIso[ComposeConverterData[A, B, C], ComposeConverter[A, B, C]] with Def[ComposeConverterIso[A, B, C]] {
     override def from(p: Rep[ComposeConverter[A, B, C]]) =
-      (p.conv2, p.conv1)
+      Pair(p.conv2, p.conv1)
     override def to(p: Rep[(Converter[B, C], Converter[A, B])]) = {
       val Pair(conv2, conv1) = p
       ComposeConverter(conv2, conv1)

@@ -169,7 +169,7 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
   class WriteFileIso
     extends EntityIso[WriteFileData, WriteFile] with Def[WriteFileIso] {
     override def from(p: Rep[WriteFile]) =
-      (p.fileName, p.lines)
+      Pair(p.fileName, p.lines)
     override def to(p: Rep[(String, List[String])]) = {
       val Pair(fileName, lines) = p
       WriteFile(fileName, lines)

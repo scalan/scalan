@@ -170,7 +170,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
   class DenseFlatMatrixIso[T](implicit eT: Elem[T])
     extends EntityIso[DenseFlatMatrixData[T], DenseFlatMatrix[T]] with Def[DenseFlatMatrixIso[T]] {
     override def from(p: Rep[DenseFlatMatrix[T]]) =
-      (p.rmValues, p.numColumns)
+      Pair(p.rmValues, p.numColumns)
     override def to(p: Rep[(Collection[T], Int)]) = {
       val Pair(rmValues, numColumns) = p
       DenseFlatMatrix(rmValues, numColumns)
@@ -256,7 +256,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
   class SparseMatrixIso[T](implicit eT: Elem[T])
     extends EntityIso[SparseMatrixData[T], SparseMatrix[T]] with Def[SparseMatrixIso[T]] {
     override def from(p: Rep[SparseMatrix[T]]) =
-      (p.sparseRows, p.numColumns)
+      Pair(p.sparseRows, p.numColumns)
     override def to(p: Rep[(NestedCollection[(Int, T)], Int)]) = {
       val Pair(sparseRows, numColumns) = p
       SparseMatrix(sparseRows, numColumns)
@@ -342,7 +342,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
   class CompoundMatrixIso[T](implicit eT: Elem[T])
     extends EntityIso[CompoundMatrixData[T], CompoundMatrix[T]] with Def[CompoundMatrixIso[T]] {
     override def from(p: Rep[CompoundMatrix[T]]) =
-      (p.rows, p.numColumns)
+      Pair(p.rows, p.numColumns)
     override def to(p: Rep[(Collection[Vector[T]], Int)]) = {
       val Pair(rows, numColumns) = p
       CompoundMatrix(rows, numColumns)
@@ -429,7 +429,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
   class ConstMatrixIso[T](implicit eT: Elem[T])
     extends EntityIso[ConstMatrixData[T], ConstMatrix[T]] with Def[ConstMatrixIso[T]] {
     override def from(p: Rep[ConstMatrix[T]]) =
-      (p.item, p.numColumns, p.numRows)
+      Pair(p.item, Pair(p.numColumns, p.numRows))
     override def to(p: Rep[(T, (Int, Int))]) = {
       val Pair(item, Pair(numColumns, numRows)) = p
       ConstMatrix(item, numColumns, numRows)

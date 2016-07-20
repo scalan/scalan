@@ -43,11 +43,11 @@ trait MST_example extends ScalanDsl {
     }
 
     val vertexNum = offs.length
-    val visited = SArray.replicate(vertexNum,toRep(false)).update(startVertex, toRep(true))
+    val visited = SArray.replicate(vertexNum,FALSE).update(startVertex, TRUE)
 
     val startFront = SArray.replicate(1, startVertex)
     val out = outInitial.update(startVertex, NO_PARENT)
-    val st = toRep(false)
+    val st = FALSE
 
     val result = from(startFront, visited, out, st).until((_, _, _, stop) => stop) { (front,visited, out, stop) =>
       val outEdges = outEdgesOf(front, visited)
@@ -64,7 +64,7 @@ trait MST_example extends ScalanDsl {
         val to = minEdge._3
 
         val newFront = front :+ to
-        val newVisited = visited.update(to, toRep(true))
+        val newVisited = visited.update(to, TRUE)
         val newOut = out.update(to, from)
 
         (newFront, newVisited, newOut)
@@ -75,17 +75,17 @@ trait MST_example extends ScalanDsl {
   }
 
   def MSF_prime_adjlist(links: Rep[Array[Int]], edge_vals: Rep[Array[Double]], offs: Rep[Array[Int]], lens: Rep[Array[Int]]): Arr[Int] = {
-    val startVertex = toRep(0);
+    val startVertex = ZERO;
     val vertexNum = offs.length
     val out = SArray.replicate(vertexNum, UNVISITED)
-    val stop = toRep(false)
+    val stop = FALSE
 
     val outIndexes = SArray.rangeFrom0(vertexNum)
     val result = from( startVertex, out, stop).until((_, _, stop) => stop ) { (start, out, stop) =>
       val newOut = MST_prime_adjlist(links, edge_vals, offs, lens, start, out)
       val remain = (outIndexes zip newOut).filter( x => x._2 === UNVISITED)
       val stop = (remain.length === 0)
-      val newStart = IF (stop) THEN toRep(0) ELSE remain(0)._1
+      val newStart = IF (stop) THEN ZERO ELSE remain(0)._1
       (newStart, newOut, stop)
 
     }
@@ -128,16 +128,16 @@ trait MST_example extends ScalanDsl {
 
       val res = vs.flatMap { v =>
         val row = vertexRow(v)
-        (row zip rowIndexes).filter({i =>  (i._1 > toRep(0)) && predicate(i._2) }).map( i => (v,i._2))
+        (row zip rowIndexes).filter({i =>  (i._1 > ZERO_D) && predicate(i._2) }).map( i => (v,i._2))
       }
       res
     }
 
-    val visited = SArray.replicate(vertexNum,toRep(false)).update(startVertex, toRep(true))
+    val visited = SArray.replicate(vertexNum,FALSE).update(startVertex, TRUE)
 
     val startFront = SArray.replicate(1, startVertex)
     val out = outInitial.update(startVertex, NO_PARENT)
-    val st = toRep(false)
+    val st = FALSE
 
     val result = from(startFront, visited, out, st).until((_, _, _, stop) => stop) { (front,visited, out, stop) =>
       val outEdges = outEdgesOf(front, visited)
@@ -154,7 +154,7 @@ trait MST_example extends ScalanDsl {
         val to = minEdge._3
 
         val newFront = front :+ to
-        val newVisited = visited.update(to, toRep(true))
+        val newVisited = visited.update(to, TRUE)
         val newOut = out.update(to, from)
 
         (newFront, newVisited, newOut)
@@ -165,16 +165,16 @@ trait MST_example extends ScalanDsl {
   }
 
   def MSF_prime_adjmatrix(incMatrix: Rep[Array[Double]], vertexNum: Rep[Int]): Arr[Int] = {
-    val startVertex = toRep(0);
+    val startVertex = ZERO;
     val out = SArray.replicate(vertexNum, UNVISITED)
-    val stop = toRep(false)
+    val stop = FALSE
 
     val outIndexes = SArray.rangeFrom0(vertexNum)
     val result = from( startVertex, out, stop).until((_, _, stop) => stop ) { (start, out, stop) =>
       val newOut = MST_prime_adjmatrix(incMatrix, vertexNum, start, out)
       val remain = (outIndexes zip newOut).filter( x => x._2 === UNVISITED)
       val stop = (remain.length === 0)
-      val newStart = IF (stop) THEN toRep(0) ELSE remain(0)._1
+      val newStart = IF (stop) THEN ZERO ELSE remain(0)._1
       (newStart, newOut, stop)
 
     }
@@ -223,11 +223,11 @@ trait MST_example extends ScalanDsl {
     val startFront = (empty.update(startVertex, ()) | empty)
 
     val out = outInitial.update(startVertex, NO_PARENT)
-    val st = toRep(false)
+    val st = FALSE
 
     val result = from(startFront, out, st).until(stopCondition) { (front, out, st) =>
       val outEdges = outEdgesOf(front)
-      val stop = (outEdges.length === toRep(0))
+      val stop = (outEdges.length === ZERO)
       val res = IF  (stop) THEN {
         (front, out)
       } ELSE {
@@ -244,7 +244,7 @@ trait MST_example extends ScalanDsl {
   }
 
   def MSF_prime_adjlistMap(links: Rep[Array[Int]], edge_vals: Rep[Array[Double]], offs: Rep[Array[Int]], lens: Rep[Array[Int]]): Arr[Int] = {
-    val startVertex = toRep(0);
+    val startVertex = ZERO;
     val vertexNum = offs.length
     val out = SArray.replicate(vertexNum, UNVISITED)
 
@@ -300,11 +300,11 @@ trait MST_example extends ScalanDsl {
     val empty = MMap.empty[Int,Unit]
     val startFront = (empty.update(startVertex, ()) | empty)
     val out = outInitial.update(startVertex, NO_PARENT)
-    val st = toRep(false)
+    val st = FALSE
 
     val result = from(startFront, out, st).until(stopCondition) { (front, out, st) =>
       val outEdges = outEdgesOf(front)
-      val stop = (outEdges.length === toRep(0))
+      val stop = (outEdges.length === ZERO)
       val res = IF  (stop) THEN {
         (front, out)
       } ELSE {
@@ -321,7 +321,7 @@ trait MST_example extends ScalanDsl {
   }
 
   def MSF_prime_adjmatrixMap(incMatrix: Rep[Array[Double]], vertexNum: Rep[Int]): Arr[Int] = {
-    val startVertex = toRep(0);
+    val startVertex = ZERO;
     val out = SArray.replicate(vertexNum, UNVISITED)
 
     val outIndexes = SArray.rangeFrom0(vertexNum)
@@ -372,11 +372,11 @@ trait MST_example extends ScalanDsl {
     }
 
     val vertexNum = offs.length
-    val visited = SArray.replicate(vertexNum,toRep(false)).update(startVertex, toRep(true))
+    val visited = SArray.replicate(vertexNum,FALSE).update(startVertex, TRUE)
 
     val startFront = startVertex :: SList.empty[Int]
     val out = outInitial.update(startVertex, NO_PARENT)
-    val st = toRep(false)
+    val st = FALSE
 
     val result = from(startFront, visited, out, st).until((_, _, _, stop) => stop) { (front,visited, out, stop) =>
       val outEdges = outEdgesOf(front, visited)
@@ -393,7 +393,7 @@ trait MST_example extends ScalanDsl {
         val to = minEdge._3
 
         val newFront = to :: front
-        val newVisited = visited.update(to, toRep(true))
+        val newVisited = visited.update(to, TRUE)
         val newOut = out.update(to, from)
 
         (newFront, newVisited, newOut)
@@ -404,17 +404,17 @@ trait MST_example extends ScalanDsl {
   }
 
   def MSF_prime_adjlistList(links: Rep[Array[Int]], edge_vals: Rep[Array[Double]], offs: Rep[Array[Int]], lens: Rep[Array[Int]]): Arr[Int] = {
-    val startVertex = toRep(0);
+    val startVertex = ZERO;
     val vertexNum = offs.length
     val out = SArray.replicate(vertexNum, UNVISITED)
-    val stop = toRep(false)
+    val stop = FALSE
 
     val outIndexes = SArray.rangeFrom0(vertexNum)
     val result = from( startVertex, out, stop).until((_, _, stop) => stop ) { (start, out, stop) =>
       val newOut = MST_prime_adjlistList(links, edge_vals, offs, lens, start, out)
       val remain = (outIndexes zip newOut).filter( x => x._2 === UNVISITED)
       val stop = (remain.length === 0)
-      val newStart = IF (stop) THEN toRep(0) ELSE remain(0)._1
+      val newStart = IF (stop) THEN ZERO ELSE remain(0)._1
       (newStart, newOut, stop)
 
     }
@@ -457,16 +457,16 @@ trait MST_example extends ScalanDsl {
 
       val res = vs.toArray.flatMap { v =>
         val row = vertexRow(v)
-        (row zip rowIndexes).filter({i =>  (i._1 > toRep(0)) && predicate(i._2) }).map( i => (v,i._2))
+        (row zip rowIndexes).filter({i =>  (i._1 > ZERO_D) && predicate(i._2) }).map( i => (v,i._2))
       }
       res
     }
 
-    val visited = SArray.replicate(vertexNum,toRep(false)).update(startVertex, toRep(true))
+    val visited = SArray.replicate(vertexNum,FALSE).update(startVertex, TRUE)
 
     val startFront = startVertex :: SList.empty[Int]
     val out = outInitial.update(startVertex, NO_PARENT)
-    val st = toRep(false)
+    val st = FALSE
 
     val result = from(startFront, visited, out, st).until((_, _, _, stop) => stop) { (front,visited, out, stop) =>
       val outEdges = outEdgesOf(front, visited)
@@ -483,7 +483,7 @@ trait MST_example extends ScalanDsl {
         val to = minEdge._3
 
         val newFront = to :: front
-        val newVisited = visited.update(to, toRep(true))
+        val newVisited = visited.update(to, TRUE)
         val newOut = out.update(to, from)
 
         (newFront, newVisited, newOut)
@@ -494,16 +494,16 @@ trait MST_example extends ScalanDsl {
   }
 
   def MSF_prime_adjmatrixList(incMatrix: Rep[Array[Double]], vertexNum: Rep[Int]): Arr[Int] = {
-    val startVertex = toRep(0);
+    val startVertex = ZERO;
     val out = SArray.replicate(vertexNum, UNVISITED)
-    val stop = toRep(false)
+    val stop = FALSE
 
     val outIndexes = SArray.rangeFrom0(vertexNum)
     val result = from( startVertex, out, stop).until((_, _, stop) => stop ) { (start, out, stop) =>
       val newOut = MST_prime_adjmatrixList(incMatrix, vertexNum, start, out)
       val remain = (outIndexes zip newOut).filter( x => x._2 === UNVISITED)
       val stop = (remain.length === 0)
-      val newStart = IF (stop) THEN toRep(0) ELSE remain(0)._1
+      val newStart = IF (stop) THEN ZERO ELSE remain(0)._1
       (newStart, newOut, stop)
 
     }

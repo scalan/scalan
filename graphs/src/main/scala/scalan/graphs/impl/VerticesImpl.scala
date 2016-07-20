@@ -87,7 +87,7 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
   class SVertexIso[V, E](implicit eV: Elem[V], eE: Elem[E])
     extends EntityIso[SVertexData[V, E], SVertex[V, E]] with Def[SVertexIso[V, E]] {
     override def from(p: Rep[SVertex[V, E]]) =
-      (p.id, p.graph)
+      Pair(p.id, p.graph)
     override def to(p: Rep[(Int, Graph[V, E])]) = {
       val Pair(id, graph) = p
       SVertex(id, graph)

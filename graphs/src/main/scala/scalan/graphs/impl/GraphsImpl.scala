@@ -90,7 +90,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
   class AdjacencyGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
     extends EntityIso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] with Def[AdjacencyGraphIso[V, E]] {
     override def from(p: Rep[AdjacencyGraph[V, E]]) =
-      (p.vertexValues, p.edgeValues, p.links)
+      Pair(p.vertexValues, Pair(p.edgeValues, p.links))
     override def to(p: Rep[(Collection[V], (NestedCollection[E], NestedCollection[Int]))]) = {
       val Pair(vertexValues, Pair(edgeValues, links)) = p
       AdjacencyGraph(vertexValues, edgeValues, links)
@@ -178,7 +178,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
   class IncidenceGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
     extends EntityIso[IncidenceGraphData[V, E], IncidenceGraph[V, E]] with Def[IncidenceGraphIso[V, E]] {
     override def from(p: Rep[IncidenceGraph[V, E]]) =
-      (p.vertexValues, p.incMatrixWithVals, p.vertexNum)
+      Pair(p.vertexValues, Pair(p.incMatrixWithVals, p.vertexNum))
     override def to(p: Rep[(Collection[V], (Collection[E], Int))]) = {
       val Pair(vertexValues, Pair(incMatrixWithVals, vertexNum)) = p
       IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)

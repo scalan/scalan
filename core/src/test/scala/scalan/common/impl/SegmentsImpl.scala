@@ -82,7 +82,7 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   class IntervalIso
     extends EntityIso[IntervalData, Interval] with Def[IntervalIso] {
     override def from(p: Rep[Interval]) =
-      (p.start, p.end)
+      Pair(p.start, p.end)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(start, end) = p
       Interval(start, end)
@@ -166,7 +166,7 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   class SliceIso
     extends EntityIso[SliceData, Slice] with Def[SliceIso] {
     override def from(p: Rep[Slice]) =
-      (p.start, p.length)
+      Pair(p.start, p.length)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(start, length) = p
       Slice(start, length)
@@ -251,7 +251,7 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   class CenteredIso
     extends EntityIso[CenteredData, Centered] with Def[CenteredIso] {
     override def from(p: Rep[Centered]) =
-      (p.center, p.radius)
+      Pair(p.center, p.radius)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(center, radius) = p
       Centered(center, radius)

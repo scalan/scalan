@@ -91,7 +91,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
   }
 
   def pairify(fs: List[String]): String = fs match {
-    case Nil => "unit"
+    case Nil => "UNIT"
     case f :: Nil => f
     case f :: fs => s"Pair($f, ${pairify(fs)})"
   }
@@ -510,7 +510,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     val concreteClasses = for { clazz <- classes } yield {
       val className = clazz.name
       val c = ConcreteClassTemplateData(module, clazz)
-      import c.{implicitArgsOrParens, implicitArgsUse, tpeArgsDecl, tpeArgsUse}
+      import c.{implicitArgsUse, tpeArgsDecl, tpeArgsUse}
       val fields = clazz.args.argNames
       val fieldsWithType = clazz.args.argNamesAndTypes(config)
       val fieldTypes = clazz.args.argUnrepTypes(module, config)
@@ -561,7 +561,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
               else str0 + s"(element[${args(0)}])"
             }
           }
-          val args = fieldTypes.map(_.toString)
+          val args = fieldTypes.map(_._1.toString)
           args.length match {
             case n if n >= 2 =>
               val impls = implElem(args)("")
@@ -609,7 +609,23 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
         case 1 => c.implicitArgs(0).name
         case _ => s"${implicitArgsUse}.productElement(n)"
       }
+      val isoFromType = dataType(fieldTypes.map(_._1))
       val parentIsoType = s"EntityIso[$dataTpe, ${c.typeUse}]"
+      val defaultRepExpr =
+        s"""$className(${
+          fieldTypes.rep {
+            case (tpe, true) => zeroSExpr(tpe)
+            case (tpe, false) => s"scalan.common.Default.defaultOf[$tpe]"
+          }
+        })"""
+      val isoToConstructorArgs = fields.zip(fieldTypes.map(_._2)).rep {
+        case (field, false) => s"valueFromRep($field)"
+        case (field, true) => field
+      }
+      val unmkReturnType = fieldTypes.opt(_.rep {
+        case (t, true) => s"Rep[$t]"
+        case (t, false) => t.toString
+      }, "Rep[Unit]")
       s"""
          |$defaultImpl
          |  // elem for concrete class
@@ -620,7 +636,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    override lazy val typeArgs = TypeArgs(${c.tpeSubstStr})
          |    ${e.isWrapper.opt("override lazy val eTo: Elem[_] = this")}
          |    override def convert${parent.name}(x: Rep[$parent]) = $converterBody
-         |    override def getDefaultRep = $className(${fieldTypes.rep(zeroSExpr(_))})
+         |    override def getDefaultRep = $defaultRepExpr
          |    override lazy val tag = {
          |${implicitTagsFromElems(c)}
          |      weakTypeTag[${c.typeUse}]
@@ -628,16 +644,16 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |  }
          |
          |  // state representation type
-         |  type ${className}Data${tpeArgsDecl} = ${dataType(fieldTypes)}
+         |  type ${className}Data${tpeArgsDecl} = $isoFromType
          |
          |  // 3) Iso for concrete class
          |  class ${className}Iso${tpeArgsDecl}${implicitArgsDecl}
          |    extends $parentIsoType with Def[${className}Iso$tpeArgsUse] {
          |    override def from(p: Rep[${c.typeUse}]) =
-         |      ${fields.map(fields => "p." + fields).opt(s => if (s.toList.length > 1) s"(${s.rep()})" else s.rep(), "()")}
-         |    override def to(p: Rep[${dataType(fieldTypes)}]) = {
+         |      ${pairify(fields.map(fields => "p." + fields))}
+         |    override def to(p: Rep[$isoFromType]) = {
          |      val ${pairify(fields)} = p
-         |      $className(${fields.rep()})
+         |      $className($isoToConstructorArgs)
          |    }
          |    lazy val eFrom = $eFrom
          |    lazy val eTo = new ${c.elemTypeUse}(self)
@@ -649,7 +665,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    def isEntityType = true
          |    def getDefaultRep = reifyObject(new ${className}Iso${tpeArgsUse}()$implicitArgsUse)
          |    lazy val tag = {
-         |
          |${implicitTagsFromElems(c)}
          |      weakTypeTag[${className}Iso$tpeArgsUse]
          |    }
@@ -693,7 +708,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |
          |  // 6) smart constructor and deconstructor
          |  def mk${c.typeDecl}(${fieldsWithType.rep()})${implicitArgsDecl}: Rep[${c.typeUse}]
-         |  def unmk${c.typeDecl}(p: Rep[$parent]): Option[(${fieldTypes.opt(fieldTypes => fieldTypes.rep(t => s"Rep[$t]"), "Rep[Unit]")})]
+         |  def unmk${c.typeDecl}(p: Rep[$parent]): Option[(${unmkReturnType})]
          |""".stripAndTrim
     }
 

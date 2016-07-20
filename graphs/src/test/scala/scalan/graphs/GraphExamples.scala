@@ -42,7 +42,7 @@ trait GraphExamples extends GraphsDsl with PrimitiveExamples {
   }
 
   def MSF_prime(g: Rep[Graph[Unit,Double]], startFront: Rep[Front])  = {
-    val startRoot = toRep(0);
+    val startRoot = ZERO;
     val out = Collection.replicate(g.vertexNum, UNVISITED)
     val outIndexes = Collection.indexRange(g.vertexNum)
 

@@ -88,7 +88,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
   class AdjEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
     extends EntityIso[AdjEdgeData[V, E], AdjEdge[V, E]] with Def[AdjEdgeIso[V, E]] {
     override def from(p: Rep[AdjEdge[V, E]]) =
-      (p.fromId, p.outIndex, p.graph)
+      Pair(p.fromId, Pair(p.outIndex, p.graph))
     override def to(p: Rep[(Int, (Int, Graph[V, E]))]) = {
       val Pair(fromId, Pair(outIndex, graph)) = p
       AdjEdge(fromId, outIndex, graph)
@@ -176,7 +176,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
   class IncEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
     extends EntityIso[IncEdgeData[V, E], IncEdge[V, E]] with Def[IncEdgeIso[V, E]] {
     override def from(p: Rep[IncEdge[V, E]]) =
-      (p.fromId, p.toId, p.graph)
+      Pair(p.fromId, Pair(p.toId, p.graph))
     override def to(p: Rep[(Int, (Int, Graph[V, E]))]) = {
       val Pair(fromId, Pair(toId, graph)) = p
       IncEdge(fromId, toId, graph)

@@ -23,6 +23,13 @@ trait Base extends LazyLogging { self: Scalan =>
   type DoubleRep = Rep[Double]
   type :=>[-A, +B] = PartialFunction[A, B]
   type RFunc[-A,+B] = Rep[Function1[A,B]]
+  lazy val UNIT = toRep(())
+  lazy val ZERO = toRep(0)
+  lazy val ONE = toRep(1)
+  lazy val ZERO_D = toRep(0.0)
+  lazy val ONE_D = toRep(1.0)
+  lazy val FALSE = toRep(false)
+  lazy val TRUE = toRep(true)
 
   protected def stagingExceptionMessage(message: String, syms: Seq[Rep[_]]): String
 

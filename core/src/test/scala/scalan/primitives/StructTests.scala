@@ -5,6 +5,7 @@ import scalan._
 import scalan.common._
 import scalan.compilation.{DummyCompiler, StructsCompiler}
 import scalan.it.BaseItTests
+import scalan.meta.{MetaTestsDsl, MetaTestsDslExp, MetaTestsDslStd}
 
 trait StructExamples extends Scalan with SegmentsDsl with MetaTestsDsl {
   def eInt = IntElement

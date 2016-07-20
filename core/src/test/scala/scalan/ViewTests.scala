@@ -1,7 +1,8 @@
 package scalan
 
 import scala.language.reflectiveCalls
-import scalan.common.{CommonExamples, MetaTestsDslExp, SegmentsDslExp, ViewExamples}
+import scalan.common.{CommonExamples, SegmentsDslExp, ViewExamples}
+import scalan.meta.MetaTestsDslExp
 
 abstract class BaseViewTests extends BaseCtxTests {
   class ViewTestsCtx extends TestContext {

@@ -57,7 +57,7 @@ trait StringOpsExp extends StringOps with BaseExp { self: ScalanExp =>
     case ApplyBinOp(op, Def(Const("")), x) if op == StringConcat =>
       x
     case ApplyBinOp(op, x, Def(Const(""))) if op == StringStartsWith || op == StringEndsWith =>
-      toRep(true)
+      TRUE
     case _ => super.rewriteDef(d)
   }
 }

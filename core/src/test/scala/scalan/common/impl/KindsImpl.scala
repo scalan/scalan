@@ -172,7 +172,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
   class BindIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends EntityIso[BindData[F, S, B], Bind[F, S, B]] with Def[BindIso[F, S, B]] {
     override def from(p: Rep[Bind[F, S, B]]) =
-      (p.a, p.f)
+      Pair(p.a, p.f)
     override def to(p: Rep[(Kind[F, S], S => Kind[F, B])]) = {
       val Pair(a, f) = p
       Bind(a, f)

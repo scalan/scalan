@@ -86,7 +86,7 @@ trait AuthenticationsAbs extends scalan.ScalanDsl with Authentications {
   class LoginIso
     extends EntityIso[LoginData, Login] with Def[LoginIso] {
     override def from(p: Rep[Login]) =
-      (p.user, p.password)
+      Pair(p.user, p.password)
     override def to(p: Rep[(String, String)]) = {
       val Pair(user, password) = p
       Login(user, password)
@@ -171,7 +171,7 @@ trait AuthenticationsAbs extends scalan.ScalanDsl with Authentications {
   class HasPermissionIso
     extends EntityIso[HasPermissionData, HasPermission] with Def[HasPermissionIso] {
     override def from(p: Rep[HasPermission]) =
-      (p.user, p.password)
+      Pair(p.user, p.password)
     override def to(p: Rep[(String, String)]) = {
       val Pair(user, password) = p
       HasPermission(user, password)

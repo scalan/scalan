@@ -59,7 +59,8 @@ class BoilerplateTool extends StrictLogging {
     entityFiles = List(
       "scalan/common/Segments.scala",
       "scalan/common/Kinds.scala",
-      "scalan/common/MetaTests.scala"
+      "scalan/meta/MetaTests.scala",
+      "scalan/meta/StaticMetaTests.scala"
     ),
     coreTestsTypeSynonyms
   )

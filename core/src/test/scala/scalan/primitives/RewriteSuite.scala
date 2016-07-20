@@ -12,7 +12,7 @@ class RewriteSuite extends BaseTests {
     val rand2 = random(5)
 
     test("A random should be equal to itself") {
-      (rand1 === rand1) shouldEqual toRep(true)
+      (rand1 === rand1) shouldEqual TRUE
     }
 
     test("Different randoms shouldn't be equal") {
@@ -21,7 +21,7 @@ class RewriteSuite extends BaseTests {
   }
 
   test("Constants should propagate") {
-    (toRep(4) + 5 > toRep(1) * 3) shouldEqual toRep(true)
+    (toRep(4) + 5 > toRep(1) * 3) shouldEqual TRUE
   }
 
   test("One-sided constant propagation") {
@@ -29,7 +29,7 @@ class RewriteSuite extends BaseTests {
 
     (x && true) shouldEqual x
 
-    (toRep(false) || x) shouldEqual x
+    (FALSE || x) shouldEqual x
 
     (x === false) shouldEqual !x
 

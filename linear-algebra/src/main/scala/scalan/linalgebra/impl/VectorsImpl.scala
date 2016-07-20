@@ -172,7 +172,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
   class ConstVectorIso[T](implicit eT: Elem[T])
     extends EntityIso[ConstVectorData[T], ConstVector[T]] with Def[ConstVectorIso[T]] {
     override def from(p: Rep[ConstVector[T]]) =
-      (p.item, p.length)
+      Pair(p.item, p.length)
     override def to(p: Rep[(T, Int)]) = {
       val Pair(item, length) = p
       ConstVector(item, length)
@@ -258,7 +258,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
   class SparseVectorIso[T](implicit eT: Elem[T])
     extends EntityIso[SparseVectorData[T], SparseVector[T]] with Def[SparseVectorIso[T]] {
     override def from(p: Rep[SparseVector[T]]) =
-      (p.nonZeroIndices, p.nonZeroValues, p.length)
+      Pair(p.nonZeroIndices, Pair(p.nonZeroValues, p.length))
     override def to(p: Rep[(Collection[Int], (Collection[T], Int))]) = {
       val Pair(nonZeroIndices, Pair(nonZeroValues, length)) = p
       SparseVector(nonZeroIndices, nonZeroValues, length)
@@ -344,7 +344,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
   class SparseVector1Iso[T](implicit eT: Elem[T])
     extends EntityIso[SparseVector1Data[T], SparseVector1[T]] with Def[SparseVector1Iso[T]] {
     override def from(p: Rep[SparseVector1[T]]) =
-      (p.nonZeroItems, p.length)
+      Pair(p.nonZeroItems, p.length)
     override def to(p: Rep[(Collection[(Int, T)], Int)]) = {
       val Pair(nonZeroItems, length) = p
       SparseVector1(nonZeroItems, length)

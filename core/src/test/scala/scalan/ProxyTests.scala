@@ -36,7 +36,7 @@ class ProxyTests extends BaseCtxTests {
     testResultElem[Segment, Int]("start")
     testResultElem[SThrowable, SThrowable]("initCause", classOf[Object] -> SThrowable(""))
     // Tests below don't work and probably need changes in testResultElem and/or getResultElem
-    // pending: testResultElem[Monad[Id], Int]("unit", classOf[Object] -> toRep(0), classOf[Element[_]] -> IntElement)
-    // pending: testResultElem[Array[Double], Double]("apply", classOf[Object] -> toRep(0))
+    // pending: testResultElem[Monad[Id], Int]("unit", classOf[Object] -> ZERO, classOf[Element[_]] -> IntElement)
+    // pending: testResultElem[Array[Double], Double]("apply", classOf[Object] -> ZERO)
   }
 }

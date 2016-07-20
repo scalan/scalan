@@ -260,10 +260,9 @@ trait Vectors { self: LADsl =>
     def nonZeroItems: Rep[Collection[(Int, T)]] = nonZeroIndices zip nonZeroValues
 
     def apply(i: IntRep): Rep[T] = {
-      val zero = toRep(0)
-      IF (nonZeroIndices.length > zero) THEN {
+      IF (nonZeroIndices.length > ZERO) THEN {
         val k = binarySearch(i, nonZeroIndices)
-        IF (k >= zero) THEN nonZeroValues(k) ELSE zeroValue
+        IF (k >= ZERO) THEN nonZeroValues(k) ELSE zeroValue
       } ELSE zeroValue
     }
 
@@ -388,10 +387,9 @@ trait Vectors { self: LADsl =>
     def nonZeroValues: Rep[Collection[T]] = nonZeroItems.bs
 
     def apply(i: IntRep): Rep[T] = {
-      val zero = toRep(0)
-      IF (nonZeroIndices.length > zero) THEN {
+      IF (nonZeroIndices.length > ZERO) THEN {
         val k = binarySearch(i, nonZeroIndices)
-        IF (k >= zero) THEN nonZeroValues(k) ELSE zeroValue
+        IF (k >= ZERO) THEN nonZeroValues(k) ELSE zeroValue
       } ELSE zeroValue
     }
 

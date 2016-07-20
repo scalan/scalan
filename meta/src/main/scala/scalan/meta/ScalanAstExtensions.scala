@@ -17,10 +17,15 @@ trait ScalanAstExtensions {
 
     def argUnrepTypes(module: SEntityModuleDef, config: CodegenConfig) = {
       if (config.isAlreadyRep) {
-        as.args.map(a => a.tpe.unRep(module, config).getOrElse {
-          sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
-        })
-      } else as.args.map(_.tpe)
+        as.args.map { a =>
+          val tpe = a.tpe
+          tpe.unRep(module, config) match {
+            case Some(unrepped) => (unrepped, true)
+            case None => (tpe, false)
+          }
+        }
+      } else
+        as.args.map(a => (a.tpe, true))
     }
   }
 

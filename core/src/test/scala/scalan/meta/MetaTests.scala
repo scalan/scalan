@@ -1,8 +1,4 @@
-package scalan.common
-
-/**
- * Created by Victor Smirnov on 4/14/15.
- */
+package scalan.meta
 
 trait MetaTests { self: MetaTestsDsl =>
 

@@ -89,7 +89,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
   class AwaitIso[F[_], A, O](implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
     extends EntityIso[AwaitData[F, A, O], Await[F, A, O]] with Def[AwaitIso[F, A, O]] {
     override def from(p: Rep[Await[F, A, O]]) =
-      (p.req, p.recv)
+      Pair(p.req, p.recv)
     override def to(p: Rep[(F[A], $bar[Throwable, A] => Process[F, O])]) = {
       val Pair(req, recv) = p
       Await(req, recv)
@@ -177,7 +177,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
   class EmitIso[F[_], O](implicit eO: Elem[O], cF: Cont[F])
     extends EntityIso[EmitData[F, O], Emit[F, O]] with Def[EmitIso[F, O]] {
     override def from(p: Rep[Emit[F, O]]) =
-      (p.head, p.tail)
+      Pair(p.head, p.tail)
     override def to(p: Rep[(O, Process[F, O])]) = {
       val Pair(head, tail) = p
       Emit(head, tail)

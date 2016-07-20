@@ -1,7 +1,8 @@
 package scalan.compilation.lua
 
 import scalan.ScalanDslExp
-import scalan.common.{MetaTestsDslExp, SegmentsDslExp}
+import scalan.common.SegmentsDslExp
+import scalan.meta.MetaTestsDslExp
 import scalan.primitives.{StructExamples, StructItTests}
 
 class LuaStructItTests extends StructItTests {

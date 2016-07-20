@@ -258,7 +258,7 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
   class FlatMapIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends EntityIso[FlatMapData[F, S, B], FlatMap[F, S, B]] with Def[FlatMapIso[F, S, B]] {
     override def from(p: Rep[FlatMap[F, S, B]]) =
-      (p.a, p.f)
+      Pair(p.a, p.f)
     override def to(p: Rep[(FreeM[F, S], S => FreeM[F, B])]) = {
       val Pair(a, f) = p
       FlatMap(a, f)

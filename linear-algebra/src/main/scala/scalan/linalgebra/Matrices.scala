@@ -784,13 +784,13 @@ trait MatricesDsl extends impl.MatricesAbs { self: LADsl =>
       for (i <- Collection.indexRange(m.numColumns))
         yield {
           val items = Collection.indexRange(nestedItems.length).map(j => Pair(j, nestedItems(j)(i))).filter {
-            p => p._2 !== n.zero//.nonZeroIndices.filter(l => l === i).length !== toRep(0)
+            p => p._2 !== n.zero//.nonZeroIndices.filter(l => l === i).length !== ZERO
           }
           /*val newRow: PairColl[Int, T] =
             indices zip indices.map { j =>
               val indices = nestedItems(j).nonZeroIndices
               val values = nestedItems(j).nonZeroValues
-              val p = (indices zip Collection.indexRange(indices.length)).filter(l => l._1 === i)(toRep(0))
+              val p = (indices zip Collection.indexRange(indices.length)).filter(l => l._1 === i)(ZERO)
               values(p._2)
             }*/
           SparseVector(items.as, items.bs, m.numRows)

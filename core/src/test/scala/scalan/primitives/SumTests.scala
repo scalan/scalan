@@ -65,6 +65,6 @@ class SumTests extends BaseCtxTests {
 
     isLeftFun.getLambda.y should matchPattern { case Def(IsLeft(_)) => }
     isRightFun.getLambda.y should matchPattern { case Def(IsRight(_)) => }
-    shouldBeTrue shouldEqual toRep(true)
+    shouldBeTrue shouldEqual TRUE
   }
 }

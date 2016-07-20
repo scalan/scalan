@@ -496,7 +496,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   class PairCollectionSOAIso[A, B](implicit eA: Elem[A], eB: Elem[B])
     extends EntityIso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] with Def[PairCollectionSOAIso[A, B]] {
     override def from(p: Rep[PairCollectionSOA[A, B]]) =
-      (p.as, p.bs)
+      Pair(p.as, p.bs)
     override def to(p: Rep[(Collection[A], Collection[B])]) = {
       val Pair(as, bs) = p
       PairCollectionSOA(as, bs)
@@ -669,7 +669,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   class NestedCollectionFlatIso[A](implicit eA: Elem[A])
     extends EntityIso[NestedCollectionFlatData[A], NestedCollectionFlat[A]] with Def[NestedCollectionFlatIso[A]] {
     override def from(p: Rep[NestedCollectionFlat[A]]) =
-      (p.values, p.segments)
+      Pair(p.values, p.segments)
     override def to(p: Rep[(Collection[A], PairCollection[Int, Int])]) = {
       val Pair(values, segments) = p
       NestedCollectionFlat(values, segments)
@@ -842,7 +842,7 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   class FuncCollectionIso[A, B, Env](implicit eA: Elem[A], eB: Elem[B], eEnv: Elem[Env])
     extends EntityIso[FuncCollectionData[A, B, Env], FuncCollection[A, B, Env]] with Def[FuncCollectionIso[A, B, Env]] {
     override def from(p: Rep[FuncCollection[A, B, Env]]) =
-      (p.env1, p.indexedFunc)
+      Pair(p.env1, p.indexedFunc)
     override def to(p: Rep[(Collection[Env], ((Int, A)) => B)]) = {
       val Pair(env1, indexedFunc) = p
       FuncCollection(env1, indexedFunc)

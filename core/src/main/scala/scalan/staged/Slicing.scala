@@ -193,7 +193,7 @@ trait Slicing extends ScalanExp {
     def >>[R](m2: SliceMarking[R]): SliceMarking[T] = this
     def isIdentity = false
     def |/|[R](key: KeyPath, inner: SliceMarking[R]) = !!!(s"Inner marking is not possible for base type ${elem}")
-    def projectToExp(x: Exp[T]): Exp[_] = toRep(())
+    def projectToExp(x: Exp[T]): Exp[_] = UNIT
     def projectedElem: Elem[_] = element[Unit]
     def makeSlot = SlicedBase((), this)
     def set(slot: Exp[T], value: Exp[_]) = {

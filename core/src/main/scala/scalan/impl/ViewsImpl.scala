@@ -129,9 +129,9 @@ trait ViewsAbs extends Views {
   class IdentityIsoIso[A](implicit eA: Elem[A])
     extends EntityIso[IdentityIsoData[A], IdentityIso[A]] with Def[IdentityIsoIso[A]] {
     override def from(p: Rep[IdentityIso[A]]) =
-      ()
+      UNIT
     override def to(p: Rep[Unit]) = {
-      val unit = p
+      val UNIT = p
       IdentityIso()
     }
     lazy val eFrom = UnitElement
@@ -219,7 +219,7 @@ trait ViewsAbs extends Views {
   class PairIsoIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends EntityIso[PairIsoData[A1, A2, B1, B2], PairIso[A1, A2, B1, B2]] with Def[PairIsoIso[A1, A2, B1, B2]] {
     override def from(p: Rep[PairIso[A1, A2, B1, B2]]) =
-      (p.iso1, p.iso2)
+      Pair(p.iso1, p.iso2)
     override def to(p: Rep[(IsoUR[A1, B1], IsoUR[A2, B2])]) = {
       val Pair(iso1, iso2) = p
       PairIso(iso1, iso2)
@@ -486,7 +486,7 @@ trait ViewsAbs extends Views {
   class SumIsoIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends EntityIso[SumIsoData[A1, A2, B1, B2], SumIso[A1, A2, B1, B2]] with Def[SumIsoIso[A1, A2, B1, B2]] {
     override def from(p: Rep[SumIso[A1, A2, B1, B2]]) =
-      (p.iso1, p.iso2)
+      Pair(p.iso1, p.iso2)
     override def to(p: Rep[(IsoUR[A1, B1], IsoUR[A2, B2])]) = {
       val Pair(iso1, iso2) = p
       SumIso(iso1, iso2)
@@ -578,7 +578,7 @@ trait ViewsAbs extends Views {
   class ComposeIsoIso[A, B, C](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
     extends EntityIso[ComposeIsoData[A, B, C], ComposeIso[A, B, C]] with Def[ComposeIsoIso[A, B, C]] {
     override def from(p: Rep[ComposeIso[A, B, C]]) =
-      (p.iso2, p.iso1)
+      Pair(p.iso2, p.iso1)
     override def to(p: Rep[(IsoUR[B, C], IsoUR[A, B])]) = {
       val Pair(iso2, iso1) = p
       ComposeIso(iso2, iso1)
@@ -670,7 +670,7 @@ trait ViewsAbs extends Views {
   class FuncIsoIso[A, B, C, D](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D])
     extends EntityIso[FuncIsoData[A, B, C, D], FuncIso[A, B, C, D]] with Def[FuncIsoIso[A, B, C, D]] {
     override def from(p: Rep[FuncIso[A, B, C, D]]) =
-      (p.iso1, p.iso2)
+      Pair(p.iso1, p.iso2)
     override def to(p: Rep[(IsoUR[A, B], IsoUR[C, D])]) = {
       val Pair(iso1, iso2) = p
       FuncIso(iso1, iso2)
@@ -761,7 +761,7 @@ trait ViewsAbs extends Views {
   class ConverterIsoIso[A, B](implicit eA: Elem[A], eB: Elem[B])
     extends EntityIso[ConverterIsoData[A, B], ConverterIso[A, B]] with Def[ConverterIsoIso[A, B]] {
     override def from(p: Rep[ConverterIso[A, B]]) =
-      (p.convTo, p.convFrom)
+      Pair(p.convTo, p.convFrom)
     override def to(p: Rep[(Converter[A, B], Converter[B, A])]) = {
       val Pair(convTo, convFrom) = p
       ConverterIso(convTo, convFrom)
@@ -1196,7 +1196,7 @@ trait ViewsAbs extends Views {
   class MapIsoIso[K1, V1, K2, V2](implicit eK1: Elem[K1], eV1: Elem[V1], eK2: Elem[K2], eV2: Elem[V2])
     extends EntityIso[MapIsoData[K1, V1, K2, V2], MapIso[K1, V1, K2, V2]] with Def[MapIsoIso[K1, V1, K2, V2]] {
     override def from(p: Rep[MapIso[K1, V1, K2, V2]]) =
-      (p.iso1, p.iso2)
+      Pair(p.iso1, p.iso2)
     override def to(p: Rep[(IsoUR[K1, K2], IsoUR[V1, V2])]) = {
       val Pair(iso1, iso2) = p
       MapIso(iso1, iso2)

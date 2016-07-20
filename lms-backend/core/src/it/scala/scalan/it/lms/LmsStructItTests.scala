@@ -1,9 +1,10 @@
 package scalan.it.lms
 
-import scalan.common.{MetaTestsDslExp, SegmentsDslExp}
+import scalan.common.SegmentsDslExp
 import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.uni.LmsCompilerUni
+import scalan.meta.MetaTestsDslExp
 import scalan.primitives.{StructExamples, StructItTests}
 import scalan.{JNIExtractorOpsExp, ScalanDslExp}
 
