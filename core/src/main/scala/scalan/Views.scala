@@ -463,6 +463,12 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
       }
   }.asInstanceOf[Iso[A, C]]
 
+  def tryComposeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Option[Iso[A, C]] = try {
+    Some(composeIso(iso2, iso1))
+  } catch {
+    case _: Throwable => None
+  }
+
   def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] =
     FuncIso[A, B, C, D](iso1, iso2)(iso1.eFrom, iso1.eTo, iso2.eFrom, iso2.eTo)
 
