@@ -38,6 +38,9 @@ trait TestContexts extends TestsUtil {
       emitF(name, () => s1)
       s2.foreach(s => emitF(name, () => s))
     }
+    def emitMany(name: String, ss: Exp[_]*): Unit = {
+      emitF(name, ss.map((s: Rep[_]) => () => s): _*)
+    }
 //    def emit(name: String, s1: => Exp[_], s2: => Exp[_], s3: => Exp[_]): Unit = emitF(name, () => s1, () => s2, () => s3)
     def emit(s1: => Exp[_]): Unit = emitF(testName, () => s1)
     def emit(s1: => Exp[_], s2: Exp[_]*): Unit = {
