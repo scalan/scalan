@@ -2,7 +2,8 @@ package scalan.collections
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scala.collection.mutable.Map;
+import scala.collection.mutable.Map
+import scalan.staged.BaseExp;
 
 trait MapOps extends  Base  { self: Scalan =>
   type MM[K, V] = Rep[MMap[K, V]]
@@ -137,7 +138,7 @@ trait MapOpsStd extends MapOps { self: ScalanStd =>
 }
 
 
-trait MapOpsExp extends MapOps { self: ScalanExp =>
+trait MapOpsExp extends MapOps with BaseExp { self: ScalanExp =>
   abstract class MMapDef[K, V](implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MMap[K, V]  {
 
     def union(that: MM[K, V]): MM[K, V] = MapUnion(this, that)
@@ -227,74 +228,50 @@ trait MapOpsExp extends MapOps { self: ScalanExp =>
     }
     case _ => ???("cannot resolve MMap", sym)
   }
-}
-/*
-trait MapViewsExp extends MapsExp with ViewsExp with BaseExp { self: ScalanExp =>
-  case class ViewMap[K1, V1, K2, V2](source: PM[K1, V1])(implicit iso1: Iso[K1, K2], iso2: Iso[V1, V2]) extends View2[K1, V1, K2, V2, MMap] {
-    lazy val iso = mapIso(iso1, iso2)
-    def copy(source: PM[K1, V1]) = ViewMap(source)
-    override def toString = s"ViewMap[${iso1.eTo.name},${iso2.eTo.name}]($source)"
-    override def equals(other: Any) = other match {
-      case v: ViewMap[_, _, _, _] => source == v.source && iso1.eTo == v.iso1.eTo && iso2.eTo == v.iso2.eTo
-      case _ => false
-    }
-  }
-
-  override def hasViews(s: Exp[_]): Boolean = s match {
-    case Def(ViewMap(_)) => true
-    case s => super.hasViews(s)
-  }
-
-  override def eliminateViews(s: Exp[_]): (Exp[_], Iso[_, _]) =
-    s match {
-      case Def(view: ViewMap[_, _, _, _]) =>
-        (view.source, mapIso(view.iso1, view.iso2))
-      case s =>
-        super.eliminateViews(s)
-    }
-
-  def mapIso[K1, V1, K2, V2](iso1: Iso[K1, K2], iso2: Iso[V1, V2]): Iso[MMap[K1, V1], MMap[K2, V2]] = {
-    implicit val k1 = iso1.eFrom
-    implicit val k2 = iso1.eTo
-    implicit val v1 = iso2.eFrom
-    implicit val v2 = iso2.eTo
-    new Iso[MMap[K1, V1], MMap[K2, V2]] {
-      lazy val eTo = element[MMap[K2, V2]]
-      def from(x: PM[K2, V2]) = MMap.fromArray[K1, V1](x.keys.map(iso1.from _) zip x.values.map(iso2.from _))
-      def to(x: PM[K1, V1]) = MMap.fromArray[K2, V2](x.keys.map(iso1.to _) zip x.values.map(iso2.to _))
-      lazy val tag = {
-        implicit val tK = iso1.tag
-        implicit val tV = iso2.tag
-        typeTag[MMap[K2, V2]]
-      }
-    }
-  }
-
-  val HasViewArg = HasArg {
-    case Def(_: ViewMap[_, _, _, _]) => true
-    case _ => false
-  }
-
-
-  def liftViewFromArgs[T](d: Def[T])/*(implicit eT: Elem[T])*/: Option[Exp[_]] = d match {
-    case _ => None
-  }
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case HasViewArg(_) => liftViewFromArgs(d) match {
-      case Some(s) => s
-      case _ => super.rewriteDef(d)
+    case MapFromArray(arr @ Def(ArrayZip(Def(MapKeys(m1)), Def(MapValues(m2))))) if (m1 == m2) => m1
+
+    // This rule is only valid if the array has distinct values for the keys
+//    case MapKeys(Def(d@MapFromArray(arr: Rep[Array[(k,v)]]))) =>  {
+//      implicit val eK = d.elemKey.asElem[k]
+//      implicit val eV = d.elemValue.asElem[v]
+//      implicit val eKV = PairElem(eK,eV)
+//      array_map(arr, fun({a: Rep[(k,v)] => a._1})(toLazyElem(eKV), eK))(eK)
+//    }
+    case MapValues(Def(d@MapFromArray(arr: Rep[Array[(k,v)]]))) => {
+      implicit val eK = d.elemKey.asElem[k]
+      implicit val eV = d.elemValue.asElem[v]
+      implicit val eKV = PairElem(eK,eV)
+      array_map(arr, fun({a: Rep[(k,v)] => a._2})(toLazyElem(eKV), eV))(eV)
     }
-    case view1@ViewMap(Def(view2@ViewMap(map))) =>
-      val compIso1 = composeIso(view1.iso1, view2.iso1)
-      val compIso2 = composeIso(view1.iso2, view2.iso2)
-      implicit val kAB = compIso1.eTo
-      implicit val vAB = compIso2.eTo
-      ViewMap(map)(compIso1, compIso2)
+
+    /* TODO: uncomment when flatten will be supported
+    case MapUnion(Def(m1Def: MapFromArray[k,v]), Def(m2Def: MapFromArray[_,_])) => {
+      implicit val eK = m2Def.elemKey.asElem[k]
+      implicit val eV = m2Def.elemValue.asElem[v]
+      implicit val eKV = PairElem(eK,eV)
+      MMap.fromArray(array_concat(m1Def.arr,m2Def.arr.asRep[Array[(k,v)]])(eKV))(eK,eV)
+    }*/
+    case MapUnion(Def(MapUsingFunc(count, func)), m2@Def(m2Def: MapFromArray[k,v])) => {
+      (count == toRep(0)) match {
+        case true => m2
+        case _ =>
+          implicit val eK = m2Def.elemKey.asElem[k]
+          implicit val eV = m2Def.elemValue.asElem[v]
+          implicit val eKV = PairElem(eK,eV)
+          val keys1 = array_map(m2Def.arr, fun({a: Rep[(k,v)]=>a._1})(toLazyElem(eKV), eK))(eK)
+          val vals1 = array_map(m2Def.arr, fun({a: Rep[(k,v)]=>a._2})(toLazyElem(eKV), eV))(eV)
+          val keys2 = SArray.rangeFrom0(count).map {i: Rep[Int] => func(i)._1}(eK)
+          val vals2 = SArray.rangeFrom0(count).map {i: Rep[Int] => func(i)._2}(eV)
+          val keys = array_concat(keys1, keys2)(eK)
+          val vals = array_concat(vals1, vals2)(eV)
+          MMap.fromArray(array_zip(keys,vals))(eK,eV)
+      }
+    }
+
     case _ =>
       super.rewriteDef(d)
   }
 }
-*/
-
 

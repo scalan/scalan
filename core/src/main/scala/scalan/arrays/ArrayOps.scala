@@ -905,6 +905,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
         case _ =>
           super.rewriteDef(d)
       }
+
     case ArrayZip(l, Def(r: ArrayZip[_, _])) =>
       implicit val e1 = l.elem.eItem
       implicit val e2 = r.selfType.eItem.eFst
@@ -938,6 +939,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
 //      implicit val eV = mr.elemValue.asElem[v]
 //      val res = xs.mapReduceBy[k, v](fun { e => map2.asRep[y => (k, v)](map1.f(e)) }, reduce.asRep[((v, v)) => v])
 //      res
+
+    case ArrayToList(Def(ListToArray(xs))) => xs
 
     case _ => super.rewriteDef(d)
   }

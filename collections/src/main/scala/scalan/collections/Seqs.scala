@@ -111,6 +111,8 @@ trait SeqsDslExp extends impl.SeqsExp {
       val ys1 = iso.from(ys.asRep[SSeq[b]])
       ViewSSeq(xs1.diff(ys1), iso.innerIso)
 
+    case SSeqCompanionMethods.apply(SSeqMethods.toArray(xs)) => xs
+
     case _ => super.rewriteDef(d)
   }
 

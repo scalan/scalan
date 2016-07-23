@@ -710,8 +710,55 @@ trait CollectionsDslStd extends impl.CollectionsStd with SeqsDslStd {
 
 trait CollectionsDslExp extends impl.CollectionsExp with SeqsDslExp {
 
+  override def getConverter[A,B](eA: Elem[A], eB: Elem[B]): Option[Conv[A,B]] = eA match {
+    case ce: CollectionElem[_, _] if ce.eItem.isInstanceOf[PairElem[_,_]] =>
+      eB match {
+        case pce: PairCollectionAOSElem[a,b] if ce.eItem == pce.eItem =>
+          val pe = pce.eItem
+          implicit val eA = pe.eFst
+          implicit val eB = pe.eSnd
+          Some(BaseConverter(fun { c: Rep[Collection[(a,b)]] => PairCollectionAOS(c) }).asConv[A,B])
+
+        case pce: PairCollectionSOAElem[a,b] if ce.eItem == pce.eItem =>
+          val pe = pce.eItem
+          implicit val eA = pe.eFst
+          implicit val eB = pe.eSnd
+          val convFun = fun { c: Rep[Collection[(a,b)]] =>
+            Convert(element[PairCollection[a,b]], pce,
+              c, fun { c: PairColl[a,b] => PairCollectionSOA(c.as, c.bs) })
+          }
+          Some(BaseConverter(convFun).asConv[A,B])
+
+        case _ =>
+          super.getConverter(eA, eB)
+      }
+    case _ => super.getConverter(eA, eB)
+  }
+
   override def rewriteDef[T](d: Def[T]) = d match {
-//    case ExpPairCollectionAOS(pairColl @ Def(_: PairCollection[_, _])) => pairColl
+    case Convert(eFrom: Elem[from], eTo: Elem[to],
+          PairCollectionMethods.coll(c @ Elem(_: PairCollectionElem[a,b,_])), conv)
+          if conv.elem.eDom.isInstanceOf[PairCollectionElem[_,_,_]] =>
+      tryConvert(eFrom, eTo, c, conv.asRep[from => to])
+
+    case ExpCollectionOverArray(CollectionMethods.arr(c)) => c
+    case ExpCollectionOverList(CollectionMethods.lst(c)) => c
+    case ExpCollectionOverSeq(CollectionMethods.seq(c)) => c
+    case ExpPairCollectionAOS(PairCollectionSOA(
+    _as @ PairCollectionMethods.as(c1),
+    _bs @ PairCollectionMethods.bs(c2))) if c1 == c2 => c1
+
+    case ExpPairCollectionAOS(PairCollectionMethods.coll(c)) if c.elem.isInstanceOf[PairCollectionAOSElem[_,_]] =>
+      c
+    case ExpPairCollectionSOA(
+    _as @ PairCollectionMethods.as(c1 @ PairCollectionMethods.coll(c: PairColl[a,b])),
+    _bs @ PairCollectionMethods.bs(c2)) if c1 == c2 =>
+      val as = _as.asRep[Collection[a]]
+      val bs = _bs.asRep[Collection[b]]
+      implicit val eA = as.elem.eItem
+      implicit val eB = bs.elem.eItem
+      PairCollectionSOA(c.as, c.bs)
+
     case _ => super.rewriteDef(d)
   }
 
