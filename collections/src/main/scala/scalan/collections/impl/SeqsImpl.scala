@@ -259,6 +259,7 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
 // Std -----------------------------------
 trait SeqsStd extends scalan.ScalanDslStd with SeqsDsl {
   self: SeqsDslStd =>
+
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs {
     override def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
       SSeqImpl(Seq.apply[A](arr: _*))
@@ -323,6 +324,7 @@ trait SeqsStd extends scalan.ScalanDslStd with SeqsDsl {
 // Exp -----------------------------------
 trait SeqsExp extends scalan.ScalanDslExp with SeqsDsl {
   self: SeqsDslExp =>
+
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs {
     def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
       methodCallEx[SSeq[A]](self,

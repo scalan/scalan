@@ -170,10 +170,10 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
   }
 
   val e = EntityTemplateData(module, entity)
-  import e.{baseTypeName, baseTypeUse, companionAbsName, companionName, optBaseType, typeDecl, typeUse}
+//  import e.{baseTypeName, baseTypeUse, companionAbsName, companionName, optBaseType, typeDecl, typeUse}
   val typesWithElems = e.boundedTpeArgString(false)
 
-  def getCompanionMethods = entity.companion.filter(_ => optBaseType.isDefined).map { comp =>
+  def getCompanionMethods = entity.companion.filter(_ => e.optBaseType.isDefined).map { comp =>
     val externalConstrs = comp.getMethodsWithAnnotation(ConstructorAnnotation)
     val externalMethods = comp.getMethodsWithAnnotation(ExternalAnnotation)
     (externalConstrs, externalMethods)
@@ -228,7 +228,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     val allArgs = md.allArgs
     s"""
        |    ${md.declaration(config, false)} =
-       |      newObjEx[$typeUse](${allArgs.rep(_.name)})
+       |      newObjEx[${e.typeUse}](${allArgs.rep(_.name)})
        |""".stripMargin
   }
 
@@ -237,7 +237,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
     val methodNameAndArgs = md.name + md.tpeArgs.useString + methodArgsUse(md)
 
-    val obj = if (isInstance) "wrappedValue" else baseTypeName
+    val obj = if (isInstance) "wrappedValue" else e.baseTypeName
 
     val methodBody = {
       val methodCall = s"$obj.$methodNameAndArgs"
@@ -258,7 +258,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
   def externalStdConstructor(md: SMethodDef) = {
     s"""
        |    ${md.declaration(config, true)} =
-       |      ${e.name}Impl(new $baseTypeUse${methodArgsUse(md)})
+       |      ${e.name}Impl(new ${e.baseTypeUse}${methodArgsUse(md)})
        |""".stripMargin
   }
 
@@ -285,29 +285,29 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
   def getTraitAbs = {
     val entityCompOpt = entity.companion
     val hasCompanion = entityCompOpt.isDefined
-    val proxyBT = optBaseType.opt { bt =>
+    val proxyBT = e.optBaseType.opt { bt =>
       s"""
          |  // TypeWrapper proxy
-         |  //implicit def proxy$baseTypeName${typesWithElems}(p: Rep[$baseTypeUse]): $typeUse =
-         |  //  proxyOps[$typeUse](p.asRep[$typeUse])
+         |  //implicit def proxy${e.baseTypeName}${typesWithElems}(p: Rep[${e.baseTypeUse}]): ${e.typeUse} =
+         |  //  proxyOps[${e.typeUse}](p.asRep[${e.typeUse}])
          |
-         |  implicit def unwrapValueOf$typeDecl(w: Rep[$typeUse]): Rep[$baseTypeUse] = w.wrappedValue
+         |  implicit def unwrapValueOf${e.typeDecl}(w: Rep[${e.typeUse}]): Rep[${e.baseTypeUse}] = w.wrappedValue
          |""".stripAndTrim
     }
 
     // note: currently can't cache them properly due to cyclical dependency between
     // baseType elem and wrapper elem
-    val baseTypeElem = optBaseType.opt { bt =>
+    val baseTypeElem = e.optBaseType.opt { bt =>
       val defOrVal = if (e.tpeArgs.isEmpty) "lazy val" else "def"
       val declaration =
-        s"implicit $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$baseTypeUse]"
+        s"implicit $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[${e.baseTypeUse}]"
       val wrapperElemType = if (e.isCont)
         "WrapperElem1[_, _, CBase, CW] forSome { type CBase[_]; type CW[_] }"
       else
         "WrapperElem[_, _]"
       s"""
          |  $declaration =
-         |    element[$typeUse].asInstanceOf[$wrapperElemType].baseElem.asInstanceOf[Elem[$baseTypeUse]]
+         |    element[${e.typeUse}].asInstanceOf[$wrapperElemType].baseElem.asInstanceOf[Elem[${e.baseTypeUse}]]
          |""".stripAndTrim
     }
 
@@ -344,7 +344,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |  implicit def cast${e.name}Element${e.tpeArgsDecl}(elem: Elem[${e.typeUse}]): $entityElem =
          |    elem.asInstanceOf[$entityElem]
          |
-         |  ${optBaseType.opt(bt => container(bt.name, false, false))}
+         |  ${e.optBaseType.opt(bt => container(bt.name, false, false))}
          |
          |  ${container(e.name, e.isFunctor, true)}
          |
@@ -418,13 +418,13 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
         } else ""
       }
 
-      val baseTypeElem = optBaseType.opt { bt =>
-        val thisElem = s"this.asInstanceOf[Elem[$typeUse]]"
+      val baseTypeElem = e.optBaseType.opt { bt =>
+        val thisElem = s"this.asInstanceOf[Elem[${e.typeUse}]]"
         if (e.isCont) {
           val elems = e.tpeArgNames.rep(ty => s"element[$ty]")
           s"""
              |    lazy val baseElem =
-             |      new BaseTypeElem1[${join(e.tpeArgNames, baseTypeName, typeUse)}]($thisElem)(
+             |      new BaseTypeElem1[${join(e.tpeArgNames, e.baseTypeName, e.typeUse)}]($thisElem)(
              |        $elems, container[${bt.name}], ${getDefaultOfBT(bt)})
              |""".stripAndTrim
         } else {
@@ -434,7 +434,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
           s"""
              |    lazy val baseElem = {
              |      $weakTagsForTpeArgs
-             |      new BaseTypeElem[$baseTypeUse, $typeUse]($thisElem)(weakTypeTag[$baseTypeUse], ${getDefaultOfBT(bt)})
+             |      new BaseTypeElem[${e.baseTypeUse}, ${e.typeUse}]($thisElem)(weakTypeTag[${e.baseTypeUse}], ${getDefaultOfBT(bt)})
              |    }
              |""".stripAndTrim
         }
@@ -476,26 +476,29 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     }
 
     val companionExtraBody = entityCompOpt.opt(extraBody)
-    val companionAbs =
+
+    def companionAbs(e: EntityTemplateData) = {
+      val hasCompanion = e.entity.companion.isDefined
       s"""
-         |  implicit case object ${companionName}Elem extends CompanionElem[$companionAbsName] {
-         |    lazy val tag = weakTypeTag[$companionAbsName]
+         |  implicit case object ${e.companionName}Elem extends CompanionElem[${e.companionAbsName}] {
+         |    lazy val tag = weakTypeTag[${e.companionAbsName}]
          |    protected def getDefaultRep = ${e.name}
          |  }
          |
-         |  abstract class $companionAbsName extends CompanionDef[$companionAbsName]${hasCompanion.opt(s" with ${companionName}")} {
-         |    def selfType = ${companionName}Elem
+         |  abstract class ${e.companionAbsName} extends CompanionDef[${e.companionAbsName}]${hasCompanion.opt(s" with ${e.companionName}")} {
+         |    def selfType = ${e.companionName}Elem
          |    override def toString = "${e.name}"
          |    $companionExtraBody
          |  }
-         |  def ${e.name}: Rep[$companionAbsName]
+         |  def ${e.name}: Rep[${e.companionAbsName}]
          |${hasCompanion.opt
             s"""
-               |  implicit def proxy$companionAbsName(p: Rep[$companionAbsName]): $companionAbsName =
-               |    proxyOps[$companionAbsName](p)
+               |  implicit def proxy${e.companionAbsName}(p: Rep[${e.companionAbsName}]): ${e.companionAbsName} =
+               |    proxyOps[${e.companionAbsName}](p)
                |""".stripAndTrim
           }
          |""".stripAndTrim
+    }
 
     val subEntities = for { entity <- module.entities.drop(1) } yield {
       val templateData = EntityTemplateData(module, entity)
@@ -504,6 +507,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |${entityProxy(templateData)}
          |${familyElem(templateData)}
          |${extraBody(entity)}
+         |${companionAbs(templateData)}
          |""".stripMargin
     }
 
@@ -520,14 +524,14 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
 
       val elemTypeDecl = c.name + "Elem" + tpeArgsDecl
 
-      lazy val defaultImpl = optBaseType match {
+      lazy val defaultImpl = e.optBaseType match {
         case Some(bt) if className == s"${e.name}Impl" =>
           val externalMethods = entity.getMethodsWithAnnotation(ExternalAnnotation)
           val externalMethodsStr = externalMethods.rep(md => externalMethod(md), "\n    ")
           val implicitArgsWithVals = c.implicitArgsDecl("val ")
           s"""
              |  // default wrapper implementation
-             |  abstract class ${e.name}Impl${tpeArgsDecl}(val wrappedValue: Rep[$baseTypeUse])${implicitArgsWithVals} extends $typeUse with Def[${e.name}Impl${tpeArgsDecl}] {
+             |  abstract class ${e.name}Impl${tpeArgsDecl}(val wrappedValue: Rep[${e.baseTypeUse}])${implicitArgsWithVals} extends ${e.typeUse} with Def[${e.name}Impl${tpeArgsDecl}] {
              |    lazy val selfType = element[${e.name}Impl${tpeArgsDecl}]
              |    $externalMethodsStr
              |  }
@@ -714,7 +718,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
        |
        |$extraTraitAbs
        |
-       |$companionAbs
+       |${companionAbs(e)}
        |
        |${subEntities.mkString("\n\n")}
        |
@@ -783,16 +787,16 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
 
   def getTraitStd = {
     val classesStd = classes.map(getSClassStd)
-    val proxyBTStd = optBaseType.opt(bt =>
+    val proxyBTStd = e.optBaseType.opt(bt =>
       s"""
          |  // override proxy if we deal with TypeWrapper
-         |  //override def proxy$baseTypeName${typesWithElems}(p: Rep[$baseTypeUse]): $typeUse =
-         |  //  proxyOpsEx[$baseTypeUse, $typeUse, Std${e.name}Impl${e.tpeArgsUse}](p, bt => Std${e.name}Impl(bt))
+         |  //override def proxy${e.baseTypeName}${typesWithElems}(p: Rep[${e.baseTypeUse}]): ${e.typeUse} =
+         |  //  proxyOpsEx[${e.baseTypeUse}, ${e.typeUse}, Std${e.name}Impl${e.tpeArgsUse}](p, bt => Std${e.name}Impl(bt))
          |""".stripAndTrim
     )
-    val baseTypeToWrapperConvertionStd = optBaseType.opt(bt =>
+    val baseTypeToWrapperConvertionStd = e.optBaseType.opt(bt =>
       s"""
-         |  implicit def wrap${baseTypeName}To${e.name}${typesWithElems}(v: $baseTypeUse): $typeUse = ${e.name}Impl(v)
+         |  implicit def wrap${e.baseTypeName}To${e.name}${typesWithElems}(v: ${e.baseTypeUse}): ${e.typeUse} = ${e.name}Impl(v)
          |""".stripAndTrim
     )
 
@@ -801,13 +805,25 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
         filterByExplicitDeclaration(e.name, methods).filter(_.body.isEmpty).rep(md => externalStdMethod(md, false), "\n")
     }
 
+    def companionStd(e: EntityTemplateData) = {
+      s"""
+        |  lazy val ${e.name}: Rep[${e.companionAbsName}] = new ${e.companionAbsName} {
+        |    $companionMethods
+        |  }
+       """.stripMargin
+    }
+
+    val companionStdString  = (for { entity <- module.entities } yield {
+      val e = EntityTemplateData(module, entity)
+      companionStd(e)
+    }).mkString("\n\n")
+
     s"""
        |// Std -----------------------------------
        |trait ${module.name}Std extends ${config.seqContextTrait.opt(t => s"$t with ")}${module.name}Dsl {
        |  ${selfTypeString("Std")}
-       |  lazy val ${e.name}: Rep[$companionAbsName] = new $companionAbsName {
-       |    $companionMethods
-       |  }
+       |
+       |${companionStdString}
        |
        |$proxyBTStd
        |
@@ -914,17 +930,35 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
         methods.rep(md => externalMethod(md), "\n    ")
     }
 
+    val extractorsForTraits = (for { entity <- module.entities.drop(1) } yield {
+      methodExtractorsString(entity)
+    }).mkString("\n\n")
+
     val concreteClassesString = classes.map(getSClassExp)
+
+    def companionExp(e: EntityTemplateData) = {
+      s"""
+        |  lazy val ${e.name}: Rep[${e.companionAbsName}] = new ${e.companionAbsName} {
+        |    $companionMethods
+        |  }
+       """.stripMargin
+    }
+
+    val companionExpString  = (for { entity <- module.entities } yield {
+      val e = EntityTemplateData(module, entity)
+      companionExp(e)
+    }).mkString("\n\n")
 
     s"""
        |// Exp -----------------------------------
        |trait ${module.name}Exp extends ${config.stagedContextTrait.opt(t => s"$t with ")}${module.name}Dsl {
        |  ${selfTypeString("Exp")}
-       |  lazy val ${e.name}: Rep[$companionAbsName] = new $companionAbsName {
-       |    $companionMethods
-       |  }
+       |
+       |$companionExpString
        |
        |${if (e.isCont) familyView(e) else ""}
+       |
+       |$extractorsForTraits
        |
        |${concreteClassesString.mkString("\n\n")}
        |

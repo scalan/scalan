@@ -100,6 +100,19 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
   implicit def pairCollectionElement[A, B](implicit eA: Elem[A], eB: Elem[B]): Elem[PairCollection[A, B]] =
     cachedElem[PairCollectionElem[A, B, PairCollection[A, B]]](eA, eB)
 
+  implicit case object PairCollectionCompanionElem extends CompanionElem[PairCollectionCompanionAbs] {
+    lazy val tag = weakTypeTag[PairCollectionCompanionAbs]
+    protected def getDefaultRep = PairCollection
+  }
+
+  abstract class PairCollectionCompanionAbs extends CompanionDef[PairCollectionCompanionAbs] {
+    def selfType = PairCollectionCompanionElem
+    override def toString = "PairCollection"
+  }
+  def PairCollection: Rep[PairCollectionCompanionAbs]
+  implicit def proxyPairCollectionCompanionAbs(p: Rep[PairCollectionCompanionAbs]): PairCollectionCompanionAbs =
+    proxyOps[PairCollectionCompanionAbs](p)
+
   // single proxy for each type family
   implicit def proxyNestedCollection[A](p: Rep[NestedCollection[A]]): NestedCollection[A] = {
     proxyOps[NestedCollection[A]](p)(scala.reflect.classTag[NestedCollection[A]])
@@ -133,6 +146,19 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
 
   implicit def nestedCollectionElement[A](implicit eA: Elem[A]): Elem[NestedCollection[A]] =
     cachedElem[NestedCollectionElem[A, NestedCollection[A]]](eA)
+
+  implicit case object NestedCollectionCompanionElem extends CompanionElem[NestedCollectionCompanionAbs] {
+    lazy val tag = weakTypeTag[NestedCollectionCompanionAbs]
+    protected def getDefaultRep = NestedCollection
+  }
+
+  abstract class NestedCollectionCompanionAbs extends CompanionDef[NestedCollectionCompanionAbs] with NestedCollectionCompanion {
+    def selfType = NestedCollectionCompanionElem
+    override def toString = "NestedCollection"
+  }
+  def NestedCollection: Rep[NestedCollectionCompanionAbs]
+  implicit def proxyNestedCollectionCompanionAbs(p: Rep[NestedCollectionCompanionAbs]): NestedCollectionCompanionAbs =
+    proxyOps[NestedCollectionCompanionAbs](p)
 
   abstract class AbsUnitCollection
       (length: Rep[Int])
@@ -996,7 +1022,14 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
 // Std -----------------------------------
 trait CollectionsStd extends scalan.ScalanDslStd with CollectionsDsl {
   self: CollectionsDslStd =>
+
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs {
+  }
+
+  lazy val PairCollection: Rep[PairCollectionCompanionAbs] = new PairCollectionCompanionAbs {
+  }
+
+  lazy val NestedCollection: Rep[NestedCollectionCompanionAbs] = new NestedCollectionCompanionAbs {
   }
 
   case class StdUnitCollection
@@ -1143,7 +1176,212 @@ trait CollectionsStd extends scalan.ScalanDslStd with CollectionsDsl {
 // Exp -----------------------------------
 trait CollectionsExp extends scalan.ScalanDslExp with CollectionsDsl {
   self: CollectionsDslExp =>
+
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs {
+  }
+
+  lazy val PairCollection: Rep[PairCollectionCompanionAbs] = new PairCollectionCompanionAbs {
+  }
+
+  lazy val NestedCollection: Rep[NestedCollectionCompanionAbs] = new NestedCollectionCompanionAbs {
+  }
+
+  object PairCollectionMethods {
+    object as {
+      def unapply(d: Def[_]): Option[Rep[PairCollection[A, B]] forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _, _]] && method.getName == "as" =>
+          Some(receiver).asInstanceOf[Option[Rep[PairCollection[A, B]] forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PairCollection[A, B]] forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object bs {
+      def unapply(d: Def[_]): Option[Rep[PairCollection[A, B]] forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _, _]] && method.getName == "bs" =>
+          Some(receiver).asInstanceOf[Option[Rep[PairCollection[A, B]] forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PairCollection[A, B]] forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_many {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], Coll[Int]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _, _]] && method.getName == "apply" =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[PairCollection[A, B]], Coll[Int]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], Coll[Int]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object coll {
+      def unapply(d: Def[_]): Option[Rep[PairCollection[A, B]] forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _, _]] && method.getName == "coll" =>
+          Some(receiver).asInstanceOf[Option[Rep[PairCollection[A, B]] forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PairCollection[A, B]] forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object innerJoin {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = d match {
+        case MethodCall(receiver, method, Seq(other, f, ordK, eR, eB, eC, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _, _]] && method.getName == "innerJoin" =>
+          Some((receiver, other, f, ordK, eR, eB, eC)).asInstanceOf[Option[(Rep[PairCollection[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object outerJoin {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], PairColl[A, C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = d match {
+        case MethodCall(receiver, method, Seq(other, f, f1, f2, ordK, eR, eB, eC, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _, _]] && method.getName == "outerJoin" =>
+          Some((receiver, other, f, f1, f2, ordK, eR, eB, eC)).asInstanceOf[Option[(Rep[PairCollection[A, B]], PairColl[A, C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], PairColl[A, C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object innerMult {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], PairColl[A, B], Ordering[A], Numeric[A], Numeric[B]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(other, ordK, nA, nB, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _, _]] && method.getName == "innerMult" =>
+          Some((receiver, other, ordK, nA, nB)).asInstanceOf[Option[(Rep[PairCollection[A, B]], PairColl[A, B], Ordering[A], Numeric[A], Numeric[B]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], PairColl[A, B], Ordering[A], Numeric[A], Numeric[B]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object outerSum {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], PairColl[A, B], Ordering[A], Numeric[A], Numeric[B]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(other, ordK, nA, nB, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _, _]] && method.getName == "outerSum" =>
+          Some((receiver, other, ordK, nA, nB)).asInstanceOf[Option[(Rep[PairCollection[A, B]], PairColl[A, B], Ordering[A], Numeric[A], Numeric[B]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], PairColl[A, B], Ordering[A], Numeric[A], Numeric[B]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object outerSubtr {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], PairColl[A, B], Ordering[A], Numeric[A], Numeric[B]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(other, ordK, nA, nB, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _, _]] && method.getName == "outerSubtr" =>
+          Some((receiver, other, ordK, nA, nB)).asInstanceOf[Option[(Rep[PairCollection[A, B]], PairColl[A, B], Ordering[A], Numeric[A], Numeric[B]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], PairColl[A, B], Ordering[A], Numeric[A], Numeric[B]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object NestedCollectionMethods {
+    object values {
+      def unapply(d: Def[_]): Option[Rep[NestedCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[NestedCollectionElem[_, _]] && method.getName == "values" =>
+          Some(receiver).asInstanceOf[Option[Rep[NestedCollection[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[NestedCollection[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object nestedValues {
+      def unapply(d: Def[_]): Option[Rep[NestedCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[NestedCollectionElem[_, _]] && method.getName == "nestedValues" =>
+          Some(receiver).asInstanceOf[Option[Rep[NestedCollection[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[NestedCollection[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object segments {
+      def unapply(d: Def[_]): Option[Rep[NestedCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[NestedCollectionElem[_, _]] && method.getName == "segments" =>
+          Some(receiver).asInstanceOf[Option[Rep[NestedCollection[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[NestedCollection[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object segOffsets {
+      def unapply(d: Def[_]): Option[Rep[NestedCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[NestedCollectionElem[_, _]] && method.getName == "segOffsets" =>
+          Some(receiver).asInstanceOf[Option[Rep[NestedCollection[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[NestedCollection[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object segLens {
+      def unapply(d: Def[_]): Option[Rep[NestedCollection[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[NestedCollectionElem[_, _]] && method.getName == "segLens" =>
+          Some(receiver).asInstanceOf[Option[Rep[NestedCollection[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[NestedCollection[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_many {
+      def unapply(d: Def[_]): Option[(Rep[NestedCollection[A]], Coll[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[NestedCollectionElem[_, _]] && method.getName == "apply" =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[NestedCollection[A]], Coll[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[NestedCollection[A]], Coll[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object NestedCollectionCompanionMethods {
+    object apply_apply_from_jugged_array {
+      def unapply(d: Def[_]): Option[Rep[Array[Array[T]]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == NestedCollectionCompanionElem && method.getName == "apply" =>
+          Some(arr).asInstanceOf[Option[Rep[Array[Array[T]]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Array[Array[T]]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   case class ExpUnitCollection

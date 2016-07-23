@@ -217,6 +217,7 @@ trait HashSetsAbs extends scalan.ScalanDsl with HashSets {
 // Std -----------------------------------
 trait HashSetsStd extends scalan.ScalanDslStd with HashSetsDsl {
   self: HashSetsDslStd =>
+
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs {
     override def empty[A:Elem]: Rep[SHashSet[A]] =
       SHashSetImpl(HashSet.empty[A])
@@ -251,6 +252,7 @@ trait HashSetsStd extends scalan.ScalanDslStd with HashSetsDsl {
 // Exp -----------------------------------
 trait HashSetsExp extends scalan.ScalanDslExp with HashSetsDsl {
   self: HashSetsDslExp =>
+
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs {
     def empty[A:Elem]: Rep[SHashSet[A]] =
       methodCallEx[SHashSet[A]](self,

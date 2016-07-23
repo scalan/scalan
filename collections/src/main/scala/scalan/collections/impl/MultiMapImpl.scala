@@ -151,6 +151,7 @@ trait MultiMapsAbs extends scalan.ScalanDsl with MultiMaps {
 // Std -----------------------------------
 trait MultiMapsStd extends scalan.ScalanDslStd with MultiMapsDsl {
   self: MultiMapsDslStd =>
+
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs {
   }
 
@@ -172,6 +173,7 @@ trait MultiMapsStd extends scalan.ScalanDslStd with MultiMapsDsl {
 // Exp -----------------------------------
 trait MultiMapsExp extends scalan.ScalanDslExp with MultiMapsDsl {
   self: MultiMapsDslExp =>
+
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs {
   }
 
