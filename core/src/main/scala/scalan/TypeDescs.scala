@@ -71,6 +71,9 @@ trait TypeDescs extends Base { self: Scalan =>
       debug$ElementCounter(this) += 1
     }
   }
+  object Elem {
+    def unapply[T, E <: Elem[T]](s: Rep[T]): Option[E] = Some(rep_getElem(s).asInstanceOf[E])
+  }
 
   private val debug$ElementCounter = counter[Elem[_]]
 
