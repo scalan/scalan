@@ -69,4 +69,39 @@ class CollectionConverterTests extends BaseCtxTests {
     }
   }
 
+  test("tryComposeIso_with_help_of_converters") {
+    val ctx = new ConvProgStaged {
+      //      override def isInvokeEnabled(d: Def[_], m: Method) = false
+      override def shouldUnpack(e: Elem[_]) = false
+    }
+    import ctx._
+
+    def test[A,B1,B2 >: B1,C](name: String, iso1: Iso[A, B1], iso2: Iso[B2, C]) = {
+      val Some(Def(iso: IsoUR[A,C] @unchecked)) = tryComposeIso(iso2, iso1.asInstanceOf[Iso[A,B2]])
+      implicit val eA = iso1.eFrom
+      implicit val eC = iso2.eTo
+      val to = iso.toFun
+      val from = iso.fromFun
+      val idA @ Def(lA: Lambda[_,_]) = fun({ x: Rep[A] =>
+        from(to(x))
+      })
+      val idC @ Def(lC: Lambda[_,_]) = fun({ x: Rep[C] =>
+        to(from(x))
+      })
+      assert(lA.isIdentity)
+      assert(lA.elem.eDom == lA.elem.eRange)
+      assert(lC.isIdentity)
+      assert(lC.elem.eDom == lC.elem.eRange)
+      ctx.emitMany(name + "_iso1", iso1.toFun, iso1.fromFun)
+      ctx.emitMany(name + "_iso2", iso2.toFun, iso2.fromFun)
+      ctx.emitMany(name + "_composed", to, from)
+      ctx.emitMany(name + "_identities", idA, idC)
+    }
+
+    test("t1", isoCollectionOverArray[(Int,Double)], isoPairCollectionAOS[Int, Double])
+    test("t2", isoCollectionOverList[(Int,Double)], isoPairCollectionAOS[Int, Double])
+    test("t3", isoCollectionOverSeq[(Int,Double)], isoPairCollectionAOS[Int, Double])
+    test("t4", isoPairCollectionSOA[Int,Double], isoPairCollectionAOS[Int, Double])
+  }
+
 }
