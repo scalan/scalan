@@ -152,6 +152,7 @@ trait StatesAbs extends scalan.ScalanDsl with States {
 // Std -----------------------------------
 trait StatesStd extends scalan.ScalanDslStd with StatesDsl {
   self: MonadsDslStd =>
+
   lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs {
   }
 
@@ -173,6 +174,7 @@ trait StatesStd extends scalan.ScalanDslStd with StatesDsl {
 // Exp -----------------------------------
 trait StatesExp extends scalan.ScalanDslExp with StatesDsl {
   self: MonadsDslExp =>
+
   lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs {
   }
 

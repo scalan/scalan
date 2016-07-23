@@ -238,6 +238,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
 // Std -----------------------------------
 trait KindsStd extends scalan.ScalanDslStd with KindsDsl {
   self: KindsDslStd =>
+
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }
 
@@ -273,6 +274,7 @@ trait KindsStd extends scalan.ScalanDslStd with KindsDsl {
 // Exp -----------------------------------
 trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
   self: KindsDslExp =>
+
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }
 

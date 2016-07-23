@@ -324,6 +324,7 @@ trait FreesAbs extends scalan.ScalanDsl with Frees {
 // Std -----------------------------------
 trait FreesStd extends scalan.ScalanDslStd with FreesDsl {
   self: MonadsDslStd =>
+
   lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs {
   }
 
@@ -373,6 +374,7 @@ trait FreesStd extends scalan.ScalanDslStd with FreesDsl {
 // Exp -----------------------------------
 trait FreesExp extends scalan.ScalanDslExp with FreesDsl {
   self: MonadsDslExp =>
+
   lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs {
   }
 

@@ -226,6 +226,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
 // Std -----------------------------------
 trait AbstractStringsStd extends scalan.ScalanStd with AbstractStringsDsl {
   self: AbstractStringsDslStd =>
+
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs {
   }
 
@@ -261,6 +262,7 @@ trait AbstractStringsStd extends scalan.ScalanStd with AbstractStringsDsl {
 // Exp -----------------------------------
 trait AbstractStringsExp extends scalan.ScalanExp with AbstractStringsDsl {
   self: AbstractStringsDslExp =>
+
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs {
   }
 

@@ -102,6 +102,19 @@ trait ViewsAbs extends Views {
   implicit def iso1URElement[A, B, C[_]](implicit eA: Elem[A], eB: Elem[B], cC: Cont[C]): Elem[Iso1UR[A, B, C]] =
     cachedElem[Iso1URElem[A, B, C, Iso1UR[A, B, C]]](eA, eB, cC)
 
+  implicit case object Iso1URCompanionElem extends CompanionElem[Iso1URCompanionAbs] {
+    lazy val tag = weakTypeTag[Iso1URCompanionAbs]
+    protected def getDefaultRep = Iso1UR
+  }
+
+  abstract class Iso1URCompanionAbs extends CompanionDef[Iso1URCompanionAbs] {
+    def selfType = Iso1URCompanionElem
+    override def toString = "Iso1UR"
+  }
+  def Iso1UR: Rep[Iso1URCompanionAbs]
+  implicit def proxyIso1URCompanionAbs(p: Rep[Iso1URCompanionAbs]): Iso1URCompanionAbs =
+    proxyOps[Iso1URCompanionAbs](p)
+
   abstract class AbsIdentityIso[A]
       ()(implicit eA: Elem[A])
     extends IdentityIso[A]() with Def[IdentityIso[A]] {
@@ -1264,7 +1277,11 @@ trait ViewsAbs extends Views {
 // Std -----------------------------------
 trait ViewsStd extends ViewsDsl {
   self: ViewsDsl with ScalanStd =>
+
   lazy val IsoUR: Rep[IsoURCompanionAbs] = new IsoURCompanionAbs {
+  }
+
+  lazy val Iso1UR: Rep[Iso1URCompanionAbs] = new Iso1URCompanionAbs {
   }
 
   case class StdIdentityIso[A]
@@ -1453,7 +1470,39 @@ trait ViewsStd extends ViewsDsl {
 // Exp -----------------------------------
 trait ViewsExp extends ViewsDsl {
   self: ViewsDsl with ScalanExp =>
+
   lazy val IsoUR: Rep[IsoURCompanionAbs] = new IsoURCompanionAbs {
+  }
+
+  lazy val Iso1UR: Rep[Iso1URCompanionAbs] = new Iso1URCompanionAbs {
+  }
+
+  object Iso1URMethods {
+    object innerIso {
+      def unapply(d: Def[_]): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = d match {
+        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: Iso1URElem[_, _, _, _] => true; case _ => false }) && method.getName == "innerIso" =>
+          Some(receiver).asInstanceOf[Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object isIdentity {
+      def unapply(d: Def[_]): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = d match {
+        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: Iso1URElem[_, _, _, _] => true; case _ => false }) && method.getName == "isIdentity" =>
+          Some(receiver).asInstanceOf[Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
   }
 
   case class ExpIdentityIso[A]

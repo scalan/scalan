@@ -150,6 +150,7 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
 // Std -----------------------------------
 trait CoproductsStd extends scalan.ScalanDslStd with CoproductsDsl {
   self: MonadsDslStd =>
+
   lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs {
   }
 
@@ -171,6 +172,7 @@ trait CoproductsStd extends scalan.ScalanDslStd with CoproductsDsl {
 // Exp -----------------------------------
 trait CoproductsExp extends scalan.ScalanDslExp with CoproductsDsl {
   self: MonadsDslExp =>
+
   lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs {
   }
 

@@ -315,6 +315,7 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
 // Std -----------------------------------
 trait SegmentsStd extends scalan.ScalanDslStd with SegmentsDsl {
   self: SegmentsDslStd =>
+
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }
 
@@ -364,6 +365,7 @@ trait SegmentsStd extends scalan.ScalanDslStd with SegmentsDsl {
 // Exp -----------------------------------
 trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
   self: SegmentsDslExp =>
+
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }
 

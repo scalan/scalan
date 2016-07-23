@@ -233,6 +233,7 @@ trait StructKeysAbs extends StructKeys {
 // Std -----------------------------------
 trait StructKeysStd extends StructKeysDsl {
   self: StructsDsl with ScalanStd =>
+
   lazy val StructKey: Rep[StructKeyCompanionAbs] = new StructKeyCompanionAbs {
   }
 
@@ -268,6 +269,7 @@ trait StructKeysStd extends StructKeysDsl {
 // Exp -----------------------------------
 trait StructKeysExp extends StructKeysDsl {
   self: StructsDsl with ScalanExp =>
+
   lazy val StructKey: Rep[StructKeyCompanionAbs] = new StructKeyCompanionAbs {
   }
 

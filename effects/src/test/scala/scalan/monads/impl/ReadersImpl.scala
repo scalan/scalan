@@ -152,6 +152,7 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
 // Std -----------------------------------
 trait ReadersStd extends scalan.ScalanDslStd with ReadersDsl {
   self: MonadsDslStd =>
+
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
 
@@ -173,6 +174,7 @@ trait ReadersStd extends scalan.ScalanDslStd with ReadersDsl {
 // Exp -----------------------------------
 trait ReadersExp extends scalan.ScalanDslExp with ReadersDsl {
   self: MonadsDslExp =>
+
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
 

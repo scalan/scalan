@@ -320,6 +320,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
 // Std -----------------------------------
 trait MetaTestsStd extends scalan.ScalanDslStd with MetaTestsDsl {
   self: MetaTestsDslStd =>
+
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }
 
@@ -369,6 +370,7 @@ trait MetaTestsStd extends scalan.ScalanDslStd with MetaTestsDsl {
 // Exp -----------------------------------
 trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
   self: MetaTestsDslExp =>
+
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }
 

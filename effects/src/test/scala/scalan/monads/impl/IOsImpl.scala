@@ -233,6 +233,7 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
 // Std -----------------------------------
 trait IOsStd extends scalan.ScalanDslStd with IOsDsl {
   self: IOsDslStd =>
+
   lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs {
   }
 
@@ -268,6 +269,7 @@ trait IOsStd extends scalan.ScalanDslStd with IOsDsl {
 // Exp -----------------------------------
 trait IOsExp extends scalan.ScalanDslExp with IOsDsl {
   self: IOsDslExp =>
+
   lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs {
   }
 

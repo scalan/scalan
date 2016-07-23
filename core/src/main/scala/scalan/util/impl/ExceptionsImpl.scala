@@ -169,6 +169,7 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
 // Std -----------------------------------
 trait ExceptionsStd extends scalan.ScalanStd with ExceptionsDsl {
   self: ExceptionsDslStd =>
+
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs {
     override def apply(msg: Rep[String]): Rep[SThrowable] =
       SThrowableImpl(new Throwable(msg))
@@ -203,6 +204,7 @@ trait ExceptionsStd extends scalan.ScalanStd with ExceptionsDsl {
 // Exp -----------------------------------
 trait ExceptionsExp extends scalan.ScalanExp with ExceptionsDsl {
   self: ExceptionsDslExp =>
+
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs {
     def apply(msg: Rep[String]): Rep[SThrowable] =
       newObjEx[SThrowable](msg)

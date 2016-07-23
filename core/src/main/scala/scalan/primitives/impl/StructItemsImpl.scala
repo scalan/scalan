@@ -156,6 +156,7 @@ trait StructItemsAbs extends StructItems {
 // Std -----------------------------------
 trait StructItemsStd extends StructItemsDsl {
   self: StructsDsl with ScalanStd =>
+
   lazy val StructItem: Rep[StructItemCompanionAbs] = new StructItemCompanionAbs {
   }
 
@@ -177,6 +178,7 @@ trait StructItemsStd extends StructItemsDsl {
 // Exp -----------------------------------
 trait StructItemsExp extends StructItemsDsl {
   self: StructsDsl with ScalanExp =>
+
   lazy val StructItem: Rep[StructItemCompanionAbs] = new StructItemCompanionAbs {
   }
 

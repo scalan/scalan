@@ -327,6 +327,7 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
 // Std -----------------------------------
 trait ProcessesStd extends scalan.ScalanDslStd with ProcessesDsl {
   self: ProcessesDslStd =>
+
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs {
   }
 
@@ -376,6 +377,7 @@ trait ProcessesStd extends scalan.ScalanDslStd with ProcessesDsl {
 // Exp -----------------------------------
 trait ProcessesExp extends scalan.ScalanDslExp with ProcessesDsl {
   self: ProcessesDslExp =>
+
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs {
   }
 

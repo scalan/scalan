@@ -243,6 +243,7 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
 // Std -----------------------------------
 trait FreeStatesStd extends scalan.ScalanDslStd with FreeStatesDsl {
   self: MonadsDslStd =>
+
   lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs {
   }
 
@@ -278,6 +279,7 @@ trait FreeStatesStd extends scalan.ScalanDslStd with FreeStatesDsl {
 // Exp -----------------------------------
 trait FreeStatesExp extends scalan.ScalanDslExp with FreeStatesDsl {
   self: MonadsDslExp =>
+
   lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs {
   }
 

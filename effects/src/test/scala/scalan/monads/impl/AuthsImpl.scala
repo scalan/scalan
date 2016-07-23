@@ -235,6 +235,7 @@ trait AuthenticationsAbs extends scalan.ScalanDsl with Authentications {
 // Std -----------------------------------
 trait AuthenticationsStd extends scalan.ScalanDslStd with AuthenticationsDsl {
   self: AuthenticationsDslStd =>
+
   lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }
 
@@ -270,6 +271,7 @@ trait AuthenticationsStd extends scalan.ScalanDslStd with AuthenticationsDsl {
 // Exp -----------------------------------
 trait AuthenticationsExp extends scalan.ScalanDslExp with AuthenticationsDsl {
   self: AuthenticationsDslExp =>
+
   lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }
 

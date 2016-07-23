@@ -400,6 +400,7 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
 // Std -----------------------------------
 trait FrontsStd extends scalan.ScalanDslStd with FrontsDsl {
   self: FrontsDslStd =>
+
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs {
   }
 
@@ -463,6 +464,7 @@ trait FrontsStd extends scalan.ScalanDslStd with FrontsDsl {
 // Exp -----------------------------------
 trait FrontsExp extends scalan.ScalanDslExp with FrontsDsl {
   self: FrontsDslExp =>
+
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs {
   }
 

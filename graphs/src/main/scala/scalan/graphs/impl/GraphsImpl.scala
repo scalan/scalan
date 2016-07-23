@@ -244,6 +244,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
 // Std -----------------------------------
 trait GraphsStd extends scalan.ScalanDslStd with GraphsDsl {
   self: GraphsDslStd =>
+
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs {
   }
 
@@ -279,6 +280,7 @@ trait GraphsStd extends scalan.ScalanDslStd with GraphsDsl {
 // Exp -----------------------------------
 trait GraphsExp extends scalan.ScalanDslExp with GraphsDsl {
   self: GraphsDslExp =>
+
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs {
   }
 

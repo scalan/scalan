@@ -409,6 +409,7 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
 // Std -----------------------------------
 trait VectorsStd extends scalan.ScalanDslStd with VectorsDsl {
   self: LADslStd =>
+
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs {
   }
 
@@ -472,6 +473,7 @@ trait VectorsStd extends scalan.ScalanDslStd with VectorsDsl {
 // Exp -----------------------------------
 trait VectorsExp extends scalan.ScalanDslExp with VectorsDsl {
   self: LADslExp =>
+
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs {
   }
 

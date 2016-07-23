@@ -232,6 +232,7 @@ trait InteractionsAbs extends scalan.ScalanDsl with Interactions {
 // Std -----------------------------------
 trait InteractionsStd extends scalan.ScalanDslStd with InteractionsDsl {
   self: InteractionsDslStd =>
+
   lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs {
   }
 
@@ -267,6 +268,7 @@ trait InteractionsStd extends scalan.ScalanDslStd with InteractionsDsl {
 // Exp -----------------------------------
 trait InteractionsExp extends scalan.ScalanDslExp with InteractionsDsl {
   self: InteractionsDslExp =>
+
   lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs {
   }
 

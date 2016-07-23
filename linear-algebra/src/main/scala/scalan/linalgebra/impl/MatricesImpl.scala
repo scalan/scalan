@@ -579,6 +579,7 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
 // Std -----------------------------------
 trait MatricesStd extends scalan.ScalanDslStd with MatricesDsl {
   self: LADslStd =>
+
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs {
   }
 
@@ -670,6 +671,7 @@ trait MatricesStd extends scalan.ScalanDslStd with MatricesDsl {
 // Exp -----------------------------------
 trait MatricesExp extends scalan.ScalanDslExp with MatricesDsl {
   self: LADslExp =>
+
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs {
   }
 

@@ -153,6 +153,7 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
 // Std -----------------------------------
 trait VerticesStd extends scalan.ScalanDslStd with VerticesDsl {
   self: GraphsDslStd =>
+
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs {
   }
 
@@ -174,6 +175,7 @@ trait VerticesStd extends scalan.ScalanDslStd with VerticesDsl {
 // Exp -----------------------------------
 trait VerticesExp extends scalan.ScalanDslExp with VerticesDsl {
   self: GraphsDslExp =>
+
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs {
   }
 

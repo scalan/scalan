@@ -687,6 +687,7 @@ trait ConvertersAbs extends Converters {
 // Std -----------------------------------
 trait ConvertersStd extends ConvertersDsl {
   self: ScalanStd =>
+
   lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs {
   }
 
@@ -792,6 +793,7 @@ trait ConvertersStd extends ConvertersDsl {
 // Exp -----------------------------------
 trait ConvertersExp extends ConvertersDsl {
   self: ScalanExp =>
+
   lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs {
   }
 
