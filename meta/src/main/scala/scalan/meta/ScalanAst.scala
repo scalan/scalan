@@ -77,12 +77,28 @@ object ScalanAst {
 
     def unRep(module: SEntityModuleDef , config: CodegenConfig): Option[STpeExpr] = self match {
       case t if !config.isAlreadyRep => Some(t)
-      case STraitCall("Elem" | "Element", Seq(t)) => Some(self)
+      case STraitCall("Elem", Seq(t)) => Some(self)
       case STraitCall("Rep", Seq(t)) => Some(t)
+      case STraitCall("RFunc", Seq(a, b)) =>
+        Some(STpeFunc(a, b))
       case STraitCall(name, args) =>
         val typeSynonyms = config.entityTypeSynonyms ++
           module.entityRepSynonym.toSeq.map(typeSyn => typeSyn.name -> module.entityOps.name).toMap
-        typeSynonyms.get(name).map(unReppedName => STraitCall(unReppedName, args))
+
+        typeSynonyms.get(name)
+          // convert e.g. RVector or RepVector to Vector
+          .orElse {
+            def withoutPrefix(prefix: String, fallback: Option[String]) = {
+              val indexAfterPrefix = prefix.length
+              if (name.startsWith(prefix) && name(indexAfterPrefix).isUpper)
+                Some(name.substring(indexAfterPrefix))
+              else
+                fallback
+            }
+
+            withoutPrefix("R", withoutPrefix("Rep", Some(name.stripSuffix("Rep")).filter(_ != name)))
+          }
+          .map(unReppedName => STraitCall(unReppedName, args))
       case _ => None
     }
 

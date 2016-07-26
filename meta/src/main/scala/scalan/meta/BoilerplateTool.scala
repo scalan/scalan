@@ -23,17 +23,7 @@ class BoilerplateTool extends StrictLogging {
     "RThrow" -> "Throwable",
     "Arr" -> "Array",
     "MM" -> "MMap",
-    "IntRep" -> "Int",
-    "DoubleRep" -> "Double",
     "BoolRep" -> "Boolean",
-    "UnitRep" -> "Unit",
-    "NothingRep" -> "Nothing",
-    "ByteRep" -> "Byte",
-    "ShortRep" -> "Short",
-    "CharRep" -> "Char",
-    "LongRep" -> "Long",
-    "FloatRep" -> "Float",
-    "DoubleRep" -> "Double",
     "ROption" -> "SOption"
   )
   lazy val coreConfig = CodegenConfig(
@@ -114,12 +104,6 @@ class BoilerplateTool extends StrictLogging {
     stagedContextTrait = "scalan.ScalanEnterpriseExp"
   )
 
-  val effectsTypeSynonyms = Map(
-    "RFree"       -> "Free",
-    "RCoproduct"  -> "Coproduct",
-    "RepInteract" -> "Interact",
-    "RepAuth" -> "Auth"
-  )
   lazy val effectsConfig = CodegenConfig(
     name = "effects",
     srcPath = "../effects/src/test/scala/",
@@ -134,8 +118,7 @@ class BoilerplateTool extends StrictLogging {
       "scalan/monads/Coproducts.scala",
       "scalan/monads/Interactions.scala",
       "scalan/monads/Auths.scala"
-    ),
-    effectsTypeSynonyms
+    )
   )
 
   val graphTypeSynonyms = collectTypeSynonyms ++ Map("PG" -> "Graph", "REdge" -> "EdgeType")
@@ -151,7 +134,6 @@ class BoilerplateTool extends StrictLogging {
     graphTypeSynonyms
   )
 
-  val structsTypeSynonyms = Map[String, String]()
   lazy val structsConfig = CodegenConfig(
     name = "structs",
     srcPath = "../core/src/main/scala",
@@ -160,7 +142,6 @@ class BoilerplateTool extends StrictLogging {
       "scalan/primitives/StructKeys.scala",
       "scalan/primitives/StructItems.scala"
     ),
-    structsTypeSynonyms,
     baseContextTrait = "", // not defined means not declare
     seqContextTrait = "",
     stagedContextTrait = ""
