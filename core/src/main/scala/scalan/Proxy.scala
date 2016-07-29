@@ -148,6 +148,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         case a => a
       }
       val receiver1 = t(receiver)
+      // in the case neverInvoke is false, the method is invoked in rewriteDef
       mkMethodCall(receiver1, method, args1, neverInvoke).asRep[A]
     case _ => super.transformDef(d, t)
   }
@@ -196,6 +197,39 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       val className = ScalaNameUtil.cleanNestedClassName(eA.runtimeClass.getName)
       s"new $className(${args.mkString(", ")})"
     case _ => super.formatDef(d)
+  }
+
+  override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
+    case call @ MethodCall(receiver, m, args, neverInvoke) =>
+      call.tryInvoke match {
+        // Rule: receiver.m(args) ==> body(m).subst{xs -> args}
+        case InvokeSuccess(res) => res
+        case InvokeFailure(e) =>
+          if (e.isInstanceOf[DelayInvokeException])
+            super.rewriteDef(d)
+          else
+            throwInvocationException("Method invocation in rewriteDef", e, receiver, m, args)
+        case InvokeImpossible =>
+          implicit val resultElem: Elem[T] = d.selfType
+          // asRep[T] cast below should be safe
+          // explicit resultElem to make sure both branches have the same type
+          def copyMethodCall(newReceiver: Exp[_]) =
+          mkMethodCall(newReceiver, m, args, neverInvoke, resultElem).asRep[T]
+
+          receiver match {
+            // Rule: (if(c) t else e).m(args) ==> if (c) t.m(args) else e.m(args)
+            case Def(IfThenElse(cond, t, e)) =>
+              IF (cond) {
+                copyMethodCall(t)
+              } ELSE {
+                copyMethodCall(e)
+              }
+            case _ =>
+              super.rewriteDef(d)
+          }
+      }
+
+    case _ => super.rewriteDef(d)
   }
 
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
