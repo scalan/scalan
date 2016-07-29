@@ -766,44 +766,36 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) Array.empty[AnyRef] else _args
-      def mkMC(e: ExternalMethodException) = {
-        val res = mkMethodCall(receiver, m, args.toList, neverInvoke = true)
-        res.setMetadata(externalClassNameMetaKey)(e.className)
-        res.setMetadata(externalMethodNameMetaKey)(e.methodName)
-        res
-      }
+
+      def mkMethodCall(neverInvoke: Boolean) =
+        ProxyExp.this.mkMethodCall(receiver, m, args.toList, neverInvoke)
+
       receiver match {
         case Def(d) =>
           if (shouldInvoke(d, m, args)) {
-            try {
+            val res = try {
               // call method of the node when it's allowed
-              val res = m.invoke(d, args: _*)
-              res
+              m.invoke(d, args: _*)
             } catch {
-              case e: ExternalMethodException =>
-                mkMC(e)
-              case e: Exception => e.getCause match {
-                case e: ExternalMethodException =>
-                  mkMC(e)
-                case _ =>
-                  throwInvocationException("Method invocation", baseCause(e), receiver, m, args)
-              }
+              case e: Exception =>
+                baseCause(e) match {
+                  case ExternalMethodException(className, methodName) =>
+                    mkMethodCall(neverInvoke = true)
+                      .setMetadata(externalClassNameMetaKey)(className)
+                      .setMetadata(externalMethodNameMetaKey)(methodName)
+                  case cause =>
+                    throwInvocationException("Method invocation", cause, receiver, m, args)
+                }
             }
+            res
           } else {
             // try to call method m via inherited class or interfaces
-            val optRes = invokeSuperMethod(d, m, args)
-            optRes match {
-              case Some(res) => res
-              case None =>
-                invokeMethodOfVar(m, args)
+            invokeSuperMethod(d, m, args).getOrElse {
+              mkMethodCall(neverInvoke = false)
             }
           }
-        case _ => invokeMethodOfVar(m, args)
+        case _ => mkMethodCall(neverInvoke = false)
       }
-    }
-
-    def invokeMethodOfVar(m: Method, args: Array[AnyRef]) = {
-      mkMethodCall(receiver, m, args.toList, false)
     }
   }
 
