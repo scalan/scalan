@@ -152,4 +152,15 @@ object ReflectionUtil {
     case _ =>
       ClassTag(tag.mirror.runtimeClass(tag.tpe))
   }).asInstanceOf[ClassTag[A]]
+
+  def createArgTypeTag(name: String): WeakTypeTag[_] = {
+    val u = scala.reflect.runtime.universe.asInstanceOf[scala.reflect.runtime.JavaUniverse]
+    val javaMirror = u.runtimeMirror(this.getClass.getClassLoader)
+    val tn = u.newTypeName(name)
+    val s = u.newFreeTypeSymbol(tn)
+    s.info = u.NoType
+    val t = u.TypeRef(u.NoPrefix, s, Nil)
+    val tc = u.FixedMirrorTypeCreator(javaMirror, t)
+    WeakTypeTag(javaMirror.asInstanceOf[scala.reflect.api.Mirror[scala.reflect.runtime.universe.type]], tc)
+  }
 }

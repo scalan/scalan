@@ -92,10 +92,10 @@ class CollectionConverterTests extends BaseCtxTests {
       assert(lA.elem.eDom == lA.elem.eRange)
       assert(lC.isIdentity)
       assert(lC.elem.eDom == lC.elem.eRange)
-      ctx.emitMany(name + "_iso1", iso1.toFun, iso1.fromFun)
-      ctx.emitMany(name + "_iso2", iso2.toFun, iso2.fromFun)
-      ctx.emitMany(name + "_composed", to, from)
-      ctx.emitMany(name + "_identities", idA, idC)
+      ctx.emit(name + "_iso1", iso1.toFun, iso1.fromFun)
+      ctx.emit(name + "_iso2", iso2.toFun, iso2.fromFun)
+      ctx.emit(name + "_composed", to, from)
+      ctx.emit(name + "_identities", idA, idC)
     }
 
     test("t1", isoCollectionOverArray[(Int,Double)], isoPairCollectionAOS[Int, Double])

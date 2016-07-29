@@ -6,6 +6,7 @@ import annotation.implicitNotFound
 import scala.collection.immutable.ListMap
 import scala.reflect.runtime.universe._
 import scala.reflect.{AnyValManifest, ClassTag}
+import scalan.meta.ScalanAst.STpeArg
 import scalan.util.ReflectionUtil
 
 trait TypeDescs extends Base { self: Scalan =>
@@ -179,6 +180,54 @@ trait TypeDescs extends Base { self: Scalan =>
       val defaultB = eRange.defaultRepValue
       fun[A, B](_ => defaultB)(Lazy(eDom), eRange)
     }
+  }
+
+  class ArgElem(val tyArg: STpeArg) extends Elem[Any] with Serializable with scala.Equals {
+    protected def getDefaultRep = toRep(Default.OfAny.value)(this)
+    val tag = ReflectionUtil.createArgTypeTag(tyArg.name).asInstanceOf[WeakTypeTag[Any]]
+    override def isEntityType = false
+    lazy val typeArgs = {
+      assert(noTypeArgs)
+      TypeArgs()
+    }
+    private[this] lazy val noTypeArgs =
+      if (tag.tpe.typeArgs.isEmpty)
+        true
+      else
+        !!!(s"${getClass.getSimpleName} is a ArgElem for a generic type, must override equals and typeArgs.")
+
+    override def getName(f: TypeDesc => String) = {
+      if (typeArgs.isEmpty)
+        tyArg.name
+      else {
+        val typeArgString = typeArgsIterator.map(f).mkString(", ")
+        s"${tyArg.name}[$typeArgString]"
+      }
+    }
+
+    def isCovariant = tyArg.isCovariant
+    def tyExpr = tyArg.toTraitCall
+    def toDesc(env: Map[ArgElem,TypeDesc]): TypeDesc = env.get(this) match {
+      case Some(d) => d
+      case None =>
+        !!!(s"Don't know how to convert ArgElem $this to TypeDesc")
+    }
+
+    override def <:<(e: Elem[_]) = if (this == e) true else super.<:<(e)
+
+    override def canEqual(other: Any) = other.isInstanceOf[ArgElem]
+    override def equals(other: Any) = other match {
+      case other: ArgElem =>
+        this.eq(other) ||
+          (other.canEqual(this) && this.tyArg == other.tyArg)
+      case _ => false
+    }
+    override def hashCode = tag.tpe.hashCode
+  }
+  object ArgElem {
+    def apply(name: String): ArgElem = new ArgElem(STpeArg(name, None, Nil))
+    def apply(a: STpeArg) = new ArgElem(a)
+    def unapply(t: ArgElem): Option[STpeArg] = Some(t.tyArg)
   }
 
   val AnyElement: Elem[Any] = new BaseElem[Any](null)

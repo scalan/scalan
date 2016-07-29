@@ -1,6 +1,7 @@
 package scalan
 
 import scalan.common.{KindsDslExp, KindsExamples}
+import scala.reflect.runtime.universe._
 
 abstract class AbstractElemTests extends BaseNestedTests {
   class Ctx extends ScalanDslExp {
@@ -48,6 +49,32 @@ class ElemTests extends AbstractElemTests {
       elementsShouldNotBeEqual[AString, CString]
       elementsShouldBeEqual[SThrowable, SThrowable]
       elementsShouldBeEqual[Thunk[Int], Thunk[Int]]
+    }
+
+    it("for ArgElem") {
+      val ae = ArgElem("A")
+      ae.tag.tpe match {
+        case t: TypeRef =>
+          assert(t.typeArgs.isEmpty)
+          assert(t.sym.isInstanceOf[FreeTypeSymbolApi])
+      }
+      println(ae.tag.tpe)
+      //    println(s"ClassTag: ${ae.classTag}")
+      val be = ArgElem("B")
+      val ae2 = ArgElem("A")
+      assert(!ae.equals(be))
+      assert(ae.equals(ae2))
+
+      assert(ae.name == "A")
+      assert(be.name == "B")
+
+      assert(!(ae <:< AnyElement))
+      assert(!(AnyElement <:< ae))
+      assert(ae <:< ae)
+      assert(ae <:< ae2)
+      assert(be <:< be)
+      assert(!(ae <:< be))
+      assert(ae.toString == "A")
     }
 
     it("for Struct elements") {

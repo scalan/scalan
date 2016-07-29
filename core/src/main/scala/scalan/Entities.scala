@@ -9,6 +9,11 @@ import scalan.util.ReflectionUtil
 trait Entities extends TypeDescs { self: Scalan =>
   abstract class EntityElem[A] extends Elem[A] with scala.Equals {
     def parent: Option[Elem[_]]
+    val entityName: String = {
+      val elemClassSymbol = ReflectionUtil.classToSymbol(this.getClass)
+      val n = elemClassSymbol.name.toString.stripSuffix("Elem")
+      n
+    }
     def convert(x: Rep[Def[_]]): Rep[A] = !!!("should not be called")
     //def getConverterTo[B](eB: Elem[B]): Conv[A,B] = !!!  //TODO make it abstract
     // TODO generate code for this in implementations
