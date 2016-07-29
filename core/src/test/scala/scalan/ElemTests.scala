@@ -58,8 +58,6 @@ class ElemTests extends AbstractElemTests {
           assert(t.typeArgs.isEmpty)
           assert(t.sym.isInstanceOf[FreeTypeSymbolApi])
       }
-      println(ae.tag.tpe)
-      //    println(s"ClassTag: ${ae.classTag}")
       val be = ArgElem("B")
       val ae2 = ArgElem("A")
       assert(!ae.equals(be))
@@ -74,7 +72,7 @@ class ElemTests extends AbstractElemTests {
       assert(ae <:< ae2)
       assert(be <:< be)
       assert(!(ae <:< be))
-      assert(ae.toString == "A")
+      assert(ae.toString == "ArgElem<A>")
     }
 
     it("for Struct elements") {
