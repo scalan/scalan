@@ -7,6 +7,7 @@ import java.lang.reflect.{InvocationTargetException, Method}
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 import scala.util.{Try, Success}
 
@@ -746,12 +747,13 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     }
   }
 
-  private def tpeFromElem(e: Elem[_]): Type = {
-    val tag = e match {
-      case baseTypeElem: BaseTypeElem[_, _] => baseTypeElem.wrapperElem.tag
-      case _ => e.tag
-    }
-    tag.tpe
+  private def tpeFromElem(e: Elem[_]): Type = e match {
+    case se: StructElem[_] =>
+      universe.internal.newFreeType("Struct").toType
+    case baseTypeElem: BaseTypeElem[_, _] =>
+      baseTypeElem.wrapperElem.tag.tpe
+    case _ =>
+      e.tag.tpe
   }
 
   private object Symbols {

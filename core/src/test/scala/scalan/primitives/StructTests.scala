@@ -142,6 +142,13 @@ class StructTests extends BaseViewTests {
 
       val es3 = tupleStructElement(tupleStructElement(element[Int], element[Char], element[Double]),
         element[Boolean])
+
+      def testGetResultElem() = {
+        val mt = MT1(es1.defaultRepValue, 0)(es1)
+
+        assert(getResultElem(mt, classOf[MetaTest[_]].getMethod("give"), Nil) == es1)
+        assert(getResultElem(mt, classOf[MetaTest[_]].getMethod("test"), Nil) == mt.elem)
+      }
     }
     override val compiler = new DummyCompiler(new ScalanCake)
                            with StructsCompiler[ScalanDslExp with StructExamples]
@@ -422,6 +429,11 @@ class StructTests extends BaseViewTests {
     val iso = getStructMergeIso(se)
     ctx.test("iso.to", iso.toFun)
     ctx.test("iso.from", iso.fromFun)
+  }
+
+  test("getResultElem for structs") {
+    val ctx = new Ctx
+    ctx.compiler.scalan.testGetResultElem()
   }
 }
 
