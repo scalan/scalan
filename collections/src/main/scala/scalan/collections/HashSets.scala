@@ -2,7 +2,6 @@ package scalan.collections
 
 import scala.collection.immutable.HashSet
 import scalan._
-import scalan.common.Default
 
 trait HashSets extends Base with TypeWrappers { self: HashSetsDsl =>
 
@@ -19,7 +18,7 @@ trait HashSets extends Base with TypeWrappers { self: HashSetsDsl =>
     @External def empty[A:Elem]: Rep[SHashSet[A]]
   }
 
-  def DefaultOfHashSet[A:Elem]: Default[HashSet[A]] = Default.defaultVal(HashSet.empty[A]) //SHashSet.defaultVal
+  def DefaultOfHashSet[A:Elem]: Rep[HashSet[A]] = HashSet.empty[A]
 }
 
 trait HashSetsDslStd extends impl.HashSetsStd {

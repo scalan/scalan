@@ -96,9 +96,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     case f :: fs => s"Pair($f, ${pairify(fs)})"
   }
 
-  def getDefaultOfBT(tc: STpeExpr) =
-    s"DefaultOf${tc.name}" + tc.tpeSExprs.asTypeParams()
-
   private val entity = module.entityOps
 
   def zeroSExpr(t: STpeExpr): String = t match {
@@ -115,8 +112,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     case tc@STraitCall(name, args) => {
       val isBT = entity.optBaseType.exists(bt => bt.name == name)
       if (isBT) {
-        s"${getDefaultOfBT(tc)}.value"
-        //s"Default.defaultOf[$t]"
+        s"DefaultOf${tc.name + tc.tpeSExprs.asTypeParams()}"
       } else {
         s"element[$t].defaultRepValue"
       }
@@ -425,7 +421,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
           s"""
              |    lazy val baseElem =
              |      new BaseTypeElem1[${join(e.tpeArgNames, e.baseTypeName, e.typeUse)}]($thisElem)(
-             |        $elems, container[${bt.name}], ${getDefaultOfBT(bt)})
+             |        $elems, container[${bt.name}])
              |""".stripAndTrim
         } else {
           val weakTagsForTpeArgs = e.tpeArgNames.map { argName =>
@@ -434,7 +430,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
           s"""
              |    lazy val baseElem = {
              |      $weakTagsForTpeArgs
-             |      new BaseTypeElem[${e.baseTypeUse}, ${e.typeUse}]($thisElem)(weakTypeTag[${e.baseTypeUse}], ${getDefaultOfBT(bt)})
+             |      new BaseTypeElem[${e.baseTypeUse}, ${e.typeUse}]($thisElem)
              |    }
              |""".stripAndTrim
         }

@@ -2,8 +2,6 @@ package scalan.collections
 
 import scala.collection.Seq
 import scalan._
-import scalan.common.Default
-import scala.reflect.runtime.universe._
 
 trait Seqs { self: SeqsDsl =>
   type RSeq[A] = Rep[SSeq[A]]
@@ -64,7 +62,7 @@ trait Seqs { self: SeqsDsl =>
     @External def fromList[A:Elem](list: Rep[List[A]]): Rep[SSeq[A]]
   }
 
-  def DefaultOfSeq[A: Elem]: Default[Seq[A]] = Default.defaultVal(Seq.empty[A])
+  def DefaultOfSeq[A: Elem]: Rep[Seq[A]] = Seq.empty[A]
 }
 
 trait SeqsDslStd extends impl.SeqsStd {

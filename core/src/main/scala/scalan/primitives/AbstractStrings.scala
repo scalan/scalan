@@ -1,7 +1,6 @@
 package scalan.primitives
 
 import scalan._
-import scalan.common.Default
 
 trait AbstractStrings extends Base with TypeWrappers { self: AbstractStringsDsl =>
 

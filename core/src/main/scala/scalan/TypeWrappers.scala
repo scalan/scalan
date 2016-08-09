@@ -2,13 +2,8 @@ package scalan
 
 import java.lang.reflect.Method
 
-import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-
-/**
- * Created by slesarenko on 17/01/15.
- */
 
 trait TypeWrappers extends Base { self: Scalan =>
 
@@ -17,8 +12,9 @@ trait TypeWrappers extends Base { self: Scalan =>
   }
 
   class BaseTypeElem[TBase, TWrapper <: TypeWrapper[TBase, TWrapper]]
-    (val wrapperElem: Elem[TWrapper])(implicit tag: WeakTypeTag[TBase], z: Default[TBase])
-    extends BaseElem[TBase] { self =>
+    (val wrapperElem: Elem[TWrapper])(implicit tag: WeakTypeTag[TBase])
+    // null can be used because getDefaultRep is overridden
+    extends BaseElem[TBase](null.asInstanceOf[TBase]) { self =>
     override protected def getDefaultRep = {
       val wrapperDefaultValue = wrapperElem.defaultRepValue
       unwrapTypeWrapperRep(wrapperDefaultValue)
@@ -28,8 +24,8 @@ trait TypeWrappers extends Base { self: Scalan =>
   }
 
   class BaseTypeElem1[A, CBase[_], TWrapper <: TypeWrapper[CBase[A], TWrapper]]
-    (wrapperElem: Elem[TWrapper])(implicit val eItem: Elem[A], val cont: Cont[CBase], z: Default[CBase[A]])
-    extends BaseTypeElem[CBase[A], TWrapper](wrapperElem)(cont.tag(eItem.tag), z) {
+    (wrapperElem: Elem[TWrapper])(implicit val eItem: Elem[A], val cont: Cont[CBase])
+    extends BaseTypeElem[CBase[A], TWrapper](wrapperElem)(cont.tag(eItem.tag)) {
     override def equals(other: Any) = other match {
       case other: BaseTypeElem1[_, _, _] =>
         this.eq(other) ||

@@ -49,7 +49,7 @@ trait StructKeysDsl extends impl.StructKeysAbs {self: StructsDsl with Scalan =>
   implicit class KeySetOps(ks: Rep[KeySet]) {
     //    def apply(i: Rep[Int]) = keyset_getAt(ks, i)
   }
-  class KeySetElem extends BaseElem[KeySet]()(weakTypeTag[KeySet], Default.defaultVal(KeySetSeq(Seq())))
+  class KeySetElem extends BaseElem[KeySet](KeySetSeq(Seq()))
   implicit val KeySetElement: Elem[KeySet] = new KeySetElem
   def keyset_create(keys: Seq[String]): Rep[KeySet]
   //  def keyset_getAt(ks: KSet, i: Rep[Int]): Rep[StructKey]

@@ -1,7 +1,6 @@
 package scalan.util
 
 import scalan._
-import scalan.common.Default
 
 trait Exceptions extends Base with TypeWrappers { self: ExceptionsDsl =>
 
@@ -13,7 +12,7 @@ trait Exceptions extends Base with TypeWrappers { self: ExceptionsDsl =>
   trait SThrowableCompanion extends ExCompanion0[Throwable]  {
     @Constructor def apply(msg: Rep[String]): Rep[SThrowable]
   }
-  lazy val DefaultOfThrowable = Default.defaultVal(new Throwable("default exception"))
+  lazy val DefaultOfThrowable = new Throwable("default exception")
 
 }
 

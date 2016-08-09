@@ -3,7 +3,6 @@ package scalan
 import org.objectweb.asm.{Type => TypeDescriptors}
 
 import scala.reflect.runtime.universe._
-import scalan.common.Default
 import scalan.primitives.{AbstractStringsDsl, AbstractStringsDslExp, AbstractStringsDslStd}
 
 /**
@@ -16,14 +15,11 @@ trait JNIExtractorOps extends Base { self: Scalan with AbstractStringsDsl =>
   class JNIFieldID
   class JNIMethodID
 
-  private implicit val z:Default[JNIClass] = scalan.common.Default.defaultVal[JNIClass](null.asInstanceOf[JNIClass])
-  case object JNIClassElem extends BaseElem[JNIClass]
+  case object JNIClassElem extends BaseElem[JNIClass](null)
 
-  private implicit val z1:Default[JNIFieldID] = scalan.common.Default.defaultVal[JNIFieldID](null.asInstanceOf[JNIFieldID])
-  case object JNIFieldIDElem extends BaseElem[JNIFieldID]
+  case object JNIFieldIDElem extends BaseElem[JNIFieldID](null)
 
-  private implicit val z2:Default[JNIMethodID] = scalan.common.Default.defaultVal[JNIMethodID](null.asInstanceOf[JNIMethodID])
-  case object JNIMethodIDElem extends BaseElem[JNIMethodID]
+  case object JNIMethodIDElem extends BaseElem[JNIMethodID](null)
 
   case class JNITypeElem[T](eT: Elem[T]) extends Elem[JNIType[T]] {
     override val tag = {
@@ -37,17 +33,6 @@ trait JNIExtractorOps extends Base { self: Scalan with AbstractStringsDsl =>
 
     lazy val typeArgs = TypeArgs("T" -> eT)
   }
-
-//  case class JNIFieldIDElem[T](eT: Elem[T]) extends Elem[JNIFieldID[T]] {
-//    override val tag = {
-//      implicit val ttag = element[T].tag
-//      weakTypeTag[JNIFieldID[T]]
-//    }
-//
-//    override def isEntityType: Boolean = element[T].isEntityType
-//
-//    lazy val defaultRep = scalan.common.Default.defaultVal[Rep[JNIFieldID[T]]](null.asInstanceOf[JNIFieldID[T]])
-//  }
 
   case class JNIArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     def parent: Option[Elem[_]] = Some(arrayElement(eItem))

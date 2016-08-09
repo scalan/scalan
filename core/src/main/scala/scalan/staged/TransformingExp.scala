@@ -4,7 +4,7 @@ import java.lang.reflect.{Method, InvocationTargetException}
 
 import scala.collection.{mutable, Seq}
 import scalan.{Scalan, ScalanExp}
-import scalan.common.{Default, Lazy}
+import scalan.common.Lazy
 import scala.reflect.runtime.universe._
 
 trait Transforming { self: Scalan =>
@@ -52,8 +52,7 @@ trait Transforming { self: Scalan =>
     _currentPass = Pass.defaultPass
   }
 
-  case class SingletonElem[T: WeakTypeTag](value: T)
-    extends BaseElem[T]()(weakTypeTag[T], Default.defaultVal(value))
+  case class SingletonElem[T: WeakTypeTag](value: T) extends BaseElem[T](value)
 
   sealed trait KeyPath {
     def isNone = this == KeyPath.None
@@ -540,10 +539,7 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
   type MarkedSym = (Exp[T], Marking[T]) forSome {type T}
   type MarkedSyms = Seq[MarkedSym]
 
-  implicit def markingDefault[T:Elem]: Default[Marking[T]] =
-    Default.defaultVal(new EmptyMarking[T](element[T]))
-
-  class MarkingElem[T:Elem] extends BaseElem[Marking[T]]()
+  class MarkingElem[T:Elem] extends BaseElem[Marking[T]](new EmptyMarking[T](element[T]))
   implicit def markingElem[T:Elem] = new MarkingElem[T]
 
   private val markingKeys = mutable.Map.empty[(String, Elem[_]), MetaKey[_]]

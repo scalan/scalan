@@ -1,7 +1,5 @@
 package scalan
 
-import scalan.common.Default
-import Default._
 import scalan.common.Lazy
 import scalan.staged.BaseExp
 import annotation.implicitNotFound
@@ -119,8 +117,8 @@ trait TypeDescs extends Base { self: Scalan =>
 
   def element[A](implicit ea: Elem[A]): Elem[A] = ea
 
-  class BaseElem[A](implicit val tag: WeakTypeTag[A], z: Default[A]) extends Elem[A] with Serializable with scala.Equals {
-    protected def getDefaultRep = toRep(z.value)(this)
+  class BaseElem[A](defaultValue: A)(implicit val tag: WeakTypeTag[A]) extends Elem[A] with Serializable with scala.Equals {
+    protected def getDefaultRep = toRep(defaultValue)(this)
     override def isEntityType = false
     override def canEqual(other: Any) = other.isInstanceOf[BaseElem[_]]
     override def equals(other: Any) = other match {
@@ -183,18 +181,18 @@ trait TypeDescs extends Base { self: Scalan =>
     }
   }
 
-  val AnyElement: Elem[Any] = new BaseElem[Any]()(typeTag[Any], Default.OfAny)
-  val AnyRefElement: Elem[AnyRef] = new BaseElem[AnyRef]()(typeTag[AnyRef], Default.OfAnyRef)
-  implicit val BooleanElement: Elem[Boolean] = new BaseElem[Boolean]
-  implicit val ByteElement: Elem[Byte] = new BaseElem[Byte]
-  implicit val ShortElement: Elem[Short] = new BaseElem[Short]
-  implicit val IntElement: Elem[Int] = new BaseElem[Int]
-  implicit val LongElement: Elem[Long] = new BaseElem[Long]
-  implicit val FloatElement: Elem[Float] = new BaseElem[Float]
-  implicit val DoubleElement: Elem[Double] = new BaseElem[Double]
-  implicit val UnitElement: Elem[Unit] = new BaseElem[Unit]
-  implicit val StringElement: Elem[String] = new BaseElem[String]
-  implicit val CharElement: Elem[Char] = new BaseElem[Char]
+  val AnyElement: Elem[Any] = new BaseElem[Any](null)
+  val AnyRefElement: Elem[AnyRef] = new BaseElem[AnyRef](null)
+  implicit val BooleanElement: Elem[Boolean] = new BaseElem(false)
+  implicit val ByteElement: Elem[Byte] = new BaseElem(0.toByte)
+  implicit val ShortElement: Elem[Short] = new BaseElem(0.toShort)
+  implicit val IntElement: Elem[Int] = new BaseElem(0)
+  implicit val LongElement: Elem[Long] = new BaseElem(0L)
+  implicit val FloatElement: Elem[Float] = new BaseElem(0.0F)
+  implicit val DoubleElement: Elem[Double] = new BaseElem(0.0)
+  implicit val UnitElement: Elem[Unit] = new BaseElem(())
+  implicit val StringElement: Elem[String] = new BaseElem("")
+  implicit val CharElement: Elem[Char] = new BaseElem('\u0000')
 
   implicit def pairElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A, B)] =
     cachedElem[PairElem[A, B]](ea, eb)
