@@ -33,9 +33,9 @@ trait TestContexts extends TestsUtil {
 
     // workaround for non-existence of by-name repeated parameters
     def emitF(name: String, sfs: (() => Exp[_])*): Unit = stage(this)(testName, name, sfs)
-    def emit(name: String, s1: => Exp[_]): Unit = emitF(name, () => s1)
-    def emit(name: String, s1: => Exp[_], s2: Exp[_]*): Unit = {
-      emitF(name, Seq(() => s1) ++ s2.map((s: Rep[_]) => () => s): _*)
+//    def emit(name: String, s1: => Exp[_]): Unit = emitF(name, () => s1)
+    def emit(name: String, ss: Exp[_]*): Unit = {
+      emitF(name, ss.map((s: Rep[_]) => () => s): _*)
     }
     def emit(s1: => Exp[_]): Unit = emitF(testName, () => s1)
     def emit(s1: => Exp[_], s2: Exp[_]*): Unit = {
