@@ -89,13 +89,15 @@ trait Entities extends TypeDescs { self: Scalan =>
     }
   }
 
-  def isConcreteElem[T](e: Elem[T]): Boolean = e match {
+  def isConcreteElem(e: TypeDesc): Boolean = e match {
     case e: PairElem[_, _] => e.eFst.isConcrete && e.eSnd.isConcrete
     case e: SumElem[_, _] => e.eLeft.isConcrete && e.eRight.isConcrete
     case e: FuncElem[_, _] => e.eDom.isConcrete && e.eRange.isConcrete
     case e: ArrayElem[_] => e.eItem.isConcrete
     case e: ListElem[_] => e.eItem.isConcrete
     case e: ArrayBufferElem[_] => e.eItem.isConcrete
+    case e: ViewElem[_,_] if e.typeArgs.nonEmpty =>
+      e.typeArgs.forall { case (n, e) => isConcreteElem(e) }
     case _: ViewElem[_,_] => true
     case _: EntityElem[_] => false
     case _: BaseElem[_] => true
