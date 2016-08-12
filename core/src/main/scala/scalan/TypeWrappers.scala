@@ -40,13 +40,13 @@ trait TypeWrappers extends Base { self: Scalan =>
 
   protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase]
 
-  abstract class WrapperElem[TBase, TWrapper] extends EntityElem[TWrapper] {
+  trait WrapperElem[TBase, TWrapper] extends EntityElem[TWrapper] {
     val baseElem: Elem[TBase]
     def eTo: Elem[_]
   }
 
   abstract class WrapperElem1[A, Abs, CBase[_], CW[_]](eA: Elem[A], contBase: Cont[CBase], contW: Cont[CW])
-    extends EntityElem1[A, Abs, CW](eA, contW) {
+    extends EntityElem1[A, Abs, CW](eA, contW) with WrapperElem[CBase[A], Abs] {
     val baseElem: Elem[CBase[A]]
     def eTo: Elem[_]
   }
@@ -61,8 +61,8 @@ trait TypeWrappers extends Base { self: Scalan =>
   def isValueAccessor(m: Method) = m.getName == "wrappedValue"
 
   def isWrapperElem(el: Elem[_]) = el match {
-    case el: WrapperElem[_,_] => true
     case el: WrapperElem1[_,_,_,_] => true
+    case el: WrapperElem[_,_] => true
     case _ => false
   }
 }
