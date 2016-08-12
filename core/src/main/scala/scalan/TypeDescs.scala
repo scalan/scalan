@@ -183,7 +183,7 @@ trait TypeDescs extends Base { self: Scalan =>
   }
 
   class ArgElem(val tyArg: STpeArg) extends Elem[Any] with Serializable with scala.Equals {
-    protected def getDefaultRep = toRep(Default.OfAny.value)(this)
+    protected def getDefaultRep = toRep(null.asInstanceOf[Any])(this)
     val tag = ReflectionUtil.createArgTypeTag(tyArg.name).asInstanceOf[WeakTypeTag[Any]]
     override def isEntityType = false
     def argName = tyArg.name
