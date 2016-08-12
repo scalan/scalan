@@ -186,6 +186,7 @@ trait TypeDescs extends Base { self: Scalan =>
     protected def getDefaultRep = toRep(Default.OfAny.value)(this)
     val tag = ReflectionUtil.createArgTypeTag(tyArg.name).asInstanceOf[WeakTypeTag[Any]]
     override def isEntityType = false
+    def argName = tyArg.name
     lazy val typeArgs = {
       assert(noTypeArgs)
       TypeArgs()
