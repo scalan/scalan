@@ -124,7 +124,12 @@ object ReflectionUtil {
   def isAnonymousClass(symbol: Symbol) = symbol.isClass && symbol.name.toString.contains("$anon")
 
   /** True if `x` is a Scala `object` */
-  def isSingleton(x: Any) = x.getClass.getField("MODULE$") != null
+  def isSingleton(x: Any) = try {
+    val _ = x.getClass.getField("MODULE$")
+    true
+  } catch {
+    case _: NoSuchFieldException => false
+  }
 
   /** A string describing the argument which allows to distinguish between overloads and overrides, unlike MethodSymbol.toString */
   def showMethod(m: MethodSymbol) = {
