@@ -1,6 +1,7 @@
 package scalan.seq
 
 import scala.language.implicitConversions
+import scala.runtime.{BoxedUnit, ScalaRunTime}
 import scalan.{Base, ScalanStd}
 
 trait BaseStd extends Base { self: ScalanStd =>
@@ -20,46 +21,44 @@ trait BaseStd extends Base { self: ScalanStd =>
 
   override def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T] = x.selfType.asElem[T]
 
-  object Classes {
-    val IntClass = classOf[Int]
-    val BooleanClass = classOf[Boolean]
-    val ByteClass = classOf[Byte]
-    val ShortClass = classOf[Short]
-    val LongClass = classOf[Long]
-    val FloatClass = classOf[Float]
-    val DoubleClass = classOf[Double]
-    val UnitClass = classOf[Unit]
-    val StringClass = classOf[String]
-    val CharClass = classOf[Char]
-  }
-  import Classes._
-
-  val classToElemMapping: Map[Class[_], Elem[_]] = Map(
-    IntClass     -> IntElement,
-    BooleanClass -> BooleanElement,
-    ByteClass    -> ByteElement,
-    ShortClass   -> ShortElement,
-    LongClass    -> LongElement,
-    FloatClass   -> FloatElement,
-    DoubleClass  -> DoubleElement,
-    UnitClass    -> UnitElement,
-    StringClass  -> StringElement,
-    CharClass    -> CharElement
+  // TODO should there be a way to register new classes for DateElem, etc?
+  // Should be obsoleted by #72
+  private val classToElemMapping: Map[Class[_], Elem[_]] = Map(
+    classOf[java.lang.Integer]   -> IntElement,
+    classOf[java.lang.Boolean]   -> BooleanElement,
+    classOf[java.lang.Byte]      -> ByteElement,
+    classOf[java.lang.Short]     -> ShortElement,
+    classOf[java.lang.Long]      -> LongElement,
+    classOf[java.lang.Float]     -> FloatElement,
+    classOf[java.lang.Double]    -> DoubleElement,
+    classOf[java.lang.Character] -> CharElement,
+    classOf[BoxedUnit]           -> UnitElement,
+    classOf[String]              -> StringElement
   )
 
-  def classToElem[T](clazz: Class[T]): Elem[T] = {
-    val res = if (clazz.isArray) {
+  private def classToElem(clazz: Class[_]): Elem[_] = {
+    if (clazz.isArray) {
       val cItem = clazz.getComponentType
       arrayElement(classToElem(cItem))
     } else {
-      val opt = classToElemMapping.get(clazz)
-      opt match {
-        case Some(c) => c
-        case None => !!!(s"Don't know how to get element for $clazz")
-      }
+      val clazz1 = ScalaRunTime.box(clazz)
+      classToElemMapping.getOrElse(clazz1, !!!(s"No way to determine element for $clazz"))
+    }
+  }
+
+  override def rep_getElem[T](x: Rep[T]): Elem[T] = {
+    val res: Elem[_] = x match {
+      case d: Def[_] =>
+        d.selfType
+      case (a, b) =>
+        pairElement(rep_getElem(a), rep_getElem(b))
+      case _: Either[_, _] =>
+        !!!("Can't determine the element of other side of Either in standard context")
+      case _: Function1[_, _] =>
+        !!!("Can't determine input element of a function in standard context")
+      case _ =>
+        classToElem(x.getClass)
     }
     res.asElem[T]
   }
-
-  override def rep_getElem[T](x: Rep[T]): Elem[T] = classToElem(x.getClass.asInstanceOf[Class[T]])
 }

@@ -43,9 +43,11 @@ trait Base extends LazyLogging { self: Scalan =>
 
   implicit class RepForSomeExtension(x: Rep[_]) {
     def asRep[T]: Rep[T] = x.asInstanceOf[Rep[T]]
+    def unsafeUntypedElem: Elem[_] = rep_getElem(x)
   }
   implicit class RepExtension[A](x: Rep[A]) {
     def asValue: A = valueFromRep(x)
+    def unsafeElem = rep_getElem(x)
   }
 
   def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for $x with element $eA")

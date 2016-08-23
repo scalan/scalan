@@ -5,6 +5,7 @@ import scala.reflect.runtime.universe._
 import scalan.util.CollectionUtil
 import scalan.common.OverloadHack._
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
+import scalan.seq.BaseStd
 import scalan.staged.Expressions
 
 /**
@@ -22,7 +23,7 @@ import scalan.staged.Expressions
 trait Structs extends Base { self: StructsDsl with Scalan =>
 }
 
-trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: StructsDsl with Scalan =>
+trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: Scalan =>
   // TODO consider if T type parameter is needed here and for AbstractStruct
   // It's only useful if we'll have some static typing on structs later (Shapeless' records?)
   abstract class StructTag[T <: Struct](implicit val typeTag: TypeTag[T]) {
@@ -53,6 +54,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
 //    def values: Rep[HList]
     def fields: Seq[StructField]
   }
+  type RStruct = Rep[Struct]
 
   case class StructElem[T <: Struct](structTag: StructTag[T], fields: Seq[(String, Elem[_])]) extends Elem[T] {
     override def isEntityType = fields.exists(_._2.isEntityType)
@@ -178,6 +180,19 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
       val value = getUnchecked[A](fieldName)
       assertElem(value, element[A])
       value
+    }
+    def tag: StructTag[_ <: Struct] = s.unsafeUntypedElem.asInstanceOf[StructElem[_ <: Struct]].structTag
+    def fieldNames = s.unsafeUntypedElem.asInstanceOf[StructElem[_ <: Struct]].fieldNames
+    def fields: Seq[StructField] = {
+      fieldNames.map(name => (name, field(s, name)))
+    }
+    def mapFields(f: Rep[_] => Rep[_]) = {
+      val newFields = fieldNames.map { name =>
+        val fieldValue = field(s, name)
+        val newValue = f(fieldValue)
+        (name, newValue)
+      }
+      struct(tag, newFields)
     }
   }
 
@@ -425,7 +440,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
 
 }
 
-trait StructsDslStd extends StructsDsl with StructItemsDslStd with StructKeysDslStd { self: StructsDslStd with ScalanStd =>
+trait StructsDslStd extends StructsDsl with StructItemsDslStd with StructKeysDslStd with BaseStd { self: ScalanStd =>
 
   case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[StructField]) extends Struct {
     override def equals(other: Any) = other match {
@@ -460,10 +475,21 @@ trait StructsDslStd extends StructsDsl with StructItemsDslStd with StructKeysDsl
     val StructSeq(tag, fieldsInStruct) = struct
     StructSeq(tag, fieldsInStruct.filter(fields.contains))
   }
+
+  override def rep_getElem[T](x: Rep[T]): Elem[T] = x match {
+    case StructSeq(tag, fields) =>
+      val fieldElems = fields.map {
+        case (name, value) =>
+          val elemForValue = rep_getElem(value)
+          (name, elemForValue)
+      }
+      StructElem(tag.asInstanceOf[StructTag[T with Struct]], fieldElems).asElem[T]
+    case _ => super.rep_getElem(x)
+  }
 }
 
 trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with EffectsExp with ViewsDslExp with StructItemsDslExp
-    with StructKeysDslExp with GraphVizExport { self: StructsDslExp with ScalanExp =>
+    with StructKeysDslExp with GraphVizExport { self: ScalanExp =>
 
   abstract class AbstractStruct[T <: Struct] extends Def[T] {
     def tag: StructTag[T]
