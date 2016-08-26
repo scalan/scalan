@@ -99,7 +99,10 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     lazy val eTo = new AdjacencyGraphElem[V, E](self)
     lazy val selfType = new AdjacencyGraphIsoElem[V, E](eV, eE)
     def productArity = 2
-    def productElement(n: Int) = (eV, eE).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eV
+      case 1 => eE
+    }
   }
   case class AdjacencyGraphIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[AdjacencyGraphIso[V, E]] {
     def isEntityType = true
@@ -187,7 +190,10 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     lazy val eTo = new IncidenceGraphElem[V, E](self)
     lazy val selfType = new IncidenceGraphIsoElem[V, E](eV, eE)
     def productArity = 2
-    def productElement(n: Int) = (eV, eE).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eV
+      case 1 => eE
+    }
   }
   case class IncidenceGraphIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[IncidenceGraphIso[V, E]] {
     def isEntityType = true

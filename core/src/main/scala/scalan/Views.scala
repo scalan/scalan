@@ -257,14 +257,13 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
   /**
     * The base type of all isos for user-defined types
     */
-  trait EntityIso[From, To] extends IsoUR[From, To] {
+  trait EntityIso[From, To] extends IsoUR[From, To] with Product {
     override def canEqual(other: Any) = getClass == other.getClass
     override def equals(other: Any) = other match {
       case i: ViewsDsl#EntityIso[_, _] =>
-        // For EntityIso the target entity (without parameters) is determined by `getClass`, and the type
-        // parameters are determined by `eFrom`. `eTo` can't be used because its calculation depends on `self` and
-        // we get a stack overflow
-        (this eq i) || (eFrom == i.eFrom && getClass == i.getClass /*eTo == i.eTo*/)
+        // Comparing productArity is unnecessary since it should be equal when the classes are equal and
+        // in case it isn't, we do little extra work
+        (this eq i) || (getClass == i.getClass && productIterator.sameElements(i.productIterator))
       case _ => false
     }
   }

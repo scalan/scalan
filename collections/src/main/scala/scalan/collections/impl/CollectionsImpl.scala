@@ -531,7 +531,10 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val eTo = new PairCollectionSOAElem[A, B](self)
     lazy val selfType = new PairCollectionSOAIsoElem[A, B](eA, eB)
     def productArity = 2
-    def productElement(n: Int) = (eA, eB).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+    }
   }
   case class PairCollectionSOAIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[PairCollectionSOAIso[A, B]] {
     def isEntityType = true
@@ -619,7 +622,10 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val eTo = new PairCollectionAOSElem[A, B](self)
     lazy val selfType = new PairCollectionAOSIsoElem[A, B](eA, eB)
     def productArity = 2
-    def productElement(n: Int) = (eA, eB).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+    }
   }
   case class PairCollectionAOSIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[PairCollectionAOSIso[A, B]] {
     def isEntityType = true
@@ -877,7 +883,11 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val eTo = new FuncCollectionElem[A, B, Env](self)
     lazy val selfType = new FuncCollectionIsoElem[A, B, Env](eA, eB, eEnv)
     def productArity = 3
-    def productElement(n: Int) = (eA, eB, eEnv).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+      case 2 => eEnv
+    }
   }
   case class FuncCollectionIsoElem[A, B, Env](eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]) extends Elem[FuncCollectionIso[A, B, Env]] {
     def isEntityType = true
@@ -967,7 +977,10 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     lazy val eTo = new StructItemCollectionElem[Val, Schema](self)
     lazy val selfType = new StructItemCollectionIsoElem[Val, Schema](eVal, eSchema)
     def productArity = 2
-    def productElement(n: Int) = (eVal, eSchema).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eVal
+      case 1 => eSchema
+    }
   }
   case class StructItemCollectionIsoElem[Val, Schema <: Struct](eVal: Elem[Val], eSchema: Elem[Schema]) extends Elem[StructItemCollectionIso[Val, Schema]] {
     def isEntityType = true

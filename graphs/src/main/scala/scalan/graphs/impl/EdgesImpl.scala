@@ -97,7 +97,10 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     lazy val eTo = new AdjEdgeElem[V, E](self)
     lazy val selfType = new AdjEdgeIsoElem[V, E](eV, eE)
     def productArity = 2
-    def productElement(n: Int) = (eV, eE).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eV
+      case 1 => eE
+    }
   }
   case class AdjEdgeIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[AdjEdgeIso[V, E]] {
     def isEntityType = true
@@ -185,7 +188,10 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     lazy val eTo = new IncEdgeElem[V, E](self)
     lazy val selfType = new IncEdgeIsoElem[V, E](eV, eE)
     def productArity = 2
-    def productElement(n: Int) = (eV, eE).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eV
+      case 1 => eE
+    }
   }
   case class IncEdgeIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[IncEdgeIso[V, E]] {
     def isEntityType = true

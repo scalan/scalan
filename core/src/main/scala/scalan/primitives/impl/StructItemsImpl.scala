@@ -99,7 +99,10 @@ trait StructItemsAbs extends StructItems {
     lazy val eTo = new StructItemBaseElem[Val, Schema](self)
     lazy val selfType = new StructItemBaseIsoElem[Val, Schema](eVal, eSchema)
     def productArity = 2
-    def productElement(n: Int) = (eVal, eSchema).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eVal
+      case 1 => eSchema
+    }
   }
   case class StructItemBaseIsoElem[Val, Schema <: Struct](eVal: Elem[Val], eSchema: Elem[Schema]) extends Elem[StructItemBaseIso[Val, Schema]] {
     def isEntityType = true

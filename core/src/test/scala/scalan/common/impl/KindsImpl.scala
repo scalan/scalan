@@ -95,7 +95,10 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     lazy val eTo = new ReturnElem[F, A](self)
     lazy val selfType = new ReturnIsoElem[F, A](eA, cF)
     def productArity = 2
-    def productElement(n: Int) = (eA, cF).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => cF
+    }
   }
   case class ReturnIsoElem[F[_], A](eA: Elem[A], cF: Cont[F]) extends Elem[ReturnIso[F, A]] {
     def isEntityType = true
@@ -181,7 +184,11 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     lazy val eTo = new BindElem[F, S, B](self)
     lazy val selfType = new BindIsoElem[F, S, B](eS, eA, cF)
     def productArity = 3
-    def productElement(n: Int) = (eS, eA, cF).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eS
+      case 1 => eA
+      case 2 => cF
+    }
   }
   case class BindIsoElem[F[_], S, B](eS: Elem[S], eA: Elem[B], cF: Cont[F]) extends Elem[BindIso[F, S, B]] {
     def isEntityType = true

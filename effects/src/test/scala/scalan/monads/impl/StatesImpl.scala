@@ -97,7 +97,10 @@ trait StatesAbs extends scalan.ScalanDsl with States {
     lazy val eTo = new StateBaseElem[S, A](self)
     lazy val selfType = new StateBaseIsoElem[S, A](eS, eA)
     def productArity = 2
-    def productElement(n: Int) = (eS, eA).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eS
+      case 1 => eA
+    }
   }
   case class StateBaseIsoElem[S, A](eS: Elem[S], eA: Elem[A]) extends Elem[StateBaseIso[S, A]] {
     def isEntityType = true

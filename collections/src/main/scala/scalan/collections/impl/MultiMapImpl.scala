@@ -96,7 +96,10 @@ trait MultiMapsAbs extends scalan.ScalanDsl with MultiMaps {
     lazy val eTo = new HashMMultiMapElem[K, V](self)
     lazy val selfType = new HashMMultiMapIsoElem[K, V](elemKey, elemValue)
     def productArity = 2
-    def productElement(n: Int) = (elemKey, elemValue).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => elemKey
+      case 1 => elemValue
+    }
   }
   case class HashMMultiMapIsoElem[K, V](elemKey: Elem[K], elemValue: Elem[V]) extends Elem[HashMMultiMapIso[K, V]] {
     def isEntityType = true

@@ -241,7 +241,12 @@ trait ViewsAbs extends Views {
     lazy val eTo = new PairIsoElem[A1, A2, B1, B2](self)
     lazy val selfType = new PairIsoIsoElem[A1, A2, B1, B2](eA1, eA2, eB1, eB2)
     def productArity = 4
-    def productElement(n: Int) = (eA1, eA2, eB1, eB2).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA1
+      case 1 => eA2
+      case 2 => eB1
+      case 3 => eB2
+    }
   }
   case class PairIsoIsoElem[A1, A2, B1, B2](eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) extends Elem[PairIsoIso[A1, A2, B1, B2]] {
     def isEntityType = true
@@ -332,7 +337,10 @@ trait ViewsAbs extends Views {
     lazy val eTo = new AbsorbFirstUnitIsoElem[A2, B2](self)
     lazy val selfType = new AbsorbFirstUnitIsoIsoElem[A2, B2](eA2, eB2)
     def productArity = 2
-    def productElement(n: Int) = (eA2, eB2).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA2
+      case 1 => eB2
+    }
   }
   case class AbsorbFirstUnitIsoIsoElem[A2, B2](eA2: Elem[A2], eB2: Elem[B2]) extends Elem[AbsorbFirstUnitIsoIso[A2, B2]] {
     def isEntityType = true
@@ -419,7 +427,10 @@ trait ViewsAbs extends Views {
     lazy val eTo = new AbsorbSecondUnitIsoElem[A1, B1](self)
     lazy val selfType = new AbsorbSecondUnitIsoIsoElem[A1, B1](eA1, eB1)
     def productArity = 2
-    def productElement(n: Int) = (eA1, eB1).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA1
+      case 1 => eB1
+    }
   }
   case class AbsorbSecondUnitIsoIsoElem[A1, B1](eA1: Elem[A1], eB1: Elem[B1]) extends Elem[AbsorbSecondUnitIsoIso[A1, B1]] {
     def isEntityType = true
@@ -508,7 +519,12 @@ trait ViewsAbs extends Views {
     lazy val eTo = new SumIsoElem[A1, A2, B1, B2](self)
     lazy val selfType = new SumIsoIsoElem[A1, A2, B1, B2](eA1, eA2, eB1, eB2)
     def productArity = 4
-    def productElement(n: Int) = (eA1, eA2, eB1, eB2).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA1
+      case 1 => eA2
+      case 2 => eB1
+      case 3 => eB2
+    }
   }
   case class SumIsoIsoElem[A1, A2, B1, B2](eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) extends Elem[SumIsoIso[A1, A2, B1, B2]] {
     def isEntityType = true
@@ -600,7 +616,11 @@ trait ViewsAbs extends Views {
     lazy val eTo = new ComposeIsoElem[A, B, C](self)
     lazy val selfType = new ComposeIsoIsoElem[A, B, C](eA, eB, eC)
     def productArity = 3
-    def productElement(n: Int) = (eA, eB, eC).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+      case 2 => eC
+    }
   }
   case class ComposeIsoIsoElem[A, B, C](eA: Elem[A], eB: Elem[B], eC: Elem[C]) extends Elem[ComposeIsoIso[A, B, C]] {
     def isEntityType = true
@@ -692,7 +712,12 @@ trait ViewsAbs extends Views {
     lazy val eTo = new FuncIsoElem[A, B, C, D](self)
     lazy val selfType = new FuncIsoIsoElem[A, B, C, D](eA, eB, eC, eD)
     def productArity = 4
-    def productElement(n: Int) = (eA, eB, eC, eD).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+      case 2 => eC
+      case 3 => eD
+    }
   }
   case class FuncIsoIsoElem[A, B, C, D](eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]) extends Elem[FuncIsoIso[A, B, C, D]] {
     def isEntityType = true
@@ -783,7 +808,10 @@ trait ViewsAbs extends Views {
     lazy val eTo = new ConverterIsoElem[A, B](self)
     lazy val selfType = new ConverterIsoIsoElem[A, B](eA, eB)
     def productArity = 2
-    def productElement(n: Int) = (eA, eB).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+    }
   }
   case class ConverterIsoIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[ConverterIsoIso[A, B]] {
     def isEntityType = true
@@ -871,7 +899,10 @@ trait ViewsAbs extends Views {
     lazy val eTo = new ArrayIsoElem[A, B](self)
     lazy val selfType = new ArrayIsoIsoElem[A, B](eA, eB)
     def productArity = 2
-    def productElement(n: Int) = (eA, eB).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+    }
   }
   case class ArrayIsoIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[ArrayIsoIso[A, B]] {
     def isEntityType = true
@@ -957,7 +988,10 @@ trait ViewsAbs extends Views {
     lazy val eTo = new ListIsoElem[A, B](self)
     lazy val selfType = new ListIsoIsoElem[A, B](eA, eB)
     def productArity = 2
-    def productElement(n: Int) = (eA, eB).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+    }
   }
   case class ListIsoIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[ListIsoIso[A, B]] {
     def isEntityType = true
@@ -1043,7 +1077,10 @@ trait ViewsAbs extends Views {
     lazy val eTo = new ArrayBufferIsoElem[A, B](self)
     lazy val selfType = new ArrayBufferIsoIsoElem[A, B](eA, eB)
     def productArity = 2
-    def productElement(n: Int) = (eA, eB).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+    }
   }
   case class ArrayBufferIsoIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[ArrayBufferIsoIso[A, B]] {
     def isEntityType = true
@@ -1129,7 +1166,10 @@ trait ViewsAbs extends Views {
     lazy val eTo = new ThunkIsoElem[A, B](self)
     lazy val selfType = new ThunkIsoIsoElem[A, B](eA, eB)
     def productArity = 2
-    def productElement(n: Int) = (eA, eB).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+    }
   }
   case class ThunkIsoIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[ThunkIsoIso[A, B]] {
     def isEntityType = true
@@ -1218,7 +1258,12 @@ trait ViewsAbs extends Views {
     lazy val eTo = new MapIsoElem[K1, V1, K2, V2](self)
     lazy val selfType = new MapIsoIsoElem[K1, V1, K2, V2](eK1, eV1, eK2, eV2)
     def productArity = 4
-    def productElement(n: Int) = (eK1, eV1, eK2, eV2).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eK1
+      case 1 => eV1
+      case 2 => eK2
+      case 3 => eV2
+    }
   }
   case class MapIsoIsoElem[K1, V1, K2, V2](eK1: Elem[K1], eV1: Elem[V1], eK2: Elem[K2], eV2: Elem[V2]) extends Elem[MapIsoIso[K1, V1, K2, V2]] {
     def isEntityType = true

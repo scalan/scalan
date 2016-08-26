@@ -263,7 +263,10 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     lazy val eTo = new MT2Elem[T, R](self)
     lazy val selfType = new MT2IsoElem[T, R](eT, eR)
     def productArity = 2
-    def productElement(n: Int) = (eT, eR).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eT
+      case 1 => eR
+    }
   }
   case class MT2IsoElem[T, R](eT: Elem[T], eR: Elem[R]) extends Elem[MT2Iso[T, R]] {
     def isEntityType = true

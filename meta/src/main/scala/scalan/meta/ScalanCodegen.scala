@@ -603,13 +603,15 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
       // note: ${className}Iso.eTo doesn't call cachedElem because
       // they are already cached via Isos + lazy val and this would lead to stack overflow
       val isoProductArity = c.implicitArgs.length
-      // TODO improve productElement to match on n
       val isoProductElementBody = isoProductArity match {
         case 0 => "???"
         case 1 => c.implicitArgs(0).name
-        case _ => s"${implicitArgsUse}.productElement(n)"
+        case _ =>
+          val cases = c.implicitArgs.zipWithIndex.map { case (arg, i) =>
+            s"      case $i => ${arg.name}"
+          }.mkString("\n")
+          s"n match {\n$cases\n    }"
       }
-      val parentIsoType = s"EntityIso[$dataTpe, ${c.typeUse}]"
       s"""
          |$defaultImpl
          |  // elem for concrete class
@@ -632,7 +634,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |
          |  // 3) Iso for concrete class
          |  class ${className}Iso${tpeArgsDecl}${implicitArgsDecl}
-         |    extends $parentIsoType with Def[${className}Iso$tpeArgsUse] {
+         |    extends EntityIso[$dataTpe, ${c.typeUse}] with Def[${className}Iso$tpeArgsUse] {
          |    override def from(p: Rep[${c.typeUse}]) =
          |      ${fields.map(fields => "p." + fields).opt(s => if (s.toList.length > 1) s"(${s.rep()})" else s.rep(), "()")}
          |    override def to(p: Rep[${dataType(fieldTypes)}]) = {
@@ -649,7 +651,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    def isEntityType = true
          |    def getDefaultRep = reifyObject(new ${className}Iso${tpeArgsUse}()$implicitArgsUse)
          |    lazy val tag = {
-         |
          |${implicitTagsFromElems(c)}
          |      weakTypeTag[${className}Iso$tpeArgsUse]
          |    }

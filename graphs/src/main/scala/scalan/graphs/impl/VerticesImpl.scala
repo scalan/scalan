@@ -96,7 +96,10 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
     lazy val eTo = new SVertexElem[V, E](self)
     lazy val selfType = new SVertexIsoElem[V, E](eV, eE)
     def productArity = 2
-    def productElement(n: Int) = (eV, eE).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eV
+      case 1 => eE
+    }
   }
   case class SVertexIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[SVertexIso[V, E]] {
     def isEntityType = true

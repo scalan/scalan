@@ -184,7 +184,10 @@ trait ConvertersAbs extends Converters {
     lazy val eTo = new BaseConverterElem[T, R](self)
     lazy val selfType = new BaseConverterIsoElem[T, R](eT, eR)
     def productArity = 2
-    def productElement(n: Int) = (eT, eR).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eT
+      case 1 => eR
+    }
   }
   case class BaseConverterIsoElem[T, R](eT: Elem[T], eR: Elem[R]) extends Elem[BaseConverterIso[T, R]] {
     def isEntityType = true
@@ -273,7 +276,12 @@ trait ConvertersAbs extends Converters {
     lazy val eTo = new PairConverterElem[A1, A2, B1, B2](self)
     lazy val selfType = new PairConverterIsoElem[A1, A2, B1, B2](eA1, eA2, eB1, eB2)
     def productArity = 4
-    def productElement(n: Int) = (eA1, eA2, eB1, eB2).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA1
+      case 1 => eA2
+      case 2 => eB1
+      case 3 => eB2
+    }
   }
   case class PairConverterIsoElem[A1, A2, B1, B2](eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) extends Elem[PairConverterIso[A1, A2, B1, B2]] {
     def isEntityType = true
@@ -366,7 +374,12 @@ trait ConvertersAbs extends Converters {
     lazy val eTo = new SumConverterElem[A1, A2, B1, B2](self)
     lazy val selfType = new SumConverterIsoElem[A1, A2, B1, B2](eA1, eA2, eB1, eB2)
     def productArity = 4
-    def productElement(n: Int) = (eA1, eA2, eB1, eB2).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA1
+      case 1 => eA2
+      case 2 => eB1
+      case 3 => eB2
+    }
   }
   case class SumConverterIsoElem[A1, A2, B1, B2](eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) extends Elem[SumConverterIso[A1, A2, B1, B2]] {
     def isEntityType = true
@@ -458,7 +471,11 @@ trait ConvertersAbs extends Converters {
     lazy val eTo = new ComposeConverterElem[A, B, C](self)
     lazy val selfType = new ComposeConverterIsoElem[A, B, C](eA, eB, eC)
     def productArity = 3
-    def productElement(n: Int) = (eA, eB, eC).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+      case 2 => eC
+    }
   }
   case class ComposeConverterIsoElem[A, B, C](eA: Elem[A], eB: Elem[B], eC: Elem[C]) extends Elem[ComposeConverterIso[A, B, C]] {
     def isEntityType = true
@@ -548,7 +565,11 @@ trait ConvertersAbs extends Converters {
     lazy val eTo = new FunctorConverterElem[A, B, F](self)
     lazy val selfType = new FunctorConverterIsoElem[A, B, F](eA, eB, F)
     def productArity = 3
-    def productElement(n: Int) = (eA, eB, F).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eB
+      case 2 => F
+    }
   }
   case class FunctorConverterIsoElem[A, B, F[_]](eA: Elem[A], eB: Elem[B], F: Functor[F]) extends Elem[FunctorConverterIso[A, B, F]] {
     def isEntityType = true
@@ -633,7 +654,11 @@ trait ConvertersAbs extends Converters {
     lazy val eTo = new NaturalConverterElem[A, F, G](self)
     lazy val selfType = new NaturalConverterIsoElem[A, F, G](eA, cF, cG)
     def productArity = 3
-    def productElement(n: Int) = (eA, cF, cG).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => cF
+      case 2 => cG
+    }
   }
   case class NaturalConverterIsoElem[A, F[_], G[_]](eA: Elem[A], cF: Cont[F], cG: Cont[G]) extends Elem[NaturalConverterIso[A, F, G]] {
     def isEntityType = true

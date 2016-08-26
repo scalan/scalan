@@ -96,7 +96,10 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     lazy val eTo = new DoneElem[F, A](self)
     lazy val selfType = new DoneIsoElem[F, A](eA, cF)
     def productArity = 2
-    def productElement(n: Int) = (eA, cF).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => cF
+    }
   }
   case class DoneIsoElem[F[_], A](eA: Elem[A], cF: Cont[F]) extends Elem[DoneIso[F, A]] {
     def isEntityType = true
@@ -181,7 +184,10 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     lazy val eTo = new MoreElem[F, A](self)
     lazy val selfType = new MoreIsoElem[F, A](eA, cF)
     def productArity = 2
-    def productElement(n: Int) = (eA, cF).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => cF
+    }
   }
   case class MoreIsoElem[F[_], A](eA: Elem[A], cF: Cont[F]) extends Elem[MoreIso[F, A]] {
     def isEntityType = true
@@ -267,7 +273,11 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     lazy val eTo = new FlatMapElem[F, S, B](self)
     lazy val selfType = new FlatMapIsoElem[F, S, B](eS, eA, cF)
     def productArity = 3
-    def productElement(n: Int) = (eS, eA, cF).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eS
+      case 1 => eA
+      case 2 => cF
+    }
   }
   case class FlatMapIsoElem[F[_], S, B](eS: Elem[S], eA: Elem[B], cF: Cont[F]) extends Elem[FlatMapIso[F, S, B]] {
     def isEntityType = true

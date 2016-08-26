@@ -97,7 +97,10 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
     lazy val eTo = new ReaderBaseElem[Env, A](self)
     lazy val selfType = new ReaderBaseIsoElem[Env, A](eEnv, eA)
     def productArity = 2
-    def productElement(n: Int) = (eEnv, eA).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eEnv
+      case 1 => eA
+    }
   }
   case class ReaderBaseIsoElem[Env, A](eEnv: Elem[Env], eA: Elem[A]) extends Elem[ReaderBaseIso[Env, A]] {
     def isEntityType = true

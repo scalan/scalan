@@ -98,7 +98,11 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     lazy val eTo = new AwaitElem[F, A, O](self)
     lazy val selfType = new AwaitIsoElem[F, A, O](eA, eO, cF)
     def productArity = 3
-    def productElement(n: Int) = (eA, eO, cF).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eA
+      case 1 => eO
+      case 2 => cF
+    }
   }
   case class AwaitIsoElem[F[_], A, O](eA: Elem[A], eO: Elem[O], cF: Cont[F]) extends Elem[AwaitIso[F, A, O]] {
     def isEntityType = true
@@ -186,7 +190,10 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     lazy val eTo = new EmitElem[F, O](self)
     lazy val selfType = new EmitIsoElem[F, O](eO, cF)
     def productArity = 2
-    def productElement(n: Int) = (eO, cF).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eO
+      case 1 => cF
+    }
   }
   case class EmitIsoElem[F[_], O](eO: Elem[O], cF: Cont[F]) extends Elem[EmitIso[F, O]] {
     def isEntityType = true
@@ -273,7 +280,10 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     lazy val eTo = new HaltElem[F, O](self)
     lazy val selfType = new HaltIsoElem[F, O](eO, cF)
     def productArity = 2
-    def productElement(n: Int) = (eO, cF).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eO
+      case 1 => cF
+    }
   }
   case class HaltIsoElem[F[_], O](eO: Elem[O], cF: Cont[F]) extends Elem[HaltIso[F, O]] {
     def isEntityType = true

@@ -99,7 +99,10 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
     lazy val eTo = new StateGetElem[S, A](self)
     lazy val selfType = new StateGetIsoElem[S, A](eS, eA)
     def productArity = 2
-    def productElement(n: Int) = (eS, eA).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eS
+      case 1 => eA
+    }
   }
   case class StateGetIsoElem[S, A](eS: Elem[S], eA: Elem[A]) extends Elem[StateGetIso[S, A]] {
     def isEntityType = true
@@ -186,7 +189,10 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
     lazy val eTo = new StatePutElem[S, A](self)
     lazy val selfType = new StatePutIsoElem[S, A](eS, eA)
     def productArity = 2
-    def productElement(n: Int) = (eS, eA).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => eS
+      case 1 => eA
+    }
   }
   case class StatePutIsoElem[S, A](eS: Elem[S], eA: Elem[A]) extends Elem[StatePutIso[S, A]] {
     def isEntityType = true

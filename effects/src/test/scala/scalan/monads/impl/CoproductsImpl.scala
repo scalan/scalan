@@ -96,7 +96,11 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
     lazy val eTo = new CoproductImplElem[F, G, A](self)
     lazy val selfType = new CoproductImplIsoElem[F, G, A](cF, cG, eA)
     def productArity = 3
-    def productElement(n: Int) = (cF, cG, eA).productElement(n)
+    def productElement(n: Int) = n match {
+      case 0 => cF
+      case 1 => cG
+      case 2 => eA
+    }
   }
   case class CoproductImplIsoElem[F[_], G[_], A](cF: Cont[F], cG: Cont[G], eA: Elem[A]) extends Elem[CoproductImplIso[F, G, A]] {
     def isEntityType = true
