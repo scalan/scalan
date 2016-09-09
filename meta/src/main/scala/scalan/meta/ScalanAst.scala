@@ -32,9 +32,9 @@ object ScalanAst {
   }
 
   val STpePrimitives = Map(
-    "Any" -> STpePrimitive("Any", ""),
-    "AnyRef" -> STpePrimitive("AnyRef", "null"),
-    "Nothing" -> STpePrimitive("Nothing", ""),
+    "Any" -> STpePrimitive("Any", "AnyElement.defaultRepValue"),
+    "AnyRef" -> STpePrimitive("AnyRef", "AnyRefElement.defaultRepValue"),
+    "Nothing" -> STpePrimitive("Nothing", "???"),
     "Unit" -> STpePrimitive("Unit", "()"),
     "Short" -> STpePrimitive("Short", "0"),
     "Int" -> STpePrimitive("Int", "0"),
