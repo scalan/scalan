@@ -260,7 +260,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       f match {
         case Def(lam: Lambda[A, B] @unchecked) if lam.mayInline => // unfold initial non-recursive function
           try {
-            unfoldLambda(lam, x)
+            mirrorApply(lam, x)
           } catch {
             case e: StackOverflowError =>
               if (f.isRecursive)
@@ -276,16 +276,9 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
-  def unfoldLambda[A,B](lam: Lambda[A,B], x: Exp[A]): Exp[B] = {
-    lam.f match {
-      case Some(g) => g(x) // unfold initial non-recursive function
-      case None => mirrorApply(lam, x)  // f is mirrored, unfold it by mirroring
-    }
-  }
-
   def unfoldLambda[A,B](f: Exp[A=>B], x: Exp[A]): Exp[B] = {
     val lam = f.getLambda
-    unfoldLambda(lam, x)
+    mirrorApply(lam, x)
   }
 
   def mirrorApply[A,B](lam: Lambda[A, B], s: Exp[A]): Exp[B] = {
