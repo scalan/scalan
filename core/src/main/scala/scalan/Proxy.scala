@@ -817,6 +817,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                     mkMethodCall(neverInvoke = true)
                       .setMetadata(externalClassNameMetaKey)(className)
                       .setMetadata(externalMethodNameMetaKey)(methodName)
+                  case _: DelayInvokeException =>
+                    mkMethodCall(neverInvoke = false)
                   case cause =>
                     throwInvocationException("Method invocation", cause, receiver, m, args)
                 }
