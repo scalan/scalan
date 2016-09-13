@@ -91,7 +91,7 @@ class LuaCodegen[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends BaseC
       tableLit(fields.map { case (key, value) => s"""["$key"] = $value""" })
     case FieldApply(struct, key) => src"""$struct["$key"]"""
     case SymsArray(syms) =>
-      tableLit(syms.zipWithIndex.map { case (s, i) => src"""[${(i + 1).toString}] = $s""" })
+      tableLit(syms.map(translate))
     case StringCharAt(str, index) =>
       src"$str[$index + 1]"
     case StringSubstring(str, start, end) =>
