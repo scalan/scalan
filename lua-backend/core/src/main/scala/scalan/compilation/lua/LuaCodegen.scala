@@ -100,12 +100,15 @@ class LuaCodegen[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends BaseC
       src"string.sub($str, $start + 1, $end)"
     case MethodCall(receiver, method, args, _) =>
       // TODO "static" methods
-      val args1 = args.collect {
-        case exp: Exp[_] => exp
-      }
+      val args1 = args.flatMap(translateMethodArg)
       src"$receiver:${method.getName}($args1)"
     case Semicolon(_,b) => src"$b"
     case _ => super.rhs(d)
+  }
+
+  def translateMethodArg(arg: AnyRef): Option[String] = arg match {
+    case _: TypeDesc | _: Numeric[_] | _: Ordering[_] => None
+    case _ => Some(translate(arg))
   }
 
   override def literal(value: Any): String = value match {
