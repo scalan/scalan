@@ -245,8 +245,11 @@ trait Slicing extends ScalanExp {
     case be: BaseElem[a] =>
       EmptyBaseMarking(be)
     case te: ThunkElem[a] =>
-      implicit val eA = te.eItem
+      val eA = te.eItem
       ThunkMarking(EmptyMarking(eA)).asMark[T]
+    case ae: ArrayElem[a] =>
+      val eA = ae.eItem
+      ArrayMarking(KeyPath.None, EmptyMarking(eA)).asMark[T]
     case _ =>
       !!!(s"Cannot create empty marking for element ${eT}")
   }
