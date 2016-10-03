@@ -196,6 +196,8 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
         s"scala.Function.untupled(${a.name})"
       else if (a.isArgList)
         s"${a.name}: _*"
+      else if (a.isTypeDesc)
+        s"${a.name}.classTag"
       else
         a.name
     }
