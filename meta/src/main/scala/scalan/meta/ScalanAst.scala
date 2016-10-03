@@ -224,6 +224,18 @@ object ScalanAst {
       }
       else name + bound.opt(b => s" <: ${b.name}")
     def toTraitCall: STraitCall = STraitCall(name, tparams.map(_.toTraitCall))
+    def getArgBounds(args: List[SMethodArgs]): List[STraitCall] = {
+      args.lastOption match {
+        case Some(SMethodArgs(lastArgs)) =>
+          lastArgs.collect{
+            case SMethodArg(true,_,_,b @ STraitCall(_,List(STraitCall(tname,_))),_,_,_) if tname == name => b
+          }
+        case None => Nil
+      }
+    }
+    def hasElemBound(args: List[SMethodArgs]) = getArgBounds(args) exists ( _.name == "Elem" )
+    def hasContBound(args: List[SMethodArgs]) = getArgBounds(args) exists ( _.name == "Cont" )
+    def hasWeakTypeTagBound(args: List[SMethodArgs]) = getArgBounds(args) exists ( _.name == "WeakTypeTag" )
   }
   type STpeArgs = List[STpeArg]
 
