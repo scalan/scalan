@@ -10,7 +10,7 @@ trait ScalanAstExtensions {
     def argNames = as.args.map(a => a.name)
     def argNamesAndTypes(config: CodegenConfig) = {
       as.args.map { arg =>
-        if (config.isAlreadyRep || arg.isElemOrCont)
+        if (config.isAlreadyRep || arg.isTypeDesc)
           s"${arg.name}: ${arg.tpe}"
         else
           s"${arg.name}: Rep[${arg.tpe}]"
