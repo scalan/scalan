@@ -463,35 +463,40 @@ trait ScalanParsers {
       Some(parseExpr(tree))
   }
 
+  def tree2Type(tree: Tree): Option[STpeExpr] = tree.tpe match {
+    case null => None
+    case tpe => Some(parseType(tpe))
+  }
+
   def parseExpr(tree: Tree): SExpr = tree match {
-    case EmptyTree => SEmpty(Some(parseType(tree.tpe)))
-    case Literal(Constant(c)) => SConst(c, Some(parseType(tree.tpe)))
-    case Ident(TermName(name)) => SIdent(name, Some(parseType(tree.tpe)))
-    case q"$left = $right" => SAssign(parseExpr(left), parseExpr(right), Some(parseType(tree.tpe)))
-    case q"$name.super[$qual].$field" => SSuper(name, qual, field, Some(parseType(tree.tpe)))
-    case q"$expr.$tname" => SSelect(parseExpr(expr), tname, Some(parseType(tree.tpe)))
+    case EmptyTree => SEmpty(tree2Type(tree))
+    case Literal(Constant(c)) => SConst(c, tree2Type(tree))
+    case Ident(TermName(name)) => SIdent(name, tree2Type(tree))
+    case q"$left = $right" => SAssign(parseExpr(left), parseExpr(right), tree2Type(tree))
+    case q"$name.super[$qual].$field" => SSuper(name, qual, field, tree2Type(tree))
+    case q"$expr.$tname" => SSelect(parseExpr(expr), tname, tree2Type(tree))
     case Apply(Select(New(name), termNames.CONSTRUCTOR), args) =>
-      SContr(name.toString(), args.map(parseExpr), Some(parseType(tree.tpe)))
+      SContr(name.toString(), args.map(parseExpr), tree2Type(tree))
     case Apply(Select(Ident(TermName("scala")), TermName(tuple)), args) if tuple.startsWith("Tuple") =>
-      STuple(args.map(parseExpr), Some(parseType(tree.tpe)))
-    case Block(init, last) => SBlock(init.map(parseExpr), parseExpr(last), Some(parseType(tree.tpe)))
+      STuple(args.map(parseExpr), tree2Type(tree))
+    case Block(init, last) => SBlock(init.map(parseExpr), parseExpr(last), tree2Type(tree))
     case q"$mods val $tname: $tpt = $expr" =>
       SValDef(tname, optTpeExpr(tpt), mods.isLazy, mods.isImplicit, parseExpr(expr))
     case q"if ($cond) $th else $el" =>
-      SIf(parseExpr(cond), parseExpr(th), parseExpr(el), Some(parseType(tree.tpe)))
-    case q"$expr: $tpt" => SAscr(parseExpr(expr), tpeExpr(tpt), Some(parseType(tree.tpe)))
+      SIf(parseExpr(cond), parseExpr(th), parseExpr(el), tree2Type(tree))
+    case q"$expr: $tpt" => SAscr(parseExpr(expr), tpeExpr(tpt), tree2Type(tree))
     case q"(..$params) => $expr" =>
       SFunc(params.map(param => parseExpr(param).asInstanceOf[SValDef]), parseExpr(expr), Some(parseType(tree.tpe)))
-    case q"$tpname.this" => SThis(tpname, Some(parseType(tree.tpe)))
-    case q"$expr: @$annot" => SAnnotated(parseExpr(expr), annot.toString, Some(parseType(tree.tpe)))
+    case q"$tpname.this" => SThis(tpname, tree2Type(tree))
+    case q"$expr: @$annot" => SAnnotated(parseExpr(expr), annot.toString, tree2Type(tree))
     case TypeApply(fun: Tree, args: List[Tree]) =>
-      STypeApply(parseExpr(fun), args.map(tpeExpr), Some(parseType(tree.tpe)))
+      STypeApply(parseExpr(fun), args.map(tpeExpr), tree2Type(tree))
     case q"$expr match { case ..$cases } " => parseMatch(expr, cases)
     case q"{ case ..$cases }" => parseMatch(EmptyTree, cases)
     case Apply(TypeApply(fun, targs), args) =>
-      SApply(parseExpr(fun), targs.map(tpeExpr), List(args.map(parseExpr)), Some(parseType(tree.tpe)))
+      SApply(parseExpr(fun), targs.map(tpeExpr), List(args.map(parseExpr)), tree2Type(tree))
     case Apply(fun, args) =>
-      SApply(parseExpr(fun), Nil, List(args.map(parseExpr)), Some(parseType(tree.tpe)))
+      SApply(parseExpr(fun), Nil, List(args.map(parseExpr)), tree2Type(tree))
     case bi => optBodyItem(bi, None) match {
       case Some(item) => item
       case None => throw new NotImplementedError(s"parseExpr: Error parsing of ${showRaw(bi)}")
