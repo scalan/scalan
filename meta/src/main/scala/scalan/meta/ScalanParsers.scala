@@ -463,33 +463,35 @@ trait ScalanParsers {
       Some(parseExpr(tree))
   }
 
-  var __counter = 0
   def parseExpr(tree: Tree): SExpr = tree match {
-    case EmptyTree => SEmpty()
-    case Literal(Constant(c)) => SConst(c)
-    case Ident(TermName(name)) => SIdent(name)
-    case q"$left = $right" => SAssign(parseExpr(left), parseExpr(right))
-    case q"$name.super[$qual].$field" => SSuper(name, qual, field)
-    case q"$expr.$tname" => SSelect(parseExpr(expr), tname)
+    case EmptyTree => SEmpty(Some(parseType(tree.tpe)))
+    case Literal(Constant(c)) => SConst(c, Some(parseType(tree.tpe)))
+    case Ident(TermName(name)) => SIdent(name, Some(parseType(tree.tpe)))
+    case q"$left = $right" => SAssign(parseExpr(left), parseExpr(right), Some(parseType(tree.tpe)))
+    case q"$name.super[$qual].$field" => SSuper(name, qual, field, Some(parseType(tree.tpe)))
+    case q"$expr.$tname" => SSelect(parseExpr(expr), tname, Some(parseType(tree.tpe)))
     case Apply(Select(New(name), termNames.CONSTRUCTOR), args) =>
-      SContr(name.toString(), args.map(parseExpr))
+      SContr(name.toString(), args.map(parseExpr), Some(parseType(tree.tpe)))
     case Apply(Select(Ident(TermName("scala")), TermName(tuple)), args) if tuple.startsWith("Tuple") =>
-      STuple(args.map(parseExpr))
-    case Block(init, last) => SBlock(init.map(parseExpr), parseExpr(last))
+      STuple(args.map(parseExpr), Some(parseType(tree.tpe)))
+    case Block(init, last) => SBlock(init.map(parseExpr), parseExpr(last), Some(parseType(tree.tpe)))
     case q"$mods val $tname: $tpt = $expr" =>
       SValDef(tname, optTpeExpr(tpt), mods.isLazy, mods.isImplicit, parseExpr(expr))
-    case q"if ($cond) $th else $el" => SIf(parseExpr(cond), parseExpr(th), parseExpr(el))
-    case q"$expr: $tpt" => SAscr(parseExpr(expr), tpeExpr(tpt))
-    case q"(..$params) => $expr" => SFunc(params.map(param => parseExpr(param).asInstanceOf[SValDef]), parseExpr(expr))
-    case q"$tpname.this" => SThis(tpname)
-    case q"$expr: @$annot" => SAnnotated(parseExpr(expr), annot.toString)
-    case TypeApply(fun: Tree, args: List[Tree]) => STypeApply(parseExpr(fun), args.map(tpeExpr))
+    case q"if ($cond) $th else $el" =>
+      SIf(parseExpr(cond), parseExpr(th), parseExpr(el), Some(parseType(tree.tpe)))
+    case q"$expr: $tpt" => SAscr(parseExpr(expr), tpeExpr(tpt), Some(parseType(tree.tpe)))
+    case q"(..$params) => $expr" =>
+      SFunc(params.map(param => parseExpr(param).asInstanceOf[SValDef]), parseExpr(expr), Some(parseType(tree.tpe)))
+    case q"$tpname.this" => SThis(tpname, Some(parseType(tree.tpe)))
+    case q"$expr: @$annot" => SAnnotated(parseExpr(expr), annot.toString, Some(parseType(tree.tpe)))
+    case TypeApply(fun: Tree, args: List[Tree]) =>
+      STypeApply(parseExpr(fun), args.map(tpeExpr), Some(parseType(tree.tpe)))
     case q"$expr match { case ..$cases } " => parseMatch(expr, cases)
     case q"{ case ..$cases }" => parseMatch(EmptyTree, cases)
     case Apply(TypeApply(fun, targs), args) =>
-      SApply(parseExpr(fun), targs.map(tpeExpr), List(args.map(parseExpr)))
+      SApply(parseExpr(fun), targs.map(tpeExpr), List(args.map(parseExpr)), Some(parseType(tree.tpe)))
     case Apply(fun, args) =>
-      SApply(parseExpr(fun), Nil, List(args.map(parseExpr)))
+      SApply(parseExpr(fun), Nil, List(args.map(parseExpr)), Some(parseType(tree.tpe)))
     case bi => optBodyItem(bi, None) match {
       case Some(item) => item
       case None => throw new NotImplementedError(s"parseExpr: Error parsing of ${showRaw(bi)}")
@@ -527,13 +529,27 @@ trait ScalanParsers {
   }
 
   def parseType(tpe: Type): STpeExpr = tpe match {
+    case NoType | NoPrefix => STpeEmpty()
+    case const: ConstantType => STpeConst(const.value.value)
+    case thisType: ThisType => STpeThis(thisType.sym.nameString)
     case tref: TypeRef => parseTypeRef(tref)
+    case single: SingleType => STpeSingle(parseType(single.pre), single.sym.nameString)
     case TypeBounds(lo, hi) => STpeTypeBounds(parseType(lo), parseType(hi))
     case ExistentialType(quant, under) =>
       val quantified = quant map(q => STpeDef(q.nameString, Nil, STpeEmpty()))
       val underlying = parseType(under)
       STpeExistential(underlying, quantified)
+    case m: MethodType => parseMethodType(Nil, m)
+    case PolyType(tparams, m: MethodType) => parseMethodType(tparams, m)
     case tpe => throw new NotImplementedError(showRaw(tpe, printTypes = Some(true)))
+  }
+
+  def parseMethodType(tparams: List[Symbol], m: MethodType): STpeMethod = {
+    val typeParams = tparams.map(_.nameString)
+    val params = m.params.map(param => parseType(param.tpe))
+    val res = parseType(m.resultType)
+
+    STpeMethod(typeParams, params, res)
   }
 
   def parseTypeRef(tref: TypeRef): STpeExpr = {
