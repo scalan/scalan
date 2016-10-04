@@ -126,6 +126,10 @@ object ScalanAst {
   }
   case class STpeExistential(tpt: STpeExpr, items: List[SBodyItem]) extends STpeExpr {
     def name = "Existential"
+    override def toString = {
+      val body = items map(_.toString)
+      s"$tpt forSome {${body.mkString(";")}}"
+    }
   }
   case class STpeBind(tname: String, texpr: STpeExpr) extends STpeExpr {
     def name = "TypedBind"
@@ -238,7 +242,9 @@ object ScalanAst {
                       isLazy: Boolean,
                       isImplicit: Boolean,
                       expr: SExpr) extends SBodyItem
-  case class STpeDef(name: String, tpeArgs: List[STpeArg], rhs: STpeExpr) extends SBodyItem
+  case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem {
+    override def toString = s"type $name"
+  }
 
   case class STpeArg(
                       name: String,
