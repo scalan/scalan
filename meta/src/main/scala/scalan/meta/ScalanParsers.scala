@@ -77,6 +77,28 @@ trait ScalanParsers {
       case cd: ClassDef if cd.name.toString == name => cd
     }
 
+  def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr))
+
+  def wrapperImpl(entity: STraitDef, bt: STpeExpr): SClassDef = {
+    val entityName = entity.name
+    val entityImplName = entityName + "Impl"
+    val typeUseExprs = entity.tpeArgs.map(tpeUseExpr)
+    SClassDef(
+      name = entityImplName,
+      tpeArgs = entity.tpeArgs,
+      args = SClassArgs(List(SClassArg(false, false, true, "wrappedValue", STraitCall("Rep", List(bt)), None))),
+      implicitArgs = entity.implicitArgs,
+      ancestors = List(STraitCall(entity.name, typeUseExprs)),
+      body = List(),
+      selfType = None,
+      companion = None,
+      //            companion = defs.collectFirst {
+      //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
+      //            },
+      true, Nil
+    )
+  }
+
   def entityModule(fileTree: PackageDef) = {
     val packageName = fileTree.pid.toString
     val statements = fileTree.stats
@@ -113,29 +135,9 @@ trait ScalanParsers {
 
     val classes = entity.optBaseType match {
       case Some(bt) =>
-        val entityName = entity.name
-        val entityImplName = entityName + "Impl"
-        val wrappedValueArg = SClassArg(false, false, true, "wrappedValue", STraitCall("Rep", List(bt)), None)
-        val parent = STraitCall(entity.name, entity.tpeArgs.map(_.toTraitCall))
-        val defaultBTImpl = SClassDef(
-          name = entityImplName,
-          tpeArgs = entity.tpeArgs,
-          args = SClassArgs(List(wrappedValueArg)),
-          implicitArgs = entity.implicitArgs,
-          ancestors = List(parent),
-          body = List(
-
-          ),
-          selfType = None,
-          companion = None,
-          //            companion = defs.collectFirst {
-          //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
-          //            },
-          true, Nil
-
-        )
-        defaultBTImpl :: moduleTrait.getConcreteClasses
-      case None => moduleTrait.getConcreteClasses
+        wrapperImpl(entity, bt) :: moduleTrait.getConcreteClasses
+      case None =>
+        moduleTrait.getConcreteClasses
     }
     val methods = defs.collect { case md: SMethodDef => md }
 
