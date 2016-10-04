@@ -230,12 +230,15 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
        |""".stripMargin
   }
 
-  def externalConstructor(md: SMethodDef) = {
-    val allArgs = md.allArgs
-    s"""
-       |    ${md.declaration(config, false)} =
-       |      newObjEx[${e.typeUse}](${allArgs.rep(_.name)})
-       |""".stripMargin
+  def externalConstructor(method: SMethodDef) = {
+    def genConstr(md: SMethodDef) = {
+      val allArgs = md.allArgs
+      s"""
+         |    ${md.declaration(config, false)} =
+         |      newObjEx[${e.typeUse}](${allArgs.rep(_.name)})
+         |""".stripMargin
+    }
+    genConstr(method.copy(argSections = method.cleanedArgs))
   }
 
   def externalStdMethod(md: SMethodDef, isInstance: Boolean) = {
