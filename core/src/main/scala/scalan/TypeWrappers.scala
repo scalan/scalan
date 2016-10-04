@@ -52,8 +52,9 @@ trait TypeWrappers extends Base { self: Scalan =>
   }
 
   trait ExCompanion0[TBase]
-
   trait ExCompanion1[TBase[_]]
+  trait ExCompanion2[TBase[_,_]]
+  trait ExCompanion3[TBase[_,_,_]]
 
   final val ContainerLength = "ContainerLength"
   final val ContainerApply = "ContainerApply"
