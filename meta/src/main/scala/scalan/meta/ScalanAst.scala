@@ -565,14 +565,13 @@ object ScalanAst {
       else shortName == fullName
 
     def getEntity(name: String): STraitOrClassDef = {
-      entities.find(e => isEqualName(e.name, name)) match {
-        case Some(e) => e
-        case _ =>
-          concreteSClasses.find(e => isEqualName(e.name, name)) match {
-            case Some(e) => e
-            case _ =>
-              sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
-          }
+      def isEqualName(shortName: String, fullName: String): Boolean =
+        fullName == shortName || fullName == s"$packageName.$name.$shortName"
+      def findByName(classes: List[STraitOrClassDef]) =
+        classes.find(e => isEqualName(e.name, name))
+
+      findByName(entities).orElse(findByName(concreteSClasses)).getOrElse {
+        sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
       }
     }
 
