@@ -448,6 +448,11 @@ object ScalanAst {
       case Some(STraitCall(_, h :: _)) => Some(h)
       case _ => None
     }
+    def baseTypeName: String = optBaseType match {
+      case Some(STraitCall(name, _)) => name
+      case _ => td.name
+    }
+    def baseInstanceName: String = baseTypeName.stripSuffix(".type")
   }
 
   case class SClassDef(

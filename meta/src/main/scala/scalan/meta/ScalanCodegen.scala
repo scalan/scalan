@@ -29,7 +29,9 @@ class MetaCodegen extends ScalanAstExtensions {
     val implicitArgsUse = implicitArgs.opt(args => s"(${args.rep(_.name)})")
     val implicitArgsOrParens = if (implicitArgs.nonEmpty) implicitArgsUse else "()"
     val optBaseType = entity.optBaseType
-    val baseTypeName = optBaseType.map(_.name).getOrElse(name)
+//    val baseTypeName = optBaseType.map(_.name).getOrElse(name)
+    val baseTypeName = entity.baseTypeName
+    val baseInstanceName = entity.baseInstanceName
     val baseTypeDecl = baseTypeName + tpeArgsDecl
     val baseTypeUse = baseTypeName + tpeArgsUse
     val firstAncestorType = entity.ancestors.headOption
@@ -94,6 +96,10 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     case Nil => "unit"
     case f :: Nil => f
     case f :: fs => s"Pair($f, ${pairify(fs)})"
+  }
+
+  def getDefaultOfBT(tc: STpeExpr,t: TemplateData) = {
+    s"DefaultOf${t.baseInstanceName}" + tc.tpeSExprs.opt(args => s"[${args.rep()}]")
   }
 
   private val entity = module.entityOps
@@ -246,7 +252,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
     val methodNameAndArgs = md.name + md.tpeArgs.useString + methodArgsUse(md)
 
-    val obj = if (isInstance) "wrappedValue" else e.baseTypeName
+    val obj = if (isInstance) "wrappedValue" else e.baseInstanceName
 
     val methodBody = {
       val methodCall = s"$obj.$methodNameAndArgs"
