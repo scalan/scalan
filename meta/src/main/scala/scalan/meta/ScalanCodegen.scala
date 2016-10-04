@@ -316,9 +316,12 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     // note: currently can't cache them properly due to cyclical dependency between
     // baseType elem and wrapper elem
     val baseTypeElem = e.optBaseType.opt { bt =>
+      // hack to work around arrayElement being defined in Scalan
+      // and arrays being wrapped in scalanizer-demo
+      val overrideOpt = if (e.baseInstanceName == "Array") "override " else ""
       val defOrVal = if (e.tpeArgs.isEmpty) "lazy val" else "def"
       val declaration =
-        s"implicit $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[${e.baseTypeUse}]"
+        s"implicit $overrideOpt $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[${e.baseTypeUse}]"
       val wrapperElemType = if (e.isCont)
         "WrapperElem1[_, _, CBase, CW] forSome { type CBase[_]; type CW[_] }"
       else
