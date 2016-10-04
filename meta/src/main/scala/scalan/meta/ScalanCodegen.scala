@@ -1164,7 +1164,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     val topLevel = List(
       getFileHeader,
       getTraitAbs,
-      getTraitStd,
+      if (config.isStdEnabled) getTraitSeq else "",
       getTraitExp,
       emitModuleSerialization,
       "}", // closing brace for `package impl {`
