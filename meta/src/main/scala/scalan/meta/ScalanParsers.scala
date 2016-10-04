@@ -13,8 +13,9 @@ import java.util.regex.Pattern
 
 trait ScalanParsers {
 
-  type Compiler = Global
-  val compiler: Compiler
+  val global: Global
+  type Compiler = global.type
+  val compiler: Compiler = global
   import compiler._
 
   implicit def nameToString(name: Name): String = name.toString

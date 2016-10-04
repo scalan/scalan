@@ -11,7 +11,7 @@ trait ScalanParsersEx extends ScalanParsers {
   settings.embeddedDefaults(getClass.getClassLoader)
   settings.usejavacp.value = true
   val reporter = new StoreReporter
-  val compiler: Compiler = new Global(settings, reporter)
+  val global: Global = new Global(settings, reporter)
 
   // Credit due to Li Haoyi in Ammonite:
   // Initialize scalac to the parser phase immediately, so we can start
