@@ -261,11 +261,14 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
        """.stripMargin
   }
 
-  def externalStdConstructor(md: SMethodDef) = {
-    s"""
-       |    ${md.declaration(config, true)} =
-       |      ${e.name}Impl(new ${e.baseTypeUse}${methodArgsUse(md)})
-       |""".stripMargin
+  def externalStdConstructor(method: SMethodDef) = {
+    def genConstr(md: SMethodDef) = {
+      s"""
+         |    ${md.declaration(config, true)} =
+         |      ${e.name}Impl(new ${e.baseTypeUse}${methodArgsUse(md)})
+         |""".stripMargin
+    }
+    genConstr(method.copy(argSections = method.cleanedArgs))
   }
 
   def entityProxy(e: EntityTemplateData) = {
