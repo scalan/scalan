@@ -321,7 +321,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
       val overrideOpt = if (e.baseInstanceName == "Array") "override " else ""
       val defOrVal = if (e.tpeArgs.isEmpty) "lazy val" else "def"
       val declaration =
-        s"implicit $overrideOpt $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[${e.baseTypeUse}]"
+        s"implicit $overrideOpt$defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[${e.baseTypeUse}]"
       val wrapperElemType = if (e.isCont)
         "WrapperElem1[_, _, CBase, CW] forSome { type CBase[_]; type CW[_] }"
       else
