@@ -141,7 +141,9 @@ trait ScalanParsers {
       case None =>
         moduleTrait.getConcreteClasses
     }
-    val methods = defs.collect { case md: SMethodDef => md }
+    val methods = defs.collect {
+      case md: SMethodDef if !md.isInternalMethodOfCompanion(moduleTrait) => md
+    }
 
     val declaredStdImplementations = parseDeclaredImplementations(traits ++ classes, dslStdModuleOpt)
     val declaredExpImplementations = parseDeclaredImplementations(traits ++ classes, dslExpModuleOpt)
