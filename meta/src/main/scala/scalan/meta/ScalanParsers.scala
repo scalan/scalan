@@ -80,14 +80,15 @@ trait ScalanParsers {
 
   def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr))
 
-  def wrapperImpl(entity: STraitDef, bt: STpeExpr): SClassDef = {
+  def wrapperImpl(entity: STraitDef, bt: STpeExpr, doRep: Boolean): SClassDef = {
     val entityName = entity.name
     val entityImplName = entityName + "Impl"
     val typeUseExprs = entity.tpeArgs.map(tpeUseExpr)
+    val valueType = if (doRep) STraitCall("Rep", List(bt)) else bt
     SClassDef(
       name = entityImplName,
       tpeArgs = entity.tpeArgs,
-      args = SClassArgs(List(SClassArg(false, false, true, "wrappedValue", STraitCall("Rep", List(bt)), None))),
+      args = SClassArgs(List(SClassArg(false, false, true, "wrappedValue", valueType, None))),
       implicitArgs = entity.implicitArgs,
       ancestors = List(STraitCall(entity.name, typeUseExprs)),
       body = List(),
@@ -136,7 +137,7 @@ trait ScalanParsers {
 
     val classes = entity.optBaseType match {
       case Some(bt) =>
-        wrapperImpl(entity, bt) :: moduleTrait.getConcreteClasses
+        wrapperImpl(entity, bt, true) :: moduleTrait.getConcreteClasses
       case None =>
         moduleTrait.getConcreteClasses
     }
@@ -265,8 +266,12 @@ trait ScalanParsers {
       STraitCall(tpt.toString, args.map(tpeExpr))
     case tt: TypeTree =>
       val parsedType = parseType(tt.tpe)
-      if (parsedType.isInstanceOf[STraitCall]) parsedType.asInstanceOf[STraitCall]
-      else throw new IllegalArgumentException(parsedType.toString)
+      parsedType match {
+        case call: STraitCall => call
+        case STpePrimitive(name, _) => STraitCall(name, List())
+        case _ =>
+          throw new IllegalArgumentException(parsedType.toString)
+      }
     case tree => ???(tree)
   }
 

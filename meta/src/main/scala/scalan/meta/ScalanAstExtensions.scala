@@ -57,11 +57,17 @@ trait ScalanAstExtensions {
   }
 
   implicit class SMethodDefOps(md: SMethodDef) {
-    def explicitReturnType = md.tpeRes.getOrElse(throw new IllegalStateException(s"Explicit return type required for method $this"))
+    def explicitReturnType(config: CodegenConfig): String = {
+      def error = throw new IllegalStateException(s"Explicit return type required for method $md")
+      val tRes = md.tpeRes.getOrElse(error)
+      if (config.isAlreadyRep) tRes.toString
+      else s"Rep[$tRes]"
+    }
+
     def declaration(config: CodegenConfig, includeOverride: Boolean) = {
       val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
       val argss = md.argSections.rep(sec => s"(${sec.argNamesAndTypes(config).rep()})", "")
-      s"${includeOverride.opt("override ")}def ${md.name}$typesDecl$argss: $explicitReturnType"
+      s"${includeOverride.opt("override ")}def ${md.name}$typesDecl$argss: ${explicitReturnType(config)}"
     }
   }
 }
