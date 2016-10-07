@@ -1147,10 +1147,10 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
   }
 
   def getDslTraits = {
-    Seq(
-      (module.hasDsl, "", "Abs"),
-      (module.hasDslStd, "Std", "Std"),
-      (module.hasDslExp, "Exp", "Exp")).collect {
+    List(
+      List((module.hasDsl, "", "Abs")),
+      if (config.isStdEnabled) List((module.hasDslStd, "Std", "Std")) else Nil,
+      List((module.hasDslExp, "Exp", "Exp"))).flatten.collect {
       case (hasDslTrait, dslTraitSuffix, traitSuffix) if !hasDslTrait =>
         val DslName = s"${module.name}Dsl"
         val selfTypeStr = module.selfType match {
