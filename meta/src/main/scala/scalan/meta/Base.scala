@@ -14,7 +14,8 @@ case class CodegenConfig(
   extraImports: List[String] = List(
     "scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}",
     "scalan.meta.ScalanAst._"),
-  isAlreadyRep: Boolean = true
+  isAlreadyRep: Boolean = true,
+  isStdEnabled: Boolean = true
 )
 
 object Base {

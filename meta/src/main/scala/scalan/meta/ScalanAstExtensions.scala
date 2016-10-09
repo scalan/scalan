@@ -9,10 +9,12 @@ trait ScalanAstExtensions {
   implicit class SMethodOrClassArgsOps(as: SMethodOrClassArgs) {
     def argNames = as.args.map(a => a.name)
     def argNamesAndTypes(config: CodegenConfig) = {
-      if (config.isAlreadyRep)
-        as.args.map(a => s"${a.name}: ${a.tpe}")
-      else
-        as.args.map(a => s"${a.name}: Rep[${a.tpe}]")
+      as.args.map { arg =>
+        if (config.isAlreadyRep || arg.isTypeDesc)
+          s"${arg.name}: ${arg.tpe}"
+        else
+          s"${arg.name}: Rep[${arg.tpe}]"
+      }
     }
 
     def argUnrepTypes(module: SEntityModuleDef, config: CodegenConfig) = {
@@ -31,10 +33,23 @@ trait ScalanAstExtensions {
     def declString = decls.asTypeParams()
     def useString = names.asTypeParams()
 
-    def getBoundedTpeArgString(withTags: Boolean = false) =
-      args.asTypeParams { t =>
-        (if (t.isHighKind) s"${t.declaration}:Cont" else s"${t.name}:Elem") + withTags.opt(":WeakTypeTag")
+    def getBoundedTpeArgString(withTags: Boolean = false, methodArgs: List[SMethodArgs] = Nil) = {
+      def getElem(tpeArg: STpeArg) = {
+        if (tpeArg.hasElemBound(methodArgs)) s"${tpeArg.name}"
+        else s"${tpeArg.name}:Elem"
       }
+      def getCont(tpeArg: STpeArg) = {
+        if (tpeArg.hasContBound(methodArgs)) s"${tpeArg.declaration}"
+        else s"${tpeArg.declaration}:Cont"
+      }
+      def getWeakTypeTag(tpeArg: STpeArg) = {
+        if (tpeArg.hasWeakTypeTagBound(methodArgs)) ""
+        else withTags.opt(":WeakTypeTag")
+      }
+      args.asTypeParams { t =>
+          (if (t.isHighKind) getCont(t) else getElem(t)) + getWeakTypeTag(t)
+      }
+    }
   }
 
   implicit class STpeDefOps(td: STpeDef) {
@@ -42,11 +57,17 @@ trait ScalanAstExtensions {
   }
 
   implicit class SMethodDefOps(md: SMethodDef) {
-    def explicitReturnType = md.tpeRes.getOrElse(throw new IllegalStateException(s"Explicit return type required for method $this"))
+    def explicitReturnType(config: CodegenConfig): String = {
+      def error = throw new IllegalStateException(s"Explicit return type required for method $md")
+      val tRes = md.tpeRes.getOrElse(error)
+      if (config.isAlreadyRep) tRes.toString
+      else s"Rep[$tRes]"
+    }
+
     def declaration(config: CodegenConfig, includeOverride: Boolean) = {
-      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false)
+      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
       val argss = md.argSections.rep(sec => s"(${sec.argNamesAndTypes(config).rep()})", "")
-      s"${includeOverride.opt("override ")}def ${md.name}$typesDecl$argss: $explicitReturnType"
+      s"${includeOverride.opt("override ")}def ${md.name}$typesDecl$argss: ${explicitReturnType(config)}"
     }
   }
 }

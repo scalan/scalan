@@ -29,7 +29,9 @@ class MetaCodegen extends ScalanAstExtensions {
     val implicitArgsUse = implicitArgs.opt(args => s"(${args.rep(_.name)})")
     val implicitArgsOrParens = if (implicitArgs.nonEmpty) implicitArgsUse else "()"
     val optBaseType = entity.optBaseType
-    val baseTypeName = optBaseType.map(_.name).getOrElse(name)
+//    val baseTypeName = optBaseType.map(_.name).getOrElse(name)
+    val baseTypeName = entity.baseTypeName
+    val baseInstanceName = entity.baseInstanceName
     val baseTypeDecl = baseTypeName + tpeArgsDecl
     val baseTypeUse = baseTypeName + tpeArgsUse
     val firstAncestorType = entity.ancestors.headOption
@@ -94,6 +96,10 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     case Nil => "unit"
     case f :: Nil => f
     case f :: fs => s"Pair($f, ${pairify(fs)})"
+  }
+
+  def getDefaultOfBT(tc: STpeExpr,t: TemplateData) = {
+    s"DefaultOf${t.baseInstanceName}" + tc.tpeSExprs.opt(args => s"[${args.rep()}]")
   }
 
   private val entity = module.entityOps
@@ -182,12 +188,22 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
       case None => ms
     }
 
+  def methodArgSection(sec: SMethodArgs) = {
+    val implicitKeyWord = sec.args.headOption match {
+      case Some(arg) if arg.impFlag => "implicit "
+      case _ => ""
+    }
+    s"($implicitKeyWord${sec.argNamesAndTypes(config).rep()})"
+  }
+
   def methodArgsUse(md: SMethodDef) = md.argSections.rep(sec => {
     val inParens = sec.args.rep { a =>
       if (a.tpe.isTupledFunc)
         s"scala.Function.untupled(${a.name})"
       else if (a.isArgList)
         s"${a.name}: _*"
+      else if (a.isTypeDesc)
+        s"${a.name}.classTag"
       else
         a.name
     }
@@ -220,12 +236,15 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
        |""".stripMargin
   }
 
-  def externalConstructor(md: SMethodDef) = {
-    val allArgs = md.allArgs
-    s"""
-       |    ${md.declaration(config, false)} =
-       |      newObjEx[${e.typeUse}](${allArgs.rep(_.name)})
-       |""".stripMargin
+  def externalConstructor(method: SMethodDef) = {
+    def genConstr(md: SMethodDef) = {
+      val allArgs = md.allArgs
+      s"""
+         |    ${md.declaration(config, false)} =
+         |      newObjEx[${e.typeUse}](${allArgs.rep(_.name)})
+         |""".stripMargin
+    }
+    genConstr(method.copy(argSections = method.cleanedArgs))
   }
 
   def externalStdMethod(md: SMethodDef, isInstance: Boolean) = {
@@ -233,7 +252,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
     val methodNameAndArgs = md.name + md.tpeArgs.useString + methodArgsUse(md)
 
-    val obj = if (isInstance) "wrappedValue" else e.baseTypeName
+    val obj = if (isInstance) "wrappedValue" else e.baseInstanceName
 
     val methodBody = {
       val methodCall = s"$obj.$methodNameAndArgs"
@@ -251,11 +270,14 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
        """.stripMargin
   }
 
-  def externalStdConstructor(md: SMethodDef) = {
-    s"""
-       |    ${md.declaration(config, true)} =
-       |      ${e.name}Impl(new ${e.baseTypeUse}${methodArgsUse(md)})
-       |""".stripMargin
+  def externalStdConstructor(method: SMethodDef) = {
+    def genConstr(md: SMethodDef) = {
+      s"""
+         |    ${md.declaration(config, true)} =
+         |      ${e.name}Impl(new ${e.baseTypeUse}${methodArgsUse(md)})
+         |""".stripMargin
+    }
+    genConstr(method.copy(argSections = method.cleanedArgs))
   }
 
   def entityProxy(e: EntityTemplateData) = {
@@ -294,9 +316,12 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     // note: currently can't cache them properly due to cyclical dependency between
     // baseType elem and wrapper elem
     val baseTypeElem = e.optBaseType.opt { bt =>
+      // hack to work around arrayElement being defined in Scalan
+      // and arrays being wrapped in scalanizer-demo
+      val overrideOpt = if (e.baseInstanceName == "Array") "override " else ""
       val defOrVal = if (e.tpeArgs.isEmpty) "lazy val" else "def"
       val declaration =
-        s"implicit $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[${e.baseTypeUse}]"
+        s"implicit $overrideOpt$defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[${e.baseTypeUse}]"
       val wrapperElemType = if (e.isCont)
         "WrapperElem1[_, _, CBase, CW] forSome { type CBase[_]; type CW[_] }"
       else
@@ -335,7 +360,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
       }
 
       val entityElem = e.elemTypeUse()
-
       s"""
          |  implicit def cast${e.name}Element${e.tpeArgsDecl}(elem: Elem[${e.typeUse}]): $entityElem =
          |    elem.asInstanceOf[$entityElem]
@@ -1015,11 +1039,12 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
             val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.declaration).toSet
             val returnType = {
               val receiverType = s"Rep[${e.name + e.tpeArgs.asTypeParams(_.name)}]"
-              val argTypes =
-                if (config.isAlreadyRep)
-                  methodArgs.map(_.tpe.toString)
+              val argTypes = methodArgs.map { arg =>
+                if (config.isAlreadyRep || arg.isTypeDesc)
+                  arg.tpe.toString
                 else
-                  methodArgs.map(a => s"Rep[${a.tpe}]")
+                  "Rep[" + arg.tpe.toString + "]"
+              }
               val receiverAndArgTypes = ((if (isCompanion) Nil else List(receiverType)) ++ argTypes) match {
                 case Seq() => "Unit"
                 case Seq(single) => single
@@ -1106,7 +1131,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     }
 
     s"""${methodExtractorsString1(e, false)}
-       |
+      |
          |${e.companion.opt(methodExtractorsString1(_, true))}""".stripMargin
   }
 
@@ -1122,10 +1147,10 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
   }
 
   def getDslTraits = {
-    Seq(
-      (module.hasDsl, "", "Abs"),
-      (module.hasDslStd, "Std", "Std"),
-      (module.hasDslExp, "Exp", "Exp")).collect {
+    List(
+      List((module.hasDsl, "", "Abs")),
+      if (config.isStdEnabled) List((module.hasDslStd, "Std", "Std")) else Nil,
+      List((module.hasDslExp, "Exp", "Exp"))).flatten.collect {
       case (hasDslTrait, dslTraitSuffix, traitSuffix) if !hasDslTrait =>
         val DslName = s"${module.name}Dsl"
         val selfTypeStr = module.selfType match {
@@ -1148,7 +1173,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     val topLevel = List(
       getFileHeader,
       getTraitAbs,
-      getTraitStd,
+      if (config.isStdEnabled) getTraitStd else "",
       getTraitExp,
       emitModuleSerialization,
       "}", // closing brace for `package impl {`
