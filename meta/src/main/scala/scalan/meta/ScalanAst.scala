@@ -240,14 +240,6 @@ object ScalanAst {
       }.flatten
     }
 
-    def isInternalMethodOfCompanion(declaringDef: STraitOrClassDef): Boolean = {
-      val moduleVarName = name + "$module"
-      val hasClass = declaringDef.body.collectFirst({ case d: SClassDef if d.name == name => ()}).isDefined
-      val hasModule = declaringDef.body.collectFirst({ case d: SValDef if d.name == moduleVarName => ()}).isDefined
-      val hasMethod = declaringDef.body.collectFirst({ case d: SMethodDef if d.name == name => ()}).isDefined
-      hasClass && hasModule && hasMethod
-    }
-
     def cleanedArgs: List[SMethodArgs] = getOriginal match {
       case Some(method) =>
         def splitArgSections(sections: List[SMethodArgs]): (List[SMethodArgs], List[SMethodArgs]) = {
@@ -414,16 +406,8 @@ object ScalanAst {
       getInheritedMethodDefs(module).collect { case md if md.body.isDefined => md.name }.toSet
     }
 
-    def isInternalClassOfCompanion(outer: STraitOrClassDef): Boolean = {
-      val moduleVarName = name + "$module"
-      if (ancestors.nonEmpty) return false
-      val hasClass = outer.body.collectFirst({ case d: SClassDef if d.name == name => ()}).isDefined
-      val hasModule = outer.body.collectFirst({ case d: SValDef if d.name == moduleVarName => ()}).isDefined
-      val hasMethod = outer.body.collectFirst({ case d: SMethodDef if d.name == name => ()}).isDefined
-      hasClass && hasModule && hasMethod
-    }
     def getConcreteClasses = body.collect {
-      case c: SClassDef if !(c.hasAnnotation("InternalType") || c.isInternalClassOfCompanion(this))  => c
+      case c: SClassDef if !c.hasAnnotation("InternalType")  => c
     }
 
     def getDeclaredElems(module: SEntityModuleDef):  List[(String, STpeExpr)] = {

@@ -15,7 +15,7 @@ trait ScalanParsers {
 
   val global: Global
   type Compiler = global.type
-  val compiler: Compiler = global
+  lazy val compiler: Compiler = global
   import compiler._
 
   implicit def nameToString(name: Name): String = name.toString
@@ -101,6 +101,23 @@ trait ScalanParsers {
     )
   }
 
+  def isInternalMethodOfCompanion(md: SMethodDef, declaringDef: STraitOrClassDef): Boolean = {
+    val moduleVarName = md.name + global.nme.MODULE_VAR_SUFFIX.toString
+    val hasClass = declaringDef.body.collectFirst({ case d: SClassDef if d.name == md.name => ()}).isDefined
+    val hasModule = declaringDef.body.collectFirst({ case d: SValDef if d.name == moduleVarName => ()}).isDefined
+    val hasMethod = declaringDef.body.collectFirst({ case d: SMethodDef if d.name == md.name => ()}).isDefined
+    hasClass && hasModule && hasMethod
+  }
+
+  def isInternalClassOfCompanion(cd: STraitOrClassDef, outer: STraitOrClassDef): Boolean = {
+    val moduleVarName = cd.name + global.nme.MODULE_VAR_SUFFIX.toString
+    if (cd.ancestors.nonEmpty) return false
+    val hasClass = outer.body.collectFirst({ case d: SClassDef if d.name == cd.name => ()}).isDefined
+    val hasModule = outer.body.collectFirst({ case d: SValDef if d.name == moduleVarName => ()}).isDefined
+    val hasMethod = outer.body.collectFirst({ case d: SMethodDef if d.name == cd.name => ()}).isDefined
+    hasClass && hasModule && hasMethod
+  }
+
   def entityModule(fileTree: PackageDef) = {
     val packageName = fileTree.pid.toString
     val statements = fileTree.stats
@@ -135,14 +152,15 @@ trait ScalanParsers {
       throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
     }
 
+    val concreteClasses = moduleTrait.getConcreteClasses.filterNot(isInternalClassOfCompanion(_, moduleTrait))
     val classes = entity.optBaseType match {
       case Some(bt) =>
-        wrapperImpl(entity, bt, true) :: moduleTrait.getConcreteClasses
+        wrapperImpl(entity, bt, true) :: concreteClasses
       case None =>
-        moduleTrait.getConcreteClasses
+        concreteClasses
     }
     val methods = defs.collect {
-      case md: SMethodDef if !md.isInternalMethodOfCompanion(moduleTrait) => md
+      case md: SMethodDef if !isInternalMethodOfCompanion(md, moduleTrait) => md
     }
 
     val declaredStdImplementations = parseDeclaredImplementations(traits ++ classes, dslStdModuleOpt)
