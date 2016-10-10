@@ -85,9 +85,9 @@ abstract class BaseCodegen[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) 
   def emitNode(sym: Exp[_], d: Def[_], graph: AstGraph)(implicit stream: PrintWriter, indentLevel: IndentLevel) = d match {
     case Lambda(lam, _, x, y) =>
       val args = argList(sym, x)
-      emitFunction(sym, args, y, lam)
+      emitFunction(sym, args, Some(y), lam)
     case th @ ThunkDef(root, schedule) =>
-      emitFunction(sym, Nil, root, th)
+      emitFunction(sym, Nil, Some(root), th)
     case _ => emit(simpleNode(sym, d))
   }
 
@@ -110,11 +110,11 @@ abstract class BaseCodegen[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) 
     argList(x, numArgs)
   }
 
-  def emitFunction(sym: Exp[_], args: List[Exp[_]], returnValue: Exp[Any], lambdaOrThunk: AstGraph, f: Schedule => Schedule = identity)(implicit stream: PrintWriter, indentLevel: IndentLevel): Unit = {
+  def emitFunction(sym: Exp[_], args: List[Exp[_]], returnValue: Option[Exp[Any]], lambdaOrThunk: AstGraph, f: Schedule => Schedule = identity)(implicit stream: PrintWriter, indentLevel: IndentLevel): Unit = {
     emit(functionHeader(sym, args))
     indented { implicit indentLevel =>
       emitSchedule(lambdaOrThunk, (s: Schedule) => f(s.filterNot(te => args.contains(te.sym))))
-      emit(functionReturn(returnValue))
+      returnValue.foreach(x => emit(functionReturn(x)))
     }
     functionFooter().foreach(emit(_))
   }
