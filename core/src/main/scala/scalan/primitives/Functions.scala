@@ -184,19 +184,19 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   def patternMatch(s1: Exp[_], s2: Exp[_]): Option[Subst] = matchExps(s1, s2, true, Map.empty)
 
   protected def matchExps(s1: Exp[_], s2: Exp[_], allowInexactMatch: Boolean, subst: Subst): Option[Subst] = s1 match {
+    case _ if s1 == s2 || subst.get(s1) == Some(s2) || subst.get(s2) == Some(s1) =>
+      Some(subst)
     case Def(d1) => s2 match {
       case Def(d2) =>
-        matchDefs(d1, d2, allowInexactMatch, subst)
+        matchDefs(d1, d2, allowInexactMatch, subst).map(_ + (s1 -> s2))
       case _ => None
     }
     case _ =>
-      if (allowInexactMatch)
+      if (allowInexactMatch && !subst.contains(s1)) {
         Some(subst + (s1 -> s2))
-      else
-        s2 match {
-          case Def(_) => None
-          case _ => if (subst.get(s1) == Some(s2)) Some(subst) else None
-        }
+      } else {
+        None
+      }
   }
 
   @inline
