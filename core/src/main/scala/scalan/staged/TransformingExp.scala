@@ -223,7 +223,7 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
 
       lambdaStack.pop
       val newLambda = getMirroredLambdaDef(tRes, newLambdaSym, lam, newRoot)
-      createDefinition(thunkStack.top, newLambdaSym, newLambda)
+      createDefinition(newLambdaSym, newLambda)
       val newLambdaExp = toExp(newLambda, newLambdaSym)
 
       val (tRes2, mirroredMetadata) = mirrorMetadata(tRes, node, newLambdaExp)
@@ -275,7 +275,7 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       val newRoot = t1(thunk.root)
       val newThunk = ThunkDef(newRoot, newSchedule.map { case DefTableEntry(te) => te })
 
-      createDefinition(thunkStack.top, newThunkSym, newThunk)
+      createDefinition(newThunkSym, newThunk)
       (t1 + (node -> newThunkSym), newThunkSym)
     }
 

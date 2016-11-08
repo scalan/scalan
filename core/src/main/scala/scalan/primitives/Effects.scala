@@ -491,7 +491,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
 
   def createReflectDefinition[A](s: Exp[A], x: Reflect[A]): Exp[A] = {
     checkReflect(s, x)
-    createDefinition(thunkStack.top, s, x)
+    createDefinition(s, x)
     context :+= s
     s
   }

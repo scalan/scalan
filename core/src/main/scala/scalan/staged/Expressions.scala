@@ -170,7 +170,7 @@ trait BaseExp extends Base { scalan: ScalanExp =>
   def fresh[T](implicit leT: LElem[T]): Exp[T]
   def findDefinition[T](s: Exp[T]): Option[TableEntry[T]]
   def findDefinition[T](thunk: Exp[_], d: Def[T]): Option[TableEntry[T]]
-  def createDefinition[T](optScope: Option[ThunkScope], s: Exp[T], d: Def[T]): TableEntry[T]
+  def createDefinition[T](s: Exp[T], d: Def[T]): TableEntry[T]
 
   /**
    * Updates the universe of symbols and definitions, then rewrites until fix-point
@@ -483,7 +483,10 @@ trait Expressions extends BaseExp { scalan: ScalanExp =>
 
   }
 
-  def createDefinition[T](optScope: Option[ThunkScope], s: Exp[T], d: Def[T]): TableEntry[T] = {
+  def createDefinition[T](s: Exp[T], d: Def[T]): TableEntry[T] =
+    createDefinition(thunkStack.top, s, d)
+
+  private def createDefinition[T](optScope: Option[ThunkScope], s: Exp[T], d: Def[T]): TableEntry[T] = {
     val te = lambdaStack.top match {
       case Some(fSym) => TableEntry(s, d, fSym)
       case _ => TableEntry(s, d)
