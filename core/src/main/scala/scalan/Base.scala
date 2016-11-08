@@ -63,7 +63,21 @@ trait Base extends LazyLogging { self: Scalan =>
       // check that nodes correspond to same operation, have the same type, and the same arguments
       // alternative would be to include Elem fields into case class
       case other: Base#Def[_] =>
-        getClass == other.getClass && productArity == other.productArity && {
+        (this eq other) || ({
+          val cls1 = getClass
+          val cls2 = other.getClass
+          cls1 == cls2 || {
+            def nameWithoutCGLib(clazz: Class[_]) = {
+              val name = clazz.getName
+              name.indexOf("$$EnhancerByCGLIB$$") match {
+                case -1 => name
+                case i => name.substring(0, i)
+              }
+            }
+
+            cls1.getClassLoader == cls2.getClassLoader && nameWithoutCGLib(cls1) == nameWithoutCGLib(cls2)
+          }
+        } && productArity == other.productArity && {
           val len = productArity
           var i = 0
           var result = true
@@ -72,7 +86,7 @@ trait Base extends LazyLogging { self: Scalan =>
             i += 1
           }
           result
-        } && selfType.name == other.selfType.name
+        } && selfType.name == other.selfType.name)
       case _ => false
     }
 
