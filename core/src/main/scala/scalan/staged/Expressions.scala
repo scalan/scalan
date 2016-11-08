@@ -469,23 +469,18 @@ trait Expressions extends BaseExp { scalan: ScalanExp =>
 
   def findOrCreateDefinition[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
     val optScope = thunkStack.top
-    optScope match {
+    val optFound = optScope match {
       case Some(scope) =>
-        scope.findDef(d) match {
-          case Some(TableEntry(s, _)) => s
-          case None =>
-            val te = createDefinition(optScope, newSym, d)
-            te.sym
-        }
+        scope.findDef(d)
       case None =>
-        val res = findDefinition(globalThunkSym, d) match {
-          case Some(TableEntry(s, _)) => s
-          case None =>
-            val TableEntry(s, _) = createDefinition(None, newSym, d)
-            s
-        }
-        res
+        findDefinition(globalThunkSym, d)
     }
+    val te = optFound.getOrElse {
+      createDefinition(optScope, newSym, d)
+    }
+    assert(te.rhs == d, s"${if (optFound.isDefined) "Found" else "Created"} unequal definition ${te.rhs} with symbol ${te.sym.toStringWithType} for $d")
+    te.sym
+
   }
 
   def createDefinition[T](optScope: Option[ThunkScope], s: Exp[T], d: Def[T]): TableEntry[T] = {

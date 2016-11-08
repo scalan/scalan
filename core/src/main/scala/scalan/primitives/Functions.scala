@@ -359,23 +359,12 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def reifyFunction[A, B](fun: Exp[A] => Exp[B], x: Exp[A], fSym: Exp[A=>B], mayInline: Boolean): Exp[A=>B] = {
     val Block(y) = reifyEffects(executeFunction(fun, x, fSym))
+    reifyFunction0(fun, x, y, fSym, mayInline)
+  }
+
+  private def reifyFunction0[A, B](fun: Exp[A] => Exp[B], x: Exp[A], y: Exp[B], fSym: Exp[A => B], mayInline: Boolean): Exp[A => B] = {
     val lam = new Lambda(Some(fun), x, y, fSym, mayInline)
-
-    val optScope = thunkStack.top
-    val optSym = optScope match {
-      case Some(scope) =>
-        scope.findDef(lam)
-      case None =>
-        findDefinition(globalThunkSym, lam)
-    }
-
-    optSym match {
-      case Some(TableEntry(sym, _)) =>
-        sym.asRep[A=>B]
-      case None =>
-        val te = createDefinition(optScope, fSym, lam)
-        te.sym
-    }
+    findOrCreateDefinition(lam, fSym)
   }
 
   def functionSplit[A, B, C](f: Rep[A=>B], g: Rep[A=>C]): Rep[A=>(B,C)] = {
@@ -406,25 +395,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     implicit val eA = leA.value
     implicit val eB: Elem[B] = y.elem
     val fSym = fresh[A => B]
-
-    // copied from Functions.reifyFunction, abstract later!
-    val lam = new Lambda(Some(fun), x, y, fSym, mayInline = true)
-
-    val optScope = thunkStack.top
-    val optSym = optScope match {
-      case Some(scope) =>
-        scope.findDef(lam)
-      case None =>
-        findDefinition(globalThunkSym, lam)
-    }
-
-    optSym match {
-      case Some(TableEntry(sym, _)) =>
-        sym.asRep[A=>B]
-      case None =>
-        val te = createDefinition(optScope, fSym, lam)
-        te.sym
-    }
+    reifyFunction0(fun, x, y, fSym, mayInline = true)
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
