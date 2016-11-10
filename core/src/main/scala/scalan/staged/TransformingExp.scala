@@ -166,9 +166,11 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
   abstract class Mirror[Ctx <: Transformer : TransformerOps] {
     def apply[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = (t, transformDef(d, t))
 
+    protected def mirrorElem(node: Exp[_]): Elem[_] = node.elem
+
     // every mirrorXXX method should return a pair (t + (v -> v1), v1)
     protected def mirrorVar[A](t: Ctx, rewriter: Rewriter, v: Exp[A]): (Ctx, Exp[_]) = {
-      val newVar = fresh(Lazy(v.elem))
+      val newVar = fresh(Lazy(mirrorElem(v)))
       val (t1, mirroredMetadata) = mirrorMetadata(t, v, newVar)
       setAllMetadata(newVar, mirroredMetadata)
       (t1 + (v -> newVar), newVar)
@@ -192,7 +194,7 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
       (t2 + (node -> res), res)
     }
 
-    protected def getMirroredLambdaSym[A, B](node: Exp[A => B]): Exp[_] = fresh(Lazy(node.elem))
+    protected def getMirroredLambdaSym[A, B](node: Exp[A => B]): Exp[_] = fresh(Lazy(mirrorElem(node)))
 
     // require: should be called after oldlam.schedule is mirrored
     private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], oldLam: Lambda[_,_], newRoot: Exp[_]): Lambda[_,_] = {
@@ -264,7 +266,7 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
     }
 
     protected def mirrorThunk[A](t: Ctx, rewriter: Rewriter, node: Exp[Thunk[A]], thunk: ThunkDef[A]): (Ctx, Exp[_]) = {
-      val newThunkSym = fresh(Lazy(node.elem))
+      val newThunkSym = fresh(Lazy(mirrorElem(node)))
       val newScope = new ThunkScope(newThunkSym)
 
       thunkStack.push(newScope)
