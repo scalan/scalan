@@ -25,11 +25,11 @@ trait LogicalOpsExp extends LogicalOps with BaseExp { self: ScalanExp =>
     case ApplyBinOp(op, lhs, rhs) =>
       op.asInstanceOf[BinOp[_, _]] match {
         case _: Equals[_] if lhs.elem == BooleanElement && rhs.elem == BooleanElement =>
-          matchBoolConsts(d, lhs, rhs, x => x, x => !x.asRep[Boolean])
+          matchBoolConsts(d, lhs, rhs, x => x, x => !x.asRep[Boolean], _ => true, _ => false)
         case And =>
-          matchBoolConsts(d, lhs, rhs, x => x, _ => false)
+          matchBoolConsts(d, lhs, rhs, x => x, _ => false, x => x, _ => false)
         case Or =>
-          matchBoolConsts(d, lhs, rhs, _ => true, x => x)
+          matchBoolConsts(d, lhs, rhs, _ => true, x => x, x => x, _ => true)
         case _ => super.rewriteDef(d)
       }
     case ApplyUnOp(o1, Def(ApplyUnOp(o2, x))) if o1 == Not && o2 == Not => x
@@ -37,11 +37,19 @@ trait LogicalOpsExp extends LogicalOps with BaseExp { self: ScalanExp =>
   }
 
   @inline
-  private def matchBoolConsts(d: Def[_], lhs: Exp[_], rhs: Exp[_], ifTrue: Exp[_] => Exp[_], ifFalse: Exp[_] => Exp[_]): Exp[_] =
+  private def matchBoolConsts(d: Def[_], lhs: Exp[_], rhs: Exp[_], ifTrue: Exp[_] => Exp[_], ifFalse: Exp[_] => Exp[_], ifEqual: Exp[_] => Exp[_], ifNegated: Exp[_] => Exp[_]): Exp[_] =
     lhs match {
-      case Def(Const(b: Boolean)) => if (b) ifTrue(rhs) else ifFalse(rhs)
+      case `rhs` =>
+        ifEqual(lhs)
+      case Def(ApplyUnOp(op, `rhs`)) if op == Not =>
+        ifNegated(lhs)
+      case Def(Const(b: Boolean)) =>
+        if (b) ifTrue(rhs) else ifFalse(rhs)
       case _ => rhs match {
-        case Def(Const(b: Boolean)) => if (b) ifTrue(lhs) else ifFalse(lhs)
+        case Def(Const(b: Boolean)) =>
+          if (b) ifTrue(lhs) else ifFalse(lhs)
+        case Def(ApplyUnOp(op, `lhs`)) if op == Not =>
+          ifNegated(rhs)
         case _ => super.rewriteDef(d)
       }
     }
