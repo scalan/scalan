@@ -786,12 +786,6 @@ trait Slicing extends ScalanExp {
         case None =>
           assert(false, s"Field $name accessed in a sliced struct with source ${p.toStringWithDefinition}, mark $m")
       }
-    case IsSliced(IsSliced(s, m1), m2) =>
-      assert(m2.projectedElem == m1.elem,
-        s"Nested Sliced with non-composing markings: m2.projectedElem = ${m2.projectedElem}, m1.elem = ${m1.elem}")
-      val m = m2 >> m1
-      Sliced(s, m)
-
     case Apply(IsSliced(f: RFunc[a, b] @unchecked, m: FuncMarking[c, _]), x) =>
       val x1 = m.mDom.projectToExp(x.asRep[c]).asRep[a]
       assert(x1.elem == f.elem.eDom)
@@ -803,7 +797,15 @@ trait Slicing extends ScalanExp {
       val f1 = sliceIn(f, m.asMark[a]).asRep[c => b]
       f1(x)
 
+    case IsSliced(IsSliced(s, m1), m2) =>
+      assert(m2.projectedElem == m1.elem,
+        s"Nested Sliced with non-composing markings: m2.projectedElem = ${m2.projectedElem}, m1.elem = ${m1.elem}")
+      val m = m2 >> m1
+      Sliced(s, m)
+
+    case UnpackSliced(IsSliced(x, m1), m2) if m1 == m2 =>
+      x
+
     case _ => super.rewriteDef(d)
   }
-
 }
