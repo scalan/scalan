@@ -37,8 +37,11 @@ object ProcessUtil {
       case 0 =>
         ProcessOutput(stdOutBuffer, stdErrBuffer, interleavedBuffer)
       case exitCode =>
+        val envPrefix = extraEnv.map {
+          case (name, value) => s"$name=${escapeCommandLineArg(value)} "
+        }.mkString("")
         val commandString = command.map(escapeCommandLineArg).mkString(" ")
-        throw new RuntimeException(s"Executing `$commandString` in directory $absoluteWorkingDir returned exit code $exitCode with following output:\n${interleavedBuffer.mkString("\n")}")
+        throw new RuntimeException(s"Executing `$envPrefix$commandString` in directory $absoluteWorkingDir returned exit code $exitCode with following output:\n${interleavedBuffer.mkString("\n")}")
     }
   }
 
