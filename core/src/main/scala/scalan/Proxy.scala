@@ -834,6 +834,6 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   def throwInvocationException(whatFailed: String, cause: Throwable, receiver: Exp[_], m: Method, args: Seq[Any]) = {
     val deps = receiver +: args.flatMap(syms)
-    !!!(s"$whatFailed $receiver.${m.getName}(${args.mkString(", ")}) failed", baseCause(cause), deps: _*)
+    !!!(s"$whatFailed (${receiver.toStringWithType}).${m.getName}(${args.mkString(", ")}) failed", baseCause(cause), deps: _*)
   }
 }
