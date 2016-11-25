@@ -303,8 +303,6 @@ trait LmsBridge extends Passes {
       Manifest.classType(cls)
     case el: WrapperElem[_,_] =>
       elemToManifest(el.baseElem)
-    case el: WrapperElem1[_,_,_,_] =>
-      elemToManifest(el.baseElem)
 
     case el: ArrayElem[_] =>
       // see Scala bug https://issues.scala-lang.org/browse/SI-8183 (won't fix)
