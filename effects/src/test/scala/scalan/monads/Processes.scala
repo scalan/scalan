@@ -154,12 +154,11 @@ trait ProcessesDsl extends ScalanDsl with impl.ProcessesAbs with Processes with 
 trait ProcessesDslStd extends ScalanDslStd with impl.ProcessesStd {
 
   //def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = i => (i + 1, v)
-  def tryCatch[A:Elem](t: Th[A], c: (Rep[Throwable]) => Rep[A]) =
+  def tryCatch[A](t: Th[A], c: (Rep[Throwable]) => Rep[A]) =
     try {
       t.force()
-    }
-    catch { case e: Throwable =>
-      c(e)
+    } catch {
+      case e: Throwable => c(e)
     }
 }
 

@@ -14,9 +14,9 @@ trait Thunks { self: Scalan =>
   }
   val Thunk: ThunkCompanion = new ThunkCompanion
 
-  implicit class RepThunkOps[T: Elem](t: Th[T]) {
+  implicit class RepThunkOps[T](t: Th[T]) {
     def force() = thunk_force(t)
-    def map[R:Elem](f: Rep[T => R]): Th[R] = Thunk { f(t.force) }
+    def map[R: Elem](f: Rep[T => R]): Th[R] = Thunk { f(force()) }
   }
 
   implicit val thunkCont: Cont[Thunk] = new Cont[Thunk] {
