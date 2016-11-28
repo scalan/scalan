@@ -369,6 +369,7 @@ class StructTests extends BaseViewTests {
     val ctx = new Ctx
     import ctx.compiler.scalan._
     {
+      addUnpackTester { _ => true }
       val eFrom = tupleStructElement(element[(Int,Int)], element[Double], element[Boolean])
       val eTo = structElement(Seq("a" -> element[Interval], "b" -> element[Double], "c" -> element[Boolean]))
       val iso = new StructIso[Struct, Struct](

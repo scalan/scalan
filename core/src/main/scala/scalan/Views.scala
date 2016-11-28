@@ -320,7 +320,9 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
   }
 
   def getIsoByElem[T](e: Elem[T]): Iso[_, T] = {
-    if (currentPass.config.shouldUnpackTuples) {
+    if (e.isInstanceOf[EntityElem[_]] && !shouldUnpack(e)) {
+      identityIso(e).asInstanceOf[Iso[_, T]]
+    } else if (currentPass.config.shouldUnpackTuples) {
       buildIso(e, new IsoBuilder {
         def apply[S](e: Elem[S]) = {
           val res: Iso[_, S] = e match {
@@ -330,8 +332,7 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
                 val sIso = structToPairIso[s,t,a,b](iso1, iso2)
                 val flatIso = flatteningIso(sIso.eFrom)
                 flatIso >> sIso.asIso[Struct,S]
-              }
-              else {
+              } else {
                 val pIso = pairIso(iso1, iso2)
                 val deepIso = getIsoByElem(pIso.eFrom)
                 deepIso >> pIso.asIso[(s,t),S]
@@ -342,8 +343,7 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
           res
         }
       })
-    }
-    else {
+    } else {
       buildIso(e, new IsoBuilder {
         def apply[S](e: Elem[S]) = {
           val res: Iso[_, S] = e match {
@@ -351,14 +351,13 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
               if (iso1.isIdentity && iso2.isIdentity) {
                 // recursion base
                 pairIso(iso1, iso2).asInstanceOf[Iso[_, S]]
-              }
-              else {
+              } else {
                 getIsoByElem(e)
               }
             case _ =>
               getIsoByElem(e)
           }
-          res.asIso[Any,S]
+          res
         }
       })
     }
