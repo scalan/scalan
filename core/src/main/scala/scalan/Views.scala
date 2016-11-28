@@ -418,11 +418,7 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
       case me: MMapElem[_, _] =>
         identityIso(me)
 
-      case we: WrapperElem1[a, Def[ext], cbase, cw]@unchecked =>
-        val eExt = we.eTo
-        val iso = builder(eExt)
-        iso
-      case we: WrapperElem[Def[base],Def[ext]] @unchecked =>
+      case we: WrapperElem[base, ext] @unchecked =>
         val eExt = we.eTo
         val iso = builder(eExt)
         iso
