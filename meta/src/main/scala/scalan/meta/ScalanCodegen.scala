@@ -870,25 +870,14 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
   def emitContRules(e: EntityTemplateData) = {
     if (e.isCont) {
       s"""
-         |    case ${e.name}Methods.map(xs, Def(IdentityLambda())) => xs
-         |
          |    case view1@View${e.name}(Def(view2@View${e.name}(arr, innerIso2)), innerIso1) =>
          |      val compIso = composeIso(innerIso1, innerIso2)
          |      implicit val eAB = compIso.eTo
          |      View${e.name}(arr, compIso)
          |
-         |    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
-         |    case mc @ MethodCall(Def(wrapper: Exp${e.name}Impl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
-         |      val resultElem = mc.selfType
-         |      val wrapperIso = getIsoByElem(resultElem)
-         |      wrapperIso match {
-         |        case iso: Iso[base,ext] =>
-         |          val eRes = iso.eFrom
-         |          val newCall = unwrapMethodCall(mc, wrapper.wrappedValue, eRes)
-         |          iso.to(newCall)
-         |      }
-         |
          |    case ${e.name}Methods.map(xs, f) => (xs, f) match {
+         |      case (_, Def(IdentityLambda())) =>
+         |        xs
          |      case (xs: ${e.entityRepSynonym.name}[a] @unchecked, LambdaResultHasViews(f, iso: Iso[b, c])) =>
          |        val f1 = f.asRep[a => c]
          |        implicit val eB = iso.eFrom

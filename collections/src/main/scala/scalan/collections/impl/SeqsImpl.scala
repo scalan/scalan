@@ -579,25 +579,14 @@ trait SeqsExp extends scalan.ScalanDslExp with SeqsDsl {
   }).asInstanceOf[Option[Unpacked[T]]]
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case SSeqMethods.map(xs, Def(IdentityLambda())) => xs
-
     case view1@ViewSSeq(Def(view2@ViewSSeq(arr, innerIso2)), innerIso1) =>
       val compIso = composeIso(innerIso1, innerIso2)
       implicit val eAB = compIso.eTo
       ViewSSeq(arr, compIso)
 
-    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
-    case mc @ MethodCall(Def(wrapper: ExpSSeqImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
-      val resultElem = mc.selfType
-      val wrapperIso = getIsoByElem(resultElem)
-      wrapperIso match {
-        case iso: Iso[base,ext] =>
-          val eRes = iso.eFrom
-          val newCall = unwrapMethodCall(mc, wrapper.wrappedValue, eRes)
-          iso.to(newCall)
-      }
-
     case SSeqMethods.map(xs, f) => (xs, f) match {
+      case (_, Def(IdentityLambda())) =>
+        xs
       case (xs: RSeq[a] @unchecked, LambdaResultHasViews(f, iso: Iso[b, c])) =>
         val f1 = f.asRep[a => c]
         implicit val eB = iso.eFrom

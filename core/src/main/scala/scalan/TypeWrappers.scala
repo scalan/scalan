@@ -4,6 +4,7 @@ import java.lang.reflect.Method
 
 import scala.reflect.runtime.universe._
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
+import scalan.staged.BaseExp
 
 trait TypeWrappers extends Base { self: Scalan =>
 
@@ -73,7 +74,7 @@ trait TypeWrappersStd extends TypeWrappers { scalan: ScalanStd =>
     x.wrappedValue
  }
 
-trait TypeWrappersExp extends TypeWrappers with GraphVizExport { scalan: ScalanExp =>
+trait TypeWrappersExp extends TypeWrappers with GraphVizExport with BaseExp { scalan: ScalanExp =>
   protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase] =
     x.asInstanceOf[Rep[TBase]]
 
@@ -108,5 +109,24 @@ trait TypeWrappersExp extends TypeWrappers with GraphVizExport { scalan: ScalanE
     val newArgs = unwrapSyms(args)
     val newObj = new NewObject[T](eUnwrappedRes, newArgs, neverInvoke)
     newObj
+  }
+
+  override def rewriteDef[T](d: Def[T]) = d match {
+    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
+    case mc @ MethodCall(Def(wrapper: TypeWrapper[_, _]), m, args, neverInvoke) if !isValueAccessor(m) =>
+      val resultElem = mc.selfType
+      val wrapperIso = getIsoByElem(resultElem)
+      wrapperIso match {
+        case Def(iso: IsoUR[base, ext]) =>
+          if (iso.isIdentity)
+            super.rewriteDef(d)
+          else {
+            val eRes = iso.eFrom
+            val newCall = unwrapMethodCall(mc, wrapper.wrappedValue, eRes)
+            iso.to(newCall)
+          }
+      }
+
+    case _ => super.rewriteDef(d)
   }
 }

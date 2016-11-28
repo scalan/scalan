@@ -361,25 +361,14 @@ trait HashSetsExp extends scalan.ScalanDslExp with HashSetsDsl {
   }).asInstanceOf[Option[Unpacked[T]]]
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case SHashSetMethods.map(xs, Def(IdentityLambda())) => xs
-
     case view1@ViewSHashSet(Def(view2@ViewSHashSet(arr, innerIso2)), innerIso1) =>
       val compIso = composeIso(innerIso1, innerIso2)
       implicit val eAB = compIso.eTo
       ViewSHashSet(arr, compIso)
 
-    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
-    case mc @ MethodCall(Def(wrapper: ExpSHashSetImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
-      val resultElem = mc.selfType
-      val wrapperIso = getIsoByElem(resultElem)
-      wrapperIso match {
-        case iso: Iso[base,ext] =>
-          val eRes = iso.eFrom
-          val newCall = unwrapMethodCall(mc, wrapper.wrappedValue, eRes)
-          iso.to(newCall)
-      }
-
     case SHashSetMethods.map(xs, f) => (xs, f) match {
+      case (_, Def(IdentityLambda())) =>
+        xs
       case (xs: RHS[a] @unchecked, LambdaResultHasViews(f, iso: Iso[b, c])) =>
         val f1 = f.asRep[a => c]
         implicit val eB = iso.eFrom
