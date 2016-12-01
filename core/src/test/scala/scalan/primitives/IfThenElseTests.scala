@@ -1,11 +1,11 @@
 package scalan.primitives
 
 import scalan.BaseTests
-
+import scalan.common.MetaTestsDslExp
 import scalan.{Scalan, ScalanDslExp, ScalanDslStd}
 
-abstract class IfThenElseTests(scalan: Scalan) extends BaseTests {
-  import scalan._
+abstract class IfThenElseTests[A <: Scalan](val ctx: A) extends BaseTests {
+  import ctx._
 
   test("simpleIf") {
     val res = IF (true) THEN 1 ELSE 0
@@ -29,4 +29,12 @@ abstract class IfThenElseTests(scalan: Scalan) extends BaseTests {
 class IfThenElseTestsSeq extends IfThenElseTests(new ScalanDslStd)
 
 // Note: these tests pass thanks to rewriting of IF with constants
-class IfThenElseTestsExp extends IfThenElseTests(new ScalanDslExp)
+class IfThenElseTestsExp extends IfThenElseTests(new ScalanDslExp with MetaTestsDslExp) {
+  import ctx._
+
+  test("type of if-then-else is the upper bound of its branches") {
+    val c = fresh[Boolean]
+    val x = IF (c) THEN MT0(0).asRep[Any] ELSE MT1(toRep(()), 0).asRep[Any]
+    x.elem shouldEqual element[MetaTest[Unit]]
+  }
+}

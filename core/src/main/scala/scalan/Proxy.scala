@@ -461,6 +461,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
           case d => !!!(s"Unknown type descriptior $d")
         }.toArray
         // entity type or base type
+        // FIXME See https://github.com/scalan/scalan/issues/252
         if (classSymbol.asClass.isTrait || classSymbol == baseType.typeSymbol) {
           // abstract case, call *Element
           val methodName = StringUtil.lowerCaseFirst(classSymbol.name.toString) + "Element"

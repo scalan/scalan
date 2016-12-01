@@ -273,6 +273,27 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
   trait ViewElem[From, To] extends Elem[To] { _: scala.Equals =>
     def iso: Iso[From, To]
     override def isEntityType = shouldUnpack(this)
+
+    override protected def _copyWithTypeArgs(argsIterator: Iterator[TypeDesc]): Elem[_] =
+      if (typeArgs.isEmpty)
+        this
+      else {
+        // FIXME See https://github.com/scalan/scalan/issues/252
+        val isoClass = iso.getClass
+        val constructor = getConstructor(isoClass)
+        try {
+          // -1 because the constructor includes `self` argument, see cachedElem0 below
+          val args = argsIterator.take(constructor.getParameterTypes.length - 1).toSeq
+          val resultIsoUR = constructor.newInstance(self +: args).asInstanceOf[IsoUR[_, _]]
+          // reifyObject in case this iso has been constructed before
+          // note that this calculation should always give the same result as "concrete case, call viewElement(*Iso)" in getResultElem: #252
+          val resultIso = reifyObject(resultIsoUR)
+          resultIso.eTo
+        } catch {
+          case e: Exception =>
+            !!!(s"ViewElem#_copyWithTypeArgs failed (class of iso is ${isoClass.getSimpleName}), override for ${getClass.getSimpleName} may be needed (unless it's a bug in ViewElem)", e)
+        }
+      }
   }
 
   object ViewElem {

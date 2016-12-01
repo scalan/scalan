@@ -23,7 +23,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     def eV = _eV
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
+    lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -72,7 +72,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
     with ConcreteElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
-    override lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
+    override lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
 
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
     override def getDefaultRep = AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue)
@@ -112,7 +112,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
       implicit val tagE = eE.tag
       weakTypeTag[AdjacencyGraphIso[V, E]]
     }
-    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
+    lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class AdjacencyGraphCompanionAbs extends CompanionDef[AdjacencyGraphCompanionAbs] with AdjacencyGraphCompanion {
@@ -163,7 +163,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     extends GraphElem[V, E, IncidenceGraph[V, E]]
     with ConcreteElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
-    override lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
+    override lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
 
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
     override def getDefaultRep = IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0)
@@ -203,7 +203,7 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
       implicit val tagE = eE.tag
       weakTypeTag[IncidenceGraphIso[V, E]]
     }
-    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
+    lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class IncidenceGraphCompanionAbs extends CompanionDef[IncidenceGraphCompanionAbs] with IncidenceGraphCompanion {
@@ -1197,7 +1197,7 @@ trait GraphsExp extends scalan.ScalanDslExp with GraphsDsl {
 }
 
 object Graphs_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXT2gcVRh/s5vNZrMxTSMSLejGuFUR3Q0JtkoQicmmpmw2odMkkpbI25mXzaQzb8aZt2HWQ70V1JuIouChongpivQgWPCiBRHx4NWzp6qUHiwIit9782dnkpmN0fbgHB7z573vz+/3+7735sqvKOfY6FFHwTqmFYMwXJHF/azDynKNMo11lky1rZN5srX54od/nDNeH8ugkQ3Uv42deUffQAXvpuZa4b3M1DoqYKoQh5m2w9DDdeGhqpi6ThSmmbSqGUab4aZOqnXNYTN11Nc01c4r6CKS6mhEMaliE0bkOR07DnH89wOER6SFzwXx3Fm2uj5olWdRjWRx1sYag/DBx4g3/wyx5A41acdgaNgPbdniYcGcInEtyGHRsHThJltHec2wTJsFXvPgYdtUg8c+iuEFGq3v4F1cBa+tqsxsjba4MQsrF3CLNGAKn94HOThE3zrbsYhvvOgwNebPtRBCwMqUCKzSxawSYlbhmJVlYmtY117F/OOKbbod5F1SFiHXAhNPHmAisEBqVC2/cV45d1suGhm+2OWh5EVA/WColKIQQQ9g++2Zt5xbpy6fzKDBDTSoObNNh9lYYVEZ+HAVMaUmEzGHCGK7BQxOpDEovMzCnD0yKSimYWEKlnwsh4AoXVM0xifzd0M+PSnY55lFgqmSa0lhvuMp+QotzWFdX7nxwFPHf6m9lEGZuIsCmJShGOzAKEO5Uza2tn3bfDzCkLTWBZg/1sQjHwpud8z3CCUE5bEbv6nXJ9H5TAil7/mfsQcmRp95/8vjZOXTDBrYEGJf0HFL8MixmieOsoEGzF1ie+/zu1jnd4lc5lWyhds68xGOQpMFaBgaT61Ti3DcZoT+pSD9oifhhklJeWGl/Lv83dtXuEJtNOR98Qr3L+3knz8NbzEhXoaGIFhG3DWst4kTgNw3B3WQSIOHuHh5LHTOhxJDg0RtkbihXCPBUu1ASzldoxeSjdjokTTFWWTF1gzoervk6a+vrd78qpETohv1gRaheQ3Hx7mLOYdCmmQou0hZkrYGPQhl0yBHJ25pm5ffZEJFkhvvZ8vNHegfM2LdQz0EFbTazy9duu/mRy/fK9rBQFNjBrbKk4doBkHt3sViR3H+huf8LUcUxdSej7PqDlYIVTqilFNqlY9j4TePdSBgLL54LppGKbIy4vKYtEc6GbIWqrimE+NAFe83UOtlYH/7SUy6FMr1wXS5AsZ0TF5697PSZgblTqPcFvQKp45yTbNN1YA82OGhQNkLwTspTh6QhW1shGSJaxx1MYu30NXECftKsijF8/4vnXkfZ3vL/Q72oKMaVZYw1Li7rrFtsNjT3sGdqOCF1mgbwaIsnIk8M3yYTk73hBifPVTlLFJFU0FE5N9UTnzx/6dy9iddiixLFuuh1BwJuD+RlCx04Tul9RSWekiiyNvuAjY0vTOVFMXhZDCcxr4VtXdXEObje13rJ6DzVVI63zxRdGwTlR/kiQE/Gt6uNv3O8+un719fFfvqkComeV/Co1Dyb9EStmbEIf7xHod4mFSuGRb8pMHN9DfP/fja9598LM5AXRgZ6veoZ+geP/aWeA5TmkhJSfY3UNDSxdsfNJ744erP4ugxyLdiOJDR8JcoeuSIE17wfMMfTgRcKCW+OUcU9AUfrv0NVBtO8pAOAAA="
+  val dump = "H4sIAAAAAAAAANVXTWwbRRQe23EcxyGkQTSlUkkILv/YUSJaUIRQSJySynGibpOAWxWNdyfOpLuzy+44tTmUWyXghhAHBIciEJcICXFBReoFkBBCPXDlzKmlqnqgEhKIN7M/Xie7DoH2wB5GO3/v53vfezOz/RtKOzZ6zFGxjlnBIBwXFPk/4/C8UmKc8taiqTV0MkfWz73yyR9njLdHkmioino3sDPn6FWUdX9KTSv4V7hWRlnMVOJw03Y4eqQsNRRVU9eJyqnJitQwGhzXdFIsU4dPl1FPzdRab6CLKFFGQ6rJVJtwoszq2HGI4433EWERDfpZ2W8tWW0drCi8KIa8OG1jysF80DHkrj9FLKXFTNYyOBr0TFuyhFmwJkeaFviwYFi6VJMqoww1LNPmvtYMaNgwNb/bwzAMoOHyJt7CRdBaLyrcpqwuhFlYPY/rpAJLxPIe8MEh+vrplkU84TmHax36mhZCCKIyKQ0rtDErBJgVBGZ5hdgU6/RNLCaXbbPZQu6XSCHUtEDEM3uI8CWQEtPy75xVz9xRckZSbG4KUzLSoF4QNBrDEBkewPaHU+85t09cPp5E/VXUT52ZmsNtrPIwDTy4cpgxk0ubAwSxXYcIjsdFUGqZgTU7aJJVTcPCDCR5WA5AoHSqUi4Wi7EBLzwx2Ge4RfyliaaVCPwdi/FXcmkW6/ry9YeePXqj9GoSJTtVZEGkAslg+0I5Sp+wsbXhyRbt/RwlVtsAi25JdkWTbbbbTBdTAlAev35T+34CnU0GUHqa/1n0QMTw8x9eOUqWv0iivqok+7yO6zKOAqs54qhV1GduEdsdz2xhXfxFxjKjkXXc0LmHcBiaFEDD0VhsnlpE4DYt+Z/w3c+5FK6YjOTnl/O/Kz++vy0YaqMBd8ZN3L/o8T9/GVznkrwcDYCxnDRXsd4gjg9yzyzkQWQYXMTl4OFAuWhGOeonWp10CkpXIiSV9pSU1ik7Hy3ERo/GMc4iyzY1oOptkee+/Wbl1tVKWpJu2ANamuYWHA/nNuYCisQER6kFxqO41e9CqJgGOTB+m567/C6XLEo0O+vZUm0T6se03PdwF0L5pfbLS5cevPXp6w/IctBXo9zAVn5iH8XAz917mOyoM36Ds96RI5NicsfkjLaJVcLUlkzlmFwV7Ugw50YdAjDSuXk27MZoaGdI5eHEDuokyWrA4pJOjD1ZvFtAqZuA3eUn0unRgK5H4ukKGL92QyscunnkQhL1nkTpdagVThmla2aDaX7w4ISHBOUv+2OJzuBBsLCNjeDg38JwUgF5ODro148Gp3px1Rt3qwZ8Y6iNa7vM2uigZ7DYVVhgrjyef/rr7Qv02pPzsm5IbSuRctoAVUMw5xKdOP6XSr+LAzvLx12saQcoUxcx1IzmGuUbILGrvL0rW9Y1rdIw/E0puGO5YkQzFe3uMdm+sK9MXGAq1YCU5N9kYufm/08m7nZ6NLQtmrFtS6r74XXI9N7I8KSgvt8t1sfEqws5cqKgz2OD6q3JKCv2R4jBOB5YYXn3GGvRftTWcwyKVSGmus4RVcc20cRjgRjwmHFPzqkPXlo7eWhtRZ7dA5pc5M4E163op9citqblQ+GJLg8FWJQvGRY8BOFn6rsXf37rp88/k/WyDShHvS4JOLrPs70u+4FL4zEuKd4hDay6eOfjylPXvvpVXm/6xXEPlz4WPLvC15rO0Gdd3fCKCoUf0ktcAEJcuiKaq38DrwCfyPQOAAA="
 }
 }
 

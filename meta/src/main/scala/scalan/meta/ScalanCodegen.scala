@@ -53,20 +53,20 @@ class MetaCodegen extends ScalanAstExtensions {
 
     def boundedTpeArgString(withTags: Boolean = false) = tpeArgs.getBoundedTpeArgString(withTags)
 
-    def tpeSubst = tpeArgs.map { a =>
-      val tyArgName = a.name
-      val argNameOpt = allArgs.collectFirst(a => a.tpe match {
-        case STraitCall("Elem", List(STpeAnnotated(STraitCall(`tyArgName`,_),_))) => Left(a.name)
-        case STraitCall("Elem", List(STraitCall(`tyArgName`,_))) => Left(a.name)
-        case STraitCall("Cont" | "Container", List(STraitCall(`tyArgName`,_))) => Right(a.name)
-      })
-      (tyArgName, argNameOpt)
-    }
-
-    def tpeSubstStr = tpeSubst.filter(_._2.isDefined).rep {
-      case (n, Some(v)) => StringUtil.quote(n) + " -> " + v.fold(l => l, r => r)
-      case (n, _) => !!!(s"No substitution for $n") // impossible due to filter above
-    }
+    def tpeSubstStr = tpeArgs.flatMap { tpeArg =>
+      val tyArgName = tpeArg.name
+      val argOpt = allArgs.find { a =>
+        a.tpe match {
+          case STraitCall("Elem", List(STpeAnnotated(STraitCall(`tyArgName`, _), _))) => true
+          case STraitCall("Elem", List(STraitCall(`tyArgName`, _))) => true
+          case STraitCall("Cont", List(STraitCall(`tyArgName`, _))) => true
+          case _ => false
+        }
+      }
+      argOpt.map { arg =>
+        s"${StringUtil.quote(tyArgName)} -> (${arg.name} -> scalan.util.${tpeArg.variance})"
+      }
+    }.rep()
 
     def companionName = name + "Companion"
     def companionAbsName = name + "CompanionAbs"
@@ -420,8 +420,8 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
         case None => !!!(s"Entity ${e.name} must extend Def, TypeWrapper, or another entity")
       }
       val overrideIfHasParent = optParent.ifDefined("override ")
+      val elemMethodName = entityElemMethodName(e.name)
       val elemMethodDefinition = {
-        val elemMethodName = entityElemMethodName(e.name)
         if (!module.methods.exists(_.name == elemMethodName)) {
           val elemType = e.elemTypeUse()
           val elemMethodBody =

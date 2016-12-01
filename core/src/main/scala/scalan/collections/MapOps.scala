@@ -3,7 +3,8 @@ package scalan.collections
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.collection.mutable.Map
-import scalan.staged.BaseExp;
+import scalan.staged.BaseExp
+import scalan.util.{Covariant, Invariant};
 
 trait MapOps extends  Base  { self: Scalan =>
   type MM[K, V] = Rep[MMap[K, V]]
@@ -52,7 +53,7 @@ trait MapOps extends  Base  { self: Scalan =>
 
     protected def getDefaultRep = emptyMap[K, V](eKey, eValue)
 
-    lazy val typeArgs = TypeArgs("K" -> eKey, "V" -> eValue)
+    lazy val typeArgs = TypeArgs("K" -> (eKey -> Invariant), "V" -> (eValue -> Covariant))
   }
 
   implicit def mMapElement[K, V](implicit eKey: Elem[K], eValue: Elem[V]): MMapElem[K, V] = new MMapElem(eKey, eValue)

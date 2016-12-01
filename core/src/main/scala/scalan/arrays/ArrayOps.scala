@@ -5,6 +5,7 @@ import scalan.common.OverloadHack.Overloaded1
 import scalan.staged.BaseExp
 import scalan.{Scalan, ScalanExp, ScalanStd}
 import scala.reflect.runtime.universe._
+import scalan.util.Invariant
 
 trait ArrayOps { self: Scalan =>
   type Arr[T] = Rep[Array[T]]
@@ -114,12 +115,13 @@ trait ArrayOps { self: Scalan =>
 
   abstract class ArrayElem[A](implicit eItem: Elem[A])
     extends EntityElem1[A, Array[A], Array](eItem, container[Array]) {
+    override lazy val typeArgs = TypeArgs("A" -> (eItem -> Invariant))
   }
 
   case class ScalaArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     def parent: Option[Elem[_]] = Some(arrayElement(eItem))
+
     override def isEntityType = eItem.isEntityType
-    override lazy val typeArgs = TypeArgs("A" -> eItem)
     lazy val tag = {
       implicit val tag1 = eItem.tag
       weakTypeTag[Array[A]]

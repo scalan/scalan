@@ -111,7 +111,7 @@ trait Loops { self: Scalan =>
 }
 
 trait LoopsStd extends Loops { self: ScalanStd =>
-  def loopUntil[A:Elem](s1: Rep[A])( isMatch: Rep[A => Boolean], step: Rep[A => A]): Rep[A] = {
+  def loopUntil[A:Elem](s1: Rep[A])(isMatch: Rep[A => Boolean], step: Rep[A => A]): Rep[A] = {
     if (isMatch(s1)) return s1
     var state = s1
     while (!isMatch(state)) {
@@ -124,7 +124,8 @@ trait LoopsStd extends Loops { self: ScalanStd =>
 trait LoopsExp extends Loops with BaseExp { self: ScalanExp =>
   def loopUntil[A: Elem](s1: Rep[A])(isMatch: Rep[A => Boolean], step: Rep[A => A]): Rep[A] = LoopUntil(s1, step, isMatch)
 
-  case class LoopUntil[A](s1: Rep[A], step: Rep[A => A], isMatch: Rep[A => Boolean]) extends BaseDef[A]()(s1.elem) {
+  case class LoopUntil[A](s1: Rep[A], step: Rep[A => A], isMatch: Rep[A => Boolean]) extends Def[A] {
+    lazy val selfType = s1.elem.leastUpperBound(step.elem.eRange).asElem[A]
     override def productIterator = List(step, isMatch, s1).toIterator
   }
 }

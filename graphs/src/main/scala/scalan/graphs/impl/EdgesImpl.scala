@@ -21,7 +21,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     def eV = _eV
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
+    lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -70,7 +70,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     extends EdgeElem[V, E, AdjEdge[V, E]]
     with ConcreteElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
-    override lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
+    override lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
 
     override def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
     override def getDefaultRep = AdjEdge(0, 0, element[Graph[V, E]].defaultRepValue)
@@ -110,7 +110,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
       implicit val tagE = eE.tag
       weakTypeTag[AdjEdgeIso[V, E]]
     }
-    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
+    lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class AdjEdgeCompanionAbs extends CompanionDef[AdjEdgeCompanionAbs] with AdjEdgeCompanion {
@@ -161,7 +161,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     extends EdgeElem[V, E, IncEdge[V, E]]
     with ConcreteElem[IncEdgeData[V, E], IncEdge[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
-    override lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
+    override lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
 
     override def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
     override def getDefaultRep = IncEdge(0, 0, element[Graph[V, E]].defaultRepValue)
@@ -201,7 +201,7 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
       implicit val tagE = eE.tag
       weakTypeTag[IncEdgeIso[V, E]]
     }
-    lazy val typeArgs = TypeArgs("V" -> eV, "E" -> eE)
+    lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class IncEdgeCompanionAbs extends CompanionDef[IncEdgeCompanionAbs] with IncEdgeCompanion {
@@ -537,7 +537,7 @@ trait EdgesExp extends scalan.ScalanDslExp with EdgesDsl {
 }
 
 object Edges_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXX2gcRRifvT+5XC7GGJFoQRPjRUX0LrRILVEkJpeackmObpuWa4nM7c5dNu7OjrtzYc+H+lZQ30QUBJGK4ktRxDdFoVRBRHzw1WefqlL6YEFQ/Gb2z+0lt1dTzYP7MOz8+/78ft/3zczlX1HWddDDroZNTEsW4bikyv8FlxfVCuUG76zaetskS6S5+fz7f5yzXp1MofE6GtrC7pJr1lHe/6l4LPpXuV5FeUw14nLbcTl6sCo1lDXbNInGDZuWDctqc9wwSblquHy+ijINW++8hC4gpYrGNZtqDuFEXTSx6xI3GB8mwiIj6udlv7POujpoWXhRjnlxysEGB/NBx7i//iRhaofatGNxNBaYts6EWbCmQDwGPqxYzJRq0lWUMyxmOzzUmgMNW7YedjMUwwCaqG7jHVwGra2yyh2DtoQwhrUXcYuswRKxPAM+uMRsnuowEggvuFzv0ecxhBCwclgaVupiVoowKwnMiipxDGwaL2MxWXNsr4P8T0kj5DEQ8fgtRIQSSIXqxdfOa+duqgUrJTZ7wpScNGgIBE0lRIikB7D99uQb7o3jl46m0EgdjRjuQsPlDtZ4PAwCuAqYUptLmyMEsdMCBmeSGJRaFmDNrjDJa7bFMAVJAZajQJRpaAYXi8XYaEBPAvY5zki4VPGYEvk7neCvjKVFbJq1a/c9MftL5WwKpXpV5EGkCsnghEI5ylT0FglEi/ZOjpSNLr6iW5Fd0eS9bpsbYEmEySPXftO/mUPnUxGSgeJ/Rh6ImHjqnc9nSe3jFBquy1hfNnFL0iigWiKuVkfD9g5x/PHcDjbFX18qczpp4rbJA4DjyKQBGY6mE9OUEQHbvAx/JXS/4Efwmk1JcblW/F397s3LIkAdNOrP+Hn7l3H0z5/GmlzGLkdDTce2VvQQ3jQkfITGQ0nUMlJzDAvKyw558uoXp69/tZaV7E4ELm1gs038zA486nonlCpzoGmFcp8/qe9Q5IpopjjA2OYrVCfeXtNEMztob7blYLbVx6dgJHs8mt9nnHWjbcQHVbUtctfMDWPz0utcxpXi9Ra49cY2FJR5ue+BASEW1t5PL1685/oHL9wt68Nww+AWZsW5fVSHMJkPMPtRL3Rji8EZJNPkcO+kTOmEnBXtZDTnswfhMb6gb4tdi3Grp2JbYhoOKbu4T5GNrmqTWH1ZjgfPXgGVQQL2xgVHucBgKSFKn/uT0wewpJPq6tufTG2mUPYEyjahSrhVlG3YbaqHJMHRzonHnwvHlF6SgBTsYCsiRX7TqAtWb1Cf7bugshuPgtKHv9sryXu42p2nicXnlhme4fZt7Tv4yiDaY7J9+qDTZIVq/680CQyOp0lyZO4rdGOWDvUFPw2l9T8K7ARaBjBfEKV0GVuG2fn3tN+RwDmLSTsQdEX7Xlf6MShxpYQSt0Q0EztEF1d1YsFTwj+mjrz17JkT9545LQ/KUV0u8mei207/h88qZvPymv7ogGs6LCpWLAbPMPg58vUzP77y/UcfymtOF0TIcEk7wBiY7heEyKOZBI/U4ECEMLpw8921x3747Gd55RkRRytcuWj05olfdXrJzvvFBZ4wMWyBNXHYxqLnS9Fc+Rv+bTYNcQ4AAA=="
+  val dump = "H4sIAAAAAAAAANVXS2wbRRiedeI4jkMIQbSlUkkIDm/sqBUqVUAoJE5x5SZWt02L+0Dj3bGzYXd22R27aw7lVgm4IcQBiUMrEJeoEuKCQEJIFAkh1ANXzpxaqqoHKiGB+Gf26cTrkkIO+DDanZ35H9/3/f94Nn5DacdGjzsK1jEtGIThgiye5x2Wl0uUaaxz1FRbOlkkjXOvXv7jtPHO7hQar6GhNewsOnoNZb2HkmuFzzJTKyiLqUIcZtoOQ49WhIeiYuo6UZhm0qJmGC2G6zopVjSHzVXQYN1UO2+iC0iqoHHFpIpNGJEXdOw4xPHnhwmPSAvfs+K9s2JFPmiRZ1GMZXHcxhqD8MHHuLf+GLHkDjVpx2BozA9txeJhwZoccS3IoWxYunAzUEEZzbBMmwVeM+BhzVSD10GKYQJNVNZxGxfBa7MoM1ujTW7MwsobuEmWYQlfPgg5OERvHO9YxDeec5ja5c+1EELAyn4RWCHCrBBiVuCY5WVia1jX3sL8Y9U23Q7yftIAQq4FJp69i4nAAilRNf/uGeX0HTlnpPhml4eSEQENgaHJBIUIegDbH46979w+fOlgCo3U0IjmzNcdZmOFxWXgw5XDlJpMxBwiiO0mMDidxKDwMg9rNskkq5iGhSlY8rEcBaJ0TdEYX8znRn16ErDPMIsESyXXksJ8pxLyFVpawLpevf7wczM3SqdSKNXtIgsmZSgGOzDK0GBJbRLfNB/vZ0hajfDlryXxyoesG42ZPpGEmDxx/ab6/Sw6kwqR9B3/M/LAxMQLH301Q6pXUmi4JrS+pOOmoJFDtUgcpYaGzTaxvflMG+v8qSeVGZU0cEtnPsBxZAYAGYamEsvUIhy2OSF/KUg/5yl42aQkv1TN/y7/+MEGF6iNRr0vXt3+pR3885exBhPaZWioYZtGWQ3gHYCCD9F4LIlai1RtzYD20ibPf/f1iVvfLKcFuxN+SqtYbxGvsv2Mouy4U2kWPJUp8/gT/vaGqfBhkgGMLVamKnG3hsaHmX57000bW2s9cvJn0ofD79vUWaS2EQ9U2TTIA9O3tXOX3mNCV5Lb3eBW6uvQUObEvkf6SCzovZ9fvPjQrU9ef1D0h+G6xgxs5We30R2CYt7B6kfd0I0t+GeQKJP93R9FSSfULB93h9889kAe4/PqOt+1EI96MrYl5mGvtIn7FFmNXOvE6MlyXDxbDZT6GdiqC4YyfsDCQlg++5LLB7B87YZa2HNz3/kUGjqC0g3oEk4Fpetmi6oBSXC0M+KyV4I5qZskIAXb2AhP/DaGIwpEwtCuoHO0mKYXV/15r1/AbwpFgEbCt9EuP2C+q1Cmnj2Wf+bLjfPataeWRMcQ3k71tBMhczaGb07qoYd7a/FbuN9c94nN7K4dY5CZ97Rv5zsNHw+J8cWdLrsyVf5fZecHHC+7ZHlGIZzdjohjMQ/1pGEAmvZ/JPEEgvpoIMeb9BI2NL3z7wVwXwL7VszaDuPMx8uRn0PQlQoJbXSRKDq2icqvA8SA64p3FB748OWTR/acPCEO41FVLPK+hP+oel+ujmJrTlwFnuxzFYBF+ZJhwVUPHg5cfennt3/67FPRGCM4oeqFAABQP3SvSYQZTSdkJPuHLgjqwp2Pl5++9sWv4m/VCD++4W8dDe9V8b9T3bRnvYYD16QY98AfP9BjOvqWD1f/BqU6/5fVDgAA"
 }
 }
 
