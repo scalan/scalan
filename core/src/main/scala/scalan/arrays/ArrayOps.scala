@@ -728,6 +728,12 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
         implicit val eT = xs.elem.eItem
         xs(start + i * stride)
       case ArrayRangeFrom0(_) => i
+      case SymsArray(xs) =>
+        i match {
+          case Def(Const(i1)) =>
+            xs(i1)
+          case _ => super.rewriteDef(d)
+        }
       case _ =>
         super.rewriteDef(d)
     }
@@ -752,6 +758,13 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
           implicit val eT = xs.elem.eItem
           xs(is.map { i => start + i * stride})
         case ArrayRangeFrom0(_) => is
+      case arr: SymsArray[a] =>
+        is match {
+          case Def(Const(is1)) =>
+            implicit val eA = arr.eItem
+            SymsArray(is1.map(arr.symbols(_)))
+          case _ => super.rewriteDef(d)
+        }
         case _ =>
           super.rewriteDef(d)
       }
@@ -775,6 +788,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
         case ArrayStride(_, _, length, _) => length
         case ArrayRangeFrom0(n) => n
         case ArrayEmpty()  => toRep(0)
+        case SymsArray(xs) =>
+          xs.length
         case _ =>
           super.rewriteDef(d)
       }
@@ -853,6 +868,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
         case ArrayReplicate(length, x) =>
           implicit val eB = f.elem.eRange
           SArray.replicate(length, f(x))
+        case SymsArray(xs) =>
+          SymsArray(xs.map(f(_)))(f.elem.eRange)
         case _ =>
           super.rewriteDef(d)
       }
@@ -915,6 +932,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       implicit val eA = v1.elem
       implicit val eB = v2.elem
       SArray.replicate(len, (v1, v2))
+    case ArrayZip(Def(xs: SymsArray[a]), Def(ys: SymsArray[b])) =>
+      // for some reason implicit val eA and eB isn't enough
+      SymsArray((xs.symbols, ys.symbols).zipped.map(Pair.apply))(pairElement(xs.eItem, ys.eItem))
 
     // Rule: fuse ArrayZip into SArray.tabulate
     // should be the last with ArrayZip on top
