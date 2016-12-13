@@ -112,27 +112,22 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
     def tryInvoke: InvokeResult =
       receiver match {
-        case Def(d) =>
+        case Def(d) if !neverInvoke =>
           val argsArray = args.toArray
 
-          if (neverInvoke) {
-            InvokeImpossible
-          } else if (shouldInvoke(d, method, argsArray))
-            try {
-              InvokeSuccess(method.invoke(d, args: _*).asInstanceOf[Exp[_]])
-            } catch {
-              case e: Exception =>
-                InvokeFailure(baseCause(e))
-            }
-          else {
-            try {
+          try {
+            if (shouldInvoke(d, method, argsArray)) {
+              val res = method.invoke(d, args: _*).asInstanceOf[Exp[_]]
+              InvokeSuccess(res)
+            } else {
               invokeSuperMethod(d, method, argsArray) match {
                 case Some(res) => InvokeSuccess(res.asInstanceOf[Exp[_]])
                 case None => InvokeImpossible
               }
-            } catch {
-              case e: Exception => InvokeFailure(baseCause(e))
             }
+          } catch {
+            case e: Exception =>
+              InvokeFailure(baseCause(e))
           }
         case _ => InvokeImpossible
       }
@@ -796,30 +791,30 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
       receiver match {
         case Def(d) =>
-          if (shouldInvoke(d, m, args)) {
-            val res = try {
+          val res = try {
+            if (shouldInvoke(d, m, args)) {
               // call method of the node when it's allowed
               m.invoke(d, args: _*)
-            } catch {
-              case e: Exception =>
-                baseCause(e) match {
-                  case ExternalMethodException(className, methodName) =>
-                    mkMethodCall(neverInvoke = true)
-                      .setMetadata(externalClassNameMetaKey)(className)
-                      .setMetadata(externalMethodNameMetaKey)(methodName)
-                  case _: DelayInvokeException =>
-                    mkMethodCall(neverInvoke = false)
-                  case cause =>
-                    throwInvocationException("Method invocation", cause, receiver, m, args)
-                }
+            } else {
+              // try to call method m via inherited class or interfaces
+              invokeSuperMethod(d, m, args).getOrElse {
+                mkMethodCall(neverInvoke = false)
+              }
             }
-            res
-          } else {
-            // try to call method m via inherited class or interfaces
-            invokeSuperMethod(d, m, args).getOrElse {
-              mkMethodCall(neverInvoke = false)
-            }
+          } catch {
+            case e: Exception =>
+              baseCause(e) match {
+                case ExternalMethodException(className, methodName) =>
+                  mkMethodCall(neverInvoke = true)
+                    .setMetadata(externalClassNameMetaKey)(className)
+                    .setMetadata(externalMethodNameMetaKey)(methodName)
+                case _: DelayInvokeException =>
+                  mkMethodCall(neverInvoke = false)
+                case cause =>
+                  throwInvocationException("Method invocation", cause, receiver, m, args)
+              }
           }
+          res
         case _ => mkMethodCall(neverInvoke = false)
       }
     }
