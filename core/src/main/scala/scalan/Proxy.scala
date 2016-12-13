@@ -111,31 +111,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     }
 
     def tryInvoke: InvokeResult =
-      receiver match {
-        case Def(d) =>
-          val argsArray = args.toArray
-
-          if (neverInvoke) {
-            InvokeImpossible
-          } else if (shouldInvoke(d, method, argsArray))
-            try {
-              InvokeSuccess(method.invoke(d, args: _*).asInstanceOf[Exp[_]])
-            } catch {
-              case e: Exception =>
-                InvokeFailure(baseCause(e))
-            }
-          else {
-            try {
-              invokeSuperMethod(d, method, argsArray) match {
-                case Some(res) => InvokeSuccess(res.asInstanceOf[Exp[_]])
-                case None => InvokeImpossible
-              }
-            } catch {
-              case e: Exception => InvokeFailure(baseCause(e))
-            }
-          }
-        case _ => InvokeImpossible
-      }
+      if (neverInvoke)
+        InvokeImpossible
+      else
+        findInvokableMethod[InvokeResult](receiver, method, args.toArray) {
+          res => InvokeSuccess(res.asInstanceOf[Exp[_]])
+        } { InvokeFailure(_) } { InvokeImpossible }
   }
 
   case class NewObject[A](eA: Elem[A], args: List[Any], neverInvoke: Boolean) extends BaseDef[A]()(eA)
@@ -252,13 +233,49 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     proxy.asInstanceOf[Ops]
   }
 
-  final val skipInterfaces = {
+  private def findInvokableMethod[A](receiver: Exp[_], m: Method, args: Array[AnyRef])
+                                    (onInvokeSuccess: AnyRef => A)
+                                    (onInvokeException: Throwable => A)
+                                    (onNoMethodFound: => A): A = {
+    receiver match {
+      case Def(d) =>
+        @tailrec
+        def findMethodLoop(m: Method): Option[Method] =
+          if (shouldInvoke(d, m, args))
+            Some(m)
+          else
+            getSuperMethod(m) match {
+              case None =>
+                None
+              case Some(superMethod) =>
+                findMethodLoop(superMethod)
+            }
+
+        findMethodLoop(m) match {
+          case Some(m1) =>
+            try {
+              val invokeResult = m1.invoke(d, args: _*)
+              onInvokeSuccess(invokeResult)
+            } catch {
+              case e: Exception =>
+                onInvokeException(baseCause(e))
+            }
+          case None =>
+            onNoMethodFound
+        }
+      case _ =>
+        onNoMethodFound
+    }
+  }
+
+  private final val skipInterfaces = {
     val mirror = scala.reflect.runtime.currentMirror
     Symbols.SuperTypesOfDef.flatMap { sym =>
       Try[Class[_]](mirror.runtimeClass(sym.asClass)).toOption
     }
   }
 
+  // Do we want to return iterator instead?
   private def getSuperMethod(m: Method): Option[Method] = {
     val c = m.getDeclaringClass
     val superClass = c.getSuperclass
@@ -349,21 +366,6 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       case f: Function2[_, _, _] => true
       case _ => false
     }
-
-  private def invokeSuperMethod(d: Def[_], m: Method, args: Array[AnyRef]): Option[AnyRef] = {
-    @tailrec
-    def loop(m: Method): Option[AnyRef] =
-      getSuperMethod(m) match {
-        case None => None
-        case Some(superMethod) =>
-          if (shouldInvoke(d, superMethod, args))
-            Some(superMethod.invoke(d, args: _*))
-          else
-            loop(superMethod)
-      }
-
-    loop(m)
-  }
 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   protected var methodCallReceivers = Set.empty[Exp[_]]
@@ -794,34 +796,19 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       def mkMethodCall(neverInvoke: Boolean) =
         ProxyExp.this.mkMethodCall(receiver, m, args.toList, neverInvoke)
 
-      receiver match {
-        case Def(d) =>
-          if (shouldInvoke(d, m, args)) {
-            val res = try {
-              // call method of the node when it's allowed
-              m.invoke(d, args: _*)
-            } catch {
-              case e: Exception =>
-                baseCause(e) match {
-                  case ExternalMethodException(className, methodName) =>
-                    mkMethodCall(neverInvoke = true)
-                      .setMetadata(externalClassNameMetaKey)(className)
-                      .setMetadata(externalMethodNameMetaKey)(methodName)
-                  case _: DelayInvokeException =>
-                    mkMethodCall(neverInvoke = false)
-                  case cause =>
-                    throwInvocationException("Method invocation", cause, receiver, m, args)
-                }
-            }
-            res
-          } else {
-            // try to call method m via inherited class or interfaces
-            invokeSuperMethod(d, m, args).getOrElse {
-              mkMethodCall(neverInvoke = false)
-            }
-          }
-        case _ => mkMethodCall(neverInvoke = false)
+      val res = findInvokableMethod(receiver, m, args)(identity) {
+        case ExternalMethodException(className, methodName) =>
+          mkMethodCall(neverInvoke = true)
+            .setMetadata(externalClassNameMetaKey)(className)
+            .setMetadata(externalMethodNameMetaKey)(methodName)
+        case _: DelayInvokeException =>
+          mkMethodCall(neverInvoke = false)
+        case cause =>
+          throwInvocationException("Method invocation", cause, receiver, m, args)
+      } {
+        mkMethodCall(neverInvoke = false)
       }
+      res
     }
   }
 
