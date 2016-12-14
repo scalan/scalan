@@ -1,6 +1,6 @@
 package scalan
 
-import scalan.common.{KindsDslExp, KindsExamples}
+import scalan.common.{KindsDslExp, KindsExamples, MetaTestsDslExp}
 import scala.reflect.runtime.universe._
 
 abstract class AbstractElemTests extends BaseNestedTests {
@@ -14,12 +14,28 @@ abstract class AbstractElemTests extends BaseNestedTests {
       assert(container[A] == container[B])
     def containersShouldNotBeEqual[A[_]: Cont, B[_]: Cont] =
       assert(container[A] != container[B])
+
+    def assertBounds[A, B, C, D](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]) = {
+      def assertBound(isUpper: Boolean) = {
+        val (boundName, bound, expectedBound) =
+          if (isUpper)
+            ("Upper", eA.leastUpperBound(eB), eC)
+          else
+            ("Lower", eA.greatestLowerBound(eB), eD)
+        assert(bound == expectedBound, s"$boundName bound for ${eA.name} and ${eB.name} should be $expectedBound but was $bound")
+      }
+
+      it(s"Bounds for ${eA.name} and ${eB.name}") {
+        assertBound(true)
+        assertBound(false)
+      }
+    }
   }
 }
 
 /** See also scalan.collections.MoreElemTests in collections subproject */
 class ElemTests extends AbstractElemTests {
-  class Ctx extends super.Ctx with KindsExamples with KindsDslExp with JNIExtractorOpsExp
+  class Ctx extends super.Ctx with KindsExamples with KindsDslExp with JNIExtractorOpsExp with MetaTestsDslExp
 
   val ctx = new Ctx
   import ctx._
@@ -108,4 +124,23 @@ class ElemTests extends AbstractElemTests {
       containersShouldNotBeEqual[Array, ArrayBuffer]
     }
   }
+
+  // locally available to infer implicit arguments for
+  implicit lazy val AnyElement = ctx.AnyElement
+  implicit lazy val NothingElement = ctx.NothingElement
+
+  assertBounds[Int, Int, Int, Int]
+  assertBounds[Int, Boolean, Any, Nothing]
+  assertBounds[MT0, MT1[Unit], MetaTest[Unit], Nothing]
+  assertBounds[MetaTest[Int], MT1[Int], MetaTest[Int], MT1[Int]]
+  assertBounds[AString, CString, AString, CString]
+  assertBounds[SString, CString, AString, Nothing]
+  // test for invariance
+  assertBounds[MT1[Int], MT1[Double], Any, Nothing]
+  // below tests show co/contravariance gets handled correctly
+  // can't use Nothing in these tests, get diverging implicit expansion otherwise
+  assertBounds[(SString, Boolean), (AString, Boolean), (AString, Boolean), (SString, Boolean)]
+  assertBounds[SString => Boolean, AString => Boolean, SString => Boolean, AString => Boolean]
+  assertBounds[Boolean => SString, Boolean => AString, Boolean => AString, Boolean => SString]
+  assertBounds[SString => SString, AString => AString, SString => AString, AString => SString]
 }

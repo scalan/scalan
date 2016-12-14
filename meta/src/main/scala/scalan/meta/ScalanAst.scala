@@ -3,6 +3,7 @@ package scalan.meta
 import scala.reflect.internal.ModifierFlags
 import PrintExtensions._
 import scalan._
+import scalan.util.{Contravariant, Covariant, Invariant}
 
 object ScalanAst {
   // STpe universe --------------------------------------------------------------------------
@@ -285,7 +286,13 @@ object ScalanAst {
                       flags: Long = ModifierFlags.PARAM)
   {
     def isHighKind = tparams.nonEmpty
-    def isCovariant = hasFlag(ModifierFlags.COVARIANT)
+    val variance =
+      if (hasFlag(ModifierFlags.COVARIANT))
+        Covariant
+      else if (hasFlag(ModifierFlags.CONTRAVARIANT))
+        Contravariant
+      else
+        Invariant
     def hasFlag(flag: Long) = (flag & flags) != 0L
     def declaration: String =
       if (isHighKind) {

@@ -1,9 +1,10 @@
 package scalan
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.language.higherKinds
 import scalan.common.Lazy
-import scalan.meta.ScalanAst.{STraitOrClassDef, SEntityModuleDef}
+import scalan.meta.ScalanAst.{SEntityModuleDef, STraitOrClassDef}
 import scalan.util.ReflectionUtil
 
 trait Entities extends TypeDescs { self: Scalan =>
@@ -27,6 +28,54 @@ trait Entities extends TypeDescs { self: Scalan =>
       case _ => false
     }
     override def hashCode = tag.tpe.hashCode
+    override protected def _commonBound(other: Elem[_], isUpper: Boolean) = other match {
+      case other: EntityElem[_] =>
+        val runtimeClass = this.runtimeClass
+
+        if (runtimeClass == other.runtimeClass) {
+          // recursion base
+          super._commonBound(other, isUpper)
+        } else if (isUpper) {
+          // Step 1:
+          // We find potential common ancestors which have the same class.
+          // 1.1: find the ancestor of `other` whose runtime class is a superclass of this (if one exists)
+          @tailrec
+          def findAncestor(e: EntityElem[_])(pred: Class[_] => Boolean): Option[EntityElem[_]] = {
+            if (pred(e.runtimeClass))
+              Some(e)
+            else
+              e.parent match {
+                case Some(parent: EntityElem[_]) =>
+                  findAncestor(parent)(pred)
+                case _ =>
+                  None
+              }
+          }
+
+          for {
+            potentialCommonAncestor2 <- findAncestor(other)(_.isAssignableFrom(runtimeClass))
+            runtimeClass2 = potentialCommonAncestor2.runtimeClass
+            potentialCommonAncestor1 <- findAncestor(EntityElem.this)(_ == runtimeClass2)
+          } yield {
+            // will hit the recursion base above
+            potentialCommonAncestor1.commonBound(potentialCommonAncestor2, isUpper)
+          }
+        } else {
+          // we are looking for lower bound and runtime classes are different
+          // just check if one is subtype of another, since we don't know how
+          // their type arguments are related
+
+          // TODO support cases like elem[Vector[String]].lowerBound(elem[DenseVector[Object]]) == DenseVector[String]
+          if (this <:< other)
+            Some(this)
+          else if (other <:< this)
+            Some(other)
+          else
+            None
+        }
+      case _ =>
+        None
+    }
   }
 
   abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
@@ -90,18 +139,18 @@ trait Entities extends TypeDescs { self: Scalan =>
   }
 
   def isConcreteElem(e: TypeDesc): Boolean = e match {
-    case e: PairElem[_, _] => e.eFst.isConcrete && e.eSnd.isConcrete
-    case e: SumElem[_, _] => e.eLeft.isConcrete && e.eRight.isConcrete
-    case e: FuncElem[_, _] => e.eDom.isConcrete && e.eRange.isConcrete
-    case e: ArrayElem[_] => e.eItem.isConcrete
-    case e: ListElem[_] => e.eItem.isConcrete
-    case e: ArrayBufferElem[_] => e.eItem.isConcrete
-    case e: ViewElem[_,_] if e.typeArgs.nonEmpty =>
-      e.typeArgs.forall { case (n, e) => isConcreteElem(e) }
-    case _: ViewElem[_,_] => true
-    case _: EntityElem[_] => false
-    case _: BaseElem[_] => true
-    case _ => ???(s"isConcreteElem is not implemented for $e")
+    case _: BaseElem[_] =>
+      true
+    case e: EntityElem[_] if !isConcreteModuloTypeArgs(e) =>
+      false
+    case e: Elem[_] =>
+      e.typeArgsIterator.forall(isConcreteElem)
+    case _: Cont[_] => true
+  }
+
+  protected def isConcreteModuloTypeArgs(e: EntityElem[_]) = e match {
+    case _: ViewElem[_, _] | _: ArrayElem[_] | _: ListElem[_] | _: ArrayBufferElem[_] => true
+    case _ => false
   }
 
   implicit class ElemOps[T](e: Elem[T]) {
@@ -123,6 +172,7 @@ trait Entities extends TypeDescs { self: Scalan =>
     override def isEntityType = false
 
     lazy val typeArgs = TypeArgs()
+    override protected def _copyWithTypeArgs(args: Iterator[TypeDesc]): Elem[_] = this
   }
 
   trait TypeFamily1[F[_]]

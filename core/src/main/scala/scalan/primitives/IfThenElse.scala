@@ -39,13 +39,9 @@ trait IfThenElseStd extends IfThenElse { self: ScalanStd =>
 
 trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: ScalanExp =>
 
-  abstract class AbstractIfThenElse[+T](implicit selfType: Elem[T @uncheckedVariance]) extends BaseDef[T] {
-    val cond: Exp[Boolean]
-    val thenp: Exp[T]
-    val elsep: Exp[T]
+  case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T]) extends Def[T] {
+    lazy val selfType = thenp.elem.leastUpperBound(elsep.elem).asElem[T]
   }
-
-  case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit selfType: Elem[T]) extends AbstractIfThenElse[T]
 
   def reifyBranch[T](b: => Exp[T]): Exp[T] = {
     val Block(res) = reifyEffects(b)
@@ -55,7 +51,6 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
   override def ifThenElse[T](cond: Exp[Boolean], thenp: => Exp[T], elsep: => Exp[T]): Exp[T] = {
     val t = reifyBranch(thenp)
     val e = reifyBranch(elsep)
-    implicit val eT = t.elem
     IfThenElse(cond, t, e)
   }
 
@@ -145,7 +140,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
         case Some((c, a, b, iso1: Iso[a,c], iso2: Iso[b,d])) =>
           val eC = iso1.eTo
           val eD = iso2.eTo
-          if (eC.isConcrete && eD.isConcrete)
+          if (eC == eD || (eC.isConcrete && eD.isConcrete))
             (eC, eD) match {
               case IsConvertible(cTo, cFrom) =>
                 Some((c, a.asRep[a], b.asRep[b], iso1, iso2, cTo, cFrom))

@@ -5,6 +5,7 @@ import scalan.common.OverloadHack.Overloaded1
 import scalan.staged.BaseExp
 import scalan.{Scalan, ScalanExp, ScalanStd}
 import scala.reflect.runtime.universe._
+import scalan.util.Covariant
 
 trait ListOps { self: Scalan =>
   type Lst[T] = Rep[List[T]]
@@ -64,7 +65,7 @@ trait ListOps { self: Scalan =>
     extends EntityElem1[A, List[A], List](eItem, container[List]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-    override lazy val typeArgs = TypeArgs("A" -> eItem)
+    override lazy val typeArgs = TypeArgs("A" -> (eItem -> Covariant))
     lazy val tag = {
       implicit val rt = eItem.tag
       weakTypeTag[List[A]]

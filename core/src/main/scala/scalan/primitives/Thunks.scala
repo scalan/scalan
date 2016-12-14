@@ -5,6 +5,7 @@ import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.{Scalan, ScalanExp, ScalanStd, ViewsDslExp}
 import scala.reflect.runtime.universe._
+import scalan.util.Covariant
 
 trait Thunks { self: Scalan =>
   type Th[+T] = Rep[Thunk[T]]
@@ -34,7 +35,7 @@ trait Thunks { self: Scalan =>
     extends EntityElem1[A, Thunk[A], Thunk](eItem, container[Thunk]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-    override lazy val typeArgs = TypeArgs("A" -> eItem)
+    override lazy val typeArgs = TypeArgs("A" -> (eItem -> Covariant))
     lazy val tag = {
       implicit val rt = eItem.tag
       weakTypeTag[Thunk[A]]

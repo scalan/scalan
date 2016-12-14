@@ -5,6 +5,7 @@ import java.lang.reflect.Method
 import scala.reflect.runtime.universe._
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.BaseExp
+import scalan.util.Invariant
 
 trait TypeWrappers extends Base { self: Scalan =>
 
@@ -36,7 +37,8 @@ trait TypeWrappers extends Base { self: Scalan =>
             eItem == other.eItem)
       case _ => false
     }
-    override lazy val typeArgs = TypeArgs("A" -> eItem, "CBase" -> cont, "TWrapper" -> wrapperElem)
+    override lazy val typeArgs =
+      TypeArgs("A" -> (eItem -> Invariant), "CBase" -> (cont -> Invariant), "TWrapper" -> (wrapperElem -> Invariant))
   }
 
   protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase]

@@ -4,6 +4,7 @@ import org.objectweb.asm.{Type => TypeDescriptors}
 
 import scala.reflect.runtime.universe._
 import scalan.primitives.{AbstractStringsDsl, AbstractStringsDslExp, AbstractStringsDslStd}
+import scalan.util.Invariant
 
 /**
  * Created by zotov on 12/9/14.
@@ -31,13 +32,13 @@ trait JNIExtractorOps extends Base { self: Scalan with AbstractStringsDsl =>
 
     lazy val getDefaultRep = null.asInstanceOf[Rep[JNIType[T]]]
 
-    lazy val typeArgs = TypeArgs("T" -> eT)
+    lazy val typeArgs = TypeArgs("T" -> (eT -> Invariant))
   }
 
   case class JNIArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     def parent: Option[Elem[_]] = Some(arrayElement(eItem))
     override def isEntityType = eItem.isEntityType
-    override lazy val typeArgs = TypeArgs("A" -> eItem)
+    override lazy val typeArgs = TypeArgs("A" -> (eItem -> Invariant))
     override def getName(f: TypeDesc => String) = s"JNI-${super.getName(f)}"
 
     lazy val tag = {

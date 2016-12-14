@@ -73,11 +73,28 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     }
     override def getName(f: TypeDesc => String) =
       baseStructName(structTag) + fieldsString(f)
-    lazy val typeArgs = TypeArgs()
     def fieldsString(f: TypeDesc => String): String =
       "{" + fields.map { case (fn,fe) => s"$fn: ${f(fe)}" }.mkString("; ") + "}"
     lazy val fieldsString: String = fieldsString(_.name)
     def findFieldIndex(fieldName: String): Int = fields.iterator.map(_._1).indexOf(fieldName)
+
+    lazy val typeArgs = TypeArgs()
+    override protected def _copyWithTypeArgs(args: Iterator[TypeDesc]) = {
+      val fields1 = for ((name, elem) <- fields) yield (name, args.next().asInstanceOf[Elem[_]])
+      structElement(structTag, fields1)
+    }
+    override protected def _commonBound(other: Elem[_], isUpper: Boolean): Option[Elem[_]] = other match {
+      case StructElem(structTag1, fields1) if structTag1 == structTag =>
+        val resultFields = fields.zipAll(fields1, null, null).map {
+          case ((name1, e1), (name2, e2)) if name1 == name2 =>
+            (name1, e1.commonBound(e2, isUpper))
+          case _ =>
+            // non-local return
+            return None
+        }
+        Some(structElement(structTag, resultFields))
+      case _ => None
+    }
   }
   implicit def StructElemExtensions[T <: Struct](e: Elem[T]): StructElem[T] = e.asInstanceOf[StructElem[T]]
 

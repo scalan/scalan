@@ -2,12 +2,12 @@ package scalan
 
 import scalan.common.Lazy
 import scalan.staged.BaseExp
-import annotation.implicitNotFound
+import scala.annotation.implicitNotFound
 import scala.collection.immutable.ListMap
 import scala.reflect.runtime.universe._
 import scala.reflect.{AnyValManifest, ClassTag}
 import scalan.meta.ScalanAst.STpeArg
-import scalan.util.ReflectionUtil
+import scalan.util._
 
 trait TypeDescs extends Base { self: Scalan =>
 
@@ -43,8 +43,33 @@ trait TypeDescs extends Base { self: Scalan =>
     final lazy val classTag: ClassTag[A] = ReflectionUtil.typeTagToClassTag(tag)
     // classTag.runtimeClass is cheap, no reason to make it lazy
     final def runtimeClass: Class[_] = classTag.runtimeClass
-    def typeArgs: ListMap[String, TypeDesc]
-    def typeArgsIterator = typeArgs.valuesIterator
+
+    def typeArgs: ListMap[String, (TypeDesc, Variance)]
+    def typeArgsIterator = typeArgs.valuesIterator.map(_._1)
+    final def copyWithTypeArgs(args: Iterator[TypeDesc]) = {
+      try {
+        val res = _copyWithTypeArgs(args)
+        assert(!args.hasNext)
+        res
+      } catch {
+        case e: NoSuchElementException =>
+          !!!(s"Not enough elements in the iterator supplied to $this._copyWithTypeArgs", e)
+      }
+    }
+    protected def _copyWithTypeArgs(args: Iterator[TypeDesc]): Elem[_] =
+      if (typeArgs.isEmpty)
+        this
+      else
+        cachedElemI(this.getClass, args)
+    def mapTypeArgs(f: Elem[_] => Elem[_]) = {
+      val newTypeArgs = typeArgsIterator.map {
+        case e: Elem[_] =>
+          f(e)
+        case x => x
+      }
+      copyWithTypeArgs(newTypeArgs)
+    }
+
     // should only be called by defaultRepValue
     protected def getDefaultRep: Rep[A]
     lazy val defaultRepValue = getDefaultRep
@@ -61,6 +86,54 @@ trait TypeDescs extends Base { self: Scalan =>
         val typeArgString = typeArgsIterator.map(f).mkString(", ")
         s"$className[$typeArgString]"
       }
+    }
+
+    def leastUpperBound(e: Elem[_]): Elem[_] =
+      commonBound(e, isUpper = true)
+
+    def greatestLowerBound(e: Elem[_]): Elem[_] =
+      commonBound(e, isUpper = false)
+
+    /**
+      * Helper for leastUpperBound and greatestLowerBound.
+      * Should be protected, but then it can't be accessed in subclasses, see
+      * http://stackoverflow.com/questions/4621853/protected-members-of-other-instances-in-scala
+      */
+    def commonBound(e: Elem[_], isUpper: Boolean): Elem[_] = {
+      if (this eq e)
+        this
+      else
+        _commonBound(e, isUpper).getOrElse {
+          if (isUpper) AnyElement else NothingElement
+        }
+    }
+
+    // overridden in BaseElem, EntityElem, StructElem
+    protected def _commonBound(other: Elem[_], isUpper: Boolean): Option[Elem[_]] = {
+      if (this.getClass == other.getClass) {
+        // empty type args case is covered too, since copyWithTypeArgs will return `this`
+        val newArgs = this.typeArgsIterator.zip(other.typeArgs.valuesIterator).map {
+          case (arg1: Elem[_], (arg2: Elem[_], variance)) if variance != Invariant =>
+            val isUpper1 = variance match {
+              case Covariant => isUpper
+              case Contravariant => !isUpper
+              case Invariant => !!!("variance can't be Invariant if we got here")
+            }
+            arg1.commonBound(arg2, isUpper1)
+          case (arg1, (arg2, _)) =>
+            if (arg1 == arg2)
+              arg1
+            else {
+              // return from the entire _commonBound method! This really throws an exception, but
+              // it works since the iterator will be consumed by copyWithTypeArgs below and the
+              // exception will get thrown there
+              return None
+            }
+        }
+        val newElem = copyWithTypeArgs(newArgs)
+        Some(newElem)
+      } else
+        None
     }
 
     def <:<(e: Elem[_]) = tag.tpe <:< e.tag.tpe
@@ -91,21 +164,35 @@ trait TypeDescs extends Base { self: Scalan =>
 
   private val debug$ElementCounter = counter[Elem[_]]
 
+  private[scalan] def getConstructor(clazz: Class[_]) = {
+    val constructors = clazz.getDeclaredConstructors()
+    if (constructors.length != 1)
+      !!!(s"Element class $clazz has ${constructors.length} constructors, 1 expected")
+    else
+      constructors(0)
+  }
+
+  // FIXME See https://github.com/scalan/scalan/issues/252
+  def cachedElem[E <: Elem[_]](args: AnyRef*)(implicit tag: ClassTag[E]) = {
+    cachedElem0(tag.runtimeClass, None, args).asInstanceOf[E]
+  }
+
+  private def cachedElemI(clazz: Class[_], argsIterator: Iterator[TypeDesc]) = {
+    val constructor = getConstructor(clazz)
+    // -1 because the constructor includes `self` argument, see cachedElem0 below
+    val args = argsIterator.take(constructor.getParameterTypes.length - 1).toSeq
+    cachedElem0(clazz, Some(constructor), args)
+  }
+
   protected val elemCache = collection.mutable.Map.empty[(Class[_], Seq[AnyRef]), AnyRef]
 
-  def cachedElem[E <: Elem[_]](args: AnyRef*)(implicit tag: ClassTag[E]) = {
-    val clazz = tag.runtimeClass
+  private def cachedElem0(clazz: Class[_], optConstructor: Option[java.lang.reflect.Constructor[_]], args: Seq[AnyRef]) = {
     elemCache.getOrElseUpdate(
       (clazz, args), {
-        val constructors = clazz.getDeclaredConstructors()
-        if (constructors.length != 1) {
-          !!!(s"Element class $clazz has ${constructors.length} constructors, 1 expected")
-        } else {
-          val constructor = constructors(0)
-          val constructorArgs = self +: args
-          constructor.newInstance(constructorArgs: _*).asInstanceOf[Elem[_]]
-        }
-      }).asInstanceOf[E]
+        val constructor = optConstructor.getOrElse(getConstructor(clazz))
+        val constructorArgs = self +: args
+        constructor.newInstance(constructorArgs: _*).asInstanceOf[AnyRef]
+      }).asInstanceOf[Elem[_]]
   }
 
   def cleanUpTypeName(tpe: Type) = tpe.toString.
@@ -130,10 +217,14 @@ trait TypeDescs extends Base { self: Scalan =>
             noTypeArgs)
       case _ => false
     }
+
     lazy val typeArgs = {
       assert(noTypeArgs)
       TypeArgs()
     }
+    override protected def _commonBound(other: Elem[_], isUpper: Boolean): Option[Elem[_]] =
+      if (this == other) Some(this) else None
+
     private[this] lazy val noTypeArgs =
       if (tag.tpe.typeArgs.isEmpty)
         true
@@ -151,7 +242,7 @@ trait TypeDescs extends Base { self: Scalan =>
       weakTypeTag[(A, B)]
     }
     override def getName(f: TypeDesc => String) = s"(${f(eFst)}, ${f(eSnd)})"
-    lazy val typeArgs = ListMap("A" -> eFst, "B" -> eSnd)
+    lazy val typeArgs = ListMap("A" -> (eFst -> Covariant), "B" -> (eSnd -> Covariant))
     protected def getDefaultRep = Pair(eFst.defaultRepValue, eSnd.defaultRepValue)
   }
 
@@ -163,7 +254,7 @@ trait TypeDescs extends Base { self: Scalan =>
       weakTypeTag[A | B]
     }
     override def getName(f: TypeDesc => String) = s"(${f(eLeft)} | ${f(eRight)})"
-    lazy val typeArgs = ListMap("A" -> eLeft, "B" -> eRight)
+    lazy val typeArgs = ListMap("A" -> (eLeft -> Covariant), "B" -> (eRight -> Covariant))
     protected def getDefaultRep = mkLeft[A, B](eLeft.defaultRepValue)(eRight)
   }
 
@@ -175,7 +266,7 @@ trait TypeDescs extends Base { self: Scalan =>
       weakTypeTag[A => B]
     }
     override def getName(f: TypeDesc => String) = s"${f(eDom)} => ${f(eRange)}"
-    lazy val typeArgs = ListMap("A" -> eDom, "B" -> eRange)
+    lazy val typeArgs = ListMap("A" -> (eDom -> Contravariant), "B" -> (eRange -> Covariant))
     protected def getDefaultRep = {
       val defaultB = eRange.defaultRepValue
       fun[A, B](_ => defaultB)(Lazy(eDom), eRange)
@@ -191,6 +282,11 @@ trait TypeDescs extends Base { self: Scalan =>
       assert(noTypeArgs)
       TypeArgs()
     }
+    override protected def _copyWithTypeArgs(args: Iterator[TypeDesc]): Elem[_] = {
+      assert(noTypeArgs)
+      this
+    }
+
     private[this] lazy val noTypeArgs =
       if (tag.tpe.typeArgs.isEmpty)
         true
@@ -206,7 +302,7 @@ trait TypeDescs extends Base { self: Scalan =>
       }
     }
 
-    def isCovariant = tyArg.isCovariant
+    def variance = tyArg.variance
     def tyExpr = tyArg.toTraitCall
     def toDesc(env: Map[ArgElem,TypeDesc]): TypeDesc = env.get(this) match {
       case Some(d) => d
@@ -233,6 +329,9 @@ trait TypeDescs extends Base { self: Scalan =>
 
   val AnyElement: Elem[Any] = new BaseElem[Any](null)
   val AnyRefElement: Elem[AnyRef] = new BaseElem[AnyRef](null)
+  // very ugly casts but should be safe
+  val NothingElement: Elem[Nothing] =
+    new BaseElem[Null](null)(weakTypeTag[Nothing].asInstanceOf[WeakTypeTag[Null]]).asElem[Nothing]
   implicit val BooleanElement: Elem[Boolean] = new BaseElem(false)
   implicit val ByteElement: Elem[Byte] = new BaseElem(0.toByte)
   implicit val ShortElement: Elem[Short] = new BaseElem(0.toShort)
@@ -262,20 +361,14 @@ trait TypeDescs extends Base { self: Scalan =>
 
   implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = Lazy(eA)
 
-  def TypeArgs(descs: (String, TypeDesc)*) = ListMap(descs: _*)
+  def TypeArgs(descs: (String, (TypeDesc, Variance))*) = ListMap(descs: _*)
 
   object TagImplicits {
     implicit def elemToClassTag[A](implicit elem: Elem[A]): ClassTag[A] = elem.classTag
   }
 
-  def concretizeElem(e: Elem[_]): Elem[_] = e match {
-    case e: BaseElem[_] => e
-    case e: ArrayElem[_] => arrayElement(concretizeElem(e.eItem))
-    case e: ArrayBufferElem[_] => arrayBufferElement(concretizeElem(e.eItem))
-    case e: PairElem[_,_] => pairElement(concretizeElem(e.eFst), concretizeElem(e.eSnd))
-    case e: SumElem[_,_] => sumElement(concretizeElem(e.eLeft), concretizeElem(e.eRight))
-    case _ => e
-  }
+  /** Returns the argument by default, can be overridden for specific types */
+  def concretizeElem(e: Elem[_]): Elem[_] = e.mapTypeArgs(concretizeElem)
 
   // can be removed and replaced with assert(value.elem == elem) after #72
   def assertElem(value: Rep[_], elem: Elem[_]): Unit = assertElem(value, elem, "")
