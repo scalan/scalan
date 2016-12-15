@@ -336,13 +336,18 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   }
 
   protected def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) = {
-    if (m.getDeclaringClass.isAssignableFrom(d.getClass)) {
-      isInvokeEnabled(d, m) || hasFuncArg(args) ||
-        // e.g. for methods returning Elem
-        (m.getReturnType != classOf[AnyRef] && m.getReturnType != classOf[Exp[_]])
-    } else {
-      //val parent = commonAncestor(m.getDeclaringClass, d.getClass)
-      false
+    m.getDeclaringClass.isAssignableFrom(d.getClass) && {
+      isInvokeEnabled(d, m) ||
+      // If method arguments include Scala functions, the method can't be staged directly.
+      // In most cases it just stages the functions and calls a method which _can_ be staged.
+      hasFuncArg(args) || {
+        // Methods can only be staged if they return Rep[_]. For such methods
+        // the JVM return type is Object if the method is defined in abstract context
+        // and Exp if defined in staged context.
+        // If neither holds, the method again should be invoked immediately.
+        val returnClass = m.getReturnType
+        !(returnClass == classOf[AnyRef] || returnClass == classOf[Exp[_]])
+      }
     }
   }
 
