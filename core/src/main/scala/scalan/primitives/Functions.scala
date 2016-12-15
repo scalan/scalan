@@ -31,6 +31,14 @@ trait Functions { self: Scalan =>
   // more convenient to call with explicit eA
   def inferredFun[A, B](eA: Elem[A])(fun: Rep[A] => Rep[B]): Rep[A => B] =
     inferredFun(fun)(Lazy(eA))
+  // see BooleanFunctionOps for example usage
+  def sameArgFun[A, B, C](f: Rep[A => C])(fun: Rep[A] => Rep[B]): Rep[A => B] =
+    // works in sequential context because Lazy's value is never accessed
+    // and in staged context because rep_getElem is safe
+    inferredFun(fun)(Lazy(rep_getElem(f).eDom))
+  def composeBi[A, B, C, D](f: Rep[A => B], g: Rep[A => C])(h: (Rep[B], Rep[C]) => Rep[D]): Rep[A => D] = {
+    sameArgFun(f) { x => h(f(x), g(x)) }
+  }
 }
 
 trait FunctionsStd extends Functions { self: ScalanStd =>
@@ -365,13 +373,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   private def reifyFunction0[A, B](fun: Exp[A] => Exp[B], x: Exp[A], y: Exp[B], fSym: Exp[A => B], mayInline: Boolean): Exp[A => B] = {
     val lam = new Lambda(Some(fun), x, y, fSym, mayInline)
     findOrCreateDefinition(lam, fSym)
-  }
-
-  def functionSplit[A, B, C](f: Rep[A=>B], g: Rep[A=>C]): Rep[A=>(B,C)] = {
-    implicit val eA = f.elem.eDom
-    implicit val eB = f.elem.eRange
-    implicit val eC = g.elem.eRange
-    fun { (x: Rep[A]) => Pair(f(x), g(x)) }
   }
 
   def identityFun[A](implicit e: Elem[A]) = fun[A, A](x => x)

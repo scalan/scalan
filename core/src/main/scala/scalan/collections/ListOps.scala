@@ -308,9 +308,7 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
         case ListMap(xs: Rep[List[c]]@unchecked, g) =>
           val xs1 = xs.asRep[List[c]]
           val g1 = g.asRep[c => a]
-          implicit val eB = f.elem.eRange
-          implicit val eC = xs.elem.eItem
-          xs1.map { x => f(g1(x))}
+          list_map(xs1, f << g1)
         case ListReplicate(length, x) =>
           implicit val eB = f.elem.eRange
           SList.replicate(length, f(x))
@@ -320,8 +318,7 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
     case ListFilter(Def(d2: Def[List[a]]@unchecked), f) =>
       d2.asDef[List[a]] match {
         case ListFilter(xs, g) =>
-          implicit val eT = xs.elem.eItem
-          xs.filter { x => f(x) && g(x)}
+          list_filter(xs, f.asRep[a => Boolean] &&& g)
         case _ =>
           super.rewriteDef(d)
       }

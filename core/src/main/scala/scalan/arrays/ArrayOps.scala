@@ -918,8 +918,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     case ArrayFilter(Def(d2: Def[Array[a]]@unchecked), f) =>
       d2.asDef[Array[a]] match {
         case ArrayFilter(xs, g) =>
-          implicit val eT = xs.elem.eItem
-          xs.filter { x => f(x) && g(x)}
+          array_filter(xs, f &&& g)
         case _ =>
           super.rewriteDef(d)
       }

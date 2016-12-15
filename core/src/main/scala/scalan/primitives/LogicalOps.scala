@@ -18,6 +18,22 @@ trait LogicalOps extends UnBinOps { self: Scalan =>
     def unary_!() : Rep[Boolean] = Not(value)
     def toInt: Rep[Int] = BooleanToInt(value)
   }
+
+  implicit class BooleanFuncOps[A](f: Rep[A => Boolean]) {
+    def &&&(g: Rep[A => Boolean]) =
+      if (f == g)
+        f
+      else
+        composeBi(f, g)(_ && _)
+
+    def |||(g: Rep[A => Boolean]) =
+      if (f == g)
+        f
+      else
+        composeBi(f, g)(_ || _)
+
+    def !!! = sameArgFun(f) { x => !f(x) }
+  }
 }
 
 trait LogicalOpsExp extends LogicalOps with BaseExp { self: ScalanExp =>
