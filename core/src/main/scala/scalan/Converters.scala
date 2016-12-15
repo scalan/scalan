@@ -10,7 +10,8 @@ trait Converters extends ViewsDsl { self: Scalan =>
   trait Converter[T,R] extends Def[Converter[T,R]] {
     implicit def eT: Elem[T]
     implicit def eR: Elem[R]
-    def convFun: Rep[T => R]
+    def convFun: Rep[T => R] = defaultConvFun
+    private[this] lazy val defaultConvFun: Rep[T => R] = fun { apply(_: Rep[T]) }
     def apply(x: Rep[T]): Rep[R]
     def isIdentity: Boolean = false
     override def toString: String = s"${eT.name} --> ${eR.name}"
@@ -21,7 +22,7 @@ trait Converters extends ViewsDsl { self: Scalan =>
     def eT: Elem[A] = eA
     def eR: Elem[A] = eA
     def apply(x: Rep[A]) = x
-    val convFun = identityFun[A]
+    override val convFun = identityFun[A]
     override def isIdentity = true
     override def equals(other: Any) = other match {
       case i: Converters#IdentityConv[_] => (this eq i) || (eT == i.eT)
@@ -40,11 +41,11 @@ trait Converters extends ViewsDsl { self: Scalan =>
     def asConv[C,D] = c.asInstanceOf[Conv[C,D]]
   }
 
-  abstract class BaseConverter[T,R](val convFun: Rep[T => R])(implicit val eT: Elem[T], val eR: Elem[R])
+  abstract class BaseConverter[T,R](override val convFun: Rep[T => R])(implicit val eT: Elem[T], val eR: Elem[R])
     extends Converter[T,R] {
     def apply(x: Rep[T]): Rep[R] = convFun(x)
     override def equals(other: Any): Boolean = other match {
-      case c: Converters#Converter[_, _] => eT == c.eT && eR == c.eR && convFun == c.convFun
+      case c: Converters#BaseConverter[_, _] => eT == c.eT && eR == c.eR && convFun == c.convFun
       case _ => false
     }
   }
@@ -57,7 +58,6 @@ trait Converters extends ViewsDsl { self: Scalan =>
     val eT = pairElement(eA1, eA2)
     val eR = pairElement(eB1, eB2)
     def apply(x: Rep[(A1,A2)]) = { val Pair(a1, a2) = x; Pair(conv1(a1), conv2(a2)) }
-    lazy val convFun = fun { x: Rep[(A1,A2)] => apply(x) }
     override def isIdentity = conv1.isIdentity && conv2.isIdentity
   }
   trait PairConverterCompanion
@@ -69,7 +69,6 @@ trait Converters extends ViewsDsl { self: Scalan =>
     val eT = sumElement(eA1, eA2)
     val eR = sumElement(eB1, eB2)
     def apply(x: Rep[(A1|A2)]) = { x.mapSumBy(conv1.convFun, conv2.convFun) }
-    lazy val convFun: Rep[(A1 | A2) => (B1 | B2)] = fun { x: Rep[A1 | A2] => apply(x) }
     override def isIdentity = conv1.isIdentity && conv2.isIdentity
   }
   trait SumConverterCompanion
@@ -79,7 +78,6 @@ trait Converters extends ViewsDsl { self: Scalan =>
     val eT: Elem[A] = conv1.eT
     val eR: Elem[C] = conv2.eR
     def apply(a: Rep[A]) = conv2.apply(conv1.apply(a))
-    lazy val convFun = fun { x: Rep[A] => apply(x) }
     override def isIdentity = conv1.isIdentity && conv2.isIdentity
     override def equals(other: Any) = other match {
       case i: Converters#ComposeConverter[_, _, _] => (this eq i) || (conv1 == i.conv1 && conv2 == i.conv2)
@@ -91,7 +89,6 @@ trait Converters extends ViewsDsl { self: Scalan =>
       (val itemConv: Conv[A, B])
       (implicit val eA: Elem[A], val eB: Elem[B], val F: Functor[F])
     extends Converter[F[A], F[B]] {
-    def convFun = fun { xs: Rep[F[A]] => apply(xs) }
     def apply(xs: Rep[F[A]]): Rep[F[B]] = F.map(xs){ x => itemConv(x) }
     val eT = F.lift(eA)
     val eR = F.lift(eB)
@@ -104,7 +101,7 @@ trait Converters extends ViewsDsl { self: Scalan =>
   trait FunctorConverterCompanion
 
   abstract class NaturalConverter[A,F[_],G[_]]
-      (val convFun: Rep[F[A] => G[A]])
+      (override val convFun: Rep[F[A] => G[A]])
       (implicit val eA: Elem[A], val cF: Cont[F], val cG: Cont[G])
     extends Converter[F[A], G[A]] {
     def apply(xs: Rep[F[A]]): Rep[G[A]] = convFun(xs)
