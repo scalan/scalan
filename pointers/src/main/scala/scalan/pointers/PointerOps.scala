@@ -20,7 +20,6 @@ trait PointerOps extends Base { self: Scalan =>
       weakTypeTag[Pointer[A]].asInstanceOf[WeakTypeTag[To]]
     }
     def convertPointer(x: Rep[Pointer[A]]): Rep[To] = x.asRep[To]
-    override def isEntityType: Boolean = eItem.isEntityType
     protected def getDefaultRep = convertPointer(nullPtr[A](eItem))
   }
   implicit def PointerElement[A](implicit eItem: Elem[A]): Elem[Pointer[A]] =
@@ -34,7 +33,6 @@ trait PointerOps extends Base { self: Scalan =>
       weakTypeTag[Scalar[A]].asInstanceOf[WeakTypeTag[To]]
     }
     def convertScalar(x: Rep[Scalar[A]]): Rep[To] = x.asRep[To]
-    override def isEntityType: Boolean = eItem.isEntityType
     protected def getDefaultRep = convertScalar(eItem.defaultRepValue.asRep[Scalar[A]])
   }
   implicit def ScalarElement[A](implicit eItem: Elem[A]): Elem[Scalar[A]] =

@@ -57,7 +57,6 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
   type RStruct = Rep[Struct]
 
   case class StructElem[T <: Struct](structTag: StructTag[T], fields: Seq[(String, Elem[_])]) extends Elem[T] {
-    override def isEntityType = fields.exists(_._2.isEntityType)
     lazy val tag = structTag.typeTag
     protected def getDefaultRep =
       struct(structTag, fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)

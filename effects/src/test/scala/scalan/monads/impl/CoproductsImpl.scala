@@ -23,7 +23,6 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("F" -> (cF -> scalan.util.Invariant), "G" -> (cG -> scalan.util.Invariant), "A" -> (eA -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[Coproduct[F, G, A]].asInstanceOf[WeakTypeTag[To]]
@@ -103,7 +102,6 @@ trait CoproductsAbs extends scalan.ScalanDsl with Coproducts {
     }
   }
   case class CoproductImplIsoElem[F[_], G[_], A](cF: Cont[F], cG: Cont[G], eA: Elem[A]) extends Elem[CoproductImplIso[F, G, A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new CoproductImplIso[F, G, A]()(cF, cG, eA))
     lazy val tag = {
       implicit val tagA = eA.tag

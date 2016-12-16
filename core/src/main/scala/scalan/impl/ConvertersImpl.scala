@@ -23,7 +23,6 @@ trait ConvertersAbs extends Converters {
     def eR = _eR
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("T" -> (eT -> scalan.util.Invariant), "R" -> (eR -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagT = eT.tag
       implicit val tagR = eR.tag
@@ -100,7 +99,6 @@ trait ConvertersAbs extends Converters {
     def productElement(n: Int) = eA
   }
   case class IdentityConvIsoElem[A](eA: Elem[A]) extends Elem[IdentityConvIso[A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new IdentityConvIso[A]()(eA))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -190,7 +188,6 @@ trait ConvertersAbs extends Converters {
     }
   }
   case class BaseConverterIsoElem[T, R](eT: Elem[T], eR: Elem[R]) extends Elem[BaseConverterIso[T, R]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new BaseConverterIso[T, R]()(eT, eR))
     lazy val tag = {
       implicit val tagT = eT.tag
@@ -284,7 +281,6 @@ trait ConvertersAbs extends Converters {
     }
   }
   case class PairConverterIsoElem[A1, A2, B1, B2](eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) extends Elem[PairConverterIso[A1, A2, B1, B2]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new PairConverterIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
     lazy val tag = {
       implicit val tagA1 = eA1.tag
@@ -382,7 +378,6 @@ trait ConvertersAbs extends Converters {
     }
   }
   case class SumConverterIsoElem[A1, A2, B1, B2](eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) extends Elem[SumConverterIso[A1, A2, B1, B2]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new SumConverterIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
     lazy val tag = {
       implicit val tagA1 = eA1.tag
@@ -478,7 +473,6 @@ trait ConvertersAbs extends Converters {
     }
   }
   case class ComposeConverterIsoElem[A, B, C](eA: Elem[A], eB: Elem[B], eC: Elem[C]) extends Elem[ComposeConverterIso[A, B, C]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ComposeConverterIso[A, B, C]()(eA, eB, eC))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -572,7 +566,6 @@ trait ConvertersAbs extends Converters {
     }
   }
   case class FunctorConverterIsoElem[A, B, F[_]](eA: Elem[A], eB: Elem[B], F: Functor[F]) extends Elem[FunctorConverterIso[A, B, F]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new FunctorConverterIso[A, B, F]()(eA, eB, F))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -661,7 +654,6 @@ trait ConvertersAbs extends Converters {
     }
   }
   case class NaturalConverterIsoElem[A, F[_], G[_]](eA: Elem[A], cF: Cont[F], cG: Cont[G]) extends Elem[NaturalConverterIso[A, F, G]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new NaturalConverterIso[A, F, G]()(eA, cF, cG))
     lazy val tag = {
       implicit val tagA = eA.tag

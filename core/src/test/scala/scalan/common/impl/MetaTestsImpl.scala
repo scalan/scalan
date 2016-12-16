@@ -19,7 +19,6 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     def elem = _elem
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("T" -> (elem -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagT = elem.tag
       weakTypeTag[MetaTest[T]].asInstanceOf[WeakTypeTag[To]]
@@ -94,7 +93,6 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     def productElement(n: Int) = ???
   }
   case class MT0IsoElem() extends Elem[MT0Iso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new MT0Iso())
     lazy val tag = {
       weakTypeTag[MT0Iso]
@@ -178,7 +176,6 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     def productElement(n: Int) = elem
   }
   case class MT1IsoElem[T](elem: Elem[T]) extends Elem[MT1Iso[T]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new MT1Iso[T]()(elem))
     lazy val tag = {
       implicit val tagT = elem.tag
@@ -269,7 +266,6 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     }
   }
   case class MT2IsoElem[T, R](eT: Elem[T], eR: Elem[R]) extends Elem[MT2Iso[T, R]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new MT2Iso[T, R]()(eT, eR))
     lazy val tag = {
       implicit val tagT = eT.tag

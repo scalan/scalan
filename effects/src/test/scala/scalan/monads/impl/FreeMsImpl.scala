@@ -22,7 +22,6 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("F" -> (cF -> scalan.util.Invariant), "A" -> (eA -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[FreeM[F, A]].asInstanceOf[WeakTypeTag[To]]
@@ -102,7 +101,6 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     }
   }
   case class DoneIsoElem[F[_], A](eA: Elem[A], cF: Cont[F]) extends Elem[DoneIso[F, A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new DoneIso[F, A]()(eA, cF))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -190,7 +188,6 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     }
   }
   case class MoreIsoElem[F[_], A](eA: Elem[A], cF: Cont[F]) extends Elem[MoreIso[F, A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new MoreIso[F, A]()(eA, cF))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -280,7 +277,6 @@ trait FreeMsAbs extends scalan.ScalanDsl with FreeMs {
     }
   }
   case class FlatMapIsoElem[F[_], S, B](eS: Elem[S], eA: Elem[B], cF: Cont[F]) extends Elem[FlatMapIso[F, S, B]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new FlatMapIso[F, S, B]()(eS, eA, cF))
     lazy val tag = {
       implicit val tagS = eS.tag

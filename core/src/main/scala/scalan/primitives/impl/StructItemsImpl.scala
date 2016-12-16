@@ -24,7 +24,6 @@ trait StructItemsAbs extends StructItems {
     def eSchema = _eSchema
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("Val" -> (eVal -> scalan.util.Covariant), "Schema" -> (eSchema -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagAnnotatedVal = eVal.tag
       implicit val tagSchema = eSchema.tag
@@ -105,7 +104,6 @@ trait StructItemsAbs extends StructItems {
     }
   }
   case class StructItemBaseIsoElem[Val, Schema <: Struct](eVal: Elem[Val], eSchema: Elem[Schema]) extends Elem[StructItemBaseIso[Val, Schema]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new StructItemBaseIso[Val, Schema]()(eVal, eSchema))
     lazy val tag = {
       implicit val tagVal = eVal.tag

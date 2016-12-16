@@ -19,7 +19,6 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs()
-    override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
     }
@@ -93,7 +92,6 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
     def productElement(n: Int) = ???
   }
   case class SStringIsoElem() extends Elem[SStringIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new SStringIso())
     lazy val tag = {
       weakTypeTag[SStringIso]
@@ -175,7 +173,6 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
     def productElement(n: Int) = ???
   }
   case class CStringIsoElem() extends Elem[CStringIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new CStringIso())
     lazy val tag = {
       weakTypeTag[CStringIso]

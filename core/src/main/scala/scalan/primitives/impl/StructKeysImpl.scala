@@ -22,7 +22,6 @@ trait StructKeysAbs extends StructKeys {
     def eSchema = _eSchema
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagSchema = eSchema.tag
       weakTypeTag[StructKey[Schema]].asInstanceOf[WeakTypeTag[To]]
@@ -98,7 +97,6 @@ trait StructKeysAbs extends StructKeys {
     def productElement(n: Int) = eSchema
   }
   case class IndexStructKeyIsoElem[Schema <: Struct](eSchema: Elem[Schema]) extends Elem[IndexStructKeyIso[Schema]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new IndexStructKeyIso[Schema]()(eSchema))
     lazy val tag = {
       implicit val tagSchema = eSchema.tag
@@ -182,7 +180,6 @@ trait StructKeysAbs extends StructKeys {
     def productElement(n: Int) = eSchema
   }
   case class NameStructKeyIsoElem[Schema <: Struct](eSchema: Elem[Schema]) extends Elem[NameStructKeyIso[Schema]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new NameStructKeyIso[Schema]()(eSchema))
     lazy val tag = {
       implicit val tagSchema = eSchema.tag

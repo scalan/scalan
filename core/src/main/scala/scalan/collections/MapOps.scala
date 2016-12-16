@@ -43,8 +43,6 @@ trait MapOps extends  Base  { self: Scalan =>
   }
 
   case class MMapElem[K, V](eKey: Elem[K], eValue: Elem[V]) extends Elem[MMap[K, V]] {
-    override def isEntityType = eKey.isEntityType || eValue.isEntityType
-
     lazy val tag = {
       implicit val kt = eKey.tag
       implicit val vt = eValue.tag

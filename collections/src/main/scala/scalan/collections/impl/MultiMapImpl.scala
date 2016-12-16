@@ -21,7 +21,6 @@ trait MultiMapsAbs extends scalan.ScalanDsl with MultiMaps {
     def elemValue = _elemValue
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("K" -> (elemKey -> scalan.util.Invariant), "V" -> (elemValue -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagK = elemKey.tag
       implicit val tagV = elemValue.tag
@@ -102,7 +101,6 @@ trait MultiMapsAbs extends scalan.ScalanDsl with MultiMaps {
     }
   }
   case class HashMMultiMapIsoElem[K, V](elemKey: Elem[K], elemValue: Elem[V]) extends Elem[HashMMultiMapIso[K, V]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new HashMMultiMapIso[K, V]()(elemKey, elemValue))
     lazy val tag = {
       implicit val tagK = elemKey.tag

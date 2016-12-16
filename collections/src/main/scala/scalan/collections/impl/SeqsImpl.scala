@@ -69,7 +69,6 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[SSeq[A]].asInstanceOf[WeakTypeTag[To]]
@@ -206,7 +205,6 @@ trait SeqsAbs extends scalan.ScalanDsl with Seqs {
     def productElement(n: Int) = eA
   }
   case class SSeqImplIsoElem[A](eA: Elem[A]) extends Elem[SSeqImplIso[A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new SSeqImplIso[A]()(eA))
     lazy val tag = {
       implicit val tagA = eA.tag

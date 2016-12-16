@@ -21,7 +21,6 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
@@ -102,7 +101,6 @@ trait VerticesAbs extends scalan.ScalanDsl with Vertices {
     }
   }
   case class SVertexIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[SVertexIso[V, E]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new SVertexIso[V, E]()(eV, eE))
     lazy val tag = {
       implicit val tagV = eV.tag

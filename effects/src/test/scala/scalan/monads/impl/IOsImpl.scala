@@ -22,7 +22,6 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[IO[A]].asInstanceOf[WeakTypeTag[To]]
@@ -98,7 +97,6 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
     def productElement(n: Int) = ???
   }
   case class ReadFileIsoElem() extends Elem[ReadFileIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ReadFileIso())
     lazy val tag = {
       weakTypeTag[ReadFileIso]
@@ -181,7 +179,6 @@ trait IOsAbs extends scalan.ScalanDsl with IOs {
     def productElement(n: Int) = ???
   }
   case class WriteFileIsoElem() extends Elem[WriteFileIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new WriteFileIso())
     lazy val tag = {
       weakTypeTag[WriteFileIso]

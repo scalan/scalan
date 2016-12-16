@@ -20,7 +20,6 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs()
-    override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
     }
@@ -94,7 +93,6 @@ trait BitSetsAbs extends scalan.ScalanDsl with BitSets {
     def productElement(n: Int) = ???
   }
   case class BoolCollBitSetIsoElem() extends Elem[BoolCollBitSetIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new BoolCollBitSetIso())
     lazy val tag = {
       weakTypeTag[BoolCollBitSetIso]

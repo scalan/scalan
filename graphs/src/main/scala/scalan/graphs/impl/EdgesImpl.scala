@@ -22,7 +22,6 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
@@ -103,7 +102,6 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     }
   }
   case class AdjEdgeIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[AdjEdgeIso[V, E]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new AdjEdgeIso[V, E]()(eV, eE))
     lazy val tag = {
       implicit val tagV = eV.tag
@@ -194,7 +192,6 @@ trait EdgesAbs extends scalan.ScalanDsl with Edges {
     }
   }
   case class IncEdgeIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[IncEdgeIso[V, E]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new IncEdgeIso[V, E]()(eV, eE))
     lazy val tag = {
       implicit val tagV = eV.tag

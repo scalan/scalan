@@ -24,7 +24,6 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("V" -> (eV -> scalan.util.Invariant), "E" -> (eE -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
@@ -105,7 +104,6 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     }
   }
   case class AdjacencyGraphIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[AdjacencyGraphIso[V, E]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new AdjacencyGraphIso[V, E]()(eV, eE))
     lazy val tag = {
       implicit val tagV = eV.tag
@@ -196,7 +194,6 @@ trait GraphsAbs extends scalan.ScalanDsl with Graphs {
     }
   }
   case class IncidenceGraphIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[IncidenceGraphIso[V, E]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new IncidenceGraphIso[V, E]()(eV, eE))
     lazy val tag = {
       implicit val tagV = eV.tag

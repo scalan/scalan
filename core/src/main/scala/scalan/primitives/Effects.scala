@@ -318,9 +318,9 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
   }
 
 
-  def isPrimitiveType[T](e: Elem[T]) = e.isBaseType
+  def isPrimitiveType[T](e: Elem[T]) = e.isInstanceOf[BaseElem[_]]
 
-  def noPrim(sm: List[Exp[Any]]): List[Exp[Any]] = sm.filterNot(_.elem.isBaseType)
+  def noPrim(sm: List[Exp[Any]]): List[Exp[Any]] = sm.filterNot(x => isPrimitiveType(x.elem))
 
   /*
     def allTransitiveAliases(start: Any): List[TableEntry[Any]] = {

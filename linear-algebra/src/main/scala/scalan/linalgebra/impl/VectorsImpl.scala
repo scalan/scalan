@@ -23,7 +23,6 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     def eT = _eT
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("T" -> (eT -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagT = eT.tag
       weakTypeTag[Vector[T]].asInstanceOf[WeakTypeTag[To]]
@@ -99,7 +98,6 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     def productElement(n: Int) = eT
   }
   case class DenseVectorIsoElem[T](eT: Elem[T]) extends Elem[DenseVectorIso[T]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new DenseVectorIso[T]()(eT))
     lazy val tag = {
       implicit val tagT = eT.tag
@@ -184,7 +182,6 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     def productElement(n: Int) = eT
   }
   case class ConstVectorIsoElem[T](eT: Elem[T]) extends Elem[ConstVectorIso[T]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ConstVectorIso[T]()(eT))
     lazy val tag = {
       implicit val tagT = eT.tag
@@ -270,7 +267,6 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     def productElement(n: Int) = eT
   }
   case class SparseVectorIsoElem[T](eT: Elem[T]) extends Elem[SparseVectorIso[T]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new SparseVectorIso[T]()(eT))
     lazy val tag = {
       implicit val tagT = eT.tag
@@ -356,7 +352,6 @@ trait VectorsAbs extends scalan.ScalanDsl with Vectors {
     def productElement(n: Int) = eT
   }
   case class SparseVector1IsoElem[T](eT: Elem[T]) extends Elem[SparseVector1Iso[T]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new SparseVector1Iso[T]()(eT))
     lazy val tag = {
       implicit val tagT = eT.tag

@@ -20,7 +20,6 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs()
-    override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[Front].asInstanceOf[WeakTypeTag[To]]
     }
@@ -95,7 +94,6 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
     def productElement(n: Int) = ???
   }
   case class BaseFrontIsoElem() extends Elem[BaseFrontIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new BaseFrontIso())
     lazy val tag = {
       weakTypeTag[BaseFrontIso]
@@ -180,7 +178,6 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
     def productElement(n: Int) = ???
   }
   case class ListFrontIsoElem() extends Elem[ListFrontIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ListFrontIso())
     lazy val tag = {
       weakTypeTag[ListFrontIso]
@@ -265,7 +262,6 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
     def productElement(n: Int) = ???
   }
   case class CollectionFrontIsoElem() extends Elem[CollectionFrontIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new CollectionFrontIso())
     lazy val tag = {
       weakTypeTag[CollectionFrontIso]
@@ -350,7 +346,6 @@ trait FrontsAbs extends scalan.ScalanDsl with Fronts {
     def productElement(n: Int) = ???
   }
   case class MapBasedFrontIsoElem() extends Elem[MapBasedFrontIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new MapBasedFrontIso())
     lazy val tag = {
       weakTypeTag[MapBasedFrontIso]

@@ -470,7 +470,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |${e.implicitArgs.opt(_.rep(a => s"    ${(e.entity.isInheritedDeclared(a.name, e.module)).opt("override ")}def ${a.name} = _${a.name}", "\n"))}
          |    ${overrideIfHasParent}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
          |    ${overrideIfHasParent}lazy val typeArgs = TypeArgs(${e.tpeSubstStr})
-         |    override def isEntityType = true
          |    override lazy val tag = {
          |${implicitTagsFromElems(e)}
          |      weakTypeTag[${e.typeUse}].asInstanceOf[WeakTypeTag[$toArgName]]
@@ -671,7 +670,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    def productElement(n: Int) = $isoProductElementBody
          |  }
          |  case class ${className}IsoElem${tpeArgsDecl}(${c.implicitArgs.rep(a => s"${a.name}: ${a.tpe}")}) extends Elem[${className}Iso$tpeArgsUse] {
-         |    def isEntityType = true
          |    def getDefaultRep = reifyObject(new ${className}Iso${tpeArgsUse}()$implicitArgsUse)
          |    lazy val tag = {
          |${implicitTagsFromElems(c)}

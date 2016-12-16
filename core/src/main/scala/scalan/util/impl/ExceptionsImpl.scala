@@ -28,7 +28,6 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
     extends WrapperElem[Throwable, To] {
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs()
-    override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[SThrowable].asInstanceOf[WeakTypeTag[To]]
     }
@@ -118,7 +117,6 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
     def productElement(n: Int) = ???
   }
   case class SThrowableImplIsoElem() extends Elem[SThrowableImplIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new SThrowableImplIso())
     lazy val tag = {
       weakTypeTag[SThrowableImplIso]

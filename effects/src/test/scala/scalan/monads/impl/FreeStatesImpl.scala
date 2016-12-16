@@ -23,7 +23,6 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("S" -> (eS -> scalan.util.Invariant), "A" -> (eA -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagS = eS.tag
       implicit val tagA = eA.tag
@@ -105,7 +104,6 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
     }
   }
   case class StateGetIsoElem[S, A](eS: Elem[S], eA: Elem[A]) extends Elem[StateGetIso[S, A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new StateGetIso[S, A]()(eS, eA))
     lazy val tag = {
       implicit val tagS = eS.tag
@@ -195,7 +193,6 @@ trait FreeStatesAbs extends scalan.ScalanDsl with FreeStates {
     }
   }
   case class StatePutIsoElem[S, A](eS: Elem[S], eA: Elem[A]) extends Elem[StatePutIso[S, A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new StatePutIso[S, A]()(eS, eA))
     lazy val tag = {
       implicit val tagS = eS.tag

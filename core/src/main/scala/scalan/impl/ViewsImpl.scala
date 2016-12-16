@@ -27,7 +27,6 @@ trait ViewsAbs extends Views {
     def eTo = _eTo
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("From" -> (eFrom -> scalan.util.Invariant), "To" -> (eTo -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagFrom = eFrom.tag
       implicit val tagTo = eTo.tag
@@ -77,7 +76,6 @@ trait ViewsAbs extends Views {
     def cC = _cC
     override lazy val parent: Option[Elem[_]] = Some(isoURElement(element[C[A]], element[C[B]]))
     override lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant), "C" -> (cC -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
       implicit val tagB = eB.tag
@@ -154,7 +152,6 @@ trait ViewsAbs extends Views {
     def productElement(n: Int) = eA
   }
   case class IdentityIsoIsoElem[A](eA: Elem[A]) extends Elem[IdentityIsoIso[A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new IdentityIsoIso[A]()(eA))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -249,7 +246,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class PairIsoIsoElem[A1, A2, B1, B2](eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) extends Elem[PairIsoIso[A1, A2, B1, B2]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new PairIsoIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
     lazy val tag = {
       implicit val tagA1 = eA1.tag
@@ -343,7 +339,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class AbsorbFirstUnitIsoIsoElem[A2, B2](eA2: Elem[A2], eB2: Elem[B2]) extends Elem[AbsorbFirstUnitIsoIso[A2, B2]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new AbsorbFirstUnitIsoIso[A2, B2]()(eA2, eB2))
     lazy val tag = {
       implicit val tagA2 = eA2.tag
@@ -433,7 +428,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class AbsorbSecondUnitIsoIsoElem[A1, B1](eA1: Elem[A1], eB1: Elem[B1]) extends Elem[AbsorbSecondUnitIsoIso[A1, B1]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new AbsorbSecondUnitIsoIso[A1, B1]()(eA1, eB1))
     lazy val tag = {
       implicit val tagA1 = eA1.tag
@@ -527,7 +521,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class SumIsoIsoElem[A1, A2, B1, B2](eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) extends Elem[SumIsoIso[A1, A2, B1, B2]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new SumIsoIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
     lazy val tag = {
       implicit val tagA1 = eA1.tag
@@ -623,7 +616,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class ComposeIsoIsoElem[A, B, C](eA: Elem[A], eB: Elem[B], eC: Elem[C]) extends Elem[ComposeIsoIso[A, B, C]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ComposeIsoIso[A, B, C]()(eA, eB, eC))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -720,7 +712,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class FuncIsoIsoElem[A, B, C, D](eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]) extends Elem[FuncIsoIso[A, B, C, D]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new FuncIsoIso[A, B, C, D]()(eA, eB, eC, eD))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -814,7 +805,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class ConverterIsoIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[ConverterIsoIso[A, B]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ConverterIsoIso[A, B]()(eA, eB))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -905,7 +895,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class ArrayIsoIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[ArrayIsoIso[A, B]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ArrayIsoIso[A, B]()(eA, eB))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -994,7 +983,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class ListIsoIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[ListIsoIso[A, B]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ListIsoIso[A, B]()(eA, eB))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -1083,7 +1071,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class ArrayBufferIsoIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[ArrayBufferIsoIso[A, B]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ArrayBufferIsoIso[A, B]()(eA, eB))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -1172,7 +1159,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class ThunkIsoIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[ThunkIsoIso[A, B]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ThunkIsoIso[A, B]()(eA, eB))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -1266,7 +1252,6 @@ trait ViewsAbs extends Views {
     }
   }
   case class MapIsoIsoElem[K1, V1, K2, V2](eK1: Elem[K1], eV1: Elem[V1], eK2: Elem[K2], eV2: Elem[V2]) extends Elem[MapIsoIso[K1, V1, K2, V2]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new MapIsoIso[K1, V1, K2, V2]()(eK1, eV1, eK2, eV2))
     lazy val tag = {
       implicit val tagK1 = eK1.tag

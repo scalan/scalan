@@ -37,8 +37,6 @@ trait TypeDescs extends Base { self: Scalan =>
     */
   @implicitNotFound(msg = "No Elem available for ${A}.")
   abstract class Elem[A] extends TypeDesc { _: scala.Equals =>
-    def isEntityType: Boolean
-    def isBaseType: Boolean = this.isInstanceOf[BaseElem[_]]
     def tag: WeakTypeTag[A]
     final lazy val classTag: ClassTag[A] = ReflectionUtil.typeTagToClassTag(tag)
     // classTag.runtimeClass is cheap, no reason to make it lazy
@@ -207,7 +205,6 @@ trait TypeDescs extends Base { self: Scalan =>
 
   class BaseElem[A](defaultValue: A)(implicit val tag: WeakTypeTag[A]) extends Elem[A] with Serializable with scala.Equals {
     protected def getDefaultRep = toRep(defaultValue)(this)
-    override def isEntityType = false
     override def canEqual(other: Any) = other.isInstanceOf[BaseElem[_]]
     override def equals(other: Any) = other match {
       case other: BaseElem[_] =>
@@ -235,7 +232,6 @@ trait TypeDescs extends Base { self: Scalan =>
 
   case class PairElem[A, B](eFst: Elem[A], eSnd: Elem[B]) extends Elem[(A, B)] {
     assert(eFst != null && eSnd != null)
-    override def isEntityType = eFst.isEntityType || eSnd.isEntityType
     lazy val tag = {
       implicit val tA = eFst.tag
       implicit val tB = eSnd.tag
@@ -247,7 +243,6 @@ trait TypeDescs extends Base { self: Scalan =>
   }
 
   case class SumElem[A, B](eLeft: Elem[A], eRight: Elem[B]) extends Elem[A | B] {
-    override def isEntityType = eLeft.isEntityType || eRight.isEntityType
     lazy val tag = {
       implicit val tA = eLeft.tag
       implicit val tB = eRight.tag
@@ -259,7 +254,6 @@ trait TypeDescs extends Base { self: Scalan =>
   }
 
   case class FuncElem[A, B](eDom: Elem[A], eRange: Elem[B]) extends Elem[A => B] {
-    override def isEntityType = eDom.isEntityType || eRange.isEntityType
     lazy val tag = {
       implicit val tA = eDom.tag
       implicit val tB = eRange.tag
@@ -276,7 +270,6 @@ trait TypeDescs extends Base { self: Scalan =>
   class ArgElem(val tyArg: STpeArg) extends Elem[Any] with Serializable with scala.Equals {
     protected def getDefaultRep = toRep(null.asInstanceOf[Any])(this)
     val tag = ReflectionUtil.createArgTypeTag(tyArg.name).asInstanceOf[WeakTypeTag[Any]]
-    override def isEntityType = false
     def argName = tyArg.name
     lazy val typeArgs = {
       assert(noTypeArgs)

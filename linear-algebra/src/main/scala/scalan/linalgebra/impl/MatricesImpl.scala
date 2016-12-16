@@ -22,7 +22,6 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     def eT = _eT
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("T" -> (eT -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagT = eT.tag
       weakTypeTag[Matrix[T]].asInstanceOf[WeakTypeTag[To]]
@@ -98,7 +97,6 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     def productElement(n: Int) = eT
   }
   case class DenseMatrixIsoElem[T](eT: Elem[T]) extends Elem[DenseMatrixIso[T]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new DenseMatrixIso[T]()(eT))
     lazy val tag = {
       implicit val tagT = eT.tag
@@ -182,7 +180,6 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     def productElement(n: Int) = eT
   }
   case class DenseFlatMatrixIsoElem[T](eT: Elem[T]) extends Elem[DenseFlatMatrixIso[T]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new DenseFlatMatrixIso[T]()(eT))
     lazy val tag = {
       implicit val tagT = eT.tag
@@ -268,7 +265,6 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     def productElement(n: Int) = eT
   }
   case class SparseMatrixIsoElem[T](eT: Elem[T]) extends Elem[SparseMatrixIso[T]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new SparseMatrixIso[T]()(eT))
     lazy val tag = {
       implicit val tagT = eT.tag
@@ -354,7 +350,6 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     def productElement(n: Int) = eT
   }
   case class CompoundMatrixIsoElem[T](eT: Elem[T]) extends Elem[CompoundMatrixIso[T]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new CompoundMatrixIso[T]()(eT))
     lazy val tag = {
       implicit val tagT = eT.tag
@@ -441,7 +436,6 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     def productElement(n: Int) = eT
   }
   case class ConstMatrixIsoElem[T](eT: Elem[T]) extends Elem[ConstMatrixIso[T]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ConstMatrixIso[T]()(eT))
     lazy val tag = {
       implicit val tagT = eT.tag
@@ -528,7 +522,6 @@ trait MatricesAbs extends scalan.ScalanDsl with Matrices {
     def productElement(n: Int) = eT
   }
   case class DiagonalMatrixIsoElem[T](eT: Elem[T]) extends Elem[DiagonalMatrixIso[T]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new DiagonalMatrixIso[T]()(eT))
     lazy val tag = {
       implicit val tagT = eT.tag

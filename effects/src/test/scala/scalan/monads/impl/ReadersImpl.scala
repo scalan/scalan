@@ -22,7 +22,6 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("Env" -> (eEnv -> scalan.util.Invariant), "A" -> (eA -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagEnv = eEnv.tag
       implicit val tagA = eA.tag
@@ -103,7 +102,6 @@ trait ReadersAbs extends scalan.ScalanDsl with Readers {
     }
   }
   case class ReaderBaseIsoElem[Env, A](eEnv: Elem[Env], eA: Elem[A]) extends Elem[ReaderBaseIso[Env, A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ReaderBaseIso[Env, A]()(eEnv, eA))
     lazy val tag = {
       implicit val tagEnv = eEnv.tag

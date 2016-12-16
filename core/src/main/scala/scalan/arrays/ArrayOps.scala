@@ -121,7 +121,6 @@ trait ArrayOps { self: Scalan =>
   case class ScalaArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     def parent: Option[Elem[_]] = Some(arrayElement(eItem))
 
-    override def isEntityType = eItem.isEntityType
     lazy val tag = {
       implicit val tag1 = eItem.tag
       weakTypeTag[Array[A]]

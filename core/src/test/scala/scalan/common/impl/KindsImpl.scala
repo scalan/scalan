@@ -21,7 +21,6 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("F" -> (cF -> scalan.util.Invariant), "A" -> (eA -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[Kind[F, A]].asInstanceOf[WeakTypeTag[To]]
@@ -101,7 +100,6 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     }
   }
   case class ReturnIsoElem[F[_], A](eA: Elem[A], cF: Cont[F]) extends Elem[ReturnIso[F, A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new ReturnIso[F, A]()(eA, cF))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -191,7 +189,6 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     }
   }
   case class BindIsoElem[F[_], S, B](eS: Elem[S], eA: Elem[B], cF: Cont[F]) extends Elem[BindIso[F, S, B]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
     lazy val tag = {
       implicit val tagS = eS.tag

@@ -23,7 +23,6 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     def eO = _eO
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("F" -> (cF -> scalan.util.Invariant), "O" -> (eO -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagO = eO.tag
       weakTypeTag[Process[F, O]].asInstanceOf[WeakTypeTag[To]]
@@ -105,7 +104,6 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     }
   }
   case class AwaitIsoElem[F[_], A, O](eA: Elem[A], eO: Elem[O], cF: Cont[F]) extends Elem[AwaitIso[F, A, O]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new AwaitIso[F, A, O]()(eA, eO, cF))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -196,7 +194,6 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     }
   }
   case class EmitIsoElem[F[_], O](eO: Elem[O], cF: Cont[F]) extends Elem[EmitIso[F, O]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new EmitIso[F, O]()(eO, cF))
     lazy val tag = {
       implicit val tagO = eO.tag
@@ -286,7 +283,6 @@ trait ProcessesAbs extends scalan.ScalanDsl with Processes {
     }
   }
   case class HaltIsoElem[F[_], O](eO: Elem[O], cF: Cont[F]) extends Elem[HaltIso[F, O]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new HaltIso[F, O]()(eO, cF))
     lazy val tag = {
       implicit val tagO = eO.tag

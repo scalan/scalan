@@ -45,7 +45,6 @@ trait ArrayBuffers extends Base { self: Scalan =>
   case class ArrayBufferElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, ArrayBuffer[A], ArrayBuffer](eItem, container[ArrayBuffer]) {
     def parent: Option[Elem[_]] = None
-    override def isEntityType = eItem.isEntityType
     override lazy val typeArgs = TypeArgs("A" -> (eItem -> Invariant))
 
     lazy val tag = {

@@ -272,7 +272,6 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
 
   trait ViewElem[From, To] extends Elem[To] { _: scala.Equals =>
     def iso: Iso[From, To]
-    override def isEntityType = shouldUnpack(this)
 
     override protected def _copyWithTypeArgs(argsIterator: Iterator[TypeDesc]): Elem[_] =
       if (typeArgs.isEmpty)

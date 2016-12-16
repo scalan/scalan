@@ -20,7 +20,6 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs()
-    override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[Segment].asInstanceOf[WeakTypeTag[To]]
     }
@@ -94,7 +93,6 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     def productElement(n: Int) = ???
   }
   case class IntervalIsoElem() extends Elem[IntervalIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new IntervalIso())
     lazy val tag = {
       weakTypeTag[IntervalIso]
@@ -178,7 +176,6 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     def productElement(n: Int) = ???
   }
   case class SliceIsoElem() extends Elem[SliceIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new SliceIso())
     lazy val tag = {
       weakTypeTag[SliceIso]
@@ -263,7 +260,6 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     def productElement(n: Int) = ???
   }
   case class CenteredIsoElem() extends Elem[CenteredIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new CenteredIso())
     lazy val tag = {
       weakTypeTag[CenteredIso]

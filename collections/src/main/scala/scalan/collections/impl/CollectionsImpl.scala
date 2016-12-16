@@ -27,7 +27,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def eItem = _eItem
     lazy val parent: Option[Elem[_]] = None
     lazy val typeArgs = TypeArgs("Item" -> (eItem -> scalan.util.Covariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagAnnotatedItem = eItem.tag
       weakTypeTag[Collection[Item]].asInstanceOf[WeakTypeTag[To]]
@@ -75,7 +74,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def eB = _eB
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(pairElement(element[A],element[B])))
     override lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
       implicit val tagB = eB.tag
@@ -123,7 +121,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def eA = _eA
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(collectionElement(element[A])))
     override lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
-    override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[NestedCollection[A]].asInstanceOf[WeakTypeTag[To]]
@@ -198,7 +195,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def productElement(n: Int) = ???
   }
   case class UnitCollectionIsoElem() extends Elem[UnitCollectionIso] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new UnitCollectionIso())
     lazy val tag = {
       weakTypeTag[UnitCollectionIso]
@@ -281,7 +277,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def productElement(n: Int) = eItem
   }
   case class CollectionOverArrayIsoElem[Item](eItem: Elem[Item]) extends Elem[CollectionOverArrayIso[Item]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new CollectionOverArrayIso[Item]()(eItem))
     lazy val tag = {
       implicit val tagItem = eItem.tag
@@ -365,7 +360,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def productElement(n: Int) = eItem
   }
   case class CollectionOverListIsoElem[Item](eItem: Elem[Item]) extends Elem[CollectionOverListIso[Item]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new CollectionOverListIso[Item]()(eItem))
     lazy val tag = {
       implicit val tagItem = eItem.tag
@@ -449,7 +443,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def productElement(n: Int) = eItem
   }
   case class CollectionOverSeqIsoElem[Item](eItem: Elem[Item]) extends Elem[CollectionOverSeqIso[Item]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new CollectionOverSeqIso[Item]()(eItem))
     lazy val tag = {
       implicit val tagItem = eItem.tag
@@ -537,7 +530,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     }
   }
   case class PairCollectionSOAIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[PairCollectionSOAIso[A, B]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new PairCollectionSOAIso[A, B]()(eA, eB))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -628,7 +620,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     }
   }
   case class PairCollectionAOSIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[PairCollectionAOSIso[A, B]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new PairCollectionAOSIso[A, B]()(eA, eB))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -713,7 +704,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def productElement(n: Int) = eA
   }
   case class NestedCollectionFlatIsoElem[A](eA: Elem[A]) extends Elem[NestedCollectionFlatIso[A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new NestedCollectionFlatIso[A]()(eA))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -799,7 +789,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     def productElement(n: Int) = eA
   }
   case class JuggedCollectionIsoElem[A](eA: Elem[A]) extends Elem[JuggedCollectionIso[A]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new JuggedCollectionIso[A]()(eA))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -890,7 +879,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     }
   }
   case class FuncCollectionIsoElem[A, B, Env](eA: Elem[A], eB: Elem[B], eEnv: Elem[Env]) extends Elem[FuncCollectionIso[A, B, Env]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new FuncCollectionIso[A, B, Env]()(eA, eB, eEnv))
     lazy val tag = {
       implicit val tagA = eA.tag
@@ -983,7 +971,6 @@ trait CollectionsAbs extends scalan.ScalanDsl with Collections {
     }
   }
   case class StructItemCollectionIsoElem[Val, Schema <: Struct](eVal: Elem[Val], eSchema: Elem[Schema]) extends Elem[StructItemCollectionIso[Val, Schema]] {
-    def isEntityType = true
     def getDefaultRep = reifyObject(new StructItemCollectionIso[Val, Schema]()(eVal, eSchema))
     lazy val tag = {
       implicit val tagVal = eVal.tag

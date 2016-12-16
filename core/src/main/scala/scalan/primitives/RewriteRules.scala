@@ -20,7 +20,6 @@ trait RewriteRules { self: Scalan =>
       implicit val tag1 = eA.tag
       implicitly[WeakTypeTag[Rewrite[A]]]
     }
-    def isEntityType = eA.isEntityType
     lazy val typeArgs = TypeArgs("A" -> (eA -> Invariant))
   }
 
