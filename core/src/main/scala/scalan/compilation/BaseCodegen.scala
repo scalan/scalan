@@ -191,6 +191,7 @@ abstract class BaseCodegen[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) 
     case e: Exp[_] => id(e)
     case d: Def[_] => rhs(d)
     case str: String => str
+    case num: Number => num.toString
     case xs: Seq[_] => xs.map(translate).mkString(", ")
     case xs: Array[_] => xs.map(translate).mkString(", ")
     case _ => !!!(s"$codegenName can't translate $arg to $languageName")
