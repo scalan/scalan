@@ -17,7 +17,8 @@ trait Thunks { self: Scalan =>
 
   implicit class RepThunkOps[T](t: Th[T]) {
     def force() = thunk_force(t)
-    def map[R: Elem](f: Rep[T => R]): Th[R] = Thunk { f(force()) }
+    def map[R](f: Rep[T => R]): Th[R] = thunk_map(t, f)
+    def map[R](f: Rep[T] => Rep[R]): Th[R] = thunk_map1(t, f)
   }
 
   implicit val thunkCont: Cont[Thunk] = new Cont[Thunk] {
@@ -48,11 +49,15 @@ trait Thunks { self: Scalan =>
 
   def thunk_create[A:Elem](block: => Rep[A]): Rep[Thunk[A]]
   def thunk_force[A](t: Th[A]): Rep[A]
+  def thunk_map[A, B](t: Th[A], f: Rep[A => B]): Th[B]
+  def thunk_map1[A, B](t: Th[A], f: Rep[A] => Rep[B]): Th[B]
 }
 
 trait ThunksStd extends Thunks { self: ScalanStd =>
-  def thunk_create[A:Elem](block: => Rep[A]): Rep[Thunk[A]] = new Thunk[A] { def value = block }
+  def thunk_create[A:Elem](block: => Rep[A]): Rep[Thunk[A]] = new Thunk[A] { lazy val value = block }
   def thunk_force[A](t: Th[A]): Rep[A] = t.value
+  def thunk_map[A, B](t: Th[A], f: Rep[A => B]): Th[B] = new Thunk[B] { lazy val value = f(t.value) }
+  def thunk_map1[A, B](t: Th[A], f: Rep[A] => Rep[B]): Th[B] = thunk_map(t, f)
 }
 
 trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>
@@ -156,6 +161,18 @@ trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizE
     val newThunk = ThunkDef(res, scheduled)
     val u = summarizeEffects(b)
     reflectEffect(newThunk, u, newThunkSym)
+  }
+
+  def thunk_map[A, B](t: Th[A], f: Rep[A => B]): Th[B] = {
+    implicit val eB = f.elem.eRange
+    Thunk {
+      f(thunk_force(t))
+    }
+  }
+  def thunk_map1[A, B](t: Th[A], f: Rep[A] => Rep[B]): Th[B] = {
+    implicit val eA = t.elem.eItem
+    val f1 = inferredFun(f)
+    thunk_map(t, f1)
   }
 
   var isInlineThunksOnForce = false
