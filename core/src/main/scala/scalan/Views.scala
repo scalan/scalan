@@ -675,6 +675,15 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
+    // Rule: Reverse elimination
+    case ExpReverseIso(ReverseIso(iso)) =>
+      iso
+    // Rule: Reverse right identity
+    case ExpComposeIso(iso1, ReverseIso(iso2)) if iso1 == iso2 =>
+      identityIso(iso1.eTo)
+    // Rule: Reverse left identity
+    case ExpComposeIso(ReverseIso(iso1), iso2) if iso1 == iso2 =>
+      identityIso(iso1.eFrom)
     // Rule: (V(a, iso1), V(b, iso2)) ==> V((a,b), PairIso(iso1, iso2))
     case Tup(HasViews(a, iso1: Iso[a, c]), HasViews(b, iso2: Iso[b, d])) =>
       PairView((a.asRep[a], b.asRep[b]))(iso1, iso2)
