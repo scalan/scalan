@@ -30,7 +30,6 @@ class BoilerplateTool extends StrictLogging {
     name = "core",
     srcPath = "../core/src/main/scala",
     entityFiles = List(
-      "scalan/primitives/AbstractStrings.scala",
       "scalan/util/Exceptions.scala"
     ),
     coreTypeSynonyms,
@@ -138,7 +137,6 @@ class BoilerplateTool extends StrictLogging {
     name = "structs",
     srcPath = "../core/src/main/scala",
     entityFiles = List(
-//      "scalan/primitives/Structs.scala",
       "scalan/primitives/StructKeys.scala",
       "scalan/primitives/StructItems.scala"
     ),
@@ -163,7 +161,8 @@ class BoilerplateTool extends StrictLogging {
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
     "lib-all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig, structsConfig),
-    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig, structsConfig)
+    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig, structsConfig),
+    "all-core" -> List(scalanConfig, coreConfig, structsConfig, coreTestsConfig)
   )
 
   def main(args: Array[String]) {

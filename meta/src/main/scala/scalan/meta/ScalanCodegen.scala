@@ -247,39 +247,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     genConstr(method.copy(argSections = method.cleanedArgs))
   }
 
-  def externalStdMethod(md: SMethodDef, isInstance: Boolean) = {
-    val msgExplicitRetType = "External methods should be declared with explicit type of returning value (result type)"
-    val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
-    val methodNameAndArgs = md.name + md.tpeArgs.useString + methodArgsUse(md)
-
-    val obj = if (isInstance) "wrappedValue" else e.baseInstanceName
-
-    val methodBody = {
-      val methodCall = s"$obj.$methodNameAndArgs"
-      tyRet.unRep(module, config) match {
-        case Some(STraitCall(name, _)) if name == e.name =>
-          s"${e.name}Impl($methodCall)"
-        case _ =>
-          methodCall
-      }
-    }
-
-    s"""
-       |    ${md.declaration(config, true)} =
-       |      $methodBody
-       """.stripMargin
-  }
-
-  def externalStdConstructor(method: SMethodDef) = {
-    def genConstr(md: SMethodDef) = {
-      s"""
-         |    ${md.declaration(config, true)} =
-         |      ${e.name}Impl(new ${e.baseTypeUse}${methodArgsUse(md)})
-         |""".stripMargin
-    }
-    genConstr(method.copy(argSections = method.cleanedArgs))
-  }
-
   def entityProxy(e: EntityTemplateData) = {
     val entityName = e.name
     val typesDecl = e.tpeArgsDecl
@@ -747,35 +714,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
        |""".stripAndTrim
   }
 
-  def getSClassStd(clazz: SClassDef) = {
-    val c = ConcreteClassTemplateData(module, clazz)
-    val fields = clazz.args.argNames
-    val fieldsWithType = clazz.args.argNamesAndTypes(config)
-    val implicitArgsDecl = c.implicitArgsDecl()
-
-    val externalMethods = entity.getMethodsWithAnnotation(ExternalAnnotation)
-    val externalMethodsStr = filterByExplicitDeclaration(c.name, externalMethods).rep(md => externalStdMethod(md, true), "\n")
-
-    val parent     = clazz.ancestors.head
-
-    s"""
-       |  case class Std${c.typeDecl}
-       |      (${fieldsWithType.rep(f => s"override val $f")})${implicitArgsDecl}
-       |    extends ${e.optBaseType.isEmpty.opt("Abs")}${c.typeUse}(${fields.rep()})${module.hasStdImplFor(c.name).opt(s" with ${c.name}Decls${c.tpeArgsUse}")} {
-       |$externalMethodsStr
-       |  }
-       |
-       |  def mk${c.typeDecl}
-       |    (${fieldsWithType.rep()})$implicitArgsDecl: Rep[${c.typeUse}] =
-       |    new Std${c.typeUse}(${fields.rep()})
-       |  def unmk${c.typeDecl}(p: Rep[$parent]) = p match {
-       |    case p: ${c.typeUse} @unchecked =>
-       |      Some((${fields.rep(f => s"p.$f")}))
-       |    case _ => None
-       |  }
-       |""".stripAndTrim
-  }
-
   def getSClassExp(clazz: SClassDef) = {
     val c = ConcreteClassTemplateData(module, clazz)
     import c._
@@ -800,55 +738,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
        |    case _ =>
        |      None
        |  }
-       |""".stripAndTrim
-  }
-
-  def getTraitStd = {
-    val classesStd = classes.map(getSClassStd)
-    val proxyBTStd = e.optBaseType.opt(bt =>
-      s"""
-         |  // override proxy if we deal with TypeWrapper
-         |  //override def proxy${e.baseTypeName}${typesWithElems}(p: Rep[${e.baseTypeUse}]): ${e.typeUse} =
-         |  //  proxyOpsEx[${e.baseTypeUse}, ${e.typeUse}, Std${e.name}Impl${e.tpeArgsUse}](p, bt => Std${e.name}Impl(bt))
-         |""".stripAndTrim
-    )
-    val baseTypeToWrapperConvertionStd = e.optBaseType.opt(bt =>
-      s"""
-         |  implicit def wrap${e.baseTypeName}To${e.name}${typesWithElems}(v: ${e.baseTypeUse}): ${e.typeUse} = ${e.name}Impl(v)
-         |""".stripAndTrim
-    )
-
-    val companionMethods = getCompanionMethods.opt { case (constrs, methods) =>
-      filterByExplicitDeclaration(e.name, constrs).rep(md => externalStdConstructor(md), "\n") +
-        filterByExplicitDeclaration(e.name, methods).filter(_.body.isEmpty).rep(md => externalStdMethod(md, false), "\n")
-    }
-
-    def companionStd(e: EntityTemplateData) = {
-      s"""
-        |  lazy val ${e.name}: Rep[${e.companionAbsName}] = new ${e.companionAbsName} {
-        |    $companionMethods
-        |  }
-       """.stripMargin
-    }
-
-    val companionStdString  = (for { entity <- module.entities } yield {
-      val e = EntityTemplateData(module, entity)
-      companionStd(e)
-    }).mkString("\n\n")
-
-    s"""
-       |// Std -----------------------------------
-       |trait ${module.name}Std extends ${config.seqContextTrait.opt(t => s"$t with ")}${module.name}Dsl {
-       |  ${selfTypeString("Std")}
-       |
-       |${companionStdString}
-       |
-       |$proxyBTStd
-       |
-       |${classesStd.mkString("\n\n")}
-       |
-       |$baseTypeToWrapperConvertionStd
-       |}
        |""".stripAndTrim
   }
 
@@ -1136,7 +1025,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
   def getDslTraits = {
     List(
       List((module.hasDsl, "", "Abs")),
-      if (config.isStdEnabled) List((module.hasDslStd, "Std", "Std")) else Nil,
       List((module.hasDslExp, "Exp", "Exp"))).flatten.collect {
       case (hasDslTrait, dslTraitSuffix, traitSuffix) if !hasDslTrait =>
         val DslName = s"${module.name}Dsl"
@@ -1160,7 +1048,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     val topLevel = List(
       getFileHeader,
       getTraitAbs,
-      if (config.isStdEnabled) getTraitStd else "",
       getTraitExp,
       emitModuleSerialization,
       "}", // closing brace for `package impl {`
