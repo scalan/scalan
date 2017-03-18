@@ -29,21 +29,13 @@ abstract class Scalan
   with Blocks
   with Monoids
   with PatternMatching
-//  with MapOps
-//  with MapViews
   with Transforming
   with Analyzing
-//  with ArrayOps
-//  with ArrayBuffers
   with Exceptions
-//  with ArrayViews
   with Thunks
   with Effects
   with Metadata
-//  with ListOps
-//  with ListViews
   with ConvertersDsl
-  with Effectful
   with StructsDsl
 
 trait ScalanDsl
@@ -70,22 +62,14 @@ abstract class ScalanExp
   with IfThenElseExp
   with BlocksExp
   with PatternMatchingExp
-//  with MapOpsExp
-//  with MapViewsExp
   with TransformingExp
   with AnalyzingExp
-//  with ArrayOpsExp
-//  with ArrayBuffersExp
   with ExceptionsExp
-//  with ArrayViewsExp
   with StringOpsExp
   with ThunksExp
   with EffectsExp
   with MetadataExp
-//  with ListOpsExp
-//  with ListViewsExp
   with ConvertersDslExp
-  with EffectfulExp
   with RewriteRulesExp
   with GraphVizExport
   with StructsDslExp

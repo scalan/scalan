@@ -36,8 +36,8 @@ Scalan issues that should be solved
 ------------------------------
 + remove Std traits 
 + make v.elem available in Abstract context (remove selfType1)
-- simplify scalan-meta
 - avoid passing implicit Elems where possible
+- simplify scalan-meta
 - rename Elem -> Type
 - avoid using Reflection API in IR
 - separate typed staging from untyped core IR 
@@ -58,10 +58,11 @@ Design decisions
 What is removed from scalan-core
 --------------------------------
 - MethodMappingDSL
-- JNI
-- Array, List, ArrayBuffer, Map from basis
-- AbstractStrings
-- Std context
++ JNI
++ Array, List, ArrayBuffer, Map from basis
++ AbstractStrings
++ Std context
++ Effectful, EffectfulCompiler
 - see also all [Mini] commits
 
 

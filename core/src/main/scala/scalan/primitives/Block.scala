@@ -18,7 +18,7 @@ trait BlocksExp extends Blocks with Expressions { self: ScalanExp =>
   case class SemicolonMulti[B](left: Seq[Exp[_]], right: Exp[B]) extends BaseDef[B]()(right.elem)
 
   def semicolon[A,B](left: Rep[A], right: Rep[B]): Rep[B] = {
-    implicit val eR = right.elem
+//    implicit val eR = right.elem
     Semicolon(left, right)
   }
   def semicolonMulti[B](xs: Seq[Rep[_]], y: Rep[B]): Rep[B] = {
@@ -56,7 +56,6 @@ trait BlocksExp extends Blocks with Expressions { self: ScalanExp =>
   override def rewriteDef[T](d: Def[T]) = d match {
     case Semicolon(a, Def(Semicolon(b,c))) => semicolonMulti(Seq(a,b), c)
     case Semicolon(Def(Semicolon(a,b)), c) => semicolonMulti(Seq(a,b), c)
-//    case Semicolon(Def(Semicolon(a,b)), Def(Semicolon(c,d))) if b == c => semicolon(Seq(a,b), d)
     case Semicolon(Def(Semicolon(a,b)), Def(Semicolon(c,d))) => semicolonMulti(Seq(a,b,c), d)
     case Semicolon(Def(SemicolonMulti(as,b)), c) =>
       semicolonMulti(addToSet(as.asInstanceOf[Seq[Rep[Any]]], b), c)
