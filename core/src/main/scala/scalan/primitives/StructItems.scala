@@ -40,7 +40,7 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[StructItem[T,S]]
     def lift[T](implicit eT: Elem[T]) = element[StructItem[T,S]]
     def unlift[T](implicit eFT: Elem[StructItem[T,S]]) = eFT.asInstanceOf[StructItemElem[T,S,_]].eVal
-    def getElem[T](fa: Rep[StructItem[T,S]]) = fa.selfType1
+    def getElem[T](fa: Rep[StructItem[T,S]]) = fa.elem
     def unapply[T](e: Elem[_]) = e match {
       case e: StructItemElem[_, _, _] => Some(e.asElem[StructItem[T,S]])
       case _ => None

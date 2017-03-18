@@ -9,8 +9,11 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.annotation.unchecked.uncheckedVariance
 
 trait Base extends LazyLogging { self: Scalan =>
+  trait Staged[+T] {
+    def elem: Elem[T @uncheckedVariance]
+  }
   type |[+A, +B] = Either[A, B]
-  type Rep[+A]
+  type Rep[+T] <: Staged[T]
   type IntRep = Rep[Int]
   type BoolRep = Rep[Boolean]
   type UnitRep = Rep[Unit]
@@ -43,11 +46,9 @@ trait Base extends LazyLogging { self: Scalan =>
 
   implicit class RepForSomeExtension(x: Rep[_]) {
     def asRep[T]: Rep[T] = x.asInstanceOf[Rep[T]]
-    def unsafeUntypedElem: Elem[_] = rep_getElem(x)
   }
   implicit class RepExtension[A](x: Rep[A]) {
     def asValue: A = valueFromRep(x)
-    def unsafeElem = rep_getElem(x)
   }
 
   def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for $x with element $eA")
@@ -169,12 +170,8 @@ trait Base extends LazyLogging { self: Scalan =>
     override def canEqual(other: Any) = other.isInstanceOf[CompanionDef[_]]
   }
 
-  // this is a bit hackish. Better would be to make Elem part of Rep in sequential context
-  implicit class RepDef[T <: Def[_]](x: Rep[T]) {
-    def selfType1: Elem[T] = repDef_getElem(x)
-  }
-  def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T]
-  def rep_getElem[T](x: Rep[T]): Elem[T]
+//  def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T]
+//  def rep_getElem[T](x: Rep[T]): Elem[T]
 
   def reifyObject[A](d: Def[A]): Rep[A]
 

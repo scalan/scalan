@@ -19,9 +19,9 @@ trait BaseExp extends Base { scalan: ScalanExp =>
   /**
    * constants/symbols (atomic)
    */
-  abstract class Exp[+T] {
+  abstract class Exp[+T] extends Staged[T] {
     def elem: Elem[T @uncheckedVariance]
-
+    
     private[scalan] var isRec = false
     def isRecursive: Boolean = isRec
     private[scalan] def isRecursive_=(b: Boolean) = { isRec = b }
@@ -213,8 +213,8 @@ trait BaseExp extends Base { scalan: ScalanExp =>
 
   def def_unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
 
-  override def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T] = x.elem
-  override def rep_getElem[T](x: Rep[T]): Elem[T] = x.elem
+//  override def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T] = x.elem
+//  override def rep_getElem[T](x: Rep[T]): Elem[T] = x.elem
 
   object Var {
     def unapply[T](e: Exp[T]): Option[Exp[T]] = e match {

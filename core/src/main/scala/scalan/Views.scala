@@ -453,7 +453,7 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
   def thunkIso[A,B](iso: Iso[A, B]) = ThunkIso[A, B](iso)(iso.eFrom, iso.eTo).asInstanceOf[Iso1[A, B, Thunk]]
 
   def converterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A]): Iso[A,B] = {
-    val convToElem = convTo.selfType1.asInstanceOf[ConverterElem[A, B, _]]
+    val convToElem = convTo.elem.asInstanceOf[ConverterElem[A, B, _]]
     ConverterIso[A, B](convTo, convFrom)(convToElem.eT, convToElem.eR)
   }
 

@@ -33,7 +33,7 @@ trait StructKeysAbs extends StructKeys {
     }
 
     def convertStructKey(x: Rep[StructKey[Schema]]): Rep[To] = {
-      x.selfType1 match {
+      x.elem match {
         case _: StructKeyElem[_, _] => x.asRep[To]
         case e => !!!(s"Expected $x to have StructKeyElem[_, _], but got $e", x)
       }

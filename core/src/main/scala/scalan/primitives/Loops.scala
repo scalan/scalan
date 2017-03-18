@@ -9,20 +9,9 @@ trait Loops { self: Scalan =>
   def loopUntil[A:Elem](s1: Rep[A])(isMatch: Rep[A => Boolean], step: Rep[A => A]): Rep[A]
 
   def loopUntilAux[A:Elem](s1: Rep[A])(isMatch: Rep[A] => Rep[Boolean], step: Rep[A] => Rep[A]): Rep[A] = {
-    val eA = elemFromRep(s1)
+    val eA = s1.elem
     val leA = Lazy(eA)
     loopUntil(s1)(fun(isMatch)(leA, BooleanElement), fun(step)(leA, eA))
-  }
-
-  private def elemFromRep[A](x: Rep[A])(implicit eA: Elem[A]): Elem[A] = eA match {
-    case ve: ViewElem[_,_] =>
-      x.unsafeElem
-    case pe: PairElem[a,b] =>
-      implicit val ea = pe.eFst
-      implicit val eb = pe.eSnd
-      val pair = x.asRep[(a, b)]
-      pairElement(elemFromRep(pair._1)(ea), elemFromRep(pair._2)(eb))
-    case _ => eA
   }
 
   def loopUntil2[A:Elem, B:Elem](s1: Rep[A], s2: Rep[B])

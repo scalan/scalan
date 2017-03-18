@@ -448,7 +448,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
          |    }
          |
          |    def convert${e.name}(x: Rep[${e.typeUse}]): Rep[$toArgName] = {
-         |      x.selfType1${e.t.isHighKind.opt(".asInstanceOf[Elem[_]]")} match {
+         |      x.elem${e.t.isHighKind.opt(".asInstanceOf[Elem[_]]")} match {
          |        case _: $wildcardElem => x.asRep[$toArgName]
          |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e", x)
          |      }

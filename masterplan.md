@@ -19,6 +19,7 @@ Goals
 - generalize Scalan and provide easy migration path 
 - support definition of composable finite state machines (FSM)
 - support Iso-kernels
+- make Elem and IR serializable
 - save IR in persistent store with versioning
 - define plugable backend API
 - provide Java codegen as reference implementation
@@ -33,7 +34,8 @@ Not Goals
 
 Scalan issues that should be solved
 ------------------------------
-- remove Std traits and merge abstract and staged cakes
++ remove Std traits 
++ make v.elem available in Abstract context (remove selfType1)
 - simplify scalan-meta
 - avoid passing implicit Elems where possible
 - rename Elem -> Type

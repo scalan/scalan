@@ -30,7 +30,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     }
 
     def convertMetaTest(x: Rep[MetaTest[T]]): Rep[To] = {
-      x.selfType1 match {
+      x.elem match {
         case _: MetaTestElem[_, _] => x.asRep[To]
         case e => !!!(s"Expected $x to have MetaTestElem[_, _], but got $e", x)
       }

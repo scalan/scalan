@@ -36,7 +36,7 @@ trait Functions { self: Scalan =>
   def sameArgFun[A, B, C](f: Rep[A => C])(fun: Rep[A] => Rep[B]): Rep[A => B] =
     // works in sequential context because Lazy's value is never accessed
     // and in staged context because rep_getElem is safe
-    inferredFun(fun)(Lazy(rep_getElem(f).eDom))
+    inferredFun(fun)(Lazy(f.elem.eDom))
   def composeBi[A, B, C, D](f: Rep[A => B], g: Rep[A => C])(h: (Rep[B], Rep[C]) => Rep[D]): Rep[A => D] = {
     sameArgFun(f) { x => h(f(x), g(x)) }
   }

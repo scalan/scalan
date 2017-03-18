@@ -196,8 +196,8 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
       assertElem(value, element[A])
       value
     }
-    def tag: StructTag[_ <: Struct] = s.unsafeUntypedElem.asInstanceOf[StructElem[_ <: Struct]].structTag
-    def fieldNames = s.unsafeUntypedElem.asInstanceOf[StructElem[_ <: Struct]].fieldNames
+    def tag: StructTag[_ <: Struct] = s.elem.asInstanceOf[StructElem[_ <: Struct]].structTag
+    def fieldNames = s.elem.asInstanceOf[StructElem[_ <: Struct]].fieldNames
     def fields: Seq[StructField] = {
       fieldNames.map(name => (name, field(s, name)))
     }

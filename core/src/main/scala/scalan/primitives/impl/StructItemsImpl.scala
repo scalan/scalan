@@ -36,7 +36,7 @@ trait StructItemsAbs extends StructItems {
     }
 
     def convertStructItem(x: Rep[StructItem[Val, Schema]]): Rep[To] = {
-      x.selfType1 match {
+      x.elem match {
         case _: StructItemElem[_, _, _] => x.asRep[To]
         case e => !!!(s"Expected $x to have StructItemElem[_, _, _], but got $e", x)
       }
