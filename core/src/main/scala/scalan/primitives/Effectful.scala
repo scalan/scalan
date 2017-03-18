@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scala.io.StdIn
 import scalan.staged.Expressions
-import scalan.{ScalanDslExp, ScalanExp, ScalanStd, Scalan}
+import scalan.{ScalanDslExp, ScalanExp, Scalan}
 import scalan.compilation.Compiler
 
 trait Effectful { self: Scalan =>
@@ -11,14 +11,6 @@ trait Effectful { self: Scalan =>
   def console_eval[A:Elem](i: Rep[Int], v: Rep[A]): Rep[(Int, A)]
   def console_printlnE(s: Rep[String]): Rep[Unit]
   def console_readlineE(): Rep[String]
-}
-
-trait EffectfulStd extends Effectful { self: ScalanStd =>
-  def console_println(i: Rep[Int], s: Rep[String]): Rep[(Int, Unit)] = (i + 1, println(s))
-  def console_readline(i: Rep[Int]): Rep[(Int, String)] = (i + 1, StdIn.readLine())
-  def console_eval[A:Elem](i: Rep[Int], v: Rep[A]): Rep[(Int, A)] = (i + 1, v)
-  def console_printlnE(s: Rep[String]): Rep[Unit] = println(s)
-  def console_readlineE(): Rep[String] = StdIn.readLine()
 }
 
 trait EffectfulExp extends Effectful with Expressions { self: ScalanExp =>

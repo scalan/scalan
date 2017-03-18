@@ -14,11 +14,11 @@ class MetaAstTests extends BaseCtxTests {
       val d = entityDef(e)
       assert(d.name == "Segment")
     }
-    {
-      val e = element[Kind[Array,Int]].asEntityElem
-      val d = entityDef(e)
-      assert(d.name == "Kind")
-    }
+//    {
+//      val e = element[Kind[Array,Int]].asEntityElem
+//      val d = entityDef(e)
+//      assert(d.name == "Kind")
+//    }
   }
 
 }

@@ -91,8 +91,8 @@ trait CommonExamples extends Scalan with SegmentsDsl {
     res.fold(l => l.length, r => r.length)
   }
 
-  lazy val t13 = fun { (in: Rep[(Int|Array[Int])]) =>
-    val res = in.fold(i => Interval(-1,i):RSeg, a => Slice(0, a.length):RSeg)
-    res.length
-  }
+//  lazy val t13 = fun { (in: Rep[(Int|Array[Int])]) =>
+//    val res = in.fold(i => Interval(-1,i):RSeg, a => Slice(0, a.length):RSeg)
+//    res.length
+//  }
 }

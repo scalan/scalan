@@ -30,10 +30,10 @@ abstract class AbstractSlicingTests extends BaseTests with TestContexts {
     val mIn2       = eIn2.toMarking
     val mJoined    = eJoined.toMarking
     val mSlicedIn  = StructMarking(Seq("a" -> eIn("a").toMarking, "b" -> eIn("b").toMarking))(eIn)
-    val mArrAll    = ArrayMarking(KeyPath.All, mIn)
-    val mArrSome   = ArrayMarking(KeyPath.All, mSlicedIn)
-    val mArrNone   = ArrayMarking(KeyPath.All, mNoFields)
-    val mArrJoined = ArrayMarking(KeyPath.All, mJoined)
+//    val mArrAll    = ArrayMarking(KeyPath.All, mIn)
+//    val mArrSome   = ArrayMarking(KeyPath.All, mSlicedIn)
+//    val mArrNone   = ArrayMarking(KeyPath.All, mNoFields)
+//    val mArrJoined = ArrayMarking(KeyPath.All, mJoined)
 
     lazy val funOneField = fun { in: Rep[Struct] => in.get[Int]("a") }(Lazy(eIn), eInt)
     lazy val funTwoFields = fun { in: Rep[Struct] =>
@@ -99,9 +99,9 @@ abstract class AbstractSlicingTests extends BaseTests with TestContexts {
     def typecheck(graph: PGraph): Unit = {
       for (te <- graph.scheduleAll) {
         te.rhs match {
-          case ArrayFilter(_xs, p: RFunc[a,Boolean]@unchecked) =>
-            val xs = _xs.asRep[Array[a]]
-            assert(xs.elem.asInstanceOf[ArrayElem[a]].eItem == p.elem.eDom)
+//          case ArrayFilter(_xs, p: RFunc[a,Boolean]@unchecked) =>
+//            val xs = _xs.asRep[Array[a]]
+//            assert(xs.elem.asInstanceOf[ArrayElem[a]].eItem == p.elem.eDom)
           case _ =>
         }
       }
@@ -119,9 +119,9 @@ class SlicingTests extends AbstractSlicingTests {
     assert(mNoFields.isEmpty)
     assert(!mIn.isEmpty)
     assert(!mSlicedIn.isEmpty)
-    assert(!mArrAll.isEmpty)
-    assert(!mArrSome.isEmpty)
-    assert(mArrNone.isEmpty)
+//    assert(!mArrAll.isEmpty)
+//    assert(!mArrSome.isEmpty)
+//    assert(mArrNone.isEmpty)
   }
 
   test("isIdentity") {
@@ -132,9 +132,9 @@ class SlicingTests extends AbstractSlicingTests {
     assert(!mNoFields.isIdentity)
     assert(mIn.isIdentity)
     assert(!mSlicedIn.isIdentity)
-    assert(mArrAll.isIdentity)
-    assert(!mArrSome.isIdentity)
-    assert(!mArrNone.isIdentity)
+//    assert(mArrAll.isIdentity)
+//    assert(!mArrSome.isIdentity)
+//    assert(!mArrNone.isIdentity)
   }
 
   test("projectedElem") {
@@ -145,9 +145,9 @@ class SlicingTests extends AbstractSlicingTests {
     assertResult(eEmpty)(mNoFields.projectedElem)
     assertResult(eIn)(mIn.projectedElem)
     assertResult(eSliced)(mSlicedIn.projectedElem)
-    assertResult(arrayElement(eIn))(mArrAll.projectedElem)
-    assertResult(arrayElement(eSliced))(mArrSome.projectedElem)
-    assertResult(arrayElement(eEmpty))(mArrNone.projectedElem)
+//    assertResult(arrayElement(eIn))(mArrAll.projectedElem)
+//    assertResult(arrayElement(eSliced))(mArrSome.projectedElem)
+//    assertResult(arrayElement(eEmpty))(mArrNone.projectedElem)
   }
 
   test("join") {
@@ -160,11 +160,11 @@ class SlicingTests extends AbstractSlicingTests {
     val m2 = StructMarking(eIn2.toStructMarking.fields)(eJoined)
     assertResult(mJoined)(m1.join(m2))
 
-    assertResult(mArrAll)(mArrSome.join(mArrAll))
+//    assertResult(mArrAll)(mArrSome.join(mArrAll))
 
-    val am1 = ArrayMarking(KeyPath.All, m1)
-    val am2 = ArrayMarking(KeyPath.All, m2)
-    assertResult(mArrJoined)(am1.join(am2))
+//    val am1 = ArrayMarking(KeyPath.All, m1)
+//    val am2 = ArrayMarking(KeyPath.All, m2)
+//    assertResult(mArrJoined)(am1.join(am2))
 
     {
       val eJoined = structElement(Seq("a" -> eInt, "b" -> eString, "c" -> eNestedAll))
@@ -174,12 +174,12 @@ class SlicingTests extends AbstractSlicingTests {
       val mRight = StructMarking(Seq(
         "b" -> eString.toMarking,
         "c" -> StructMarking(eNested2.toStructMarking.fields)(eNestedAll)))(eJoined)
-      val mArrJoined = ArrayMarking(eJoined.toMarking)
+//      val mArrJoined = ArrayMarking(eJoined.toMarking)
 
-      val am1 = ArrayMarking(mLeft)
-      val am2 = ArrayMarking(mRight)
-      val res = am1.join(am2)
-      assertResult(mArrJoined)(res)
+//      val am1 = ArrayMarking(mLeft)
+//      val am2 = ArrayMarking(mRight)
+//      val res = am1.join(am2)
+//      assertResult(mArrJoined)(res)
     }
 
     assertResult(mAll)(mEmpty.join(mAll))

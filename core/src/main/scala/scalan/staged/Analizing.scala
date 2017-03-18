@@ -5,8 +5,6 @@ import scalan.util.CollectionUtil
 
 trait Analyzing { self: Scalan =>  }
 
-trait AnalyzingStd extends Analyzing { self: ScalanStd => }
-
 trait AnalyzingExp extends Analyzing { self: ScalanExp =>
 
   case class LevelCount[T](level: Int)(implicit val elem: Elem[T]) extends Marking[T] {
@@ -38,16 +36,6 @@ trait AnalyzingExp extends Analyzing { self: ScalanExp =>
     def getInboundMarkings[T](te: TableEntry[T], outMark: LevelCount[T]): MarkedSyms = {
       val l = outMark.level
       te.rhs match {
-        case ArrayMap(xs: Arr[a], f) =>
-          Seq[MarkedSym](updateMark(xs, l), updateMark(f, l + 1))
-        case ArraySortBy(xs: Arr[a], f, _) =>
-          Seq[MarkedSym](updateMark(xs, l), updateMark(f, l + 1))
-        case ArrayFold(xs: Arr[a], init, f) =>
-          Seq[MarkedSym](
-            updateMark(xs, l), updateMark(init, l), updateMark(f, l + 1)
-          )
-        case ArrayFilter(xs: Arr[a], p) =>
-          Seq[MarkedSym](updateMark(xs, l), updateMark(p, l + 1))
         case lam: Lambda[a,b] =>
           Seq[MarkedSym](updateMark(lam.y, l))
         case _ =>

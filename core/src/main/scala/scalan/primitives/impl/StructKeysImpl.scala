@@ -227,42 +227,6 @@ trait StructKeysAbs extends StructKeys {
   registerModule(StructKeys_Module)
 }
 
-// Std -----------------------------------
-trait StructKeysStd extends StructKeysDsl {
-  self: StructsDsl with ScalanStd =>
-
-  lazy val StructKey: Rep[StructKeyCompanionAbs] = new StructKeyCompanionAbs {
-  }
-
-  case class StdIndexStructKey[Schema <: Struct]
-      (override val index: Rep[Int])(implicit eSchema: Elem[Schema])
-    extends AbsIndexStructKey[Schema](index) {
-  }
-
-  def mkIndexStructKey[Schema <: Struct]
-    (index: Rep[Int])(implicit eSchema: Elem[Schema]): Rep[IndexStructKey[Schema]] =
-    new StdIndexStructKey[Schema](index)
-  def unmkIndexStructKey[Schema <: Struct](p: Rep[StructKey[Schema]]) = p match {
-    case p: IndexStructKey[Schema] @unchecked =>
-      Some((p.index))
-    case _ => None
-  }
-
-  case class StdNameStructKey[Schema <: Struct]
-      (override val name: Rep[String])(implicit eSchema: Elem[Schema])
-    extends AbsNameStructKey[Schema](name) {
-  }
-
-  def mkNameStructKey[Schema <: Struct]
-    (name: Rep[String])(implicit eSchema: Elem[Schema]): Rep[NameStructKey[Schema]] =
-    new StdNameStructKey[Schema](name)
-  def unmkNameStructKey[Schema <: Struct](p: Rep[StructKey[Schema]]) = p match {
-    case p: NameStructKey[Schema] @unchecked =>
-      Some((p.name))
-    case _ => None
-  }
-}
-
 // Exp -----------------------------------
 trait StructKeysExp extends StructKeysDsl {
   self: StructsDsl with ScalanExp =>

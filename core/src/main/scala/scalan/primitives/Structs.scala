@@ -5,7 +5,6 @@ import scala.reflect.runtime.universe._
 import scalan.util.CollectionUtil
 import scalan.common.OverloadHack._
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.seq.BaseStd
 import scalan.staged.Expressions
 
 /**
@@ -454,54 +453,6 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     wrapperFun.asRep[A => Any]
   }
 
-}
-
-trait StructsDslStd extends StructsDsl with StructItemsDslStd with StructKeysDslStd with BaseStd { self: ScalanStd =>
-
-  case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[StructField]) extends Struct {
-    override def equals(other: Any) = other match {
-      case ss: StructsDslStd#StructSeq[_] =>
-        tag == ss.tag && fields.sameElements(ss.fields)
-      case _ => false
-    }
-    def findFieldIndex(fieldName: String): Int = fields.iterator.map(_._1).indexOf(fieldName)
-  }
-
-  def struct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]): Rep[T] =
-    StructSeq(tag, fields).asRep[T]
-  def field(struct: Rep[Struct], field: String): Rep[_] =
-    struct.asInstanceOf[StructSeq[_]].fields.find(_._1 == field) match {
-      case Some((_, value)) => value
-      case None => !!!(s"Field $field not found in structure $struct", struct)
-    }
-  def field(struct: Rep[Struct], fieldIndex: Int): Rep[_] = {
-    struct.asInstanceOf[StructSeq[_]].fields(fieldIndex)._2
-  }
-
-  def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[_]): Rep[S] = {
-    val s = struct.asInstanceOf[StructSeq[S]]
-    val buf = new scala.collection.mutable.ArrayBuffer[StructField](s.fields.length)
-    s.fields.copyToBuffer(buf)
-    val i = s.findFieldIndex(fieldName)
-    buf(i) = (buf(i)._1, v)
-    StructSeq(s.tag, buf).asInstanceOf[S]
-  }
-
-  def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct] = {
-    val StructSeq(tag, fieldsInStruct) = struct
-    StructSeq(tag, fieldsInStruct.filter(fields.contains))
-  }
-
-  override def rep_getElem[T](x: Rep[T]): Elem[T] = x match {
-    case StructSeq(tag, fields) =>
-      val fieldElems = fields.map {
-        case (name, value) =>
-          val elemForValue = rep_getElem(value)
-          (name, elemForValue)
-      }
-      StructElem(tag.asInstanceOf[StructTag[T with Struct]], fieldElems).asElem[T]
-    case _ => super.rep_getElem(x)
-  }
 }
 
 trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with EffectsExp with ViewsDslExp with StructItemsDslExp

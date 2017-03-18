@@ -49,10 +49,6 @@ trait Metadata { self: Scalan =>
   }
 }
 
-trait MetadataStd extends Metadata { self: ScalanStd =>
-  def setMetadata[A, B](target: Rep[A], key: MetaKey[B])(value: B, mirrorWithDef: Option[Boolean] = None): Rep[A] = target
-}
-
 trait MetadataExp extends Metadata { self: ScalanExp =>
   case class MetaNode(val meta: Map[MetaKey[_], MetaValue[Any]]) {
     def get[A](key: MetaKey[A]) = meta.get(key).map(_.value).asInstanceOf[Option[A]]

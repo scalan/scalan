@@ -239,42 +239,6 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
   registerModule(Kinds_Module)
 }
 
-// Std -----------------------------------
-trait KindsStd extends scalan.ScalanDslStd with KindsDsl {
-  self: KindsDslStd =>
-
-  lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
-  }
-
-  case class StdReturn[F[_], A]
-      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
-    extends AbsReturn[F, A](a) {
-  }
-
-  def mkReturn[F[_], A]
-    (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
-    new StdReturn[F, A](a)
-  def unmkReturn[F[_], A](p: Rep[Kind[F, A]]) = p match {
-    case p: Return[F, A] @unchecked =>
-      Some((p.a))
-    case _ => None
-  }
-
-  case class StdBind[F[_], S, B]
-      (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends AbsBind[F, S, B](a, f) {
-  }
-
-  def mkBind[F[_], S, B]
-    (a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
-    new StdBind[F, S, B](a, f)
-  def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]) = p match {
-    case p: Bind[F, S, B] @unchecked =>
-      Some((p.a, p.f))
-    case _ => None
-  }
-}
-
 // Exp -----------------------------------
 trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
   self: KindsDslExp =>
@@ -350,5 +314,4 @@ object Kinds_Module extends scalan.ModuleInfo {
 }
 
 trait KindsDsl extends impl.KindsAbs
-trait KindsDslStd extends impl.KindsStd
 trait KindsDslExp extends impl.KindsExp

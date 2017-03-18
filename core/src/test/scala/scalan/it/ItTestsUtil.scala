@@ -28,7 +28,7 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
     CompilerWithConfig(compiler)(compilerConfig)
 
   def defaultCompilers: Seq[CompilerWithConfig]
-  val progStd: Prog with ScalanStd
+  val progStd: Prog
 
   /** Utility method to be used when defining [[defaultCompilers]]. */
   def compilers(cs: CompilerWithConfig*) = cs
@@ -160,14 +160,14 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
   }
 
   @deprecated("Use overload taking compilers instead", "0.2.11")
-  final class CompareOutputWithSequential[S <: Scalan, Back <: Compiler[S with ScalanDslExp]](val back: Back, forth: S with ScalanDslStd) {
+  final class CompareOutputWithSequential[S <: Scalan, Back <: Compiler[S with ScalanDslExp]](val back: Back, forth: S) {
     def apply[A, B](f: S => S#Rep[A => B], functionName: String, input: A, compilerConfig: back.CompilerConfig = back.defaultCompilerConfig)
                    (implicit comparator: (B, B) => Unit) = {
       compareOutputWithExpected[S](back)(f(forth).asInstanceOf[A => B](input), f, functionName, input, compilerConfig)
     }
   }
   @deprecated("Use overload taking compilers instead", "0.2.11")
-  def compareOutputWithStd[S <: Scalan](back: Compiler[S with ScalanDslExp], forth: S with ScalanDslStd) = new CompareOutputWithSequential[S, back.type](back, forth)
+  def compareOutputWithStd[S <: Scalan](back: Compiler[S with ScalanDslExp], forth: S) = new CompareOutputWithSequential[S, back.type](back, forth)
 
   @deprecated("Use the overload taking f: S => S#Rep[A => B] instead", "0.2.10")
   def compareOutputWithStd[A, B](back: Compiler[_ <: ScalanDslExp])

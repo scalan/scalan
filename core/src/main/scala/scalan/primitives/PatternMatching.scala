@@ -30,19 +30,6 @@ trait PatternMatching { _: Scalan =>
   }
 }
 
-trait PatternMatchingStd { _: ScalanStd =>
-
-  def patternMatchError(obj: Any) = throw new MatchError(obj)
-
-  protected def patternMatch[A, B: Elem](selector: Rep[A])(branches: Branch[_ <: A, B]*)(default: Option[Rep[A => B]]) =
-    branches.collectFirst {
-      case Branch(elem, guard, f) if elem.runtimeClass.isInstance(selector) && guard.asInstanceOf[A => Boolean](selector) => f
-    }.orElse(default.asInstanceOf[Option[_ => B]]) match {
-      case Some(f) => f.asInstanceOf[A => B](selector)
-      case None => patternMatchError(selector)
-    }
-}
-
 trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
   // TODO match branches need to be treated similarly to if branches for code motion etc.
 

@@ -211,45 +211,11 @@ trait Views extends TypeDescs { self: ViewsDsl with Scalan =>
     }
   }
 
-  // TODO currently need implicit args for ArrayIsoElem to be generated, should be removed
-  abstract class ArrayIso[A,B](val innerIso: Iso[A,B])(implicit override val eA: Elem[A], override val eB: Elem[B]) extends Iso1UR[A, B, Array] {
-    def cC = container[Array]
-    def from(x: Arr[B]) = x.mapBy(innerIso.fromFun)
-    def to(x: Arr[A]) = x.mapBy(innerIso.toFun)
-  }
-
-  abstract class ListIso[A,B](val innerIso: Iso[A,B])(implicit override val eA: Elem[A], override val eB: Elem[B]) extends Iso1UR[A, B, List] {
-    def cC = container[List]
-    def from(x: Lst[B]) = x.mapBy(innerIso.fromFun)
-    def to(x: Lst[A]) = x.mapBy(innerIso.toFun)
-  }
-
-  abstract class ArrayBufferIso[A,B](val innerIso: Iso[A,B])(implicit override val eA: Elem[A], override val eB: Elem[B]) extends Iso1UR[A, B, ArrayBuffer] {
-    def cC = container[ArrayBuffer]
-    def from(x: Rep[ArrayBuffer[B]]) = x.mapBy(innerIso.fromFun)
-    def to(x: Rep[ArrayBuffer[A]]) = x.mapBy(innerIso.toFun)
-  }
-
   abstract class ThunkIso[A,B](val innerIso: Iso[A,B])(implicit override val eA: Elem[A], override val eB: Elem[B]) extends Iso1UR[A, B, Thunk] {
     def cC = container[Thunk]
     def from(x: Th[B]) = x.map(innerIso.fromFun)
     def to(x: Th[A]) = x.map(innerIso.toFun)
     lazy val defaultRepTo = Thunk(eB.defaultRepValue)(eB)
-  }
-
-  abstract class MapIso[K1, V1, K2, V2](val iso1: Iso[K1, K2], val iso2: Iso[V1, V2])(
-    implicit val eK1: Elem[K1], val eV1: Elem[V1], val eK2: Elem[K2], val eV2: Elem[V2])
-    extends IsoUR[MMap[K1, V1], MMap[K2, V2]] {
-    lazy val eFrom: Elem[MMap[K1, V1]] = element[MMap[K1, V1]]
-    lazy val eTo: Elem[MMap[K2, V2]] = element[MMap[K2, V2]]
-    def from(b: MM[K2, V2]) = MMap.fromArray[K1, V1](b.keys.map(iso1.from) zip b.values.map(iso2.from))
-    def to(a: MM[K1, V1]) = MMap.fromArray[K2, V2](a.keys.map(iso1.to) zip a.values.map(iso2.to))
-    lazy val defaultRepTo = emptyMap[K2, V2](eK2, eV2)
-    override def isIdentity = iso1.isIdentity && iso2.isIdentity
-    override def equals(other: Any) = other match {
-      case i: Views#MapIso[_, _, _, _] => (this eq i) || (iso1 == i.iso1 && iso2 == i.iso2)
-      case _ => false
-    }
   }
 }
 
@@ -422,20 +388,9 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
         val iso1 = builder(fe.eDom)
         val iso2 = builder(fe.eRange)
         funcIso(iso1,iso2)
-      case ae: ArrayElem[_] =>
-        val iso = builder(ae.eItem)
-        arrayIso(iso)
-      case ae: ListElem[_] =>
-        val iso = builder(ae.eItem)
-        listIso(iso)
-      case ae: ArrayBufferElem[_] =>
-        val iso = builder(ae.eItem)
-        arrayBufferIso(iso)
       case ae: ThunkElem[_] =>
         val iso = builder(ae.eItem)
         thunkIso(iso)
-      case me: MMapElem[_, _] =>
-        identityIso(me)
 
       case we: WrapperElem[base, ext] @unchecked =>
         val eExt = we.eTo
@@ -495,16 +450,7 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
   def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] =
     FuncIso[A, B, C, D](iso1, iso2)(iso1.eFrom, iso1.eTo, iso2.eFrom, iso2.eTo)
 
-  def arrayIso[A,B](iso: Iso[A, B]) = ArrayIso[A, B](iso)(iso.eFrom, iso.eTo).asInstanceOf[Iso1[A, B, Array]]
-
-  def listIso[A,B](iso: Iso[A, B]) = ListIso[A, B](iso)(iso.eFrom, iso.eTo).asInstanceOf[Iso1[A, B, List]]
-
-  def arrayBufferIso[A,B](iso: Iso[A, B]) = ArrayBufferIso[A, B](iso)(iso.eFrom, iso.eTo).asInstanceOf[Iso1[A, B, ArrayBuffer]]
-
   def thunkIso[A,B](iso: Iso[A, B]) = ThunkIso[A, B](iso)(iso.eFrom, iso.eTo).asInstanceOf[Iso1[A, B, Thunk]]
-
-  def mapIso[K1, V1, K2, V2](iso1: Iso[K1, K2], iso2: Iso[V1, V2]): Iso[MMap[K1, V1], MMap[K2, V2]] =
-    MapIso[K1, V1, K2, V2](iso1, iso2)(iso1.eFrom, iso2.eFrom, iso1.eTo, iso2.eTo)
 
   def converterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A]): Iso[A,B] = {
     val convToElem = convTo.selfType1.asInstanceOf[ConverterElem[A, B, _]]
@@ -527,10 +473,6 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
         (iso1, convertAfterIso(iso2, toC, toD))
     (i1, i2)
   }
-}
-
-trait ViewsDslStd extends impl.ViewsStd { self: ScalanStd =>
-  def shouldUnpack(e: Elem[_]) = true
 }
 
 trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: ScalanExp =>
@@ -696,10 +638,10 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
     case UnpackView(Def(UnpackableDef(source, _)), _) => source
 
     // Rule: ParExec(nJobs, f @ i => ... V(_, iso)) ==> V(ParExec(nJobs, f >> iso.from), arrayiso(iso))
-    case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, HasViews(_, iso: Iso[a, b])))) =>
-      implicit val ea = iso.eFrom
-      val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
-      ViewArray(parRes, iso)
+//    case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, HasViews(_, iso: Iso[a, b])))) =>
+//      implicit val ea = iso.eFrom
+//      val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
+//      ViewArray(parRes, iso)
 
     // Rule: loop(V(start, iso), step, isMatch) ==> iso.to(loop(start, iso.to >> step >> iso.from, iso.to >> isMatch))
     case LoopUntil(HasViews(startWithoutViews, iso: Iso[a, b]), step, isMatch) =>

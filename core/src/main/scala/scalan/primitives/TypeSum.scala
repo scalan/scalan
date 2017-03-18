@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{Scalan, ScalanExp, ScalanStd}
+import scalan.{Scalan, ScalanExp }
 
 trait TypeSum { self: Scalan =>
 
@@ -67,31 +67,6 @@ trait TypeSum { self: Scalan =>
 
   // TODO used by generated code; ideally should be unnecessary
   def sOptionElement[A: Elem] = element[SOption[A]]
-}
-
-trait TypeSumStd extends TypeSum { self: ScalanStd =>
-
-  def mkLeft[A, B: Elem](a: Rep[A]): Rep[A | B] = Left[A, B](a)
-
-  def mkRight[A: Elem, B](a: Rep[B]): Rep[A | B] = Right[A, B](a)
-
-  class SeqSumOps[A, B](s: Rep[A | B]) extends SumOps[A, B] {
-    def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = foldBy(l, r)
-
-    def foldBy[R](l: Rep[A => R], r: Rep[B => R]): Rep[R] = s.fold(l, r)
-
-    def mapSum[C: Elem, D: Elem](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]) = mapSumBy(fl, fr)
-
-    def mapSumBy[C, D](fl: Rep[A => C], fr: Rep[B => D]) = {
-      s.fold(x => Left(fl(x)), y => Right(fr(y)))
-    }
-
-    def isLeft = s.isLeft
-
-    def isRight = s.isRight
-  }
-
-  implicit def pimpSum[A, B](s: Rep[A | B]): SumOps[A, B] = new SeqSumOps[A, B](s)
 }
 
 trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>

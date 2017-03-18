@@ -3,7 +3,7 @@ package scalan.primitives
 import scala.util.Random
 import scalan.common.IdSupply
 import scalan.staged.BaseExp
-import scalan.{ ScalanExp, Scalan, ScalanStd }
+import scalan.{ ScalanExp, Scalan }
 
 trait NumericOps { self: Scalan =>
   implicit class NumericOpsCls[T](x: Rep[T])(implicit val n: Numeric[T], et: Elem[T]) {
@@ -59,16 +59,6 @@ trait NumericOps { self: Scalan =>
   case class IntegralMod[T](i: Integral[T])(implicit elem: Elem[T]) extends DivOp[T]("%", i.rem, i)
 
   def random[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T]
-}
-
-trait NumericOpsStd extends NumericOps { self: ScalanStd =>
-  def random[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = {
-    (et match {
-      case IntElement => Random.nextInt(bound.asInstanceOf[Int])
-      case DoubleElement => Random.nextDouble() * bound.asInstanceOf[Double]
-      case _ => ???(s"random not implemented for $et")
-    }).asInstanceOf[Rep[T]]
-  }
 }
 
 trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanExp =>

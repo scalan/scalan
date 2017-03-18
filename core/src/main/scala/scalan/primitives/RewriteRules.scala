@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{Scalan, ScalanExp, ScalanStd}
+import scalan.{Scalan, ScalanExp}
 import scala.reflect.runtime.universe._
 import scalan.util.Invariant
 
@@ -31,9 +31,6 @@ trait RewriteRules { self: Scalan =>
   implicit class PropEqualityOps[A: Elem](x: Rep[A]) {
     def <=>(y: Rep[A]): Rep[Rewrite[A]] = self.rewr(x, y)
   }
-}
-
-trait RewriteRulesStd extends RewriteRules { self: ScalanStd =>
 }
 
 trait RewriteRulesExp extends RewriteRules with BaseExp { self: ScalanExp =>

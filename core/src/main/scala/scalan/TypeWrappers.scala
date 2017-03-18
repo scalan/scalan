@@ -71,11 +71,6 @@ trait TypeWrappers extends Base { self: Scalan =>
   }
 }
 
-trait TypeWrappersStd extends TypeWrappers { scalan: ScalanStd =>
-  protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase] =
-    x.wrappedValue
- }
-
 trait TypeWrappersExp extends TypeWrappers with GraphVizExport with BaseExp { scalan: ScalanExp =>
   protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase] =
     x.asInstanceOf[Rep[TBase]]

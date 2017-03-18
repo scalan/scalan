@@ -71,10 +71,6 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
 
 }
 
-trait StructItemsDslStd extends impl.StructItemsStd {self: StructsDsl with ScalanStd =>
-  def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int])(implicit eS: Elem[S]): Rep[StructItem[_,S]] = struct_getItem(s, i)
-
-}
 trait StructItemsDslExp extends impl.StructItemsExp {self: StructsDsl with ScalanExp =>
 
   def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int])(implicit eS: Elem[S]): Rep[StructItem[_,S]] =

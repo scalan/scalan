@@ -1,6 +1,6 @@
 package scalan.it
 
-import scalan.{ScalanStd, Scalan, BaseTests, TestContexts}
+import scalan.{Scalan, BaseTests, TestContexts}
 
 /**
  * Base class for integration testing
@@ -9,8 +9,8 @@ import scalan.{ScalanStd, Scalan, BaseTests, TestContexts}
  *                  if the class doesn't use [[ItTestsUtil.compareOutputWithStd]].
  * @tparam Prog Program type
  */
-abstract class BaseItTests[Prog <: Scalan](mkProgStd: => Prog with ScalanStd) extends BaseTests with ItTestsUtil[Prog] {
+abstract class BaseItTests[Prog <: Scalan](mkProgStd: => Prog) extends BaseTests with ItTestsUtil[Prog] {
   lazy val progStd = mkProgStd
 }
 
-abstract class BaseCtxItTests[Prog <: Scalan](mkProgStd: => Prog with ScalanStd) extends BaseItTests[Prog](mkProgStd) with TestContexts
+abstract class BaseCtxItTests[Prog <: Scalan](mkProgStd: => Prog) extends BaseItTests[Prog](mkProgStd) with TestContexts

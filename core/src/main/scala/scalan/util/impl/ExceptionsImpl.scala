@@ -163,41 +163,6 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
   registerModule(Exceptions_Module)
 }
 
-// Std -----------------------------------
-trait ExceptionsStd extends scalan.ScalanStd with ExceptionsDsl {
-  self: ExceptionsDslStd =>
-
-  lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs {
-    override def apply(msg: Rep[String]): Rep[SThrowable] =
-      SThrowableImpl(new Throwable(msg))
-  }
-
-  // override proxy if we deal with TypeWrapper
-  //override def proxyThrowable(p: Rep[Throwable]): SThrowable =
-  //  proxyOpsEx[Throwable, SThrowable, StdSThrowableImpl](p, bt => StdSThrowableImpl(bt))
-
-  case class StdSThrowableImpl
-      (override val wrappedValue: Rep[Throwable])
-    extends SThrowableImpl(wrappedValue) {
-    override def getMessage: Rep[String] =
-      wrappedValue.getMessage
-
-    override def initCause(cause: Rep[SThrowable]): Rep[SThrowable] =
-      SThrowableImpl(wrappedValue.initCause(cause))
-  }
-
-  def mkSThrowableImpl
-    (wrappedValue: Rep[Throwable]): Rep[SThrowableImpl] =
-    new StdSThrowableImpl(wrappedValue)
-  def unmkSThrowableImpl(p: Rep[SThrowable]) = p match {
-    case p: SThrowableImpl @unchecked =>
-      Some((p.wrappedValue))
-    case _ => None
-  }
-
-  implicit def wrapThrowableToSThrowable(v: Throwable): SThrowable = SThrowableImpl(v)
-}
-
 // Exp -----------------------------------
 trait ExceptionsExp extends scalan.ScalanExp with ExceptionsDsl {
   self: ExceptionsDslExp =>

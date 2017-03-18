@@ -1,6 +1,6 @@
 package scalan.it.smoke
 
-import scalan.{ScalanDslStd, ScalanDslExp, ScalanDsl}
+import scalan.{ScalanDslExp, ScalanDsl}
 import scalan.it.BaseItTests
 import scalan.compilation.Compiler
 
@@ -8,49 +8,49 @@ trait SmokeProg extends ScalanDsl {
 
   lazy val simpleArith = fun {x: Rep[Int] => x*x + 2}
 
-  lazy val simpleArrGet = fun {in: Rep[(Array[Int], Int)] =>
-    val arr = in._1
-    val ind = in._2
-    arr(ind)
-  }
-  lazy val simpleMap = fun {x: Rep[Array[Int]] =>
-    val x1 = x.map {y:Rep[Int] => y+1}
-    x1
-  }
-  lazy val simpleMapNested = fun {x: Rep[(Array[Array[Double]], Int)] =>
-    val x1 = x._1.map {y:Rep[Array[Double]] => y(x._2)}
-    x1
-  }
-  lazy val simpleZip = fun {x: Rep[Array[Int]] =>
-    val x1 = x.map {y:Rep[Int] => y+2}
-    x1 zip x
-  }
-  lazy val simpleZipWith = fun {x: Rep[Array[Int]] =>
-    val x1 = x.map {y:Rep[Int] => y+3}
-    val x2 = x1 zip x
-    val x3 = x2.map {y:Rep[(Int,Int)] => y._1 * y._2}
-    x3
-  }
-
-  lazy val simpleReduce = fun {x: Rep[Array[Int]] =>
-    val x1 = x.reduce
-    x1
-  }
-  lazy val mvMul = fun { in:Rep[(Array[Array[Int]], Array[Int])] =>
-    val mat = in._1
-    val vec = in._2
-    val res = mat map {row: Rep[Array[Int]] =>
-      val x1 = row zip vec
-      val x2 = x1.map {y:Rep[(Int,Int)] => y._1 * y._2}
-      x2.reduce
-    }
-    res
-  }
-
-  lazy val simpleIf = fun { in: Rep[(Array[Double], Double)] =>
-    val res = IF (in._2 === 0.0) THEN { in._1 map (x => x/2.0) } ELSE { IF ( in._2 < 0.0) THEN { in._1 map (x => (x*(-1.0))/in._2) } ELSE {in._1 map (x => x/in._2) } }
-    res.reduce
-  }
+//  lazy val simpleArrGet = fun {in: Rep[(Array[Int], Int)] =>
+//    val arr = in._1
+//    val ind = in._2
+//    arr(ind)
+//  }
+//  lazy val simpleMap = fun {x: Rep[Array[Int]] =>
+//    val x1 = x.map {y:Rep[Int] => y+1}
+//    x1
+//  }
+//  lazy val simpleMapNested = fun {x: Rep[(Array[Array[Double]], Int)] =>
+//    val x1 = x._1.map {y:Rep[Array[Double]] => y(x._2)}
+//    x1
+//  }
+//  lazy val simpleZip = fun {x: Rep[Array[Int]] =>
+//    val x1 = x.map {y:Rep[Int] => y+2}
+//    x1 zip x
+//  }
+//  lazy val simpleZipWith = fun {x: Rep[Array[Int]] =>
+//    val x1 = x.map {y:Rep[Int] => y+3}
+//    val x2 = x1 zip x
+//    val x3 = x2.map {y:Rep[(Int,Int)] => y._1 * y._2}
+//    x3
+//  }
+//
+//  lazy val simpleReduce = fun {x: Rep[Array[Int]] =>
+//    val x1 = x.reduce
+//    x1
+//  }
+//  lazy val mvMul = fun { in:Rep[(Array[Array[Int]], Array[Int])] =>
+//    val mat = in._1
+//    val vec = in._2
+//    val res = mat map {row: Rep[Array[Int]] =>
+//      val x1 = row zip vec
+//      val x2 = x1.map {y:Rep[(Int,Int)] => y._1 * y._2}
+//      x2.reduce
+//    }
+//    res
+//  }
+//
+//  lazy val simpleIf = fun { in: Rep[(Array[Double], Double)] =>
+//    val res = IF (in._2 === 0.0) THEN { in._1 map (x => x/2.0) } ELSE { IF ( in._2 < 0.0) THEN { in._1 map (x => (x*(-1.0))/in._2) } ELSE {in._1 map (x => x/in._2) } }
+//    res.reduce
+//  }
 
   lazy val simpleSum = fun { x: Rep[Int] =>
     val l = x.asLeft[Unit].mapSum(_ + 7, identity)
@@ -84,67 +84,67 @@ trait SmokeProg extends ScalanDsl {
     (a, b)
   }
 
-  lazy val arrayUpdate = fun {in: Rep[Array[Int]] => val f = {a:Rep[Array[Int]] => a.update(0,1)}; f(in)}
-
-  lazy val filterCompound = fun { in: Rep[Array[(Int, (Int, Int))]] =>
-    in.filter(x => x._1 >= 20 && x._2 >= x._1 && x._3 < 30)
-  }
-
-  lazy val aggregates = fun { in: Rep[Array[Int]] =>
-    (in.min, in.max, in.sum, in.avg)
-  }
-
-  lazy val sortBy = fun { in: Rep[Array[(Int, Int)]] =>
-    in.sortBy(fun { p => p._1})
-  }
-
-  lazy val reuseTest = fun { len: Rep[Int] =>
-    val matrix: Rep[Array[Array[Int]]] = SArray.tabulate[Array[Int]](len) { n => SArray.tabulate[Int](n) { i => i}}
-    matrix.map(row => row.reduce) zip matrix.map(row => row.reduce * 2)
-  }
-
-  lazy val arrayEmpty = fun { _:Rep[Int] => SArray.empty[Int]}
-
-  lazy val arrayReplicate = fun {in:Rep[(Int,Double)] =>
-    SArray.replicate(in._1, in._2)
-  }
+//  lazy val arrayUpdate = fun {in: Rep[Array[Int]] => val f = {a:Rep[Array[Int]] => a.update(0,1)}; f(in)}
+//
+//  lazy val filterCompound = fun { in: Rep[Array[(Int, (Int, Int))]] =>
+//    in.filter(x => x._1 >= 20 && x._2 >= x._1 && x._3 < 30)
+//  }
+//
+//  lazy val aggregates = fun { in: Rep[Array[Int]] =>
+//    (in.min, in.max, in.sum, in.avg)
+//  }
+//
+//  lazy val sortBy = fun { in: Rep[Array[(Int, Int)]] =>
+//    in.sortBy(fun { p => p._1})
+//  }
+//
+//  lazy val reuseTest = fun { len: Rep[Int] =>
+//    val matrix: Rep[Array[Array[Int]]] = SArray.tabulate[Array[Int]](len) { n => SArray.tabulate[Int](n) { i => i}}
+//    matrix.map(row => row.reduce) zip matrix.map(row => row.reduce * 2)
+//  }
+//
+//  lazy val arrayEmpty = fun { _:Rep[Int] => SArray.empty[Int]}
+//
+//  lazy val arrayReplicate = fun {in:Rep[(Int,Double)] =>
+//    SArray.replicate(in._1, in._2)
+//  }
 
   lazy val randoms = fun { in: Rep[(Int, Double)] =>
     val Pair(i, d) = in
     Pair(random(i), random(d))
   }
 
-  lazy val emptyNestedUnitArray = fun {_ : Rep[Int] => array_empty[Array[Unit]]}
-
-
-  lazy val pairIf = fun { in: Rep[(Int, Array[Int])] =>
-    val rs = IF (in._1 > 0) THEN {
-      val red = in._2.reduce
-      (red + 1, red - 1)
-    } ELSE {
-      (0,0)
-    }
-    rs._1 + rs._2
-  }
-
-  lazy val arrayUpdateMany = fun { in: Rep[(Array[Int], (Array[Int], Array[Int]))] => array_updateMany(in._1, in._2, in._3) }
-
-  lazy val listRangeFrom0 = fun { n: Rep[Int] => SList.rangeFrom0(n) }
-
-  lazy val applyLambda2Array = fun {arr: Rep[Array[Int]] =>
-    def isMatch(arr: Rep[Array[Int]]) = arr.length > 3
-    def step(arr: Rep[Array[Int]]): Rep[Array[Int]] = arr map {a => a + 2}
-
-    from(arr).until(isMatch)(step)
-  }
-
-  lazy val fillArrayBuffer = fun { in: Rep[Array[Int]] =>
-    in.fold(ArrayBuffer.empty[Int], (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
-  }
-
-  lazy val makeArrayBuffer = fun { in: Rep[Array[Int]] =>
-    in.fold(ArrayBuffer.make[Int]("testArrayBuffer"), (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
-  }
+//  lazy val emptyNestedUnitArray = fun {_ : Rep[Int] => array_empty[Array[Unit]]}
+//
+//
+//  lazy val pairIf = fun { in: Rep[(Int, Array[Int])] =>
+//    val rs = IF (in._1 > 0) THEN {
+//      val red = in._2.reduce
+//      (red + 1, red - 1)
+//    } ELSE {
+//      (0,0)
+//    }
+//    rs._1 + rs._2
+//  }
+//
+//  lazy val arrayUpdateMany = fun { in: Rep[(Array[Int], (Array[Int], Array[Int]))] => array_updateMany(in._1, in._2, in._3) }
+//
+//  lazy val listRangeFrom0 = fun { n: Rep[Int] => SList.rangeFrom0(n) }
+//
+//  lazy val applyLambda2Array = fun {arr: Rep[Array[Int]] =>
+//    def isMatch(arr: Rep[Array[Int]]) = arr.length > 3
+//    def step(arr: Rep[Array[Int]]): Rep[Array[Int]] = arr map {a => a + 2}
+//
+//    from(arr).until(isMatch)(step)
+//  }
+//
+//  lazy val fillArrayBuffer = fun { in: Rep[Array[Int]] =>
+//    in.fold(ArrayBuffer.empty[Int], (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
+//  }
+//
+//  lazy val makeArrayBuffer = fun { in: Rep[Array[Int]] =>
+//    in.fold(ArrayBuffer.make[Int]("testArrayBuffer"), (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
+//  }
 
   lazy val stringCompare = fun { in: Rep[(String, String)] =>
     val Pair(a,b) = in
@@ -309,38 +309,38 @@ trait SmokeProg extends ScalanDsl {
 /**
  *  Tests that very simple examples are run correctly
  */
-abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanDslStd with SmokeProg) {
+abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanDslExp with SmokeProg) {
   test("simpleArith") {
     compareOutputWithStd(_.simpleArith)(2)
   }
-  test("simpleArrGet") {
-    val in = (Array(2,3), 1)
-    compareOutputWithStd(_.simpleArrGet)(in)
-  }
-  test("simpleMap") {
-    compareOutputWithStd(_.simpleMap)(Array(2,3))
-  }
-  test("simpleMapNested") {
-    val in = (Array(Array(2.0,3.0), Array(3.0,4.0)), 1)
-    compareOutputWithStd(_.simpleMapNested)(in)
-  }
-  test("simpleZip") {
-    compareOutputWithStd(_.simpleZip)(Array(2,3))
-  }
-  test("simpleZipWith") {
-    compareOutputWithStd(_.simpleZipWith)(Array(2,3))
-  }
-  test("simpleReduce") {
-    compareOutputWithStd(_.simpleReduce)(Array(2,3))
-  }
-  test("mvMul") {
-    val in = (Array(Array(2,3), Array(4,5)), Array(6,7))
-    compareOutputWithStd(_.mvMul)(in)
-  }
-  test("simpleIf") {
-    val in = (Array(2.0,3.0), 4.0)
-    compareOutputWithStd(_.simpleIf)(in)
-  }
+//  test("simpleArrGet") {
+//    val in = (Array(2,3), 1)
+//    compareOutputWithStd(_.simpleArrGet)(in)
+//  }
+//  test("simpleMap") {
+//    compareOutputWithStd(_.simpleMap)(Array(2,3))
+//  }
+//  test("simpleMapNested") {
+//    val in = (Array(Array(2.0,3.0), Array(3.0,4.0)), 1)
+//    compareOutputWithStd(_.simpleMapNested)(in)
+//  }
+//  test("simpleZip") {
+//    compareOutputWithStd(_.simpleZip)(Array(2,3))
+//  }
+//  test("simpleZipWith") {
+//    compareOutputWithStd(_.simpleZipWith)(Array(2,3))
+//  }
+//  test("simpleReduce") {
+//    compareOutputWithStd(_.simpleReduce)(Array(2,3))
+//  }
+//  test("mvMul") {
+//    val in = (Array(Array(2,3), Array(4,5)), Array(6,7))
+//    compareOutputWithStd(_.mvMul)(in)
+//  }
+//  test("simpleIf") {
+//    val in = (Array(2.0,3.0), 4.0)
+//    compareOutputWithStd(_.simpleIf)(in)
+//  }
   test("optionOps") {
     compareOutputWithStd(_.optionOps)(7)
   }
@@ -348,20 +348,20 @@ abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanDslStd with
     val in = (true, false)
     compareOutputWithStd(_.logicalOps)(in)
   }
-  test("filterCompound") {
-    val in = Array((11, (12, 13)), (21, (22, 23)), (31, (32, 33)))
-    compareOutputWithStd(_.filterCompound)(in)
-  }
-  test("reuseTest") {
-    compareOutputWithStd(_.reuseTest)(5)
-  }
-  test("arrayEmpty") {
-    compareOutputWithStd(_.arrayEmpty)(0)
-  }
-  test("arrayReplicate") {
-    val in = (3, 3.14)
-    compareOutputWithStd(_.arrayReplicate)(in)
-  }
+//  test("filterCompound") {
+//    val in = Array((11, (12, 13)), (21, (22, 23)), (31, (32, 33)))
+//    compareOutputWithStd(_.filterCompound)(in)
+//  }
+//  test("reuseTest") {
+//    compareOutputWithStd(_.reuseTest)(5)
+//  }
+//  test("arrayEmpty") {
+//    compareOutputWithStd(_.arrayEmpty)(0)
+//  }
+//  test("arrayReplicate") {
+//    val in = (3, 3.14)
+//    compareOutputWithStd(_.arrayReplicate)(in)
+//  }
 
 //  val progStaged: Prog with ScalanDslExp
 

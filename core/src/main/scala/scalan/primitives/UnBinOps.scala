@@ -1,6 +1,6 @@
 package scalan.primitives
 
-import scalan.{ScalanStd, Scalan, ScalanExp}
+import scalan.{Scalan, ScalanExp}
 import scalan.staged.BaseExp
 
 trait UnBinOps { self: Scalan =>
@@ -28,14 +28,6 @@ trait UnBinOps { self: Scalan =>
   def applyUnOp[A, R](op: UnOp[A, R], arg: Rep[A]): Rep[R]
 
   def applyBinOp[A, R](op: BinOp[A, R], lhs: Rep[A], rhs: Rep[A]): Rep[R]
-}
-
-trait UnBinOpsStd extends UnBinOps { self: ScalanStd =>
-  def applyUnOp[A, R](op: UnOp[A, R], arg: Rep[A]): Rep[R] =
-    op.applySeq(arg)
-
-  def applyBinOp[A, R](op: BinOp[A, R], lhs: Rep[A], rhs: Rep[A]): Rep[R] =
-    op.applySeq(lhs, rhs)
 }
 
 trait UnBinOpsExp extends BaseExp with UnBinOps { self: ScalanExp =>

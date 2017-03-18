@@ -1,12 +1,9 @@
 package scalan
 
-import scalan.arrays._
-import scalan.collections._
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
-import scalan.seq.BaseStd
 import scalan.staged.{BaseExp, Expressions, Transforming, TransformingExp}
-import scalan.util.{ExceptionsDsl, ExceptionsDslExp, ExceptionsDslStd}
+import scalan.util.{ExceptionsDsl, ExceptionsDslExp}
 
 abstract class Scalan
   extends Base
@@ -32,19 +29,19 @@ abstract class Scalan
   with Blocks
   with Monoids
   with PatternMatching
-  with MapOps
-  with MapViews
+//  with MapOps
+//  with MapViews
   with Transforming
   with Analyzing
-  with ArrayOps
-  with ArrayBuffers
+//  with ArrayOps
+//  with ArrayBuffers
   with Exceptions
-  with ArrayViews
+//  with ArrayViews
   with Thunks
   with Effects
   with Metadata
-  with ListOps
-  with ListViews
+//  with ListOps
+//  with ListViews
   with ConvertersDsl
   with Effectful
   with StructsDsl
@@ -52,47 +49,6 @@ abstract class Scalan
 trait ScalanDsl
 extends Scalan
   with ExceptionsDsl
-  with AbstractStringsDsl
-
-abstract class ScalanStd
-extends Scalan
-  with BaseStd
-  with TypeDescsStd
-  with TypeWrappersStd
-  with ViewsDslStd
-  with ProxyStd
-  with TuplesStd
-  with LoopsStd
-  with TypeSumStd
-  with UnBinOpsStd
-  with NumericOpsStd
-  with FunctionsStd
-  with IfThenElseStd
-  with BlocksStd
-  with PatternMatchingStd
-  with MapOpsStd
-  with MapViewsStd
-  with MonoidsStd
-  with AnalyzingStd
-  with ArrayOpsStd
-  with ArrayBuffersStd
-  with ExceptionsStd
-  with ArrayViewsStd
-  with StringOpsStd
-  with ThunksStd
-  with EffectsStd
-  with MetadataStd
-  with ListOpsStd
-  with ListViewsStd
-  with ConvertersDslStd
-  with EffectfulStd
-  with StructsDslStd
-
-class ScalanDslStd
-extends ScalanStd
-  with ScalanDsl
-  with ExceptionsDslStd
-  with AbstractStringsDslStd
 
 abstract class ScalanExp
   extends Scalan
@@ -114,20 +70,20 @@ abstract class ScalanExp
   with IfThenElseExp
   with BlocksExp
   with PatternMatchingExp
-  with MapOpsExp
-  with MapViewsExp
+//  with MapOpsExp
+//  with MapViewsExp
   with TransformingExp
   with AnalyzingExp
-  with ArrayOpsExp
-  with ArrayBuffersExp
+//  with ArrayOpsExp
+//  with ArrayBuffersExp
   with ExceptionsExp
-  with ArrayViewsExp
+//  with ArrayViewsExp
   with StringOpsExp
   with ThunksExp
   with EffectsExp
   with MetadataExp
-  with ListOpsExp
-  with ListViewsExp
+//  with ListOpsExp
+//  with ListViewsExp
   with ConvertersDslExp
   with EffectfulExp
   with RewriteRulesExp
@@ -139,4 +95,3 @@ extends ScalanExp
   with ScalanDsl
   with Expressions
   with ExceptionsDslExp
-  with AbstractStringsDslExp

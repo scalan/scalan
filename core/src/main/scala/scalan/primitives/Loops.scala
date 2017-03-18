@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scalan.common.Lazy
 import scalan.staged.BaseExp
-import scalan.{ ScalanExp, Scalan, ScalanStd }
+import scalan.{ ScalanExp, Scalan }
 
 trait Loops { self: Scalan =>
 
@@ -108,17 +108,6 @@ trait Loops { self: Scalan =>
       loopUntil8(s1, s2, s3, s4, s5, s6, s7, s8)(isMatch, step)
   }
 
-}
-
-trait LoopsStd extends Loops { self: ScalanStd =>
-  def loopUntil[A:Elem](s1: Rep[A])(isMatch: Rep[A => Boolean], step: Rep[A => A]): Rep[A] = {
-    if (isMatch(s1)) return s1
-    var state = s1
-    while (!isMatch(state)) {
-      state = step(state)
-    }
-    state
-  }
 }
 
 trait LoopsExp extends Loops with BaseExp { self: ScalanExp =>

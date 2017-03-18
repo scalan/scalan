@@ -53,4 +53,13 @@ Design decisions
 - recursive functions
 - first-class IR cakes so that all basis primitives are methods[<0;61;16M
 
+What is removed from scalan-core
+--------------------------------
+- MethodMappingDSL
+- JNI
+- Array, List, ArrayBuffer, Map from basis
+- AbstractStrings
+- Std context
+- see also all [Mini] commits
+
 

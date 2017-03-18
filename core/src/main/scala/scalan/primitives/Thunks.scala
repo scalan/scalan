@@ -3,7 +3,7 @@ package scalan.primitives
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.{Scalan, ScalanExp, ScalanStd, ViewsDslExp}
+import scalan.{Scalan, ScalanExp, ViewsDslExp}
 import scala.reflect.runtime.universe._
 import scalan.util.Covariant
 
@@ -51,13 +51,6 @@ trait Thunks { self: Scalan =>
   def thunk_force[A](t: Th[A]): Rep[A]
   def thunk_map[A, B](t: Th[A], f: Rep[A => B]): Th[B]
   def thunk_map1[A, B](t: Th[A], f: Rep[A] => Rep[B]): Th[B]
-}
-
-trait ThunksStd extends Thunks { self: ScalanStd =>
-  def thunk_create[A:Elem](block: => Rep[A]): Rep[Thunk[A]] = new Thunk[A] { lazy val value = block }
-  def thunk_force[A](t: Th[A]): Rep[A] = t.value
-  def thunk_map[A, B](t: Th[A], f: Rep[A => B]): Th[B] = new Thunk[B] { lazy val value = f(t.value) }
-  def thunk_map1[A, B](t: Th[A], f: Rep[A] => Rep[B]): Th[B] = thunk_map(t, f)
 }
 
 trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>

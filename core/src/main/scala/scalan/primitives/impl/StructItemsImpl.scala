@@ -154,28 +154,6 @@ trait StructItemsAbs extends StructItems {
   registerModule(StructItems_Module)
 }
 
-// Std -----------------------------------
-trait StructItemsStd extends StructItemsDsl {
-  self: StructsDsl with ScalanStd =>
-
-  lazy val StructItem: Rep[StructItemCompanionAbs] = new StructItemCompanionAbs {
-  }
-
-  case class StdStructItemBase[Val, Schema <: Struct]
-      (override val key: Rep[StructKey[Schema]], override val value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
-    extends AbsStructItemBase[Val, Schema](key, value) {
-  }
-
-  def mkStructItemBase[Val, Schema <: Struct]
-    (key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
-    new StdStructItemBase[Val, Schema](key, value)
-  def unmkStructItemBase[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]) = p match {
-    case p: StructItemBase[Val, Schema] @unchecked =>
-      Some((p.key, p.value))
-    case _ => None
-  }
-}
-
 // Exp -----------------------------------
 trait StructItemsExp extends StructItemsDsl {
   self: StructsDsl with ScalanExp =>

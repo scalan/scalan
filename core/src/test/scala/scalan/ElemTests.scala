@@ -35,7 +35,7 @@ abstract class AbstractElemTests extends BaseNestedTests {
 
 /** See also scalan.collections.MoreElemTests in collections subproject */
 class ElemTests extends AbstractElemTests {
-  class Ctx extends super.Ctx with KindsExamples with KindsDslExp with JNIExtractorOpsExp with MetaTestsDslExp
+  class Ctx extends super.Ctx with KindsExamples with KindsDslExp with MetaTestsDslExp
 
   val ctx = new Ctx
   import ctx._
@@ -46,9 +46,9 @@ class ElemTests extends AbstractElemTests {
       elementsShouldBeEqual[Double, Double]
       elementsShouldNotBeEqual[Int, Double]
 
-      elementsShouldBeEqual[Array[Int], Array[Int]]
-      elementsShouldNotBeEqual[Array[Int], Array[Double]]
-      elementsShouldNotBeEqual[Array[Int], List[Int]]
+//      elementsShouldBeEqual[Array[Int], Array[Int]]
+//      elementsShouldNotBeEqual[Array[Int], Array[Double]]
+//      elementsShouldNotBeEqual[Array[Int], List[Int]]
 
       elementsShouldBeEqual[Double => Int, Double => Int]
       elementsShouldNotBeEqual[Int => Double, Double => Int]
@@ -59,10 +59,6 @@ class ElemTests extends AbstractElemTests {
       elementsShouldBeEqual[Int | Int, Int | Int]
       elementsShouldNotBeEqual[Int | Int, Int]
 
-      elementsShouldBeEqual[AString, AString]
-      elementsShouldNotBeEqual[String, AString]
-      elementsShouldBeEqual[CString, CString]
-      elementsShouldNotBeEqual[AString, CString]
       elementsShouldBeEqual[SThrowable, SThrowable]
       elementsShouldBeEqual[Thunk[Int], Thunk[Int]]
     }
@@ -98,49 +94,39 @@ class ElemTests extends AbstractElemTests {
       elementsShouldBeEqual(se1, se2)
       elementsShouldNotBeEqual(se1, se3)
 
-      val ae1 = arrayElement(se1)
-      val ae2 = arrayElement(se2)
-      val ae3 = arrayElement(se3)
-      elementsShouldBeEqual(ae1, ae2)
-      elementsShouldNotBeEqual(ae1, ae3)
+//      val ae1 = arrayElement(se1)
+//      val ae2 = arrayElement(se2)
+//      val ae3 = arrayElement(se3)
+//      elementsShouldBeEqual(ae1, ae2)
+//      elementsShouldNotBeEqual(ae1, ae3)
 
-      val be1 = arrayBufferElement(se1)
-      val be2 = arrayBufferElement(se2)
-      val be3 = arrayBufferElement(se3)
-      elementsShouldBeEqual(be1, be2)
-      elementsShouldNotBeEqual(be1, be3)
-
-      elementsShouldNotBeEqual(ae1, be1)
+//      val be1 = arrayBufferElement(se1)
+//      val be2 = arrayBufferElement(se2)
+//      val be3 = arrayBufferElement(se3)
+//      elementsShouldBeEqual(be1, be2)
+//      elementsShouldNotBeEqual(be1, be3)
+//
+//      elementsShouldNotBeEqual(ae1, be1)
     }
 
-    it("for JNI types") {
-      elementsShouldNotBeEqual(JNIArrayElem(element[Int]), element[Array[Int]])
-    }
-
-    it("for containers") {
-      containersShouldBeEqual[ArrayBuffer, ArrayBuffer]
-      containersShouldBeEqual[Array, Array]
-      containersShouldBeEqual[Id, Id]
-      containersShouldNotBeEqual[Array, ArrayBuffer]
-    }
+//    it("for containers") {
+//      containersShouldBeEqual[ArrayBuffer, ArrayBuffer]
+//      containersShouldBeEqual[Array, Array]
+//      containersShouldBeEqual[Id, Id]
+//      containersShouldNotBeEqual[Array, ArrayBuffer]
+//    }
   }
 
   // locally available to infer implicit arguments for
   implicit lazy val AnyElement = ctx.AnyElement
   implicit lazy val NothingElement = ctx.NothingElement
 
-  assertBounds[Int, Int, Int, Int]
-  assertBounds[Int, Boolean, Any, Nothing]
-  assertBounds[MT0, MT1[Unit], MetaTest[Unit], Nothing]
-  assertBounds[MetaTest[Int], MT1[Int], MetaTest[Int], MT1[Int]]
-  assertBounds[AString, CString, AString, CString]
-  assertBounds[SString, CString, AString, Nothing]
+//  assertBounds[Int, Int, Int, Int]
+//  assertBounds[Int, Boolean, Any, Nothing]
+//  assertBounds[MT0, MT1[Unit], MetaTest[Unit], Nothing]
+//  assertBounds[MetaTest[Int], MT1[Int], MetaTest[Int], MT1[Int]]
   // test for invariance
-  assertBounds[MT1[Int], MT1[Double], Any, Nothing]
+//  assertBounds[MT1[Int], MT1[Double], Any, Nothing]
   // below tests show co/contravariance gets handled correctly
   // can't use Nothing in these tests, get diverging implicit expansion otherwise
-  assertBounds[(SString, Boolean), (AString, Boolean), (AString, Boolean), (SString, Boolean)]
-  assertBounds[SString => Boolean, AString => Boolean, SString => Boolean, AString => Boolean]
-  assertBounds[Boolean => SString, Boolean => AString, Boolean => AString, Boolean => SString]
-  assertBounds[SString => SString, AString => AString, SString => AString, AString => SString]
 }

@@ -316,56 +316,6 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
   registerModule(MetaTests_Module)
 }
 
-// Std -----------------------------------
-trait MetaTestsStd extends scalan.ScalanDslStd with MetaTestsDsl {
-  self: MetaTestsDslStd =>
-
-  lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
-  }
-
-  case class StdMT0
-      (override val size: Rep[Int])
-    extends AbsMT0(size) {
-  }
-
-  def mkMT0
-    (size: Rep[Int]): Rep[MT0] =
-    new StdMT0(size)
-  def unmkMT0(p: Rep[MetaTest[Unit]]) = p match {
-    case p: MT0 @unchecked =>
-      Some((p.size))
-    case _ => None
-  }
-
-  case class StdMT1[T]
-      (override val data: Rep[T], override val size: Rep[Int])(implicit elem: Elem[T])
-    extends AbsMT1[T](data, size) {
-  }
-
-  def mkMT1[T]
-    (data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
-    new StdMT1[T](data, size)
-  def unmkMT1[T](p: Rep[MetaTest[T]]) = p match {
-    case p: MT1[T] @unchecked =>
-      Some((p.data, p.size))
-    case _ => None
-  }
-
-  case class StdMT2[T, R]
-      (override val indices: Rep[T], override val values: Rep[R], override val size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R])
-    extends AbsMT2[T, R](indices, values, size) {
-  }
-
-  def mkMT2[T, R]
-    (indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
-    new StdMT2[T, R](indices, values, size)
-  def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]) = p match {
-    case p: MT2[T, R] @unchecked =>
-      Some((p.indices, p.values, p.size))
-    case _ => None
-  }
-}
-
 // Exp -----------------------------------
 trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
   self: MetaTestsDslExp =>
@@ -555,5 +505,4 @@ object MetaTests_Module extends scalan.ModuleInfo {
 }
 }
 
-trait MetaTestsDslStd extends impl.MetaTestsStd
 trait MetaTestsDslExp extends impl.MetaTestsExp

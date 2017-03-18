@@ -342,14 +342,11 @@ trait TypeDescs extends Base { self: Scalan =>
     cachedElem[SumElem[A, B]](ea, eb)
   implicit def funcElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[A => B] =
     cachedElem[FuncElem[A, B]](ea, eb)
-  implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] =
-    cachedElem[ScalaArrayElem[A]](eA)
   ///implicit def elemElement[A](implicit ea: Elem[A]): Elem[Elem[A]]
 
   implicit def PairElemExtensions[A, B](eAB: Elem[(A, B)]): PairElem[A, B] = eAB.asInstanceOf[PairElem[A, B]]
   implicit def SumElemExtensions[A, B](eAB: Elem[A | B]): SumElem[A, B] = eAB.asInstanceOf[SumElem[A, B]]
   implicit def FuncElemExtensions[A, B](eAB: Elem[A => B]): FuncElem[A, B] = eAB.asInstanceOf[FuncElem[A, B]]
-  implicit def ArrayElemExtensions[A](eArr: Elem[Array[A]]): ArrayElem[A] = eArr.asInstanceOf[ArrayElem[A]]
   //  implicit def ElemElemExtensions[A](eeA: Elem[Elem[A]]): ElemElem[A] = eeA.asInstanceOf[ElemElem[A]]
 
   implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = Lazy(eA)
@@ -403,18 +400,6 @@ trait TypeDescs extends Base { self: Scalan =>
   trait Functor[F[_]] extends Cont[F] {
     def map[A:Elem,B:Elem](a: Rep[F[A]])(f: Rep[A] => Rep[B]): Rep[F[B]]
   }
-}
-
-trait TypeDescsStd extends TypeDescs { self: ScalanStd =>
-  override def assertElem(value: Rep[_], elem: Elem[_], hint: => String) =
-    (value, elem) match {
-      case (_: Boolean, BooleanElement) | (_: Byte, ByteElement) | (_: Short, ShortElement) |
-           (_: Int, IntElement) | (_: Long, LongElement) | (_: Float, FloatElement) |
-           (_: Double, DoubleElement) | ((), UnitElement) | (_: Char, CharElement) => // do nothing
-      case _ =>
-        assert(elem.runtimeClass.isInstance(value),
-          s"$value has class ${value.getClass}, expected ${elem.runtimeClass}" + (if (hint.isEmpty) "" else s"; $hint"))
-    }
 }
 
 trait TypeDescsExp extends TypeDescs with BaseExp { self: ScalanExp =>

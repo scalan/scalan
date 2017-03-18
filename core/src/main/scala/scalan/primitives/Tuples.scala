@@ -6,7 +6,7 @@ package scalan.primitives
 
 import scalan.common.OverloadHack._
 import scalan.staged.BaseExp
-import scalan.{ScalanExp, Scalan, ScalanStd}
+import scalan.{ScalanExp, Scalan }
 
 trait Tuples { self: Scalan =>
   object Pair {
@@ -186,11 +186,6 @@ trait Tuples { self: Scalan =>
     def unapply[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P](p: Rep[(A, (B, (C, (D, (E, (F, (G, (H, (I, (J, (K, (L, (M, (N, (O, P)))))))))))))))])(implicit o: Overloaded7) =
       Some((p._1, p._2, p._3, p._4, p._5, p._6, p._7, p._8, p._9, p._10, p._11, p._12, p._13, p._14, p._15, p._16))
   }
-}
-
-trait TuplesStd extends Tuples  { self: ScalanStd =>
-  def unzipPair[A, B](p: Rep[(A, B)]): (Rep[A], Rep[B]) = p
-  implicit def zipPair[A, B](p: (Rep[A], Rep[B])): Rep[(A, B)] = p
 }
 
 trait TuplesExp extends Tuples with BaseExp { self: ScalanExp =>

@@ -108,28 +108,28 @@ class ViewTests extends BaseViewTests {
     testGetIsoWithEmit("t1", element[(((Int,(Unit,Int)),Unit),Unit)], element[(Int,Int)])
 
     // Array
-    testGetIso(element[Array[Int]], element[Array[Int]])
-    testGetIso(element[Array[(Int,Int)]], element[Array[(Int,Int)]])
-    testGetIso(element[Array[(Int,Unit)]], element[Array[Int]])
-
-    testGetIso(element[Array[Segment]], element[Array[Segment]])
-    testGetIso(element[Array[Interval]], element[Array[(Int,Int)]])
+//    testGetIso(element[Array[Int]], element[Array[Int]])
+//    testGetIso(element[Array[(Int,Int)]], element[Array[(Int,Int)]])
+//    testGetIso(element[Array[(Int,Unit)]], element[Array[Int]])
+//
+//    testGetIso(element[Array[Segment]], element[Array[Segment]])
+//    testGetIso(element[Array[Interval]], element[Array[(Int,Int)]])
 
     // List
-    testGetIso(element[List[Int]], element[List[Int]])
-    testGetIso(element[List[(Int,Int)]], element[List[(Int,Int)]])
-    testGetIso(element[List[(Int,Unit)]], element[List[Int]])
-
-    testGetIso(element[List[Segment]], element[List[Segment]])
-    testGetIso(element[List[Interval]], element[List[(Int,Int)]])
+//    testGetIso(element[List[Int]], element[List[Int]])
+//    testGetIso(element[List[(Int,Int)]], element[List[(Int,Int)]])
+//    testGetIso(element[List[(Int,Unit)]], element[List[Int]])
+//
+//    testGetIso(element[List[Segment]], element[List[Segment]])
+//    testGetIso(element[List[Interval]], element[List[(Int,Int)]])
 
     // ArrayBuffer
-    testGetIso(element[ArrayBuffer[Int]], element[ArrayBuffer[Int]])
-    testGetIso(element[ArrayBuffer[(Int,Int)]], element[ArrayBuffer[(Int,Int)]])
-    testGetIso(element[ArrayBuffer[(Int,Unit)]], element[ArrayBuffer[Int]])
-
-    testGetIso(element[ArrayBuffer[Segment]], element[ArrayBuffer[Segment]])
-    testGetIso(element[ArrayBuffer[Interval]], element[ArrayBuffer[(Int,Int)]])
+//    testGetIso(element[ArrayBuffer[Int]], element[ArrayBuffer[Int]])
+//    testGetIso(element[ArrayBuffer[(Int,Int)]], element[ArrayBuffer[(Int,Int)]])
+//    testGetIso(element[ArrayBuffer[(Int,Unit)]], element[ArrayBuffer[Int]])
+//
+//    testGetIso(element[ArrayBuffer[Segment]], element[ArrayBuffer[Segment]])
+//    testGetIso(element[ArrayBuffer[Interval]], element[ArrayBuffer[(Int,Int)]])
 
     // Thunk
     testGetIso(element[Thunk[Int]], element[Thunk[Int]])
@@ -157,16 +157,16 @@ class ViewTests extends BaseViewTests {
     testGetIsoWithEmit("t3.1", element[(Unit, Interval)], seIntInt)
     testGetIsoWithEmit("t4", element[(Interval, Interval)], tupleStructElement(element[Int], element[Int], element[Int], element[Int]))
     testGetIsoWithEmit("t4.1", element[(Unit,(Interval, Interval))], tupleStructElement(element[Int], element[Int], element[Int], element[Int]))
-    testGetIsoWithEmit("t5", element[(Int, Array[(Int, Int)])], tupleStructElement(element[Int], arrayElement(seIntInt)))
-    testGetIsoWithEmit("t5.1", element[(Int, Array[(Int, (Int,Unit))])], tupleStructElement(element[Int], arrayElement(seIntInt)))
-    testGetIsoWithEmit("t6", element[(Array[(Int, Int)], Int)], tupleStructElement(arrayElement(seIntInt), element[Int]))
+//    testGetIsoWithEmit("t5", element[(Int, Array[(Int, Int)])], tupleStructElement(element[Int], arrayElement(seIntInt)))
+//    testGetIsoWithEmit("t5.1", element[(Int, Array[(Int, (Int,Unit))])], tupleStructElement(element[Int], arrayElement(seIntInt)))
+//    testGetIsoWithEmit("t6", element[(Array[(Int, Int)], Int)], tupleStructElement(arrayElement(seIntInt), element[Int]))
 
-    testGetIsoWithEmit("a1", element[Array[(Int,Int)]], arrayElement(seIntInt))
-    testGetIsoWithEmit("a2", element[Array[Interval]], arrayElement(seIntInt))
-    testGetIsoWithEmit("a2.1", element[Array[(Interval,Unit)]], arrayElement(seIntInt))
-    testGetIsoWithEmit("a3", element[Array[(Int, (Int, Int))]], arrayElement(tupleStructElement(element[Int], element[Int], element[Int])))
-    testGetIsoWithEmit("a4", element[Array[(Int, Interval)]], arrayElement(tupleStructElement(element[Int], element[Int], element[Int])))
-    testGetIsoWithEmit("a4.1", element[Array[((Unit,Int), Interval)]], arrayElement(tupleStructElement(element[Int], element[Int], element[Int])))
-    testGetIsoWithEmit("a5", element[Array[(Interval, Interval)]], arrayElement(tupleStructElement(element[Int], element[Int], element[Int], element[Int])))
+//    testGetIsoWithEmit("a1", element[Array[(Int,Int)]], arrayElement(seIntInt))
+//    testGetIsoWithEmit("a2", element[Array[Interval]], arrayElement(seIntInt))
+//    testGetIsoWithEmit("a2.1", element[Array[(Interval,Unit)]], arrayElement(seIntInt))
+//    testGetIsoWithEmit("a3", element[Array[(Int, (Int, Int))]], arrayElement(tupleStructElement(element[Int], element[Int], element[Int])))
+//    testGetIsoWithEmit("a4", element[Array[(Int, Interval)]], arrayElement(tupleStructElement(element[Int], element[Int], element[Int])))
+//    testGetIsoWithEmit("a4.1", element[Array[((Unit,Int), Interval)]], arrayElement(tupleStructElement(element[Int], element[Int], element[Int])))
+//    testGetIsoWithEmit("a5", element[Array[(Interval, Interval)]], arrayElement(tupleStructElement(element[Int], element[Int], element[Int], element[Int])))
   }
 }

@@ -12,8 +12,8 @@ class ConverterTests extends BaseCtxTests {
 
   class ConvProgStaged extends TestContext with ConvProg with SegmentsDslExp {
   }
-  class ConvProgStd extends ScalanDslStd with ConvProg with SegmentsDslStd {
-  }
+//  class ConvProgStd extends ScalanDslStd with ConvProg with SegmentsDslStd {
+//  }
 
   test("simple converter tests") {
     val ctx = new ConvProgStaged
@@ -30,11 +30,11 @@ class ConverterTests extends BaseCtxTests {
     ctx.emit("t6", ctx.t6)
   }
 
-  test("convertSeq") {
-    val ctx = new ConvProgStd
-    val res = ctx.t4((10,20))
-    assertResult((10,30))(res)
-  }
+//  test("convertSeq") {
+//    val ctx = new ConvProgStd
+//    val res = ctx.t4((10,20))
+//    assertResult((10,30))(res)
+//  }
 
   test("converIfThenElse") {
     val ctx = new ConvProgStaged
@@ -65,7 +65,7 @@ class ConverterTests extends BaseCtxTests {
 
   test("convertSumFold") {
     val ctx = new ConvProgStaged
-    ctx.emit("t13", ctx.t13)
+//    ctx.emit("t13", ctx.t13)
   }
 
   def testConverter[A,B](ctx: ConvProgStaged, name: String, shouldConvert: Boolean = true)(implicit eA: ctx.Elem[A], eB: ctx.Elem[B]) = {
@@ -93,10 +93,10 @@ class ConverterTests extends BaseCtxTests {
     testConverter[Interval, Segment](ctx, "convToSuperType")
     testConverter[Segment, Interval](ctx, "convFromSuperType")
     testConverter[(Interval,Slice), (Slice,Interval)](ctx, "convPairOfIsoEntities")
-    testConverter[Array[Interval], Array[Slice]](ctx, "convArray")
-    testConverter[(Array[Interval],Array[Slice]), (Array[Slice],Array[Interval])](ctx, "convPairOfArrays")
-    testConverter[Array[Array[Interval]], Array[Array[Slice]]](ctx, "convNArray")
-    testConverter[Array[Array[Interval]], Array[Slice]](ctx, "convNArrayToArray", false)
+//    testConverter[Array[Interval], Array[Slice]](ctx, "convArray")
+//    testConverter[(Array[Interval],Array[Slice]), (Array[Slice],Array[Interval])](ctx, "convPairOfArrays")
+//    testConverter[Array[Array[Interval]], Array[Array[Slice]]](ctx, "convNArray")
+//    testConverter[Array[Array[Interval]], Array[Slice]](ctx, "convNArrayToArray", false)
   }
 
   test("identityConv") {

@@ -16,6 +16,3 @@ trait Exceptions extends Base with TypeWrappers { self: ExceptionsDsl =>
 
 }
 
-trait ExceptionsDslStd extends impl.ExceptionsStd {
-  trait StdSThrowable
-}

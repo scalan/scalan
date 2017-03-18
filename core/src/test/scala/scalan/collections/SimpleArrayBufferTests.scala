@@ -18,9 +18,9 @@ class SimpleArrayBufferTests extends BaseCtxTests  {
 
       def test() = {
         val t = reifyEffects {
-          val arrayBuffer1 = ArrayBuffer.empty[Int]
-          val arrayBuffer2 = ArrayBuffer.empty[Int]
-          assert(arrayBuffer1 != arrayBuffer2)
+//          val arrayBuffer1 = ArrayBuffer.empty[Int]
+//          val arrayBuffer2 = ArrayBuffer.empty[Int]
+//          assert(arrayBuffer1 != arrayBuffer2)
         }
       }
       test()

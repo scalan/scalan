@@ -47,59 +47,6 @@ trait Proxy { self: Scalan =>
   def delayInvoke = throw new DelayInvokeException
 }
 
-trait ProxyStd extends Proxy { self: ScalanStd =>
-  def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = x
-  def proxyOpsEx[OpsBase <: AnyRef, Ops <: AnyRef, Wrapper <: Ops]
-                (x: Rep[OpsBase], wrapper: OpsBase => Wrapper)
-                (implicit ctBase: ClassTag[OpsBase], ct: ClassTag[Ops], ctWrapper: ClassTag[Wrapper]): Ops =  {
-    getProxy[OpsBase, Ops, Wrapper](x, wrapper)(ctBase, ct, ctWrapper)
-  }
-
-  private val proxies = scala.collection.mutable.Map.empty[(AnyRef, ClassTag[_]), AnyRef]
-  private val objenesis = new ObjenesisStd
-
-  private def getProxy[OpsBase <: AnyRef, Ops <: AnyRef, Wrapper <: Ops]
-                      (x: OpsBase, wrapper: OpsBase => Wrapper)(ctBase: ClassTag[OpsBase], ct: ClassTag[Ops], ctWrapper: ClassTag[Wrapper]) = {
-    val proxy = proxies.getOrElseUpdate((x, ct), {
-      val clazz = ct.runtimeClass
-      val e = new Enhancer
-      e.setClassLoader(clazz.getClassLoader)
-      e.setSuperclass(clazz)
-      e.setCallbackType(classOf[SeqInvocationHandler[_,_,_]])
-      val proxyClass = e.createClass().asSubclass(classOf[AnyRef])
-      val proxyInstance = objenesis.newInstance(proxyClass).asInstanceOf[Factory]
-      proxyInstance.setCallback(0, new SeqInvocationHandler[OpsBase, Ops, Wrapper](x, wrapper)(ctBase, ct, ctWrapper))
-      proxyInstance
-    })
-    proxy.asInstanceOf[Ops]
-  }
-
-  class SeqInvocationHandler[TBase <: AnyRef, Ops <: AnyRef, Wrapper <: Ops]
-                            (receiver: TBase, wrapper: TBase => Wrapper)
-                            (implicit ctBase: ClassTag[TBase], ct: ClassTag[Ops], ctWrapper: ClassTag[Wrapper]) extends InvocationHandler {
-    override def toString = s"SeqInvocationHandler(${receiver.toString})"
-
-    //val clazzElem = classOf[Elem[_]]
-    val wrapped = wrapper(receiver)
-
-    def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
-      m.invoke(wrapped, _args: _*)
-//      val clazzBase = ctBase.runtimeClass
-//      val mBase = clazzBase.getMethod(m.getName, m.getParameterTypes.filterNot(c => clazzElem.isAssignableFrom(c)): _*)
-//      mBase.invoke(receiver, _args: _*)
-    }
-  }
-
-  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
-    m.invoke(receiver, args.map(_.asInstanceOf[AnyRef]): _*).asInstanceOf[A]
-
-  def newObjEx[A](args: Any*)(implicit eA: Elem[A]): Rep[A] = {
-    val types = args.map(a => a.getClass)
-    val constr = eA.runtimeClass.getConstructor(types: _*)
-    constr.newInstance(args.map(_.asInstanceOf[AnyRef]): _*).asInstanceOf[Rep[A]]
-  }
-}
-
 trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp =>
   // call mkMethodCall instead of constructor
   case class MethodCall private[ProxyExp] (receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean)(val selfType: Elem[Any]) extends Def[Any] {
@@ -402,12 +349,6 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         val eA = elemFromType(params(0), elemMap, baseType)
         val eB = elemFromType(params(1), elemMap, baseType)
         funcElement(eA, eB)
-      case ArraySym =>
-        val eItem = elemFromType(params(0), elemMap, baseType)
-        arrayElement(eItem)
-      case ListSym =>
-        val eItem = elemFromType(params(0), elemMap, baseType)
-        listElement(eItem)
       case _ if classSymbol.asType.isParameter =>
         getDesc(elemMap, classSymbol, s"Can't create element for abstract type $tpe") match {
           case elem: Elem[_] => elem
@@ -520,12 +461,6 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     case Function1Sym =>
       val elem1 = elem.asInstanceOf[FuncElem[_, _]]
       List(elem1.eDom -> params(0), elem1.eRange -> params(1))
-    case ArraySym =>
-      val elem1 = elem.asInstanceOf[ArrayElem[_]]
-      List(elem1.eItem -> params(0))
-    case ListSym =>
-      val elem1 = elem.asInstanceOf[ListElem[_]]
-      List(elem1.eItem -> params(0))
     case _ if classSymbol.isClass =>
       val declarations = classSymbol.asClass.selfType.decls
       val res = declarations.flatMap {
@@ -769,8 +704,6 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val Tuple2Sym = typeOf[(_, _)].typeSymbol
     val EitherSym = typeOf[_ | _].typeSymbol
     val Function1Sym = typeOf[_ => _].typeSymbol
-    val ArraySym = typeOf[Array[_]].typeSymbol
-    val ListSym = typeOf[List[_]].typeSymbol
 
     val TypeWrapperSym = typeOf[TypeWrapper[_, _]].typeSymbol
 

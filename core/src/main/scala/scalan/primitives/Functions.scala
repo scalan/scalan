@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.{ProgramGraphs, BaseExp}
-import scalan.{ScalanExp, ScalanStd, Scalan}
+import scalan.{ScalanExp, Scalan}
 import collection.mutable
 import scala.language.{implicitConversions}
 import scalan.common.Lazy
@@ -11,8 +11,8 @@ trait Functions { self: Scalan =>
     def apply(x: Rep[A]): Rep[B] = mkApply(f, x)
     def >>[C](g: Rep[B => C]) = compose(g, f)
     def <<[C](g: Rep[C => A]) = compose(f, g)
+    def compile: A => B = self.compile(f)
   }
-  def par[B:Elem](nJobs: Rep[Int], f: Rep[Int=>B]): Arr[B]
   def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B]
   def mkLambda[A,B](f: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B]
   def mkLambda[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C]
@@ -27,6 +27,7 @@ trait Functions { self: Scalan =>
   def identityFun[A: Elem]: Rep[A => A]
   def constFun[A: Elem, B](x: Rep[B]): Rep[A => B]
   def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C]
+  def compile[A, B](f: Rep[A => B]): A => B
   def inferredFun[A, B](fun: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B]
   // more convenient to call with explicit eA
   def inferredFun[A, B](eA: Elem[A])(fun: Rep[A] => Rep[B]): Rep[A => B] =
@@ -39,31 +40,6 @@ trait Functions { self: Scalan =>
   def composeBi[A, B, C, D](f: Rep[A => B], g: Rep[A => C])(h: (Rep[B], Rep[C]) => Rep[D]): Rep[A => D] = {
     sameArgFun(f) { x => h(f(x), g(x)) }
   }
-}
-
-trait FunctionsStd extends Functions { self: ScalanStd =>
-  def par[B](nJobs: Rep[Int], f: Rep[Int=>B])(implicit elem:Elem[B]): Arr[B] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    implicit val tag = elem.classTag
-    val tasks = for (i <- 0 until nJobs) yield scala.concurrent.Future {
-      f(i)
-    }
-    scala.concurrent.Await.result(scala.concurrent.Future.sequence(tasks), scala.concurrent.duration.Duration.Inf).toArray
-  }
-  def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B] = f(x)
-  def mkLambda[A,B](f: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B] = f
-  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: Elem[B], eC: Elem[C]) = fun
-  def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C] = {
-    case (x, y) => fun(x, y)
-  }
-  //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C] = f
-  def funRec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B] = {
-    f(funRec(f, mayInline))(_)
-  }
-  def identityFun[A: Elem]: Rep[A => A] = x => x
-  def constFun[A: Elem, B](x: Rep[B]): Rep[A => B] = _ => x
-  def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C] = x => f(g(x))
-  def inferredFun[A, B](fun: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = fun
 }
 
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanExp =>
@@ -151,10 +127,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   // matcher version of Lambda.isIdentity
   object IdentityLambda {
     def unapply[A,B](lam: Lambda[A, B]): Boolean = lam.isIdentity
-  }
-
-  case class ParallelExecute[B:Elem](nJobs: Exp[Int], f: Exp[Int => B])  extends Def[Array[B]] {
-    def selfType = element[Array[B]]
   }
 
   case class Apply[A,B]
@@ -253,8 +225,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   //=====================================================================================
   //   Function application
-
-  def par[B:Elem](nJobs: Rep[Int], f: Rep[Int=>B]): Arr[B] = ParallelExecute(nJobs, f)
 
   def mkApply[A,B](f: Exp[A => B], x: Exp[A]): Exp[B] = {
     implicit val leB = Lazy(f.elem.eRange)
@@ -386,6 +356,10 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     implicit val eA = g.elem.eDom
     implicit val eC = f.elem.eRange
     fun { x => f(g(x)) }
+  }
+
+  def compile[A, B](f: Rep[A => B]): A => B = {
+    ???
   }
 
   // variant of fun which doesn't take eB

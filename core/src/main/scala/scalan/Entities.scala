@@ -149,7 +149,7 @@ trait Entities extends TypeDescs { self: Scalan =>
   }
 
   protected def isConcreteModuloTypeArgs(e: EntityElem[_]) = e match {
-    case _: ViewElem[_, _] | _: ArrayElem[_] | _: ListElem[_] | _: ArrayBufferElem[_] => true
+    case _: ViewElem[_, _] => true
     case _ => false
   }
 

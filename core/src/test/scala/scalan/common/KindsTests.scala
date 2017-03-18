@@ -7,8 +7,8 @@ class KindsTests extends BaseCtxTests {
 
   class ConvProgStaged extends TestContext with KindsExamples with KindsDslExp {
   }
-  class ConvProgStd extends ScalanDslStd with KindsExamples with KindsDslStd {
-  }
+//  class ConvProgStd extends ScalanDslStd with KindsExamples with KindsDslStd {
+//  }
 
   test("simple kinds tests") {
     val ctx = new ConvProgStaged

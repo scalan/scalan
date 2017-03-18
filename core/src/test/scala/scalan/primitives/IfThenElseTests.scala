@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scalan.BaseTests
 import scalan.common.MetaTestsDslExp
-import scalan.{Scalan, ScalanDslExp, ScalanDslStd}
+import scalan.{Scalan, ScalanDslExp}
 
 abstract class IfThenElseTests[A <: Scalan](val ctx: A) extends BaseTests {
   import ctx._
@@ -26,7 +26,7 @@ abstract class IfThenElseTests[A <: Scalan](val ctx: A) extends BaseTests {
 }
 
 
-class IfThenElseTestsSeq extends IfThenElseTests(new ScalanDslStd)
+class IfThenElseTestsSeq extends IfThenElseTests(new ScalanDslExp)
 
 // Note: these tests pass thanks to rewriting of IF with constants
 class IfThenElseTestsExp extends IfThenElseTests(new ScalanDslExp with MetaTestsDslExp) {

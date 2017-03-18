@@ -4,7 +4,7 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
-import scalan.{ScalanExp, ScalanStd, Scalan}
+import scalan.{ScalanExp, Scalan}
 import scalan.common.{Utils, Lazy}
 
 /*
@@ -23,9 +23,6 @@ import scalan.common.{Utils, Lazy}
 trait Effects { self: Scalan =>
 
 
-}
-
-trait EffectsStd extends Effects { self: ScalanStd =>
 }
 
 trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport { self: ScalanExp =>

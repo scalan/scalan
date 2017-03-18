@@ -57,10 +57,6 @@ trait StructKeysDsl extends impl.StructKeysAbs {self: StructsDsl with Scalan =>
 
 }
 
-trait StructKeysDslStd extends impl.StructKeysStd {self: StructsDsl with ScalanStd =>
-  def keyset_create(keys: Seq[String]): Rep[KeySet] = KeySetSeq(keys)
-}
-
 trait StructKeysDslExp extends impl.StructKeysExp {self: StructsDsl with ScalanExp =>
   def keyset_create(keys: Seq[String]): Rep[KeySet] = KeySetDef(keys)
   case class KeySetDef(keys: Seq[String]) extends BaseDef[KeySet] {

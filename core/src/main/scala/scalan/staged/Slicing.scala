@@ -247,9 +247,6 @@ trait Slicing extends ScalanExp {
     case te: ThunkElem[a] =>
       val eA = te.eItem
       ThunkMarking(EmptyMarking(eA)).asMark[T]
-    case ae: ArrayElem[a] =>
-      val eA = ae.eItem
-      ArrayMarking(KeyPath.None, EmptyMarking(eA)).asMark[T]
     case _ =>
       !!!(s"Cannot create empty marking for element ${eT}")
   }
@@ -259,9 +256,6 @@ trait Slicing extends ScalanExp {
   }
 
   def createAllMarking[T](e: Elem[T]): SliceMarking[T] = e match {
-    case ae: ArrayElem[a] =>
-      implicit val eA = ae.eItem
-      ArrayMarking[a](KeyPath.All, AllMarking(eA)).asMark[T]
     case pe: PairElem[a,b] =>
       implicit val eA = pe.eFst
       implicit val eB = pe.eSnd
@@ -549,9 +543,6 @@ trait Slicing extends ScalanExp {
 
     override def toString = s"TraversableMarkingFor[${cF.name}]"
   }
-
-  val ArrayMarking = new TraversableMarkingFor[Array]
-  val ListMarking = new TraversableMarkingFor[List]
 
   case class ThunkMarking[A](innerMark: SliceMarking[A]) extends SliceMarking1[A, Thunk] {
     def meet(other: SliceMarking[Thunk[A]]) = other match {

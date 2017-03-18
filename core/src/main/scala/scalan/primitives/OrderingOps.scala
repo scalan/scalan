@@ -1,6 +1,6 @@
 package scalan.primitives
 
-import scalan.{ScalanExp, ScalanStd, Scalan}
+import scalan.{ScalanExp, Scalan}
 import scalan.staged.{BaseExp}
 
 trait OrderingOps { self: Scalan =>

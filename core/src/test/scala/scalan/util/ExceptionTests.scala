@@ -58,15 +58,15 @@ class ExceptionTests extends BaseCtxTests {
     ctx.emit("t6", ctx.t6)
   }
 
-  test("throwablesSeq") {
-    val ctx = new ScalanDslStd with ThrowableExamples {
-      def test() = {
-        //assert(!isInlineThunksOnForce, "precondition for tests")
-
-      }
-    }
-    ctx.test
-    val res = ctx.t1(ctx.SThrowable("test"))
-    assertResult("test")(res)
-  }
+//  test("throwablesSeq") {
+//    val ctx = new ScalanDslExp with ThrowableExamples {
+//      def test() = {
+//        //assert(!isInlineThunksOnForce, "precondition for tests")
+//
+//      }
+//    }
+//    ctx.test
+//    val res = ctx.compile(ctx.t1)(ctx.SThrowable("test"))
+//    assertResult("test")(res)
+//  }
 }

@@ -33,8 +33,8 @@ class ReflectionTests extends BaseCtxTests {
     check(interval)(canGetAll, namesAre("start", "end"))
 
     // No implicit parameters, `extends ArrayDef`
-    val arr = ArrayRangeFrom0(10)
-    check(arr)(canGetAll, namesAre("n"))
+//    val arr = ArrayRangeFrom0(10)
+//    check(arr)(canGetAll, namesAre("n"))
 
     // A lambda
     val f @ Def(lambda) = fun { x: Rep[Int] => x + 1 }
@@ -43,21 +43,21 @@ class ReflectionTests extends BaseCtxTests {
     check(lambda)(canGetAll, namesAre("f", "x", "y", "self0", "mayInline", "eA", "eB"))
 
     // `implicit eItem` without `val` with `extends ArrayDef`
-    val sort = ArraySort(arr, implicitly[Ordering[Int]])
-    // Scala-reflect bug: last name is `eItem ` and `selfType `
-    check(sort)(canGetAll)//, namesAre("xs", "o", "eItem"))
+//    val sort = ArraySort(arr, implicitly[Ordering[Int]])
+//    // Scala-reflect bug: last name is `eItem ` and `selfType `
+//    check(sort)(canGetAll)//, namesAre("xs", "o", "eItem"))
 
     // implicit constructor parameters with different name from `eItem` and `extends ArrayDef`
-    val zip = ArrayZip(arr, sort)
-    check(zip)(canGetAll, namesAre("xs", "ys", "eT", "eU"))
+//    val zip = ArrayZip(arr, sort)
+//    check(zip)(canGetAll, namesAre("xs", "ys", "eT", "eU"))
 
     // context bound with `extends ArrayBufferDef` (`eItem` is reused for it)
-    val arrBuf = ArrayBufferEmpty[Int]
-    check(arrBuf)(canGetAll)//, namesAre("eItem"))
+//    val arrBuf = ArrayBufferEmpty[Int]
+//    check(arrBuf)(canGetAll)//, namesAre("eItem"))
 
     // context bound with `extends BaseDef` (`selfType` is reused for it)
-    val arrBufApply = ArrayBufferApply(arrBuf, 0)
-    check(arrBufApply)(canGetAll)//, namesAre("buf", "i", "selfType"))
+//    val arrBufApply = ArrayBufferApply(arrBuf, 0)
+//    check(arrBufApply)(canGetAll)//, namesAre("buf", "i", "selfType"))
   }
 
 }

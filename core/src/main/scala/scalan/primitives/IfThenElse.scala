@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scala.annotation.unchecked.uncheckedVariance
 import scalan.staged.{BaseExp}
-import scalan.{ScalanExp, ScalanStd, Base, Scalan}
+import scalan.{ScalanExp, Base, Scalan}
 
 trait IfThenElse extends Base { self: Scalan =>
   def ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T]
@@ -31,10 +31,6 @@ trait IfThenElse extends Base { self: Scalan =>
     
     def ELSEIF(cond1: => Rep[Boolean]) = new ElseIfBranch[T](cond1, this)
   }
-}
-
-trait IfThenElseStd extends IfThenElse { self: ScalanStd =>
-  def ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T] = if(cond) thenp else elsep
 }
 
 trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: ScalanExp =>

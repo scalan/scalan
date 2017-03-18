@@ -308,56 +308,6 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   registerModule(Segments_Module)
 }
 
-// Std -----------------------------------
-trait SegmentsStd extends scalan.ScalanDslStd with SegmentsDsl {
-  self: SegmentsDslStd =>
-
-  lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
-  }
-
-  case class StdInterval
-      (override val start: Rep[Int], override val end: Rep[Int])
-    extends AbsInterval(start, end) {
-  }
-
-  def mkInterval
-    (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
-    new StdInterval(start, end)
-  def unmkInterval(p: Rep[Segment]) = p match {
-    case p: Interval @unchecked =>
-      Some((p.start, p.end))
-    case _ => None
-  }
-
-  case class StdSlice
-      (override val start: Rep[Int], override val length: Rep[Int])
-    extends AbsSlice(start, length) {
-  }
-
-  def mkSlice
-    (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
-    new StdSlice(start, length)
-  def unmkSlice(p: Rep[Segment]) = p match {
-    case p: Slice @unchecked =>
-      Some((p.start, p.length))
-    case _ => None
-  }
-
-  case class StdCentered
-      (override val center: Rep[Int], override val radius: Rep[Int])
-    extends AbsCentered(center, radius) {
-  }
-
-  def mkCentered
-    (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
-    new StdCentered(center, radius)
-  def unmkCentered(p: Rep[Segment]) = p match {
-    case p: Centered @unchecked =>
-      Some((p.center, p.radius))
-    case _ => None
-  }
-}
-
 // Exp -----------------------------------
 trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
   self: SegmentsDslExp =>
@@ -626,5 +576,4 @@ object Segments_Module extends scalan.ModuleInfo {
 }
 
 trait SegmentsDsl extends impl.SegmentsAbs
-trait SegmentsDslStd extends impl.SegmentsStd
 trait SegmentsDslExp extends impl.SegmentsExp

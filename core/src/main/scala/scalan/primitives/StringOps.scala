@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{ ScalanExp, Scalan, ScalanStd }
+import scalan.{ ScalanExp, Scalan }
 import scalan.Scalan
 
 trait StringOps extends UnBinOps { self: Scalan =>
@@ -35,13 +35,6 @@ trait StringOps extends UnBinOps { self: Scalan =>
   val StringEndsWith = new BinOp[String, Boolean]("endsWith", _.endsWith(_))
   val StringMatches = new BinOp[String, Boolean]("matches", _.matches(_))
 }
-
-
-trait StringOpsStd extends StringOps { self: ScalanStd =>
-  def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String] = str.substring(start, end)
-  def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char] = str.charAt(index)
-}
-
 
 trait StringOpsExp extends StringOps with BaseExp { self: ScalanExp =>
 

@@ -195,10 +195,6 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
   }
 }
 
-trait ConvertersDslStd extends impl.ConvertersStd { self: ScalanStd =>
-  def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Def[_]], conv: Rep[From => To]): Rep[To] = conv(x.asRep[From])
-}
-
 trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: ScalanExp =>
 
   case class Convert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Def[_]], conv: Rep[From => To])
