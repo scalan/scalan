@@ -21,6 +21,7 @@ trait Functions { self: Scalan =>
   implicit def fun2[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = mkLambda(f)
   def funGlob[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = mkLambda(f, false)
   def identityFun[A: Elem]: Rep[A => A]
+  def upcustFun[A: Elem, B >: A]: Rep[A => B]
   def constFun[A: Elem, B](x: Rep[B]): Rep[A => B]
   def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C]
   def compile[A, B](f: Rep[A => B]): A => B
@@ -331,6 +332,8 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   }
 
   def identityFun[A](implicit e: Elem[A]) = fun[A, A](x => x)
+
+  def upcustFun[A: Elem, B >: A]: Rep[A => B] = fun[A,B](x => x)
 
   def constFun[A, B](x: Rep[B])(implicit e: Elem[A]) = {
     implicit val eB = x.elem

@@ -46,7 +46,11 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
       case e: StructItemElem[_, _, _] => Some(e.asElem[StructItem[T,S]])
       case _ => None
     }
-    def map[A:Elem,B:Elem](xs: Rep[StructItem[A,S]])(f: Rep[A] => Rep[B]) = StructItemBase(xs.key, f(xs.value))
+    def map[A,B](xs: Rep[StructItem[A,S]])(f: Rep[A] => Rep[B]) = {
+      val res = f(xs.value)
+      implicit val eB = res.elem
+      StructItemBase(xs.key, res)
+    }
   }
   implicit def structItemContainer[S <: Struct : Elem]: Functor[({type f[x] = StructItem[x,S]})#f] =
     new StructItemFunctor[S] { def eS = element[S] }

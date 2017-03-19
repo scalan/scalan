@@ -31,7 +31,7 @@ trait Proxy { self: Scalan =>
     f.invoke(this).asInstanceOf[Rep[_]]
   }
 
-  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef]): Rep[A]
   def newObjEx[A](args: Any*)(implicit eA: Elem[A]): Rep[A]
 
   /**
@@ -149,7 +149,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     case _ => super.rewriteDef(d)
   }
 
-  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef]): Rep[A] =
     mkMethodCall(receiver, m, args, true).asRep[A]
 
   def newObjEx[A](args: Any*)(implicit eA: Elem[A]): Rep[A] = {

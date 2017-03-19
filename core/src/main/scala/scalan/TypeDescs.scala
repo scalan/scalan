@@ -362,10 +362,15 @@ trait TypeDescs extends Base { self: Scalan =>
 
   // can be removed and replaced with assert(value.elem == elem) after #72
   def assertElem(value: Rep[_], elem: Elem[_]): Unit = assertElem(value, elem, "")
-  def assertElem(value: Rep[_], elem: Elem[_], hint: => String): Unit
-
-  def assertEqualElems[A](e1: Elem[A], e2: Elem[A], m: => String) =
+  def assertElem(value: Rep[_], elem: Elem[_], hint: => String): Unit = {
+    assert(value.elem == elem,
+      s"${value.toStringWithType} doesn't have type ${elem.name}" + (if (hint.isEmpty) "" else s"; $hint"))
+  }
+  def assertEqualElems[A](e1: Elem[A], e2: Elem[A], m: => String): Unit =
     assert(e1 == e2, s"Element $e1 != $e2: $m")
+
+  def withElemOf[A, R](x: Rep[A])(block: Elem[A] => R): R = block(x.elem)
+  def withResultElem[A, B, R](f: Rep[A => B])(block: Elem[B] => R): R = block(withElemOf(f) { e => e.eRange })
 
   @implicitNotFound(msg = "No Cont available for ${F}.")
   trait Cont[F[_]] extends TypeDesc {
@@ -376,7 +381,7 @@ trait TypeDescs extends Base { self: Scalan =>
     def getItemElem[T](fa: Rep[F[T]]): Elem[T] = unlift(getElem(fa))
     def unapply[T](e: Elem[_]): Option[Elem[F[T]]]
 
-    def getName(f: TypeDesc => String) = {
+    def getName(f: TypeDesc => String): String = {
       // note: will use WeakTypeTag[x], so x type parameter ends up in the result
       // instead of the actual type parameter it's called with (see below)
       def tpeA[x] = tag[x].tpe
@@ -398,21 +403,9 @@ trait TypeDescs extends Base { self: Scalan =>
   implicit def containerElem[F[_]:Cont, A:Elem]: Elem[F[A]] = container[F].lift(element[A])
 
   trait Functor[F[_]] extends Cont[F] {
-    def map[A:Elem,B:Elem](a: Rep[F[A]])(f: Rep[A] => Rep[B]): Rep[F[B]]
+    def map[A,B](a: Rep[F[A]])(f: Rep[A] => Rep[B]): Rep[F[B]]
   }
 }
 
 trait TypeDescsExp extends TypeDescs with BaseExp { self: ScalanExp =>
-
-  override def assertElem(value: Rep[_], elem: Elem[_], hint: => String) =
-    assert(value.elem == elem,
-      s"${value.toStringWithType} doesn't have type ${elem.name}" + (if (hint.isEmpty) "" else s"; $hint"))
-
-  def withElemOf[A, R](x: Rep[A])(block: Elem[A] => R) = block(x.elem)
-  def withResultElem[A, B, R](f: Rep[A => B])(block: Elem[B] => R) = block(withElemOf(f) { e => e.eRange })
-
-  //  override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
-  //    case ee: ElemElem[a] => ElemDef[a](x)
-  //    case _ => super.toRep(x)(eA)
-  //  }
 }

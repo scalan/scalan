@@ -35,7 +35,6 @@ trait Converters extends ViewsDsl { self: Scalan =>
     def >>[B1 >: B, C](f: Rep[B1 => C])(implicit o2: Overloaded2): Rep[A => C] = {
       compose(f, funcFromConv(c).asRep[A => B1])
     }
-//      c.convFun.asRep[A => B1] >> f
   }
   implicit class AnyConvOps(c: Conv[_, _]) {
     def asConv[C,D] = c.asInstanceOf[Conv[C,D]]
@@ -121,7 +120,7 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
 
   def identityConv[A](implicit elem: Elem[A]): Conv[A, A] = IdentityConv[A]()(elem)
 
-  def baseConv[T:Elem,R:Elem](f: Rep[T => R]): Conv[T,R] = BaseConverter(f)
+  def baseConv[T,R](f: Rep[T => R]): Conv[T,R] = BaseConverter(f)(f.elem.eDom, f.elem.eRange)
   def funcFromConv[T,R](c: Conv[T,R]): Rep[T => R] = c.convFun
 
   def pairConv[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2]): Conv[(A1, A2), (B1, B2)] =

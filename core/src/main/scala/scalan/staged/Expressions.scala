@@ -38,8 +38,6 @@ trait BaseExp extends Base { scalan: ScalanExp =>
 
     def isCompanion: Boolean = elem.isInstanceOf[CompanionElem[_]]
 
-    def varName: String
-    def toStringWithType = varName + ":" + elem.name
     def toStringWithDefinition: String
 
     def show(): Unit = show(defaultGraphVizConfig)

@@ -3,15 +3,16 @@ package scalan.primitives
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.{Scalan, ScalanExp, ViewsDslExp}
+import scalan.{ScalanExp, ViewsDslExp, Scalan}
 import scala.reflect.runtime.universe._
+import scalan.common.Lazy
 import scalan.util.Covariant
 
 trait Thunks { self: Scalan =>
   type Th[+T] = Rep[Thunk[T]]
   trait Thunk[+A] { def value: A }
   class ThunkCompanion {
-    def apply[T:Elem](block: => Rep[T]) = thunk_create(block)
+    def apply[T](block: => Rep[T]) = thunk_create(block)
   }
   val Thunk: ThunkCompanion = new ThunkCompanion
 
@@ -40,14 +41,14 @@ trait Thunks { self: Scalan =>
       implicit val rt = eItem.tag
       weakTypeTag[Thunk[A]]
     }
-    protected def getDefaultRep = Thunk(eItem.defaultRepValue)(eItem)
+    protected def getDefaultRep = Thunk(eItem.defaultRepValue)
   }
 
   implicit def thunkElement[T](implicit eItem: Elem[T]): Elem[Thunk[T]] =
     cachedElem[ThunkElem[T]](eItem)
   implicit def extendThunkElement[T](elem: Elem[Thunk[T]]): ThunkElem[T] = elem.asInstanceOf[ThunkElem[T]]
 
-  def thunk_create[A:Elem](block: => Rep[A]): Rep[Thunk[A]]
+  def thunk_create[A](block: => Rep[A]): Rep[Thunk[A]]
   def thunk_force[A](t: Th[A]): Rep[A]
   def thunk_map[A, B](t: Th[A], f: Rep[A => B]): Th[B]
   def thunk_map1[A, B](t: Th[A], f: Rep[A] => Rep[B]): Th[B]
@@ -137,14 +138,17 @@ trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizE
     case None => globalThunkSym
   }
 
-  def thunk_create[A:Elem](block: => Rep[A]): Rep[Thunk[A]] = {
-    val newThunkSym = fresh[Thunk[A]]
+  def thunk_create[A](block: => Rep[A]): Rep[Thunk[A]] = {
+    var eA: Elem[A] = null // will be known after block is evaluated
+    val newThunkSym = fresh[Thunk[A]](Lazy{ thunkElement(eA) })
     val newScope = new ThunkScope(newThunkSym)
 
     thunkStack.push(newScope)
     // execute block and add all new definitions to the top scope (see createDefinition)
     // reify all the effects during block execution
     val b @ Block(res) = reifyEffects(block)
+    eA = res.elem
+    val eTh = newThunkSym.elem  // force lazy value in newThunkSym (see Lazy above)
     thunkStack.pop
 
     val scheduled = newScope.scheduleForResult(res)
@@ -157,14 +161,14 @@ trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizE
   }
 
   def thunk_map[A, B](t: Th[A], f: Rep[A => B]): Th[B] = {
-    implicit val eB = f.elem.eRange
     Thunk {
       f(thunk_force(t))
     }
   }
   def thunk_map1[A, B](t: Th[A], f: Rep[A] => Rep[B]): Th[B] = {
-    implicit val eA = t.elem.eItem
-    thunk_map(t, fun(f))
+    Thunk {
+      f(thunk_force(t))
+    }
   }
 
   var isInlineThunksOnForce = false

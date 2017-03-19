@@ -1,7 +1,8 @@
 package scalan.primitives
 
+import scalan.common.Lazy
 import scalan.staged.BaseExp
-import scalan.{Scalan, ScalanExp }
+import scalan.{ScalanExp, Scalan}
 
 trait TypeSum { self: Scalan =>
 
@@ -31,25 +32,31 @@ trait TypeSum { self: Scalan =>
     def asRight[B: Elem]: Rep[B | A] = mkRight[B, A](x)
   }
 
-  implicit class JoinSumOps[A: Elem](sum: Rep[A | A]) {
-    def joinSum: Rep[A] = sum.foldBy(identityFun, identityFun)
+  implicit class JoinSumOps[A](sum: Rep[A | A]) {
+    def joinSum: Rep[A] = {
+      implicit val eA = sum.elem.eLeft
+      sum.foldBy(identityFun, identityFun)
+    }
   }
 
-  implicit class OptionOps[A: Elem](opt: ROption[A]) {
-    def map[B: Elem](f: Rep[A] => Rep[B]): ROption[B] =
+  implicit class OptionOps[A](opt: ROption[A]) {
+    implicit def eA: Elem[A] = opt.elem.eRight
+    def map[B](f: Rep[A] => Rep[B]): ROption[B] =
       mapBy(fun(f))
 
     def mapBy[B](f: Rep[A => B]): ROption[B] =
       opt.mapSumBy(identityFun, f)
 
-    def flatMap[B: Elem](f: Rep[A] => ROption[B]): ROption[B] =
+    def flatMap[B](f: Rep[A] => ROption[B]): ROption[B] =
       flatMapBy(fun(f))
 
-    def flatMapBy[B: Elem](f: Rep[A => SOption[B]]): ROption[B] =
+    def flatMapBy[B](f: Rep[A => SOption[B]]): ROption[B] = {
+      implicit val eB = f.elem.eRange.eRight
       opt.foldBy(constFun(SOption.none[B]), f)
+    }
 
-    def getOrElse[B >: A : Elem](default: Rep[B]): Rep[B] =
-      opt.foldBy(constFun(default), identityFun)
+    def getOrElse[B >: A](default: Rep[B]): Rep[B] =
+      opt.foldBy(constFun(default), upcustFun[A,B])
 
     def isEmpty = opt.isLeft
 

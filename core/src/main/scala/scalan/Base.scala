@@ -11,6 +11,8 @@ import scala.annotation.unchecked.uncheckedVariance
 trait Base extends LazyLogging { self: Scalan =>
   trait Staged[+T] {
     def elem: Elem[T @uncheckedVariance]
+    def varName: String
+    def toStringWithType = varName + ":" + elem.name
   }
   type |[+A, +B] = Either[A, B]
   type Rep[+T] <: Staged[T]

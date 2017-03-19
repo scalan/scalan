@@ -215,7 +215,7 @@ trait Views extends TypeDescs { self: ViewsDsl with Scalan =>
     def cC = container[Thunk]
     def from(x: Th[B]) = x.map(innerIso.fromFun)
     def to(x: Th[A]) = x.map(innerIso.toFun)
-    lazy val defaultRepTo = Thunk(eB.defaultRepValue)(eB)
+    lazy val defaultRepTo: Th[B] = Thunk(eB.defaultRepValue)
   }
 }
 
@@ -284,7 +284,6 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
             Some(iso)
         case _ => None
       }
-
     })
   }
 

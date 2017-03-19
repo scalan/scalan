@@ -396,7 +396,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
       !!!(s"Don't know how merge non struct $e")
   }).asInstanceOf[Iso[_,T]]
 
-  def tuplifyStruct[A <: Struct](se: Elem[A]): Elem[_] = {
+  def pairifyStruct[A <: Struct](se: Elem[A]): Elem[_] = {
     CollectionUtil.foldRight[(String, Elem[_]), Elem[_]](se.fields)(_._2) { case ((fn,fe), e) => pairElement(fe, e) }
   }
 
@@ -412,7 +412,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
   }
 
   case class PairifyIso[A, AS <: Struct](eTo: Elem[AS]) extends IsoUR[A, AS] {
-    val eFrom: Elem[A] = tuplifyStruct(eTo).asElem[A]
+    val eFrom: Elem[A] = pairifyStruct(eTo).asElem[A]
 
     def from(y: Rep[AS]) =  {
       val res = CollectionUtil.foldRight[String, Rep[_]](eTo.fieldNames)(y.getUntyped(_)) {
@@ -435,20 +435,21 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     lazy val selfType = new ConcreteIsoElem[A, AS, PairifyIso[A, AS]](eFrom, eTo).asElem[IsoUR[A, AS]]
   }
 
-  def structWrapper[A:Elem,B:Elem](f: Rep[A => B]): Rep[Any => Any] = {
-    val wrapperFun = (getStructWrapperIso[A], getStructWrapperIso[B]) match {
+  def structWrapper[A,B](f: Rep[A => B]): Rep[Any => Any] = {
+    val wrapperFun = (getStructWrapperIso[A](f.elem.eDom),
+                      getStructWrapperIso[B](f.elem.eRange)) match {
       case (inIso: Iso[a, A] @unchecked, outIso: Iso[b, B] @unchecked) =>
         outIso.fromFun << f << inIso.toFun
     }
     wrapperFun.asRep[Any => Any]
   }
-  def structWrapperIn[A:Elem,B:Elem](f: Rep[A => B]): Rep[Any => B] = {
-    val inIso = getStructWrapperIso[A]
+  def structWrapperIn[A,B](f: Rep[A => B]): Rep[Any => B] = {
+    val inIso = getStructWrapperIso[A](f.elem.eDom)
     val wrapperFun = inIso.toFun >> f
     wrapperFun.asRep[Any => B]
   }
-  def structWrapperOut[A:Elem,B:Elem](f: Rep[A => B]): Rep[A => Any] = {
-    val outIso = getStructWrapperIso[B]
+  def structWrapperOut[A,B](f: Rep[A => B]): Rep[A => Any] = {
+    val outIso = getStructWrapperIso[B](f.elem.eRange)
     val wrapperFun = f >> outIso.fromFun
     wrapperFun.asRep[A => Any]
   }

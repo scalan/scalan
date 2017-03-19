@@ -1,7 +1,8 @@
 package scalan
 
 trait Monoids { self: Scalan =>
-  case class RepMonoid[A](opName: String, zero: Rep[A], append: Rep[((A, A)) => A], isCommutative: Boolean)(implicit val eA: Elem[A]) {
+  case class RepMonoid[A](opName: String, zero: Rep[A], append: Rep[((A, A)) => A], isCommutative: Boolean) {
+    implicit val eA: Elem[A] = zero.elem
     override def toString = repMonoid_toString(this)
     // avoids having to write monoid.append((x, y))
     def append(x: Rep[A], y: Rep[A]): Rep[A] = append.apply(Pair(x, y))
@@ -28,6 +29,7 @@ trait Monoids { self: Scalan =>
 
   implicit lazy val BooleanRepOrMonoid: RepMonoid[Boolean] =
     RepMonoid("||", false, isCommutative = true) { (a, b) => a || b }
+
   lazy val BooleanRepAndMonoid =
     RepMonoid[Boolean]("&&", true, isCommutative = true) { (a, b) => a && b }
 }
