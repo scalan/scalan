@@ -433,7 +433,8 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     // reflectEffect(d, Pure())
   }
 
-  def reflectMirrored[A:Elem](zd: Reflect[A]): Exp[A] = {
+  def reflectMirrored[A](zd: Reflect[A]): Exp[A] = {
+    implicit val eA = zd.x.selfType
     checkContext()
     createReflectDefinition(fresh[A], zd)
     // warn if type is Any. TODO: make optional, sometimes Exp[Any] is fine
@@ -468,7 +469,8 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     s
   }
 
-  def reflectMutable[A:Elem](d: Def[A]): Exp[A] = {
+  def reflectMutable[A](d: Def[A]): Exp[A] = {
+    implicit val eA = d.selfType
     val z = reflectEffect(d, Alloc(), fresh[A])
 
     val mutableAliases = mutableTransitiveAliases(d)
@@ -476,8 +478,9 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     z
   }
 
-  def reflectWrite[A:Elem](write0: Exp[Any]*)(d: Def[A]): Exp[A] = {
-    val write = write0.toList.asInstanceOf[List[Exp[Any]]] // should check...
+  def reflectWrite[A](write0: Exp[Any]*)(d: Def[A]): Exp[A] = {
+    implicit val eA = d.selfType
+    val write = write0.toList
 
     val z = reflectEffect(d, Write(write), fresh[A])
 
@@ -493,16 +496,18 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     s
   }
 
-  def reflectEffect[A:Elem](x: Def[A]): Exp[A] =
+  def reflectEffect[A](x: Def[A]): Exp[A] = {
+    implicit val eA = x.selfType
     reflectEffect(x, Simple(), fresh[A]) // simple effect (serialized with respect to other simples)
+  }
 
-  def reflectEffect[A:Elem](d: Def[A], u: Summary, newSym: => Exp[A]): Exp[A] = {
+  def reflectEffect[A](d: Def[A], u: Summary, newSym: => Exp[A]): Exp[A] = {
     // are we depending on a variable? then we need to be serialized -> effect
     //val mutableInputs = readMutableData(d)
     reflectEffectInternal(d, u /*andAlso Read(mutableInputs)*/, newSym) // will call super.toAtom if mutableInput.isEmpty
   }
 
-  def reflectEffectInternal[A:Elem](x: Def[A], u: Summary, newSym: => Exp[A]): Exp[A] = {
+  def reflectEffectInternal[A](x: Def[A], u: Summary, newSym: => Exp[A]): Exp[A] = {
     if (mustPure(u))
       super.toExp(x, newSym)
     else {

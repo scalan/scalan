@@ -14,7 +14,7 @@ trait RewriteRules { self: Scalan =>
   case class RewriteElem[A](eA: Elem[A]) extends Elem[Rewrite[A]] {
     protected def getDefaultRep = {
       val defA = eA.defaultRepValue
-      rewr(defA, defA)(eA)
+      mkRewrite(defA, defA)
     }
     lazy val tag = {
       implicit val tag1 = eA.tag
@@ -23,13 +23,13 @@ trait RewriteRules { self: Scalan =>
     lazy val typeArgs = TypeArgs("A" -> (eA -> Invariant))
   }
 
-  implicit def rewrElement[A](implicit eA: Elem[A]): Elem[Rewrite[A]] =
+  implicit def rewriteElement[A](implicit eA: Elem[A]): Elem[Rewrite[A]] =
     cachedElem[RewriteElem[A]](eA)
 
-  def rewr[A:Elem](x: Rep[A], y: Rep[A]): Rep[Rewrite[A]] = RewriteOp[A].apply(x, y)
+  def mkRewrite[A](x: Rep[A], y: Rep[A]): Rep[Rewrite[A]] = RewriteOp[A]()(x.elem).apply(x, y)
 
-  implicit class PropEqualityOps[A: Elem](x: Rep[A]) {
-    def <=>(y: Rep[A]): Rep[Rewrite[A]] = self.rewr(x, y)
+  implicit class PropEqualityOps[A](x: Rep[A]) {
+    def <=>(y: Rep[A]): Rep[Rewrite[A]] = self.mkRewrite(x, y)
   }
 }
 

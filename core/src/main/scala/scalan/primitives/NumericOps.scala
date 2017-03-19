@@ -6,11 +6,11 @@ import scalan.staged.BaseExp
 import scalan.{ ScalanExp, Scalan }
 
 trait NumericOps { self: Scalan =>
-  implicit class NumericOpsCls[T](x: Rep[T])(implicit val n: Numeric[T], et: Elem[T]) {
-    def +(y: Rep[T]) = NumericPlus(n).apply(x, y)
-    def -(y: Rep[T]) = NumericMinus(n).apply(x, y)
-    def *(y: Rep[T]) = NumericTimes(n).apply(x, y)
-    def unary_- = NumericNegate(n).apply(x)
+  implicit class NumericOpsCls[T](x: Rep[T])(implicit val n: Numeric[T]) {
+    def +(y: Rep[T]) = NumericPlus(n)(x.elem).apply(x, y)
+    def -(y: Rep[T]) = NumericMinus(n)(x.elem).apply(x, y)
+    def *(y: Rep[T]) = NumericTimes(n)(x.elem).apply(x, y)
+    def unary_- = NumericNegate(n)(x.elem).apply(x)
     def abs = Math.abs(x)
     def toFloat = NumericToFloat(n).apply(x)
     def toDouble = NumericToDouble(n).apply(x)
@@ -20,13 +20,13 @@ trait NumericOps { self: Scalan =>
     def floor = Math.floor(toDouble)
   }
 
-  implicit class FractionalOpsCls[T](x: Rep[T])(implicit f: Fractional[T], et: Elem[T]) {
-    def /(y: Rep[T]): Rep[T] = FractionalDivide(f).apply(x, y)
+  implicit class FractionalOpsCls[T](x: Rep[T])(implicit f: Fractional[T]) {
+    def /(y: Rep[T]): Rep[T] = FractionalDivide(f)(x.elem).apply(x, y)
   }
 
-  implicit class IntegralOpsCls[T](x: Rep[T])(implicit i: Integral[T], eT: Elem[T]) {
-    def div(y: Rep[T]): Rep[T] = IntegralDivide(i).apply(x, y)
-    def mod(y: Rep[T]): Rep[T] = IntegralMod(i).apply(x, y)
+  implicit class IntegralOpsCls[T](x: Rep[T])(implicit i: Integral[T]) {
+    def div(y: Rep[T]): Rep[T] = IntegralDivide(i)(x.elem).apply(x, y)
+    def mod(y: Rep[T]): Rep[T] = IntegralMod(i)(x.elem).apply(x, y)
     // avoid / due to conflicts
     def /!(y: Rep[T]): Rep[T] = div(y)
     def %(y: Rep[T]): Rep[T] = mod(y)
@@ -58,7 +58,7 @@ trait NumericOps { self: Scalan =>
 
   case class IntegralMod[T](i: Integral[T])(implicit elem: Elem[T]) extends DivOp[T]("%", i.rem, i)
 
-  def random[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T]
+  def random[T](bound: Rep[T])(implicit n: Numeric[T]): Rep[T]
 }
 
 trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanExp =>
@@ -69,8 +69,8 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanExp =>
     case _ => super.transformDef(d, t)
   }
 
-  def random[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] =
-    NumericRand(bound)(et)
+  def random[T](bound: Rep[T])(implicit n: Numeric[T]): Rep[T] =
+    NumericRand(bound)(bound.elem)
 
   private def isZero[T](x: T, n: Numeric[T]) = x == n.zero
   private def isOne[T](x: T, n: Numeric[T]) = x == n.fromInt(1)
@@ -87,7 +87,7 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanExp =>
       case (NumericMinus(n), x, Def(Const(zero))) if isZero(zero, n) => x
       // 0 - x => -x
       case (NumericMinus(n), Def(Const(zero)), x) if isZero(zero, n) =>
-        new NumericOpsCls(x)(n, d.selfType.asElem[a]).unary_-
+        new NumericOpsCls(x)(n).unary_-
       // _ * 0 => 0
       case (NumericTimes(n), _, y@Def(Const(zero))) if isZero(zero, n) => y
       // 0 * _ => 0
