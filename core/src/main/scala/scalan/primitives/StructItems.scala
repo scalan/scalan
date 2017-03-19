@@ -23,16 +23,17 @@ trait StructItems extends ViewsDsl with Entities  { self: StructsDsl with Scalan
 
 trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan =>
 
-  def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int])(implicit eS: Elem[S]): Rep[StructItem[_,S]]
+  def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int]): Rep[StructItem[_,S]]
 
-  def struct_getItem[S <: Struct](s: Rep[S], i: Int)(implicit eS: Elem[S], o1: Overloaded1): Rep[StructItem[_,S]] = {
+  def struct_getItem[S <: Struct](s: Rep[S], i: Int)(implicit o1: Overloaded1): Rep[StructItem[_,S]] = {
     val value = s.getUntyped(i)
-    val key = IndexStructKey[S](i)
+    val eS = s.elem
+    val key = IndexStructKey[S](i)(eS)
     StructItemBase(key, value)(eS.fields(i)._2.asElem[Any], eS)
   }
 
-  def struct_setItem[S <: Struct](s: Rep[S], i: Rep[Int], v: Rep[_])(implicit eS: Elem[S]): Rep[S] = {
-    updateField(s, eS.fieldNames(i.asValue), v)
+  def struct_setItem[S <: Struct](s: Rep[S], i: Rep[Int], v: Rep[_]): Rep[S] = {
+    updateField(s, s.elem.fieldNames(i.asValue), v)
   }
 
   trait StructItemFunctor[S <: Struct] extends Functor[({type f[x] = StructItem[x,S]})#f] {
@@ -61,19 +62,21 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
     }
   }
 
-  implicit class StructExtensionsForStructItem[S <: Struct](s: Rep[S])(implicit eS: Elem[S]) {
-    def getItem[A](i: Int): Rep[StructItem[A, S]] = struct_getItem(s, i).asRep[StructItem[A,S]]
+  implicit class StructExtensionsForStructItem[S <: Struct](s: Rep[S]) {
+    def getItem[A](i: Int): Rep[StructItem[A, S]] = {
+      val item = struct_getItem(s, i)
+      item.asRep[StructItem[A,S]]
+    }
     def getItem[A](i: Rep[Int]): Rep[StructItem[A, S]] = struct_getItem(s, i).asRep[StructItem[A,S]]
     def getItem[A](k: Rep[StructKey[S]])(implicit o: Overloaded2): Rep[StructItem[A,S]] = struct_getItem(s, k.index).asRep[StructItem[A,S]]
     def setItem(i: Rep[Int], v: Rep[_]): Rep[S] = struct_setItem(s, i, v)
     def setItem(k: Rep[StructKey[S]], v: Rep[_])(implicit o: Overloaded2): Rep[S] = struct_setItem(s, k.index, v)
   }
-
 }
 
 trait StructItemsDslExp extends impl.StructItemsExp {self: StructsDsl with ScalanExp =>
 
-  def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int])(implicit eS: Elem[S]): Rep[StructItem[_,S]] =
+  def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int]): Rep[StructItem[_,S]] =
     i match {
       case Def(Const(i: Int)) => struct_getItem(s, i)
       case _ =>

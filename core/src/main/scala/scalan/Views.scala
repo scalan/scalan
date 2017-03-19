@@ -22,8 +22,8 @@ trait Views extends TypeDescs { self: ViewsDsl with Scalan =>
       !!!(s"Iso.equals must be overridden in $getClass. Make sure the outer reference is ignored when overriding.")
     override lazy val hashCode = 41 * eFrom.hashCode // + eTo.hashCode
     def isIdentity: Boolean = false
-    lazy val fromFun = fun { x: Rep[To] => from(x) }(Lazy(eTo), eFrom)
-    lazy val toFun = fun { x: Rep[From] => to(x) }(Lazy(eFrom), eTo)
+    lazy val fromFun = fun { x: Rep[To] => from(x) }(Lazy(eTo))
+    lazy val toFun = fun { x: Rep[From] => to(x) }(Lazy(eFrom))
 
     //    if (isDebug) {
     //      debug$IsoCounter(this) += 1

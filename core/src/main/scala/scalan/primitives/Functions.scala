@@ -14,29 +14,25 @@ trait Functions { self: Scalan =>
     def compile: A => B = self.compile(f)
   }
   def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B]
-  def mkLambda[A,B](f: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B]
-  def mkLambda[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C]
-  def mkLambda[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C]
-  implicit def fun[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B] = mkLambda(f, true)
-  implicit def fun2[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C] = mkLambda(f)
-  def funGlob[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B] = mkLambda(f, false)
-  //def fun[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = mkLambda(f)
-  def funRec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B]
-  def funRec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]))(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B] = funRec(f, true)
-  //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C]
+  def mkLambda[A,B](f: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A]): Rep[A => B]
+  def mkLambda[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: Elem[B]): Rep[A=>B=>C]
+  def mkLambda[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C]
+  implicit def fun[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = mkLambda(f, true)
+  implicit def fun2[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = mkLambda(f)
+  def funGlob[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = mkLambda(f, false)
   def identityFun[A: Elem]: Rep[A => A]
   def constFun[A: Elem, B](x: Rep[B]): Rep[A => B]
   def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C]
   def compile[A, B](f: Rep[A => B]): A => B
-  def inferredFun[A, B](fun: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B]
+
   // more convenient to call with explicit eA
-  def inferredFun[A, B](eA: Elem[A])(fun: Rep[A] => Rep[B]): Rep[A => B] =
-    inferredFun(fun)(Lazy(eA))
+  def typedfun[A, B](eA: Elem[A])(f: Rep[A] => Rep[B]): Rep[A => B] =
+    fun(f)(Lazy(eA))
+
   // see BooleanFunctionOps for example usage
-  def sameArgFun[A, B, C](f: Rep[A => C])(fun: Rep[A] => Rep[B]): Rep[A => B] =
-    // works in sequential context because Lazy's value is never accessed
-    // and in staged context because rep_getElem is safe
-    inferredFun(fun)(Lazy(f.elem.eDom))
+  def sameArgFun[A, B, C](sample: Rep[A => C])(f: Rep[A] => Rep[B]): Rep[A => B] =
+    typedfun(sample.elem.eDom)(f)
+
   def composeBi[A, B, C, D](f: Rep[A => B], g: Rep[A => C])(h: (Rep[B], Rep[C]) => Rep[D]): Rep[A => D] = {
     sameArgFun(f) { x => h(f(x), g(x)) }
   }
@@ -275,21 +271,18 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   //=====================================================================================
   //   Function reification
 
-  def mkLambda[A,B](f: Exp[A] => Exp[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Exp[A=>B] = {
-    // in Scalan
-    // funRec[A,B]((f: Exp[A => B]) => fun, mayInline)
+  def mkLambda[A,B](f: Exp[A] => Exp[B], mayInline: Boolean)(implicit eA: LElem[A]): Exp[A=>B] = {
     val x = fresh[A]
     lambda(x)(f, mayInline)
   }
 
-  def mkLambda[A,B,C]
-  (f: Rep[A]=>Rep[B]=>Rep[C])
-  (implicit eA: LElem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = {
+  def mkLambda[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])
+                     (implicit eA: LElem[A], eB: Elem[B]): Rep[A=>B=>C] = {
     val y = fresh[B]
     mkLambda((a: Rep[A]) => lambda(y)((b:Rep[B]) => f(a)(b), true), true)
   }
 
-  def mkLambda[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C] = {
+  def mkLambda[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = {
     implicit val leAB = Lazy(pairElement(eA.value, eB.value))
     mkLambda({ (p: Rep[(A, B)]) =>
       val (x, y) = unzipPair(p)
@@ -297,10 +290,14 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }, true)
   }
 
-  private def lambda[A,B](x: Rep[A])(f: Exp[A] => Exp[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Exp[A=>B] = {
-    implicit val eA1 = eA.value
-    val res = fresh[A => B]
-    reifyFunction(f, x, res, mayInline)
+  private def lambda[A,B](x: Rep[A])(f: Exp[A] => Exp[B], mayInline: Boolean)(implicit leA: LElem[A]): Exp[A=>B] = {
+    implicit val eA = leA.value
+    var eB: Elem[B] = null // will be known after f is executed
+    val fSym = fresh[A => B](Lazy { assert(eB != null); funcElement(eA, eB) })
+    val Block(y) = reifyEffects(executeFunction(f, x, fSym))
+    eB = y.elem
+    val eF = fSym.elem // force lazy value in sSym
+    reifyFunction0(f, x, y, fSym, mayInline)
   }
 
   class LambdaStack {
@@ -328,18 +325,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
-  def funRec[A:Elem,B:Elem](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean): Rep[A=>B] = {
-    val x = fresh[A]
-    val res = fresh[A => B]
-    val fun = f(res)
-    reifyFunction(fun, x, res, mayInline)
-  }
-
-  def reifyFunction[A, B](fun: Exp[A] => Exp[B], x: Exp[A], fSym: Exp[A=>B], mayInline: Boolean): Exp[A=>B] = {
-    val Block(y) = reifyEffects(executeFunction(fun, x, fSym))
-    reifyFunction0(fun, x, y, fSym, mayInline)
-  }
-
   private def reifyFunction0[A, B](fun: Exp[A] => Exp[B], x: Exp[A], y: Exp[B], fSym: Exp[A => B], mayInline: Boolean): Exp[A => B] = {
     val lam = new Lambda(Some(fun), x, y, fSym, mayInline)
     findOrCreateDefinition(lam, fSym)
@@ -360,17 +345,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def compile[A, B](f: Rep[A => B]): A => B = {
     ???
-  }
-
-  // variant of fun which doesn't take eB
-  // useful e.g. when taking and returning structs
-  def inferredFun[A, B](fun: Rep[A] => Rep[B])(implicit leA: LElem[A]): Rep[A => B] = {
-    val x = fresh[A]
-    val Block(y) = reifyEffects(fun(x))
-    implicit val eA = leA.value
-    implicit val eB: Elem[B] = y.elem
-    val fSym = fresh[A => B]
-    reifyFunction0(fun, x, y, fSym, mayInline = true)
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {

@@ -618,7 +618,7 @@ trait Slicing extends ScalanExp {
           val slot = m.makeSlot
           val init = m.set(slot, x)
           mirrorApply(lam, init)
-        }(Lazy(eC), eB)
+        }(Lazy(eC))
         res
     }
   }

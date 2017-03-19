@@ -164,8 +164,7 @@ trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizE
   }
   def thunk_map1[A, B](t: Th[A], f: Rep[A] => Rep[B]): Th[B] = {
     implicit val eA = t.elem.eItem
-    val f1 = inferredFun(f)
-    thunk_map(t, f1)
+    thunk_map(t, fun(f))
   }
 
   var isInlineThunksOnForce = false

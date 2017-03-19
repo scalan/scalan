@@ -35,28 +35,28 @@ abstract class AbstractSlicingTests extends BaseTests with TestContexts {
 //    val mArrNone   = ArrayMarking(KeyPath.All, mNoFields)
 //    val mArrJoined = ArrayMarking(KeyPath.All, mJoined)
 
-    lazy val funOneField = fun { in: Rep[Struct] => in.get[Int]("a") }(Lazy(eIn), eInt)
+    lazy val funOneField = fun { in: Rep[Struct] => in.get[Int]("a") }(Lazy(eIn))
     lazy val funTwoFields = fun { in: Rep[Struct] =>
-      Pair(in.get[Int]("a"), in.get[String]("b")) }(Lazy(eIn), pairElement(eInt, eString))
+      Pair(in.get[Int]("a"), in.get[String]("b")) }(Lazy(eIn))
     lazy val funNestedFields = fun { in: Rep[Struct] =>
-      in.getUnchecked[Struct]("d").get[Int]("e") }(Lazy(eJoined), eInt)
+      in.getUnchecked[Struct]("d").get[Int]("e") }(Lazy(eJoined))
     lazy val funPlus = fun { in: Rep[Struct] =>
-      in.get[Int]("a") + in.getUnchecked[Struct]("d").get[Int]("e") }(Lazy(eJoined), eInt)
+      in.get[Int]("a") + in.getUnchecked[Struct]("d").get[Int]("e") }(Lazy(eJoined))
     lazy val funMap = fun { in: Rep[Struct] =>
       Pair(
         in.get[Int]("a") + in.getUnchecked[Struct]("d").get[Int]("e"),
         in.get[Int]("a") * in.get[String]("b").toInt
       )
-    }(Lazy(eJoined), pairElement(eInt, eInt))
+    }(Lazy(eJoined))
 
-    lazy val funKey = fun { in: Rep[Struct] => in.get[String]("b") }(Lazy(eJoined), eString)
+    lazy val funKey = fun { in: Rep[Struct] => in.get[String]("b") }(Lazy(eJoined))
     lazy val funReduce = fun {
       in: Rep[(Int, Struct)] => in._1 + in._2.getUnchecked[Struct]("d").get[Int]("e")
-    }(Lazy(pairElement(IntElement, eJoined)), IntElement)
+    }(Lazy(pairElement(IntElement, eJoined)))
 
     lazy val funPred = fun { in: Rep[Struct] =>
       in.get[Int]("a") < in.getUnchecked[Struct]("d").get[Int]("e")
-    }(Lazy(eJoined), eBoolean)
+    }(Lazy(eJoined))
   }
 
   class TestHelper(val ctx: Ctx) {

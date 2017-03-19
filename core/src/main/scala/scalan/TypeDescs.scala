@@ -263,7 +263,7 @@ trait TypeDescs extends Base { self: Scalan =>
     lazy val typeArgs = ListMap("A" -> (eDom -> Contravariant), "B" -> (eRange -> Covariant))
     protected def getDefaultRep = {
       val defaultB = eRange.defaultRepValue
-      fun[A, B](_ => defaultB)(Lazy(eDom), eRange)
+      fun[A, B](_ => defaultB)(Lazy(eDom))
     }
   }
 

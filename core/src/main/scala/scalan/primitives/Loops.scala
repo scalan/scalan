@@ -11,7 +11,7 @@ trait Loops { self: Scalan =>
   def loopUntilAux[A](s1: Rep[A])(isMatch: Rep[A] => Rep[Boolean], step: Rep[A] => Rep[A]): Rep[A] = {
     val eA = s1.elem
     val leA = Lazy(eA)
-    loopUntil(s1)(fun(isMatch)(leA, BooleanElement), fun(step)(leA, eA))
+    loopUntil(s1)(fun(isMatch)(leA), fun(step)(leA))
   }
 
   def loopUntil2[A, B](s1: Rep[A], s2: Rep[B])
