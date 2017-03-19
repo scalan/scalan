@@ -6,7 +6,6 @@ import scala.reflect.SourceContext
 import scala.lms.common._
 import scala.lms.internal.Transforming
 import scalan.compilation.lms.LmsBackendFacade
-import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait ArrayOpsExt extends Base {
   def array_insert[T: Manifest](x: Rep[Array[T]], n: Rep[Int], y: Rep[T])(implicit pos: SourceContext): Rep[Array[T]]
@@ -331,44 +330,3 @@ trait ScalaGenArrayOpsExt extends ScalaGenBase {
   }
 }
 
-trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
-  val IR: ArrayOpsExtExp with ArrayOpsExp
-  import IR._
-
-  headerFiles += "scalan/algorithm.hpp"
-
-  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case a @ ArrayAppend(xs, v) =>
-/////////////////////////////////////////////////////
-// Creates new array, copies values to it from xs and adds new element
-      emitNode(sym, ArrayNew(Const(0))(a.m))
-      val xsLen = src"${xs}_len"
-      gen"""size_t $xsLen = $xs->size();
-           |$sym->resize($xsLen + 1);
-           |std::copy($xs->begin(), $xs->end(), $sym->begin());
-           |(*$sym)[$xsLen] = $v;"""
-////////////////////////////////////////////////////
-// Modifies xs adding new element and assigns new symbol to xs
-//      gen"""$xs->push_back($v);"""
-//      emitValDef(sym, src"$xs")
-    case a @ ArrayInsert(xs,i,y) =>
-      emitNode(sym, ArrayNew(Const(0))(a.m))
-      val xsLen = src"${xs}_len"
-      gen"""size_t $xsLen = $xs->size();
-           |$sym->resize($xsLen + 1);
-           |std::copy($xs->begin(), $xs->begin() + $i, $sym->begin());
-           |(*$sym)[$i] = $y;
-           |std::copy($xs->begin() + $i, $xs->end(), $sym->begin() + $i + 1);"""
-    case ds @ ArrayBinarySearch(i, is) =>
-      emitValDef(sym, src"scalan::binary_search($is->begin(), $is->end(), $i);")
-    case a@ArraySortBy(arr, by) =>
-      emitNode(sym, ArrayNew(Const(0))(sym.tp))
-      val aT = src"${remap(a.mA)}"
-      gen"""$sym->resize($arr->size());
-           |std::copy($arr->begin(), $arr->end(), $sym->begin());
-           |auto ${sym}_cmp = [=]($aT x1, $aT x2) -> bool { return $by(x1) < $by(x2); };
-           |std::sort($sym->begin(), $sym->end(), ${sym}_cmp);"""
-    case _ =>
-      super.emitNode(sym, rhs)
-  }
-}

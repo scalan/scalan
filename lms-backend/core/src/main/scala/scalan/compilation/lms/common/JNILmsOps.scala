@@ -7,7 +7,6 @@ import scala.lms.common._
 import scala.lms.internal.{GenerationFailedException, GenericCodegen}
 import scalan.compilation.lms.ManifestUtil
 import scalan.compilation.lms.arrays.ArrayLoopsExp
-import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait JNILmsOps extends Base {
   trait JNIType[T]
@@ -320,77 +319,3 @@ trait JNIExtractorOpsCxxGenBase extends GenericCodegen with ManifestUtil {
   }
 }
 
-trait CxxShptrGenJNIExtractor extends CxxShptrCodegen with JNIExtractorOpsCxxGenBase {
-  val IR: JNILmsOpsExp
-  import IR._
-
-  headerFiles ++= Seq("jni-array-wrapper.hpp")
-
-  override def toShptrManifest(m: Manifest[_]): Manifest[_] = {
-    m.runtimeClass match {
-      case c if c == classOf[JNIType[_]] => m
-      case c if c.isArray && m.typeArguments(0).runtimeClass == classOf[JNIType[_]] =>
-        m
-      case _ =>
-        super.toShptrManifest(m)
-    }
-  }
-
-  override protected def doNotWrap(m: Manifest[_]) =
-    // JNIArray[_] intentionally not included
-    m.isOneOf(classOf[JNIType[_]], classOf[JObject[_]], classOf[JNIClass], classOf[JNIFieldID], classOf[JNIMethodID]) ||
-      super.doNotWrap(m)
-
-  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case res@NewPrimitive(x) =>
-      emitValDef(sym, src"static_cast<${x.tp}>($x)")
-    case res@NewObject(clazz, mid, args@_*) =>
-      emitValDef(quote(sym), jobjectManifest(sym.tp), src"env->NewObject($clazz, ${mid +: args})")
-    case res@CallObjectMethod(x, mid, args@_*) =>
-      // TODO is static_cast useful here and in GetObjectFieldValue?
-      emitValDef(quote(sym),jobjectManifest(sym.tp), src"static_cast<${jobjectManifest(sym.tp)}>(env->CallObjectMethod($x, ${mid +: args}))")
-    case res@ReturnFirstArg(jArray, _) =>
-      emitValDef(sym, src"$jArray")
-    case res@NewPrimitiveArray(len) =>
-      // toString avoids remapping the JVM type name to C++
-      emitValDef(sym, src"env->New${res.mA.toString}Array($len)")
-    case res@NewObjectArray(len, clazz) =>
-      emitValDef(sym, src"env->NewObjectArray($len, $clazz, nullptr)")
-    case FindClass(className) =>
-      emitValDef(sym, src"env->FindClass($className)")
-    case ExtractPrimitive(x) =>
-      emitValDef(sym, src"static_cast<${sym.tp}>($x)")
-    case ExtractPrimitiveArray(x) =>
-      emitConstruct(sym, "env", src"$x")
-    case Reflect(ExtractPrimitiveArray(x),_,_) =>
-      emitConstruct(sym, "env", src"$x")
-    case GetArrayLength(x) =>
-      emitValDef(sym, src"env->GetArrayLength($x)")
-    case ExtractObjectArray(x) =>
-      emitValDef(sym, src"$x")
-    case GetObjectArrayItem(x, i) =>
-      emitValDef(sym, src"static_cast<${sym.tp}>(env->GetObjectArrayElement($x, $i))")
-    case GetObjectClass(x) =>
-      emitValDef(sym, src"env->GetObjectClass($x)")
-    case GetFieldID(clazz, fn, sig) =>
-      emitValDef(sym, src"env->GetFieldID($clazz, $fn, $sig)")
-    case GetMethodID(clazz, mn, sig) =>
-      emitValDef(sym, src"env->GetMethodID($clazz, $mn, $sig)")
-    case GetObjectFieldValue(fid, x) =>
-      emitValDef(quote(sym), jobjectManifest(sym.tp), src"static_cast<${jobjectManifest(sym.tp)}>(env->GetObjectField($x, $fid))")
-    case res@GetPrimitiveFieldValue(fid, x) =>
-      // toString avoids remapping the JVM type name to C++
-      emitValDef(sym, src"static_cast<${sym.tp}>(env->Get${res.tp.toString}Field($x, $fid))")
-    case _ =>
-      super.emitNode(sym, rhs)
-  }
-
-  override def quote(x: Exp[Any]) = {
-    x match {
-      case JNIStringConst(str) =>
-        "\""+str.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")+"\""
-      case _ =>
-        super.quote(x)
-    }
-  }
-}

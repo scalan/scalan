@@ -4,7 +4,6 @@ import scala.reflect.SourceContext
 import scala.lms.common._
 import scala.lms.internal.ScalaNestedCodegen
 import scalan.compilation.lms.LmsBackendFacade
-import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait LstOps extends Base {
 
@@ -89,14 +88,3 @@ trait ScalaGenLstOps extends ScalaNestedCodegen {
   }
 }
 
-trait CxxShptrGenLstOps extends CxxShptrCodegen {
-  val IR: LstOpsExp
-  import IR._
-
-  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case ListReplicate(len, x) =>
-      emitConstruct(sym, src"$len", src"$x")
-//    case ListRangeFrom0Lms(length) => emitValDef(sym, src"List((for(i <- 0 to ${quote(length)}) yield i ) : _*)")
-    case _ => super.emitNode(sym, rhs)
-  }
-}

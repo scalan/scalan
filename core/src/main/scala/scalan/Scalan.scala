@@ -79,3 +79,9 @@ extends ScalanExp
   with ScalanDsl
   with Expressions
   with ExceptionsDslExp
+
+class ScalanDslStd
+extends ScalanExp
+  with ScalanDsl
+  with Expressions
+  with ExceptionsDslExp

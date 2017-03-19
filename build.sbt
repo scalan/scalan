@@ -39,16 +39,16 @@ lazy val testSettings = Seq(
 
 lazy val commonSettings = buildSettings ++ testSettings
 
-//lazy val scalaVirtualizedVersion = sys.env.getOrElse("SCALA_VIRTUALIZED_VERSION", "2.11.2")
+lazy val scalaVirtualizedVersion = sys.env.getOrElse("SCALA_VIRTUALIZED_VERSION", "2.11.2")
 
-//lazy val scalaVirtualizedSettings = Seq(
-//  scalaVersion := scalaVirtualizedVersion,
-//  scalaOrganization := "org.scala-lang.virtualized",
-//  libraryDependencies ++= Seq(
-//    "org.scala-lang.virtualized" % "scala-library" % scalaVirtualizedVersion,
-//    "org.scala-lang.virtualized" % "scala-compiler" % scalaVirtualizedVersion
-//  )
-//)
+lazy val scalaVirtualizedSettings = Seq(
+  scalaVersion := scalaVirtualizedVersion,
+  scalaOrganization := "org.scala-lang.virtualized",
+  libraryDependencies ++= Seq(
+    "org.scala-lang.virtualized" % "scala-library" % scalaVirtualizedVersion,
+    "org.scala-lang.virtualized" % "scala-compiler" % scalaVirtualizedVersion
+  )
+)
 
 lazy val itSettings = commonSettings ++ Defaults.itSettings ++
   Seq(
@@ -58,10 +58,10 @@ lazy val itSettings = commonSettings ++ Defaults.itSettings ++
     parallelExecution in IntegrationTest := false,
     fork in IntegrationTest := true)
 
-//lazy val lmsBackendSettings = itSettings ++ scalaVirtualizedSettings ++ Seq(
-//    libraryDependencies += "org.scala-lang.lms" %% "lms-core" % "0.9.1-SNAPSHOT",
-//    // we know we use LMS snapshot here, ignore it
-//    releaseSnapshotDependencies := Seq.empty)
+lazy val lmsBackendSettings = itSettings ++ scalaVirtualizedSettings ++ Seq(
+    libraryDependencies += "org.scala-lang.lms" %% "lms-core" % "0.9.1-SNAPSHOT",
+    // we know we use LMS snapshot here, ignore it
+    releaseSnapshotDependencies := Seq.empty)
 
 lazy val allConfigDependency = "compile->compile;test->test"
 
@@ -113,9 +113,9 @@ lazy val core = Project("scalan-core", file("core"))
 //  .dependsOn(collections % allConfigDependency)
 //  .settings(commonSettings)
 
-//lazy val lmsBackendCore = Project("scalan-lms-backend-core", file("lms-backend") / "core")
-//  .dependsOn(core % "compile->compile;it->test")
-//  .configs(IntegrationTest).settings(lmsBackendSettings)
+lazy val lmsBackendCore = Project("scalan-lms-backend-core", file("lms-backend") / "core")
+  .dependsOn(core % "compile->compile;it->test")
+  .configs(IntegrationTest).settings(lmsBackendSettings)
 
 //lazy val lmsBackendCollections = Project("scalan-lms-backend-collections", file("lms-backend") / "collections")
 //  .dependsOn(lmsBackendCore, collections % "compile->compile;it->test")
@@ -169,8 +169,8 @@ lazy val extraClassPathTask = TaskKey[String]("extraClassPath") // scalan.plugin
 //}.value
 
 lazy val root = Project("scalan", file("."))
-  .aggregate(common, meta, core/*,
+  .aggregate(common, meta, core, lmsBackendCore/*,
     collections, linalg, graphs, pointers, effects,
-    lmsBackendCore, lmsBackendCollections, lmsBackendLinAlg, lmsBackendPointers, lmsBackendIT,
+    lmsBackendCollections, lmsBackendLinAlg, lmsBackendPointers, lmsBackendIT,
     luaBackendCore, examples*/)
   .settings(buildSettings, publishArtifact := false)

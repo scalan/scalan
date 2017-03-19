@@ -3,7 +3,6 @@ package scalan.compilation.lms.common
 import scala.reflect.SourceContext
 import scala.lms.common._
 import scala.lms.internal.ScalaNestedCodegen
-import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait ExtNumOps extends Base {
   def numeric_rand[A: Manifest](bound: Rep[A], id: Int): Rep[A]
@@ -59,12 +58,3 @@ trait ScalaGenExtNumOps extends ScalaGenBase {
 
 }
 
-trait CxxShptrGenExtNumOps extends CxxShptrCodegen {
-  val IR: ExtNumOpsExp
-  import IR._
-
-  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case _ => super.emitNode(sym, rhs)
-  }
-
-}

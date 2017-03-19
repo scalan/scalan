@@ -4,7 +4,6 @@ import java.util.HashMap
 
 import scala.lms.common._
 import scala.reflect.SourceContext
-import scalan.compilation.lms.cxx.sharedptr.CxxShptrGenHashMapOps
 
 trait HashMapOpsExt extends HashMapOps with IterableOps {
   def hashmap_keys_array[K:Manifest,V:Manifest](m: Rep[HashMap[K,V]])(implicit pos: SourceContext): Rep[Array[K]] = {
@@ -37,18 +36,3 @@ trait HashMapOpsExpExt extends HashMapOpsExp {
 
 }
 
-trait CxxShptrGenHashMapOpsExt extends CxxShptrGenHashMapOps {
-  val IR: HashMapOpsExpExt
-
-  import IR._
-
-  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case HashMapKeysArray(m) =>
-      emitValDef(sym, src"std::make_shared<${remap(sym.tp)}>($m->size())")
-      val value_type = src"${remap(m.tp)}::value_type"
-      val key_type = src"${remap(m.tp)}::key_type"
-      gen"""auto ${sym}_tran = [=]($value_type& p) -> $key_type { return p.first; };
-         |std::transform($m->begin(), $m->end(), $sym->begin(), ${sym}_tran);"""
-    case _ => super.emitNode(sym, rhs)
-  }
-}

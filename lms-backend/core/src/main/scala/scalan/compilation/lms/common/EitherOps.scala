@@ -2,7 +2,6 @@ package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
 import scala.lms.common._
-import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait EitherOps extends Base {
 
@@ -96,47 +95,3 @@ trait ScalaGenEitherOps extends ScalaGenBase {
   }
 }
 
-trait CxxShptrGenEitherOps extends CxxShptrCodegen {
-  val IR: EitherOpsExp
-  import IR._
-
-  headerFiles += "boost/variant.hpp"
-
-  override protected def doNotWrap(m: Manifest[_]) = m.runtimeClass == classOf[Either[_,_]] ||
-    super.doNotWrap(m)
-
-  override def remap[A](m: Manifest[A]): String = {
-    m.runtimeClass match {
-      case c if c == classOf[Either[_,_]] =>
-        val mA = m.typeArguments(0)
-        val mB = m.typeArguments(1)
-        src"boost::variant<$mA,$mB>"
-      case _ =>
-        super.remap(m)
-    }
-  }
-
-  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case EitherGetLeft(sum) =>
-      emitValDef(sym, src"boost::get<${sum.tp.typeArguments(0)}>($sum)")
-    case EitherGetRight(sum) =>
-      emitValDef(sym, src"boost::get<${sum.tp.typeArguments(1)}>($sum)")
-    case EitherLeft(a, _, _) =>
-      stream.println(src"${sym.tp} $sym($a);")
-    case EitherRight(b, _, _) =>
-      stream.println(src"${sym.tp} $sym($b);")
-    case EitherIsLeft(sum) =>
-      emitValDef(sym, src"$sum.which() == 0")
-    case EitherIsRight(sum) =>
-      emitValDef(sym, src"$sum.which() == 1")
-    case EitherFold(sum, l, r) =>
-      emitValDef(sym, src"$sum.which() == 0 ? $l(boost::get<${l.tp.typeArguments(0)}>($sum)) : $r(boost::get<${r.tp.typeArguments(0)}>($sum))")
-    case EitherMap(sum, l, r) =>
-      val tpl = remap(sum.tp.typeArguments(0))
-      val tpr = remap(sum.tp.typeArguments(1))
-      val rtp = remap(sym.tp)
-      emitValDef(sym, src"$sum.which() == 0 ? $rtp($l(boost::get<$tpl>($sum))) : $rtp($r(boost::get<$tpr>($sum)))")
-    case _ =>
-      super.emitNode(sym, rhs)
-  }
-}

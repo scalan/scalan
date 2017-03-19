@@ -42,6 +42,7 @@ Scalan issues that should be solved
 - avoid using Reflection API in IR
 - separate typed staging from untyped core IR 
 - more principled solution for getResultElem
+- mechanism to map structs to given types (instead of generating Anon2390 classes)
 
 Design decisions
 ----------------

@@ -429,8 +429,16 @@ class StructTests extends BaseViewTests {
 abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslExp with SegmentsDslExp with MetaTestsDslExp with StructExamples) {
   import progStd._
 
-  test("struct out") {
+  test("t1") {
     compareOutputWithStd(s => s.t1.asInstanceOf[s.Rep[Int => Struct]])(100)
+  }
+
+  test("t2") {
+    compareOutputWithStd(s => s.t2)(100)
+  }
+
+  test("t3") {
+    compareOutputWithStd(s => s.t3.asInstanceOf[s.Rep[Int => Struct]])(100)
   }
 
 //  test("struct with one field in") {

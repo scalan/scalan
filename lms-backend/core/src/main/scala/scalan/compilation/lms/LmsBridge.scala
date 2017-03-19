@@ -289,8 +289,8 @@ trait LmsBridge extends Passes {
     ReflectedElement(lmsClass, paramMirrors)
   }
 
-  registerElemClass[ArrayBufferElem[_], scala.collection.mutable.ArrayBuilder[_]]
-  registerElemClass[MMapElem[_, _], java.util.HashMap[_,_]]
+//  registerElemClass[ArrayBufferElem[_], scala.collection.mutable.ArrayBuilder[_]]
+//  registerElemClass[MMapElem[_, _], java.util.HashMap[_,_]]
 
   def elemToManifest[T](elem: Elem[T]): Manifest[_] = elem match {
     case el: BaseTypeElem1[_,_,_] =>
@@ -304,13 +304,13 @@ trait LmsBridge extends Passes {
     case el: WrapperElem[_,_] =>
       elemToManifest(el.baseElem)
 
-    case el: ArrayElem[_] =>
-      // see Scala bug https://issues.scala-lang.org/browse/SI-8183 (won't fix)
-      val m = el.eItem match {
-        case UnitElement => manifest[scala.runtime.BoxedUnit]
-        case _ => elemToManifest(el.eItem)
-      }
-      Manifest.arrayType(m)
+//    case el: ArrayElem[_] =>
+//      // see Scala bug https://issues.scala-lang.org/browse/SI-8183 (won't fix)
+//      val m = el.eItem match {
+//        case UnitElement => manifest[scala.runtime.BoxedUnit]
+//        case _ => elemToManifest(el.eItem)
+//      }
+//      Manifest.arrayType(m)
 
     case UnitElement => Manifest.Unit
     case BooleanElement => Manifest.Boolean
