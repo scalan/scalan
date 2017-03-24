@@ -41,6 +41,26 @@ trait Views extends TypeDescs { self: ViewsDsl with Scalan =>
       case _ => false
     }
   }
+
+  abstract class ReverseIso[A,B](val iso: Iso[A,B])(
+    implicit val eA:Elem[A], val eB:Elem[B])
+    extends IsoUR[B,A] {
+    lazy val eFrom: Elem[B] = eB
+    lazy val eTo: Elem[A] = eA
+
+    override def isIdentity = { iso.isIdentity }
+    override def equals(other: Any) = {
+      other match {
+        case r: Views#ReverseIso[_, _] => (this eq r) || iso == r.iso
+        case _ => false
+      }
+    }
+
+    def from(a :Rep[A]) = { iso.to(a) }
+    def to(b: Rep[B]) = { iso.from(b) }
+  }
+
+
   implicit class IsoOps[A,B](iso: Iso[A,B]) {
     def >>[C](iso2: Iso[B,C]): Iso[A,C] = composeIso(iso2, iso)
   }
@@ -456,6 +476,8 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
 
   def identityIso[A](implicit elem: Elem[A]): Iso[A, A] = IdentityIso[A]()(elem)
 
+  def reverseIso[A,B](iso: Iso[A,B]): Iso[B,A] = ReverseIso[A,B](iso)(iso.eFrom, iso.eTo)
+
   def pairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[(A1, A2), (B1, B2)] =
     PairIso[A1, A2, B1, B2](iso1, iso2)(iso1.eFrom, iso2.eFrom, iso1.eTo, iso2.eTo)
 
@@ -653,6 +675,15 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
+    // Rule: Reverse elimination
+    case ExpReverseIso(ReverseIso(iso)) =>
+      iso
+    // Rule: Reverse right identity
+    case ExpComposeIso(iso1, ReverseIso(iso2)) if iso1 == iso2 =>
+      identityIso(iso1.eTo)
+    // Rule: Reverse left identity
+    case ExpComposeIso(ReverseIso(iso1), iso2) if iso1 == iso2 =>
+      identityIso(iso1.eFrom)
     // Rule: (V(a, iso1), V(b, iso2)) ==> V((a,b), PairIso(iso1, iso2))
     case Tup(HasViews(a, iso1: Iso[a, c]), HasViews(b, iso2: Iso[b, d])) =>
       PairView((a.asRep[a], b.asRep[b]))(iso1, iso2)

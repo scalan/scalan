@@ -57,6 +57,20 @@ abstract class BaseViewTests extends BaseCtxTests {
 }
 
 class ViewTests extends BaseViewTests {
+  test("ReverseIso double elimination rule") {
+    val ctx = new ViewTestsCtx with SegmentsDslExp
+    import ctx._
+    val ri = reverseIso(reverseIso(isoInterval))
+    assert(ri == isoInterval)
+  }
+
+  test("ReverseIso inversion elimination rule") {
+    val ctx = new ViewTestsCtx with SegmentsDslExp
+    import ctx._
+
+    assert(reverseIso(isoInterval) >> isoInterval == identityIso[Interval])
+    assert(isoInterval >> ReverseIso(isoInterval) == identityIso[(Int,Int)])
+  }
 
   test("LambdaResultHasViews") {
     val ctx = new ViewTestsCtx with ViewExamples with CommonExamples with SegmentsDslExp
