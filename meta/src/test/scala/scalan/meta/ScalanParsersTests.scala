@@ -64,6 +64,12 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
     }
   }
 
+  def parseType(tpeString: String): STpeExpr = {
+    val tree = parseString(Type, tpeString)
+    val tpe = tpeExpr(tree)
+    tpe
+  }
+
   def test[A](kind: TreeKind, prog: String, expected: A)(f: Tree => A) {
     it(prog) {
       val tree = parseString(kind, prog)
@@ -186,22 +192,22 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
           Some(INT), false, false, None, Nil, None))))
   }
 
-  describe("SEntityModuleDef") {
-    val reactiveModule =
-      """package scalan.rx
-      |import scalan._
-      |trait Reactive extends ScalanDsl {
-      |  type Obs[A] = Rep[Observable[A]]
-      |  trait Observable[A] {
-      |    implicit def eA: Elem[A]
-      |  }
-      |  class ObservableImpl1[A](implicit val eA: Elem[A]) extends Observable[A] {
-      |  }
-      |  class ObservableImpl2[A](implicit val eA: Elem[A]) extends Observable[A] {
-      |  }
-      |}
+  val reactiveModule =
+    """package scalan.rx
+     |import scalan._
+     |trait Reactive extends ScalanDsl {
+     |  type Obs[A] = Rep[Observable[A]]
+     |  trait Observable[A] {
+     |    implicit def eA: Elem[A]
+     |  }
+     |  class ObservableImpl1[A](implicit val eA: Elem[A]) extends Observable[A] {
+     |  }
+     |  class ObservableImpl2[A](implicit val eA: Elem[A]) extends Observable[A] {
+     |  }
+     |}
     """.stripMargin
 
+  describe("SEntityModuleDef") {
     val tpeArgA = L(STpeArg("A", None, Nil))
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
@@ -243,5 +249,45 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
       |}
     """.stripMargin
   describe("annotations")  {
+  }
+
+  def testPath(module: SEntityModuleDef, tpeString: String, name: String, expected: Option[STpePath]): Unit = {
+    val tpe = parseType(tpeString)
+
+    it(s"find('${tpeString}', '${name}')") {
+      assertResult(STpePath.find(module, tpe, name))(expected)
+    }
+  }
+
+  def testStructPath(module: SEntityModuleDef, tpe: STpeExpr, name: String, expected: Option[STpePath]): Unit = {
+    it(s"find(${tpe}, '${name}')") {
+      assertResult(STpePath.find(module, tpe, name))(expected)
+    }
+  }
+
+  describe("find TpePath") {
+    val pkg = parseString(TopLevel, reactiveModule).asInstanceOf[PackageDef]
+    val module = entityModule(pkg)
+    testPath(module, "Int", "A", None)
+    testPath(module, "A", "A", Some(SNilPath))
+    testPath(module, "A => Int", "A", Some(SDomPath(SNilPath)))
+    testPath(module, "Int => A", "A", Some(SRangePath(SNilPath)))
+    testPath(module, "B => A", "A", Some(SRangePath(SNilPath)))
+
+    testPath(module, "(A, Int)", "A", Some(STuplePath(0, SNilPath)))
+    testPath(module, "(Int, A)", "A", Some(STuplePath(1, SNilPath)))
+    testPath(module, "(B, A)", "A", Some(STuplePath(1, SNilPath)))
+
+    testStructPath(module, STpeStruct(List(("a", parseType("A")))), "A", Some(SStructPath("a", SNilPath)))
+    testStructPath(module,
+      STpeStruct(List(("a", parseType("Int")), ("b", parseType("(A,Int)")))), "A",
+      Some(SStructPath("b", STuplePath(0, SNilPath))))
+
+    testPath(module, "Observable[Int]", "A", None)
+    testPath(module, "Observable[A]", "A", Some(SEntityPath("Observable", "A", SNilPath)))
+    testPath(module, "Observable[A => Int]", "A", Some(SEntityPath("Observable", "A", SDomPath(SNilPath))))
+    testPath(module, "Observable[Int => A]", "A", Some(SEntityPath("Observable", "A", SRangePath(SNilPath))))
+    testPath(module, "Observable[Observable[A]]", "A",
+      Some(SEntityPath("Observable", "A", SEntityPath("Observable", "A", SNilPath))))
   }
 }

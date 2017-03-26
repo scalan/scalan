@@ -36,25 +36,29 @@ Scalan issues that should be solved
 ------------------------------
 + remove Std traits 
 + make v.elem available in Abstract context (remove selfType1)
-- avoid passing implicit Elems where possible
++ avoid passing implicit Elems where possible
+- in boilerplate elements of constructors (see mkBind) are passed as implicits
+- more principled solution for getResultElem
 - simplify scalan-meta
 - rename Elem -> Type
 - avoid using Reflection API in IR
 - separate typed staging from untyped core IR 
-- more principled solution for getResultElem
 - mechanism to map structs to given types (instead of generating Anon2390 classes)
+
 
 Design decisions
 ----------------
-- separate staging front-end from IR (typed wrappers over untyped core)
-- core IR should be self-sufficient
-- use LMS style staging in Scala for easy migration from Scalan
+- LMS style staging in Scala for easy implementation of basis 
 - Cake based modular design of staging front-end
-- Java front-end using fluent API and builder pattern
-- IR for Java subset of Scala
-- nested classes and interfaces
-- recursive functions
-- first-class IR cakes so that all basis primitives are methods[<0;61;16M
+- new dynamic IR to represent OOP constructs
+- dynamic IR should be serializable
+- classes and interfaces should form Symbol hierarchy (as scala.reflect.api.Symbols)
+- Java front-end using fluent API and builder pattern to directly construct IR
+- IR should be enough for Java subset of Scala (not full Scala)
+    - nested classes and interfaces
+    - recursive functions
+- statically predefined staged classes (created with scalan-meta) should be wrappable in new dynamic IR 
+- Scalan cake should be mixed with Def so that all its methods are subjects of staged invoke
 
 What is removed from scalan-core
 --------------------------------

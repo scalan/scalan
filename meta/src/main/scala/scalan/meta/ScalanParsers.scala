@@ -568,7 +568,7 @@ trait ScalanParsers {
 
   def parseType(tpe: Type): STpeExpr = tpe match {
     case NoType | NoPrefix => STpeEmpty()
-    case const: ConstantType => STpeConst(const.value.value)
+    case const: ConstantType => STpeConst(SConst(const.value.value, Some(parseType(const.underlying))))
     case thisType: ThisType => STpeThis(thisType.sym.nameString)
     case tref: TypeRef => parseTypeRef(tref)
     case single: SingleType => STpeSingle(parseType(single.pre), single.sym.nameString)

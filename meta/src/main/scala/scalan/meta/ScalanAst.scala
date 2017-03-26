@@ -3,7 +3,7 @@ package scalan.meta
 import scala.reflect.internal.ModifierFlags
 import PrintExtensions._
 import scalan._
-import scalan.util.{Contravariant, Covariant, Invariant}
+import scalan.util.{Covariant, Contravariant, Invariant}
 
 object ScalanAst {
   // STpe universe --------------------------------------------------------------------------
@@ -15,15 +15,20 @@ object ScalanAst {
   }
   type STpeExprs = List[STpeExpr]
 
+  /** Represents scala.reflect.internal.Types.NoType | NoPrefix */
   case class STpeEmpty() extends STpeExpr {
     def name = "Empty"
   }
 
-  case class STpeConst(c: Any) extends STpeExpr {
+  /** Represents scala.reflect.internal.Types.ConstantType */
+  case class STpeConst(const: SConst) extends STpeExpr {
     def name = "Constant"
   }
 
-  case class STpeThis(name: String) extends STpeExpr
+  /** A class for this-types of the form <sym>.this.type */
+  case class STpeThis(fullNameString: String) extends STpeExpr {
+     def name = s"$fullNameString.this.type"
+  }
 
   /** <pre>.<single>.type */
   case class STpeSingle(pre: STpeExpr, name: String) extends STpeExpr
@@ -61,6 +66,11 @@ object ScalanAst {
   case class STpeTuple(override val tpeSExprs: List[STpeExpr]) extends STpeExpr {
     def name = "Tuple" + tpeSExprs.length
     override def toString = tpeSExprs.mkString("(", ", ", ")")
+  }
+
+  case class STpeStruct(fields: List[(String, STpeExpr)]) extends STpeExpr {
+    def name = "Struct"
+    override def toString = fields.map { case (n, t) => s"$n: $t" }.mkString("{", "; ", "}")
   }
 
   case class STpeFunc(domain: STpeExpr, range: STpeExpr) extends STpeExpr {
@@ -151,6 +161,72 @@ object ScalanAst {
   case class STpeMethod(tparams: List[String], params: List[STpeExpr], resultType: STpeExpr) extends STpeExpr {
     def name = tparams.mkString("[",",","]")+params.mkString("(",",",")")+resultType
   }
+
+  // TpePath universe ------------------------------------------------------------------------------
+  sealed abstract class STpePath {
+  }
+  case object SNilPath extends STpePath
+  case class STuplePath(index: Int, tail: STpePath) extends STpePath
+  case class SDomPath(tail: STpePath) extends STpePath
+  case class SRangePath(tail: STpePath) extends STpePath
+  case class SStructPath(fieldName: String, tail: STpePath) extends STpePath
+  case class SEntityPath(entityName: String, tyArgName: String, tail: STpePath) extends STpePath
+
+  object STpePath {
+    def find(module: SEntityModuleDef, tpe: STpeExpr, argName: String): Option[STpePath] = tpe match {
+      case STpePrimitive(_,_) => None
+      case STpeFunc(d, r) =>
+        find(module, d, argName) match {
+          case Some(tailPath) => Some(SDomPath(tailPath))
+          case None => find(module, r, argName) match {
+            case Some(tailPath) => Some(SRangePath(tailPath))
+            case None => None
+          }
+        }
+      case t @ STpeTuple(_) =>
+        def findInTuple(t: STpeTuple): Option[STpePath] = {
+          for ((item, i) <- t.tpeSExprs.zipWithIndex) {
+            find(module, item, argName) match {
+              case Some(tailPath) =>
+                return Some(STuplePath(i, tailPath))
+              case None =>
+            }
+          }
+          None
+        }
+        findInTuple(t)
+      case s @ STpeStruct(_) =>
+        def findInStruct(s: STpeStruct): Option[STpePath] = {
+          for ((fn, ft) <- s.fields) {
+            find(module, ft, argName) match {
+              case Some(tailPath) =>
+                return Some(SStructPath(fn, tailPath))
+              case None =>
+            }
+          }
+          None
+        }
+        findInStruct(s)
+      case STraitCall(`argName`,_) => Some(SNilPath)
+      case STraitCall(name, args) if module.isEntity(name) || module.isClass(name) =>
+        def findInEntity(e: STraitOrClassDef): Option[STpePath] = {
+          var i = 0
+          for (a <- args) {
+            find(module, a, argName) match {
+              case Some(tailPath) =>
+                return Some(SEntityPath(name, e.tpeArgs(i).name, tailPath))
+              case None =>
+            }
+            i += 1
+          }
+          None
+        }
+        findInEntity(module.getEntity(name))
+
+      case _ => None
+    }
+  }
+
   // SAnnotation universe --------------------------------------------------------------------------
   trait SAnnotation {
     def annotationClass: String
