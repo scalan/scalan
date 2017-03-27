@@ -265,9 +265,14 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
     }
   }
 
-  describe("find TpePath") {
+  def makeModule(moduleText: String): SEntityModuleDef = {
     val pkg = parseString(TopLevel, reactiveModule).asInstanceOf[PackageDef]
     val module = entityModule(pkg)
+    module
+  }
+
+  describe("find TpePath") {
+    val module = makeModule(reactiveModule)
     testPath(module, "Int", "A", None)
     testPath(module, "A", "A", Some(SNilPath))
     testPath(module, "A => Int", "A", Some(SDomPath(SNilPath)))
@@ -289,5 +294,49 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
     testPath(module, "Observable[Int => A]", "A", Some(SEntityPath("Observable", "A", SRangePath(SNilPath))))
     testPath(module, "Observable[Observable[A]]", "A",
       Some(SEntityPath("Observable", "A", SEntityPath("Observable", "A", SNilPath))))
+  }
+
+  def makePath(module: SEntityModuleDef, tpeString: String, name: String): STpePath = {
+    val tpe = parseType(tpeString)
+    STpePath.find(module, tpe, name).get
+  }
+  def makePath(module: SEntityModuleDef, tpe: STpeExpr, name: String): STpePath = {
+    STpePath.find(module, tpe, name).get
+  }
+
+  import ScalanCodegen._
+
+  def testEmit(module: SEntityModuleDef, inType: String, name: String, path: STpePath, expected: String): Unit = {
+    val prefix = "x.elem"
+    val code = emitImplicitElemDeclByTpePath(prefix, path)
+    it(s"emit($inType, $name)") {
+      assertResult(code)(prefix + expected)
+    }
+  }
+
+  def testEmit(module: SEntityModuleDef, inType: String, name: String, expected: String): Unit = {
+    val path = makePath(module, inType, name)
+    testEmit(module, inType, name, path, expected)
+  }
+
+  def testEmit(module: SEntityModuleDef, inType: STpeExpr, name: String, expected: String): Unit = {
+    val path = makePath(module, inType, name)
+    testEmit(module, inType.toString, name, path, expected)
+  }
+
+  describe("emitImplicitElemDeclByTpePath") {
+    val module = makeModule(reactiveModule)
+    testEmit(module, "A", "A", "")
+    testEmit(module, "A => Int", "A", ".eDom")
+    testEmit(module, "Int => A", "A", ".eRange")
+    testEmit(module, "(A, Int)", "A", ".eFst")
+    testEmit(module, "(Int, A)", "A", ".eSnd")
+    testEmit(module, "(Int, A) => Int", "A", ".eDom.eSnd")
+    testEmit(module, "Int => (Int, A)", "A", ".eRange.eSnd")
+
+    val tStruct = STpeStruct(List(("a", parseType("Int")), ("b", parseType("(A,Int)"))))
+    testEmit(module, tStruct, "A", """.asInstanceOf[StructElem[_]]("b").asInstanceOf[PairElem[_,_]].eFst""")
+
+//    testEmit(module, "Observable[A]", "A", ".eA")
   }
 }

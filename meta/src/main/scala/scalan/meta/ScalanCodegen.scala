@@ -8,6 +8,41 @@ import scalan.util.{ScalaNameUtil, Serialization, StringUtil}
 
 class MetaCodegen extends ScalanAstExtensions {
 
+  def emitImplicitElemDeclByTpePath(prefixExpr: String, tailPath: STpePath) = {
+    def emit(prefix: String, tailPath: STpePath, typed: Boolean): String = tailPath match {
+      case SNilPath => prefix
+      case STuplePath(i, t) => i match {
+        case 0 =>
+          if (typed)
+            emit(s"$prefix.eFst", t, typed)
+          else
+            emit(s"$prefix.asInstanceOf[PairElem[_,_]].eFst", t, typed)
+        case 1 =>
+          if (typed)
+            emit(s"$prefix.eSnd", t, typed)
+          else
+            emit(s"$prefix.asInstanceOf[PairElem[_,_]].eSnd", t, typed)
+        case _ =>
+          sys.error(s"Unsupported tuple type ($prefix, $tailPath)")
+      }
+      case SDomPath(t) =>
+        if (typed)
+          emit(s"$prefix.eDom", t, typed)
+        else
+          emit(s"$prefix.asInstanceOf[FuncElem[_,_]].eDom", t, typed)
+      case SRangePath(t) =>
+        if (typed)
+          emit(s"$prefix.eRange", t, typed)
+        else
+          emit(s"$prefix.asInstanceOf[FuncElem[_,_]].eRange", t, typed)
+      case SStructPath(fn, t) =>
+        emit(s"""$prefix.asInstanceOf[StructElem[_]]("$fn")""", t, false)
+//      case SEntityPath(name, tyArgName, t) =>
+//        emit(s"""$prefix.asInstanceOf[${name}Elem[_]].("$fn")""", t, false)
+    }
+    emit(prefixExpr, tailPath, true)
+  }
+
   abstract class TemplateData(val module: SEntityModuleDef, val entity: STraitOrClassDef) {
     val name = entity.name
     val tpeArgs = entity.tpeArgs
@@ -96,10 +131,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
     case Nil => "unit"
     case f :: Nil => f
     case f :: fs => s"Pair($f, ${pairify(fs)})"
-  }
-
-  def getDefaultOfBT(tc: STpeExpr,t: TemplateData) = {
-    s"DefaultOf${t.baseInstanceName}" + tc.tpeSExprs.opt(args => s"[${args.rep()}]")
   }
 
   private val entity = module.entityOps
