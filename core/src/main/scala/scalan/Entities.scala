@@ -4,7 +4,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.language.higherKinds
 import scalan.common.Lazy
-import scalan.meta.ScalanAst.{SEntityModuleDef, STraitOrClassDef}
+import scalan.meta.ScalanAst.{SModuleDef, STraitOrClassDef}
 import scalan.util.ReflectionUtil
 
 trait Entities extends TypeDescs { self: Scalan =>
@@ -114,7 +114,7 @@ trait Entities extends TypeDescs { self: Scalan =>
     def asEntityElem = e.asInstanceOf[EntityElem[A]]
   }
 
-  private[this] lazy val modules = mutable.Map.empty[String, SEntityModuleDef]
+  private[this] lazy val modules = mutable.Map.empty[String, SModuleDef]
   def getModules = modules
 
   def allEntities = modules.values.flatMap(_.allEntities)

@@ -17,7 +17,7 @@ trait ScalanAstExtensions {
       }
     }
 
-    def argUnrepTypes(module: SEntityModuleDef, config: CodegenConfig) = {
+    def argUnrepTypes(module: SModuleDef, config: CodegenConfig) = {
       if (config.isAlreadyRep) {
         as.args.map(a => a.tpe.unRep(module, config).getOrElse {
           sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")

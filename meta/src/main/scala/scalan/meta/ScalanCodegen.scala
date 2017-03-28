@@ -43,7 +43,7 @@ class MetaCodegen extends ScalanAstExtensions {
     emit(prefixExpr, tailPath, true)
   }
 
-  abstract class TemplateData(val module: SEntityModuleDef, val entity: STraitOrClassDef) {
+  abstract class TemplateData(val module: SModuleDef, val entity: STraitOrClassDef) {
     val name = entity.name
     val tpeArgs = entity.tpeArgs
     val tpeArgNames = tpeArgs.names
@@ -107,18 +107,18 @@ class MetaCodegen extends ScalanAstExtensions {
     def companionAbsName = name + "CompanionAbs"
   }
 
-  case class EntityTemplateData(m: SEntityModuleDef, t: STraitDef) extends TemplateData(m, t) {
+  case class EntityTemplateData(m: SModuleDef, t: STraitDef) extends TemplateData(m, t) {
     def elemTypeUse(toType: String = typeUse) = s"${name}Elem[${join(tpeArgNames, toType)}]"
   }
 
-  case class ConcreteClassTemplateData(m: SEntityModuleDef, c: SClassDef) extends TemplateData(m, c) {
+  case class ConcreteClassTemplateData(m: SModuleDef, c: SClassDef) extends TemplateData(m, c) {
     val elemTypeUse = name + "Elem" + tpeArgsUse
   }
 }
 
 object ScalanCodegen extends MetaCodegen
 
-class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, config: CodegenConfig) {
+class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: CodegenConfig) {
   import codegen._
 
   def dataType(ts: List[STpeExpr]): String = ts match {

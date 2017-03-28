@@ -19,4 +19,7 @@ trait KindsExamples extends Scalan with KindsDsl {
   lazy val t1 = fun { (in: Rep[Kind[Id,Int]]) => in }
 
   lazy val kindMap = fun { (in: Rep[Kind[Id,Int]]) => in.mapBy(fun {x => x + 1}) }
+  
+  // should compile:
+  // val e = null.asInstanceOf[BindElem[F,_,_] forSome {type F[A]}].typeArgs("B")._1.asElem
 }

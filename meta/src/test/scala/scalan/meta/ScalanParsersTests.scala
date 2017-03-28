@@ -15,7 +15,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
     SMethodArgs => MAs,
     SMethodArg => MA,
     STpeTuple => T,
-    SEntityModuleDef => EMD,
+    SModuleDef => EMD,
     SImportStat => IS
   }
   import scala.{ List => L }
@@ -78,7 +78,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
     }
   }
 
-  def testModule(prog: String, expected: SEntityModuleDef) {
+  def testModule(prog: String, expected: SModuleDef) {
     test(TopLevel, prog, expected) { case tree: PackageDef => entityModule(tree) }
   }
 
@@ -251,7 +251,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
   describe("annotations")  {
   }
 
-  def testPath(module: SEntityModuleDef, tpeString: String, name: String, expected: Option[STpePath]): Unit = {
+  def testPath(module: SModuleDef, tpeString: String, name: String, expected: Option[STpePath]): Unit = {
     val tpe = parseType(tpeString)
 
     it(s"find('${tpeString}', '${name}')") {
@@ -259,13 +259,13 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
     }
   }
 
-  def testStructPath(module: SEntityModuleDef, tpe: STpeExpr, name: String, expected: Option[STpePath]): Unit = {
+  def testStructPath(module: SModuleDef, tpe: STpeExpr, name: String, expected: Option[STpePath]): Unit = {
     it(s"find(${tpe}, '${name}')") {
       assertResult(STpePath.find(module, tpe, name))(expected)
     }
   }
 
-  def makeModule(moduleText: String): SEntityModuleDef = {
+  def makeModule(moduleText: String): SModuleDef = {
     val pkg = parseString(TopLevel, reactiveModule).asInstanceOf[PackageDef]
     val module = entityModule(pkg)
     module
@@ -296,17 +296,17 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
       Some(SEntityPath("Observable", "A", SEntityPath("Observable", "A", SNilPath))))
   }
 
-  def makePath(module: SEntityModuleDef, tpeString: String, name: String): STpePath = {
+  def makePath(module: SModuleDef, tpeString: String, name: String): STpePath = {
     val tpe = parseType(tpeString)
     STpePath.find(module, tpe, name).get
   }
-  def makePath(module: SEntityModuleDef, tpe: STpeExpr, name: String): STpePath = {
+  def makePath(module: SModuleDef, tpe: STpeExpr, name: String): STpePath = {
     STpePath.find(module, tpe, name).get
   }
 
   import ScalanCodegen._
 
-  def testEmit(module: SEntityModuleDef, inType: String, name: String, path: STpePath, expected: String): Unit = {
+  def testEmit(module: SModuleDef, inType: String, name: String, path: STpePath, expected: String): Unit = {
     val prefix = "x.elem"
     val code = emitImplicitElemDeclByTpePath(prefix, path)
     it(s"emit($inType, $name)") {
@@ -314,12 +314,12 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
     }
   }
 
-  def testEmit(module: SEntityModuleDef, inType: String, name: String, expected: String): Unit = {
+  def testEmit(module: SModuleDef, inType: String, name: String, expected: String): Unit = {
     val path = makePath(module, inType, name)
     testEmit(module, inType, name, path, expected)
   }
 
-  def testEmit(module: SEntityModuleDef, inType: STpeExpr, name: String, expected: String): Unit = {
+  def testEmit(module: SModuleDef, inType: STpeExpr, name: String, expected: String): Unit = {
     val path = makePath(module, inType, name)
     testEmit(module, inType.toString, name, path, expected)
   }

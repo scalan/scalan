@@ -166,7 +166,7 @@ trait ScalanParsers {
     val declaredStdImplementations = parseDeclaredImplementations(traits ++ classes, dslStdModuleOpt)
     val declaredExpImplementations = parseDeclaredImplementations(traits ++ classes, dslExpModuleOpt)
 
-    SEntityModuleDef(packageName, imports, moduleName,
+    SModuleDef(packageName, imports, moduleName,
       entityRepSynonym, entity, traits, classes, methods,
       moduleTrait.selfType, Nil,
       Some(declaredStdImplementations),

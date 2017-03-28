@@ -96,7 +96,7 @@ object ScalanAst {
       case _ => self
     }
 
-    def unRep(module: SEntityModuleDef , config: CodegenConfig): Option[STpeExpr] = self match {
+    def unRep(module: SModuleDef, config: CodegenConfig): Option[STpeExpr] = self match {
       case t if !config.isAlreadyRep => Some(t)
       case STraitCall("Elem", Seq(t)) => Some(self)
       case STraitCall("Rep", Seq(t)) => Some(t)
@@ -123,7 +123,7 @@ object ScalanAst {
       case _ => None
     }
 
-    def isRep(module: SEntityModuleDef, config: CodegenConfig) = unRep(module, config) match {
+    def isRep(module: SModuleDef, config: CodegenConfig) = unRep(module, config) match {
       case Some(_) => true
       case None => false
     }
@@ -173,7 +173,7 @@ object ScalanAst {
   case class SEntityPath(entityName: String, tyArgName: String, tail: STpePath) extends STpePath
 
   object STpePath {
-    def find(module: SEntityModuleDef, tpe: STpeExpr, argName: String): Option[STpePath] = tpe match {
+    def find(module: SModuleDef, tpe: STpeExpr, argName: String): Option[STpePath] = tpe match {
       case STpePrimitive(_,_) => None
       case STpeFunc(d, r) =>
         find(module, d, argName) match {
@@ -435,7 +435,7 @@ object ScalanAst {
     def tpe = components.mkString(" with ")
   }
 
-  type Module = SEntityModuleDef
+  type Module = SModuleDef
   abstract class STraitOrClassDef extends SBodyItem {
     def name: String
     def tpeArgs: List[STpeArg]
@@ -449,11 +449,11 @@ object ScalanAst {
     def implicitArgs: SClassArgs
     def isHighKind = tpeArgs.exists(_.isHighKind)
 
-    def isInheritedDeclared(propName: String, module: SEntityModuleDef) = {
+    def isInheritedDeclared(propName: String, module: SModuleDef) = {
       getInheritedDeclaredFields(module).contains(propName)
     }
 
-    def isInheritedDefined(propName: String, module: SEntityModuleDef) = {
+    def isInheritedDefined(propName: String, module: SModuleDef) = {
       getInheritedDefinedFields(module).contains(propName)
     }
 
@@ -465,27 +465,27 @@ object ScalanAst {
       case md: SMethodDef if md.allArgs.isEmpty => md
     }
 
-    def getAncestorTraits(module: SEntityModuleDef): List[STraitOrClassDef] = {
+    def getAncestorTraits(module: SModuleDef): List[STraitOrClassDef] = {
       ancestors.filter(tc => module.isEntity(tc.name)).map(tc => module.getEntity(tc.name))
     }
 
-    def getAvailableFields(module: SEntityModuleDef): Set[String] = {
+    def getAvailableFields(module: SModuleDef): Set[String] = {
       getFieldDefs.map(_.name).toSet ++ getAncestorTraits(module).flatMap(_.getAvailableFields(module))
     }
 
-    def getAvailableMethodDefs(module: SEntityModuleDef): Seq[SMethodDef] = {
+    def getAvailableMethodDefs(module: SModuleDef): Seq[SMethodDef] = {
       getFieldDefs ++ getAncestorTraits(module).flatMap(_.getAvailableMethodDefs(module))
     }
 
-    def getInheritedMethodDefs(module: SEntityModuleDef): Seq[SMethodDef] = {
+    def getInheritedMethodDefs(module: SModuleDef): Seq[SMethodDef] = {
       getAncestorTraits(module).flatMap(_.getAvailableMethodDefs(module))
     }
 
-    def getInheritedDeclaredFields(module: SEntityModuleDef): Set[String] = {
+    def getInheritedDeclaredFields(module: SModuleDef): Set[String] = {
       getInheritedMethodDefs(module).collect { case md if md.body.isEmpty => md.name }.toSet
     }
 
-    def getInheritedDefinedFields(module: SEntityModuleDef): Set[String] = {
+    def getInheritedDefinedFields(module: SModuleDef): Set[String] = {
       getInheritedMethodDefs(module).collect { case md if md.body.isDefined => md.name }.toSet
     }
 
@@ -493,7 +493,7 @@ object ScalanAst {
       case c: SClassDef if !c.hasAnnotation("InternalType")  => c
     }
 
-    def getDeclaredElems(module: SEntityModuleDef):  List[(String, STpeExpr)] = {
+    def getDeclaredElems(module: SModuleDef):  List[(String, STpeExpr)] = {
       val res = (this :: getAncestorTraits(module))
         .flatMap(e => {
           val elems = e.body.collect {
@@ -627,7 +627,7 @@ object ScalanAst {
   }
 
   type Entity = STraitOrClassDef
-  case class SEntityModuleDef(
+  case class SModuleDef(
                                packageName: String,
                                imports: List[SImportStat],
                                name: String,
@@ -694,7 +694,7 @@ object ScalanAst {
       )
     }
 
-    def printAst(ast: SEntityModuleDef): Unit = {
+    def printAst(ast: SModuleDef): Unit = {
       val entityNames = ast.entities.map(_.name).mkString(",")
       val concreteClassNames = ast.concreteSClasses.map(_.name).mkString(",")
 
@@ -708,7 +708,7 @@ object ScalanAst {
     }
   }
 
-  object SEntityModuleDef {
+  object SModuleDef {
 
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
 

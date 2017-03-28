@@ -11,7 +11,7 @@ import ScalanAst._
 
 class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx with LazyLogging {
 
-  case class EntityManager(name: String, file: File, entityDef: SEntityModuleDef, config: CodegenConfig)
+  case class EntityManager(name: String, file: File, entityDef: SModuleDef, config: CodegenConfig)
 
   protected val entities = config.entityFiles.flatMap { f =>
     val file = FileUtil.file(config.srcPath, f)
@@ -27,7 +27,7 @@ class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx with L
 
   def getCodegen: MetaCodegen = ScalanCodegen
 
-  def createFileGenerator(codegen: MetaCodegen, module: SEntityModuleDef, config: CodegenConfig) =
+  def createFileGenerator(codegen: MetaCodegen, module: SModuleDef, config: CodegenConfig) =
     new EntityFileGenerator(codegen, module, config)
 
   def generateAll() = {
