@@ -251,11 +251,11 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
   describe("annotations")  {
   }
 
-  def testPath(module: SModuleDef, tpeString: String, name: String, expected: Option[STpePath]): Unit = {
+  def testPath(module: SModuleDef, tpeString: String, name: String, expected: STpeExpr => Option[STpePath]): Unit = {
     val tpe = parseType(tpeString)
 
     it(s"find('${tpeString}', '${name}')") {
-      assertResult(STpePath.find(module, tpe, name))(expected)
+      assertResult(STpePath.find(module, tpe, name))(expected(tpe))
     }
   }
 
@@ -273,27 +273,40 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
 
   describe("find TpePath") {
     val module = makeModule(reactiveModule)
-    testPath(module, "Int", "A", None)
-    testPath(module, "A", "A", Some(SNilPath))
-    testPath(module, "A => Int", "A", Some(SDomPath(SNilPath)))
-    testPath(module, "Int => A", "A", Some(SRangePath(SNilPath)))
-    testPath(module, "B => A", "A", Some(SRangePath(SNilPath)))
+    testPath(module, "Int", "A", _ => None)
+    testPath(module, "A", "A", _ => Some(SNilPath))
+    testPath(module, "A => Int", "A", t => Some(SDomPath(t, SNilPath)))
+    testPath(module, "Int => A", "A", t => Some(SRangePath(t, SNilPath)))
+    testPath(module, "B => A", "A", t => Some(SRangePath(t, SNilPath)))
 
-    testPath(module, "(A, Int)", "A", Some(STuplePath(0, SNilPath)))
-    testPath(module, "(Int, A)", "A", Some(STuplePath(1, SNilPath)))
-    testPath(module, "(B, A)", "A", Some(STuplePath(1, SNilPath)))
+    testPath(module, "(A, Int)", "A", t => Some(STuplePath(t, 0, SNilPath)))
+    testPath(module, "(Int, A)", "A", t => Some(STuplePath(t, 1, SNilPath)))
+    testPath(module, "(B, A)", "A", t => Some(STuplePath(t, 1, SNilPath)))
 
-    testStructPath(module, STpeStruct(List(("a", parseType("A")))), "A", Some(SStructPath("a", SNilPath)))
-    testStructPath(module,
-      STpeStruct(List(("a", parseType("Int")), ("b", parseType("(A,Int)")))), "A",
-      Some(SStructPath("b", STuplePath(0, SNilPath))))
+    val t1 = STpeStruct(List(("a", parseType("A"))))
+    testStructPath(module, t1, "A", Some(SStructPath(t1, "a", SNilPath)))
+    val t2 = parseType("(A,Int)")
+    val t3 = STpeStruct(List(("a", parseType("Int")), ("b", t2)))
+    testStructPath(module, t3, "A",
+      Some(SStructPath(t3, "b", STuplePath(t2, 0, SNilPath))))
 
-    testPath(module, "Observable[Int]", "A", None)
-    testPath(module, "Observable[A]", "A", Some(SEntityPath("Observable", "A", SNilPath)))
-    testPath(module, "Observable[A => Int]", "A", Some(SEntityPath("Observable", "A", SDomPath(SNilPath))))
-    testPath(module, "Observable[Int => A]", "A", Some(SEntityPath("Observable", "A", SRangePath(SNilPath))))
-    testPath(module, "Observable[Observable[A]]", "A",
-      Some(SEntityPath("Observable", "A", SEntityPath("Observable", "A", SNilPath))))
+    val entity = module.getEntity("Observable")
+    testPath(module, "Observable[Int]", "A", _ => None)
+    testPath(module, "Observable[A]", "A", t => Some(SEntityPath(t, entity, "A", SNilPath)))
+
+    {
+      val t1 = parseType("A => Int")
+      testPath(module, "Observable[A => Int]", "A", t => Some(SEntityPath(t, entity, "A", SDomPath(t1, SNilPath))))
+    }
+    {
+      val t1 = parseType("Int => A")
+      testPath(module, "Observable[Int => A]", "A", t => Some(SEntityPath(t, entity, "A", SRangePath(t1, SNilPath))))
+    }
+    {
+      val t1 = parseType("Observable[A]")
+      testPath(module, "Observable[Observable[A]]", "A",
+        t => Some(SEntityPath(t, entity, "A", SEntityPath(t1, entity, "A", SNilPath))))
+    }
   }
 
   def makePath(module: SModuleDef, tpeString: String, name: String): STpePath = {
@@ -337,6 +350,6 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
     val tStruct = STpeStruct(List(("a", parseType("Int")), ("b", parseType("(A,Int)"))))
     testEmit(module, tStruct, "A", """.asInstanceOf[StructElem[_]]("b").asInstanceOf[PairElem[_,_]].eFst""")
 
-//    testEmit(module, "Observable[A]", "A", ".eA")
+    testEmit(module, "Observable[A]", "A", """.asInstanceOf[ObservableElem[_]].typeArgs("A")._1.asElem[A]""")
   }
 }

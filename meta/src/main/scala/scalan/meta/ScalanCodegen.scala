@@ -1,17 +1,41 @@
 package scalan.meta
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ArrayBuffer
 import scalan.meta.Base.!!!
 import scalan.meta.PrintExtensions._
 import scalan.meta.ScalanAst._
-import scalan.util.{ScalaNameUtil, Serialization, StringUtil}
+import scalan.util.{Serialization, StringUtil, ScalaNameUtil}
 
 class MetaCodegen extends ScalanAstExtensions {
 
+  class EntityTypeBuilder(entity: STraitOrClassDef) {
+    private var _args: ArrayBuffer[String] = ArrayBuffer.empty
+    private var _forSomeTypes: ArrayBuffer[String] = ArrayBuffer.empty
+
+    {
+      var iHKind = 1
+      for (a <- entity.tpeArgs) {
+        if (a.isHighKind) {
+          val tyName = "F" + iHKind
+          _args += tyName
+          _forSomeTypes += s"type $tyName[_]"
+          iHKind += 1
+        }
+        else {
+          _args += "_"
+        }
+      }
+    }
+    
+    def elemTypeName = {
+      s"${entity.name}Elem[${_args.rep()}]${_forSomeTypes.opt(ts => s"forSome {${ts.rep(_.toString, ";")}}") }"
+    }
+  }
   def emitImplicitElemDeclByTpePath(prefixExpr: String, tailPath: STpePath) = {
     def emit(prefix: String, tailPath: STpePath, typed: Boolean): String = tailPath match {
       case SNilPath => prefix
-      case STuplePath(i, t) => i match {
+      case STuplePath(_, i, t) => i match {
         case 0 =>
           if (typed)
             emit(s"$prefix.eFst", t, typed)
@@ -25,20 +49,23 @@ class MetaCodegen extends ScalanAstExtensions {
         case _ =>
           sys.error(s"Unsupported tuple type ($prefix, $tailPath)")
       }
-      case SDomPath(t) =>
+      case SDomPath(_, t) =>
         if (typed)
           emit(s"$prefix.eDom", t, typed)
         else
           emit(s"$prefix.asInstanceOf[FuncElem[_,_]].eDom", t, typed)
-      case SRangePath(t) =>
+      case SRangePath(_, t) =>
         if (typed)
           emit(s"$prefix.eRange", t, typed)
         else
           emit(s"$prefix.asInstanceOf[FuncElem[_,_]].eRange", t, typed)
-      case SStructPath(fn, t) =>
+      case SStructPath(_, fn, t) =>
         emit(s"""$prefix.asInstanceOf[StructElem[_]]("$fn")""", t, false)
-//      case SEntityPath(name, tyArgName, t) =>
-//        emit(s"""$prefix.asInstanceOf[${name}Elem[_]].("$fn")""", t, false)
+      case SEntityPath(STraitCall(name, args), e, tyArgName, t) =>
+        val b = new EntityTypeBuilder(e)
+        val argIndex = e.tpeArgs.zipWithIndex.find { case (a, i) => a.name == tyArgName }.get._2
+        val argTy = args(argIndex)
+        emit(s"""$prefix.asInstanceOf[${b.elemTypeName}].typeArgs("$tyArgName")._1.asElem[$argTy]""", t, true)
     }
     emit(prefixExpr, tailPath, true)
   }

@@ -166,20 +166,21 @@ object ScalanAst {
   sealed abstract class STpePath {
   }
   case object SNilPath extends STpePath
-  case class STuplePath(index: Int, tail: STpePath) extends STpePath
-  case class SDomPath(tail: STpePath) extends STpePath
-  case class SRangePath(tail: STpePath) extends STpePath
-  case class SStructPath(fieldName: String, tail: STpePath) extends STpePath
-  case class SEntityPath(entityName: String, tyArgName: String, tail: STpePath) extends STpePath
+  sealed abstract class SBasedPath extends STpePath { def base: STpeExpr }
+  case class STuplePath(base: STpeExpr, index: Int, tail: STpePath) extends SBasedPath
+  case class SDomPath(base: STpeExpr, tail: STpePath) extends SBasedPath
+  case class SRangePath(base: STpeExpr, tail: STpePath) extends SBasedPath
+  case class SStructPath(base: STpeExpr, fieldName: String, tail: STpePath) extends SBasedPath
+  case class SEntityPath(base: STpeExpr, entity: STraitOrClassDef, tyArgName: String, tail: STpePath) extends SBasedPath
 
   object STpePath {
     def find(module: SModuleDef, tpe: STpeExpr, argName: String): Option[STpePath] = tpe match {
       case STpePrimitive(_,_) => None
       case STpeFunc(d, r) =>
         find(module, d, argName) match {
-          case Some(tailPath) => Some(SDomPath(tailPath))
+          case Some(tailPath) => Some(SDomPath(tpe, tailPath))
           case None => find(module, r, argName) match {
-            case Some(tailPath) => Some(SRangePath(tailPath))
+            case Some(tailPath) => Some(SRangePath(tpe, tailPath))
             case None => None
           }
         }
@@ -188,7 +189,7 @@ object ScalanAst {
           for ((item, i) <- t.tpeSExprs.zipWithIndex) {
             find(module, item, argName) match {
               case Some(tailPath) =>
-                return Some(STuplePath(i, tailPath))
+                return Some(STuplePath(t, i, tailPath))
               case None =>
             }
           }
@@ -200,7 +201,7 @@ object ScalanAst {
           for ((fn, ft) <- s.fields) {
             find(module, ft, argName) match {
               case Some(tailPath) =>
-                return Some(SStructPath(fn, tailPath))
+                return Some(SStructPath(s, fn, tailPath))
               case None =>
             }
           }
@@ -208,20 +209,20 @@ object ScalanAst {
         }
         findInStruct(s)
       case STraitCall(`argName`,_) => Some(SNilPath)
-      case STraitCall(name, args) if module.isEntity(name) || module.isClass(name) =>
+      case tc @ STraitCall(module.FindEntity(e), args) =>
         def findInEntity(e: STraitOrClassDef): Option[STpePath] = {
           var i = 0
           for (a <- args) {
             find(module, a, argName) match {
               case Some(tailPath) =>
-                return Some(SEntityPath(name, e.tpeArgs(i).name, tailPath))
+                return Some(SEntityPath(tc, e, e.tpeArgs(i).name, tailPath))
               case None =>
             }
             i += 1
           }
           None
         }
-        findInEntity(module.getEntity(name))
+        findInEntity(e)
 
       case _ => None
     }
@@ -650,13 +651,17 @@ object ScalanAst {
       if (fullName == getFullName(shortName)) true
       else shortName == fullName
 
-    def getEntity(name: String): STraitOrClassDef = {
+    def findEntity(name: String): Option[STraitOrClassDef] = {
       def isEqualName(shortName: String, fullName: String): Boolean =
         fullName == shortName || fullName == s"$packageName.$name.$shortName"
       def findByName(classes: List[STraitOrClassDef]) =
         classes.find(e => isEqualName(e.name, name))
 
-      findByName(entities).orElse(findByName(concreteSClasses)).getOrElse {
+      findByName(entities).orElse(findByName(concreteSClasses))
+    }
+
+    def getEntity(name: String): STraitOrClassDef = {
+      findEntity(name).getOrElse {
         sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
       }
     }
@@ -706,6 +711,8 @@ object ScalanAst {
           | Concrete Classes: $concreteClassNames
       """)
     }
+
+    object FindEntity { def unapply(name: String): Option[STraitOrClassDef] = findEntity(name) }
   }
 
   object SModuleDef {
