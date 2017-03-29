@@ -188,10 +188,13 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     def selfType = MT1CompanionElem
     override def toString = "MT1"
     @scalan.OverloadId("fromData")
-    def apply[T](p: Rep[MT1Data[T]])(implicit elem: Elem[T]): Rep[MT1[T]] =
-      isoMT1(elem).to(p)
+    def apply[T](p: Rep[MT1Data[T]]): Rep[MT1[T]] = {
+      implicit val eT = p._1.elem
+      isoMT1[T].to(p)
+    }
+
     @scalan.OverloadId("fromFields")
-    def apply[T](data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
+    def apply[T](data: Rep[T], size: Rep[Int]): Rep[MT1[T]] =
       mkMT1(data, size)
 
     def unapply[T](p: Rep[MetaTest[T]]) = unmkMT1(p)
@@ -219,7 +222,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     reifyObject(new MT1Iso[T]()(elem))
 
   // 6) smart constructor and deconstructor
-  def mkMT1[T](data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]]
+  def mkMT1[T](data: Rep[T], size: Rep[Int]): Rep[MT1[T]]
   def unmkMT1[T](p: Rep[MetaTest[T]]): Option[(Rep[T], Rep[Int])]
 
   abstract class AbsMT2[T, R]
@@ -279,10 +282,14 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     def selfType = MT2CompanionElem
     override def toString = "MT2"
     @scalan.OverloadId("fromData")
-    def apply[T, R](p: Rep[MT2Data[T, R]])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
-      isoMT2(eT, eR).to(p)
+    def apply[T, R](p: Rep[MT2Data[T, R]]): Rep[MT2[T, R]] = {
+      implicit val eT = p._1.elem;
+implicit val eR = p._2.elem
+      isoMT2[T, R].to(p)
+    }
+
     @scalan.OverloadId("fromFields")
-    def apply[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
+    def apply[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int]): Rep[MT2[T, R]] =
       mkMT2(indices, values, size)
 
     def unapply[T, R](p: Rep[MetaTest[(T, R)]]) = unmkMT2(p)
@@ -310,7 +317,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     reifyObject(new MT2Iso[T, R]()(eT, eR))
 
   // 6) smart constructor and deconstructor
-  def mkMT2[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]]
+  def mkMT2[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int]): Rep[MT2[T, R]]
   def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]): Option[(Rep[T], Rep[R], Rep[Int])]
 
   registerModule(MetaTests_Module)
@@ -369,8 +376,9 @@ trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
   }
 
   def mkMT0
-    (size: Rep[Int]): Rep[MT0] =
+    (size: Rep[Int]): Rep[MT0] = {
     new ExpMT0(size)
+  }
   def unmkMT0(p: Rep[MetaTest[Unit]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: MT0Elem @unchecked =>
       Some((p.asRep[MT0].size))
@@ -409,8 +417,10 @@ trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
   }
 
   def mkMT1[T]
-    (data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
+    (data: Rep[T], size: Rep[Int]): Rep[MT1[T]] = {
+    implicit val eT = data.elem
     new ExpMT1[T](data, size)
+  }
   def unmkMT1[T](p: Rep[MetaTest[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: MT1Elem[T] @unchecked =>
       Some((p.asRep[MT1[T]].data, p.asRep[MT1[T]].size))
@@ -449,8 +459,11 @@ trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
   }
 
   def mkMT2[T, R]
-    (indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
+    (indices: Rep[T], values: Rep[R], size: Rep[Int]): Rep[MT2[T, R]] = {
+    implicit val eT = indices.elem;
+implicit val eR = values.elem
     new ExpMT2[T, R](indices, values, size)
+  }
   def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: MT2Elem[T, R] @unchecked =>
       Some((p.asRep[MT2[T, R]].indices, p.asRep[MT2[T, R]].values, p.asRep[MT2[T, R]].size))
@@ -501,7 +514,7 @@ trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
 }
 
 object MetaTests_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVXTWwbRRSetZM4jk2bJqIUpJIQXCUtYIcWVKQIQcgPpHISK+u0EKpW491JOmV/ht2xa3MonCoEEgeEOCBxKOLnEiEhLlUrcQEkhFAOSJw4c0AtVdUDFQcQb2Z/vHa8TqqqPox2Zt9+78173/dmvPkX6nUdNOpq2MBW3iQc51X5PO3ynLpo61WDzJL1P387++KwuzWRQINrqO8cdmddYw2lvYe5OgufVa4XURpbGnG57bgcPVaU2AXNNgyicWpbBWqaVY4rBikUqcuniqinYuuNN9FFpBTRoGZbmkM4UWcM7LrE9df7icUpp+E8LeeNZdb0YRVE/IVI/GUHUw7hg49Bz36FMLVh2VbD5GiPH9oyE2GBTYbUGexhwWSGdJMsohQ1me3wwGsKPJyz9WDaY2FYQEPF87iGC+B1o6Byh1obAoxh7Q28QZbARJj3wB5cYqyXG4z44BmX6y3+6gwhBPU4KgPLN3OWD3OWFznLqcSh2KBvYfGy5Nj1BvJ+ShKhOgOIJ3eACBDInKXn3jutvX5HzZgJ8XFdhJKSAfUB0EgMN2R5ILc/rXzo3n758vEEGlhDA9SdrrjcwRqP0sBPVwZbls1lzGEGsbMBFRyLq6D0Mg02bTRJa7bJsAVIfi6zUCiDapQLY7GW9csTk/sUZyQwVepMCfcbpwXJpRlsGKXrDz916MbcqwmUaHWRBkgVxOAEoBz1LwJKGZIQwj8eB89IyaEmULxGnv3+2uqt75Z6pYchnazjqsFPYqNKPHb5/pq+havExGGOelYtysVSut4cU112FeZ3/PpN/cdJdDoRVsXfxO6IABBDz31y9RApfZ1A/WtSN/MG3pCUEGmfJa62hvrtGnG89VQNG+KpIy1S/qb9YkWznIQsczQaK3lGRAmmpJSUYPsZTw1LtkVy86Xc3+rPH20Ksjso673xesB/9Pi/v+9Z51IHkE0X9CFD2stRElqHnwsxDnOkTMLqgtUx3wMerGqbZN/YbXrm8vtcZlapt7aL5cp5kOeU/O7RLkkOOtk3ly49eOvzs8NSbf0Vyk3McpN3obVAGvdRS0gmodlFHmrOxTACmc0ulidnol5H2s0htWDT9iqjRCqwd7u8/GWlHDprrYuEj9g+EnJEOoKK65jjmIq3A8cgdOaMGHLbApLfbI9KacckBjEDzJ65YNJtvzJ9TzfxhYAPxrceqN5rN/T8gZsHLyRQ3wnUuw7KdIuot2JXLT2gBRzNnNT5S8Ga0koLoAF2sBme2DUMRwzQkqP9gVqrnBqFk/66p1H4jaJmncPdQMD7/YDFV/kFy8PjuSeubF6gW4fnpUojtdiJHV3UxUi5ygzyzLV/zrz7zitMSnVbO++Y9HC60pFzu2Zeilo6BQnfE/n6auKQ6IaxsiPG/SBwgpR3S984gJVuANtzL/l/NMp/MZa68E0Mq12smj5Wo44i6EdQa1hJ6Nf30q9auBNaePNx32PbcodWuy/w2aHfRm8od52r9kA/aCKMg9byMVqbJZqBHaKLWy8x4VbunVHHPn7h1IkDp1al9LK6NPLehId95/8Qi5hNyRvvRJcbLxjl5kzGG+Lh2A/P//r2L199EfaPlL+7dFgejh7ww4ez0fSPULGrsZhdqf6JCCW/eOfTpSNb3/4hb28D4myFW4cV/oWI3tpaaZAN3cOfgggjhCYBPlL3z8Tw5f/cZ8sNvQ0AAA=="
+  val dump = "H4sIAAAAAAAAALVXTWwbRRQeb35sJ26VBKiCUGkIjkhpsUMLKlKEUEgcSOX8kHVSCFXReHeSTtmfYXfs2hwKFyoEBySEOCBxqArqJaqEuCAqcQEkhFAPXDlzQA1V1UMrDiDezP54/bNOqqo+jHZm337vzfe+92a8/Tfqcx005mrYwFbOJBznVPk84/KsumjrFYPMkc3lnQ8e/+vy0TsKGt5A/WexO+caGyjtPRRqLHxWuV5Ew/PU0gsWp7yeNSUER7mi5yMvfOQ7+chGvpouojS2NOJy23E5esL7OK/ZhkE0Tm0rT02zwnHZIPkidTnY95Ztvf4OuoCUIhrSbEtzCCfqrIFdl7j+eooIeBrO03JeX2YNH+0BlhxMOcQHPoY8+1XC1LplW3WTo/1+aMtMhAU2g6TGgIgFkxnSTW8RJanJbIcHXpPg4aytB9NeC8MCGimew1WcB69beZU71NoSYAxrb+MtsgQmwrwP9uASY7NUZ8QHH3S53uSvxhBCDLJ6TEaWa5CWC0nLCdKyKnEoNui7WLxccexaHXm/RA9CNQFxdBeIAIEULD370WntzbvqoKmIj2silpSMKAlAh2IUJvMD5P6y+ql7+5VLJxQ0sIEGqDtTdrmDNR7Vgc/XILYsm8uYQwqxswUpHI9LofQyAzYtOklrtsmwBUg+mRnIlEE1yoWxWNvn5yeG/CRnJDBVaiwR7jeuoqSYZrFhrNx49JmJncLrSigB30UaIFUoKScA5Si1CCglICGEfzIOnpEVh5qg8Sp5/sdra7d+WOqTHkZ0sokrBl/HRoV48vL9NXwLV8rkYY561yzKxdJArTGmuuwq5PepGzf1n6fQaQUl/Kz4m9ibEABi5IUvvp8gK1cVlNqQhTNv4C0pCUH7HHG1DZSyq8Tx1pNVbIinjrJI+pv2kxVluQdY5mgstuYZESmYlrWUCLY/6FXDkm2R7PxK9o7662fbQuwOynhvvCbwHz3x7x/7N7msA2DThfqQIQ1x1AO9w+dCjA9zlJiC1QWrI98DHqxqm2R4/DY9c+ljLplN1Jr7xXL5HJTntPzuUBeSg1b2zcWLj9z66q2HZLWlypSbmGWn7qHWgtJ4gLWEJAmNLjLamIthDJjNLJamZqNex1rNgVqwaXmVSUQyMNReXv5yohQ6a86LhI/YPhZqRDqCjOuY45iMtwLHIHTWjBgm2gKS37RHlWjFJAYxA8zeQjDptl9J37MNfFHAB+NbD2TvjR09N3rz4HkF9Z9EfZtQmW4R9ZXtiqUHsoCzmZMafzlYa+l/IAPsYDM8sqsYjhiQJUcHgmqtcGrk1/11r0bhN4YaeQ53AwEf8AMWX+UWLA+PZ498t32eXj88L6s0kovd1NGluhgpVZhBnrv2z5kP33+VyVJta+cdSQ+nqx01t2flJeEKRaGE70t8/VVxSHTDWN0V40EIWCGlvco3DmC1G0A791L/x6L6F+NrXfQmhvUuVg0f61FHEfQjqDmsHujX99OvmrQTWnjzSd9jy3KHVjsc+OzQb6M3lHvmqjXQTxoIk1BruZhamyOagR2ii2svMeFa7p1Rxz9/6dTJ0VNrsvQyujTy3oSHfec/EYuYTcsb72SXGy8YZQsm43XxcPynF39/77crX4f9I+XvLh2mh6N9fvhwNpr+ESp2NR6zK9U/ESHlF+5+ufT09W//lLe3AXG2wq3DCv9DRG9tzTLIhO7hX0FEEaImAT6S98tiuPI/3uhvuQMOAAA="
 }
 }
 

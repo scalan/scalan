@@ -32,6 +32,7 @@ class MetaCodegen extends ScalanAstExtensions {
       s"${entity.name}Elem[${_args.rep()}]${_forSomeTypes.opt(ts => s"forSome {${ts.rep(_.toString, ";")}}") }"
     }
   }
+
   def emitImplicitElemDeclByTpePath(prefixExpr: String, tailPath: STpePath) = {
     def emit(prefix: String, tailPath: STpePath, typed: Boolean): String = tailPath match {
       case SNilPath => prefix
@@ -62,12 +63,39 @@ class MetaCodegen extends ScalanAstExtensions {
       case SStructPath(_, fn, t) =>
         emit(s"""$prefix.asInstanceOf[StructElem[_]]("$fn")""", t, false)
       case SEntityPath(STraitCall(name, args), e, tyArgName, t) =>
-        val b = new EntityTypeBuilder(e)
         val argIndex = e.tpeArgs.zipWithIndex.find { case (a, i) => a.name == tyArgName }.get._2
         val argTy = args(argIndex)
-        emit(s"""$prefix.asInstanceOf[${b.elemTypeName}].typeArgs("$tyArgName")._1.asElem[$argTy]""", t, true)
+        val kind = if (e.tpeArgs(argIndex).isHighKind) "Cont" else "Elem"
+        emit(s"""$prefix.typeArgs("$tyArgName")._1.as$kind[$argTy]""", t, true)
     }
     emit(prefixExpr, tailPath, true)
+  }
+
+  /** Build element extraction expression for each type argument.
+    * @param m the module we are working in
+    * @param dataArgs data arguments which we can use to extract elements from
+    * @param tpeArgs the type arguments for which elements should be extracted
+    * @return a list with either Some(element extraction expression) or None for some type arguments
+    */
+  def extractImplicitElems(m: SModuleDef, dataArgs: List[SClassArg], tpeArgs: List[STpeArg], argSubst: Map[String, String] = Map()): List[Option[String]] = {
+    def subst(arg: String) = argSubst.getOrElse(arg, arg)
+    tpeArgs.map { ta =>
+      val paths = for {
+            da <- dataArgs
+            argTpe <- PartialFunction.condOpt(da.tpe) { case STraitCall("Rep", List(argTpe)) => argTpe }
+            path <- STpePath.find(m, argTpe, ta.name)
+          } yield (da, path)
+
+      if (paths.nonEmpty) {
+        val (da, path) = paths.head
+        val expr = emitImplicitElemDeclByTpePath(s"${subst(da.name)}.elem", path)
+        Some(expr)
+      }
+      else {
+        // the element cannot be extracted from data
+        None
+      }
+    }
   }
 
   abstract class TemplateData(val module: SModuleDef, val entity: STraitOrClassDef) {
@@ -79,8 +107,8 @@ class MetaCodegen extends ScalanAstExtensions {
     val typeDecl = name + tpeArgsDecl
     val typeUse = name + tpeArgsUse
     val implicitArgs = entity.implicitArgs.args
-    def implicitArgsDecl(prefix: String = "") =
-      implicitArgs.opt(args => s"(implicit ${args.rep(a => s"$prefix${a.name}: ${a.tpe}")})")
+    def implicitArgsDecl(prefix: String = "", p: SClassArg => Boolean = _ => true) =
+      implicitArgs.filter(p).opt(args => s"(implicit ${args.rep(a => s"$prefix${a.name}: ${a.tpe}")})")
     def implicitArgsDeclConcreteElem = {
       implicitArgs.opt(args => s"(implicit ${args.rep(a => {
                                  val declared = entity.isInheritedDeclared(a.name, module)
@@ -140,6 +168,28 @@ class MetaCodegen extends ScalanAstExtensions {
 
   case class ConcreteClassTemplateData(m: SModuleDef, c: SClassDef) extends TemplateData(m, c) {
     val elemTypeUse = name + "Elem" + tpeArgsUse
+
+    // methods to extract elements from data arguments
+    class ExtractionBuilder(argSubst: Map[String, String]) {
+      val extractionExprs = extractImplicitElems(m, c.args.args, c.tpeArgs, argSubst)
+      val extractableArgs: Map[String,(STpeArg, String)] = c.tpeArgs.zip(extractionExprs)
+        .collect { case (arg, Some(expr)) => (arg.name, (arg, expr)) }.toMap
+      def isExtractable(a: SClassArg): Boolean = a.tpe match {
+        case STraitCall("Elem", List(STraitCall(tyArgName, Nil))) =>
+          extractableArgs.contains(tyArgName)
+        case STraitCall("Cont", List(STraitCall(tyArgName, Nil))) =>
+          extractableArgs.contains(tyArgName)
+        case _ => false
+      }
+      val extractableImplicits = {
+        extractableArgs.map { case (tyArgName, (arg, expr)) =>
+          val kind = if (arg.isHighKind) "c" else "e"
+          s"implicit val $kind$tyArgName = $expr"
+        }.mkString(";\n")
+      }
+    }
+
+    def extractionBuilder(argSubst: Map[String, String] = Map()) = new ExtractionBuilder(argSubst)
   }
 }
 
@@ -706,12 +756,18 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
          |  class ${c.companionAbsName} extends CompanionDef[${c.companionAbsName}]${hasCompanion.opt(s" with ${c.companionName}")} {
          |    def selfType = ${className}CompanionElem
          |    override def toString = "$className"
-         |${(fields.length != 1).opt(s"""
-                                        |    @scalan.OverloadId("fromData")
-                                        |    def apply${tpeArgsDecl}(p: Rep[$dataTpe])${implicitArgsDecl}: Rep[${c.typeUse}] =
-                                        |      iso$className${implicitArgsUse}.to(p)""".stripAndTrim)}
+         |${(fields.length != 1).opt({
+           val s = c.entity.args.args.zipWithIndex.map { case (a, i) => a.name -> s"p._${i + 1}" }.toMap
+           val sb = c.extractionBuilder(s)
+           s"""
+            |    @scalan.OverloadId("fromData")
+            |    def apply${tpeArgsDecl}(p: Rep[$dataTpe])${c.implicitArgsDecl("", !sb.isExtractable(_))}: Rep[${c.typeUse}] = {
+            |      ${sb.extractableImplicits}
+            |      iso$className${c.tpeArgNames.opt(ns => s"[${ns.rep()}]")}.to(p)
+            |    }
+            """.stripAndTrim })}
          |    @scalan.OverloadId("fromFields")
-         |    def apply${tpeArgsDecl}(${fieldsWithType.rep()})${implicitArgsDecl}: Rep[${c.typeUse}] =
+         |    def apply${tpeArgsDecl}(${fieldsWithType.rep()})${val b = c.extractionBuilder(); c.implicitArgsDecl("", !b.isExtractable(_))}: Rep[${c.typeUse}] =
          |      mk$className(${fields.rep()})
          |    ${extraBody(clazz)}
          |    def unapply${tpeArgsDecl}(p: Rep[$parent]) = unmk$className(p)
@@ -739,7 +795,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
          |    reifyObject(new ${className}Iso${tpeArgsUse}()$implicitArgsUse)
          |
          |  // 6) smart constructor and deconstructor
-         |  def mk${c.typeDecl}(${fieldsWithType.rep()})${implicitArgsDecl}: Rep[${c.typeUse}]
+         |  def mk${c.typeDecl}(${fieldsWithType.rep()})${val b = c.extractionBuilder(); c.implicitArgsDecl("", !b.isExtractable(_))}: Rep[${c.typeUse}]
          |  def unmk${c.typeDecl}(p: Rep[$parent]): Option[(${fieldTypes.opt(fieldTypes => fieldTypes.rep(t => s"Rep[$t]"), "Rep[Unit]")})]
          |""".stripAndTrim
     }
@@ -778,6 +834,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     val fields = clazz.args.argNames
     val fieldsWithType = clazz.args.argNamesAndTypes(config)
     val parent     = clazz.ancestors.head
+    val b = c.extractionBuilder()
 
     s"""
        |  case class Exp${c.typeDecl}
@@ -788,8 +845,10 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
        |${methodExtractorsString(clazz)}
        |
        |  def mk${c.typeDecl}
-       |    (${fieldsWithType.rep()})${implicitArgsDecl()}: Rep[${c.typeUse}] =
+       |    (${fieldsWithType.rep()})${implicitArgsDecl("", !b.isExtractable(_))}: Rep[${c.typeUse}] = {
+       |    ${b.extractableImplicits}
        |    new Exp${c.typeUse}(${fields.rep()})
+       |  }
        |  def unmk${c.typeDecl}(p: Rep[$parent]) = p.elem.asInstanceOf[Elem[_]] match {
        |    case _: ${c.elemTypeUse} @unchecked =>
        |      Some((${fields.rep(f => s"p.asRep[${c.typeUse}].$f")}))

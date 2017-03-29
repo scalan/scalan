@@ -208,7 +208,7 @@ object ScalanAst {
           None
         }
         findInStruct(s)
-      case STraitCall(`argName`,_) => Some(SNilPath)
+      case STraitCall(`argName`,Nil) => Some(SNilPath)
       case tc @ STraitCall(module.FindEntity(e), args) =>
         def findInEntity(e: STraitOrClassDef): Option[STpePath] = {
           var i = 0

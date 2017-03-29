@@ -9,9 +9,9 @@ trait Kinds extends Base { self: KindsDsl =>
     implicit def eA: Elem[A]
     implicit def cF: Cont[F]
 
-    def flatMap[B:Elem](f: Rep[A] => Rep[Kind[F,B]]): Rep[Kind[F,B]] = Bind(self, fun(f))
+    def flatMap[B](f: Rep[A] => Rep[Kind[F,B]]): Rep[Kind[F,B]] = Bind(self, fun(f))
 
-    def mapBy[B:Elem](f: Rep[A => B]): Rep[Kind[F,B]] =
+    def mapBy[B](f: Rep[A => B]): Rep[Kind[F,B]] =
       flatMap(a => Return(f(a)))
   }
   trait KindCompanion
@@ -20,7 +20,7 @@ trait Kinds extends Base { self: KindsDsl =>
         (val a: Rep[A])
         (implicit val eA: Elem[A], val cF: Cont[F]) extends Kind[F,A]
   {
-    override def flatMap[B:Elem](f: Rep[A] => Rep[Kind[F,B]]): Rep[Kind[F,B]] = f(a)
+    override def flatMap[B](f: Rep[A] => Rep[Kind[F,B]]): Rep[Kind[F,B]] = f(a)
   }
   trait ReturnCompanion
 
@@ -28,7 +28,7 @@ trait Kinds extends Base { self: KindsDsl =>
         (val a: Rep[Kind[F, S]], val f: Rep[S => Kind[F,B]])
         (implicit val eS: Elem[S], val eA: Elem[B], val cF: Cont[F]) extends Kind[F,B] {
 
-    override def flatMap[R:Elem](f1: Rep[B] => Rep[Kind[F,R]]): Rep[Kind[F,R]] = {
+    override def flatMap[R](f1: Rep[B] => Rep[Kind[F,R]]): Rep[Kind[F,R]] = {
       a.flatMap((s: Rep[S]) => f(s).flatMap(f1))
     }
   }

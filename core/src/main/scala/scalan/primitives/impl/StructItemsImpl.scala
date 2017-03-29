@@ -117,10 +117,13 @@ trait StructItemsAbs extends StructItems {
     def selfType = StructItemBaseCompanionElem
     override def toString = "StructItemBase"
     @scalan.OverloadId("fromData")
-    def apply[Val, Schema <: Struct](p: Rep[StructItemBaseData[Val, Schema]])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
-      isoStructItemBase(eVal, eSchema).to(p)
+    def apply[Val, Schema <: Struct](p: Rep[StructItemBaseData[Val, Schema]])(implicit eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] = {
+      implicit val eVal = p._2.elem
+      isoStructItemBase[Val, Schema].to(p)
+    }
+
     @scalan.OverloadId("fromFields")
-    def apply[Val, Schema <: Struct](key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
+    def apply[Val, Schema <: Struct](key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
       mkStructItemBase(key, value)
 
     def unapply[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]) = unmkStructItemBase(p)
@@ -148,7 +151,7 @@ trait StructItemsAbs extends StructItems {
     reifyObject(new StructItemBaseIso[Val, Schema]()(eVal, eSchema))
 
   // 6) smart constructor and deconstructor
-  def mkStructItemBase[Val, Schema <: Struct](key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]]
+  def mkStructItemBase[Val, Schema <: Struct](key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]]
   def unmkStructItemBase[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]): Option[(Rep[StructKey[Schema]], Rep[Val])]
 
   registerModule(StructItems_Module)
@@ -169,8 +172,10 @@ trait StructItemsExp extends StructItemsDsl {
   }
 
   def mkStructItemBase[Val, Schema <: Struct]
-    (key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] =
+    (key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] = {
+    implicit val eVal = value.elem
     new ExpStructItemBase[Val, Schema](key, value)
+  }
   def unmkStructItemBase[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: StructItemBaseElem[Val, Schema] @unchecked =>
       Some((p.asRep[StructItemBase[Val, Schema]].key, p.asRep[StructItemBase[Val, Schema]].value))
@@ -206,7 +211,7 @@ trait StructItemsExp extends StructItemsDsl {
 }
 
 object StructItems_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRQeO/6J7aikrWhLUWlIXVGg2BU9FCmqID9O5eImoVtaMBXVeHfsbDP7052xu+ZQxKUHEBeEOCBxqATiEiGhXqqeOICEEMoBiRNnDqg/Qj2QE4g3s792sm6pxB5Gs2/fvp/vfe/NrN9DWeagKaZiis2KQTiuKHI/y3hZOWNpXUoWSPuPXy+9tpttHEmjySbKrWK2wGgTFbxNzbXDvcK1BipgUyWMWw7j6NmGtF1VLUqJynXLrOqG0eW4RUm1oTM+00CZlqX1r6BrKNVAk6plqg7hRJmnmDHCfPk4MbnO9fC9IN/7y3bkw6yK+Kux+M85WOcQPviY9PTPElvpm5bZNzja4Ye2bIuwQKdEXBtyqBs2lW7GGiivG7bl8MBrHjysWlrwmjExCNCuxmXcw1Xw2qkq3NHNjjBmY3UNd8gSqAj1DOTACG2f69vEN15iXBvw59oIIajHyzKwSoRZJcSsIjArK8TRMdXfw+LjimO5feQ9qTGEXBtMHH2IicACqZla+cOL6jubSslIi59dEUpeBpQDQwcTuCHLA9j+ePYT9uDUjRNpVGyios5mW4w7WOVxGvhwlbBpWlzGHCKInQ5UcDqpgtLLLOgM0aSgWoaNTbDkYzkBhaK6qnOhLGQTfnkSsM9zmwSqKddOhfkm9YLk0jymdOXOUy8dvlt7K43Sgy4KYFKBZnACoxwVgQ5dldc5MXwHYn2Co7HzmEY4gyCnqKvEwFImloIbrfkRYYUAPXfnvvbDMXQxHcLqR/FolQQTu175/PZhsvJNGo03JfEXKe7ImgrcFghTm2jc6hHHk+d7mIrdtnXNa6SNu5T7aMdhGgOYOJpK7FmbCAxnZC+kgvRLHp2XLJOUF1fKfyk/fbou2OqgCe+L18T/6Cf+/m1Hm0siA8prpB8iDq0/WIOCV5zXfZ3cw0ohv+8PoxLLQY6yAEOXJHsJK72lqtKAVNsb+2V/ashBhoCFwFqmRhOpFI9y2EieeEmNsJOUNgzKiMVzmJEobsGqA0n9Ivvr7btaZd/9A1fTKHcaZdtAF9ZA2ZbVNbWgcWHgc+LyuUCWGqQLNCp2sBGeAz0MgwsGC0d7Agp1uU6r5325Rxx4ppAMVOYTbzgH7fFDFv9V6qZnkZdfvLV+Vd94flGSR/qbCyzBT0WPZ4plkJ3TD/R3b3zEZaul3MEDYLl1GQbujATvmQhbiWCIbX4r3Ke2UG1UzwYn27fXrz/555eXdsvpO97SuYHt8rH/MHuDUfk/zlY0xFcIe1CydUo66NAIWnmZEO3QzQ/unWwd/VhO4qxMMJoxcvu0mAI7uyZAra4RLeDIY03hQuxg3BtVUpJscNTHGySiUeoRCTlvBYTkWPvO2rzV3I6Q4q3+uPQS6xtRlHUIoZKA9wJRKXaIJi4pxIBLlEeh45+9euH0vgtvyhaY0KSS9yUc7dtf+c5ge0ZeUI6MuKCAUrlm2LwvNse/P/nL+z9//ZVEIZ5iKUYbqLKfgO3oBlwUe4SFuU0n5Kb4tAVCXtv8YumFjZu/SyoVRQPASWOG976I7a69LXfF3XeYScJPjEkwdEWfxConiXLlX/i8kZOECwAA"
+  val dump = "H4sIAAAAAAAAALVWS2wbRRgeO3b8ClVSRBVUSkO6Fa9gV/RQpKhCaeJAgptE2dKCqUDj3bEzzb7YHbtrDkUc6AHEBSEOSBwqQFwiJNRL1RMHkBBCPXDl3EPVtEI9NCcQ/8w+/Vi3VGIPo9mZf/7H93//P7NzB2UdG804CtawUdYJw2VZzBccJsmnTbWtkSXSXN/9+Olb38zdT6OpOhrfws6So9VRwZtUXSucy0ytoallaqhVg1HWlXShgqFyzbNR4TYqw2xIsVPzNVTAhkIcZtoOQ894hyuKqWlEYdQ0KlTX2ww3NFKpUYeBfKZhqt330SWUrqFJxTQUmzAiL2rYcYjjr+cJV0/D/4L4765bkY1BB8/YmDLwD2xMevKbxJK7hml0dYb2+a6tW9wtkCkR1wIgVnRLE2YyNZSjumXaLLCaAwtbphr8ZgwMC2h/7QLu4ApYbVVkZlOjxZVZWNnGLbIGIlw8CzE4RGue6VrEV15ymNpjz7UQQhZk9WXhWTkCrRyCVuagSTKxKdboB5hvbtim20XelxpDyOUq5h6gItBAqoYqfXJeeWdPLulpftjlvuSFRzlQdDiBYSI/AO6vm5879167ciKNinVUpM5Cw2E2VlicBz5eJWwYJhM+hxBiuwUpnE1KobCyADJ9PCkopm5hAzT5YE5ApjSqUMaF+dpjfn4SwM8xiwSiaddKhfEmVZQg0yLWtI3bT750dLf6VjqkgG+iACplKCk7UMpQEfjQVtgKI7pvgI+TDI2dxVqEMyyMy8oW0bFY40PRjcb8CLdCgJ69fVf95Rg6n0YpH1bfi4fLJKjY/8pX14+SjR/SKF8XzF/WcEvklOO2RByljvJmh9jeeq6DNT4bmtecSpq4rTEf7ThMYwATQzOJRWsRjuG8KIZUEH7Jo/OaaRBpeUO6L//2xQ5nq40mvB2viv+hJ/7+c1+TCSIDytukGyIOtd+bg4KXnDd8mdyDUiH2D4Ze8WGGoSzA0CbJVsJMD2RVKBBi07EjB1N9BjIENATaMlUtkUpxL/uV5IgX1Ag9SWFDp4xYfAo7JPKbs+pQUr2I+np7Vy1P3z10MY3GV1G2CXRxaijbMNuGGhQudHxGXHYqWOurKihUbGM9vAg6GBoXNBaGDgQUajOqVc766x5x4JtBwlERT7zgbHTAd5mfK68YnkYmvXht5yK98fyyII+wtxhogkNFj2eyqZOp2Xv03SufMlFqKbf3BlhvXICGOy/AOxxhKxAMsc0Pwv36ANVG1Wxwtf14+fITf3373uOi++YblOnYko79h94btMr/sbeiPr6C270rg13SRkdG0MqLhKhHrn5052Rj7jPRibMiwKjHiOlTvAtMtQ2AWtkmasCRR+rCxdjFOB1lUpCst9XHCySiUeohCbloBoRkWP3J3LtWH0ZI/rf6qPTi42bk5Sq4UE7Ae4koGraJyl8pRIdXlEeh41++em51+tybogQmVCHk7YStffib7zS25sUD5bkRDxQQkqq6xbp8cvznk398+Pv33wkU4iGWYrSBLPsBWDbV4aXYIU4Y22xCbLJPWyDkpb2v1164cfWmoFKRFwDcNEb48IvY7lpDuctf0P1M4nZiTIKmy+skljmxa/8LZunexMoLAAA="
 }
 }
 

@@ -29,7 +29,7 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
     val value = s.getUntyped(i)
     val eS = s.elem
     val key = IndexStructKey[S](i)(eS)
-    StructItemBase(key, value)(eS.fields(i)._2.asElem[Any], eS)
+    StructItemBase(key, value)(eS)
   }
 
   def struct_setItem[S <: Struct](s: Rep[S], i: Rep[Int], v: Rep[_]): Rep[S] = {

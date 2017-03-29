@@ -104,8 +104,10 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     def selfType = IntervalCompanionElem
     override def toString = "Interval"
     @scalan.OverloadId("fromData")
-    def apply(p: Rep[IntervalData]): Rep[Interval] =
+    def apply(p: Rep[IntervalData]): Rep[Interval] = {
       isoInterval.to(p)
+    }
+
     @scalan.OverloadId("fromFields")
     def apply(start: Rep[Int], end: Rep[Int]): Rep[Interval] =
       mkInterval(start, end)
@@ -187,8 +189,10 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     def selfType = SliceCompanionElem
     override def toString = "Slice"
     @scalan.OverloadId("fromData")
-    def apply(p: Rep[SliceData]): Rep[Slice] =
+    def apply(p: Rep[SliceData]): Rep[Slice] = {
       isoSlice.to(p)
+    }
+
     @scalan.OverloadId("fromFields")
     def apply(start: Rep[Int], length: Rep[Int]): Rep[Slice] =
       mkSlice(start, length)
@@ -271,8 +275,10 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     def selfType = CenteredCompanionElem
     override def toString = "Centered"
     @scalan.OverloadId("fromData")
-    def apply(p: Rep[CenteredData]): Rep[Centered] =
+    def apply(p: Rep[CenteredData]): Rep[Centered] = {
       isoCentered.to(p)
+    }
+
     @scalan.OverloadId("fromFields")
     def apply(center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
       mkCentered(center, radius)
@@ -361,8 +367,9 @@ trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
   }
 
   def mkInterval
-    (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
+    (start: Rep[Int], end: Rep[Int]): Rep[Interval] = {
     new ExpInterval(start, end)
+  }
   def unmkInterval(p: Rep[Segment]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: IntervalElem @unchecked =>
       Some((p.asRep[Interval].start, p.asRep[Interval].end))
@@ -416,8 +423,9 @@ trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
   }
 
   def mkSlice
-    (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
+    (start: Rep[Int], length: Rep[Int]): Rep[Slice] = {
     new ExpSlice(start, length)
+  }
   def unmkSlice(p: Rep[Segment]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SliceElem @unchecked =>
       Some((p.asRep[Slice].start, p.asRep[Slice].length))
@@ -495,8 +503,9 @@ trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
   }
 
   def mkCentered
-    (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
+    (center: Rep[Int], radius: Rep[Int]): Rep[Centered] = {
     new ExpCentered(center, radius)
+  }
   def unmkCentered(p: Rep[Segment]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: CenteredElem @unchecked =>
       Some((p.asRep[Centered].center, p.asRep[Centered].radius))
@@ -571,7 +580,7 @@ trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
 }
 
 object Segments_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRQe24l/4pAmqSrRXAjBFRE/dkSFihQhiJIUFbmJ1e0PMlWr8e7EmTK7O+yMozWHcusBbghxQOJQCcSlQkLcQOICSAihHpA4ceaACqjqgZ5AvJmdXa/dbGOQ4sNod+bt+977vvee59YfaFIEaFHYmGGv7hKJ65Z+XhOyZp31nR4jG2Tnt5+vvnxU3F7Oo9k2Ku5isSFYG1Wih82QJ8+WdJqogj2bCOkHQqLHm9p3w/YZI7akvtegrtuTuMNIo0mFXG2iiY7v9N9E11GuiWZt37MDIom1zrAQRJj9MvEklTR5r+j3/jYfYHgNFX8jFf/5AFMJ4QPGbGR/jnCr7/le35VoxoS2zVVYYFMlIYcczricaZhCE5Woy/1AxqglQNj1nfh1wsOwgeab1/AebgBqt2HJgHpd5Yxj+w3cJVtgoswnIAdB2M75PifGeVVIZwgv5Agh0OM5HVh9wFk94ayuOKtZJKCY0bewOmwFfthH0S9XQCjk4OKZA1zEHsim59TeuWy/ft+qunn1cahCKemAiuDosYza0PIAt9+fe0/ce+XmqTyaaqMpKtY6QgbYlukyMHRVsef5UsecMIiDLii4lKWgRlkDm5Eyqdi+y7EHngyX0yAUozaVyljtTRt5MrgvSU5i01zIc0m+Wb2ga2kdM9a6c/zZE79vvpZH+WGICri0oBmC2KlEJYt0Xag8TalaKobdbJwk4yfv/Ol8t4Iu5xOejNvxpAEX8y98+OUJ0vosj8ptXcmnGe5qkRQRG0TYbVT290gQ7Zf2MFNP+wpVcsgO7jFp6EvnXYC8JVrMbEJOFCmrurhzcfrVqD63fI/UTrdqf1k/vH9LlV+ApqOTqCv/oaf+/mVmR+rKlDCsJDbdeESiAnRzQsYTWbpx0gqoC7Njjzz/zVcX7n69NamlmzcZXcSsR6K2NQkNklOYuRVAOhNpWAk13rEkE7UswDnxnAejUsviQPWB9lNRipbvkrmle/TKzXelVjkXDg+T7c41aN5V/d3xhwgez7nPb9w4dvfjq0d1L5Y7VLqY11b+QyfGjXOInYYS3qIZMz9412QC43PANgmgGtfT0Auj30hUjg1HzqtxOxtJMttQO0vZPiBsVsGlpN3/wyIjXlfujl0Ual3W69NjMDRjgQLkIHomtdWhcVO0iaL//5ATYIf2xCGRM7eu4yLOgeUTGw7OU1EXDeAwXQVos7EIHKJxJOjxc5k1zvdJZeTvZWEE/4reNHABqmeMjg1iMwwUqEsIUb6ioXDyg5cuvfropQt6LE072ig6SSb9/le6s5iv6gvI8kMuIGBU23S57KuHk9+++NPbP376iR7xAwZAHpMdQD5ioodZ5JqRpZJaykjKMhMItLp+/6Otp25/8ase+VNqlsE/jpdc6NKjfljWaowON7QUtRJNqPmWklGf8n8B8fhJ9koLAAA="
+  val dump = "H4sIAAAAAAAAALVWTYgcRRSumf2Zv82ys0FRFzRZO0RlM7MYJMIisuzOSmSyO6QTI2Mw1HTXzlas7q501ywzHuLJHPQm4kHwEFS8BEG8KXhRQYJ48OrZgySGkENyUnxVXd3TMzudnQg7h6K769X73vu+997Ujb/RVOCjI4GFGXYrDhG4Yqrn1UAY5hnP7jCyTra3br//9F+fL93PonITTe/gYD1gTVQIH2pdHj+bwq6j8gZ17ZorqOgZjnIhUKUeYlQlRnUUhpE4tVJHBexaJBCeHwh0NDxctTzGiCWo51ap43QEbjFSrdNAgP1ky7N7V9BVlK2jOctzLZ8IYq4xHAQk0N/zRLqn8XtBvfe2eB9jb4DnfEwFxAcYc6H9WcLNnuu5PUegWR3aFpdhgU2JdDkQcdrhTMFM1lGOOtzzRYSaA4Qdz45eJ10MH9B8/TLexVVAbVdN4VO3LZ1xbL2D22QTTKT5FOQQELZ9rseJdl4KhD2A1+UIIQ6qvqgiq/RJq8SkVSRphkl8ihl9F8vNhu91eyj8ZSYQ6koXS/u4iDyQmmsbH1y03npglpysPNyVseRVRDlw9ExKhSl9gNxfzn4U3Hvt+qksKjZRkQarrUD42BLJOtB8lbDrekLFHFOI/TZIuJgmoUJZBZuhOilYnsOxC540mTOgFKMWFdJYfjuk9UkhPyc4iUyzXZ6J803rKFVMa5ixxq0nTxy7XXszG5eAhiiASxNayo+cCpQzSduB0lOUyqWo2U3HiTM+fuuO/fMyuphFGc2TdjueNOBi/uVPvztGGl9nUb6pSnmD4bYSSRKxTgKrifLeLvHD77ldzOTTSKFyNtnGHSY0fcm8JyBvgY6kdiEnkpQVVd2ZKP1SWJ+bnkuMjYZx37z58Q1Zfj6aCXfCtvyXnvrnj9ltoSpTwMgTWLfjnEAT0M4xGc+m6cZJw6cODI9d8tKP35+/+8PmlJJuXmf0BmYdEvatTqifnMTMLAPS6VDDYlfhPR5nIpcF2CeuvTcquRztq97XvhimaHoOKS/eo29f/1AolTPdwWmy1boMzbuizj31EMGjQffNtWuP3f3i0mHVi/kWFQ7mxvIjdGLUOAfYaSjmLZwxh/vvikxgvAxsEx+qcS0JvTB8RqB8ZDi0PxO1s5YktQ2Vs4TtHmHTCi4h7eiD04y4bbEzdlHI9Xm1Lo3B0KwJCpD96JlSVgfGzbRFJP3/hxwf27QTHBA55TUVF7H3LZ/IsL+fiDqnAQfpmoA2G4vAARqHgh4/lzntfEQqQ38vC0P4l9RHDeejSsroWCcWw0CBvIUQ6SscCic/efXC609cOK/G0oytjMKdeNKPvtOdwXxFXUCee8gFBIyMmsNFTz6c/OmV39/79asv1YjvMwDy6OwA8pCOHmaRo0eWTGoxJSlTTyDQ6uqDzzZf+O3bP9XIL8pZBv84bnyjS476QVlLETpc0RLUCjQp51tCRkcuV/4DcFelkpALAAA="
 }
 }
 

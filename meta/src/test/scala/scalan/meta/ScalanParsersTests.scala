@@ -350,6 +350,8 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
     val tStruct = STpeStruct(List(("a", parseType("Int")), ("b", parseType("(A,Int)"))))
     testEmit(module, tStruct, "A", """.asInstanceOf[StructElem[_]]("b").asInstanceOf[PairElem[_,_]].eFst""")
 
-    testEmit(module, "Observable[A]", "A", """.asInstanceOf[ObservableElem[_]].typeArgs("A")._1.asElem[A]""")
+    testEmit(module, "Observable[A]", "A", """.typeArgs("A")._1.asElem[A]""")
+    testEmit(module, "Observable[Observable[A]]", "A",
+      """.typeArgs("A")._1.asElem[Observable[A]].typeArgs("A")._1.asElem[A]""")
   }
 }

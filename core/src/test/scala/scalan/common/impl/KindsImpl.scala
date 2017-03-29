@@ -113,7 +113,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     override def toString = "Return"
 
     @scalan.OverloadId("fromFields")
-    def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
+    def apply[F[_], A](a: Rep[A])(implicit cF: Cont[F]): Rep[Return[F, A]] =
       mkReturn(a)
 
     def unapply[F[_], A](p: Rep[Kind[F, A]]) = unmkReturn(p)
@@ -141,7 +141,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     reifyObject(new ReturnIso[F, A]()(eA, cF))
 
   // 6) smart constructor and deconstructor
-  def mkReturn[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]]
+  def mkReturn[F[_], A](a: Rep[A])(implicit cF: Cont[F]): Rep[Return[F, A]]
   def unmkReturn[F[_], A](p: Rep[Kind[F, A]]): Option[(Rep[A])]
 
   abstract class AbsBind[F[_], S, B]
@@ -202,10 +202,15 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     def selfType = BindCompanionElem
     override def toString = "Bind"
     @scalan.OverloadId("fromData")
-    def apply[F[_], S, B](p: Rep[BindData[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
-      isoBind(eS, eA, cF).to(p)
+    def apply[F[_], S, B](p: Rep[BindData[F, S, B]]): Rep[Bind[F, S, B]] = {
+      implicit val cF = p._1.elem.typeArgs("F")._1.asCont[F];
+implicit val eS = p._1.elem.typeArgs("A")._1.asElem[S];
+implicit val eB = p._2.elem.eRange.typeArgs("A")._1.asElem[B]
+      isoBind[F, S, B].to(p)
+    }
+
     @scalan.OverloadId("fromFields")
-    def apply[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
+    def apply[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]]): Rep[Bind[F, S, B]] =
       mkBind(a, f)
 
     def unapply[F[_], S, B](p: Rep[Kind[F, B]]) = unmkBind(p)
@@ -233,7 +238,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
 
   // 6) smart constructor and deconstructor
-  def mkBind[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]
+  def mkBind[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]]): Rep[Bind[F, S, B]]
   def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]): Option[(Rep[Kind[F, S]], Rep[S => Kind[F, B]])]
 
   registerModule(Kinds_Module)
@@ -258,8 +263,10 @@ trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
   }
 
   def mkReturn[F[_], A]
-    (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
+    (a: Rep[A])(implicit cF: Cont[F]): Rep[Return[F, A]] = {
+    implicit val eA = a.elem
     new ExpReturn[F, A](a)
+  }
   def unmkReturn[F[_], A](p: Rep[Kind[F, A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: ReturnElem[F, A] @unchecked =>
       Some((p.asRep[Return[F, A]].a))
@@ -279,8 +286,12 @@ trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
   }
 
   def mkBind[F[_], S, B]
-    (a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
+    (a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]]): Rep[Bind[F, S, B]] = {
+    implicit val cF = a.elem.typeArgs("F")._1.asCont[F];
+implicit val eS = a.elem.typeArgs("A")._1.asElem[S];
+implicit val eB = f.elem.eRange.typeArgs("A")._1.asElem[B]
     new ExpBind[F, S, B](a, f)
+  }
   def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: BindElem[F, S, B] @unchecked =>
       Some((p.asRep[Bind[F, S, B]].a, p.asRep[Bind[F, S, B]].f))
@@ -309,7 +320,7 @@ trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
 }
 
 object Kinds_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAMVXTWwbRRSedRw7jkMTGlEKVUiI3NLyY1f0UKQIFTuxo7RuEmULhVARjXfH6Zbd2WV3nK45lFsPcEMIBBKHSiAuEVJVISHOrYQQygHBiRMHDqilQj3QE4g3s792vE5ShPBhtDN++36+930zs5u/o0HHRlOOgnVMiwZhuCiL57LDCvJZU23pZI40f/tp7aVxZ+toCo2tosxF7Mw5+irKeQ9V1wqfZabWUQ5ThTjMtB2GnqwL3yXF1HWiMM2kJc0wWgw3dFKqaw6bqaN0w1Tbb6ErSKqjMcWkik0YkWd17DjE8deHCGUa08J5TszbS1YUg5Z4/qVY/udsrDFIH2KMefYrxJLb1KRtg6F9fmpLFk8LbPLEtaCGBcPSRZiBOspqhmXaLIiahQgXTTWYpimGBbS/fglv4BJEXS/JzNboOndmYeVNvE4WwYSbp6EGh+jNc22L+M7zDlM74rkWQgj68bxIrBhhVgwxK3LMCjKxNaxrb2P+57Jtum3k/aQBhFwLXDy7g4vAA6lStfDuBeX1+3LeSPGXXZ5KViSUAUeTCdwQ7QFsv11537k3f+1kCg2vomHNKTccZmOFxWngw5XHlJpM5BwiiO116OB0UgdFlDLYdNEkp5iGhSl48rEcgUbpmqIxbszXRvz2JGCfZRYJTCXXksJ6k7QguDSLdX359mPPHb5TfTWFUp0hcuBSBjHYgVOG0mc0qvqu+TjKkFSL8OXTspjyIedGY7ZPJiEmT92+q946ji6kQiT9wLtrHrjY/8In3xwmy1+m0NCq4HpNx+uijRyqOeIoq2jI3CC2t57dwDp/6tnKrEqauKUzH+A4MgOADENTiTK1CIdtRtBfCsrPewxeNCkp1JYLf8rffbDJCWqjEe8fT7d/ayf/+nlfkwnuAp44QHYAtN4FfTLWw55L2TTIw9P3tDeuvccEqpLbKe+lxiWQ04x474k+AAc7z/WrVx/547O1caGOoYbGDGwVju9BGwGV/0PuoxAVj5WPRnM+TAKqoyuEtWw6Gw88GXsjhvPjUtBDYcRQipSDBqSrOjH69CTBgVILHcyalPXUU7ypDGW8fIWDUAwTSb0SaLx2Ry0evDtxOYUyp9FgE1ju1NFgw2xRNYAZjiZGXFYJ1qROmAFWbGMjPLE2MGyx0GaGDgTMbzFNL73ir3t8h98UivDkBcUKPNXTYi2g7QG/JO63uEC9iKzwzNebl7WtYzWhiQiZ+T4uozbMx3qRlzrB3sV+VknQ2DaeoK4291PuLuLK2+ImhGn2CGODmBPJUWtR5ceFj8dHJ9Z+EZt+RjUNrAl2HQKO2LAxCA4c8nfeKJ1/jVscvSNiPLYLuT5UgXAPKFa5n1jjID+Q2is7O9i72tO83LjWk2m+g7b4UO1Wwk7SiUDpZ1Xp5dYHIeN3trPWATg/9iyD3kdchwi7+LMHWp3pTavgovP/tWDb7hWNH0VZHQGdFxN0PkcUHdtE5ZdxYsDHgncUn/jw1PnTB8+/LC4DI6ow8v4J7zO9P23OYmtGXMSP9rmIg1GhaliszR9O3Hzxh3e+/+LzcNPO+tUNiq4D/H7qcPwb/i2BVzSdUJHsH/rAoiv3P118euvGr2L3GubXB7hU0fCrJjrE3K59d0iEhm+UGKug2fw+EePOdT589Q8/D0wSTA4AAA=="
+  val dump = "H4sIAAAAAAAAAMVXTWwbRRQeO3bs/LRNWlEF0bQmchUoxa7ooUgRAjuxSVo3ibKFgqmIxrvjdMvu7LI7Ttccyoke4IYQAiQOFSAuERIgIcQZJIRQD4gbJw4cUEOFemhPIN7M/trxOk4RwofRzvjt+/ne983Mbv2B0raFcraMNUwLOmG4IInnks3y0nlDaWlkgTRXtt84+vtHJ+8m0WQdDV/G9oKt1dGI+1BxzOBZYkoNTVZVqlQoU1k7rwsXDBVqbowij1HsFSMfeWuuhkYwlYnNDMtm6GH35aJsaBqRmWrQoqrrLYYbGinWVJuBfaphKO1X0TWUrKEJ2aCyRRiR5jVs28T21rOEu1eD+YiYt1fMMMbOBC9YWGWQH8SYcO3XiCm1qUHbOkP7vdRWTJ4W2IwRxwQglnRTE2FSNZRRddOwmB81AxEuG4o/TVEMC+hg7QrexEWIulGUmKXSDe7MxPIreIMsgwk3T0MNNtGaF9om8ZyP2UzpiOeYCCETuvqEyKwQglYIQCtw0PISsVSsqa9h/ueqZTht5P4SQwg53MXJXVz4HkiFKvk3L8kv3ZPG9CR/2eG5ZEVGGXB0LIZhoj8A7vdrb9t3nr1xJolG62hUtUsNm1lYZlEeeHiNYUoNJnIOIMTWBrRwJq6FIkoJbLp4MiIbuokpePLAHIdOaaqsMm7M1/Z5/YkBP8NM4psmHTMR1BunKEGmeaxpq7cefPz4duWFZEABL8QIuJRAUpbvlKHUOVCG55qPEwwlqiG+fFoSUz6MOuGY7ZNJgMnsrdvKd6fQpSRKeEh6gQdrHrg4+OQH3xwnq58lUbYuyF7V8IZoI4dqgdhyHWWNTWK565lNrPGnnq3MKKSJWxrzAI4iMwTIMJSL1alJOGxzgv8Jv/wxl8HLBiX56mr+rvTDO1ucoBYad/9xhfu3euavX/Y3meAu4Il9ZIdA7F3Qx2M96rqUDJ1MztxRX77xFhOoJpxOfa80roCc5sR7x/oA7G89n1+//sCfH68fEurINlSmYzN/ag/a8Kn8H3IfBai4rJwK53zIAaoH1ghrWXQ+GjgXeSOC80MJv4fCiKEkKfkNSFU0ovfpSYwDuRo4mDco66mnaFMZGnbzFQ4CMUzH9Uqg8eK2Upi6PX01iYbPonQTWG7XULphtKjiwwxnEyMOK/trXfoHWLGF9eDI2sSwxUKbGTrsM7/FVK34vLfu8h1+ORTiyQuKFPhMT4t1n7aHvZK438ISdSOy/GNfb11Vbz5aFZoIkVns4zJsw2KkF+OJTrAH2M/KMRrbwRPU1eZ+yh0grrQjbkyYZo8wFjoaT45qi8o/L71/6MD0+q9i0x9WDB2rgl1HgCMWbAyCA0e8nTdM51/jFkVvVownBpDrvjKEu0+xSv3EGgX5vtRe3t3B3tWe4uVGtR5P8120xYcwwuJg0glB6WdV7uXWAyHjdbaz1iE4P/Ysg95HXIcIu/izB1qd600r/6Lz/7Vgx+4Vju+FWc2CzgsxOl8gsoYtovDbONHha8E9ik+/+/TFs1MXnxOXgXFFGLn/BPeZ3t8257E5Jy7ij/S5iINRvqKbrM0fTn/71E+v//jpJ8GmnfWqS4uuA/xe6nD8694tgVc0E1OR5B36wKJr9z5cPnHzy9/E7jXKrw9wqaLBZ014iDld+25WhIaPlAiroNn8PhHhzhd8+Oof/5r3BZIOAAA="
 }
 }
 

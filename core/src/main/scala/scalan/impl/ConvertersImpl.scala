@@ -111,8 +111,10 @@ trait ConvertersAbs extends Converters {
     def selfType = IdentityConvCompanionElem
     override def toString = "IdentityConv"
     @scalan.OverloadId("fromData")
-    def apply[A](p: Rep[IdentityConvData[A]])(implicit eA: Elem[A]): Rep[IdentityConv[A]] =
-      isoIdentityConv(eA).to(p)
+    def apply[A](p: Rep[IdentityConvData[A]])(implicit eA: Elem[A]): Rep[IdentityConv[A]] = {
+      isoIdentityConv[A].to(p)
+    }
+
     @scalan.OverloadId("fromFields")
     def apply[A]()(implicit eA: Elem[A]): Rep[IdentityConv[A]] =
       mkIdentityConv()
@@ -202,7 +204,7 @@ trait ConvertersAbs extends Converters {
     override def toString = "BaseConverter"
 
     @scalan.OverloadId("fromFields")
-    def apply[T, R](convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]] =
+    def apply[T, R](convFun: Rep[T => R]): Rep[BaseConverter[T, R]] =
       mkBaseConverter(convFun)
 
     def unapply[T, R](p: Rep[Converter[T, R]]) = unmkBaseConverter(p)
@@ -230,7 +232,7 @@ trait ConvertersAbs extends Converters {
     reifyObject(new BaseConverterIso[T, R]()(eT, eR))
 
   // 6) smart constructor and deconstructor
-  def mkBaseConverter[T, R](convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]]
+  def mkBaseConverter[T, R](convFun: Rep[T => R]): Rep[BaseConverter[T, R]]
   def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]): Option[(Rep[T => R])]
 
   abstract class AbsPairConverter[A1, A2, B1, B2]
@@ -296,8 +298,10 @@ trait ConvertersAbs extends Converters {
     def selfType = PairConverterCompanionElem
     override def toString = "PairConverter"
     @scalan.OverloadId("fromData")
-    def apply[A1, A2, B1, B2](p: Rep[PairConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
-      isoPairConverter(eA1, eA2, eB1, eB2).to(p)
+    def apply[A1, A2, B1, B2](p: Rep[PairConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] = {
+      isoPairConverter[A1, A2, B1, B2].to(p)
+    }
+
     @scalan.OverloadId("fromFields")
     def apply[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
       mkPairConverter(conv1, conv2)
@@ -393,8 +397,10 @@ trait ConvertersAbs extends Converters {
     def selfType = SumConverterCompanionElem
     override def toString = "SumConverter"
     @scalan.OverloadId("fromData")
-    def apply[A1, A2, B1, B2](p: Rep[SumConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
-      isoSumConverter(eA1, eA2, eB1, eB2).to(p)
+    def apply[A1, A2, B1, B2](p: Rep[SumConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] = {
+      isoSumConverter[A1, A2, B1, B2].to(p)
+    }
+
     @scalan.OverloadId("fromFields")
     def apply[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
       mkSumConverter(conv1, conv2)
@@ -487,8 +493,10 @@ trait ConvertersAbs extends Converters {
     def selfType = ComposeConverterCompanionElem
     override def toString = "ComposeConverter"
     @scalan.OverloadId("fromData")
-    def apply[A, B, C](p: Rep[ComposeConverterData[A, B, C]])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] =
-      isoComposeConverter(eA, eB, eC).to(p)
+    def apply[A, B, C](p: Rep[ComposeConverterData[A, B, C]])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] = {
+      isoComposeConverter[A, B, C].to(p)
+    }
+
     @scalan.OverloadId("fromFields")
     def apply[A, B, C](conv2: Conv[B, C], conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] =
       mkComposeConverter(conv2, conv1)
@@ -741,8 +749,9 @@ trait ConvertersExp extends ConvertersDsl {
   }
 
   def mkIdentityConv[A]
-    ()(implicit eA: Elem[A]): Rep[IdentityConv[A]] =
+    ()(implicit eA: Elem[A]): Rep[IdentityConv[A]] = {
     new ExpIdentityConv[A]()
+  }
   def unmkIdentityConv[A](p: Rep[Converter[A, A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: IdentityConvElem[A] @unchecked =>
       Some(())
@@ -774,8 +783,11 @@ trait ConvertersExp extends ConvertersDsl {
   }
 
   def mkBaseConverter[T, R]
-    (convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]] =
+    (convFun: Rep[T => R]): Rep[BaseConverter[T, R]] = {
+    implicit val eT = convFun.elem.eDom;
+implicit val eR = convFun.elem.eRange
     new ExpBaseConverter[T, R](convFun)
+  }
   def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: BaseConverterElem[T, R] @unchecked =>
       Some((p.asRep[BaseConverter[T, R]].convFun))
@@ -817,8 +829,9 @@ trait ConvertersExp extends ConvertersDsl {
   }
 
   def mkPairConverter[A1, A2, B1, B2]
-    (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
+    (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] = {
     new ExpPairConverter[A1, A2, B1, B2](conv1, conv2)
+  }
   def unmkPairConverter[A1, A2, B1, B2](p: Rep[Converter[(A1, A2), (B1, B2)]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: PairConverterElem[A1, A2, B1, B2] @unchecked =>
       Some((p.asRep[PairConverter[A1, A2, B1, B2]].conv1, p.asRep[PairConverter[A1, A2, B1, B2]].conv2))
@@ -860,8 +873,9 @@ trait ConvertersExp extends ConvertersDsl {
   }
 
   def mkSumConverter[A1, A2, B1, B2]
-    (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
+    (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] = {
     new ExpSumConverter[A1, A2, B1, B2](conv1, conv2)
+  }
   def unmkSumConverter[A1, A2, B1, B2](p: Rep[Converter[$bar[A1, A2], $bar[B1, B2]]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SumConverterElem[A1, A2, B1, B2] @unchecked =>
       Some((p.asRep[SumConverter[A1, A2, B1, B2]].conv1, p.asRep[SumConverter[A1, A2, B1, B2]].conv2))
@@ -902,8 +916,9 @@ trait ConvertersExp extends ConvertersDsl {
   }
 
   def mkComposeConverter[A, B, C]
-    (conv2: Conv[B, C], conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] =
+    (conv2: Conv[B, C], conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] = {
     new ExpComposeConverter[A, B, C](conv2, conv1)
+  }
   def unmkComposeConverter[A, B, C](p: Rep[Converter[A, C]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: ComposeConverterElem[A, B, C] @unchecked =>
       Some((p.asRep[ComposeConverter[A, B, C]].conv2, p.asRep[ComposeConverter[A, B, C]].conv1))
@@ -947,8 +962,9 @@ trait ConvertersExp extends ConvertersDsl {
   }
 
   def mkFunctorConverter[A, B, F[_]]
-    (itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]] =
+    (itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]] = {
     new ExpFunctorConverter[A, B, F](itemConv)
+  }
   def unmkFunctorConverter[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: FunctorConverterElem[A, B, F] @unchecked =>
       Some((p.asRep[FunctorConverter[A, B, F]].itemConv))
@@ -977,8 +993,9 @@ trait ConvertersExp extends ConvertersDsl {
   }
 
   def mkNaturalConverter[A, F[_], G[_]]
-    (convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]): Rep[NaturalConverter[A, F, G]] =
+    (convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]): Rep[NaturalConverter[A, F, G]] = {
     new ExpNaturalConverter[A, F, G](convFun)
+  }
   def unmkNaturalConverter[A, F[_], G[_]](p: Rep[Converter[F[A], G[A]]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: NaturalConverterElem[A, F, G] @unchecked =>
       Some((p.asRep[NaturalConverter[A, F, G]].convFun))
@@ -1021,7 +1038,7 @@ trait ConvertersExp extends ConvertersDsl {
 }
 
 object Converters_Module extends scalan.ModuleInfo {
-  val dump = "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"
+  val dump = "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"
 }
 }
 
