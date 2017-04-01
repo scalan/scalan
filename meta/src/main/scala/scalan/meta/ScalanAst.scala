@@ -743,7 +743,7 @@ object ScalanAst {
       )
     }
 
-//    def apply(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
+//    def apply(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SModuleDef = {
 //      val moduleName = moduleTrait.name
 //      val defs = moduleTrait.body
 //      val classes = entity.optBaseType match {
@@ -754,7 +754,7 @@ object ScalanAst {
 //      }
 //      val methods = defs.collect { case md: SMethodDef => md }
 //
-//      SEntityModuleDef(packageName, imports, moduleName,
+//      SModuleDef(packageName, imports, moduleName,
 //        entityRepSynonym, entity, traits, classes, methods,
 //        moduleTrait.selfType, Nil, None, moduleTrait.ancestors)
 //    }

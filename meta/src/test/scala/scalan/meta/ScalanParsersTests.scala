@@ -207,7 +207,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
      |}
     """.stripMargin
 
-  describe("SEntityModuleDef") {
+  describe("SModuleDef") {
     val tpeArgA = L(STpeArg("A", None, Nil))
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
