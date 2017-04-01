@@ -1,15 +1,15 @@
-package scalan.plugin
+package scalan.meta.scalanizer
 
-import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
 import scalan.meta.{ScalanParsers, CodegenConfig}
 
-trait Common extends ScalanParsers {
+trait ScalanizerBase extends ScalanParsers {
   import global._
 
-  def config: CodegenConfig = ScalanPluginConfig.codegenConfig
+  def snState : ScalanizerState
+  def snConfig: ScalanizerConfig
+  def config: CodegenConfig = snConfig.codegenConfig
 
-  type WrapperDescr = ScalanPluginState.WrapperDescr
   /** Converts the name of external type to the name of its wrapper. */
   def wrap(name: String) = "W" + name
   /** Converts the name of external type to the name of the module which
@@ -29,19 +29,19 @@ trait Common extends ScalanParsers {
     Set("ClassTag").contains(name)
   }
   def isEntity(name: String): Boolean = {
-    ScalanPluginConfig.concreteClassesOfEntity.keySet.contains(name)
+    snConfig.concreteClassesOfEntity.keySet.contains(name)
   }
   def isEntityCompanion(name: String): Boolean = {
-    ScalanPluginConfig.concreteClassesOfEntity.keys.map(comp(_)).toSet.contains(name)
+    snConfig.concreteClassesOfEntity.keys.map(comp(_)).toSet.contains(name)
   }
   def isClass(name: String): Boolean = {
-    ScalanPluginConfig.concreteClassesOfEntity.values.flatten.toSet.contains(name)
+    snConfig.concreteClassesOfEntity.values.flatten.toSet.contains(name)
   }
   def isClassCompanion(name: String): Boolean = {
-    ScalanPluginConfig.concreteClassesOfEntity.values.flatten.map(comp(_)).toSet.contains(name)
+    snConfig.concreteClassesOfEntity.values.flatten.map(comp(_)).toSet.contains(name)
   }
   def isModule(name: String): Boolean = {
-    ScalanPluginConfig.concreteClassesOfEntity.keys.map(mod(_)).toSet.contains(name)
+    snConfig.concreteClassesOfEntity.keys.map(mod(_)).toSet.contains(name)
   }
   def isWrapper(name: String): Boolean = {
     !Set(

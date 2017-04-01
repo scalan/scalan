@@ -1,10 +1,11 @@
-package scalan.plugin
+package scalan.meta.scalanizer
 
 import java.io.File
+
 import scalan.meta.ScalanAst._
 import scalan.util.FileUtil
 
-trait Enricher extends Common {
+trait Enricher extends ScalanizerBase {
   /** Module parent is replaced by the parent with its extension. */
   def composeParentWithExt(module: SModuleDef) = {
     val parentsWithExts = module.ancestors.map{ancestor =>
@@ -16,7 +17,7 @@ trait Enricher extends Common {
 
   /** Gets all packages needed for the module and imports them. */
   def getImportByName(name: String): SImportStat = {
-    val pkgOfModule = ScalanPluginState.packageOfModule.get(name) match {
+    val pkgOfModule = snState.packageOfModule.get(name) match {
       case Some(pkgName) => pkgName + "."
       case _ => ""
     }
@@ -25,7 +26,7 @@ trait Enricher extends Common {
 
   /** Imports scalan._ and other packages needed by Scalan and further transformations. */
   def addImports(module: SModuleDef) = {
-    val usedModules = ScalanPluginState.dependenceOfModule.getOrElse(module.name, List())
+    val usedModules = snState.dependenceOfModule.getOrElse(module.name, List())
     val usedImports = usedModules.map(getImportByName)
     val usersImport = module.imports.collect{
       case imp @ SImportStat("scalan.compilation.KernelTypes._") => imp
@@ -143,7 +144,7 @@ trait Enricher extends Common {
   }
 
   def saveDebugCode(fileName: String, code: String) = {
-    val folder = new File(ScalanPluginConfig.home)
+    val folder = new File(snConfig.home)
     val file = FileUtil.file(folder, "debug", fileName)
     file.mkdirs()
 
@@ -333,8 +334,8 @@ trait Enricher extends Common {
                     moduleAncestors: List[STraitCall]
                     ): List[STraitDef] = {
     val boilerplateSuffix = Map("Dsl" -> "Abs", "DslStd" -> "Std", "DslExp" -> "Exp")
-    val extensions = ScalanPluginState.subcakesOfModule(moduleName)
-                     .filterNot(ext => ext.endsWith("Std") && !ScalanPluginConfig.codegenConfig.isStdEnabled)
+    val extensions = snState.subcakesOfModule(moduleName)
+                     .filterNot(ext => ext.endsWith("Std") && !snConfig.codegenConfig.isStdEnabled)
 
     (extensions map {extName =>
       val extSuffix = extName.stripPrefix(moduleName)
@@ -416,7 +417,7 @@ trait Enricher extends Common {
   }
 
   def externalTypeToWrapper(module: SModuleDef) = {
-    val wrappedModule = ScalanPluginState.externalTypes.foldLeft(module){(acc, externalTypeName) =>
+    val wrappedModule = snState.externalTypes.foldLeft(module){(acc, externalTypeName) =>
       new ExtType2WrapperTransformer(externalTypeName).moduleTransform(acc)
     }
 

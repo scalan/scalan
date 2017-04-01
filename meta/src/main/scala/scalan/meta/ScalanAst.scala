@@ -760,4 +760,5 @@ object ScalanAst {
 //    }
   }
 
+  case class WrapperDescr(module: SModuleDef, ownerChain: List[String])
 }
