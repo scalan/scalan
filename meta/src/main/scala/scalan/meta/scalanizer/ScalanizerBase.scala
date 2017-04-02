@@ -1,12 +1,13 @@
 package scalan.meta.scalanizer
 
+import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
 import scalan.meta.{ScalanParsers, CodegenConfig}
 
-trait ScalanizerBase extends ScalanParsers {
+trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
   import global._
 
-  def snState : ScalanizerState
+  def snState : ScalanizerState[G]
   def snConfig: ScalanizerConfig
   def config: CodegenConfig = snConfig.codegenConfig
 

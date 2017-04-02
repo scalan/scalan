@@ -2,9 +2,13 @@ package scalan.meta
 
 import scalan.BaseNestedTests
 import scala.reflect.internal.util.BatchSourceFile
+import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
 
-class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
+class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
+  def getGlobal = new Global(settings, reporter)
+  initCompiler()
+
   val ast: this.type = this
   import scalan.meta.ScalanAst.
   {

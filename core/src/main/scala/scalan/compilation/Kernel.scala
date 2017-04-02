@@ -3,10 +3,11 @@ package scalan.compilation
 import java.io.File
 
 import com.github.kxbmap.configs.syntax._
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ConfigFactory, Config}
 
+import scalan.meta.ScalanAst.KernelType
 import scalan.util.{ClassLoaderUtil, FileUtil}
-import scalan.{Plugins, ScalanDslExp}
+import scalan.{ScalanDslExp, Plugins}
 
 // TODO Split into AbstractKernel and FileSystemKernel?
 class Kernel[+ScalanCake <: ScalanDslExp, A, B](

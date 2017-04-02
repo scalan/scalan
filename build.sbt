@@ -80,7 +80,10 @@ lazy val common = Project("scalan-common", file("common"))
 lazy val meta = Project("scalan-meta", file("meta"))
   .dependsOn(common % allConfigDependency)
   .settings(commonSettings,
-    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "com.github.kxbmap" %% "configs-java7" % "0.3.0"
+      ),
     fork in Test := true,
     fork in run := true)
 

@@ -1,10 +1,11 @@
 package scalan.meta.scalanizer
 
 import scala.reflect.internal.util.BatchSourceFile
+import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
 import scalan.meta.{EntityFileGenerator, ScalanCodegen}
 
-trait Backend extends ScalanizerBase {
+trait Backend[G <: Global] extends ScalanizerBase[G] {
   import global._
 
   def genBoilerplate(module: SModuleDef): Tree = {

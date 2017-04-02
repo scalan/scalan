@@ -6,20 +6,21 @@ import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
 import scala.reflect.internal.util.SourceFile
 
-trait ScalanParsersEx extends ScalanParsers {
+trait ScalanParsersEx[G <: Global] extends ScalanParsers[G] {
   val settings = new Settings
   settings.embeddedDefaults(getClass.getClassLoader)
   settings.usejavacp.value = true
   val reporter = new StoreReporter
-  val global: Global = new Global(settings, reporter)
 
   // Credit due to Li Haoyi in Ammonite:
   // Initialize scalac to the parser phase immediately, so we can start
   // using Compiler#parse even if we haven't compiled any compilation
   // units yet due to caching
-  val run = new compiler.Run()
-  compiler.phase = run.parserPhase
-  run.cancel()
+  def initCompiler() = {
+    val run = new compiler.Run()
+    compiler.phase = run.parserPhase
+    run.cancel()
+  }
 
   def parseEntityModule(file: File) = {
     val sourceFile = compiler.getSourceFile(file.getPath)

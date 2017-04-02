@@ -11,9 +11,10 @@ import scala.reflect.internal.util.OffsetPosition
 import scalan.meta.ScalanAst._
 import java.util.regex.Pattern
 
-trait ScalanParsers {
+trait ScalanParsers[G <: Global] {
+  def getGlobal: G
+  lazy val global: G = getGlobal
 
-  val global: Global
   type Compiler = global.type
   lazy val compiler: Compiler = global
   import compiler._

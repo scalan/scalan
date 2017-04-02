@@ -2,10 +2,11 @@ package scalan.meta.scalanizer
 
 import java.io.File
 
+import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
 import scalan.util.FileUtil
 
-trait Enricher extends ScalanizerBase {
+trait Enricher[G <: Global] extends ScalanizerBase[G] {
   /** Module parent is replaced by the parent with its extension. */
   def composeParentWithExt(module: SModuleDef) = {
     val parentsWithExts = module.ancestors.map{ancestor =>

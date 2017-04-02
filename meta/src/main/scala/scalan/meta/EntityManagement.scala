@@ -5,11 +5,16 @@
 package scalan.meta
 
 import java.io.File
+
 import com.typesafe.scalalogging.LazyLogging
+
 import scalan.util.FileUtil
 import ScalanAst._
+import scala.tools.nsc.Global
 
-class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx with LazyLogging {
+class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx[Global] with LazyLogging {
+  def getGlobal: Global = new Global(settings, reporter)
+  initCompiler()
 
   case class EntityManager(name: String, file: File, entityDef: SModuleDef, config: CodegenConfig)
 
