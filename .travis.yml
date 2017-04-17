@@ -46,4 +46,4 @@ install:
     fi
 
 script:
-  - sbt -jvm-opts .travis.jvmopts $TEST_SUITE
+  - travis_wait sbt -jvm-opts .travis.jvmopts $TEST_SUITE
