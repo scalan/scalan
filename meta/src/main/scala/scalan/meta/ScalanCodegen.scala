@@ -67,6 +67,7 @@ class MetaCodegen extends ScalanAstExtensions {
         val argTy = args(argIndex)
         val kind = if (e.tpeArgs(argIndex).isHighKind) "Cont" else "Elem"
         emit(s"""$prefix.typeArgs("$tyArgName")._1.as$kind[$argTy]""", t, true)
+      case _ => sys.error(s"emit($tailPath)")
     }
     emit(prefixExpr, tailPath, true)
   }

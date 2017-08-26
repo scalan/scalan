@@ -10,6 +10,9 @@ object PrintExtensions {
     def asTypeParams(show: A => String = _.toString) =
       if (it.nonEmpty) it.map(show).mkString("[", ", ", "]") else ""
 
+    def optList(start: String, end: String, sep: String = ", ", show: A => String = _.toString) =
+      if (it.nonEmpty) it.map(show).mkString(start, sep, end) else ""
+
     def enumTypes(show: Int => String) = (1 to it.size).map(show)
   }
 
