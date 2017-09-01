@@ -1,8 +1,8 @@
 package scalan.common
 
-import scalan.Scalan
+import scalan.ScalanExp
 
-trait CommonExamples extends Scalan with SegmentsDsl {
+trait CommonExamples extends ScalanExp with SegmentsDsl {
   lazy val t1 = fun { (in: Rep[Interval]) => in.convertTo[Slice] }
   lazy val t2 = fun { (in: Rep[Slice]) => in.convertTo[Interval] }
   lazy val t3 = fun { (in: Rep[IntervalData]) => Interval(in).convertTo[Slice].toData }

@@ -1,12 +1,12 @@
 package scalan.util
 
 import scala.reflect.runtime.universe._
-import scalan.common.SegmentsDslExp
+import scalan.common.SegmentsDsl
 import scalan.{BaseCtxTests, ScalanDslExp}
 
 class ReflectionTests extends BaseCtxTests {
 
-  trait ReflectionExamples extends ScalanDslExp with SegmentsDslExp {
+  trait ReflectionExamples extends ScalanDslExp with SegmentsDsl {
   }
 
   test("paramMirrors") {
@@ -29,7 +29,7 @@ class ReflectionTests extends BaseCtxTests {
     // Classes on the right-hand side are used to get a variety of constructor parameter definitions
 
     // Same field type
-    val interval = new ExpInterval(1, 2)
+    val interval = new IntervalDef(1, 2)
     check(interval)(canGetAll, namesAre("start", "end"))
 
     // No implicit parameters, `extends ArrayDef`

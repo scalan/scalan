@@ -1,8 +1,8 @@
 package scalan.common
 
-import scalan.Scalan
+import scalan.ScalanExp
 
-trait ViewExamples extends Scalan with SegmentsDsl {
+trait ViewExamples extends ScalanExp with SegmentsDsl {
   lazy val v1 = fun { (in: Rep[Interval]) => in }
   lazy val v2 = fun { (in: Rep[Interval]) => Pair(in,in) }
   lazy val v3 = fun { (in: Rep[Interval]) => Pair(in, in.length) }

@@ -1,7 +1,7 @@
 package scalan
 
 import scala.language.reflectiveCalls
-import scalan.common.{CommonExamples, MetaTestsDslExp, SegmentsDslExp, ViewExamples}
+import scalan.common.{CommonExamples, MetaTestsDslExp, SegmentsDsl, ViewExamples}
 
 abstract class BaseViewTests extends BaseCtxTests {
   class ViewTestsCtx extends TestContext {
@@ -47,7 +47,7 @@ abstract class BaseViewTests extends BaseCtxTests {
       }
     }
   }
-  class CtxForStructs extends ViewTestsCtx with SegmentsDslExp with MetaTestsDslExp {
+  class CtxForStructs extends ViewTestsCtx with SegmentsDsl with MetaTestsDslExp {
     override def shouldUnpack(e: Elem[_])  = true
     override val currentPass = new Pass {
       val name = "test"
@@ -59,7 +59,7 @@ abstract class BaseViewTests extends BaseCtxTests {
 class ViewTests extends BaseViewTests {
 
   test("LambdaResultHasViews") {
-    val ctx = new ViewTestsCtx with ViewExamples with CommonExamples with SegmentsDslExp
+    val ctx = new ViewTestsCtx with ViewExamples with CommonExamples with SegmentsDsl
     import ctx._
     testLambdaResultHasViewsWithDataType("t1", t1, element[(Int,Int)])
     testLambdaResultHasViewsWithDataType("t2", t2, element[(Int,Int)])
@@ -80,7 +80,7 @@ class ViewTests extends BaseViewTests {
   }
 
   test("LambdaResultHasViews_Sums") {
-    val ctx = new ViewTestsCtx with SegmentsDslExp {
+    val ctx = new ViewTestsCtx with SegmentsDsl {
       lazy val v1 = fun { (in: Rep[Unit]) => in.asLeft[Slice] }
       lazy val v2 = fun { (in: Rep[(Int,Int)]) => SumView(in.asRight[Unit])(identityIso[Unit], isoSlice) }
     }
@@ -92,7 +92,7 @@ class ViewTests extends BaseViewTests {
 
 
   test("getIsoByElem") {
-    val ctx = new ViewTestsCtx with SegmentsDslExp
+    val ctx = new ViewTestsCtx with SegmentsDsl
     import ctx._
 
     testGetIso(element[Int], element[Int])

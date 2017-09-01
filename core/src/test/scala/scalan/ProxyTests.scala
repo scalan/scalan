@@ -1,13 +1,13 @@
 package scalan
 
 import scala.reflect.runtime.universe._
-import scalan.common.{SegmentsDslExp, Lazy}
+import scalan.common.{SegmentsDsl, Lazy}
 import scalan.util.ReflectionUtil
 
 //import scalan.monads.{FreesDslExp, MonadsDslExp}
 
 class ProxyTests extends BaseCtxTests {
-  class Ctx extends TestContext with SegmentsDslExp /*with FreesDslExp with MonadsDslExp*/ {
+  class Ctx extends TestContext with SegmentsDsl /*with FreesDslExp with MonadsDslExp*/ {
     def testElemFromType(tpe: Type, elemMap: Map[Symbol, TypeDesc], expected: Elem[_]) = {
       assertResult(expected)(elemFromType(tpe, elemMap, definitions.NothingTpe))
     }

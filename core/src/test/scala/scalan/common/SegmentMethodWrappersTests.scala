@@ -3,7 +3,7 @@ package scalan.common
 import scala.language.reflectiveCalls
 import scalan._
 
-trait SegmentMethodWrappers extends Scalan with SegmentsDsl {
+trait SegmentMethodWrappers extends ScalanExp with SegmentsDsl {
   lazy val Interval_start = fun { (in: Rep[IntervalData]) => Interval(in).start }
   lazy val Slice_start = fun { (in: Rep[SliceData]) => Slice(in).end }
 
@@ -19,7 +19,7 @@ trait SegmentMethodWrappers extends Scalan with SegmentsDsl {
 
 class SegmentMethodWrappersTests extends BaseNestedCtxTests {
 
-  class SegmentMethodWrappersStaged(testName: String) extends TestContext(testName) with SegmentMethodWrappers with SegmentsDslExp {
+  class SegmentMethodWrappersStaged(testName: String) extends TestContext(testName) with SegmentMethodWrappers with SegmentsDsl {
   }
 
   describe("Start") {

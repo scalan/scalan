@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait SegmentsAbs extends scalan.ScalanDsl with Segments {
+trait SegmentsAbs extends scalan.ScalanExp with Segments {
   self: SegmentsDsl =>
 
   // single proxy for each type family
@@ -42,21 +42,20 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   implicit def segmentElement: Elem[Segment] =
     cachedElem[SegmentElem[Segment]]()
 
-  implicit case object SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs] {
-    lazy val tag = weakTypeTag[SegmentCompanionAbs]
+  implicit case object SegmentCompanionElem extends CompanionElem[SegmentCompanionDef] {
+    lazy val tag = weakTypeTag[SegmentCompanionDef]
     protected def getDefaultRep = Segment
   }
 
-  abstract class SegmentCompanionAbs extends CompanionDef[SegmentCompanionAbs] with SegmentCompanion {
+  abstract class SegmentCompanionDef extends CompanionDef[SegmentCompanionDef] with SegmentCompanion {
     def selfType = SegmentCompanionElem
     override def toString = "Segment"
   }
-  def Segment: Rep[SegmentCompanionAbs]
-  implicit def proxySegmentCompanionAbs(p: Rep[SegmentCompanionAbs]): SegmentCompanionAbs =
-    proxyOps[SegmentCompanionAbs](p)
+  implicit def proxySegmentCompanion(p: Rep[SegmentCompanionDef]): SegmentCompanionDef =
+    proxyOps[SegmentCompanionDef](p)
 
-  abstract class AbsInterval
-      (start: Rep[Int], end: Rep[Int])
+  case class IntervalDef
+      (override val start: Rep[Int], override val end: Rep[Int])
     extends Interval(start, end) with Def[Interval] {
     lazy val selfType = element[Interval]
   }
@@ -100,7 +99,7 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
-  class IntervalCompanionAbs extends CompanionDef[IntervalCompanionAbs] with IntervalCompanion {
+  class IntervalCompanionDef extends CompanionDef[IntervalCompanionDef] with IntervalCompanion {
     def selfType = IntervalCompanionElem
     override def toString = "Interval"
     @scalan.OverloadId("fromData")
@@ -114,14 +113,14 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
 
     def unapply(p: Rep[Segment]) = unmkInterval(p)
   }
-  lazy val IntervalRep: Rep[IntervalCompanionAbs] = new IntervalCompanionAbs
-  lazy val Interval: IntervalCompanionAbs = proxyIntervalCompanion(IntervalRep)
-  implicit def proxyIntervalCompanion(p: Rep[IntervalCompanionAbs]): IntervalCompanionAbs = {
-    proxyOps[IntervalCompanionAbs](p)
+  lazy val IntervalRep: Rep[IntervalCompanionDef] = new IntervalCompanionDef
+  lazy val Interval: IntervalCompanionDef         = proxyIntervalCompanion(IntervalRep)
+  implicit def proxyIntervalCompanion(p: Rep[IntervalCompanionDef]): IntervalCompanionDef = {
+    proxyOps[IntervalCompanionDef](p)
   }
 
-  implicit case object IntervalCompanionElem extends CompanionElem[IntervalCompanionAbs] {
-    lazy val tag = weakTypeTag[IntervalCompanionAbs]
+  implicit case object IntervalCompanionElem extends CompanionElem[IntervalCompanionDef] {
+    lazy val tag = weakTypeTag[IntervalCompanionDef]
     protected def getDefaultRep = Interval
   }
 
@@ -136,12 +135,8 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   implicit def isoInterval: Iso[IntervalData, Interval] =
     reifyObject(new IntervalIso())
 
-  // 6) smart constructor and deconstructor
-  def mkInterval(start: Rep[Int], end: Rep[Int]): Rep[Interval]
-  def unmkInterval(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
-
-  abstract class AbsSlice
-      (start: Rep[Int], length: Rep[Int])
+  case class SliceDef
+      (override val start: Rep[Int], override val length: Rep[Int])
     extends Slice(start, length) with Def[Slice] {
     lazy val selfType = element[Slice]
   }
@@ -185,7 +180,7 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
-  class SliceCompanionAbs extends CompanionDef[SliceCompanionAbs] with SliceCompanion {
+  class SliceCompanionDef extends CompanionDef[SliceCompanionDef] with SliceCompanion {
     def selfType = SliceCompanionElem
     override def toString = "Slice"
     @scalan.OverloadId("fromData")
@@ -199,14 +194,14 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
 
     def unapply(p: Rep[Segment]) = unmkSlice(p)
   }
-  lazy val SliceRep: Rep[SliceCompanionAbs] = new SliceCompanionAbs
-  lazy val Slice: SliceCompanionAbs = proxySliceCompanion(SliceRep)
-  implicit def proxySliceCompanion(p: Rep[SliceCompanionAbs]): SliceCompanionAbs = {
-    proxyOps[SliceCompanionAbs](p)
+  lazy val SliceRep: Rep[SliceCompanionDef] = new SliceCompanionDef
+  lazy val Slice: SliceCompanionDef         = proxySliceCompanion(SliceRep)
+  implicit def proxySliceCompanion(p: Rep[SliceCompanionDef]): SliceCompanionDef = {
+    proxyOps[SliceCompanionDef](p)
   }
 
-  implicit case object SliceCompanionElem extends CompanionElem[SliceCompanionAbs] {
-    lazy val tag = weakTypeTag[SliceCompanionAbs]
+  implicit case object SliceCompanionElem extends CompanionElem[SliceCompanionDef] {
+    lazy val tag = weakTypeTag[SliceCompanionDef]
     protected def getDefaultRep = Slice
   }
 
@@ -221,12 +216,8 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   implicit def isoSlice: Iso[SliceData, Slice] =
     reifyObject(new SliceIso())
 
-  // 6) smart constructor and deconstructor
-  def mkSlice(start: Rep[Int], length: Rep[Int]): Rep[Slice]
-  def unmkSlice(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
-
-  abstract class AbsCentered
-      (center: Rep[Int], radius: Rep[Int])
+  case class CenteredDef
+    (override val center: Rep[Int], override val radius: Rep[Int])
     extends Centered(center, radius) with Def[Centered] {
     lazy val selfType = element[Centered]
   }
@@ -271,7 +262,7 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
     lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
-  class CenteredCompanionAbs extends CompanionDef[CenteredCompanionAbs] with CenteredCompanion {
+  class CenteredCompanionDef extends CompanionDef[CenteredCompanionDef] with CenteredCompanion {
     def selfType = CenteredCompanionElem
     override def toString = "Centered"
     @scalan.OverloadId("fromData")
@@ -285,14 +276,14 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
 
     def unapply(p: Rep[Segment]) = unmkCentered(p)
   }
-  lazy val CenteredRep: Rep[CenteredCompanionAbs] = new CenteredCompanionAbs
-  lazy val Centered: CenteredCompanionAbs = proxyCenteredCompanion(CenteredRep)
-  implicit def proxyCenteredCompanion(p: Rep[CenteredCompanionAbs]): CenteredCompanionAbs = {
-    proxyOps[CenteredCompanionAbs](p)
+  lazy val CenteredRep: Rep[CenteredCompanionDef] = new CenteredCompanionDef
+  lazy val Centered: CenteredCompanionDef         = proxyCenteredCompanion(CenteredRep)
+  implicit def proxyCenteredCompanion(p: Rep[CenteredCompanionDef]): CenteredCompanionDef = {
+    proxyOps[CenteredCompanionDef](p)
   }
 
-  implicit case object CenteredCompanionElem extends CompanionElem[CenteredCompanionAbs] {
-    lazy val tag = weakTypeTag[CenteredCompanionAbs]
+  implicit case object CenteredCompanionElem extends CompanionElem[CenteredCompanionDef] {
+    lazy val tag = weakTypeTag[CenteredCompanionDef]
     protected def getDefaultRep = Centered
   }
 
@@ -307,23 +298,10 @@ trait SegmentsAbs extends scalan.ScalanDsl with Segments {
   implicit def isoCentered: Iso[CenteredData, Centered] =
     reifyObject(new CenteredIso())
 
-  // 6) smart constructor and deconstructor
-  def mkCentered(center: Rep[Int], radius: Rep[Int]): Rep[Centered]
-  def unmkCentered(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
-
   registerModule(Segments_Module)
-}
 
-// Exp -----------------------------------
-trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
-  self: SegmentsDslExp =>
-
-  lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
+  lazy val Segment: Rep[SegmentCompanionDef] = new SegmentCompanionDef {
   }
-
-  case class ExpInterval
-      (override val start: Rep[Int], override val end: Rep[Int])
-    extends AbsInterval(start, end)
 
   object IntervalMethods {
     object length {
@@ -368,7 +346,7 @@ trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
 
   def mkInterval
     (start: Rep[Int], end: Rep[Int]): Rep[Interval] = {
-    new ExpInterval(start, end)
+    new IntervalDef(start, end)
   }
   def unmkInterval(p: Rep[Segment]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: IntervalElem @unchecked =>
@@ -376,10 +354,6 @@ trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
     case _ =>
       None
   }
-
-  case class ExpSlice
-      (override val start: Rep[Int], override val length: Rep[Int])
-    extends AbsSlice(start, length)
 
   object SliceMethods {
     object end {
@@ -424,7 +398,7 @@ trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
 
   def mkSlice
     (start: Rep[Int], length: Rep[Int]): Rep[Slice] = {
-    new ExpSlice(start, length)
+    new SliceDef(start, length)
   }
   def unmkSlice(p: Rep[Segment]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SliceElem @unchecked =>
@@ -432,10 +406,6 @@ trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
     case _ =>
       None
   }
-
-  case class ExpCentered
-      (override val center: Rep[Int], override val radius: Rep[Int])
-    extends AbsCentered(center, radius)
 
   object CenteredMethods {
     object start {
@@ -504,7 +474,7 @@ trait SegmentsExp extends scalan.ScalanDslExp with SegmentsDsl {
 
   def mkCentered
     (center: Rep[Int], radius: Rep[Int]): Rep[Centered] = {
-    new ExpCentered(center, radius)
+    new CenteredDef(center, radius)
   }
   def unmkCentered(p: Rep[Segment]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: CenteredElem @unchecked =>
@@ -585,4 +555,3 @@ object Segments_Module extends scalan.ModuleInfo {
 }
 
 trait SegmentsDsl extends impl.SegmentsAbs
-trait SegmentsDslExp extends impl.SegmentsExp

@@ -21,9 +21,6 @@ import scalan.util.{StringUtil, ReflectionUtil, ScalaNameUtil}
 
 trait Proxy { self: Scalan =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops
-//  def proxyOpsEx[OpsBase <: AnyRef, Ops <: AnyRef, Wrapper <: Ops]
-//        (x: Rep[OpsBase])
-//        (implicit ctBase: ClassTag[OpsBase], ct: ClassTag[Ops], ctWrapper: ClassTag[Wrapper]): Ops
 
   def getStagedFunc(name: String): Rep[_] = {
     val clazz = this.getClass
@@ -609,6 +606,9 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       !!!(s"Method $m couldn't be found on type $tpe")
   }
 
+  def isStagedType(symName: String) =
+    symName.toString == "Rep" || symName.toString == "Exp"
+
   protected def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = {
     val e = receiver.elem
     val tpe = tpeFromElem(e)
@@ -619,11 +619,11 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val returnType = scalaMethod.returnType.asSeenFrom(tpe, scalaMethod.owner).dealias
     returnType match {
       // FIXME can't figure out proper comparison with RepType here
-      case TypeRef(_, sym, List(tpe1)) if sym.name.toString == "Rep" =>
+      case TypeRef(_, sym, List(tpe1)) if isStagedType(sym.name.toString) =>
         val paramTypes = scalaMethod.paramLists.flatten.map(_.typeSignature.asSeenFrom(tpe, scalaMethod.owner).dealias)
         // reverse to let implicit elem parameters be first
         val elemsWithTypes: List[(TypeDesc, Type)] = args.zip(paramTypes).reverse.flatMap {
-          case (e: Exp[_], TypeRef(_, sym, List(tpeE))) if sym.name.toString == "Rep" =>
+          case (e: Exp[_], TypeRef(_, sym, List(tpeE))) if isStagedType(sym.name.toString) =>
             List(e.elem -> tpeE)
           case (elem: Elem[_], TypeRef(_, ElementSym, List(tpeElem))) =>
             List(elem -> tpeElem)
