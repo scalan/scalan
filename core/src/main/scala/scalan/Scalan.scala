@@ -3,51 +3,13 @@ package scalan
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
 import scalan.staged.{BaseExp, Expressions, Transforming, TransformingExp}
-import scalan.util.{ExceptionsDsl, ExceptionsDslExp}
-
-abstract class Scalan
-  extends Base
-  with Debugging
-  with TypeDescs
-  with TypeWrappers
-  with ViewsDsl
-  with Entities
-  with Proxy
-  with Tuples
-  with Loops
-  with TypeSum
-  with UnBinOps
-  with LogicalOps
-  with OrderingOps
-  with NumericOps
-  with StringOps
-  with Equal
-  with UniversalOps
-  with MathOps
-  with Functions
-  with IfThenElse
-  with Blocks
-  with Monoids
-  with PatternMatching
-  with Transforming
-  with Analyzing
-  with Exceptions
-  with Thunks
-  with Effects
-  with Metadata
-  with ConvertersDsl
-  with StructsDsl
-
-trait ScalanDsl
-extends Scalan
-  with ExceptionsDsl
+import scalan.util.{ExceptionsDsl}
 
 abstract class ScalanExp
-  extends Scalan
-  with BaseExp
+  extends BaseExp
   with TypeDescsExp
   with TypeWrappersExp
-  with ViewsDslExp
+  with ViewsDsl
   with ProxyExp
   with TuplesExp
   with LoopsExp
@@ -56,6 +18,8 @@ abstract class ScalanExp
   with UnBinOpsExp
   with LogicalOpsExp
   with OrderingOpsExp
+  with MathOps
+  with Monoids
   with EqualExp
   with UniversalOpsExp
   with FunctionsExp
@@ -69,19 +33,24 @@ abstract class ScalanExp
   with ThunksExp
   with EffectsExp
   with MetadataExp
-  with ConvertersDslExp
+  with ConvertersDsl
   with RewriteRulesExp
   with GraphVizExport
-  with StructsDslExp
+  with Structs
+  with Debugging
+
+trait ScalanDsl
+  extends ScalanExp
+    with ExceptionsDsl
 
 class ScalanDslExp
 extends ScalanExp
   with ScalanDsl
   with Expressions
-  with ExceptionsDslExp
+  with ExceptionsDsl
 
 class ScalanDslStd
 extends ScalanExp
   with ScalanDsl
   with Expressions
-  with ExceptionsDslExp
+  with ExceptionsDsl

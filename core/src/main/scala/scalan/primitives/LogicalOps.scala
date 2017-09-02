@@ -1,9 +1,9 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{ScalanExp, Scalan}
+import scalan.{ScalanExp}
 
-trait LogicalOps extends UnBinOps { self: Scalan =>
+trait LogicalOpsExp extends BaseExp { self: ScalanExp =>
   val And = new EndoBinOp[Boolean]("&&", _ && _)
 
   val Or = new EndoBinOp[Boolean]("||", _ || _)
@@ -34,9 +34,7 @@ trait LogicalOps extends UnBinOps { self: Scalan =>
 
     def !!! = sameArgFun(f) { x => !f(x) }
   }
-}
 
-trait LogicalOpsExp extends LogicalOps with BaseExp { self: ScalanExp =>
   override def rewriteDef[A](d: Def[A]) = d match {
     case ApplyBinOp(op, lhs, rhs) =>
       op.asInstanceOf[BinOp[_, _]] match {

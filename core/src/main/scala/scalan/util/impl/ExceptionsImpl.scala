@@ -6,15 +6,15 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait ExceptionsAbs extends scalan.Scalan with Exceptions {
+trait ExceptionsDefs extends scalan.ScalanExp with Exceptions {
   self: ExceptionsDsl =>
 
-  // single proxy for each type family
+  // entityProxy: single proxy for each type family
   implicit def proxySThrowable(p: Rep[SThrowable]): SThrowable = {
     proxyOps[SThrowable](p)(scala.reflect.classTag[SThrowable])
   }
 
-  // TypeWrapper proxy
+  //proxyBT: TypeWrapper proxy
   //implicit def proxyThrowable(p: Rep[Throwable]): SThrowable =
   //  proxyOps[SThrowable](p.asRep[SThrowable])
 
@@ -55,18 +55,17 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
       (classOf[SThrowableElem[SThrowable]], Nil),
       new SThrowableElem[SThrowable]).asInstanceOf[Elem[SThrowable]]
 
-  implicit case object SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs] {
-    lazy val tag = weakTypeTag[SThrowableCompanionAbs]
+  implicit case object SThrowableCompanionElem extends CompanionElem[SThrowableCompanionCtor] {
+    lazy val tag = weakTypeTag[SThrowableCompanionCtor]
     protected def getDefaultRep = SThrowable
   }
 
-  abstract class SThrowableCompanionAbs extends CompanionDef[SThrowableCompanionAbs] with SThrowableCompanion {
+  abstract class SThrowableCompanionCtor extends CompanionDef[SThrowableCompanionCtor] with SThrowableCompanion {
     def selfType = SThrowableCompanionElem
     override def toString = "SThrowable"
   }
-  def SThrowable: Rep[SThrowableCompanionAbs]
-  implicit def proxySThrowableCompanionAbs(p: Rep[SThrowableCompanionAbs]): SThrowableCompanionAbs =
-    proxyOps[SThrowableCompanionAbs](p)
+  implicit def proxySThrowableCompanionCtor(p: Rep[SThrowableCompanionCtor]): SThrowableCompanionCtor =
+    proxyOps[SThrowableCompanionCtor](p)
 
   // default wrapper implementation
   abstract class SThrowableImpl(val wrappedValue: Rep[Throwable]) extends SThrowable with Def[SThrowableImpl] {
@@ -81,6 +80,8 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
       methodCallEx[SThrowable](self,
         this.getClass.getMethod("initCause", classOf[AnyRef]),
         List(cause.asInstanceOf[AnyRef]))
+  }
+  case class SThrowableImplCtor(override val wrappedValue: Rep[Throwable]) extends SThrowableImpl(wrappedValue) {
   }
   trait SThrowableImplCompanion
   // elem for concrete class
@@ -124,7 +125,7 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
     lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
-  class SThrowableImplCompanionAbs extends CompanionDef[SThrowableImplCompanionAbs] {
+  class SThrowableImplCompanionCtor extends CompanionDef[SThrowableImplCompanionCtor] {
     def selfType = SThrowableImplCompanionElem
     override def toString = "SThrowableImpl"
 
@@ -134,14 +135,14 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
 
     def unapply(p: Rep[SThrowable]) = unmkSThrowableImpl(p)
   }
-  lazy val SThrowableImplRep: Rep[SThrowableImplCompanionAbs] = new SThrowableImplCompanionAbs
-  lazy val SThrowableImpl: SThrowableImplCompanionAbs = proxySThrowableImplCompanion(SThrowableImplRep)
-  implicit def proxySThrowableImplCompanion(p: Rep[SThrowableImplCompanionAbs]): SThrowableImplCompanionAbs = {
-    proxyOps[SThrowableImplCompanionAbs](p)
+  lazy val SThrowableImplRep: Rep[SThrowableImplCompanionCtor] = new SThrowableImplCompanionCtor
+  lazy val SThrowableImpl: SThrowableImplCompanionCtor = proxySThrowableImplCompanion(SThrowableImplRep)
+  implicit def proxySThrowableImplCompanion(p: Rep[SThrowableImplCompanionCtor]): SThrowableImplCompanionCtor = {
+    proxyOps[SThrowableImplCompanionCtor](p)
   }
 
-  implicit case object SThrowableImplCompanionElem extends CompanionElem[SThrowableImplCompanionAbs] {
-    lazy val tag = weakTypeTag[SThrowableImplCompanionAbs]
+  implicit case object SThrowableImplCompanionElem extends CompanionElem[SThrowableImplCompanionCtor] {
+    lazy val tag = weakTypeTag[SThrowableImplCompanionCtor]
     protected def getDefaultRep = SThrowableImpl
   }
 
@@ -156,32 +157,19 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
   implicit def isoSThrowableImpl: Iso[SThrowableImplData, SThrowableImpl] =
     reifyObject(new SThrowableImplIso())
 
-  // 6) smart constructor and deconstructor
-  def mkSThrowableImpl(wrappedValue: Rep[Throwable]): Rep[SThrowableImpl]
-  def unmkSThrowableImpl(p: Rep[SThrowable]): Option[(Rep[Throwable])]
-
   registerModule(Exceptions_Module)
-}
 
-// Exp -----------------------------------
-trait ExceptionsExp extends scalan.ScalanExp with ExceptionsDsl {
-  self: ExceptionsDslExp =>
-
-  lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs {
+  lazy val SThrowable: Rep[SThrowableCompanionCtor] = new SThrowableCompanionCtor {
     def apply(msg: Rep[String]): Rep[SThrowable] =
       newObjEx[SThrowable](msg)
   }
-
-  case class ExpSThrowableImpl
-      (override val wrappedValue: Rep[Throwable])
-    extends SThrowableImpl(wrappedValue)
 
   object SThrowableImplMethods {
   }
 
   def mkSThrowableImpl
     (wrappedValue: Rep[Throwable]): Rep[SThrowableImpl] = {
-    new ExpSThrowableImpl(wrappedValue)
+    new SThrowableImplCtor(wrappedValue)
   }
   def unmkSThrowableImpl(p: Rep[SThrowable]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SThrowableImplElem @unchecked =>
@@ -236,5 +224,4 @@ object Exceptions_Module extends scalan.ModuleInfo {
 }
 }
 
-trait ExceptionsDsl extends impl.ExceptionsAbs
-trait ExceptionsDslExp extends impl.ExceptionsExp
+trait ExceptionsDsl extends impl.ExceptionsDefs

@@ -3,7 +3,7 @@ package scalan
 import scala.collection.Seq
 import scalan.util.CollectionUtil
 
-trait Analyzing { self: Scalan =>  }
+trait Analyzing { self: ScalanExp =>  }
 
 trait AnalyzingExp extends Analyzing { self: ScalanExp =>
 

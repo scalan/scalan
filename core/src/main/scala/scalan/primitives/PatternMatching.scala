@@ -6,14 +6,10 @@ import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.BaseExp
 import scalan.util.ScalaNameUtil
 
-trait PatternMatching { _: Scalan =>
-
-  def patternMatchError(obj: Any): Nothing
+trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
 
   def MATCH[A, B: Elem](selector: Rep[A])(f: PartialFunction[Rep[A], Rep[B]]): Rep[B] =
-    macro PatternMatchingMacro.patternMatchImpl[A, B]
-
-  protected def patternMatch[A, B: Elem](selector: Rep[A])(branches: Branch[_ <: A, B]*)(default: Option[Rep[A => B]]): Rep[B]
+  macro PatternMatchingMacro.patternMatchImpl[A, B]
 
   case class Branch[A, +B](elem: Elem[A], guard: Rep[A => Boolean], body: Rep[A => B])
 
@@ -28,9 +24,7 @@ trait PatternMatching { _: Scalan =>
     def make[B: Elem](body: Rep[A] => Rep[B]) = Branch(elem, constFun(true)(elem), fun(body))
     def make[B: Elem](guard: Rep[A] => Rep[Boolean])(body: Rep[A] => Rep[B]) = Branch(elem, fun(guard), fun(body))
   }
-}
 
-trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
   // TODO match branches need to be treated similarly to if branches for code motion etc.
 
   def patternMatchError(obj: Any): Nothing = throw new DelayInvokeException

@@ -1,11 +1,11 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{Scalan, ScalanExp}
+import scalan.{ScalanExp}
 import scala.reflect.runtime.universe._
 import scalan.util.Invariant
 
-trait RewriteRules { self: Scalan =>
+trait RewriteRulesExp extends BaseExp { self: ScalanExp =>
   case class Rewrite[A](lhs: Rep[A], rhs: Rep[A])
   case class RewriteOp[A: Elem]() extends BinOp[A, Rewrite[A]]("==>", (x, y) => Rewrite[A](x, y))
 
@@ -31,9 +31,6 @@ trait RewriteRules { self: Scalan =>
   implicit class PropEqualityOps[A](x: Rep[A]) {
     def <=>(y: Rep[A]): Rep[Rewrite[A]] = self.mkRewrite(x, y)
   }
-}
-
-trait RewriteRulesExp extends RewriteRules with BaseExp { self: ScalanExp =>
 
   def postulate[A:Elem, R](p: Rep[A] => RRewrite[R]): RRewrite[R] = p(fresh[A])
   def postulate[A:Elem, B:Elem, R](p: (Rep[A], Rep[B]) => RRewrite[R]): RRewrite[R] = p(fresh[A], fresh[B])

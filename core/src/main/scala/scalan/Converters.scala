@@ -4,7 +4,7 @@ import scalan.staged.Expressions
 import scalan.common.{Lazy, OverloadHack}
 import OverloadHack.Overloaded2
 
-trait Converters extends ViewsDsl { self: Scalan =>
+trait Converters extends ViewsDsl { self: ScalanExp =>
 
   type Conv[T,R] = Rep[Converter[T,R]]
   trait Converter[T,R] extends Def[Converter[T,R]] {
@@ -112,11 +112,9 @@ trait Converters extends ViewsDsl { self: Scalan =>
       case _ => false
     }
   }
-
 }
 
-trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
-  def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Def[_]], conv: Rep[From => To]): Rep[To]
+trait ConvertersDsl extends impl.ConvertersDefs { self: ScalanExp =>
 
   def identityConv[A](implicit elem: Elem[A]): Conv[A, A] = IdentityConv[A]()(elem)
 
@@ -192,9 +190,6 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
       case _ => None
     }
   }
-}
-
-trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: ScalanExp =>
 
   case class Convert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Def[_]], conv: Rep[From => To])
     extends BaseDef[To]()(eTo)
@@ -220,3 +215,4 @@ trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: Scala
     case _ => super.rewriteDef(d)
   }
 }
+

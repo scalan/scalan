@@ -2,7 +2,7 @@ package scalan.graphs
 
 import scalan._
 import scalan.collections.{CollectionsDslExp, CollectionsDslStd, CollectionsDsl}
-import scalan.{ScalanStd, ScalanExp, Scalan}
+import scalan.{ScalanStd, ScalanExp}
 import scalan.common.OverloadHack.Overloaded1
 
 

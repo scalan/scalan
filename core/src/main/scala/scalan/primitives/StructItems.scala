@@ -5,7 +5,7 @@ import scalan._
 import scala.reflect.runtime.universe._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 
-trait StructItems extends ViewsDsl with Entities  { self: StructsDsl with Scalan =>
+trait StructItems extends ViewsDsl with Entities  { self: Structs with ScalanExp =>
 
   trait StructItem[@uncheckedVariance +Val, Schema <: Struct] extends Def[StructItem[Val @uncheckedVariance, Schema]] {
     def eVal: Elem[Val @uncheckedVariance]
@@ -21,9 +21,7 @@ trait StructItems extends ViewsDsl with Entities  { self: StructsDsl with Scalan
 
 }
 
-trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan =>
-
-  def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int]): Rep[StructItem[_,S]]
+trait StructItemsDsl extends impl.StructItemsDefs { self: Structs with ScalanExp =>
 
   def struct_getItem[S <: Struct](s: Rep[S], i: Int)(implicit o1: Overloaded1): Rep[StructItem[_,S]] = {
     val value = s.getUntyped(i)
@@ -76,9 +74,6 @@ trait StructItemsDsl extends impl.StructItemsAbs { self: StructsDsl with Scalan 
     def setItem(i: Rep[Int], v: Rep[_]): Rep[S] = struct_setItem(s, i, v)
     def setItem(k: Rep[StructKey[S]], v: Rep[_])(implicit o: Overloaded2): Rep[S] = struct_setItem(s, k.index, v)
   }
-}
-
-trait StructItemsDslExp extends impl.StructItemsExp {self: StructsDsl with ScalanExp =>
 
   def struct_getItem[S <: Struct](s: Rep[S], i: Rep[Int]): Rep[StructItem[_,S]] =
     i match {
@@ -87,3 +82,4 @@ trait StructItemsDslExp extends impl.StructItemsExp {self: StructsDsl with Scala
         ???
     }
 }
+

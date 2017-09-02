@@ -9,7 +9,7 @@ import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
 import scalan.util.{ParamMirror, ReflectionUtil}
-import scalan.{Base, Scalan, ScalanExp}
+import scalan.{Base, ScalanExp}
 import scalan.common.Lazy
 import scalan.compilation.GraphVizConfig
 

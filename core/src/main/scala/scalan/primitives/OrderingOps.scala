@@ -1,9 +1,9 @@
 package scalan.primitives
 
-import scalan.{ScalanExp, Scalan}
+import scalan.{ScalanExp}
 import scalan.staged.{BaseExp}
 
-trait OrderingOps { self: Scalan =>
+trait OrderingOpsExp extends BaseExp { self: ScalanExp =>
   implicit def repOrderingToOrderingOps[T](x: Rep[T])(implicit n: Ordering[T]) = new OrderingOpsCls(x)
   implicit def OrderingToOrderingOps[T](x: T)(implicit n: Ordering[T], et: Elem[T]) = new OrderingOpsCls(toRep(x))
 
@@ -30,9 +30,7 @@ trait OrderingOps { self: Scalan =>
   case class OrderingMin[T: Elem](ord: Ordering[T]) extends BinOp[T, T]("min", ord.min)
 
   case class OrderingCompare[T](ord: Ordering[T]) extends BinOp[T, Int]("compare", ord.compare)
-}
 
-trait OrderingOpsExp extends OrderingOps with BaseExp { self: ScalanExp =>
   override def rewriteDef[T](d: Def[T]) = d match {
     case ApplyUnOp(not, Def(ApplyBinOp(op, x, y))) if not == Not =>
       op.asInstanceOf[BinOp[_, _]] match {

@@ -19,10 +19,7 @@ import scalan.staged.Expressions
  - no SourceContext, withPos
  - mirroring implemented in Scalan way (though consistent with LMS)
  */
-trait Structs extends Base { self: StructsDsl with Scalan =>
-}
-
-trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: Scalan =>
+trait Structs extends EffectsExp with StructItemsDsl with StructKeysDsl { self: ScalanExp =>
   // TODO consider if T type parameter is needed here and for AbstractStruct
   // It's only useful if we'll have some static typing on structs later (Shapeless' records?)
   abstract class StructTag[T <: Struct](implicit val typeTag: TypeTag[T]) {
@@ -31,7 +28,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
   }
   case class SimpleTag[T <: Struct](name: String)(implicit typeTag: TypeTag[T]) extends StructTag[T] {
     override def equals(other: Any) = other match {
-      case tag: StructsDsl#SimpleTag[_] => name == tag.name && typeTag == tag.typeTag
+      case tag: Structs#SimpleTag[_] => name == tag.name && typeTag == tag.typeTag
       case _ => false
     }
   }
@@ -127,7 +124,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
   case class StructToPairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
     extends IsoUR[Struct, (B1, B2)] {
     override def equals(other: Any) = other match {
-      case iso: StructsDsl#StructToPairIso[_, _, _, _] =>
+      case iso: Structs#StructToPairIso[_, _, _, _] =>
         (this eq iso) || (iso1 == iso.iso1 && iso2 == iso.iso2)
       case _ => false
     }
@@ -161,7 +158,7 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     assert(eTo.isEqualType(itemIsos.map(_.eTo)))
 
     override def equals(other: Any) = other match {
-      case iso: StructsDsl#StructIso[_, _] =>
+      case iso: Structs#StructIso[_, _] =>
         (this eq iso) || (eFrom == iso.eFrom && eTo == iso.eTo)
       case _ => false
     }
@@ -215,23 +212,17 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
   def struct(fields: Seq[StructField]): Rep[Struct] = struct(defaultStructTag, fields)
   def struct[T <: Struct](tag: StructTag[T], fields: StructField*)(implicit o: Overloaded1): Rep[T] =
     struct(tag, fields)
-  def struct[T <: Struct](tag: StructTag[T], fields: Seq[StructField]): Rep[T]
   def tupleStruct(items: Rep[_]*): Rep[Struct] = {
     val fields = items.zipWithIndex.map { case (f, i) => tupleFN(i) -> f }
     struct(defaultStructTag, fields)
   }
-  def field(struct: Rep[Struct], field: String): Rep[_]
-  def updateField[S <: Struct](struct: Rep[S], fieldName: String, v: Rep[_]): Rep[S]
-  def field(struct: Rep[Struct], fieldIndex: Int): Rep[_]
-
-  def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct]
 
   case class Link(field: String, nestedField: String, nestedElem: Elem[_], flatName: String)
 
   case class FlatteningIso[T <: Struct](eTo: StructElem[T], flatIsos: Map[String, Iso[_,_]], links: Seq[Link])
       extends IsoUR[Struct,T] {
     override def equals(other: Any) = other match {
-      case iso: StructsDsl#FlatteningIso[_] =>
+      case iso: Structs#FlatteningIso[_] =>
         (this eq iso) || (eFrom == iso.eFrom && eTo == iso.eTo)
       case _ => false
     }
@@ -453,12 +444,6 @@ trait StructsDsl extends Structs with StructItemsDsl with StructKeysDsl { self: 
     val wrapperFun = f >> outIso.fromFun
     wrapperFun.asRep[A => Any]
   }
-
-}
-
-trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with EffectsExp with ViewsDslExp with StructItemsDslExp
-    with StructKeysDslExp with GraphVizExport { self: ScalanExp =>
-
   abstract class AbstractStruct[T <: Struct] extends Def[T] {
     def tag: StructTag[T]
     def fields: Seq[StructField]
@@ -502,7 +487,7 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
   def field(struct: Rep[Struct], field: String): Rep[_] = {
     struct.elem match {
       case se: StructElem[a] =>
-//        val fieldElem = se(field)
+        //        val fieldElem = se(field)
         FieldApply[a](struct, field)
       case _ =>
         !!!(s"Attempt to get field $field from a non-struct ${struct.toStringWithType}", struct)
@@ -640,3 +625,4 @@ trait StructsDslExp extends StructsDsl with Expressions with FunctionsExp with E
     }).asRep[T]
   }
 }
+

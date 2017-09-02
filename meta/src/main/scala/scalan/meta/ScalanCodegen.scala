@@ -631,6 +631,8 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
              |    lazy val selfType = element[${e.name}Impl${tpeArgsDecl}]
              |    $externalMethodsStr
              |  }
+             |  case class ${e.name}ImplCtor${tpeArgsDecl}(override val wrappedValue: Rep[${e.baseTypeUse}])${implicitArgsWithVals} extends ${e.name}Impl${tpeArgsUse}(${fields.rep()}) {
+             |  }
              |  trait ${e.name}ImplCompanion
              |""".stripAndTrim
         case Some(_) => ""

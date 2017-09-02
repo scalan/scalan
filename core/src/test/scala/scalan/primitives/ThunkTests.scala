@@ -7,7 +7,7 @@ import scalan._
 import scalan.common.{SegmentsDsl}
 
 class ThunkTests extends BaseCtxTests {
-  trait MyProg extends Scalan {
+  trait MyProg extends ScalanExp {
     lazy val t1 = fun { (in: Rep[Int]) =>
       Thunk { in }
     }

@@ -2,11 +2,9 @@ package scalan.primitives
 
 import scalan.common.Lazy
 import scalan.staged.BaseExp
-import scalan.{ ScalanExp, Scalan }
+import scalan.{ ScalanExp }
 
-trait Loops { self: Scalan =>
-
-  def loopUntil[A](s1: Rep[A])(isMatch: Rep[A => Boolean], step: Rep[A => A]): Rep[A]
+trait LoopsExp extends BaseExp { self: ScalanExp =>
 
   def loopUntilAux[A](s1: Rep[A])(isMatch: Rep[A] => Rep[Boolean], step: Rep[A] => Rep[A]): Rep[A] = {
     val eA = s1.elem
@@ -35,22 +33,22 @@ trait Loops { self: Scalan =>
   def loopUntil5[A, B, C, D, E](s1: Rep[A], s2: Rep[B], s3: Rep[C], s4: Rep[D], s5: Rep[E])
                                (isMatch: (Rep[A],Rep[B],Rep[C],Rep[D],Rep[E]) => Rep[Boolean],
                                 step: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E]) => (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E])): Rep[(A,(B,(C,(D,E))))]
-    = loopUntilAux(Tuple(s1, s2, s3,s4, s5))({case Tuple(a,b,c,d,e) => isMatch(a,b,c,d,e) }, {case Tuple(a,b,c,d,e) => step(a,b,c,d,e)})
+  = loopUntilAux(Tuple(s1, s2, s3,s4, s5))({case Tuple(a,b,c,d,e) => isMatch(a,b,c,d,e) }, {case Tuple(a,b,c,d,e) => step(a,b,c,d,e)})
 
   def loopUntil6[A, B, C, D, E, F](s1: Rep[A], s2: Rep[B], s3: Rep[C], s4: Rep[D], s5: Rep[E], s6: Rep[F])
                                   (isMatch: (Rep[A],Rep[B],Rep[C],Rep[D],Rep[E],Rep[F]) => Rep[Boolean],
                                    step: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F]) => (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F])): Rep[(A,(B,(C,(D,(E,F)))))]
-    = loopUntilAux(Tuple(s1, s2, s3,s4, s5,s6))({case Tuple(a,b,c,d,e,f) => isMatch(a,b,c,d,e,f) }, {case Tuple(a,b,c,d,e,f) => step(a,b,c,d,e,f)})
+  = loopUntilAux(Tuple(s1, s2, s3,s4, s5,s6))({case Tuple(a,b,c,d,e,f) => isMatch(a,b,c,d,e,f) }, {case Tuple(a,b,c,d,e,f) => step(a,b,c,d,e,f)})
 
   def loopUntil7[A, B, C, D, E, F, G](s1: Rep[A], s2: Rep[B], s3: Rep[C], s4: Rep[D], s5: Rep[E], s6: Rep[F], s7: Rep[G])
                                      (isMatch: (Rep[A],Rep[B],Rep[C],Rep[D],Rep[E],Rep[F],Rep[G]) => Rep[Boolean],
                                       step: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F],Rep[G]) => (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F],Rep[G])): Rep[(A,(B,(C,(D,(E,(F,G))))))]
-    = loopUntilAux(Tuple(s1, s2, s3,s4, s5,s6,s7))({case Tuple(a,b,c,d,e,f,g) => isMatch(a,b,c,d,e,f,g) }, {case Tuple(a,b,c,d,e,f,g) => step(a,b,c,d,e,f,g)})
+  = loopUntilAux(Tuple(s1, s2, s3,s4, s5,s6,s7))({case Tuple(a,b,c,d,e,f,g) => isMatch(a,b,c,d,e,f,g) }, {case Tuple(a,b,c,d,e,f,g) => step(a,b,c,d,e,f,g)})
 
   def loopUntil8[A, B, C, D, E, F, G, H](s1: Rep[A], s2: Rep[B], s3: Rep[C], s4: Rep[D], s5: Rep[E], s6: Rep[F], s7: Rep[G], s8: Rep[H])
                                         (isMatch: (Rep[A],Rep[B],Rep[C],Rep[D],Rep[E],Rep[F],Rep[G],Rep[H]) => Rep[Boolean],
                                          step: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F],Rep[G],Rep[H]) => (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F],Rep[G],Rep[H])): Rep[(A,(B,(C,(D,(E,(F,(G,H)))))))]
-    = loopUntilAux(Tuple(s1, s2, s3,s4, s5, s6, s7, s8))({case Tuple(a,b,c,d,e,f,g,h) => isMatch(a,b,c,d,e,f,g,h) }, {case Tuple(a,b,c,d,e,f,g,h) => step(a,b,c,d,e,f,g,h)})
+  = loopUntilAux(Tuple(s1, s2, s3,s4, s5, s6, s7, s8))({case Tuple(a,b,c,d,e,f,g,h) => isMatch(a,b,c,d,e,f,g,h) }, {case Tuple(a,b,c,d,e,f,g,h) => step(a,b,c,d,e,f,g,h)})
 
   def from[A](s1: Rep[A]) = new From1(s1)
   def from[A, B](s1: Rep[A], s2: Rep[B]) = new From2(s1, s2)
@@ -100,9 +98,6 @@ trait Loops { self: Scalan =>
       loopUntil8(s1, s2, s3, s4, s5, s6, s7, s8)(isMatch, step)
   }
 
-}
-
-trait LoopsExp extends Loops with BaseExp { self: ScalanExp =>
   def loopUntil[A](s1: Rep[A])(isMatch: Rep[A => Boolean], step: Rep[A => A]): Rep[A] = LoopUntil(s1, step, isMatch)
 
   case class LoopUntil[A](s1: Rep[A], step: Rep[A => A], isMatch: Rep[A => Boolean]) extends Def[A] {

@@ -9,9 +9,7 @@ import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.util.{Try, Success}
-
 import org.objenesis.ObjenesisStd
-
 import net.sf.cglib.proxy.Enhancer
 import net.sf.cglib.proxy.Factory
 import net.sf.cglib.proxy.InvocationHandler
@@ -19,8 +17,7 @@ import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.BaseExp
 import scalan.util.{StringUtil, ReflectionUtil, ScalaNameUtil}
 
-trait Proxy { self: Scalan =>
-  def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops
+trait ProxyExp extends BaseExp with MetadataExp with GraphVizExport { self: ScalanExp =>
 
   def getStagedFunc(name: String): Rep[_] = {
     val clazz = this.getClass
@@ -28,12 +25,9 @@ trait Proxy { self: Scalan =>
     f.invoke(this).asInstanceOf[Rep[_]]
   }
 
-  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef]): Rep[A]
-  def newObjEx[A](args: Any*)(implicit eA: Elem[A]): Rep[A]
-
   /**
-   * Can be thrown to prevent invoke
-   */
+    * Can be thrown to prevent invoke
+    */
   class DelayInvokeException extends Exception
 
   case class ExternalMethodException(className: String, methodName: String) extends DelayInvokeException
@@ -42,9 +36,7 @@ trait Proxy { self: Scalan =>
     throw new ExternalMethodException(className, methodName)
   }
   def delayInvoke = throw new DelayInvokeException
-}
 
-trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp =>
   // call mkMethodCall instead of constructor
   case class MethodCall private[ProxyExp] (receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean)(val selfType: Elem[Any]) extends Def[Any] {
 
@@ -156,7 +148,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   private val proxies = scala.collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
 
-  override def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops =
+  def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops =
     x match {
       case Def(Const(c)) => c
       case _ => getProxy(x, ct)

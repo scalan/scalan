@@ -2,20 +2,17 @@ package scalan.primitives
 
 import scala.collection.mutable
 import scalan.staged.Expressions
-import scalan.{ScalanExp, Scalan}
+import scalan.{ScalanExp}
 import scalan.common.Lazy
 
-trait Blocks { self: Scalan =>
-  def semicolon[A,B](left: Rep[A], right: Rep[B]): Rep[B]
- 
+trait BlocksExp extends Expressions { self: ScalanExp =>
+
   implicit class RepBlock[A](left: Rep[A]) { 
     def |[B](right: Rep[B]) = semicolon(left, right)
   }
-}
 
-trait BlocksExp extends Blocks with Expressions { self: ScalanExp =>
-  case class Semicolon[A,B](left: Exp[A], right: Exp[B]) extends BaseDef[B]()(right.elem)
-  case class SemicolonMulti[B](left: Seq[Exp[_]], right: Exp[B]) extends BaseDef[B]()(right.elem)
+  case class Semicolon[A,B](left: Rep[A], right: Rep[B]) extends BaseDef[B]()(right.elem)
+  case class SemicolonMulti[B](left: Seq[Rep[_]], right: Rep[B]) extends BaseDef[B]()(right.elem)
 
   def semicolon[A,B](left: Rep[A], right: Rep[B]): Rep[B] = {
 //    implicit val eR = right.elem

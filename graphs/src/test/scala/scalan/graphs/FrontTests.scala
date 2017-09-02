@@ -5,7 +5,7 @@ import scalan._
 
 class FrontTests extends BaseCtxTests {
 
-  trait FrontProg extends Scalan with GraphsDsl {
+  trait FrontProg extends ScalanExp with GraphsDsl {
     lazy val example = fun { (in: Rep[(Int, Front)]) =>
       val Pair(v, f) = in;
       f.append(v)

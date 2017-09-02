@@ -3,12 +3,12 @@ package scalan.primitives
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.{ScalanExp, ViewsDslExp, Scalan}
+import scalan.{ScalanExp, ViewsDsl}
 import scala.reflect.runtime.universe._
 import scalan.common.Lazy
 import scalan.util.Covariant
 
-trait Thunks { self: Scalan =>
+trait ThunksExp extends FunctionsExp with ViewsDsl with GraphVizExport with EffectsExp { self: ScalanExp =>
   type Th[+T] = Rep[Thunk[T]]
   trait Thunk[+A] { def value: A }
   class ThunkCompanion {
@@ -47,14 +47,6 @@ trait Thunks { self: Scalan =>
   implicit def thunkElement[T](implicit eItem: Elem[T]): Elem[Thunk[T]] =
     cachedElem[ThunkElem[T]](eItem)
   implicit def extendThunkElement[T](elem: Elem[Thunk[T]]): ThunkElem[T] = elem.asInstanceOf[ThunkElem[T]]
-
-  def thunk_create[A](block: => Rep[A]): Rep[Thunk[A]]
-  def thunk_force[A](t: Th[A]): Rep[A]
-  def thunk_map[A, B](t: Th[A], f: Rep[A => B]): Th[B]
-  def thunk_map1[A, B](t: Th[A], f: Rep[A] => Rep[B]): Th[B]
-}
-
-trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>
 
   case class ThunkDef[A](val root: Exp[A], override val schedule: Schedule)
     extends BaseDef[Thunk[A]]()(thunkElement(root.elem)) with AstGraph with Product {

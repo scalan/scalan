@@ -1,10 +1,9 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{ ScalanExp, Scalan }
-import scalan.Scalan
+import scalan.{ ScalanExp }
 
-trait StringOps extends UnBinOps { self: Scalan =>
+trait StringOpsExp extends BaseExp { self: ScalanExp =>
   implicit class StringOpsCls(lhs: Rep[String]) {
     def toInt = StringToInt(lhs)
     def toDouble = StringToDouble(lhs)
@@ -22,9 +21,6 @@ trait StringOps extends UnBinOps { self: Scalan =>
     lazy val empty = toRep("")
   }
 
-  def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String]
-  def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char]
-
   val StringToInt = new UnOp[String, Int]("toInt", _.toInt)
   val StringToDouble = new UnOp[String, Double]("toDouble", _.toDouble)
   val StringLength = new UnOp[String, Int]("length", _.length)
@@ -34,9 +30,6 @@ trait StringOps extends UnBinOps { self: Scalan =>
   val StringStartsWith = new BinOp[String, Boolean]("startsWith", _.startsWith(_))
   val StringEndsWith = new BinOp[String, Boolean]("endsWith", _.endsWith(_))
   val StringMatches = new BinOp[String, Boolean]("matches", _.matches(_))
-}
-
-trait StringOpsExp extends StringOps with BaseExp { self: ScalanExp =>
 
   case class StringSubstring(str: Rep[String], start: Rep[Int], end: Rep[Int]) extends BaseDef[String]
   case class StringCharAt(str: Rep[String], index: Rep[Int]) extends BaseDef[Char]

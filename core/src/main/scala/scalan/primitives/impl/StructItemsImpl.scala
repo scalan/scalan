@@ -9,10 +9,10 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait StructItemsAbs extends StructItems {
-  self: StructsDsl with Scalan =>
+trait StructItemsDefs extends StructItems {
+  self: Structs with ScalanExp =>
 
-  // single proxy for each type family
+  // entityProxy: single proxy for each type family
   implicit def proxyStructItem[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]): StructItem[Val, Schema] = {
     proxyOps[StructItem[Val, Schema]](p)(scala.reflect.classTag[StructItem[Val, Schema]])
   }
@@ -48,21 +48,20 @@ trait StructItemsAbs extends StructItems {
   implicit def structItemElement[Val, Schema <: Struct](implicit eVal: Elem[Val @uncheckedVariance], eSchema: Elem[Schema]): Elem[StructItem[Val, Schema]] =
     cachedElem[StructItemElem[Val, Schema, StructItem[Val, Schema]]](eVal, eSchema)
 
-  implicit case object StructItemCompanionElem extends CompanionElem[StructItemCompanionAbs] {
-    lazy val tag = weakTypeTag[StructItemCompanionAbs]
+  implicit case object StructItemCompanionElem extends CompanionElem[StructItemCompanionCtor] {
+    lazy val tag = weakTypeTag[StructItemCompanionCtor]
     protected def getDefaultRep = StructItem
   }
 
-  abstract class StructItemCompanionAbs extends CompanionDef[StructItemCompanionAbs] {
+  abstract class StructItemCompanionCtor extends CompanionDef[StructItemCompanionCtor] {
     def selfType = StructItemCompanionElem
     override def toString = "StructItem"
   }
-  def StructItem: Rep[StructItemCompanionAbs]
-  implicit def proxyStructItemCompanionAbs(p: Rep[StructItemCompanionAbs]): StructItemCompanionAbs =
-    proxyOps[StructItemCompanionAbs](p)
+  implicit def proxyStructItemCompanionCtor(p: Rep[StructItemCompanionCtor]): StructItemCompanionCtor =
+    proxyOps[StructItemCompanionCtor](p)
 
-  abstract class AbsStructItemBase[Val, Schema <: Struct]
-      (key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
+  case class StructItemBaseCtor[Val, Schema <: Struct]
+      (override val key: Rep[StructKey[Schema]], override val value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
     extends StructItemBase[Val, Schema](key, value) with Def[StructItemBase[Val, Schema]] {
     lazy val selfType = element[StructItemBase[Val, Schema]]
   }
@@ -113,7 +112,7 @@ trait StructItemsAbs extends StructItems {
     lazy val typeArgs = TypeArgs("Val" -> (eVal -> scalan.util.Invariant), "Schema" -> (eSchema -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class StructItemBaseCompanionAbs extends CompanionDef[StructItemBaseCompanionAbs] {
+  class StructItemBaseCompanionCtor extends CompanionDef[StructItemBaseCompanionCtor] {
     def selfType = StructItemBaseCompanionElem
     override def toString = "StructItemBase"
     @scalan.OverloadId("fromData")
@@ -128,14 +127,14 @@ trait StructItemsAbs extends StructItems {
 
     def unapply[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]) = unmkStructItemBase(p)
   }
-  lazy val StructItemBaseRep: Rep[StructItemBaseCompanionAbs] = new StructItemBaseCompanionAbs
-  lazy val StructItemBase: StructItemBaseCompanionAbs = proxyStructItemBaseCompanion(StructItemBaseRep)
-  implicit def proxyStructItemBaseCompanion(p: Rep[StructItemBaseCompanionAbs]): StructItemBaseCompanionAbs = {
-    proxyOps[StructItemBaseCompanionAbs](p)
+  lazy val StructItemBaseRep: Rep[StructItemBaseCompanionCtor] = new StructItemBaseCompanionCtor
+  lazy val StructItemBase: StructItemBaseCompanionCtor = proxyStructItemBaseCompanion(StructItemBaseRep)
+  implicit def proxyStructItemBaseCompanion(p: Rep[StructItemBaseCompanionCtor]): StructItemBaseCompanionCtor = {
+    proxyOps[StructItemBaseCompanionCtor](p)
   }
 
-  implicit case object StructItemBaseCompanionElem extends CompanionElem[StructItemBaseCompanionAbs] {
-    lazy val tag = weakTypeTag[StructItemBaseCompanionAbs]
+  implicit case object StructItemBaseCompanionElem extends CompanionElem[StructItemBaseCompanionCtor] {
+    lazy val tag = weakTypeTag[StructItemBaseCompanionCtor]
     protected def getDefaultRep = StructItemBase
   }
 
@@ -150,23 +149,10 @@ trait StructItemsAbs extends StructItems {
   implicit def isoStructItemBase[Val, Schema <: Struct](implicit eVal: Elem[Val], eSchema: Elem[Schema]): Iso[StructItemBaseData[Val, Schema], StructItemBase[Val, Schema]] =
     reifyObject(new StructItemBaseIso[Val, Schema]()(eVal, eSchema))
 
-  // 6) smart constructor and deconstructor
-  def mkStructItemBase[Val, Schema <: Struct](key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]]
-  def unmkStructItemBase[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]): Option[(Rep[StructKey[Schema]], Rep[Val])]
-
   registerModule(StructItems_Module)
-}
 
-// Exp -----------------------------------
-trait StructItemsExp extends StructItemsDsl {
-  self: StructsDsl with ScalanExp =>
-
-  lazy val StructItem: Rep[StructItemCompanionAbs] = new StructItemCompanionAbs {
+  lazy val StructItem: Rep[StructItemCompanionCtor] = new StructItemCompanionCtor {
   }
-
-  case class ExpStructItemBase[Val, Schema <: Struct]
-      (override val key: Rep[StructKey[Schema]], override val value: Rep[Val])(implicit eVal: Elem[Val], eSchema: Elem[Schema])
-    extends AbsStructItemBase[Val, Schema](key, value)
 
   object StructItemBaseMethods {
   }
@@ -174,7 +160,7 @@ trait StructItemsExp extends StructItemsDsl {
   def mkStructItemBase[Val, Schema <: Struct]
     (key: Rep[StructKey[Schema]], value: Rep[Val])(implicit eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] = {
     implicit val eVal = value.elem
-    new ExpStructItemBase[Val, Schema](key, value)
+    new StructItemBaseCtor[Val, Schema](key, value)
   }
   def unmkStructItemBase[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: StructItemBaseElem[Val, Schema] @unchecked =>
@@ -211,7 +197,7 @@ trait StructItemsExp extends StructItemsDsl {
 }
 
 object StructItems_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWS2wbRRgeO3b8ClVSRBVUSkO6Fa9gV/RQpKhCaeJAgptE2dKCqUDj3bEzzb7YHbtrDkUc6AHEBSEOSBwqQFwiJNRL1RMHkBBCPXDl3EPVtEI9NCcQ/8w+/Vi3VGIPo9mZf/7H93//P7NzB2UdG804CtawUdYJw2VZzBccJsmnTbWtkSXSXN/9+Olb38zdT6OpOhrfws6So9VRwZtUXSucy0ytoallaqhVg1HWlXShgqFyzbNR4TYqw2xIsVPzNVTAhkIcZtoOQ894hyuKqWlEYdQ0KlTX2ww3NFKpUYeBfKZhqt330SWUrqFJxTQUmzAiL2rYcYjjr+cJV0/D/4L4765bkY1BB8/YmDLwD2xMevKbxJK7hml0dYb2+a6tW9wtkCkR1wIgVnRLE2YyNZSjumXaLLCaAwtbphr8ZgwMC2h/7QLu4ApYbVVkZlOjxZVZWNnGLbIGIlw8CzE4RGue6VrEV15ymNpjz7UQQhZk9WXhWTkCrRyCVuagSTKxKdboB5hvbtim20XelxpDyOUq5h6gItBAqoYqfXJeeWdPLulpftjlvuSFRzlQdDiBYSI/AO6vm5879167ciKNinVUpM5Cw2E2VlicBz5eJWwYJhM+hxBiuwUpnE1KobCyADJ9PCkopm5hAzT5YE5ApjSqUMaF+dpjfn4SwM8xiwSiaddKhfEmVZQg0yLWtI3bT750dLf6VjqkgG+iACplKCk7UMpQEfjQVtgKI7pvgI+TDI2dxVqEMyyMy8oW0bFY40PRjcb8CLdCgJ69fVf95Rg6n0YpH1bfi4fLJKjY/8pX14+SjR/SKF8XzF/WcEvklOO2RByljvJmh9jeeq6DNT4bmtecSpq4rTEf7ThMYwATQzOJRWsRjuG8KIZUEH7Jo/OaaRBpeUO6L//2xQ5nq40mvB2viv+hJ/7+c1+TCSIDytukGyIOtd+bg4KXnDd8mdyDUiH2D4Ze8WGGoSzA0CbJVsJMD2RVKBBi07EjB1N9BjIENATaMlUtkUpxL/uV5IgX1Ag9SWFDp4xYfAo7JPKbs+pQUr2I+np7Vy1P3z10MY3GV1G2CXRxaijbMNuGGhQudHxGXHYqWOurKihUbGM9vAg6GBoXNBaGDgQUajOqVc766x5x4JtBwlERT7zgbHTAd5mfK68YnkYmvXht5yK98fyyII+wtxhogkNFj2eyqZOp2Xv03SufMlFqKbf3BlhvXICGOy/AOxxhKxAMsc0Pwv36ANVG1Wxwtf14+fITf3373uOi++YblOnYko79h94btMr/sbeiPr6C270rg13SRkdG0MqLhKhHrn5052Rj7jPRibMiwKjHiOlTvAtMtQ2AWtkmasCRR+rCxdjFOB1lUpCst9XHCySiUeohCbloBoRkWP3J3LtWH0ZI/rf6qPTi42bk5Sq4UE7Ae4koGraJyl8pRIdXlEeh41++em51+tybogQmVCHk7YStffib7zS25sUD5bkRDxQQkqq6xbp8cvznk398+Pv33wkU4iGWYrSBLPsBWDbV4aXYIU4Y22xCbLJPWyDkpb2v1164cfWmoFKRFwDcNEb48IvY7lpDuctf0P1M4nZiTIKmy+skljmxa/8LZunexMoLAAA="
+  val dump = "H4sIAAAAAAAAALVWTWwbRRQeO3b8F6qkiCqolIbUFX/BruihSFGF0sSBBDeJsqUFU4HGu2Nnmv1jZ5yuORRxoAcQF4Q4IHGoAHGJkFAvVU8cQEII9cCVcw9V0wr10JxAvJn9tZ11SyX2MJqZffN+vve9N7N9B2WZg6aYinVsVgzCcUWR8znGy8ppS+voZIG0Vnc+fvrWNzP302iigUY3MFtgegMVvEnNtcO5wrU6mlikplYzOeXdsiFVcFSpezaqwkZ1Lxvl2KnZOipgUyWMWw7j6BnvcFW1dJ2onFpmlRpGh+OmTqp1yjjIZ5qW1n0fXULpOhpXLVN1CCfKvI4ZI8zfzxOhnobrglx3V+3IxqCDZxxMOfgHNsY9+XViK13TMrsGR/t811Zt4RbIlIhrAxBLhq1LM5k6ylHDthweWM2BhQ1LC5YZE8MG2l+/gLdwFay2qwp3qNkWymysbuI2WQERIZ6FGBjRW2e6NvGVlxjXeuy5NkLIhqy+LD2rRKBVQtAqArSyQhyKdfoBFj/XHMvtIu9LjSDkChUzD1ARaCA1Uyt/cl59Z1cpGWlx2BW+5KVHOVB0OIFhMj8A7q/rn7N7r105kUbFBipSNtdk3MEqj/PAx6uETdPi0ucQQuy0IYXTSSmUVuZApo8nBdUybGyCJh/MMciUTlXKhbDYe8zPTwL4OW6TQDTt2qkw3qSKkmSax7q+dvvJl47u1N5KhxTwTRRApQIl5QRKOSoCHzoqX+LE8A2IcZyjkbNYj3CGjVFF3SAGlntiKLrRmB/iVgjQs7fvar8cQ+fTKOXD6nvxcJkEFftf+er6UbL2QxrlG5L5izpuy5wK3BYIUxsob20Rx9vPbWFdzPbMa04jLdzRuY92HKYRgImjqcSitYnAcFYWQyoIv+TRecUySXlxrXxf+e2LbcFWB415f7wq/oee+PvPfS0uiQwob5JuiDjUfm8OCl5y3vBlcg9Khfx/MPRKDFMcZQGGDkm2EmZ6IKtSgRSbjB05mOozkCGgIdCWqemJVIp72a8kR7yghuhJChs6ZcTiU5iRyG/BqkNJ9SLr6+0drTJ599DFNBpdRtkW0IXVUbZpdUwtKFzo+Jy4/FSw11dVUKjYwUZ4EWxhaFzQWDg6EFCow6lePevve8SBbwpJR2U88YJz0AHfZXGusmR6Gnn5xWvbF+mN5xcleaS9+UATHCp6PFMsg0xM36PvXvmUy1JLub03wGrzAjTcWQne4QhbiWCIbX4Q7tcHqDasZoOr7cfLl5/469v3HpfdN9+k3MB2+dh/6L1Bq/wfeyvq4yu43bsz2CUddGQIrbxIiHbk6kd3TjZnPpOdOCsDjHqMnD4lusBExwSo1U2iBRx5pC5cjF2Mk1EmJcl6W328QCIapR6SkPNWQEiOtZ+s3WuNvQgpVsuPSi8xrkdeLoMLlQS8F4iqY4do4pVCDHhFeRQ6/uWr55Ynz70pS2BMk0Len7C17/3mO43tWflAeW7IAwWEyjXD5l0xOf7zyT8+/P377yQK8RBLMdpAlv0AbIca8FLcIiyMbTohNsWnLRDy0u7XKy/cuHpTUqkoCgBuGjN8+EVsd/vae85zgvXQqOAZqcX8FX00I+okljlZX86/VwoctsoLAAA="
 }
 }
 

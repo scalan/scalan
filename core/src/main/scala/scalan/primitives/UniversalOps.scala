@@ -1,9 +1,9 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{Scalan, ScalanExp}
+import scalan.{ScalanExp}
 
-trait UniversalOps extends UnBinOps { self: Scalan =>
+trait UniversalOpsExp extends BaseExp { self: ScalanExp =>
   case class HashCode[A]() extends UnOp[A, Int]("hashCode", _.hashCode)
 
   case class ToString[A]() extends UnOp[A, String]("toString", _.toString)
@@ -12,9 +12,6 @@ trait UniversalOps extends UnBinOps { self: Scalan =>
     def hashCodeRep: Rep[Int] = HashCode[A]().apply(x)
     def toStringRep = ToString[A]().apply(x)
   }
-}
-
-trait UniversalOpsExp extends UniversalOps with BaseExp { self: ScalanExp =>
   override def rewriteDef[T](d: Def[T]) = d match {
     case ApplyUnOp(ToString(), x) if x.elem == StringElement => x
     case _ => super.rewriteDef(d)

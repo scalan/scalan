@@ -8,7 +8,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.annotation.unchecked.uncheckedVariance
 
-trait Base extends LazyLogging { self: Scalan =>
+trait Base extends LazyLogging { self: ScalanExp =>
   trait Staged[+T] {
     def elem: Elem[T @uncheckedVariance]
     def varName: String

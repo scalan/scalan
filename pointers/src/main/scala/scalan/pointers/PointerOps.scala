@@ -2,9 +2,9 @@ package scalan.pointers
 
 import scala.reflect.runtime.universe._
 import scalan.util.{Covariant, Invariant}
-import scalan.{Base, Scalan, ScalanExp}
+import scalan.{Base, ScalanExp}
 
-trait PointerOps extends Base { self: Scalan =>
+trait PointerOps extends Base { self: ScalanExp =>
   class Pointer[A](implicit val eA: Elem[A])
   class Scalar[A](implicit val eA: Elem[A])
 

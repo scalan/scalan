@@ -7,15 +7,14 @@ import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.BaseExp
 import scalan.util.Invariant
 
-trait TypeWrappers extends Base { self: Scalan =>
-
+trait TypeWrappersExp extends GraphVizExport with BaseExp { scalan: ScalanExp =>
   trait TypeWrapper[TBase, TWrapper] extends Def[TWrapper] {
     def wrappedValue: Rep[TBase]
   }
 
   class BaseTypeElem[TBase, TWrapper <: TypeWrapper[TBase, TWrapper]]
-    (val wrapperElem: Elem[TWrapper])(implicit tag: WeakTypeTag[TBase])
-    // null can be used because getDefaultRep is overridden
+  (val wrapperElem: Elem[TWrapper])(implicit tag: WeakTypeTag[TBase])
+  // null can be used because getDefaultRep is overridden
     extends BaseElem[TBase](null.asInstanceOf[TBase]) { self =>
     override protected def getDefaultRep = {
       val wrapperDefaultValue = wrapperElem.defaultRepValue
@@ -26,7 +25,7 @@ trait TypeWrappers extends Base { self: Scalan =>
   }
 
   class BaseTypeElem1[A, CBase[_], TWrapper <: TypeWrapper[CBase[A], TWrapper]]
-    (wrapperElem: Elem[TWrapper])(implicit val eItem: Elem[A], val cont: Cont[CBase])
+  (wrapperElem: Elem[TWrapper])(implicit val eItem: Elem[A], val cont: Cont[CBase])
     extends BaseTypeElem[CBase[A], TWrapper](wrapperElem)(cont.tag(eItem.tag)) {
     override def equals(other: Any) = other match {
       case other: BaseTypeElem1[_, _, _] =>
@@ -40,8 +39,6 @@ trait TypeWrappers extends Base { self: Scalan =>
     override lazy val typeArgs =
       TypeArgs("A" -> (eItem -> Invariant), "CBase" -> (cont -> Invariant), "TWrapper" -> (wrapperElem -> Invariant))
   }
-
-  protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase]
 
   trait WrapperElem[TBase, TWrapper] extends EntityElem[TWrapper] {
     val baseElem: Elem[TBase]
@@ -69,9 +66,7 @@ trait TypeWrappers extends Base { self: Scalan =>
     case el: WrapperElem[_,_] => true
     case _ => false
   }
-}
 
-trait TypeWrappersExp extends TypeWrappers with GraphVizExport with BaseExp { scalan: ScalanExp =>
   protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase] =
     x.asInstanceOf[Rep[TBase]]
 

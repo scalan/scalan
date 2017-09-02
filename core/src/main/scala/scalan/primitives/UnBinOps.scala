@@ -1,9 +1,10 @@
 package scalan.primitives
 
-import scalan.{Scalan, ScalanExp}
+import scalan.{ScalanExp}
 import scalan.staged.BaseExp
 
-trait UnBinOps { self: Scalan =>
+trait UnBinOpsExp extends BaseExp { self: ScalanExp =>
+
   class UnOp[A, R](val opName: String, val applySeq: A => R)(implicit val eResult: Elem[R]) {
     override def toString = opName
 
@@ -24,13 +25,6 @@ trait UnBinOps { self: Scalan =>
 
   type EndoUnOp[A] = UnOp[A, A]
   type EndoBinOp[A] = BinOp[A, A]
-
-  def applyUnOp[A, R](op: UnOp[A, R], arg: Rep[A]): Rep[R]
-
-  def applyBinOp[A, R](op: BinOp[A, R], lhs: Rep[A], rhs: Rep[A]): Rep[R]
-}
-
-trait UnBinOpsExp extends BaseExp with UnBinOps { self: ScalanExp =>
 
   case class ApplyUnOp[A, R](op: UnOp[A, R], arg: Exp[A]) extends BaseDef[R]()(op.eResult) {
     override def toString = s"$op($arg)"

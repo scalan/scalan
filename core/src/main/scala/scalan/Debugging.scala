@@ -11,7 +11,7 @@ import scala.util.control.NonFatal
  * in `application.conf`. To print it, call `printDebugData()`. Debug data is everything
  * stored in fields whose names start with (or contain) "debug$".
  */
-trait Debugging { self: Scalan =>
+trait Debugging { self: ScalanExp =>
   var isDebug: Boolean = config.getBoolean("debug")
 
   private lazy val fields = {

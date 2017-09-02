@@ -9,8 +9,7 @@ import scala.reflect.{AnyValManifest, ClassTag}
 import scalan.meta.ScalanAst.STpeArg
 import scalan.util._
 
-trait TypeDescs extends Base { self: Scalan =>
-
+trait TypeDescsExp extends BaseExp { self: ScalanExp =>
   sealed trait TypeDesc extends Serializable {
     def getName(f: TypeDesc => String): String
     lazy val name: String = getName(_.name)
@@ -405,7 +404,4 @@ trait TypeDescs extends Base { self: Scalan =>
   trait Functor[F[_]] extends Cont[F] {
     def map[A,B](a: Rep[F[A]])(f: Rep[A] => Rep[B]): Rep[F[B]]
   }
-}
-
-trait TypeDescsExp extends TypeDescs with BaseExp { self: ScalanExp =>
 }

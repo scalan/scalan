@@ -12,10 +12,10 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait ViewsAbs extends Views {
-  self: ViewsDsl with Scalan =>
+trait ViewsDefs extends Views {
+  self: ViewsDsl with ScalanExp =>
 
-  // single proxy for each type family
+  // entityProxy: single proxy for each type family
   implicit def proxyIsoUR[From, To](p: Rep[IsoUR[From, To]]): IsoUR[From, To] = {
     proxyOps[IsoUR[From, To]](p)(scala.reflect.classTag[IsoUR[From, To]])
   }
@@ -51,20 +51,19 @@ trait ViewsAbs extends Views {
   implicit def isoURElement[From, To](implicit eFrom: Elem[From], eTo: Elem[To]): Elem[IsoUR[From, To]] =
     cachedElem[IsoURElem[From, To, IsoUR[From, To]]](eFrom, eTo)
 
-  implicit case object IsoURCompanionElem extends CompanionElem[IsoURCompanionAbs] {
-    lazy val tag = weakTypeTag[IsoURCompanionAbs]
+  implicit case object IsoURCompanionElem extends CompanionElem[IsoURCompanionCtor] {
+    lazy val tag = weakTypeTag[IsoURCompanionCtor]
     protected def getDefaultRep = IsoUR
   }
 
-  abstract class IsoURCompanionAbs extends CompanionDef[IsoURCompanionAbs] {
+  abstract class IsoURCompanionCtor extends CompanionDef[IsoURCompanionCtor] {
     def selfType = IsoURCompanionElem
     override def toString = "IsoUR"
   }
-  def IsoUR: Rep[IsoURCompanionAbs]
-  implicit def proxyIsoURCompanionAbs(p: Rep[IsoURCompanionAbs]): IsoURCompanionAbs =
-    proxyOps[IsoURCompanionAbs](p)
+  implicit def proxyIsoURCompanionCtor(p: Rep[IsoURCompanionCtor]): IsoURCompanionCtor =
+    proxyOps[IsoURCompanionCtor](p)
 
-  // single proxy for each type family
+  // entityProxy: single proxy for each type family
   implicit def proxyIso1UR[A, B, C[_]](p: Rep[Iso1UR[A, B, C]]): Iso1UR[A, B, C] = {
     proxyOps[Iso1UR[A, B, C]](p)(scala.reflect.classTag[Iso1UR[A, B, C]])
   }
@@ -100,20 +99,19 @@ trait ViewsAbs extends Views {
   implicit def iso1URElement[A, B, C[_]](implicit eA: Elem[A], eB: Elem[B], cC: Cont[C]): Elem[Iso1UR[A, B, C]] =
     cachedElem[Iso1URElem[A, B, C, Iso1UR[A, B, C]]](eA, eB, cC)
 
-  implicit case object Iso1URCompanionElem extends CompanionElem[Iso1URCompanionAbs] {
-    lazy val tag = weakTypeTag[Iso1URCompanionAbs]
+  implicit case object Iso1URCompanionElem extends CompanionElem[Iso1URCompanionCtor] {
+    lazy val tag = weakTypeTag[Iso1URCompanionCtor]
     protected def getDefaultRep = Iso1UR
   }
 
-  abstract class Iso1URCompanionAbs extends CompanionDef[Iso1URCompanionAbs] {
+  abstract class Iso1URCompanionCtor extends CompanionDef[Iso1URCompanionCtor] {
     def selfType = Iso1URCompanionElem
     override def toString = "Iso1UR"
   }
-  def Iso1UR: Rep[Iso1URCompanionAbs]
-  implicit def proxyIso1URCompanionAbs(p: Rep[Iso1URCompanionAbs]): Iso1URCompanionAbs =
-    proxyOps[Iso1URCompanionAbs](p)
+  implicit def proxyIso1URCompanionCtor(p: Rep[Iso1URCompanionCtor]): Iso1URCompanionCtor =
+    proxyOps[Iso1URCompanionCtor](p)
 
-  abstract class AbsIdentityIso[A]
+  case class IdentityIsoCtor[A]
       ()(implicit eA: Elem[A])
     extends IdentityIso[A]() with Def[IdentityIso[A]] {
     lazy val selfType = element[IdentityIso[A]]
@@ -160,7 +158,7 @@ trait ViewsAbs extends Views {
     lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class IdentityIsoCompanionAbs extends CompanionDef[IdentityIsoCompanionAbs] {
+  class IdentityIsoCompanionCtor extends CompanionDef[IdentityIsoCompanionCtor] {
     def selfType = IdentityIsoCompanionElem
     override def toString = "IdentityIso"
     @scalan.OverloadId("fromData")
@@ -174,14 +172,14 @@ trait ViewsAbs extends Views {
 
     def unapply[A](p: Rep[IsoUR[A, A]]) = unmkIdentityIso(p)
   }
-  lazy val IdentityIsoRep: Rep[IdentityIsoCompanionAbs] = new IdentityIsoCompanionAbs
-  lazy val IdentityIso: IdentityIsoCompanionAbs = proxyIdentityIsoCompanion(IdentityIsoRep)
-  implicit def proxyIdentityIsoCompanion(p: Rep[IdentityIsoCompanionAbs]): IdentityIsoCompanionAbs = {
-    proxyOps[IdentityIsoCompanionAbs](p)
+  lazy val IdentityIsoRep: Rep[IdentityIsoCompanionCtor] = new IdentityIsoCompanionCtor
+  lazy val IdentityIso: IdentityIsoCompanionCtor = proxyIdentityIsoCompanion(IdentityIsoRep)
+  implicit def proxyIdentityIsoCompanion(p: Rep[IdentityIsoCompanionCtor]): IdentityIsoCompanionCtor = {
+    proxyOps[IdentityIsoCompanionCtor](p)
   }
 
-  implicit case object IdentityIsoCompanionElem extends CompanionElem[IdentityIsoCompanionAbs] {
-    lazy val tag = weakTypeTag[IdentityIsoCompanionAbs]
+  implicit case object IdentityIsoCompanionElem extends CompanionElem[IdentityIsoCompanionCtor] {
+    lazy val tag = weakTypeTag[IdentityIsoCompanionCtor]
     protected def getDefaultRep = IdentityIso
   }
 
@@ -196,12 +194,8 @@ trait ViewsAbs extends Views {
   implicit def isoIdentityIso[A](implicit eA: Elem[A]): Iso[IdentityIsoData[A], IdentityIso[A]] =
     reifyObject(new IdentityIsoIso[A]()(eA))
 
-  // 6) smart constructor and deconstructor
-  def mkIdentityIso[A]()(implicit eA: Elem[A]): Rep[IdentityIso[A]]
-  def unmkIdentityIso[A](p: Rep[IsoUR[A, A]]): Option[(Rep[Unit])]
-
-  abstract class AbsPairIso[A1, A2, B1, B2]
-      (iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
+  case class PairIsoCtor[A1, A2, B1, B2]
+      (override val iso1: Iso[A1, B1], override val iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends PairIso[A1, A2, B1, B2](iso1, iso2) with Def[PairIso[A1, A2, B1, B2]] {
     lazy val selfType = element[PairIso[A1, A2, B1, B2]]
   }
@@ -259,7 +253,7 @@ trait ViewsAbs extends Views {
     lazy val typeArgs = TypeArgs("A1" -> (eA1 -> scalan.util.Invariant), "A2" -> (eA2 -> scalan.util.Invariant), "B1" -> (eB1 -> scalan.util.Invariant), "B2" -> (eB2 -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class PairIsoCompanionAbs extends CompanionDef[PairIsoCompanionAbs] with PairIsoCompanion {
+  class PairIsoCompanionCtor extends CompanionDef[PairIsoCompanionCtor] with PairIsoCompanion {
     def selfType = PairIsoCompanionElem
     override def toString = "PairIso"
     @scalan.OverloadId("fromData")
@@ -273,14 +267,14 @@ trait ViewsAbs extends Views {
 
     def unapply[A1, A2, B1, B2](p: Rep[IsoUR[(A1, A2), (B1, B2)]]) = unmkPairIso(p)
   }
-  lazy val PairIsoRep: Rep[PairIsoCompanionAbs] = new PairIsoCompanionAbs
-  lazy val PairIso: PairIsoCompanionAbs = proxyPairIsoCompanion(PairIsoRep)
-  implicit def proxyPairIsoCompanion(p: Rep[PairIsoCompanionAbs]): PairIsoCompanionAbs = {
-    proxyOps[PairIsoCompanionAbs](p)
+  lazy val PairIsoRep: Rep[PairIsoCompanionCtor] = new PairIsoCompanionCtor
+  lazy val PairIso: PairIsoCompanionCtor = proxyPairIsoCompanion(PairIsoRep)
+  implicit def proxyPairIsoCompanion(p: Rep[PairIsoCompanionCtor]): PairIsoCompanionCtor = {
+    proxyOps[PairIsoCompanionCtor](p)
   }
 
-  implicit case object PairIsoCompanionElem extends CompanionElem[PairIsoCompanionAbs] {
-    lazy val tag = weakTypeTag[PairIsoCompanionAbs]
+  implicit case object PairIsoCompanionElem extends CompanionElem[PairIsoCompanionCtor] {
+    lazy val tag = weakTypeTag[PairIsoCompanionCtor]
     protected def getDefaultRep = PairIso
   }
 
@@ -295,12 +289,8 @@ trait ViewsAbs extends Views {
   implicit def isoPairIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Iso[PairIsoData[A1, A2, B1, B2], PairIso[A1, A2, B1, B2]] =
     reifyObject(new PairIsoIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
 
-  // 6) smart constructor and deconstructor
-  def mkPairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairIso[A1, A2, B1, B2]]
-  def unmkPairIso[A1, A2, B1, B2](p: Rep[IsoUR[(A1, A2), (B1, B2)]]): Option[(Rep[IsoUR[A1, B1]], Rep[IsoUR[A2, B2]])]
-
-  abstract class AbsAbsorbFirstUnitIso[A2, B2]
-      (iso2: Iso[A2, B2])(implicit eA2: Elem[A2], eB2: Elem[B2])
+  case class AbsorbFirstUnitIsoCtor[A2, B2]
+      (override val iso2: Iso[A2, B2])(implicit eA2: Elem[A2], eB2: Elem[B2])
     extends AbsorbFirstUnitIso[A2, B2](iso2) with Def[AbsorbFirstUnitIso[A2, B2]] {
     lazy val selfType = element[AbsorbFirstUnitIso[A2, B2]]
   }
@@ -352,7 +342,7 @@ trait ViewsAbs extends Views {
     lazy val typeArgs = TypeArgs("A2" -> (eA2 -> scalan.util.Invariant), "B2" -> (eB2 -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class AbsorbFirstUnitIsoCompanionAbs extends CompanionDef[AbsorbFirstUnitIsoCompanionAbs] {
+  class AbsorbFirstUnitIsoCompanionCtor extends CompanionDef[AbsorbFirstUnitIsoCompanionCtor] {
     def selfType = AbsorbFirstUnitIsoCompanionElem
     override def toString = "AbsorbFirstUnitIso"
 
@@ -362,14 +352,14 @@ trait ViewsAbs extends Views {
 
     def unapply[A2, B2](p: Rep[IsoUR[A2, (Unit, B2)]]) = unmkAbsorbFirstUnitIso(p)
   }
-  lazy val AbsorbFirstUnitIsoRep: Rep[AbsorbFirstUnitIsoCompanionAbs] = new AbsorbFirstUnitIsoCompanionAbs
-  lazy val AbsorbFirstUnitIso: AbsorbFirstUnitIsoCompanionAbs = proxyAbsorbFirstUnitIsoCompanion(AbsorbFirstUnitIsoRep)
-  implicit def proxyAbsorbFirstUnitIsoCompanion(p: Rep[AbsorbFirstUnitIsoCompanionAbs]): AbsorbFirstUnitIsoCompanionAbs = {
-    proxyOps[AbsorbFirstUnitIsoCompanionAbs](p)
+  lazy val AbsorbFirstUnitIsoRep: Rep[AbsorbFirstUnitIsoCompanionCtor] = new AbsorbFirstUnitIsoCompanionCtor
+  lazy val AbsorbFirstUnitIso: AbsorbFirstUnitIsoCompanionCtor = proxyAbsorbFirstUnitIsoCompanion(AbsorbFirstUnitIsoRep)
+  implicit def proxyAbsorbFirstUnitIsoCompanion(p: Rep[AbsorbFirstUnitIsoCompanionCtor]): AbsorbFirstUnitIsoCompanionCtor = {
+    proxyOps[AbsorbFirstUnitIsoCompanionCtor](p)
   }
 
-  implicit case object AbsorbFirstUnitIsoCompanionElem extends CompanionElem[AbsorbFirstUnitIsoCompanionAbs] {
-    lazy val tag = weakTypeTag[AbsorbFirstUnitIsoCompanionAbs]
+  implicit case object AbsorbFirstUnitIsoCompanionElem extends CompanionElem[AbsorbFirstUnitIsoCompanionCtor] {
+    lazy val tag = weakTypeTag[AbsorbFirstUnitIsoCompanionCtor]
     protected def getDefaultRep = AbsorbFirstUnitIso
   }
 
@@ -384,12 +374,8 @@ trait ViewsAbs extends Views {
   implicit def isoAbsorbFirstUnitIso[A2, B2](implicit eA2: Elem[A2], eB2: Elem[B2]): Iso[AbsorbFirstUnitIsoData[A2, B2], AbsorbFirstUnitIso[A2, B2]] =
     reifyObject(new AbsorbFirstUnitIsoIso[A2, B2]()(eA2, eB2))
 
-  // 6) smart constructor and deconstructor
-  def mkAbsorbFirstUnitIso[A2, B2](iso2: Iso[A2, B2])(implicit eA2: Elem[A2], eB2: Elem[B2]): Rep[AbsorbFirstUnitIso[A2, B2]]
-  def unmkAbsorbFirstUnitIso[A2, B2](p: Rep[IsoUR[A2, (Unit, B2)]]): Option[(Rep[IsoUR[A2, B2]])]
-
-  abstract class AbsAbsorbSecondUnitIso[A1, B1]
-      (iso1: Iso[A1, B1])(implicit eA1: Elem[A1], eB1: Elem[B1])
+  case class AbsorbSecondUnitIsoCtor[A1, B1]
+      (override val iso1: Iso[A1, B1])(implicit eA1: Elem[A1], eB1: Elem[B1])
     extends AbsorbSecondUnitIso[A1, B1](iso1) with Def[AbsorbSecondUnitIso[A1, B1]] {
     lazy val selfType = element[AbsorbSecondUnitIso[A1, B1]]
   }
@@ -441,7 +427,7 @@ trait ViewsAbs extends Views {
     lazy val typeArgs = TypeArgs("A1" -> (eA1 -> scalan.util.Invariant), "B1" -> (eB1 -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class AbsorbSecondUnitIsoCompanionAbs extends CompanionDef[AbsorbSecondUnitIsoCompanionAbs] {
+  class AbsorbSecondUnitIsoCompanionCtor extends CompanionDef[AbsorbSecondUnitIsoCompanionCtor] {
     def selfType = AbsorbSecondUnitIsoCompanionElem
     override def toString = "AbsorbSecondUnitIso"
 
@@ -451,14 +437,14 @@ trait ViewsAbs extends Views {
 
     def unapply[A1, B1](p: Rep[IsoUR[A1, (B1, Unit)]]) = unmkAbsorbSecondUnitIso(p)
   }
-  lazy val AbsorbSecondUnitIsoRep: Rep[AbsorbSecondUnitIsoCompanionAbs] = new AbsorbSecondUnitIsoCompanionAbs
-  lazy val AbsorbSecondUnitIso: AbsorbSecondUnitIsoCompanionAbs = proxyAbsorbSecondUnitIsoCompanion(AbsorbSecondUnitIsoRep)
-  implicit def proxyAbsorbSecondUnitIsoCompanion(p: Rep[AbsorbSecondUnitIsoCompanionAbs]): AbsorbSecondUnitIsoCompanionAbs = {
-    proxyOps[AbsorbSecondUnitIsoCompanionAbs](p)
+  lazy val AbsorbSecondUnitIsoRep: Rep[AbsorbSecondUnitIsoCompanionCtor] = new AbsorbSecondUnitIsoCompanionCtor
+  lazy val AbsorbSecondUnitIso: AbsorbSecondUnitIsoCompanionCtor = proxyAbsorbSecondUnitIsoCompanion(AbsorbSecondUnitIsoRep)
+  implicit def proxyAbsorbSecondUnitIsoCompanion(p: Rep[AbsorbSecondUnitIsoCompanionCtor]): AbsorbSecondUnitIsoCompanionCtor = {
+    proxyOps[AbsorbSecondUnitIsoCompanionCtor](p)
   }
 
-  implicit case object AbsorbSecondUnitIsoCompanionElem extends CompanionElem[AbsorbSecondUnitIsoCompanionAbs] {
-    lazy val tag = weakTypeTag[AbsorbSecondUnitIsoCompanionAbs]
+  implicit case object AbsorbSecondUnitIsoCompanionElem extends CompanionElem[AbsorbSecondUnitIsoCompanionCtor] {
+    lazy val tag = weakTypeTag[AbsorbSecondUnitIsoCompanionCtor]
     protected def getDefaultRep = AbsorbSecondUnitIso
   }
 
@@ -473,12 +459,8 @@ trait ViewsAbs extends Views {
   implicit def isoAbsorbSecondUnitIso[A1, B1](implicit eA1: Elem[A1], eB1: Elem[B1]): Iso[AbsorbSecondUnitIsoData[A1, B1], AbsorbSecondUnitIso[A1, B1]] =
     reifyObject(new AbsorbSecondUnitIsoIso[A1, B1]()(eA1, eB1))
 
-  // 6) smart constructor and deconstructor
-  def mkAbsorbSecondUnitIso[A1, B1](iso1: Iso[A1, B1])(implicit eA1: Elem[A1], eB1: Elem[B1]): Rep[AbsorbSecondUnitIso[A1, B1]]
-  def unmkAbsorbSecondUnitIso[A1, B1](p: Rep[IsoUR[A1, (B1, Unit)]]): Option[(Rep[IsoUR[A1, B1]])]
-
-  abstract class AbsSumIso[A1, A2, B1, B2]
-      (iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
+  case class SumIsoCtor[A1, A2, B1, B2]
+      (override val iso1: Iso[A1, B1], override val iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends SumIso[A1, A2, B1, B2](iso1, iso2) with Def[SumIso[A1, A2, B1, B2]] {
     lazy val selfType = element[SumIso[A1, A2, B1, B2]]
   }
@@ -536,7 +518,7 @@ trait ViewsAbs extends Views {
     lazy val typeArgs = TypeArgs("A1" -> (eA1 -> scalan.util.Invariant), "A2" -> (eA2 -> scalan.util.Invariant), "B1" -> (eB1 -> scalan.util.Invariant), "B2" -> (eB2 -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class SumIsoCompanionAbs extends CompanionDef[SumIsoCompanionAbs] {
+  class SumIsoCompanionCtor extends CompanionDef[SumIsoCompanionCtor] {
     def selfType = SumIsoCompanionElem
     override def toString = "SumIso"
     @scalan.OverloadId("fromData")
@@ -550,14 +532,14 @@ trait ViewsAbs extends Views {
 
     def unapply[A1, A2, B1, B2](p: Rep[IsoUR[$bar[A1, A2], $bar[B1, B2]]]) = unmkSumIso(p)
   }
-  lazy val SumIsoRep: Rep[SumIsoCompanionAbs] = new SumIsoCompanionAbs
-  lazy val SumIso: SumIsoCompanionAbs = proxySumIsoCompanion(SumIsoRep)
-  implicit def proxySumIsoCompanion(p: Rep[SumIsoCompanionAbs]): SumIsoCompanionAbs = {
-    proxyOps[SumIsoCompanionAbs](p)
+  lazy val SumIsoRep: Rep[SumIsoCompanionCtor] = new SumIsoCompanionCtor
+  lazy val SumIso: SumIsoCompanionCtor = proxySumIsoCompanion(SumIsoRep)
+  implicit def proxySumIsoCompanion(p: Rep[SumIsoCompanionCtor]): SumIsoCompanionCtor = {
+    proxyOps[SumIsoCompanionCtor](p)
   }
 
-  implicit case object SumIsoCompanionElem extends CompanionElem[SumIsoCompanionAbs] {
-    lazy val tag = weakTypeTag[SumIsoCompanionAbs]
+  implicit case object SumIsoCompanionElem extends CompanionElem[SumIsoCompanionCtor] {
+    lazy val tag = weakTypeTag[SumIsoCompanionCtor]
     protected def getDefaultRep = SumIso
   }
 
@@ -572,12 +554,8 @@ trait ViewsAbs extends Views {
   implicit def isoSumIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Iso[SumIsoData[A1, A2, B1, B2], SumIso[A1, A2, B1, B2]] =
     reifyObject(new SumIsoIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
 
-  // 6) smart constructor and deconstructor
-  def mkSumIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumIso[A1, A2, B1, B2]]
-  def unmkSumIso[A1, A2, B1, B2](p: Rep[IsoUR[$bar[A1, A2], $bar[B1, B2]]]): Option[(Rep[IsoUR[A1, B1]], Rep[IsoUR[A2, B2]])]
-
-  abstract class AbsComposeIso[A, B, C]
-      (iso2: Iso[B, C], iso1: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
+  case class ComposeIsoCtor[A, B, C]
+      (override val iso2: Iso[B, C], override val iso1: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
     extends ComposeIso[A, B, C](iso2, iso1) with Def[ComposeIso[A, B, C]] {
     lazy val selfType = element[ComposeIso[A, B, C]]
   }
@@ -632,7 +610,7 @@ trait ViewsAbs extends Views {
     lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant), "C" -> (eC -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class ComposeIsoCompanionAbs extends CompanionDef[ComposeIsoCompanionAbs] {
+  class ComposeIsoCompanionCtor extends CompanionDef[ComposeIsoCompanionCtor] {
     def selfType = ComposeIsoCompanionElem
     override def toString = "ComposeIso"
     @scalan.OverloadId("fromData")
@@ -646,14 +624,14 @@ trait ViewsAbs extends Views {
 
     def unapply[A, B, C](p: Rep[IsoUR[A, C]]) = unmkComposeIso(p)
   }
-  lazy val ComposeIsoRep: Rep[ComposeIsoCompanionAbs] = new ComposeIsoCompanionAbs
-  lazy val ComposeIso: ComposeIsoCompanionAbs = proxyComposeIsoCompanion(ComposeIsoRep)
-  implicit def proxyComposeIsoCompanion(p: Rep[ComposeIsoCompanionAbs]): ComposeIsoCompanionAbs = {
-    proxyOps[ComposeIsoCompanionAbs](p)
+  lazy val ComposeIsoRep: Rep[ComposeIsoCompanionCtor] = new ComposeIsoCompanionCtor
+  lazy val ComposeIso: ComposeIsoCompanionCtor = proxyComposeIsoCompanion(ComposeIsoRep)
+  implicit def proxyComposeIsoCompanion(p: Rep[ComposeIsoCompanionCtor]): ComposeIsoCompanionCtor = {
+    proxyOps[ComposeIsoCompanionCtor](p)
   }
 
-  implicit case object ComposeIsoCompanionElem extends CompanionElem[ComposeIsoCompanionAbs] {
-    lazy val tag = weakTypeTag[ComposeIsoCompanionAbs]
+  implicit case object ComposeIsoCompanionElem extends CompanionElem[ComposeIsoCompanionCtor] {
+    lazy val tag = weakTypeTag[ComposeIsoCompanionCtor]
     protected def getDefaultRep = ComposeIso
   }
 
@@ -668,12 +646,8 @@ trait ViewsAbs extends Views {
   implicit def isoComposeIso[A, B, C](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Iso[ComposeIsoData[A, B, C], ComposeIso[A, B, C]] =
     reifyObject(new ComposeIsoIso[A, B, C]()(eA, eB, eC))
 
-  // 6) smart constructor and deconstructor
-  def mkComposeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeIso[A, B, C]]
-  def unmkComposeIso[A, B, C](p: Rep[IsoUR[A, C]]): Option[(Rep[IsoUR[B, C]], Rep[IsoUR[A, B]])]
-
-  abstract class AbsFuncIso[A, B, C, D]
-      (iso1: Iso[A, B], iso2: Iso[C, D])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D])
+  case class FuncIsoCtor[A, B, C, D]
+      (override val iso1: Iso[A, B], override val iso2: Iso[C, D])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D])
     extends FuncIso[A, B, C, D](iso1, iso2) with Def[FuncIso[A, B, C, D]] {
     lazy val selfType = element[FuncIso[A, B, C, D]]
   }
@@ -731,7 +705,7 @@ trait ViewsAbs extends Views {
     lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant), "C" -> (eC -> scalan.util.Invariant), "D" -> (eD -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class FuncIsoCompanionAbs extends CompanionDef[FuncIsoCompanionAbs] {
+  class FuncIsoCompanionCtor extends CompanionDef[FuncIsoCompanionCtor] {
     def selfType = FuncIsoCompanionElem
     override def toString = "FuncIso"
     @scalan.OverloadId("fromData")
@@ -745,14 +719,14 @@ trait ViewsAbs extends Views {
 
     def unapply[A, B, C, D](p: Rep[IsoUR[A => C, B => D]]) = unmkFuncIso(p)
   }
-  lazy val FuncIsoRep: Rep[FuncIsoCompanionAbs] = new FuncIsoCompanionAbs
-  lazy val FuncIso: FuncIsoCompanionAbs = proxyFuncIsoCompanion(FuncIsoRep)
-  implicit def proxyFuncIsoCompanion(p: Rep[FuncIsoCompanionAbs]): FuncIsoCompanionAbs = {
-    proxyOps[FuncIsoCompanionAbs](p)
+  lazy val FuncIsoRep: Rep[FuncIsoCompanionCtor] = new FuncIsoCompanionCtor
+  lazy val FuncIso: FuncIsoCompanionCtor = proxyFuncIsoCompanion(FuncIsoRep)
+  implicit def proxyFuncIsoCompanion(p: Rep[FuncIsoCompanionCtor]): FuncIsoCompanionCtor = {
+    proxyOps[FuncIsoCompanionCtor](p)
   }
 
-  implicit case object FuncIsoCompanionElem extends CompanionElem[FuncIsoCompanionAbs] {
-    lazy val tag = weakTypeTag[FuncIsoCompanionAbs]
+  implicit case object FuncIsoCompanionElem extends CompanionElem[FuncIsoCompanionCtor] {
+    lazy val tag = weakTypeTag[FuncIsoCompanionCtor]
     protected def getDefaultRep = FuncIso
   }
 
@@ -767,12 +741,8 @@ trait ViewsAbs extends Views {
   implicit def isoFuncIso[A, B, C, D](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]): Iso[FuncIsoData[A, B, C, D], FuncIso[A, B, C, D]] =
     reifyObject(new FuncIsoIso[A, B, C, D]()(eA, eB, eC, eD))
 
-  // 6) smart constructor and deconstructor
-  def mkFuncIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]): Rep[FuncIso[A, B, C, D]]
-  def unmkFuncIso[A, B, C, D](p: Rep[IsoUR[A => C, B => D]]): Option[(Rep[IsoUR[A, B]], Rep[IsoUR[C, D]])]
-
-  abstract class AbsConverterIso[A, B]
-      (convTo: Conv[A, B], convFrom: Conv[B, A])(implicit eA: Elem[A], eB: Elem[B])
+  case class ConverterIsoCtor[A, B]
+      (override val convTo: Conv[A, B], override val convFrom: Conv[B, A])(implicit eA: Elem[A], eB: Elem[B])
     extends ConverterIso[A, B](convTo, convFrom) with Def[ConverterIso[A, B]] {
     lazy val selfType = element[ConverterIso[A, B]]
   }
@@ -824,7 +794,7 @@ trait ViewsAbs extends Views {
     lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class ConverterIsoCompanionAbs extends CompanionDef[ConverterIsoCompanionAbs] {
+  class ConverterIsoCompanionCtor extends CompanionDef[ConverterIsoCompanionCtor] {
     def selfType = ConverterIsoCompanionElem
     override def toString = "ConverterIso"
     @scalan.OverloadId("fromData")
@@ -838,14 +808,14 @@ trait ViewsAbs extends Views {
 
     def unapply[A, B](p: Rep[IsoUR[A, B]]) = unmkConverterIso(p)
   }
-  lazy val ConverterIsoRep: Rep[ConverterIsoCompanionAbs] = new ConverterIsoCompanionAbs
-  lazy val ConverterIso: ConverterIsoCompanionAbs = proxyConverterIsoCompanion(ConverterIsoRep)
-  implicit def proxyConverterIsoCompanion(p: Rep[ConverterIsoCompanionAbs]): ConverterIsoCompanionAbs = {
-    proxyOps[ConverterIsoCompanionAbs](p)
+  lazy val ConverterIsoRep: Rep[ConverterIsoCompanionCtor] = new ConverterIsoCompanionCtor
+  lazy val ConverterIso: ConverterIsoCompanionCtor = proxyConverterIsoCompanion(ConverterIsoRep)
+  implicit def proxyConverterIsoCompanion(p: Rep[ConverterIsoCompanionCtor]): ConverterIsoCompanionCtor = {
+    proxyOps[ConverterIsoCompanionCtor](p)
   }
 
-  implicit case object ConverterIsoCompanionElem extends CompanionElem[ConverterIsoCompanionAbs] {
-    lazy val tag = weakTypeTag[ConverterIsoCompanionAbs]
+  implicit case object ConverterIsoCompanionElem extends CompanionElem[ConverterIsoCompanionCtor] {
+    lazy val tag = weakTypeTag[ConverterIsoCompanionCtor]
     protected def getDefaultRep = ConverterIso
   }
 
@@ -860,12 +830,8 @@ trait ViewsAbs extends Views {
   implicit def isoConverterIso[A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[ConverterIsoData[A, B], ConverterIso[A, B]] =
     reifyObject(new ConverterIsoIso[A, B]()(eA, eB))
 
-  // 6) smart constructor and deconstructor
-  def mkConverterIso[A, B](convTo: Conv[A, B], convFrom: Conv[B, A])(implicit eA: Elem[A], eB: Elem[B]): Rep[ConverterIso[A, B]]
-  def unmkConverterIso[A, B](p: Rep[IsoUR[A, B]]): Option[(Rep[Converter[A, B]], Rep[Converter[B, A]])]
-
-  abstract class AbsThunkIso[A, B]
-      (innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B])
+  case class ThunkIsoCtor[A, B]
+      (override val innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B])
     extends ThunkIso[A, B](innerIso) with Def[ThunkIso[A, B]] {
     lazy val selfType = element[ThunkIso[A, B]]
   }
@@ -916,7 +882,7 @@ trait ViewsAbs extends Views {
     lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class ThunkIsoCompanionAbs extends CompanionDef[ThunkIsoCompanionAbs] {
+  class ThunkIsoCompanionCtor extends CompanionDef[ThunkIsoCompanionCtor] {
     def selfType = ThunkIsoCompanionElem
     override def toString = "ThunkIso"
 
@@ -926,14 +892,14 @@ trait ViewsAbs extends Views {
 
     def unapply[A, B](p: Rep[Iso1UR[A, B, Thunk]]) = unmkThunkIso(p)
   }
-  lazy val ThunkIsoRep: Rep[ThunkIsoCompanionAbs] = new ThunkIsoCompanionAbs
-  lazy val ThunkIso: ThunkIsoCompanionAbs = proxyThunkIsoCompanion(ThunkIsoRep)
-  implicit def proxyThunkIsoCompanion(p: Rep[ThunkIsoCompanionAbs]): ThunkIsoCompanionAbs = {
-    proxyOps[ThunkIsoCompanionAbs](p)
+  lazy val ThunkIsoRep: Rep[ThunkIsoCompanionCtor] = new ThunkIsoCompanionCtor
+  lazy val ThunkIso: ThunkIsoCompanionCtor = proxyThunkIsoCompanion(ThunkIsoRep)
+  implicit def proxyThunkIsoCompanion(p: Rep[ThunkIsoCompanionCtor]): ThunkIsoCompanionCtor = {
+    proxyOps[ThunkIsoCompanionCtor](p)
   }
 
-  implicit case object ThunkIsoCompanionElem extends CompanionElem[ThunkIsoCompanionAbs] {
-    lazy val tag = weakTypeTag[ThunkIsoCompanionAbs]
+  implicit case object ThunkIsoCompanionElem extends CompanionElem[ThunkIsoCompanionCtor] {
+    lazy val tag = weakTypeTag[ThunkIsoCompanionCtor]
     protected def getDefaultRep = ThunkIso
   }
 
@@ -948,21 +914,12 @@ trait ViewsAbs extends Views {
   implicit def isoThunkIso[A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[ThunkIsoData[A, B], ThunkIso[A, B]] =
     reifyObject(new ThunkIsoIso[A, B]()(eA, eB))
 
-  // 6) smart constructor and deconstructor
-  def mkThunkIso[A, B](innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ThunkIso[A, B]]
-  def unmkThunkIso[A, B](p: Rep[Iso1UR[A, B, Thunk]]): Option[(Rep[IsoUR[A, B]])]
-
   registerModule(Views_Module)
-}
 
-// Exp -----------------------------------
-trait ViewsExp extends ViewsDsl {
-  self: ViewsDsl with ScalanExp =>
-
-  lazy val IsoUR: Rep[IsoURCompanionAbs] = new IsoURCompanionAbs {
+  lazy val IsoUR: Rep[IsoURCompanionCtor] = new IsoURCompanionCtor {
   }
 
-  lazy val Iso1UR: Rep[Iso1URCompanionAbs] = new Iso1URCompanionAbs {
+  lazy val Iso1UR: Rep[Iso1URCompanionCtor] = new Iso1URCompanionCtor {
   }
 
   object Iso1URMethods {
@@ -992,10 +949,6 @@ trait ViewsExp extends ViewsDsl {
 
     // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
   }
-
-  case class ExpIdentityIso[A]
-      ()(implicit eA: Elem[A])
-    extends AbsIdentityIso[A]()
 
   object IdentityIsoMethods {
     object from {
@@ -1039,7 +992,7 @@ trait ViewsExp extends ViewsDsl {
 
   def mkIdentityIso[A]
     ()(implicit eA: Elem[A]): Rep[IdentityIso[A]] = {
-    new ExpIdentityIso[A]()
+    new IdentityIsoCtor[A]()
   }
   def unmkIdentityIso[A](p: Rep[IsoUR[A, A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: IdentityIsoElem[A] @unchecked =>
@@ -1047,10 +1000,6 @@ trait ViewsExp extends ViewsDsl {
     case _ =>
       None
   }
-
-  case class ExpPairIso[A1, A2, B1, B2]
-      (override val iso1: Iso[A1, B1], override val iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends AbsPairIso[A1, A2, B1, B2](iso1, iso2)
 
   object PairIsoMethods {
     object from {
@@ -1097,7 +1046,7 @@ trait ViewsExp extends ViewsDsl {
 
   def mkPairIso[A1, A2, B1, B2]
     (iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairIso[A1, A2, B1, B2]] = {
-    new ExpPairIso[A1, A2, B1, B2](iso1, iso2)
+    new PairIsoCtor[A1, A2, B1, B2](iso1, iso2)
   }
   def unmkPairIso[A1, A2, B1, B2](p: Rep[IsoUR[(A1, A2), (B1, B2)]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: PairIsoElem[A1, A2, B1, B2] @unchecked =>
@@ -1105,10 +1054,6 @@ trait ViewsExp extends ViewsDsl {
     case _ =>
       None
   }
-
-  case class ExpAbsorbFirstUnitIso[A2, B2]
-      (override val iso2: Iso[A2, B2])(implicit eA2: Elem[A2], eB2: Elem[B2])
-    extends AbsAbsorbFirstUnitIso[A2, B2](iso2)
 
   object AbsorbFirstUnitIsoMethods {
     object from {
@@ -1152,7 +1097,7 @@ trait ViewsExp extends ViewsDsl {
 
   def mkAbsorbFirstUnitIso[A2, B2]
     (iso2: Iso[A2, B2])(implicit eA2: Elem[A2], eB2: Elem[B2]): Rep[AbsorbFirstUnitIso[A2, B2]] = {
-    new ExpAbsorbFirstUnitIso[A2, B2](iso2)
+    new AbsorbFirstUnitIsoCtor[A2, B2](iso2)
   }
   def unmkAbsorbFirstUnitIso[A2, B2](p: Rep[IsoUR[A2, (Unit, B2)]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: AbsorbFirstUnitIsoElem[A2, B2] @unchecked =>
@@ -1160,10 +1105,6 @@ trait ViewsExp extends ViewsDsl {
     case _ =>
       None
   }
-
-  case class ExpAbsorbSecondUnitIso[A1, B1]
-      (override val iso1: Iso[A1, B1])(implicit eA1: Elem[A1], eB1: Elem[B1])
-    extends AbsAbsorbSecondUnitIso[A1, B1](iso1)
 
   object AbsorbSecondUnitIsoMethods {
     object from {
@@ -1207,7 +1148,7 @@ trait ViewsExp extends ViewsDsl {
 
   def mkAbsorbSecondUnitIso[A1, B1]
     (iso1: Iso[A1, B1])(implicit eA1: Elem[A1], eB1: Elem[B1]): Rep[AbsorbSecondUnitIso[A1, B1]] = {
-    new ExpAbsorbSecondUnitIso[A1, B1](iso1)
+    new AbsorbSecondUnitIsoCtor[A1, B1](iso1)
   }
   def unmkAbsorbSecondUnitIso[A1, B1](p: Rep[IsoUR[A1, (B1, Unit)]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: AbsorbSecondUnitIsoElem[A1, B1] @unchecked =>
@@ -1215,10 +1156,6 @@ trait ViewsExp extends ViewsDsl {
     case _ =>
       None
   }
-
-  case class ExpSumIso[A1, A2, B1, B2]
-      (override val iso1: Iso[A1, B1], override val iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends AbsSumIso[A1, A2, B1, B2](iso1, iso2)
 
   object SumIsoMethods {
     object from {
@@ -1262,7 +1199,7 @@ trait ViewsExp extends ViewsDsl {
 
   def mkSumIso[A1, A2, B1, B2]
     (iso1: Iso[A1, B1], iso2: Iso[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumIso[A1, A2, B1, B2]] = {
-    new ExpSumIso[A1, A2, B1, B2](iso1, iso2)
+    new SumIsoCtor[A1, A2, B1, B2](iso1, iso2)
   }
   def unmkSumIso[A1, A2, B1, B2](p: Rep[IsoUR[$bar[A1, A2], $bar[B1, B2]]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SumIsoElem[A1, A2, B1, B2] @unchecked =>
@@ -1270,10 +1207,6 @@ trait ViewsExp extends ViewsDsl {
     case _ =>
       None
   }
-
-  case class ExpComposeIso[A, B, C]
-      (override val iso2: Iso[B, C], override val iso1: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
-    extends AbsComposeIso[A, B, C](iso2, iso1)
 
   object ComposeIsoMethods {
     object from {
@@ -1317,7 +1250,7 @@ trait ViewsExp extends ViewsDsl {
 
   def mkComposeIso[A, B, C]
     (iso2: Iso[B, C], iso1: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeIso[A, B, C]] = {
-    new ExpComposeIso[A, B, C](iso2, iso1)
+    new ComposeIsoCtor[A, B, C](iso2, iso1)
   }
   def unmkComposeIso[A, B, C](p: Rep[IsoUR[A, C]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: ComposeIsoElem[A, B, C] @unchecked =>
@@ -1325,10 +1258,6 @@ trait ViewsExp extends ViewsDsl {
     case _ =>
       None
   }
-
-  case class ExpFuncIso[A, B, C, D]
-      (override val iso1: Iso[A, B], override val iso2: Iso[C, D])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D])
-    extends AbsFuncIso[A, B, C, D](iso1, iso2)
 
   object FuncIsoMethods {
     object from {
@@ -1372,7 +1301,7 @@ trait ViewsExp extends ViewsDsl {
 
   def mkFuncIso[A, B, C, D]
     (iso1: Iso[A, B], iso2: Iso[C, D])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]): Rep[FuncIso[A, B, C, D]] = {
-    new ExpFuncIso[A, B, C, D](iso1, iso2)
+    new FuncIsoCtor[A, B, C, D](iso1, iso2)
   }
   def unmkFuncIso[A, B, C, D](p: Rep[IsoUR[A => C, B => D]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: FuncIsoElem[A, B, C, D] @unchecked =>
@@ -1380,10 +1309,6 @@ trait ViewsExp extends ViewsDsl {
     case _ =>
       None
   }
-
-  case class ExpConverterIso[A, B]
-      (override val convTo: Conv[A, B], override val convFrom: Conv[B, A])(implicit eA: Elem[A], eB: Elem[B])
-    extends AbsConverterIso[A, B](convTo, convFrom)
 
   object ConverterIsoMethods {
     object to {
@@ -1427,7 +1352,7 @@ trait ViewsExp extends ViewsDsl {
 
   def mkConverterIso[A, B]
     (convTo: Conv[A, B], convFrom: Conv[B, A])(implicit eA: Elem[A], eB: Elem[B]): Rep[ConverterIso[A, B]] = {
-    new ExpConverterIso[A, B](convTo, convFrom)
+    new ConverterIsoCtor[A, B](convTo, convFrom)
   }
   def unmkConverterIso[A, B](p: Rep[IsoUR[A, B]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: ConverterIsoElem[A, B] @unchecked =>
@@ -1435,10 +1360,6 @@ trait ViewsExp extends ViewsDsl {
     case _ =>
       None
   }
-
-  case class ExpThunkIso[A, B]
-      (override val innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B])
-    extends AbsThunkIso[A, B](innerIso)
 
   object ThunkIsoMethods {
     object cC {
@@ -1480,7 +1401,7 @@ trait ViewsExp extends ViewsDsl {
 
   def mkThunkIso[A, B]
     (innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ThunkIso[A, B]] = {
-    new ExpThunkIso[A, B](innerIso)
+    new ThunkIsoCtor[A, B](innerIso)
   }
   def unmkThunkIso[A, B](p: Rep[Iso1UR[A, B, Thunk]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: ThunkIsoElem[A, B] @unchecked =>
@@ -1523,7 +1444,7 @@ trait ViewsExp extends ViewsDsl {
 }
 
 object Views_Module extends scalan.ModuleInfo {
-  val dump = "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"
+  val dump = "H4sIAAAAAAAAAOVZS4wURRiu6Z3XPsRlN5I18lhxiIA4A4MEk40x88TFYXdD7y6yEkjNdO3S0C+6a5YZD+hFYvRgYoyJJh6IGi/ExHgxknhRE2MMB+PNkwcPBiSEA8SDxqrqx/TMdvf07IAPnEOnu6f6+x/f9/9V1X35NxAzdDBp1KAElbSMMEzz7Dxn4BR/RBXqEiqi5dnrr2799YM9tzmwcQnET0OjaEhLYNA8KTU055zHQgVsLIuKUFKwiJspmUFgkK6YNjLURsbLRsr11FQFDEKlhgys6gYGj5oPZ2qqJKEaFlUlI8pyHcOqhDIV0cBkfLSqCs1z4ALgKmC0pio1HWHEFyRoGMiw7icRhRed60F23ZzVWjbWOjivQxET/4iNUXP8UaTxTUVVmjIGGyzXZjXqFhkzjBoaScS0rEnMTLQCEqKsqTq2rSaIhdOqYF9GFUhugLHKGbgKM8TqSobHuqisUDAN1s7CFTRDhtDhMRKDgaTl+aaGLPBhAwtt9hoaAEAjrGaZZ+lW0tJO0tI0aSke6SKUxJcg/XNOVxtNYP4iAwA0KMSeLhA2AiopQur1E7UX7/DDMkcfblBfksyjBAHa5qMwxg9J7rdH3zJuHbp0kANDS2BINHJVA+uwht06sPI1DBVFxcxnJ4VQXyEUbvejkFnJkTEdOhmsqbIGFYJkJXOEMCWJNRHTwfTeAxY/PslPYA3ZQ7mGFnHi9asoJqYClKS5aw8/ueN66QXOkYBlYpBA8qSkdBsUg9i0oS4ctbDpcRSDSK6V4NYlPQw1WsdkgCtOUh6/dkP4Zi84wYGIlUrLsgNJYYZNKcyoCkqV51K3+e/evkyZ1sGI+Y9ZAX+KB//4acMyZiJgQBPhREA8GXv6vS92oLlPOJBcYkVTluAKkwNNeREZtSWQVFeRbt5PrEKJnnlKIiGgZViXsEWUO8MDJMMYTPrWu4Zo+qcInaQSnBxsxoBDOTvf0ZKEZE9G3BRgMDwtmD2DUMhQnGRs8VMIU9Tx60J64saW8xyIHwaxZRKlUQGxqlpXBFuqpMdh1MB5+16Hjog0oQ5lp/WtQlKqpJQw2GRHXseilFm07k+xvkF+k4A5yoJp6UwHmyyH6VPpacXEw6knPr98Xry6q8wIN8NmNkci7elpE7G/Fkj483VNQk9d+f3ka688pzFRrqmJdmgut6+tGLhc1kUFu3ug44l8xxP57Bry3FXk1jE9bgMd0oiKhrrPRhsgoXbx0LLv8tATMhsEmQ0VAqVuyKxQXpXRxu23xJOX3sAsr5FG+7wzWz1D2vwUe+6RIJKsKfHTixcfuvnhqXHWtZNVEctQS+3toWfbLfYe9mTg6mKMxtY1SzTpr6NzUNRJggtuy5t9mO9sCgMo5xDv0RVs5t1Me0BkAyHWyNkDIh/ohYfePCACvfDQFwYJK3Xu3kaPu716iTsXmaBh2VDD8uHQXH5nwvYnrxqzW4gOHvPvXXO6KJMV5io68NWVhZtfzsTY/D5mTUaLUKojc3FnibclZDrRczt3kdwvKCK+q43pbnSRFsHdquEuSLl3HY6RBaOqV8si2S7Q/IWXZEit9SMiV+/3mYfo4c2+OF735LMujvvveD20K5vjcZNjHpGVj9AbySE7hWtYjyRHU1Wo97wq8Xnwf7Q4+Tsl95+dZON8Xb5v59jOjWzBWyh9z3SRvL+ddZVNp+P5vhTew97SDyAfBJAPAVAIAljLCwZDdMWsGiisOF1hBKjJ5WvQqJZDoSWng63+S7dyXan9OP3u+INbTv3MVm1xQZWhyDYDk2TzrZMdEluqTVr7T1/x0svIOT/hFfsR+Dr1uL6KKYRy/H4UuB9AMQhgbX7I/oiq6p8uj4BRLZ/77ds+7a+7rONkObc6rzqZLZDLfpWdpJhlXZWDUDvq0ucN6r9Q3ra4RmhQSMco9A68d4UFqCJOrO4LJwtHSPOn68rZ9SolKSoKi/V+nJRtUpMsRfeaUJfTJvpx0O7bQBEtd28CUVpjbRnn5lXPlLeR7IxwXsGZ4KFCbtnsErXbFbeOO0P17G6Fblx7DfJWW5fQrTK6R3QHzRBdrZ3ykk2mIzJuouX6IllipX2WWEVUk6COBPqlEslIsV4H73/n2WOHJ44tsBfSIwIbZP7jfKPx/u57BGpT7CPlzoCPlGRQqiRruElP9n/9zA8vf//xR86niqQVaGxRROeJvbjpuhPKdp9QeOuNM6mRC3fen9l99bNf2IpxiL67VhUSG4Pg2t/vtYslyWwWDamtfAZNKyWXf7QpROk7bsstmvJD9PD8X1qlUga+HwAA"
 }
 }
 

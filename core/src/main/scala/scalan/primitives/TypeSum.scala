@@ -2,9 +2,9 @@ package scalan.primitives
 
 import scalan.common.Lazy
 import scalan.staged.BaseExp
-import scalan.{ScalanExp, Scalan}
+import scalan.{ScalanExp}
 
-trait TypeSum { self: Scalan =>
+trait TypeSumExp extends BaseExp { self: ScalanExp =>
 
   trait SumOps[A, B] {
     def isLeft: Rep[Boolean]
@@ -19,12 +19,6 @@ trait TypeSum { self: Scalan =>
 
     def mapSumBy[C, D](fl: Rep[A => C], fr: Rep[B => D]): Rep[C | D]
   }
-
-  implicit def pimpSum[A, B](s: Rep[A | B]): SumOps[A, B]
-
-  def mkLeft[A, B: Elem](a: Rep[A]): Rep[A | B]
-
-  def mkRight[A: Elem, B](a: Rep[B]): Rep[A | B]
 
   implicit class RepExtensionsForSum[A](x: Rep[A]) {
     def asLeft[B: Elem]: Rep[A | B] = mkLeft[A, B](x)
@@ -74,9 +68,6 @@ trait TypeSum { self: Scalan =>
 
   // TODO used by generated code; ideally should be unnecessary
   def sOptionElement[A: Elem] = element[SOption[A]]
-}
-
-trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
   case class SLeft[A, B](left: Exp[A])(implicit val eRight: Elem[B]) extends BaseDef[A | B]()(sumElement(left.elem, eRight))
 

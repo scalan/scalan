@@ -33,7 +33,7 @@ class BoilerplateTool extends StrictLogging {
       "scalan/util/Exceptions.scala"
     ),
     coreTypeSynonyms,
-    baseContextTrait = "scalan.Scalan",
+    baseContextTrait = "scalan.ScalanExp",
     seqContextTrait = "scalan.ScalanStd",
     stagedContextTrait = "scalan.ScalanExp"
   )

@@ -2,38 +2,34 @@ package scalan.primitives
 
 import scala.annotation.unchecked.uncheckedVariance
 import scalan.staged.{BaseExp}
-import scalan.{ScalanExp, Base, Scalan}
+import scalan.{ScalanExp, Base}
 
-trait IfThenElse extends Base { self: Scalan =>
-  def ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T]
+trait IfThenElseExp extends BaseExp with EffectsExp { self: ScalanExp =>
 
   def IF(cond: Rep[Boolean]): IfBranch = new IfBranch(cond)
-  
+
   class IfBranch(cond: Rep[Boolean]) {
     def apply[T](thenp: => Rep[T]) = THEN(thenp)
-    
+
     def THEN[T](thenp: => Rep[T]) = new ThenBranch[T](cond, thenp)
   }
-  
+
   class ElseIfBranch[T](cond: Rep[Boolean], outer: ThenBranch[T]) {
     def apply(thenp: => Rep[T]) = THEN(thenp)
-    
+
     def THEN(thenp: => Rep[T]) = new ThenBranch[T](cond, thenp) {
       override def ELSE(elsep: => Rep[T]) = outer.elseIf(cond, thenp, elsep)
     }
   }
-  
+
   class ThenBranch[T](cond: Rep[Boolean], thenp: => Rep[T]) {
     def ELSE(elsep: => Rep[T]): Rep[T] = ifThenElse(cond, thenp, elsep)
-    
-    def elseIf(cond1: => Rep[Boolean], thenp1: => Rep[T], elsep1: => Rep[T]) = 
+
+    def elseIf(cond1: => Rep[Boolean], thenp1: => Rep[T], elsep1: => Rep[T]) =
       ELSE(ifThenElse(cond1, thenp1, elsep1))
-    
+
     def ELSEIF(cond1: => Rep[Boolean]) = new ElseIfBranch[T](cond1, this)
   }
-}
-
-trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: ScalanExp =>
 
   case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T]) extends Def[T] {
     lazy val selfType = thenp.elem.leastUpperBound(elsep.elem).asElem[T]
@@ -44,7 +40,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     res
   }
 
-  override def ifThenElse[T](cond: Exp[Boolean], thenp: => Exp[T], elsep: => Exp[T]): Exp[T] = {
+  def ifThenElse[T](cond: Exp[Boolean], thenp: => Exp[T], elsep: => Exp[T]): Exp[T] = {
     val t = reifyBranch(thenp)
     val e = reifyBranch(elsep)
     IfThenElse(cond, t, e)

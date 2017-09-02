@@ -4,7 +4,7 @@ import scalan._
 import scalan.common._
 import scala.reflect.runtime.universe._
 
-trait StructKeys extends ViewsDsl with Entities  { self: StructsDsl with Scalan =>
+trait StructKeys extends ViewsDsl with Entities  { self: Structs with ScalanExp =>
 
   type SKey[S <: Struct] = Rep[StructKey[S]]
   trait StructKey[Schema <: Struct] extends Def[StructKey[Schema]] {
@@ -34,7 +34,7 @@ trait StructKeys extends ViewsDsl with Entities  { self: StructsDsl with Scalan 
 
 }
 
-trait StructKeysDsl extends impl.StructKeysAbs {self: StructsDsl with Scalan =>
+trait StructKeysDsl extends impl.StructKeysDefs {self: Structs with ScalanExp =>
   type KSet = Rep[KeySet]
   trait KeySet {
     def keys: Seq[String]
@@ -51,13 +51,6 @@ trait StructKeysDsl extends impl.StructKeysAbs {self: StructsDsl with Scalan =>
   }
   class KeySetElem extends BaseElem[KeySet](KeySetSeq(Seq()))
   implicit val KeySetElement: Elem[KeySet] = new KeySetElem
-  def keyset_create(keys: Seq[String]): Rep[KeySet]
-  //  def keyset_getAt(ks: KSet, i: Rep[Int]): Rep[StructKey]
-
-
-}
-
-trait StructKeysDslExp extends impl.StructKeysExp {self: StructsDsl with ScalanExp =>
   def keyset_create(keys: Seq[String]): Rep[KeySet] = KeySetDef(keys)
   case class KeySetDef(keys: Seq[String]) extends BaseDef[KeySet] {
     override def toString = s"KeySet(${keys.mkString(",")})"

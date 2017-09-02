@@ -1,30 +1,22 @@
 package scalan.primitives
 
 import scalan.staged.{ProgramGraphs, BaseExp}
-import scalan.{ScalanExp, Scalan}
+import scalan.{ScalanExp}
 import collection.mutable
 import scala.language.{implicitConversions}
 import scalan.common.Lazy
 
-trait Functions { self: Scalan =>
+trait FunctionsExp extends BaseExp with ProgramGraphs { self: ScalanExp =>
+
   implicit class LambdaOps[A,B](f: Rep[A => B]) {
     def apply(x: Rep[A]): Rep[B] = mkApply(f, x)
     def >>[C](g: Rep[B => C]) = compose(g, f)
     def <<[C](g: Rep[C => A]) = compose(f, g)
     def compile: A => B = self.compile(f)
   }
-  def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B]
-  def mkLambda[A,B](f: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A]): Rep[A => B]
-  def mkLambda[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: Elem[B]): Rep[A=>B=>C]
-  def mkLambda[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C]
   implicit def fun[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = mkLambda(f, true)
   implicit def fun2[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = mkLambda(f)
   def funGlob[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = mkLambda(f, false)
-  def identityFun[A: Elem]: Rep[A => A]
-  def upcustFun[A: Elem, B >: A]: Rep[A => B]
-  def constFun[A: Elem, B](x: Rep[B]): Rep[A => B]
-  def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C]
-  def compile[A, B](f: Rep[A => B]): A => B
 
   // more convenient to call with explicit eA
   def typedfun[A, B](eA: Elem[A])(f: Rep[A] => Rep[B]): Rep[A => B] =
@@ -37,9 +29,6 @@ trait Functions { self: Scalan =>
   def composeBi[A, B, C, D](f: Rep[A => B], g: Rep[A => C])(h: (Rep[B], Rep[C]) => Rep[D]): Rep[A => D] = {
     sameArgFun(f) { x => h(f(x), g(x)) }
   }
-}
-
-trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanExp =>
 
   class Lambda[A, B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B], private val self0: Rep[A => B], val mayInline: Boolean)
                     (implicit val eA: Elem[A] = x.elem, val eB: Elem[B] = y.elem)

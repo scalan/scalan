@@ -8,7 +8,7 @@ import scalan.common.Lazy
 import scalan.staged.{BaseExp,Transforming}
 import scalan.meta.ScalanAst.STraitOrClassDef
 
-trait Views extends TypeDescs { self: ViewsDsl with Scalan =>
+trait Views extends TypeDescsExp with ProxyExp { self: ViewsDsl with ScalanExp =>
   type Iso[From, To] = Rep[IsoUR[From, To]]
 
   // TODO try to find a way to generate eTo such that equals and hashCode can refer to it (see commented code)
@@ -219,7 +219,7 @@ trait Views extends TypeDescs { self: ViewsDsl with Scalan =>
   }
 }
 
-trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
+trait ViewsDsl extends impl.ViewsDefs { self: ScalanExp =>
   /**
     * The base type of all isos for user-defined types
     */
@@ -286,8 +286,6 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
       }
     })
   }
-
-  def shouldUnpack(e: Elem[_]): Boolean
 
   trait IsoBuilder { def apply[T](e: Elem[T]): Iso[_,T] }
 
@@ -472,9 +470,6 @@ trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
         (iso1, convertAfterIso(iso2, toC, toD))
     (i1, i2)
   }
-}
-
-trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: ScalanExp =>
   override protected def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = receiver match {
     case Def(iso: IsoUR[_, _]) => m.getName match {
       case "from" => iso.eFrom
@@ -637,10 +632,10 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
     case UnpackView(Def(UnpackableDef(source, _)), _) => source
 
     // Rule: ParExec(nJobs, f @ i => ... V(_, iso)) ==> V(ParExec(nJobs, f >> iso.from), arrayiso(iso))
-//    case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, HasViews(_, iso: Iso[a, b])))) =>
-//      implicit val ea = iso.eFrom
-//      val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
-//      ViewArray(parRes, iso)
+    //    case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, HasViews(_, iso: Iso[a, b])))) =>
+    //      implicit val ea = iso.eFrom
+    //      val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
+    //      ViewArray(parRes, iso)
 
     // Rule: loop(V(start, iso), step, isMatch) ==> iso.to(loop(start, iso.to >> step >> iso.from, iso.to >> isMatch))
     case LoopUntil(HasViews(startWithoutViews, iso: Iso[a, b]), step, isMatch) =>
@@ -650,7 +645,7 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
       val step1 = fun { (x: Rep[a]) =>
         val x_viewed = iso.to(x)
         val res_viewed = step.asRep[b => b](x_viewed) // mirrorApply(step.asRep[b => b], x_viewed)
-        val res = iso.from(res_viewed)
+      val res = iso.from(res_viewed)
         res
       }
       val isMatch1 = fun { (x: Rep[a]) =>
@@ -664,3 +659,4 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
     case _ => super.rewriteDef(d)
   }
 }
+

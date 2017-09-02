@@ -1,6 +1,6 @@
 package scalan
 
-trait Metadata { self: Scalan =>
+trait MetadataExp { self: ScalanExp =>
   // exists only to avoid duplicate keys
   private[this] var metaKeyNames = Set.empty[String]
 
@@ -8,8 +8,8 @@ trait Metadata { self: Scalan =>
   // Elem[A] ensures it's a known serializable type so that external tools can
   // handle metadata. We may weaken this restriction later
   /**
-   * Key for metadata of type `A`.
-   */
+    * Key for metadata of type `A`.
+    */
   case class MetaKey[A](name: String)(implicit val eA: Elem[A]) {
     if (metaKeyNames.contains(name)) {
       !!!(s"Duplicate metadata key: $name")
@@ -19,21 +19,20 @@ trait Metadata { self: Scalan =>
   }
 
   /**
-   * Value for metadata of type `A`.
-   * @param mirrorWithDef
-   *   None - mirror always,
+    * Value for metadata of type `A`.
+    * @param mirrorWithDef
+    *   None - mirror always,
     *  Some(true) - mirror during graph mirroring and rewriting of current stage (used for Analyzer markings)
     *  Some(false) - don't mirror during stage mirroring
-   */
+    */
   case class MetaValue[A](value: A, mirrorWithDef: Option[Boolean] = None)
 
   /**
-   * Sets metadata for the target. No-op in sequential context,
-   * but the metadata can be accessed, transformed, etc. in staged context.
-   *
-   * Returns the target for chaining.
-   */
-  def setMetadata[A, B](target: Rep[A], key: MetaKey[B])(value: B, mirrorWithDef: Option[Boolean] = None): Rep[A]
+    * Sets metadata for the target. No-op in sequential context,
+    * but the metadata can be accessed, transformed, etc. in staged context.
+    *
+    * Returns the target for chaining.
+    */
 
   implicit class MetadataOps[A](target: Rep[A]) {
     def setMetadata[B](key: MetaKey[B])(value: B, mirrorWithDef: Option[Boolean] = None) = {
@@ -47,9 +46,7 @@ trait Metadata { self: Scalan =>
   implicit class MultipleArgs(f: Rep[_ => _]) {
     def multipleArgs(n: Int) = f.setMetadata(MultipleArgsKey)(n)
   }
-}
 
-trait MetadataExp extends Metadata { self: ScalanExp =>
   case class MetaNode(val meta: Map[MetaKey[_], MetaValue[Any]]) {
     def get[A](key: MetaKey[A]) = meta.get(key).map(_.value).asInstanceOf[Option[A]]
 
