@@ -106,7 +106,9 @@ class MetaCodegen extends ScalanAstExtensions {
     val tpeArgsDecl = tpeArgs.declString
     val tpeArgsUse = tpeArgs.useString
     val typeDecl = name + tpeArgsDecl
+    def typeDecl(suffix: String) = name + suffix + tpeArgsDecl
     val typeUse = name + tpeArgsUse
+    def typeUse(suffix: String) = name + suffix + tpeArgsUse
     val implicitArgs = entity.implicitArgs.args
     def implicitArgsDecl(prefix: String = "", p: SClassArg => Boolean = _ => true) =
       implicitArgs.filter(p).opt(args => s"(implicit ${args.rep(a => s"$prefix${a.name}: ${a.tpe}")})")
@@ -634,7 +636,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         case Some(_) => ""
         case None =>
           s"""
-             |  case class ${c.typeDecl}Ctor
+             |  case class ${c.typeDecl("Ctor")}
              |      (${fieldsWithType.rep(f => s"override val $f")})${implicitArgsDecl}
              |    extends ${c.typeUse}(${fields.rep()})${clazz.selfType.opt(t => s" with ${t.tpe}")} with Def[${c.typeUse}] {
              |    lazy val selfType = element[${c.typeUse}]
@@ -874,7 +876,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
        |  def mk${c.typeDecl}
        |    (${fieldsWithType.rep()})${implicitArgsDecl("", !b.isExtractable(_))}: Rep[${c.typeUse}] = {
        |    ${b.extractableImplicits}
-       |    new ${c.typeUse}Ctor(${fields.rep()})
+       |    new ${c.typeUse("Ctor")}(${fields.rep()})
        |  }
        |  def unmk${c.typeDecl}(p: Rep[$parent]) = p.elem.asInstanceOf[Elem[_]] match {
        |    case _: ${c.elemTypeUse} @unchecked =>

@@ -1,6 +1,6 @@
 package scalan
 
-import scalan.common.{KindsDslExp, KindsExamples, MetaTestsDslExp}
+import scalan.common.{KindsDsl, KindsExamples, MetaTestsDslExp}
 import scala.reflect.runtime.universe._
 
 abstract class AbstractElemTests extends BaseNestedTests {
@@ -35,7 +35,7 @@ abstract class AbstractElemTests extends BaseNestedTests {
 
 /** See also scalan.collections.MoreElemTests in collections subproject */
 class ElemTests extends AbstractElemTests {
-  class Ctx extends super.Ctx with KindsExamples with KindsDslExp with MetaTestsDslExp
+  class Ctx extends super.Ctx with KindsExamples with KindsDsl with MetaTestsDslExp
 
   val ctx = new Ctx
   import ctx._

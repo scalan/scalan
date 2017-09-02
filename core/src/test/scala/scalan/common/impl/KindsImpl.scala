@@ -6,10 +6,10 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait KindsAbs extends scalan.ScalanDsl with Kinds {
+trait KindsDefs extends scalan.ScalanExp with Kinds {
   self: KindsDsl =>
 
-  // single proxy for each type family
+  // entityProxy: single proxy for each type family
   implicit def proxyKind[F[_], A](p: Rep[Kind[F, A]]): Kind[F, A] = {
     proxyOps[Kind[F, A]](p)(scala.reflect.classTag[Kind[F, A]])
   }
@@ -44,21 +44,20 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
   implicit def kindElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]): Elem[Kind[F, A]] =
     cachedElem[KindElem[F, A, Kind[F, A]]](cF, eA)
 
-  implicit case object KindCompanionElem extends CompanionElem[KindCompanionAbs] {
-    lazy val tag = weakTypeTag[KindCompanionAbs]
+  implicit case object KindCompanionElem extends CompanionElem[KindCompanionCtor] {
+    lazy val tag = weakTypeTag[KindCompanionCtor]
     protected def getDefaultRep = Kind
   }
 
-  abstract class KindCompanionAbs extends CompanionDef[KindCompanionAbs] with KindCompanion {
+  abstract class KindCompanionCtor extends CompanionDef[KindCompanionCtor] with KindCompanion {
     def selfType = KindCompanionElem
     override def toString = "Kind"
   }
-  def Kind: Rep[KindCompanionAbs]
-  implicit def proxyKindCompanionAbs(p: Rep[KindCompanionAbs]): KindCompanionAbs =
-    proxyOps[KindCompanionAbs](p)
+  implicit def proxyKindCompanionCtor(p: Rep[KindCompanionCtor]): KindCompanionCtor =
+    proxyOps[KindCompanionCtor](p)
 
-  abstract class AbsReturn[F[_], A]
-      (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+  case class ReturnCtor[F[_], A]
+      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
     extends Return[F, A](a) with Def[Return[F, A]] {
     lazy val selfType = element[Return[F, A]]
   }
@@ -108,7 +107,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     lazy val typeArgs = TypeArgs("F" -> (cF -> scalan.util.Invariant), "A" -> (eA -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class ReturnCompanionAbs extends CompanionDef[ReturnCompanionAbs] with ReturnCompanion {
+  class ReturnCompanionCtor extends CompanionDef[ReturnCompanionCtor] with ReturnCompanion {
     def selfType = ReturnCompanionElem
     override def toString = "Return"
 
@@ -118,14 +117,14 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
 
     def unapply[F[_], A](p: Rep[Kind[F, A]]) = unmkReturn(p)
   }
-  lazy val ReturnRep: Rep[ReturnCompanionAbs] = new ReturnCompanionAbs
-  lazy val Return: ReturnCompanionAbs = proxyReturnCompanion(ReturnRep)
-  implicit def proxyReturnCompanion(p: Rep[ReturnCompanionAbs]): ReturnCompanionAbs = {
-    proxyOps[ReturnCompanionAbs](p)
+  lazy val ReturnRep: Rep[ReturnCompanionCtor] = new ReturnCompanionCtor
+  lazy val Return: ReturnCompanionCtor = proxyReturnCompanion(ReturnRep)
+  implicit def proxyReturnCompanion(p: Rep[ReturnCompanionCtor]): ReturnCompanionCtor = {
+    proxyOps[ReturnCompanionCtor](p)
   }
 
-  implicit case object ReturnCompanionElem extends CompanionElem[ReturnCompanionAbs] {
-    lazy val tag = weakTypeTag[ReturnCompanionAbs]
+  implicit case object ReturnCompanionElem extends CompanionElem[ReturnCompanionCtor] {
+    lazy val tag = weakTypeTag[ReturnCompanionCtor]
     protected def getDefaultRep = Return
   }
 
@@ -140,12 +139,8 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
   implicit def isoReturn[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[ReturnData[F, A], Return[F, A]] =
     reifyObject(new ReturnIso[F, A]()(eA, cF))
 
-  // 6) smart constructor and deconstructor
-  def mkReturn[F[_], A](a: Rep[A])(implicit cF: Cont[F]): Rep[Return[F, A]]
-  def unmkReturn[F[_], A](p: Rep[Kind[F, A]]): Option[(Rep[A])]
-
-  abstract class AbsBind[F[_], S, B]
-      (a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+  case class BindCtor[F[_], S, B]
+      (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends Bind[F, S, B](a, f) with Def[Bind[F, S, B]] {
     lazy val selfType = element[Bind[F, S, B]]
   }
@@ -198,7 +193,7 @@ trait KindsAbs extends scalan.ScalanDsl with Kinds {
     lazy val typeArgs = TypeArgs("F" -> (cF -> scalan.util.Invariant), "S" -> (eS -> scalan.util.Invariant), "B" -> (eA -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {
+  class BindCompanionCtor extends CompanionDef[BindCompanionCtor] with BindCompanion {
     def selfType = BindCompanionElem
     override def toString = "Bind"
     @scalan.OverloadId("fromData")
@@ -215,14 +210,14 @@ implicit val eB = p._2.elem.eRange.typeArgs("A")._1.asElem[B]
 
     def unapply[F[_], S, B](p: Rep[Kind[F, B]]) = unmkBind(p)
   }
-  lazy val BindRep: Rep[BindCompanionAbs] = new BindCompanionAbs
-  lazy val Bind: BindCompanionAbs = proxyBindCompanion(BindRep)
-  implicit def proxyBindCompanion(p: Rep[BindCompanionAbs]): BindCompanionAbs = {
-    proxyOps[BindCompanionAbs](p)
+  lazy val BindRep: Rep[BindCompanionCtor] = new BindCompanionCtor
+  lazy val Bind: BindCompanionCtor = proxyBindCompanion(BindRep)
+  implicit def proxyBindCompanion(p: Rep[BindCompanionCtor]): BindCompanionCtor = {
+    proxyOps[BindCompanionCtor](p)
   }
 
-  implicit case object BindCompanionElem extends CompanionElem[BindCompanionAbs] {
-    lazy val tag = weakTypeTag[BindCompanionAbs]
+  implicit case object BindCompanionElem extends CompanionElem[BindCompanionCtor] {
+    lazy val tag = weakTypeTag[BindCompanionCtor]
     protected def getDefaultRep = Bind
   }
 
@@ -237,23 +232,10 @@ implicit val eB = p._2.elem.eRange.typeArgs("A")._1.asElem[B]
   implicit def isoBind[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Iso[BindData[F, S, B], Bind[F, S, B]] =
     reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
 
-  // 6) smart constructor and deconstructor
-  def mkBind[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]]): Rep[Bind[F, S, B]]
-  def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]): Option[(Rep[Kind[F, S]], Rep[S => Kind[F, B]])]
-
   registerModule(Kinds_Module)
-}
 
-// Exp -----------------------------------
-trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
-  self: KindsDslExp =>
-
-  lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
+  lazy val Kind: Rep[KindCompanionCtor] = new KindCompanionCtor {
   }
-
-  case class ExpReturn[F[_], A]
-      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
-    extends AbsReturn[F, A](a)
 
   object ReturnMethods {
     // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
@@ -265,7 +247,7 @@ trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
   def mkReturn[F[_], A]
     (a: Rep[A])(implicit cF: Cont[F]): Rep[Return[F, A]] = {
     implicit val eA = a.elem
-    new ExpReturn[F, A](a)
+    new ReturnCtor[F, A](a)
   }
   def unmkReturn[F[_], A](p: Rep[Kind[F, A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: ReturnElem[F, A] @unchecked =>
@@ -273,10 +255,6 @@ trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
     case _ =>
       None
   }
-
-  case class ExpBind[F[_], S, B]
-      (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends AbsBind[F, S, B](a, f)
 
   object BindMethods {
     // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f1
@@ -290,7 +268,7 @@ trait KindsExp extends scalan.ScalanDslExp with KindsDsl {
     implicit val cF = a.elem.typeArgs("F")._1.asCont[F];
 implicit val eS = a.elem.typeArgs("A")._1.asElem[S];
 implicit val eB = f.elem.eRange.typeArgs("A")._1.asElem[B]
-    new ExpBind[F, S, B](a, f)
+    new BindCtor[F, S, B](a, f)
   }
   def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: BindElem[F, S, B] @unchecked =>
@@ -324,5 +302,4 @@ object Kinds_Module extends scalan.ModuleInfo {
 }
 }
 
-trait KindsDsl extends impl.KindsAbs
-trait KindsDslExp extends impl.KindsExp
+trait KindsDsl extends impl.KindsDefs
