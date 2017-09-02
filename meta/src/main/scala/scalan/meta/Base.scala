@@ -8,7 +8,7 @@ case class CodegenConfig(
   srcPath: String,
   entityFiles: List[String],
   entityTypeSynonyms: Map[String, String] = Map.empty,
-  baseContextTrait: String = "scalan.ScalanDsl",
+  baseContextTrait: String = "scalan.ScalanExp",
   seqContextTrait: String = "scalan.ScalanDslStd",
   stagedContextTrait: String = "scalan.ScalanDslExp",
   extraImports: List[String] = List(

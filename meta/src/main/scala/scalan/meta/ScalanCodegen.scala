@@ -160,7 +160,7 @@ class MetaCodegen extends ScalanAstExtensions {
     }.rep()
 
     def companionName = name + "Companion"
-    def companionAbsName = name + "CompanionAbs"
+    def companionAbsName = name + "CompanionCtor"
   }
 
   case class EntityTemplateData(m: SModuleDef, t: STraitDef) extends TemplateData(m, t) {
@@ -360,7 +360,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     val entityName = e.name
     val typesDecl = e.tpeArgsDecl
     s"""
-       |  // single proxy for each type family
+       |  // entityProxy: single proxy for each type family
        |  implicit def proxy$entityName${typesDecl}(p: Rep[${e.typeUse}]): ${e.typeUse} = {
        |    proxyOps[${e.typeUse}](p)(scala.reflect.classTag[${e.typeUse}])
        |  }
@@ -376,12 +376,12 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
 
   def extraTraitAbs: String = ""
 
-  def getTraitAbs = {
+  def getTraitDefs = {
     val entityCompOpt = entity.companion
     val hasCompanion = entityCompOpt.isDefined
     val proxyBT = e.optBaseType.opt { bt =>
       s"""
-         |  // TypeWrapper proxy
+         |  //proxyBT: TypeWrapper proxy
          |  //implicit def proxy${e.baseTypeName}${typesWithElems}(p: Rep[${e.baseTypeUse}]): ${e.typeUse} =
          |  //  proxyOps[${e.typeUse}](p.asRep[${e.typeUse}])
          |
@@ -585,7 +585,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
          |    override def toString = "${e.name}"
          |    $companionExtraBody
          |  }
-         |  def ${e.name}: Rep[${e.companionAbsName}]
          |${hasCompanion.opt
             s"""
                |  implicit def proxy${e.companionAbsName}(p: Rep[${e.companionAbsName}]): ${e.companionAbsName} =
@@ -635,8 +634,8 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         case Some(_) => ""
         case None =>
           s"""
-             |  abstract class Abs${c.typeDecl}
-             |      (${fieldsWithType.rep()})${implicitArgsDecl}
+             |  case class ${c.typeDecl}Ctor
+             |      (${fieldsWithType.rep(f => s"override val $f")})${implicitArgsDecl}
              |    extends ${c.typeUse}(${fields.rep()})${clazz.selfType.opt(t => s" with ${t.tpe}")} with Def[${c.typeUse}] {
              |    lazy val selfType = element[${c.typeUse}]
              |  }
@@ -795,15 +794,36 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
          |  implicit def iso${c.typeDecl}${implicitArgsDecl}: Iso[$dataTpe, ${c.typeUse}] =
          |    reifyObject(new ${className}Iso${tpeArgsUse}()$implicitArgsUse)
          |
-         |  // 6) smart constructor and deconstructor
-         |  def mk${c.typeDecl}(${fieldsWithType.rep()})${val b = c.extractionBuilder(); c.implicitArgsDecl("", !b.isExtractable(_))}: Rep[${c.typeUse}]
-         |  def unmk${c.typeDecl}(p: Rep[$parent]): Option[(${fieldTypes.opt(fieldTypes => fieldTypes.rep(t => s"Rep[$t]"), "Rep[Unit]")})]
          |""".stripAndTrim
     }
 
+    val companionMethods = getCompanionMethods.opt { case (constrs, methods) =>
+      constrs.rep(md => externalConstructor(md), "\n    ") +
+        methods.rep(md => externalMethod(md), "\n    ")
+    }
+
+    val extractorsForTraits = (for { entity <- module.entities.drop(1) } yield {
+      methodExtractorsString(entity)
+    }).mkString("\n\n")
+
+    val concreteClassesString = classes.map(getSClassExp)
+
+    def companionExp(e: EntityTemplateData) = {
+      s"""
+        |  lazy val ${e.name}: Rep[${e.companionAbsName}] = new ${e.companionAbsName} {
+        |    $companionMethods
+        |  }
+       """.stripMargin
+    }
+
+    val companionExpString  = (for { entity <- module.entities } yield {
+      val e = EntityTemplateData(module, entity)
+      companionExp(e)
+    }).mkString("\n\n")
+
     s"""
        |// Abs -----------------------------------
-       |trait ${module.name}Abs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
+       |trait ${module.name}Defs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
        |  ${selfTypeString("")}
        |
        |${entityProxy(e)}
@@ -825,6 +845,17 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
        |${concreteClasses.mkString("\n\n")}
        |
        |  registerModule(${module.name}_Module)
+       |
+       |$companionExpString
+       |
+       |${if (e.isCont) familyView(e) else ""}
+       |
+       |$extractorsForTraits
+       |
+       |${concreteClassesString.mkString("\n\n")}
+       |
+       |${methodExtractorsString(entity)}
+       |${emitRewriteDef(e)}
        |}
        |""".stripAndTrim
   }
@@ -838,17 +869,12 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     val b = c.extractionBuilder()
 
     s"""
-       |  case class Exp${c.typeDecl}
-       |      (${fieldsWithType.rep(f => s"override val $f")})${implicitArgsDecl()}
-       |    extends ${e.optBaseType.isEmpty.opt("Abs")}${c.typeUse}(${fields.rep()})
-       |    ${c.module.hasExpImplFor(c.name).opt(s" with ${c.name}Decls${c.tpeArgsUse}")}
-       |
        |${methodExtractorsString(clazz)}
        |
        |  def mk${c.typeDecl}
        |    (${fieldsWithType.rep()})${implicitArgsDecl("", !b.isExtractable(_))}: Rep[${c.typeUse}] = {
        |    ${b.extractableImplicits}
-       |    new Exp${c.typeUse}(${fields.rep()})
+       |    new ${c.typeUse}Ctor(${fields.rep()})
        |  }
        |  def unmk${c.typeDecl}(p: Rep[$parent]) = p.elem.asInstanceOf[Elem[_]] match {
        |    case _: ${c.elemTypeUse} @unchecked =>
@@ -936,50 +962,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
          """.stripMargin
     }
     else ""
-  }
-
-  def getTraitExp = {
-    val companionMethods = getCompanionMethods.opt { case (constrs, methods) =>
-      constrs.rep(md => externalConstructor(md), "\n    ") +
-        methods.rep(md => externalMethod(md), "\n    ")
-    }
-
-    val extractorsForTraits = (for { entity <- module.entities.drop(1) } yield {
-      methodExtractorsString(entity)
-    }).mkString("\n\n")
-
-    val concreteClassesString = classes.map(getSClassExp)
-
-    def companionExp(e: EntityTemplateData) = {
-      s"""
-        |  lazy val ${e.name}: Rep[${e.companionAbsName}] = new ${e.companionAbsName} {
-        |    $companionMethods
-        |  }
-       """.stripMargin
-    }
-
-    val companionExpString  = (for { entity <- module.entities } yield {
-      val e = EntityTemplateData(module, entity)
-      companionExp(e)
-    }).mkString("\n\n")
-
-    s"""
-       |// Exp -----------------------------------
-       |trait ${module.name}Exp extends ${config.stagedContextTrait.opt(t => s"$t with ")}${module.name}Dsl {
-       |  ${selfTypeString("Exp")}
-       |
-       |$companionExpString
-       |
-       |${if (e.isCont) familyView(e) else ""}
-       |
-       |$extractorsForTraits
-       |
-       |${concreteClassesString.mkString("\n\n")}
-       |
-       |${methodExtractorsString(entity)}
-       |${emitRewriteDef(e)}
-       |}
-       |""".stripAndTrim
   }
 
   def methodExtractorsString(e: STraitOrClassDef) = {
@@ -1135,17 +1117,14 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
        |
       |${(module.imports ++ config.extraImports.map(SImportStat(_))).distinct.rep(i => s"import ${i.name}", "\n")}
        |
-      |package impl {
-       |
       |""".stripAndTrim
   }
 
   def getDslTraits = {
     List(
-      List((module.hasDsl, "", "Abs")),
-      List((module.hasDslExp, "Exp", "Exp"))).flatten.collect {
+      List((module.hasDslExp, "", "Defs"))).flatten.collect {
       case (hasDslTrait, dslTraitSuffix, traitSuffix) if !hasDslTrait =>
-        val DslName = s"${module.name}Dsl"
+        val DslName = module.name + "Dsl"
         val selfTypeStr = module.selfType match {
           case Some(SSelfTypeDef(_, List(STraitCall(DslName, Nil)))) => ""
           case _ => s" {${selfTypeString(dslTraitSuffix)}}"
@@ -1165,10 +1144,10 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
   def getImplFile: String = {
     val topLevel = List(
       getFileHeader,
-      getTraitAbs,
-      getTraitExp,
+      "package impl {",
+      getTraitDefs,
       emitModuleSerialization,
-      "}", // closing brace for `package impl {`
+      "}",
       getDslTraits
     )
     topLevel.mkString("", "\n\n", "\n").

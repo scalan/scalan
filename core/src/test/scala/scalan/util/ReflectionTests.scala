@@ -29,7 +29,7 @@ class ReflectionTests extends BaseCtxTests {
     // Classes on the right-hand side are used to get a variety of constructor parameter definitions
 
     // Same field type
-    val interval = new IntervalDef(1, 2)
+    val interval = new IntervalCtor(1, 2)
     check(interval)(canGetAll, namesAre("start", "end"))
 
     // No implicit parameters, `extends ArrayDef`

@@ -130,7 +130,7 @@ trait Entities extends TypeDescs { self: Scalan =>
 
   def entityDef(e: EntityElem[_]): STraitOrClassDef = {
     val elemClassSymbol = ReflectionUtil.classToSymbol(e.getClass)
-    val moduleName = elemClassSymbol.owner.name.toString.stripSuffix("Abs")
+    val moduleName = elemClassSymbol.owner.name.toString.stripSuffix("Defs")
     val module = modules.getOrElse(moduleName, !!!(s"Module $moduleName not found"))
     val entityName = elemClassSymbol.name.toString.stripSuffix("Elem")
     module.allEntities.find(_.name == entityName).getOrElse {
