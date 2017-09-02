@@ -1,9 +1,5 @@
 package scalan.common
 
-/**
- * Created by Victor Smirnov on 4/14/15.
- */
-
 trait MetaTests { self: MetaTestsDsl =>
 
   type RMetaTest[T] = Rep[MetaTest[T]]
@@ -39,4 +35,4 @@ trait MetaTests { self: MetaTestsDsl =>
   }
 }
 
-trait MetaTestsDsl extends impl.MetaTestsAbs
+trait MetaTestsDsl extends impl.MetaTestsDefs

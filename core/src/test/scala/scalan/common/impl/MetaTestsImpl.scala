@@ -5,10 +5,10 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
+trait MetaTestsDefs extends scalan.ScalanExp with MetaTests {
   self: MetaTestsDsl =>
 
-  // single proxy for each type family
+  // entityProxy: single proxy for each type family
   implicit def proxyMetaTest[T](p: Rep[MetaTest[T]]): MetaTest[T] = {
     proxyOps[MetaTest[T]](p)(scala.reflect.classTag[MetaTest[T]])
   }
@@ -42,21 +42,20 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
   implicit def metaTestElement[T](implicit elem: Elem[T]): Elem[MetaTest[T]] =
     cachedElem[MetaTestElem[T, MetaTest[T]]](elem)
 
-  implicit case object MetaTestCompanionElem extends CompanionElem[MetaTestCompanionAbs] {
-    lazy val tag = weakTypeTag[MetaTestCompanionAbs]
+  implicit case object MetaTestCompanionElem extends CompanionElem[MetaTestCompanionCtor] {
+    lazy val tag = weakTypeTag[MetaTestCompanionCtor]
     protected def getDefaultRep = MetaTest
   }
 
-  abstract class MetaTestCompanionAbs extends CompanionDef[MetaTestCompanionAbs] with MetaTestCompanion {
+  abstract class MetaTestCompanionCtor extends CompanionDef[MetaTestCompanionCtor] with MetaTestCompanion {
     def selfType = MetaTestCompanionElem
     override def toString = "MetaTest"
   }
-  def MetaTest: Rep[MetaTestCompanionAbs]
-  implicit def proxyMetaTestCompanionAbs(p: Rep[MetaTestCompanionAbs]): MetaTestCompanionAbs =
-    proxyOps[MetaTestCompanionAbs](p)
+  implicit def proxyMetaTestCompanionCtor(p: Rep[MetaTestCompanionCtor]): MetaTestCompanionCtor =
+    proxyOps[MetaTestCompanionCtor](p)
 
-  abstract class AbsMT0
-      (size: Rep[Int])
+  case class MT0Ctor
+      (override val size: Rep[Int])
     extends MT0(size) with Def[MT0] {
     lazy val selfType = element[MT0]
   }
@@ -100,7 +99,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
-  class MT0CompanionAbs extends CompanionDef[MT0CompanionAbs] with MT0Companion {
+  class MT0CompanionCtor extends CompanionDef[MT0CompanionCtor] with MT0Companion {
     def selfType = MT0CompanionElem
     override def toString = "MT0"
 
@@ -110,14 +109,14 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
 
     def unapply(p: Rep[MetaTest[Unit]]) = unmkMT0(p)
   }
-  lazy val MT0Rep: Rep[MT0CompanionAbs] = new MT0CompanionAbs
-  lazy val MT0: MT0CompanionAbs = proxyMT0Companion(MT0Rep)
-  implicit def proxyMT0Companion(p: Rep[MT0CompanionAbs]): MT0CompanionAbs = {
-    proxyOps[MT0CompanionAbs](p)
+  lazy val MT0Rep: Rep[MT0CompanionCtor] = new MT0CompanionCtor
+  lazy val MT0: MT0CompanionCtor = proxyMT0Companion(MT0Rep)
+  implicit def proxyMT0Companion(p: Rep[MT0CompanionCtor]): MT0CompanionCtor = {
+    proxyOps[MT0CompanionCtor](p)
   }
 
-  implicit case object MT0CompanionElem extends CompanionElem[MT0CompanionAbs] {
-    lazy val tag = weakTypeTag[MT0CompanionAbs]
+  implicit case object MT0CompanionElem extends CompanionElem[MT0CompanionCtor] {
+    lazy val tag = weakTypeTag[MT0CompanionCtor]
     protected def getDefaultRep = MT0
   }
 
@@ -132,12 +131,8 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
   implicit def isoMT0: Iso[MT0Data, MT0] =
     reifyObject(new MT0Iso())
 
-  // 6) smart constructor and deconstructor
-  def mkMT0(size: Rep[Int]): Rep[MT0]
-  def unmkMT0(p: Rep[MetaTest[Unit]]): Option[(Rep[Int])]
-
-  abstract class AbsMT1[T]
-      (data: Rep[T], size: Rep[Int])(implicit elem: Elem[T])
+  case class MT1Ctor[T]
+      (override val data: Rep[T], override val size: Rep[Int])(implicit elem: Elem[T])
     extends MT1[T](data, size) with Def[MT1[T]] {
     lazy val selfType = element[MT1[T]]
   }
@@ -184,7 +179,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     lazy val typeArgs = TypeArgs("T" -> (elem -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class MT1CompanionAbs extends CompanionDef[MT1CompanionAbs] {
+  class MT1CompanionCtor extends CompanionDef[MT1CompanionCtor] {
     def selfType = MT1CompanionElem
     override def toString = "MT1"
     @scalan.OverloadId("fromData")
@@ -199,14 +194,14 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
 
     def unapply[T](p: Rep[MetaTest[T]]) = unmkMT1(p)
   }
-  lazy val MT1Rep: Rep[MT1CompanionAbs] = new MT1CompanionAbs
-  lazy val MT1: MT1CompanionAbs = proxyMT1Companion(MT1Rep)
-  implicit def proxyMT1Companion(p: Rep[MT1CompanionAbs]): MT1CompanionAbs = {
-    proxyOps[MT1CompanionAbs](p)
+  lazy val MT1Rep: Rep[MT1CompanionCtor] = new MT1CompanionCtor
+  lazy val MT1: MT1CompanionCtor = proxyMT1Companion(MT1Rep)
+  implicit def proxyMT1Companion(p: Rep[MT1CompanionCtor]): MT1CompanionCtor = {
+    proxyOps[MT1CompanionCtor](p)
   }
 
-  implicit case object MT1CompanionElem extends CompanionElem[MT1CompanionAbs] {
-    lazy val tag = weakTypeTag[MT1CompanionAbs]
+  implicit case object MT1CompanionElem extends CompanionElem[MT1CompanionCtor] {
+    lazy val tag = weakTypeTag[MT1CompanionCtor]
     protected def getDefaultRep = MT1
   }
 
@@ -221,12 +216,8 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
   implicit def isoMT1[T](implicit elem: Elem[T]): Iso[MT1Data[T], MT1[T]] =
     reifyObject(new MT1Iso[T]()(elem))
 
-  // 6) smart constructor and deconstructor
-  def mkMT1[T](data: Rep[T], size: Rep[Int]): Rep[MT1[T]]
-  def unmkMT1[T](p: Rep[MetaTest[T]]): Option[(Rep[T], Rep[Int])]
-
-  abstract class AbsMT2[T, R]
-      (indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R])
+  case class MT2Ctor[T, R]
+      (override val indices: Rep[T], override val values: Rep[R], override val size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R])
     extends MT2[T, R](indices, values, size) with Def[MT2[T, R]] {
     lazy val selfType = element[MT2[T, R]]
   }
@@ -278,7 +269,7 @@ trait MetaTestsAbs extends scalan.ScalanDsl with MetaTests {
     lazy val typeArgs = TypeArgs("T" -> (eT -> scalan.util.Invariant), "R" -> (eR -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
-  class MT2CompanionAbs extends CompanionDef[MT2CompanionAbs] {
+  class MT2CompanionCtor extends CompanionDef[MT2CompanionCtor] {
     def selfType = MT2CompanionElem
     override def toString = "MT2"
     @scalan.OverloadId("fromData")
@@ -294,14 +285,14 @@ implicit val eR = p._2.elem
 
     def unapply[T, R](p: Rep[MetaTest[(T, R)]]) = unmkMT2(p)
   }
-  lazy val MT2Rep: Rep[MT2CompanionAbs] = new MT2CompanionAbs
-  lazy val MT2: MT2CompanionAbs = proxyMT2Companion(MT2Rep)
-  implicit def proxyMT2Companion(p: Rep[MT2CompanionAbs]): MT2CompanionAbs = {
-    proxyOps[MT2CompanionAbs](p)
+  lazy val MT2Rep: Rep[MT2CompanionCtor] = new MT2CompanionCtor
+  lazy val MT2: MT2CompanionCtor = proxyMT2Companion(MT2Rep)
+  implicit def proxyMT2Companion(p: Rep[MT2CompanionCtor]): MT2CompanionCtor = {
+    proxyOps[MT2CompanionCtor](p)
   }
 
-  implicit case object MT2CompanionElem extends CompanionElem[MT2CompanionAbs] {
-    lazy val tag = weakTypeTag[MT2CompanionAbs]
+  implicit case object MT2CompanionElem extends CompanionElem[MT2CompanionCtor] {
+    lazy val tag = weakTypeTag[MT2CompanionCtor]
     protected def getDefaultRep = MT2
   }
 
@@ -316,23 +307,10 @@ implicit val eR = p._2.elem
   implicit def isoMT2[T, R](implicit eT: Elem[T], eR: Elem[R]): Iso[MT2Data[T, R], MT2[T, R]] =
     reifyObject(new MT2Iso[T, R]()(eT, eR))
 
-  // 6) smart constructor and deconstructor
-  def mkMT2[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int]): Rep[MT2[T, R]]
-  def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]): Option[(Rep[T], Rep[R], Rep[Int])]
-
   registerModule(MetaTests_Module)
-}
 
-// Exp -----------------------------------
-trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
-  self: MetaTestsDslExp =>
-
-  lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
+  lazy val MetaTest: Rep[MetaTestCompanionCtor] = new MetaTestCompanionCtor {
   }
-
-  case class ExpMT0
-      (override val size: Rep[Int])
-    extends AbsMT0(size)
 
   object MT0Methods {
     object test {
@@ -377,7 +355,7 @@ trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
 
   def mkMT0
     (size: Rep[Int]): Rep[MT0] = {
-    new ExpMT0(size)
+    new MT0Ctor(size)
   }
   def unmkMT0(p: Rep[MetaTest[Unit]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: MT0Elem @unchecked =>
@@ -385,10 +363,6 @@ trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
     case _ =>
       None
   }
-
-  case class ExpMT1[T]
-      (override val data: Rep[T], override val size: Rep[Int])(implicit elem: Elem[T])
-    extends AbsMT1[T](data, size)
 
   object MT1Methods {
     object test {
@@ -419,7 +393,7 @@ trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
   def mkMT1[T]
     (data: Rep[T], size: Rep[Int]): Rep[MT1[T]] = {
     implicit val eT = data.elem
-    new ExpMT1[T](data, size)
+    new MT1Ctor[T](data, size)
   }
   def unmkMT1[T](p: Rep[MetaTest[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: MT1Elem[T] @unchecked =>
@@ -427,10 +401,6 @@ trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
     case _ =>
       None
   }
-
-  case class ExpMT2[T, R]
-      (override val indices: Rep[T], override val values: Rep[R], override val size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R])
-    extends AbsMT2[T, R](indices, values, size)
 
   object MT2Methods {
     object test {
@@ -462,7 +432,7 @@ trait MetaTestsExp extends scalan.ScalanDslExp with MetaTestsDsl {
     (indices: Rep[T], values: Rep[R], size: Rep[Int]): Rep[MT2[T, R]] = {
     implicit val eT = indices.elem;
 implicit val eR = values.elem
-    new ExpMT2[T, R](indices, values, size)
+    new MT2Ctor[T, R](indices, values, size)
   }
   def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: MT2Elem[T, R] @unchecked =>
@@ -518,4 +488,3 @@ object MetaTests_Module extends scalan.ModuleInfo {
 }
 }
 
-trait MetaTestsDslExp extends impl.MetaTestsExp
