@@ -6,7 +6,7 @@ import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.Base
 import scalan.util.ScalaNameUtil
 
-trait PatternMatching extends Base with GraphVizExport { _: ScalanExp =>
+trait PatternMatching extends Base with GraphVizExport { _: Scalan =>
 
   def MATCH[A, B: Elem](selector: Rep[A])(f: PartialFunction[Rep[A], Rep[B]]): Rep[B] =
   macro PatternMatchingMacro.patternMatchImpl[A, B]

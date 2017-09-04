@@ -6,7 +6,7 @@ import scalan.compilation.{GraphVizConfig, Compiler}
 import scalan.util.FileUtil
 
 trait TestContexts extends TestsUtil {
-  protected[this] def stage(scalan: ScalanExp)(testName: String, name: String, sfs: Seq[() => scalan.Exp[_]]): Unit = {
+  protected[this] def stage(scalan: Scalan)(testName: String, name: String, sfs: Seq[() => scalan.Exp[_]]): Unit = {
     val directory = FileUtil.file(prefix, testName)
     implicit val graphVizConfig = scalan.defaultGraphVizConfig
     try {
@@ -47,7 +47,7 @@ trait TestContexts extends TestsUtil {
   abstract class TestCompilerContext(testName: String) {
     def this() = this(currentTestNameAsFileName)
 
-    val compiler: Compiler[_ <: ScalanExp]
+    val compiler: Compiler[_ <: Scalan]
     import compiler._
 
     def test[A,B](functionName: String, f: => scalan.Exp[A => B]): CompilerOutput[A, B] = {

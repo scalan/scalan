@@ -7,7 +7,7 @@ import scalan._
 import scalan.common.{SegmentsDsl}
 
 class ThunkTests extends BaseCtxTests {
-  trait MyProg extends ScalanExp {
+  trait MyProg extends Scalan {
     lazy val t1 = fun { (in: Rep[Int]) =>
       Thunk { in }
     }
@@ -131,7 +131,7 @@ class ThunkTests extends BaseCtxTests {
     ctx.emit("t11_inl", ctx.t11)
   }
 
-  trait MyDomainProg extends ScalanExp with SegmentsDsl {
+  trait MyDomainProg extends Scalan with SegmentsDsl {
     lazy val t1 = fun { (in: Rep[Int]) =>
       Thunk { Interval(in, in) }.force.length
     }

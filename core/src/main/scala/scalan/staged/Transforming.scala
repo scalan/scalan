@@ -3,11 +3,11 @@ package scalan.staged
 import java.lang.reflect.{Method, InvocationTargetException}
 
 import scala.collection.{mutable, Seq}
-import scalan.{ScalanExp}
+import scalan.{Scalan}
 import scalan.common.Lazy
 import scala.reflect.runtime.universe._
 
-trait Transforming { self: ScalanExp =>
+trait Transforming { self: Scalan =>
 
   trait Pass {
     def name: String

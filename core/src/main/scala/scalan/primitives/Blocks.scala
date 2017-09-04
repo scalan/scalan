@@ -2,10 +2,10 @@ package scalan.primitives
 
 import scala.collection.mutable
 import scalan.staged.Expressions
-import scalan.{ScalanExp}
+import scalan.{Scalan}
 import scalan.common.Lazy
 
-trait Blocks extends Expressions { self: ScalanExp =>
+trait Blocks extends Expressions { self: Scalan =>
 
   implicit class RepBlock[A](left: Rep[A]) { 
     def |[B](right: Rep[B]) = semicolon(left, right)

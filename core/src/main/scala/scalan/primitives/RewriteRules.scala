@@ -1,11 +1,11 @@
 package scalan.primitives
 
 import scalan.Base
-import scalan.{ScalanExp}
+import scalan.{Scalan}
 import scala.reflect.runtime.universe._
 import scalan.util.Invariant
 
-trait RewriteRules extends Base { self: ScalanExp =>
+trait RewriteRules extends Base { self: Scalan =>
   case class Rewrite[A](lhs: Rep[A], rhs: Rep[A])
   case class RewriteOp[A: Elem]() extends BinOp[A, Rewrite[A]]("==>", (x, y) => Rewrite[A](x, y))
 

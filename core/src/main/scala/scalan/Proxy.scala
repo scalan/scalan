@@ -16,7 +16,7 @@ import net.sf.cglib.proxy.InvocationHandler
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.util.{StringUtil, ReflectionUtil, ScalaNameUtil}
 
-trait Proxy extends Base with Metadata with GraphVizExport { self: ScalanExp =>
+trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
 
   def getStagedFunc(name: String): Rep[_] = {
     val clazz = this.getClass

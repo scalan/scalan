@@ -1,9 +1,9 @@
 package scalan.primitives
 
 import scalan.Base
-import scalan.{ScalanExp}
+import scalan.{Scalan}
 
-trait LogicalOps extends Base { self: ScalanExp =>
+trait LogicalOps extends Base { self: Scalan =>
   val And = new EndoBinOp[Boolean]("&&", _ && _)
 
   val Or = new EndoBinOp[Boolean]("||", _ || _)

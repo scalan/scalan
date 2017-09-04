@@ -6,7 +6,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait KindsDefs extends scalan.ScalanExp with Kinds {
+trait KindsDefs extends scalan.Scalan with Kinds {
   self: KindsDsl =>
 
   // entityProxy: single proxy for each type family

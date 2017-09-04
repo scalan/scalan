@@ -1,9 +1,9 @@
 package scalan.primitives
 
 import scalan.Base
-import scalan.{ScalanExp}
+import scalan.{Scalan}
 
-trait Equal extends Base { self: ScalanExp =>
+trait Equal extends Base { self: Scalan =>
   case class Equals[A]() extends BinOp[A, Boolean]("==", _ == _)
 
   implicit class EqualOps[A](x: Rep[A]) {

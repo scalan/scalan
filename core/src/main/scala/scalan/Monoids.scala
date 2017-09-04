@@ -1,6 +1,6 @@
 package scalan
 
-trait Monoids { self: ScalanExp =>
+trait Monoids { self: Scalan =>
   case class RepMonoid[A](opName: String, zero: Rep[A], append: Rep[((A, A)) => A], isCommutative: Boolean) {
     implicit val eA: Elem[A] = zero.elem
     override def toString = repMonoid_toString(this)

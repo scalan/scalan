@@ -1,9 +1,9 @@
 package scalan.primitives
 
 import scalan.Base
-import scalan.{ ScalanExp }
+import scalan.{ Scalan }
 
-trait StringOps extends Base { self: ScalanExp =>
+trait StringOps extends Base { self: Scalan =>
   implicit class StringOpsCls(lhs: Rep[String]) {
     def toInt = StringToInt(lhs)
     def toDouble = StringToDouble(lhs)

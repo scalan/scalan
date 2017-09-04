@@ -7,7 +7,7 @@ import com.github.kxbmap.configs.Configs
 import com.github.kxbmap.configs.syntax._
 import com.typesafe.config.{Config, ConfigUtil}
 
-import scalan.{Base, ScalanExp}
+import scalan.{Base, Scalan}
 import scalan.util.{FileUtil, ProcessUtil, ScalaNameUtil, StringUtil}
 
 case class GraphFile(file: File, fileType: String) {
@@ -21,7 +21,7 @@ case class GraphFile(file: File, fileType: String) {
   }
 }
 
-trait GraphVizExport { self: ScalanExp =>
+trait GraphVizExport { self: Scalan =>
 
   // TODO it would be better to have nodeColor(elem: Elem[_], optDef: Option[Def[_]]) to
   // avoid looking up definition, but this leads to ClassFormatError (likely Scala bug)

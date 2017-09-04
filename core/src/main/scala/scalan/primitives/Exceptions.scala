@@ -1,8 +1,8 @@
 package scalan.primitives
 
-import scalan.{ScalanExp}
+import scalan.{Scalan}
 
-trait Exceptions { self: ScalanExp =>
+trait Exceptions { self: Scalan =>
   case class ThrowException(msg: Rep[String]) extends BaseDef[Unit]
   def THROW(msg: Rep[String]): Rep[Unit] = ThrowException(msg)    
 }

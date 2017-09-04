@@ -4,7 +4,7 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
-import scalan.{ScalanExp}
+import scalan.{Scalan}
 import scalan.common.{Utils, Lazy}
 
 /*
@@ -20,7 +20,7 @@ import scalan.common.{Utils, Lazy}
  - mirroring implemented in Scalan way (though consistent with LMS)
  */
 
-trait Effects extends Expressions with Utils with GraphVizExport { self: ScalanExp =>
+trait Effects extends Expressions with Utils with GraphVizExport { self: Scalan =>
 
   case class Block[+T](val res: Exp[T]) { def elem: Elem[T @uncheckedVariance] = res.elem } // variance ...
 

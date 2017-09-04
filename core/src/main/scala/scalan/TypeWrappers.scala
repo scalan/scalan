@@ -6,7 +6,7 @@ import scala.reflect.runtime.universe._
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.util.Invariant
 
-trait TypeWrappers extends GraphVizExport with Base { scalan: ScalanExp =>
+trait TypeWrappers extends GraphVizExport with Base { scalan: Scalan =>
   trait TypeWrapper[TBase, TWrapper] extends Def[TWrapper] {
     def wrappedValue: Rep[TBase]
   }

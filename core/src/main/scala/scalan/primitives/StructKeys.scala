@@ -4,7 +4,7 @@ import scalan._
 import scalan.common._
 import scala.reflect.runtime.universe._
 
-trait StructKeys extends ViewsDsl with Entities  { self: Structs with ScalanExp =>
+trait StructKeys extends ViewsDsl with Entities  { self: Structs with Scalan =>
 
   type SKey[S <: Struct] = Rep[StructKey[S]]
   trait StructKey[Schema <: Struct] extends Def[StructKey[Schema]] {
@@ -34,7 +34,7 @@ trait StructKeys extends ViewsDsl with Entities  { self: Structs with ScalanExp 
 
 }
 
-trait StructKeysDsl extends impl.StructKeysDefs {self: Structs with ScalanExp =>
+trait StructKeysDsl extends impl.StructKeysDefs {self: Structs with Scalan =>
   type KSet = Rep[KeySet]
   trait KeySet {
     def keys: Seq[String]

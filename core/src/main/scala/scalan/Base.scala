@@ -13,7 +13,7 @@ import scalan.compilation.GraphVizConfig
 import scalan.util.{ReflectionUtil, ParamMirror}
 import scala.reflect.runtime.universe._
 
-trait Base extends LazyLogging { scalan: ScalanExp =>
+trait Base extends LazyLogging { scalan: Scalan =>
   type Rep[+A] = Exp[A]
   type |[+A, +B] = Either[A, B]
   type IntRep = Rep[Int]

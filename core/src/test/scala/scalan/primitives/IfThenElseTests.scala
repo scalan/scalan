@@ -1,9 +1,9 @@
 package scalan.primitives
 
-import scalan.{BaseTests, ScalanDslExp, ScalanExp}
+import scalan.{BaseTests, ScalanDslExp, Scalan}
 import scalan.common.MetaTestsDsl
 
-abstract class IfThenElseTests[A <: ScalanExp](val ctx: A) extends BaseTests {
+abstract class IfThenElseTests[A <: Scalan](val ctx: A) extends BaseTests {
   import ctx._
 
   test("simpleIf") {

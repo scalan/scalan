@@ -12,7 +12,7 @@ import scalan.meta.ScalanAst._
 package impl {
 // Abs -----------------------------------
 trait ViewsDefs extends Views {
-  self: ViewsDsl with ScalanExp =>
+  self: ViewsDsl with Scalan =>
 
   // entityProxy: single proxy for each type family
   implicit def proxyIsoUR[From, To](p: Rep[IsoUR[From, To]]): IsoUR[From, To] = {

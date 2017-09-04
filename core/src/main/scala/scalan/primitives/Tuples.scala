@@ -6,9 +6,9 @@ package scalan.primitives
 
 import scalan.common.OverloadHack._
 import scalan.Base
-import scalan.{ScalanExp}
+import scalan.{Scalan}
 
-trait Tuples extends Base { self: ScalanExp =>
+trait Tuples extends Base { self: Scalan =>
   object Pair {
     def apply[A, B](a: Rep[A], b: Rep[B]) = zipPair[A, B]((a, b))
     def unapply[A, B](p: Rep[(A, B)]) = Some(unzipPair[A, B](p))

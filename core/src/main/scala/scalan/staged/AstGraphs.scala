@@ -1,11 +1,11 @@
 package scalan.staged
 
 import scala.collection._
-import scalan.ScalanExp
+import scalan.Scalan
 import scalan.common.GraphUtil
 import scalan.compilation.GraphVizConfig
 
-trait AstGraphs extends Transforming { self: ScalanExp =>
+trait AstGraphs extends Transforming { self: Scalan =>
 
   /**
    * AstNode is created for each symbol of the AstGraph and represents graph linking structure

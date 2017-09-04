@@ -6,7 +6,7 @@ import scalan.util.FileUtil
 class MetadataTests extends BaseNestedTests {
   private val mainStr = "main"
 
-  trait Prog extends ScalanExp {
+  trait Prog extends Scalan {
     val functionNameKey = MetaKey[String]("name")
 
     val main = fun { x: Rep[Int] => x + 1 }

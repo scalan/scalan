@@ -5,7 +5,7 @@ import scala.language.higherKinds
 import scala.collection.mutable.{Map => MutMap}
 import scalan.common.Lazy
 
-trait Views extends TypeDescs with Proxy { self: ViewsDsl with ScalanExp =>
+trait Views extends TypeDescs with Proxy { self: ViewsDsl with Scalan =>
   type Iso[From, To] = Rep[IsoUR[From, To]]
 
   // TODO try to find a way to generate eTo such that equals and hashCode can refer to it (see commented code)
@@ -216,7 +216,7 @@ trait Views extends TypeDescs with Proxy { self: ViewsDsl with ScalanExp =>
   }
 }
 
-trait ViewsDsl extends impl.ViewsDefs { self: ScalanExp =>
+trait ViewsDsl extends impl.ViewsDefs { self: Scalan =>
   /**
     * The base type of all isos for user-defined types
     */

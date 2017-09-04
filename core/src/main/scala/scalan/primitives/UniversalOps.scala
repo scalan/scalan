@@ -1,9 +1,9 @@
 package scalan.primitives
 
 import scalan.Base
-import scalan.{ScalanExp}
+import scalan.{Scalan}
 
-trait UniversalOps extends Base { self: ScalanExp =>
+trait UniversalOps extends Base { self: Scalan =>
   case class HashCode[A]() extends UnOp[A, Int]("hashCode", _.hashCode)
 
   case class ToString[A]() extends UnOp[A, String]("toString", _.toString)

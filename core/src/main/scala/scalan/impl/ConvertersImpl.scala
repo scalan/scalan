@@ -9,7 +9,7 @@ import scalan.meta.ScalanAst._
 package impl {
 // Abs -----------------------------------
 trait ConvertersDefs extends Converters {
-  self: ScalanExp =>
+  self: Scalan =>
 
   // entityProxy: single proxy for each type family
   implicit def proxyConverter[T, R](p: Rep[Converter[T, R]]): Converter[T, R] = {

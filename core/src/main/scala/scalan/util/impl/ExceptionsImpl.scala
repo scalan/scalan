@@ -6,7 +6,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait ExceptionsDefs extends scalan.ScalanExp with Exceptions {
+trait ExceptionsDefs extends scalan.Scalan with Exceptions {
   self: ExceptionsDsl =>
 
   // entityProxy: single proxy for each type family

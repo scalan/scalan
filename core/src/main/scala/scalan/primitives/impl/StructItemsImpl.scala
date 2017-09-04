@@ -10,7 +10,7 @@ import scalan.meta.ScalanAst._
 package impl {
 // Abs -----------------------------------
 trait StructItemsDefs extends StructItems {
-  self: Structs with ScalanExp =>
+  self: Structs with Scalan =>
 
   // entityProxy: single proxy for each type family
   implicit def proxyStructItem[Val, Schema <: Struct](p: Rep[StructItem[Val, Schema]]): StructItem[Val, Schema] = {

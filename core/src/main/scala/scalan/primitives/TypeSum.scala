@@ -2,9 +2,9 @@ package scalan.primitives
 
 import scalan.common.Lazy
 import scalan.Base
-import scalan.{ScalanExp}
+import scalan.{Scalan}
 
-trait TypeSum extends Base { self: ScalanExp =>
+trait TypeSum extends Base { self: Scalan =>
 
   trait SumOps[A, B] {
     def isLeft: Rep[Boolean]

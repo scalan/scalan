@@ -1,10 +1,10 @@
 package scalan.common
 
 import scala.collection.Seq
-import scalan.ScalanExp
+import scalan.Scalan
 import scala.reflect.runtime.universe._
 
-trait KindsExamples extends ScalanExp with KindsDsl {
+trait KindsExamples extends Scalan with KindsDsl {
   type Id[A] = A
 
   implicit val functorId: Functor[Id] = new Functor[Id] {

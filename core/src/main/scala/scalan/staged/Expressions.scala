@@ -11,7 +11,7 @@ import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
 import scalan.util.{ParamMirror, ReflectionUtil}
-import scalan.{ScalanExp, Base, Plugins}
+import scalan.{Scalan, Base, Plugins}
 import scalan.common.Lazy
 import scalan.compilation.GraphVizConfig
 
@@ -21,7 +21,7 @@ import scalan.compilation.GraphVizConfig
  *
  * @since 0.1
  */
-trait Expressions extends Base { scalan: ScalanExp =>
+trait Expressions extends Base { scalan: Scalan =>
   /**
    * A Sym is a symbolic reference used internally to refer to expressions.
    */

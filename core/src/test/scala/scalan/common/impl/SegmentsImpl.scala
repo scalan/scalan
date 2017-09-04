@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait SegmentsDefs extends scalan.ScalanExp with Segments {
+trait SegmentsDefs extends scalan.Scalan with Segments {
   self: SegmentsDsl =>
 
   // entityProxy: single proxy for each type family

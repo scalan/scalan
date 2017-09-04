@@ -1,8 +1,8 @@
 package scalan.primitives
 
-import scalan.ScalanExp
+import scalan.Scalan
 
-trait MathOps { self: ScalanExp =>
+trait MathOps { self: Scalan =>
   object Math {
     def ceil(x: Rep[Double]) = MathCeil(x)
     def floor(x: Rep[Double]) = MathFloor(x)

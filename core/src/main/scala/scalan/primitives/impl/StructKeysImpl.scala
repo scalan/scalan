@@ -9,7 +9,7 @@ import scalan.meta.ScalanAst._
 package impl {
 // Abs -----------------------------------
 trait StructKeysDefs extends StructKeys {
-  self: Structs with ScalanExp =>
+  self: Structs with Scalan =>
 
   // entityProxy: single proxy for each type family
   implicit def proxyStructKey[Schema <: Struct](p: Rep[StructKey[Schema]]): StructKey[Schema] = {

@@ -5,7 +5,7 @@ import scalan.primitives._
 import scalan.staged.{Expressions, Transforming}
 import scalan.util.{ExceptionsDsl}
 
-abstract class ScalanExp
+abstract class Scalan
   extends Base
   with Debugging
   with TypeDescs
@@ -41,17 +41,17 @@ abstract class ScalanExp
 
 
 trait ScalanDsl
-  extends ScalanExp
+  extends Scalan
     with ExceptionsDsl
 
 class ScalanDslExp
-extends ScalanExp
+extends Scalan
   with ScalanDsl
   with Expressions
   with ExceptionsDsl
 
 class ScalanDslStd
-extends ScalanExp
+extends Scalan
   with ScalanDsl
   with Expressions
   with ExceptionsDsl

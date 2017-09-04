@@ -6,7 +6,7 @@ import scalan.common._
 import scalan.compilation.{DummyCompiler, StructsCompiler}
 import scalan.it.BaseItTests
 
-trait StructExamples extends ScalanExp with SegmentsDsl with MetaTestsDsl {
+trait StructExamples extends Scalan with SegmentsDsl with MetaTestsDsl {
   def eInt = IntElement
 
   lazy val t1 = fun({ (in: Rep[Int]) =>

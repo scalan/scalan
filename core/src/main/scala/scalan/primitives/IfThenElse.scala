@@ -2,9 +2,9 @@ package scalan.primitives
 
 import scala.annotation.unchecked.uncheckedVariance
 import scalan.Base
-import scalan.ScalanExp
+import scalan.Scalan
 
-trait IfThenElse extends Base with Effects { self: ScalanExp =>
+trait IfThenElse extends Base with Effects { self: Scalan =>
 
   def IF(cond: Rep[Boolean]): IfBranch = new IfBranch(cond)
 

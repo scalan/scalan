@@ -5,7 +5,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait MetaTestsDefs extends scalan.ScalanExp with MetaTests {
+trait MetaTestsDefs extends scalan.Scalan with MetaTests {
   self: MetaTestsDsl =>
 
   // entityProxy: single proxy for each type family

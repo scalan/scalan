@@ -8,7 +8,7 @@ import scala.reflect.{AnyValManifest, ClassTag}
 import scalan.meta.ScalanAst.STpeArg
 import scalan.util._
 
-trait TypeDescs extends Base { self: ScalanExp =>
+trait TypeDescs extends Base { self: Scalan =>
   sealed trait TypeDesc extends Serializable {
     def getName(f: TypeDesc => String): String
     lazy val name: String = getName(_.name)
