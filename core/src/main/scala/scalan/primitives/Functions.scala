@@ -1,12 +1,12 @@
 package scalan.primitives
 
-import scalan.staged.{ProgramGraphs, BaseExp}
-import scalan.{ScalanExp}
+import scalan.staged.ProgramGraphs
+import scalan.{ScalanExp, Base}
 import collection.mutable
-import scala.language.{implicitConversions}
+import scala.language.implicitConversions
 import scalan.common.Lazy
 
-trait FunctionsExp extends BaseExp with ProgramGraphs { self: ScalanExp =>
+trait Functions extends Base with ProgramGraphs { self: ScalanExp =>
 
   implicit class LambdaOps[A,B](f: Rep[A => B]) {
     def apply(x: Rep[A]): Rep[B] = mkApply(f, x)

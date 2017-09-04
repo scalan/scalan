@@ -1,9 +1,9 @@
 package scalan.primitives
 
 import scalan.{ScalanExp}
-import scalan.staged.{BaseExp}
+import scalan.Base
 
-trait OrderingOpsExp extends BaseExp { self: ScalanExp =>
+trait OrderingOps extends Base { self: ScalanExp =>
   implicit def repOrderingToOrderingOps[T](x: Rep[T])(implicit n: Ordering[T]) = new OrderingOpsCls(x)
   implicit def OrderingToOrderingOps[T](x: T)(implicit n: Ordering[T], et: Elem[T]) = new OrderingOpsCls(toRep(x))
 

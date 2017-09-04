@@ -1,10 +1,10 @@
 package scalan.primitives
 
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.staged.{BaseExp}
-import scalan.{ScalanExp, Base}
+import scalan.Base
+import scalan.ScalanExp
 
-trait IfThenElseExp extends BaseExp with EffectsExp { self: ScalanExp =>
+trait IfThenElse extends Base with Effects { self: ScalanExp =>
 
   def IF(cond: Rep[Boolean]): IfBranch = new IfBranch(cond)
 

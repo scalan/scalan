@@ -2,10 +2,10 @@ package scalan.primitives
 
 import scala.util.Random
 import scalan.common.IdSupply
-import scalan.staged.BaseExp
+import scalan.Base
 import scalan.{ ScalanExp }
 
-trait NumericOpsExp extends BaseExp { self: ScalanExp =>
+trait NumericOps extends Base { self: ScalanExp =>
   implicit class NumericOpsCls[T](x: Rep[T])(implicit val n: Numeric[T]) {
     def +(y: Rep[T]) = NumericPlus(n)(x.elem).apply(x, y)
     def -(y: Rep[T]) = NumericMinus(n)(x.elem).apply(x, y)

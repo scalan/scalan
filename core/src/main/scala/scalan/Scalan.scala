@@ -2,41 +2,40 @@ package scalan
 
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
-import scalan.staged.{BaseExp, Expressions, Transforming, TransformingExp}
+import scalan.staged.{Expressions, Transforming}
 import scalan.util.{ExceptionsDsl}
 
 abstract class ScalanExp
-  extends BaseExp
+  extends Base
   with Debugging
-  with TypeDescsExp
-  with TypeWrappersExp
-
-  with ProxyExp
-  with TuplesExp
-  with LoopsExp
-  with TypeSumExp
-  with NumericOpsExp
-  with UnBinOpsExp
-  with LogicalOpsExp
-  with OrderingOpsExp
+  with TypeDescs
+  with TypeWrappers
+  with Metadata
+  with Proxy
+  with Tuples
+  with Loops
+  with TypeSum
+  with NumericOps
+  with UnBinOps
+  with LogicalOps
+  with OrderingOps
   with MathOps
   with Monoids
-  with EqualExp
-  with UniversalOpsExp
-  with FunctionsExp
-  with IfThenElseExp
-  with BlocksExp
-  with PatternMatchingExp
-  with TransformingExp
-  with AnalyzingExp
-  with ExceptionsExp
-  with StringOpsExp
-  with EffectsExp
-  with MetadataExp
-  with RewriteRulesExp
+  with Equal
+  with UniversalOps
+  with Functions
+  with IfThenElse
+  with Blocks
+  with PatternMatching
+  with Transforming
+  with Analyzing
+  with Exceptions
+  with StringOps
+  with Effects
+  with RewriteRules
   with GraphVizExport
   with ViewsDsl
-  with ThunksExp
+  with Thunks
   with Structs
   with ConvertersDsl
 

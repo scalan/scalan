@@ -3,12 +3,9 @@ package scalan
 import java.lang.reflect.Method
 import scala.language.higherKinds
 import scala.collection.mutable.{Map => MutMap}
-import scala.reflect.ClassTag
 import scalan.common.Lazy
-import scalan.staged.{BaseExp,Transforming}
-import scalan.meta.ScalanAst.STraitOrClassDef
 
-trait Views extends TypeDescsExp with ProxyExp { self: ViewsDsl with ScalanExp =>
+trait Views extends TypeDescs with Proxy { self: ViewsDsl with ScalanExp =>
   type Iso[From, To] = Rep[IsoUR[From, To]]
 
   // TODO try to find a way to generate eTo such that equals and hashCode can refer to it (see commented code)

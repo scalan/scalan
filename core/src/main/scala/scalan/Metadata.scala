@@ -1,6 +1,6 @@
 package scalan
 
-trait MetadataExp { self: ScalanExp =>
+trait Metadata { self: ScalanExp =>
   // exists only to avoid duplicate keys
   private[this] var metaKeyNames = Set.empty[String]
 

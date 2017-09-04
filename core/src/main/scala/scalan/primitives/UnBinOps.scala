@@ -1,9 +1,9 @@
 package scalan.primitives
 
 import scalan.{ScalanExp}
-import scalan.staged.BaseExp
+import scalan.Base
 
-trait UnBinOpsExp extends BaseExp { self: ScalanExp =>
+trait UnBinOps extends Base { self: ScalanExp =>
 
   class UnOp[A, R](val opName: String, val applySeq: A => R)(implicit val eResult: Elem[R]) {
     override def toString = opName

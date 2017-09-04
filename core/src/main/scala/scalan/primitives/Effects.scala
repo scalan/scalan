@@ -20,7 +20,7 @@ import scalan.common.{Utils, Lazy}
  - mirroring implemented in Scalan way (though consistent with LMS)
  */
 
-trait EffectsExp extends Expressions with Utils with GraphVizExport { self: ScalanExp =>
+trait Effects extends Expressions with Utils with GraphVizExport { self: ScalanExp =>
 
   case class Block[+T](val res: Exp[T]) { def elem: Elem[T @uncheckedVariance] = res.elem } // variance ...
 

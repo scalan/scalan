@@ -29,11 +29,11 @@ trait Transforming { self: ScalanExp =>
   }
 
   case class PassConfig(
-    shouldUnpackTuples: Boolean = false,
-    shouldExtractFields: Boolean = true,
-    constantPropagation: Boolean = true,
-    shouldSlice: Boolean = false
-    )
+                         shouldUnpackTuples: Boolean = false,
+                         shouldExtractFields: Boolean = true,
+                         constantPropagation: Boolean = true,
+                         shouldSlice: Boolean = false
+                       )
   {
     def withConstantPropagation(value: Boolean) = this.copy(constantPropagation = value)
   }
@@ -73,11 +73,6 @@ trait Transforming { self: ScalanExp =>
   implicit class KeyPathElemOps(eKeyPath: Elem[KeyPath]) {
     def keyPath = eKeyPath.asInstanceOf[SingletonElem[KeyPath]].value
   }
-
-}
-
-trait TransformingExp extends Transforming { self: ScalanExp =>
-
 
   class MapTransformer(private val subst: Map[Exp[_], Exp[_]]) extends Transformer {
     def this(substPairs: (Exp[_], Exp[_])*) {

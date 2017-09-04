@@ -2,7 +2,7 @@ package scalan.util
 
 import scalan._
 
-trait Exceptions extends Base with TypeWrappersExp { self: ExceptionsDsl =>
+trait Exceptions extends Base with TypeWrappers { self: ExceptionsDsl =>
 
   type RThrow = Rep[Throwable]
   trait SThrowable extends TypeWrapper[Throwable, SThrowable] { self =>

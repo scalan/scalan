@@ -5,7 +5,6 @@ import scala.language.higherKinds
 import scala.collection.mutable.{Map=>MutMap}
 import scala.reflect.ClassTag
 import scalan.common.Lazy
-import scalan.staged.{BaseExp, Transforming}
 import scalan.meta.ScalanAst.STraitOrClassDef
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._

@@ -3,9 +3,7 @@ package scalan
 import scala.collection.Seq
 import scalan.util.CollectionUtil
 
-trait Analyzing { self: ScalanExp =>  }
-
-trait AnalyzingExp extends Analyzing { self: ScalanExp =>
+trait Analyzing { self: ScalanExp =>
 
   case class LevelCount[T](level: Int)(implicit val elem: Elem[T]) extends Marking[T] {
     def nonEmpty = true

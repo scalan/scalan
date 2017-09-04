@@ -5,10 +5,10 @@
 package scalan.primitives
 
 import scalan.common.OverloadHack._
-import scalan.staged.BaseExp
+import scalan.Base
 import scalan.{ScalanExp}
 
-trait TuplesExp extends BaseExp { self: ScalanExp =>
+trait Tuples extends Base { self: ScalanExp =>
   object Pair {
     def apply[A, B](a: Rep[A], b: Rep[B]) = zipPair[A, B]((a, b))
     def unapply[A, B](p: Rep[(A, B)]) = Some(unzipPair[A, B](p))

@@ -3,10 +3,10 @@ package scalan.primitives
 import scala.reflect.macros.blackbox
 import scalan._
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.staged.BaseExp
+import scalan.Base
 import scalan.util.ScalaNameUtil
 
-trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
+trait PatternMatching extends Base with GraphVizExport { _: ScalanExp =>
 
   def MATCH[A, B: Elem](selector: Rep[A])(f: PartialFunction[Rep[A], Rep[B]]): Rep[B] =
   macro PatternMatchingMacro.patternMatchImpl[A, B]

@@ -14,10 +14,9 @@ import net.sf.cglib.proxy.Enhancer
 import net.sf.cglib.proxy.Factory
 import net.sf.cglib.proxy.InvocationHandler
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.staged.BaseExp
 import scalan.util.{StringUtil, ReflectionUtil, ScalaNameUtil}
 
-trait ProxyExp extends BaseExp with MetadataExp with GraphVizExport { self: ScalanExp =>
+trait Proxy extends Base with Metadata with GraphVizExport { self: ScalanExp =>
 
   def getStagedFunc(name: String): Rep[_] = {
     val clazz = this.getClass
@@ -38,7 +37,7 @@ trait ProxyExp extends BaseExp with MetadataExp with GraphVizExport { self: Scal
   def delayInvoke = throw new DelayInvokeException
 
   // call mkMethodCall instead of constructor
-  case class MethodCall private[ProxyExp] (receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean)(val selfType: Elem[Any]) extends Def[Any] {
+  case class MethodCall private[Proxy](receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean)(val selfType: Elem[Any]) extends Def[Any] {
 
     override def toString = {
       val methodStr = method.toString.replace("java.lang.", "").
@@ -724,7 +723,7 @@ trait ProxyExp extends BaseExp with MetadataExp with GraphVizExport { self: Scal
       val args = if (_args == null) Array.empty[AnyRef] else _args
 
       def mkMethodCall(neverInvoke: Boolean) =
-        ProxyExp.this.mkMethodCall(receiver, m, args.toList, neverInvoke)
+        Proxy.this.mkMethodCall(receiver, m, args.toList, neverInvoke)
 
       val res = findInvokableMethod(receiver, m, args)(identity) {
         case ExternalMethodException(className, methodName) =>

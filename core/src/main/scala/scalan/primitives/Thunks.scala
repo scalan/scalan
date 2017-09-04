@@ -8,7 +8,7 @@ import scala.reflect.runtime.universe._
 import scalan.common.Lazy
 import scalan.util.Covariant
 
-trait ThunksExp extends FunctionsExp with ViewsDsl with GraphVizExport with EffectsExp { self: ScalanExp =>
+trait Thunks extends Functions with ViewsDsl with GraphVizExport with Effects { self: ScalanExp =>
   type Th[+T] = Rep[Thunk[T]]
   trait Thunk[+A] { def value: A }
   class ThunkCompanion {

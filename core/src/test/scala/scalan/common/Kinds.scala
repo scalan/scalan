@@ -1,6 +1,7 @@
 package scalan.common
 
 import scalan._
+import scalan.Base
 
 trait Kinds extends Base { self: KindsDsl =>
   type RKind[F[_],A] = Rep[Kind[F,A]]

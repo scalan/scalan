@@ -1,7 +1,6 @@
 package scalan
 
 import scalan.common.Lazy
-import scalan.staged.BaseExp
 import scala.annotation.implicitNotFound
 import scala.collection.immutable.ListMap
 import scala.reflect.runtime.universe._
@@ -9,7 +8,7 @@ import scala.reflect.{AnyValManifest, ClassTag}
 import scalan.meta.ScalanAst.STpeArg
 import scalan.util._
 
-trait TypeDescsExp extends BaseExp { self: ScalanExp =>
+trait TypeDescs extends Base { self: ScalanExp =>
   sealed trait TypeDesc extends Serializable {
     def getName(f: TypeDesc => String): String
     lazy val name: String = getName(_.name)
