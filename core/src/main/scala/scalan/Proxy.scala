@@ -4,17 +4,14 @@
 package scalan
 
 import java.lang.reflect.{InvocationTargetException, Method}
-
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.{Try, Success}
+import scala.util.{Success, Try}
 import org.objenesis.ObjenesisStd
-import net.sf.cglib.proxy.Enhancer
-import net.sf.cglib.proxy.Factory
-import net.sf.cglib.proxy.InvocationHandler
+import net.sf.cglib.proxy.{Enhancer, Factory, InvocationHandler}
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.util.{StringUtil, ReflectionUtil, ScalaNameUtil}
+import scalan.util.{ReflectionUtil, StringUtil, ScalaNameUtil}
 
 trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
 

@@ -1,7 +1,6 @@
 package scalan.primitives
 
-import scalan.{Scalan}
-import scalan.Base
+import scalan.{Scalan, Base}
 
 trait UnBinOps extends Base { self: Scalan =>
 

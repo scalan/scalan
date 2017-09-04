@@ -2,7 +2,7 @@ package scalan.compilation.lms.source2bin
 
 import java.io.File
 
-import scalan.util.{FileUtil, ProcessUtil}
+import scalan.util.{ProcessUtil, FileUtil}
 import com.github.kxbmap.configs.syntax._
 
 import scalan.Plugins

@@ -1,8 +1,7 @@
 package scalan.it.smoke
 
-import scalan.{ScalanDsl}
+import scalan.ScalanDsl
 import scalan.it.BaseItTests
-import scalan.compilation.Compiler
 
 trait SmokeProg extends ScalanDsl {
 

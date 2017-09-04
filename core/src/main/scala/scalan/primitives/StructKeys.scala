@@ -1,8 +1,6 @@
 package scalan.primitives
 
 import scalan._
-import scalan.common._
-import scala.reflect.runtime.universe._
 
 trait StructKeys extends ViewsDsl with Entities  { self: Structs with Scalan =>
 

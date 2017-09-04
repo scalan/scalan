@@ -2,8 +2,8 @@ package scalan
 
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
-import scalan.staged.{Expressions, Transforming}
-import scalan.util.{ExceptionsDsl}
+import scalan.staged.{Transforming, Expressions}
+import scalan.util.ExceptionsDsl
 
 abstract class Scalan
   extends Base

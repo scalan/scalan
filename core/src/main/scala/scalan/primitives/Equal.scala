@@ -1,7 +1,6 @@
 package scalan.primitives
 
-import scalan.Base
-import scalan.{Scalan}
+import scalan.{Base, Scalan}
 
 trait Equal extends Base { self: Scalan =>
   case class Equals[A]() extends BinOp[A, Boolean]("==", _ == _)

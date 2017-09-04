@@ -4,8 +4,7 @@ import scalan._
 import scala.reflect.runtime.universe._
 import scalan.util.CollectionUtil
 import scalan.common.OverloadHack._
-import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.staged.Expressions
+import scalan.compilation.GraphVizConfig
 
 /**
  The code is inspired by LMS structs and is used in Scalan with the same semantics

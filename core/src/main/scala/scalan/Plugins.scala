@@ -1,9 +1,7 @@
 package scalan
 
 import java.io.File
-
 import com.typesafe.config.ConfigFactory
-
 import scalan.util.ClassLoaderUtil
 
 object Plugins {

@@ -1,7 +1,6 @@
 package scalan.staged
 
 import scalan.Scalan
-import scalan.common.GraphUtil
 
 trait ProgramGraphs extends AstGraphs { self: Scalan =>
 

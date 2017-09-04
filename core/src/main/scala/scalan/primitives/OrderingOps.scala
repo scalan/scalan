@@ -1,7 +1,6 @@
 package scalan.primitives
 
-import scalan.{Scalan}
-import scalan.Base
+import scalan.{Scalan, Base}
 
 trait OrderingOps extends Base { self: Scalan =>
   implicit def repOrderingToOrderingOps[T](x: Rep[T])(implicit n: Ordering[T]) = new OrderingOpsCls(x)

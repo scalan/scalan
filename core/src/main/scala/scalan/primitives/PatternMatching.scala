@@ -1,10 +1,8 @@
 package scalan.primitives
 
 import scala.reflect.macros.blackbox
-import scalan._
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.Base
-import scalan.util.ScalaNameUtil
+import scalan.{Base, _}
 
 trait PatternMatching extends Base with GraphVizExport { _: Scalan =>
 

@@ -1,7 +1,6 @@
 package scalan.primitives
 
-import scalan.Base
-import scalan.{Scalan}
+import scalan.{Base, Scalan}
 
 trait LogicalOps extends Base { self: Scalan =>
   val And = new EndoBinOp[Boolean]("&&", _ && _)

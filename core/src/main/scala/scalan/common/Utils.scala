@@ -1,6 +1,6 @@
 package scalan.common
 
-import scalan.{Base}
+import scalan.Base
 
 // TODO: add logging, etc.
 trait Utils {

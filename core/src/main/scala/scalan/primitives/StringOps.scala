@@ -1,7 +1,6 @@
 package scalan.primitives
 
-import scalan.Base
-import scalan.{ Scalan }
+import scalan.{Base, Scalan}
 
 trait StringOps extends Base { self: Scalan =>
   implicit class StringOpsCls(lhs: Rep[String]) {

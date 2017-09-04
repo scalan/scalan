@@ -5,8 +5,7 @@
 package scalan.primitives
 
 import scalan.common.OverloadHack._
-import scalan.Base
-import scalan.{Scalan}
+import scalan.{Base, Scalan}
 
 trait Tuples extends Base { self: Scalan =>
   object Pair {

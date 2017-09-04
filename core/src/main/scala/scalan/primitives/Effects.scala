@@ -4,8 +4,8 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
-import scalan.{Scalan}
-import scalan.common.{Utils, Lazy}
+import scalan.Scalan
+import scalan.common.Utils
 
 /*
  The code is taken from LMS and is used in Scalan with the same semantics

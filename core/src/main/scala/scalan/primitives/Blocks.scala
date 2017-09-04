@@ -2,8 +2,7 @@ package scalan.primitives
 
 import scala.collection.mutable
 import scalan.staged.Expressions
-import scalan.{Scalan}
-import scalan.common.Lazy
+import scalan.Scalan
 
 trait Blocks extends Expressions { self: Scalan =>
 

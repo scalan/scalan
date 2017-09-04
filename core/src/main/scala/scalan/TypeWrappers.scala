@@ -1,7 +1,6 @@
 package scalan
 
 import java.lang.reflect.Method
-
 import scala.reflect.runtime.universe._
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.util.Invariant

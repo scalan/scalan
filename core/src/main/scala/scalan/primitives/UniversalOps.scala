@@ -1,7 +1,6 @@
 package scalan.primitives
 
-import scalan.Base
-import scalan.{Scalan}
+import scalan.{Base, Scalan}
 
 trait UniversalOps extends Base { self: Scalan =>
   case class HashCode[A]() extends UnOp[A, Int]("hashCode", _.hashCode)

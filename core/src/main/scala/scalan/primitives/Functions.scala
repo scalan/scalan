@@ -1,8 +1,8 @@
 package scalan.primitives
 
 import scalan.staged.ProgramGraphs
-import scalan.{Scalan, Base}
-import collection.mutable
+import scalan.{Base, Scalan}
+import scala.collection.mutable
 import scala.language.implicitConversions
 import scalan.common.Lazy
 

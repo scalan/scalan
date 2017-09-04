@@ -1,6 +1,5 @@
 package scalan.common
 
-import scalan._
 import scalan.Base
 
 trait Kinds extends Base { self: KindsDsl =>

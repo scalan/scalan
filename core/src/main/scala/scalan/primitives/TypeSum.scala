@@ -1,8 +1,6 @@
 package scalan.primitives
 
-import scalan.common.Lazy
-import scalan.Base
-import scalan.{Scalan}
+import scalan.{Base, Scalan}
 
 trait TypeSum extends Base { self: Scalan =>
 

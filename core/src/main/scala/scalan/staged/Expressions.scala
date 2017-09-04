@@ -1,19 +1,9 @@
 package scalan.staged
 
-import java.lang.reflect.Constructor
-import java.util.{Objects, Arrays}
-import com.github.kxbmap.configs.syntax.ConfigOps
-import com.typesafe.config.{ConfigFactory, Config}
-import com.typesafe.scalalogging.LazyLogging
 import scala.annotation.unchecked.uncheckedVariance
-import scala.collection.{mutable, TraversableOnce}
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
 import scala.language.implicitConversions
-import scala.reflect.runtime.universe._
-import scalan.util.{ParamMirror, ReflectionUtil}
-import scalan.{Scalan, Base, Plugins}
-import scalan.common.Lazy
-import scalan.compilation.GraphVizConfig
+import scalan.{Base, Scalan}
 
 /**
  * The Expressions trait houses common AST nodes. It also manages a list of encountered Definitions which

@@ -1,7 +1,6 @@
 package scalan.primitives
 
-import scalan.Base
-import scalan.{Scalan}
+import scalan.{Base, Scalan}
 import scala.reflect.runtime.universe._
 import scalan.util.Invariant
 

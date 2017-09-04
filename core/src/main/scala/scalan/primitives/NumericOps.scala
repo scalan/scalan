@@ -1,9 +1,7 @@
 package scalan.primitives
 
-import scala.util.Random
 import scalan.common.IdSupply
-import scalan.Base
-import scalan.{ Scalan }
+import scalan.{Base, Scalan}
 
 trait NumericOps extends Base { self: Scalan =>
   implicit class NumericOpsCls[T](x: Rep[T])(implicit val n: Numeric[T]) {

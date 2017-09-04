@@ -1,8 +1,7 @@
 package scalan
 
-import scalan.staged.Expressions
-import scalan.common.{Lazy, OverloadHack}
-import OverloadHack.Overloaded2
+import scalan.common.OverloadHack
+import scalan.common.OverloadHack.Overloaded2
 
 trait Converters extends ViewsDsl { self: Scalan =>
 
