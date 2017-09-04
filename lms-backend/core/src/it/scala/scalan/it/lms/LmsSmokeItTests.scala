@@ -6,7 +6,7 @@ import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.smoke.{SmokeItTests, SmokeProg}
 
 class LmsSmokeItTests extends SmokeItTests {
-  class ProgExp extends ScalanDslExp with SmokeProg
+  class ProgExp extends ScalanDsl with SmokeProg
 
   val progStaged = new LmsCompilerScala(new ProgExp)
 

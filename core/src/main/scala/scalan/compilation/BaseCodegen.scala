@@ -2,7 +2,7 @@ package scalan.compilation
 
 import java.io.{File, PrintWriter}
 
-import scalan.ScalanDslExp
+import scalan.ScalanDsl
 import scalan.util.FileUtil
 
 case class IndentLevel(level: Int) {
@@ -11,7 +11,7 @@ case class IndentLevel(level: Int) {
 
 // based on scala.lms.internal.GenericCodegen
 /** Base class for code generators */
-abstract class BaseCodegen[+ScalanCake <: ScalanDslExp](val scalan: ScalanCake) {
+abstract class BaseCodegen[+ScalanCake <: ScalanDsl](val scalan: ScalanCake) {
   import scalan._
 
   /** Codegen name (used in error messages) */

@@ -39,19 +39,7 @@ abstract class Scalan
   with Structs
   with ConvertersDsl
 
-
-trait ScalanDsl
+class ScalanDsl
   extends Scalan
-    with ExceptionsDsl
-
-class ScalanDslExp
-extends Scalan
-  with ScalanDsl
-  with Expressions
-  with ExceptionsDsl
-
-class ScalanDslStd
-extends Scalan
-  with ScalanDsl
   with Expressions
   with ExceptionsDsl

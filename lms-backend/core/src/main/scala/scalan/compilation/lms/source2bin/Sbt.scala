@@ -5,7 +5,7 @@ import java.io.File.separator
 
 import org.apache.commons.io.FileUtils
 
-import scalan.ScalanDslExp
+import scalan.ScalanDsl
 import scalan.compilation.lms.scalac.LmsCompilerScalaConfig
 import scalan.util.FileUtil._
 import scalan.util.{ExtensionFilter, FileUtil, ProcessUtil, StringUtil}

@@ -1,9 +1,9 @@
 package scalan.compilation
 
-import scalan.ScalanDslExp
+import scalan.ScalanDsl
 import scalan.staged.Slicing
 
-trait SlicingCompiler[+ScalanCake <: ScalanDslExp with Slicing] extends Compiler[ScalanCake] {
+trait SlicingCompiler[+ScalanCake <: ScalanDsl with Slicing] extends Compiler[ScalanCake] {
   import scalan._
 
   override def graphPasses(compilerConfig: CompilerConfig) =

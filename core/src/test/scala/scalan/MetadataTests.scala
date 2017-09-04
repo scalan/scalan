@@ -14,7 +14,7 @@ class MetadataTests extends BaseNestedTests {
     main.setMetadata(functionNameKey)(mainStr)
   }
 
-  class ProgExp extends ScalanDslExp with Prog
+  class ProgExp extends ScalanDsl with Prog
 
   describe("Metadata") {
     it("survives compilation passes") {

@@ -1,6 +1,6 @@
 package scalan.it.smoke
 
-import scalan.{ScalanDslExp, ScalanDsl}
+import scalan.{ScalanDsl}
 import scalan.it.BaseItTests
 import scalan.compilation.Compiler
 
@@ -309,7 +309,7 @@ trait SmokeProg extends ScalanDsl {
 /**
  *  Tests that very simple examples are run correctly
  */
-abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanDslExp with SmokeProg) {
+abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanDsl with SmokeProg) {
   test("simpleArith") {
     compareOutputWithStd(_.simpleArith)(2)
   }

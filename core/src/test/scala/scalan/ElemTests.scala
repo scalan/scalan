@@ -4,7 +4,7 @@ import scalan.common.{KindsDsl, KindsExamples, MetaTestsDsl}
 import scala.reflect.runtime.universe._
 
 abstract class AbstractElemTests extends BaseNestedTests {
-  class Ctx extends ScalanDslExp {
+  class Ctx extends ScalanDsl {
     def elementsShouldBeEqual[A: Elem, B: Elem] =
       assert(element[A] == element[B])
     def elementsShouldNotBeEqual[A: Elem, B: Elem] =

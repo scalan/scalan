@@ -1,8 +1,8 @@
 package scalan.compilation
 
-import scalan.ScalanDslExp
+import scalan.ScalanDsl
 
-abstract class ScalanCompiler[+ScalanCake <: ScalanDslExp, +Codegen <: BaseCodegen[ScalanCake]](_scalan: ScalanCake)
+abstract class ScalanCompiler[+ScalanCake <: ScalanDsl, +Codegen <: BaseCodegen[ScalanCake]](_scalan: ScalanCake)
     extends Compiler[ScalanCake](_scalan) {
   def codegen: Codegen
 }

@@ -18,7 +18,7 @@ case class LmsCompilerScalaConfig(extraCompilerOptions: Seq[String] = Seq.empty,
   def withSbtConfig(sbtConfig: SbtConfig) = copy(sbtConfigOpt = Some(sbtConfig))
 }
 
-class LmsCompilerScala[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreLmsBridgeScala {
+class LmsCompilerScala[+ScalanCake <: ScalanDsl](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreLmsBridgeScala {
   val lms = new ScalaCoreLmsBackend
 
   import scalan._
@@ -111,5 +111,5 @@ class LmsCompilerScala[+ScalanCake <: ScalanDslExp](_scalan: ScalanCake) extends
       output
   }).asInstanceOf[A]
 
-  protected[this] lazy val scalanSeq = new ScalanDslStd
+  protected[this] lazy val scalanSeq = new ScalanDsl
 }

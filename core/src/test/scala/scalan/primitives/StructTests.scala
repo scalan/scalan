@@ -112,7 +112,7 @@ trait StructExamples extends Scalan with SegmentsDsl with MetaTestsDsl {
 class StructTests extends BaseViewTests {
 
   class Ctx extends TestCompilerContext {
-    class ScalanCake extends ScalanDslExp with StructExamples with SegmentsDsl with MetaTestsDsl {
+    class ScalanCake extends ScalanDsl with StructExamples with SegmentsDsl with MetaTestsDsl {
       def containsTuples(g: PGraph): Boolean = {
         g.scheduleAll.exists(tp => tp.rhs match {
           case First(_) => true
@@ -143,7 +143,7 @@ class StructTests extends BaseViewTests {
         element[Boolean])
     }
     override val compiler = new DummyCompiler(new ScalanCake)
-                           with StructsCompiler[ScalanDslExp with StructExamples]
+                           with StructsCompiler[ScalanDsl with StructExamples]
   }
 
   test("StructElem equality") {
@@ -425,7 +425,7 @@ class StructTests extends BaseViewTests {
   }
 }
 
-abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDslExp with SegmentsDsl with MetaTestsDsl with StructExamples) {
+abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDsl with SegmentsDsl with MetaTestsDsl with StructExamples) {
   import progStd._
 
   test("t1") {

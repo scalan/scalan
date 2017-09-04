@@ -1,6 +1,6 @@
 package scalan.primitives
 
-import scalan.{BaseTests, ScalanDslExp, Scalan}
+import scalan.{BaseTests, ScalanDsl, Scalan}
 import scalan.common.MetaTestsDsl
 
 abstract class IfThenElseTests[A <: Scalan](val ctx: A) extends BaseTests {
@@ -25,10 +25,10 @@ abstract class IfThenElseTests[A <: Scalan](val ctx: A) extends BaseTests {
 }
 
 
-class IfThenElseTestsSeq extends IfThenElseTests(new ScalanDslExp)
+class IfThenElseTestsSeq extends IfThenElseTests(new ScalanDsl)
 
 // Note: these tests pass thanks to rewriting of IF with constants
-class IfThenElseTestsExp extends IfThenElseTests(new ScalanDslExp with MetaTestsDsl) {
+class IfThenElseTestsExp extends IfThenElseTests(new ScalanDsl with MetaTestsDsl) {
   import ctx._
 
   test("type of if-then-else is the upper bound of its branches") {

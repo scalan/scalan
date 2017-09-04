@@ -4,7 +4,7 @@ import _root_.scalan.compilation.GraphVizExport
 
 class PolymorphicRewriteRuleSuite extends BaseShouldTests {
 
-  class Ctx extends ScalanDslExp with GraphVizExport {
+  class Ctx extends ScalanDsl with GraphVizExport {
     //    lazy val testLemma = postulate[Int, Int, Int, Int]((x, y, z) => x * y + x * z <=> x * (y + z))
     //    lazy val rule = patternRewriteRule(testLemma)
     //    lazy val patGraph = rule.patternGraph
