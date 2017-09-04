@@ -160,7 +160,7 @@ trait ViewsDefs extends Views {
   // 4) constructor and deconstructor
   class IdentityIsoCompanionCtor extends CompanionDef[IdentityIsoCompanionCtor] {
     def selfType = IdentityIsoCompanionElem
-    override def toString = "IdentityIso"
+    override def toString = "IdentityIsoCompanion"
     @scalan.OverloadId("fromData")
     def apply[A](p: Rep[IdentityIsoData[A]])(implicit eA: Elem[A]): Rep[IdentityIso[A]] = {
       isoIdentityIso[A].to(p)
@@ -180,7 +180,7 @@ trait ViewsDefs extends Views {
 
   implicit case object IdentityIsoCompanionElem extends CompanionElem[IdentityIsoCompanionCtor] {
     lazy val tag = weakTypeTag[IdentityIsoCompanionCtor]
-    protected def getDefaultRep = IdentityIso
+    protected def getDefaultRep = IdentityIsoRep
   }
 
   implicit def proxyIdentityIso[A](p: Rep[IdentityIso[A]]): IdentityIso[A] =
@@ -255,7 +255,7 @@ trait ViewsDefs extends Views {
   // 4) constructor and deconstructor
   class PairIsoCompanionCtor extends CompanionDef[PairIsoCompanionCtor] with PairIsoCompanion {
     def selfType = PairIsoCompanionElem
-    override def toString = "PairIso"
+    override def toString = "PairIsoCompanion"
     @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[PairIsoData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairIso[A1, A2, B1, B2]] = {
       isoPairIso[A1, A2, B1, B2].to(p)
@@ -275,7 +275,7 @@ trait ViewsDefs extends Views {
 
   implicit case object PairIsoCompanionElem extends CompanionElem[PairIsoCompanionCtor] {
     lazy val tag = weakTypeTag[PairIsoCompanionCtor]
-    protected def getDefaultRep = PairIso
+    protected def getDefaultRep = PairIsoRep
   }
 
   implicit def proxyPairIso[A1, A2, B1, B2](p: Rep[PairIso[A1, A2, B1, B2]]): PairIso[A1, A2, B1, B2] =
@@ -344,7 +344,7 @@ trait ViewsDefs extends Views {
   // 4) constructor and deconstructor
   class AbsorbFirstUnitIsoCompanionCtor extends CompanionDef[AbsorbFirstUnitIsoCompanionCtor] {
     def selfType = AbsorbFirstUnitIsoCompanionElem
-    override def toString = "AbsorbFirstUnitIso"
+    override def toString = "AbsorbFirstUnitIsoCompanion"
 
     @scalan.OverloadId("fromFields")
     def apply[A2, B2](iso2: Iso[A2, B2])(implicit eA2: Elem[A2], eB2: Elem[B2]): Rep[AbsorbFirstUnitIso[A2, B2]] =
@@ -360,7 +360,7 @@ trait ViewsDefs extends Views {
 
   implicit case object AbsorbFirstUnitIsoCompanionElem extends CompanionElem[AbsorbFirstUnitIsoCompanionCtor] {
     lazy val tag = weakTypeTag[AbsorbFirstUnitIsoCompanionCtor]
-    protected def getDefaultRep = AbsorbFirstUnitIso
+    protected def getDefaultRep = AbsorbFirstUnitIsoRep
   }
 
   implicit def proxyAbsorbFirstUnitIso[A2, B2](p: Rep[AbsorbFirstUnitIso[A2, B2]]): AbsorbFirstUnitIso[A2, B2] =
@@ -429,7 +429,7 @@ trait ViewsDefs extends Views {
   // 4) constructor and deconstructor
   class AbsorbSecondUnitIsoCompanionCtor extends CompanionDef[AbsorbSecondUnitIsoCompanionCtor] {
     def selfType = AbsorbSecondUnitIsoCompanionElem
-    override def toString = "AbsorbSecondUnitIso"
+    override def toString = "AbsorbSecondUnitIsoCompanion"
 
     @scalan.OverloadId("fromFields")
     def apply[A1, B1](iso1: Iso[A1, B1])(implicit eA1: Elem[A1], eB1: Elem[B1]): Rep[AbsorbSecondUnitIso[A1, B1]] =
@@ -445,7 +445,7 @@ trait ViewsDefs extends Views {
 
   implicit case object AbsorbSecondUnitIsoCompanionElem extends CompanionElem[AbsorbSecondUnitIsoCompanionCtor] {
     lazy val tag = weakTypeTag[AbsorbSecondUnitIsoCompanionCtor]
-    protected def getDefaultRep = AbsorbSecondUnitIso
+    protected def getDefaultRep = AbsorbSecondUnitIsoRep
   }
 
   implicit def proxyAbsorbSecondUnitIso[A1, B1](p: Rep[AbsorbSecondUnitIso[A1, B1]]): AbsorbSecondUnitIso[A1, B1] =
@@ -520,7 +520,7 @@ trait ViewsDefs extends Views {
   // 4) constructor and deconstructor
   class SumIsoCompanionCtor extends CompanionDef[SumIsoCompanionCtor] {
     def selfType = SumIsoCompanionElem
-    override def toString = "SumIso"
+    override def toString = "SumIsoCompanion"
     @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[SumIsoData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumIso[A1, A2, B1, B2]] = {
       isoSumIso[A1, A2, B1, B2].to(p)
@@ -540,7 +540,7 @@ trait ViewsDefs extends Views {
 
   implicit case object SumIsoCompanionElem extends CompanionElem[SumIsoCompanionCtor] {
     lazy val tag = weakTypeTag[SumIsoCompanionCtor]
-    protected def getDefaultRep = SumIso
+    protected def getDefaultRep = SumIsoRep
   }
 
   implicit def proxySumIso[A1, A2, B1, B2](p: Rep[SumIso[A1, A2, B1, B2]]): SumIso[A1, A2, B1, B2] =
@@ -612,7 +612,7 @@ trait ViewsDefs extends Views {
   // 4) constructor and deconstructor
   class ComposeIsoCompanionCtor extends CompanionDef[ComposeIsoCompanionCtor] {
     def selfType = ComposeIsoCompanionElem
-    override def toString = "ComposeIso"
+    override def toString = "ComposeIsoCompanion"
     @scalan.OverloadId("fromData")
     def apply[A, B, C](p: Rep[ComposeIsoData[A, B, C]])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeIso[A, B, C]] = {
       isoComposeIso[A, B, C].to(p)
@@ -632,7 +632,7 @@ trait ViewsDefs extends Views {
 
   implicit case object ComposeIsoCompanionElem extends CompanionElem[ComposeIsoCompanionCtor] {
     lazy val tag = weakTypeTag[ComposeIsoCompanionCtor]
-    protected def getDefaultRep = ComposeIso
+    protected def getDefaultRep = ComposeIsoRep
   }
 
   implicit def proxyComposeIso[A, B, C](p: Rep[ComposeIso[A, B, C]]): ComposeIso[A, B, C] =
@@ -707,7 +707,7 @@ trait ViewsDefs extends Views {
   // 4) constructor and deconstructor
   class FuncIsoCompanionCtor extends CompanionDef[FuncIsoCompanionCtor] {
     def selfType = FuncIsoCompanionElem
-    override def toString = "FuncIso"
+    override def toString = "FuncIsoCompanion"
     @scalan.OverloadId("fromData")
     def apply[A, B, C, D](p: Rep[FuncIsoData[A, B, C, D]])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]): Rep[FuncIso[A, B, C, D]] = {
       isoFuncIso[A, B, C, D].to(p)
@@ -727,7 +727,7 @@ trait ViewsDefs extends Views {
 
   implicit case object FuncIsoCompanionElem extends CompanionElem[FuncIsoCompanionCtor] {
     lazy val tag = weakTypeTag[FuncIsoCompanionCtor]
-    protected def getDefaultRep = FuncIso
+    protected def getDefaultRep = FuncIsoRep
   }
 
   implicit def proxyFuncIso[A, B, C, D](p: Rep[FuncIso[A, B, C, D]]): FuncIso[A, B, C, D] =
@@ -796,7 +796,7 @@ trait ViewsDefs extends Views {
   // 4) constructor and deconstructor
   class ConverterIsoCompanionCtor extends CompanionDef[ConverterIsoCompanionCtor] {
     def selfType = ConverterIsoCompanionElem
-    override def toString = "ConverterIso"
+    override def toString = "ConverterIsoCompanion"
     @scalan.OverloadId("fromData")
     def apply[A, B](p: Rep[ConverterIsoData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[ConverterIso[A, B]] = {
       isoConverterIso[A, B].to(p)
@@ -816,7 +816,7 @@ trait ViewsDefs extends Views {
 
   implicit case object ConverterIsoCompanionElem extends CompanionElem[ConverterIsoCompanionCtor] {
     lazy val tag = weakTypeTag[ConverterIsoCompanionCtor]
-    protected def getDefaultRep = ConverterIso
+    protected def getDefaultRep = ConverterIsoRep
   }
 
   implicit def proxyConverterIso[A, B](p: Rep[ConverterIso[A, B]]): ConverterIso[A, B] =
@@ -884,7 +884,7 @@ trait ViewsDefs extends Views {
   // 4) constructor and deconstructor
   class ThunkIsoCompanionCtor extends CompanionDef[ThunkIsoCompanionCtor] {
     def selfType = ThunkIsoCompanionElem
-    override def toString = "ThunkIso"
+    override def toString = "ThunkIsoCompanion"
 
     @scalan.OverloadId("fromFields")
     def apply[A, B](innerIso: Iso[A, B])(implicit eA: Elem[A], eB: Elem[B]): Rep[ThunkIso[A, B]] =
@@ -900,7 +900,7 @@ trait ViewsDefs extends Views {
 
   implicit case object ThunkIsoCompanionElem extends CompanionElem[ThunkIsoCompanionCtor] {
     lazy val tag = weakTypeTag[ThunkIsoCompanionCtor]
-    protected def getDefaultRep = ThunkIso
+    protected def getDefaultRep = ThunkIsoRep
   }
 
   implicit def proxyThunkIso[A, B](p: Rep[ThunkIso[A, B]]): ThunkIso[A, B] =

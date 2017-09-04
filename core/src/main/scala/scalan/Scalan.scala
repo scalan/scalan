@@ -7,9 +7,10 @@ import scalan.util.{ExceptionsDsl}
 
 abstract class ScalanExp
   extends BaseExp
+  with Debugging
   with TypeDescsExp
   with TypeWrappersExp
-  with ViewsDsl
+
   with ProxyExp
   with TuplesExp
   with LoopsExp
@@ -30,14 +31,15 @@ abstract class ScalanExp
   with AnalyzingExp
   with ExceptionsExp
   with StringOpsExp
-  with ThunksExp
   with EffectsExp
   with MetadataExp
-  with ConvertersDsl
   with RewriteRulesExp
   with GraphVizExport
+  with ViewsDsl
+  with ThunksExp
   with Structs
-  with Debugging
+  with ConvertersDsl
+
 
 trait ScalanDsl
   extends ScalanExp

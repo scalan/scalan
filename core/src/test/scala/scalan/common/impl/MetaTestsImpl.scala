@@ -101,7 +101,7 @@ trait MetaTestsDefs extends scalan.ScalanExp with MetaTests {
   // 4) constructor and deconstructor
   class MT0CompanionCtor extends CompanionDef[MT0CompanionCtor] with MT0Companion {
     def selfType = MT0CompanionElem
-    override def toString = "MT0"
+    override def toString = "MT0Companion"
 
     @scalan.OverloadId("fromFields")
     def apply(size: Rep[Int]): Rep[MT0] =
@@ -117,7 +117,7 @@ trait MetaTestsDefs extends scalan.ScalanExp with MetaTests {
 
   implicit case object MT0CompanionElem extends CompanionElem[MT0CompanionCtor] {
     lazy val tag = weakTypeTag[MT0CompanionCtor]
-    protected def getDefaultRep = MT0
+    protected def getDefaultRep = MT0Rep
   }
 
   implicit def proxyMT0(p: Rep[MT0]): MT0 =
@@ -181,7 +181,7 @@ trait MetaTestsDefs extends scalan.ScalanExp with MetaTests {
   // 4) constructor and deconstructor
   class MT1CompanionCtor extends CompanionDef[MT1CompanionCtor] {
     def selfType = MT1CompanionElem
-    override def toString = "MT1"
+    override def toString = "MT1Companion"
     @scalan.OverloadId("fromData")
     def apply[T](p: Rep[MT1Data[T]]): Rep[MT1[T]] = {
       implicit val eT = p._1.elem
@@ -202,7 +202,7 @@ trait MetaTestsDefs extends scalan.ScalanExp with MetaTests {
 
   implicit case object MT1CompanionElem extends CompanionElem[MT1CompanionCtor] {
     lazy val tag = weakTypeTag[MT1CompanionCtor]
-    protected def getDefaultRep = MT1
+    protected def getDefaultRep = MT1Rep
   }
 
   implicit def proxyMT1[T](p: Rep[MT1[T]]): MT1[T] =
@@ -271,7 +271,7 @@ trait MetaTestsDefs extends scalan.ScalanExp with MetaTests {
   // 4) constructor and deconstructor
   class MT2CompanionCtor extends CompanionDef[MT2CompanionCtor] {
     def selfType = MT2CompanionElem
-    override def toString = "MT2"
+    override def toString = "MT2Companion"
     @scalan.OverloadId("fromData")
     def apply[T, R](p: Rep[MT2Data[T, R]]): Rep[MT2[T, R]] = {
       implicit val eT = p._1.elem;
@@ -293,7 +293,7 @@ implicit val eR = p._2.elem
 
   implicit case object MT2CompanionElem extends CompanionElem[MT2CompanionCtor] {
     lazy val tag = weakTypeTag[MT2CompanionCtor]
-    protected def getDefaultRep = MT2
+    protected def getDefaultRep = MT2Rep
   }
 
   implicit def proxyMT2[T, R](p: Rep[MT2[T, R]]): MT2[T, R] =

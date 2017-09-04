@@ -113,7 +113,6 @@ class StructTests extends BaseViewTests {
 
   class Ctx extends TestCompilerContext {
     class ScalanCake extends ScalanDslExp with StructExamples with SegmentsDsl with MetaTestsDsl {
-
       def containsTuples(g: PGraph): Boolean = {
         g.scheduleAll.exists(tp => tp.rhs match {
           case First(_) => true

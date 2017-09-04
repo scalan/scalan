@@ -151,18 +151,18 @@ class BoilerplateTool extends StrictLogging {
     }.distinct
 
   val configsMap = Map(
-    "scalan" -> List(scalanConfig),
-    "structs" -> List(structsConfig),
-    "core" -> List(coreConfig),
-    "core-tests" -> List(coreTestsConfig),
-    "collections" -> List(collectionsConfig),
-    "la" -> List(laConfig),
-    "graphs" -> List(graphConfig),
-    "ee" -> List(eeConfig),
-    "effects" -> List(effectsConfig),
-    "lib-all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig, structsConfig),
-    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig, structsConfig),
-    "all-core" -> List(scalanConfig, coreConfig, structsConfig, coreTestsConfig)
+    scalanConfig.name -> List(scalanConfig),
+    structsConfig.name -> List(structsConfig),
+    coreConfig.name -> List(coreConfig),
+    coreTestsConfig.name -> List(coreTestsConfig),
+    "allcore" -> List(scalanConfig, coreConfig, structsConfig, coreTestsConfig),
+  "collections" -> List(collectionsConfig),
+  "la" -> List(laConfig),
+  "graphs" -> List(graphConfig),
+  "ee" -> List(eeConfig),
+  "effects" -> List(effectsConfig),
+  "lib-all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig, structsConfig),
+  "all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig, structsConfig)
   )
 
   def main(args: Array[String]) {

@@ -109,7 +109,7 @@ trait KindsDefs extends scalan.ScalanExp with Kinds {
   // 4) constructor and deconstructor
   class ReturnCompanionCtor extends CompanionDef[ReturnCompanionCtor] with ReturnCompanion {
     def selfType = ReturnCompanionElem
-    override def toString = "Return"
+    override def toString = "ReturnCompanion"
 
     @scalan.OverloadId("fromFields")
     def apply[F[_], A](a: Rep[A])(implicit cF: Cont[F]): Rep[Return[F, A]] =
@@ -125,7 +125,7 @@ trait KindsDefs extends scalan.ScalanExp with Kinds {
 
   implicit case object ReturnCompanionElem extends CompanionElem[ReturnCompanionCtor] {
     lazy val tag = weakTypeTag[ReturnCompanionCtor]
-    protected def getDefaultRep = Return
+    protected def getDefaultRep = ReturnRep
   }
 
   implicit def proxyReturn[F[_], A](p: Rep[Return[F, A]]): Return[F, A] =
@@ -195,7 +195,7 @@ trait KindsDefs extends scalan.ScalanExp with Kinds {
   // 4) constructor and deconstructor
   class BindCompanionCtor extends CompanionDef[BindCompanionCtor] with BindCompanion {
     def selfType = BindCompanionElem
-    override def toString = "Bind"
+    override def toString = "BindCompanion"
     @scalan.OverloadId("fromData")
     def apply[F[_], S, B](p: Rep[BindData[F, S, B]]): Rep[Bind[F, S, B]] = {
       implicit val cF = p._1.elem.typeArgs("F")._1.asCont[F];
@@ -218,7 +218,7 @@ implicit val eB = p._2.elem.eRange.typeArgs("A")._1.asElem[B]
 
   implicit case object BindCompanionElem extends CompanionElem[BindCompanionCtor] {
     lazy val tag = weakTypeTag[BindCompanionCtor]
-    protected def getDefaultRep = Bind
+    protected def getDefaultRep = BindRep
   }
 
   implicit def proxyBind[F[_], S, B](p: Rep[Bind[F, S, B]]): Bind[F, S, B] =

@@ -101,7 +101,7 @@ trait SegmentsDefs extends scalan.ScalanExp with Segments {
   // 4) constructor and deconstructor
   class IntervalCompanionCtor extends CompanionDef[IntervalCompanionCtor] with IntervalCompanion {
     def selfType = IntervalCompanionElem
-    override def toString = "Interval"
+    override def toString = "IntervalCompanion"
     @scalan.OverloadId("fromData")
     def apply(p: Rep[IntervalData]): Rep[Interval] = {
       isoInterval.to(p)
@@ -121,7 +121,7 @@ trait SegmentsDefs extends scalan.ScalanExp with Segments {
 
   implicit case object IntervalCompanionElem extends CompanionElem[IntervalCompanionCtor] {
     lazy val tag = weakTypeTag[IntervalCompanionCtor]
-    protected def getDefaultRep = Interval
+    protected def getDefaultRep = IntervalRep
   }
 
   implicit def proxyInterval(p: Rep[Interval]): Interval =
@@ -182,7 +182,7 @@ trait SegmentsDefs extends scalan.ScalanExp with Segments {
   // 4) constructor and deconstructor
   class SliceCompanionCtor extends CompanionDef[SliceCompanionCtor] with SliceCompanion {
     def selfType = SliceCompanionElem
-    override def toString = "Slice"
+    override def toString = "SliceCompanion"
     @scalan.OverloadId("fromData")
     def apply(p: Rep[SliceData]): Rep[Slice] = {
       isoSlice.to(p)
@@ -202,7 +202,7 @@ trait SegmentsDefs extends scalan.ScalanExp with Segments {
 
   implicit case object SliceCompanionElem extends CompanionElem[SliceCompanionCtor] {
     lazy val tag = weakTypeTag[SliceCompanionCtor]
-    protected def getDefaultRep = Slice
+    protected def getDefaultRep = SliceRep
   }
 
   implicit def proxySlice(p: Rep[Slice]): Slice =
@@ -264,7 +264,7 @@ trait SegmentsDefs extends scalan.ScalanExp with Segments {
   // 4) constructor and deconstructor
   class CenteredCompanionCtor extends CompanionDef[CenteredCompanionCtor] with CenteredCompanion {
     def selfType = CenteredCompanionElem
-    override def toString = "Centered"
+    override def toString = "CenteredCompanion"
     @scalan.OverloadId("fromData")
     def apply(p: Rep[CenteredData]): Rep[Centered] = {
       isoCentered.to(p)
@@ -284,7 +284,7 @@ trait SegmentsDefs extends scalan.ScalanExp with Segments {
 
   implicit case object CenteredCompanionElem extends CompanionElem[CenteredCompanionCtor] {
     lazy val tag = weakTypeTag[CenteredCompanionCtor]
-    protected def getDefaultRep = Centered
+    protected def getDefaultRep = CenteredRep
   }
 
   implicit def proxyCentered(p: Rep[Centered]): Centered =

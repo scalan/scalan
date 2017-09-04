@@ -127,7 +127,7 @@ trait ExceptionsDefs extends scalan.ScalanExp with Exceptions {
   // 4) constructor and deconstructor
   class SThrowableImplCompanionCtor extends CompanionDef[SThrowableImplCompanionCtor] {
     def selfType = SThrowableImplCompanionElem
-    override def toString = "SThrowableImpl"
+    override def toString = "SThrowableImplCompanion"
 
     @scalan.OverloadId("fromFields")
     def apply(wrappedValue: Rep[Throwable]): Rep[SThrowableImpl] =
@@ -143,7 +143,7 @@ trait ExceptionsDefs extends scalan.ScalanExp with Exceptions {
 
   implicit case object SThrowableImplCompanionElem extends CompanionElem[SThrowableImplCompanionCtor] {
     lazy val tag = weakTypeTag[SThrowableImplCompanionCtor]
-    protected def getDefaultRep = SThrowableImpl
+    protected def getDefaultRep = SThrowableImplRep
   }
 
   implicit def proxySThrowableImpl(p: Rep[SThrowableImpl]): SThrowableImpl =

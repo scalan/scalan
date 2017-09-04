@@ -108,7 +108,7 @@ trait ConvertersDefs extends Converters {
   // 4) constructor and deconstructor
   class IdentityConvCompanionCtor extends CompanionDef[IdentityConvCompanionCtor] {
     def selfType = IdentityConvCompanionElem
-    override def toString = "IdentityConv"
+    override def toString = "IdentityConvCompanion"
     @scalan.OverloadId("fromData")
     def apply[A](p: Rep[IdentityConvData[A]])(implicit eA: Elem[A]): Rep[IdentityConv[A]] = {
       isoIdentityConv[A].to(p)
@@ -128,7 +128,7 @@ trait ConvertersDefs extends Converters {
 
   implicit case object IdentityConvCompanionElem extends CompanionElem[IdentityConvCompanionCtor] {
     lazy val tag = weakTypeTag[IdentityConvCompanionCtor]
-    protected def getDefaultRep = IdentityConv
+    protected def getDefaultRep = IdentityConvRep
   }
 
   implicit def proxyIdentityConv[A](p: Rep[IdentityConv[A]]): IdentityConv[A] =
@@ -196,7 +196,7 @@ trait ConvertersDefs extends Converters {
   // 4) constructor and deconstructor
   class BaseConverterCompanionCtor extends CompanionDef[BaseConverterCompanionCtor] with BaseConverterCompanion {
     def selfType = BaseConverterCompanionElem
-    override def toString = "BaseConverter"
+    override def toString = "BaseConverterCompanion"
 
     @scalan.OverloadId("fromFields")
     def apply[T, R](convFun: Rep[T => R]): Rep[BaseConverter[T, R]] =
@@ -212,7 +212,7 @@ trait ConvertersDefs extends Converters {
 
   implicit case object BaseConverterCompanionElem extends CompanionElem[BaseConverterCompanionCtor] {
     lazy val tag = weakTypeTag[BaseConverterCompanionCtor]
-    protected def getDefaultRep = BaseConverter
+    protected def getDefaultRep = BaseConverterRep
   }
 
   implicit def proxyBaseConverter[T, R](p: Rep[BaseConverter[T, R]]): BaseConverter[T, R] =
@@ -287,7 +287,7 @@ trait ConvertersDefs extends Converters {
   // 4) constructor and deconstructor
   class PairConverterCompanionCtor extends CompanionDef[PairConverterCompanionCtor] with PairConverterCompanion {
     def selfType = PairConverterCompanionElem
-    override def toString = "PairConverter"
+    override def toString = "PairConverterCompanion"
     @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[PairConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] = {
       isoPairConverter[A1, A2, B1, B2].to(p)
@@ -307,7 +307,7 @@ trait ConvertersDefs extends Converters {
 
   implicit case object PairConverterCompanionElem extends CompanionElem[PairConverterCompanionCtor] {
     lazy val tag = weakTypeTag[PairConverterCompanionCtor]
-    protected def getDefaultRep = PairConverter
+    protected def getDefaultRep = PairConverterRep
   }
 
   implicit def proxyPairConverter[A1, A2, B1, B2](p: Rep[PairConverter[A1, A2, B1, B2]]): PairConverter[A1, A2, B1, B2] =
@@ -382,7 +382,7 @@ trait ConvertersDefs extends Converters {
   // 4) constructor and deconstructor
   class SumConverterCompanionCtor extends CompanionDef[SumConverterCompanionCtor] with SumConverterCompanion {
     def selfType = SumConverterCompanionElem
-    override def toString = "SumConverter"
+    override def toString = "SumConverterCompanion"
     @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[SumConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] = {
       isoSumConverter[A1, A2, B1, B2].to(p)
@@ -402,7 +402,7 @@ trait ConvertersDefs extends Converters {
 
   implicit case object SumConverterCompanionElem extends CompanionElem[SumConverterCompanionCtor] {
     lazy val tag = weakTypeTag[SumConverterCompanionCtor]
-    protected def getDefaultRep = SumConverter
+    protected def getDefaultRep = SumConverterRep
   }
 
   implicit def proxySumConverter[A1, A2, B1, B2](p: Rep[SumConverter[A1, A2, B1, B2]]): SumConverter[A1, A2, B1, B2] =
@@ -474,7 +474,7 @@ trait ConvertersDefs extends Converters {
   // 4) constructor and deconstructor
   class ComposeConverterCompanionCtor extends CompanionDef[ComposeConverterCompanionCtor] {
     def selfType = ComposeConverterCompanionElem
-    override def toString = "ComposeConverter"
+    override def toString = "ComposeConverterCompanion"
     @scalan.OverloadId("fromData")
     def apply[A, B, C](p: Rep[ComposeConverterData[A, B, C]])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] = {
       isoComposeConverter[A, B, C].to(p)
@@ -494,7 +494,7 @@ trait ConvertersDefs extends Converters {
 
   implicit case object ComposeConverterCompanionElem extends CompanionElem[ComposeConverterCompanionCtor] {
     lazy val tag = weakTypeTag[ComposeConverterCompanionCtor]
-    protected def getDefaultRep = ComposeConverter
+    protected def getDefaultRep = ComposeConverterRep
   }
 
   implicit def proxyComposeConverter[A, B, C](p: Rep[ComposeConverter[A, B, C]]): ComposeConverter[A, B, C] =
@@ -564,7 +564,7 @@ trait ConvertersDefs extends Converters {
   // 4) constructor and deconstructor
   class FunctorConverterCompanionCtor extends CompanionDef[FunctorConverterCompanionCtor] with FunctorConverterCompanion {
     def selfType = FunctorConverterCompanionElem
-    override def toString = "FunctorConverter"
+    override def toString = "FunctorConverterCompanion"
 
     @scalan.OverloadId("fromFields")
     def apply[A, B, F[_]](itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]] =
@@ -580,7 +580,7 @@ trait ConvertersDefs extends Converters {
 
   implicit case object FunctorConverterCompanionElem extends CompanionElem[FunctorConverterCompanionCtor] {
     lazy val tag = weakTypeTag[FunctorConverterCompanionCtor]
-    protected def getDefaultRep = FunctorConverter
+    protected def getDefaultRep = FunctorConverterRep
   }
 
   implicit def proxyFunctorConverter[A, B, F[_]](p: Rep[FunctorConverter[A, B, F]]): FunctorConverter[A, B, F] =
@@ -647,7 +647,7 @@ trait ConvertersDefs extends Converters {
   // 4) constructor and deconstructor
   class NaturalConverterCompanionCtor extends CompanionDef[NaturalConverterCompanionCtor] {
     def selfType = NaturalConverterCompanionElem
-    override def toString = "NaturalConverter"
+    override def toString = "NaturalConverterCompanion"
 
     @scalan.OverloadId("fromFields")
     def apply[A, F[_], G[_]](convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]): Rep[NaturalConverter[A, F, G]] =
@@ -663,7 +663,7 @@ trait ConvertersDefs extends Converters {
 
   implicit case object NaturalConverterCompanionElem extends CompanionElem[NaturalConverterCompanionCtor] {
     lazy val tag = weakTypeTag[NaturalConverterCompanionCtor]
-    protected def getDefaultRep = NaturalConverter
+    protected def getDefaultRep = NaturalConverterRep
   }
 
   implicit def proxyNaturalConverter[A, F[_], G[_]](p: Rep[NaturalConverter[A, F, G]]): NaturalConverter[A, F, G] =

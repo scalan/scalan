@@ -114,7 +114,7 @@ trait StructItemsDefs extends StructItems {
   // 4) constructor and deconstructor
   class StructItemBaseCompanionCtor extends CompanionDef[StructItemBaseCompanionCtor] {
     def selfType = StructItemBaseCompanionElem
-    override def toString = "StructItemBase"
+    override def toString = "StructItemBaseCompanion"
     @scalan.OverloadId("fromData")
     def apply[Val, Schema <: Struct](p: Rep[StructItemBaseData[Val, Schema]])(implicit eSchema: Elem[Schema]): Rep[StructItemBase[Val, Schema]] = {
       implicit val eVal = p._2.elem
@@ -135,7 +135,7 @@ trait StructItemsDefs extends StructItems {
 
   implicit case object StructItemBaseCompanionElem extends CompanionElem[StructItemBaseCompanionCtor] {
     lazy val tag = weakTypeTag[StructItemBaseCompanionCtor]
-    protected def getDefaultRep = StructItemBase
+    protected def getDefaultRep = StructItemBaseRep
   }
 
   implicit def proxyStructItemBase[Val, Schema <: Struct](p: Rep[StructItemBase[Val, Schema]]): StructItemBase[Val, Schema] =

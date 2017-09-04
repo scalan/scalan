@@ -106,7 +106,7 @@ trait StructKeysDefs extends StructKeys {
   // 4) constructor and deconstructor
   class IndexStructKeyCompanionCtor extends CompanionDef[IndexStructKeyCompanionCtor] {
     def selfType = IndexStructKeyCompanionElem
-    override def toString = "IndexStructKey"
+    override def toString = "IndexStructKeyCompanion"
 
     @scalan.OverloadId("fromFields")
     def apply[Schema <: Struct](index: Rep[Int])(implicit eSchema: Elem[Schema]): Rep[IndexStructKey[Schema]] =
@@ -122,7 +122,7 @@ trait StructKeysDefs extends StructKeys {
 
   implicit case object IndexStructKeyCompanionElem extends CompanionElem[IndexStructKeyCompanionCtor] {
     lazy val tag = weakTypeTag[IndexStructKeyCompanionCtor]
-    protected def getDefaultRep = IndexStructKey
+    protected def getDefaultRep = IndexStructKeyRep
   }
 
   implicit def proxyIndexStructKey[Schema <: Struct](p: Rep[IndexStructKey[Schema]]): IndexStructKey[Schema] =
@@ -185,7 +185,7 @@ trait StructKeysDefs extends StructKeys {
   // 4) constructor and deconstructor
   class NameStructKeyCompanionCtor extends CompanionDef[NameStructKeyCompanionCtor] {
     def selfType = NameStructKeyCompanionElem
-    override def toString = "NameStructKey"
+    override def toString = "NameStructKeyCompanion"
 
     @scalan.OverloadId("fromFields")
     def apply[Schema <: Struct](name: Rep[String])(implicit eSchema: Elem[Schema]): Rep[NameStructKey[Schema]] =
@@ -201,7 +201,7 @@ trait StructKeysDefs extends StructKeys {
 
   implicit case object NameStructKeyCompanionElem extends CompanionElem[NameStructKeyCompanionCtor] {
     lazy val tag = weakTypeTag[NameStructKeyCompanionCtor]
-    protected def getDefaultRep = NameStructKey
+    protected def getDefaultRep = NameStructKeyRep
   }
 
   implicit def proxyNameStructKey[Schema <: Struct](p: Rep[NameStructKey[Schema]]): NameStructKey[Schema] =

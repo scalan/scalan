@@ -759,7 +759,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
          |  // 4) constructor and deconstructor
          |  class ${c.companionAbsName} extends CompanionDef[${c.companionAbsName}]${hasCompanion.opt(s" with ${c.companionName}")} {
          |    def selfType = ${className}CompanionElem
-         |    override def toString = "$className"
+         |    override def toString = "${className}Companion"
          |${(fields.length != 1).opt({
            val s = c.entity.args.args.zipWithIndex.map { case (a, i) => a.name -> s"p._${i + 1}" }.toMap
            val sb = c.extractionBuilder(s)
@@ -784,7 +784,7 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
          |
          |  implicit case object ${className}CompanionElem extends CompanionElem[${c.companionAbsName}] {
          |    lazy val tag = weakTypeTag[${c.companionAbsName}]
-         |    protected def getDefaultRep = $className
+         |    protected def getDefaultRep = ${className}Rep
          |  }
          |
          |  implicit def proxy${c.typeDecl}(p: Rep[${c.typeUse}]): ${c.typeUse} =
