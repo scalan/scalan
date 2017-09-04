@@ -245,7 +245,7 @@ trait ProxyExp extends BaseExp with MetadataExp with GraphVizExport { self: Scal
   }
 
   private val isCompanionApply: InvokeTester = NamedInvokeTester("isCompanionApply",
-    (_, m) => m.getName == "apply" && m.getDeclaringClass.getName.endsWith("CompanionAbs")
+    (_, m) => m.getName == "apply" && m.getDeclaringClass.getName.endsWith("CompanionCtor")
   )
 
   private val isFieldGetterCache = collection.mutable.Map.empty[(Type, Method), Boolean]
@@ -599,7 +599,7 @@ trait ProxyExp extends BaseExp with MetadataExp with GraphVizExport { self: Scal
   }
 
   def isStagedType(symName: String) =
-    symName.toString == "Rep" || symName.toString == "Exp"
+    symName == "Rep" || symName == "Exp"
 
   protected def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = {
     val e = receiver.elem
