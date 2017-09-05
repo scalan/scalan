@@ -78,7 +78,7 @@ trait Thunks extends Functions with ViewsDsl with GraphVizExport with Effects { 
 
   override def transformDef[A](d: Def[A], t: Transformer) = d match {
     case thunk: ThunkDef[a] =>
-      import thunk.eA
+      implicit lazy val eA = thunk.eA
       val newSym = fresh[Thunk[a]]
       val newSchedule = for {
         tp <- thunk.schedule

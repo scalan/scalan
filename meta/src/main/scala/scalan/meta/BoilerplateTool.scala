@@ -33,9 +33,9 @@ class BoilerplateTool extends StrictLogging {
       "scalan/util/Exceptions.scala"
     ),
     coreTypeSynonyms,
-    baseContextTrait = "scalan.ScalanExp",
+    baseContextTrait = "scalan.Scalan",
     seqContextTrait = "scalan.ScalanStd",
-    stagedContextTrait = "scalan.ScalanExp"
+    stagedContextTrait = "scalan.Scalan"
   )
 
   val coreTestsTypeSynonyms = coreTypeSynonyms ++ Map(
@@ -51,6 +51,18 @@ class BoilerplateTool extends StrictLogging {
       "scalan/common/MetaTests.scala"
     ),
     coreTestsTypeSynonyms
+  )
+
+  val specTypeSynonyms = coreTypeSynonyms ++ Map(
+    "RepIsoFunc" -> "IsoFunc"
+  )
+  lazy val specConfig = CodegenConfig(
+    name = "spec",
+    srcPath = "../core/src/main/scala",
+    entityFiles = List(
+      "scalan/dynamic/Specializations.scala"
+    ),
+    specTypeSynonyms
   )
 
   val collectTypeSynonyms = coreTypeSynonyms ++ Map(
@@ -155,7 +167,7 @@ class BoilerplateTool extends StrictLogging {
     structsConfig.name -> List(structsConfig),
     coreConfig.name -> List(coreConfig),
     coreTestsConfig.name -> List(coreTestsConfig),
-    "allcore" -> List(scalanConfig, coreConfig, structsConfig, coreTestsConfig),
+    "allcore" -> List(scalanConfig, coreConfig, structsConfig, coreTestsConfig, specConfig),
   "collections" -> List(collectionsConfig),
   "la" -> List(laConfig),
   "graphs" -> List(graphConfig),

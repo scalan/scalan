@@ -151,7 +151,7 @@ trait HotSpots[G <: Global] extends ScalanizerBase[G] with Enricher[G] with Back
     q"""
       object HotSpotManager {
         $cakeImport
-        val scalanContext: ScalanExp = new ScalanExp
+        val scalanContext: Scalan = new Scalan
         class Scalan extends LinearAlgebraDslExp {
           ..$ScalaWrappers
         }

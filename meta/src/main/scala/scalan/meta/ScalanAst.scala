@@ -372,6 +372,7 @@ object ScalanAst {
         Contravariant
       else
         Invariant
+    def isCovariant = variance == Covariant
     def hasFlag(flag: Long) = (flag & flags) != 0L
     def declaration: String =
       if (isHighKind) {

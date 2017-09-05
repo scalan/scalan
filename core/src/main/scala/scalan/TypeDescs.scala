@@ -294,6 +294,7 @@ trait TypeDescs extends Base { self: Scalan =>
     }
 
     def variance = tyArg.variance
+    def isCovariant = tyArg.isCovariant
     def tyExpr = tyArg.toTraitCall
     def toDesc(env: Map[ArgElem,TypeDesc]): TypeDesc = env.get(this) match {
       case Some(d) => d

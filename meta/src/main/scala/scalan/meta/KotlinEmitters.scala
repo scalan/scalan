@@ -3,10 +3,13 @@ package scalan.meta
 import scalan.meta.ScalanAst.{STraitCall, SClassArg, SValDef, STpeArgs, STpeExpr, STpeFunc, SExpr, STpeArg, STpeEmpty, SModuleDef, SClassDef, STpeTuple, STpeSingleton, STpeSelectFromTT, SClassArgs, STpeTypeBounds, STpePrimitive, SBodyItem, STpeAnnotated, STpeExistential}
 import PrintExtensions._
 
-object KotlinEmitters {
+trait Emitters {
+  def genClass(c: SClassDef): String
+}
 
-  case class GenCtx(module: SModuleDef)
+case class GenCtx(module: SModuleDef)
 
+class KotlinEmitters(implicit val ctx: GenCtx) extends Emitters {
   implicit def classDefEmitter(implicit ctx: GenCtx) = new CodeEmitter[SClassDef](genClass(_))
 
   implicit def bodyItemEmitter(implicit ctx: GenCtx) = new CodeEmitter[SBodyItem](genBodyItem(_))
@@ -50,7 +53,7 @@ object KotlinEmitters {
     repClassArgs.filterNot(_.isEmpty)
   }
 
-  def genClass(c: SClassDef)(implicit ctx: GenCtx): String = {
+  def genClass(c: SClassDef): String = {
     val className = c.name
     assert(c.selfType.isEmpty, "self types are not supported")
     val parents = genParents(c.ancestors)
