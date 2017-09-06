@@ -33,7 +33,7 @@ class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx[Global
   def getCodegen: MetaCodegen = ScalanCodegen
 
   def createFileGenerator(codegen: MetaCodegen, module: SModuleDef, config: CodegenConfig) =
-    new EntityFileGenerator(codegen, module, config)
+    new ModuleFileGenerator(codegen, module, config)
 
   def generateAll() = {
     entities.foreach { man =>

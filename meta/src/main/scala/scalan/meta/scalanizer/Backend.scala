@@ -3,13 +3,13 @@ package scalan.meta.scalanizer
 import scala.reflect.internal.util.BatchSourceFile
 import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
-import scalan.meta.{EntityFileGenerator, ScalanCodegen}
+import scalan.meta.{ModuleFileGenerator, ScalanCodegen}
 
 trait Backend[G <: Global] extends ScalanizerBase[G] {
   import global._
 
   def genBoilerplate(module: SModuleDef): Tree = {
-    val entityGen = new EntityFileGenerator(ScalanCodegen, module, snConfig.codegenConfig)
+    val entityGen = new ModuleFileGenerator(ScalanCodegen, module, snConfig.codegenConfig)
     val implCode = entityGen.getImplFile
     val implCodeFile = new BatchSourceFile("<impl>", implCode)
     val boilerplate = newUnitParser(new CompilationUnit(implCodeFile)).parse()
