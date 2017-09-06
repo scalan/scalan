@@ -14,8 +14,8 @@ class ElemTests extends BaseCtxTests { suite =>
     val eSlice    = element[Slice]
     val eCentered = element[Centered]
 //    val eCollectionInt = element[Collection[Int]]
-    val tyCollectionInt = Entity("Collection")(eInt)
-    val tyCollectionDouble = Entity("Collection")(eDouble)
+//    val tyCollectionInt = Entity("Collection")(eInt)
+//    val tyCollectionDouble = Entity("Collection")(eDouble)
 
     def genElems[A](n: Int, e: Elem[A], f: Elem[A] => Iterator[Elem[_]]): Set[Elem[_]] = {
       genTuples(List.fill(n)(e))(f).map(es => Elem.pairify(es.toIterator)).toSet
@@ -110,29 +110,29 @@ class ElemTests extends BaseCtxTests { suite =>
       val res = unifyTypes(t1, t2)
       assertResult(expectedSubst)(res)
     }
-    val entColl = Entity("Collection")
-    val entPairColl = Entity("PairCollection")
-    val argItem = entColl.typeArg("Item")
-    val argA = entPairColl.typeArg("A")
-    val argB = entPairColl.typeArg("B")
+//    val entColl = Entity("Collection")
+//    val entPairColl = Entity("PairCollection")
+//    val argItem = entColl.typeArg("Item")
+//    val argA = entPairColl.typeArg("A")
+//    val argB = entPairColl.typeArg("B")
     testUni[Int](eDouble, None)
     testUni[Int](eInt, Some(Map()))
-    testUni[(Int, Double)](pairElement(argA, eDouble), Some(Map(argA -> eInt)))
-    testUni[(Int, Double)](pairElement(argA, eInt), None)
-    testUni[(Int, Double)](pairElement(argA, argB), Some(Map(argA -> eInt, argB -> eDouble)))
-    testUni[(Int, (Double, Int))](pairElement(argA, pairElement(argB, eInt)), Some(Map(argA -> eInt, argB -> eDouble)))
+//    testUni[(Int, Double)](pairElement(argA, eDouble), Some(Map(argA -> eInt)))
+//    testUni[(Int, Double)](pairElement(argA, eInt), None)
+//    testUni[(Int, Double)](pairElement(argA, argB), Some(Map(argA -> eInt, argB -> eDouble)))
+//    testUni[(Int, (Double, Int))](pairElement(argA, pairElement(argB, eInt)), Some(Map(argA -> eInt, argB -> eDouble)))
 //    testUni[Collection[(Int, Double)]](entColl(argItem.argName -> pairElement(argA, argB)), Some(Map(argA -> eInt, argB -> eDouble)))
     
-    testUni[(Int | Double)](sumElement(argA, eDouble), Some(Map(argA -> eInt)))
-    testUni[(Int | Double)](sumElement(argA, eInt), None)
-    testUni[(Int | Double)](sumElement(argA, argB), Some(Map(argA -> eInt, argB -> eDouble)))
-    testUni[(Int | (Double | Int))](sumElement(argA, sumElement(argB, eInt)), Some(Map(argA -> eInt, argB -> eDouble)))
+//    testUni[(Int | Double)](sumElement(argA, eDouble), Some(Map(argA -> eInt)))
+//    testUni[(Int | Double)](sumElement(argA, eInt), None)
+//    testUni[(Int | Double)](sumElement(argA, argB), Some(Map(argA -> eInt, argB -> eDouble)))
+//    testUni[(Int | (Double | Int))](sumElement(argA, sumElement(argB, eInt)), Some(Map(argA -> eInt, argB -> eDouble)))
 //    testUni[Collection[(Int | Double)]](entColl(argItem.argName -> sumElement(argA, argB)), Some(Map(argA -> eInt, argB -> eDouble)))
 
-    testUni[(Int => Double)](funcElement(argA, eDouble), Some(Map(argA -> eInt)))
-    testUni[(Int => Double)](funcElement(argA, eInt), None)
-    testUni[(Int => Double)](funcElement(argA, argB), Some(Map(argA -> eInt, argB -> eDouble)))
-    testUni[(Int => (Double => Int))](funcElement(argA, funcElement(argB, eInt)), Some(Map(argA -> eInt, argB -> eDouble)))
+//    testUni[(Int => Double)](funcElement(argA, eDouble), Some(Map(argA -> eInt)))
+//    testUni[(Int => Double)](funcElement(argA, eInt), None)
+//    testUni[(Int => Double)](funcElement(argA, argB), Some(Map(argA -> eInt, argB -> eDouble)))
+//    testUni[(Int => (Double => Int))](funcElement(argA, funcElement(argB, eInt)), Some(Map(argA -> eInt, argB -> eDouble)))
 //    testUni[Collection[(Int => Double)]](entColl(argItem.argName -> funcElement(argA, argB)), Some(Map(argA -> eInt, argB -> eDouble)))
   }
 
