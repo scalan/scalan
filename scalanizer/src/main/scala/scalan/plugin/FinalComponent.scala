@@ -75,7 +75,7 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
 //        showTree("stagedAst", unitName, stagedAst)
 
         if (snConfig.save) {
-          saveImplCode(unit.source.file.file, showCode(stagedAst))
+//          saveImplCode(unit.source.file.file, showCode(stagedAst))
         }
 
         if (snConfig.read) {

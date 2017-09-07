@@ -33,7 +33,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
         /** Form source code of the wrapper and store it. */
         val wrapperModuleWithoutImpl = module.copy(concreteSClasses = Nil)
         val wrapperPackage = genWrapperPackage(wrapperModuleWithoutImpl)
-        saveWrapperCode(wrapperModuleWithoutImpl.name, showCode(wrapperPackage))
+        saveWrapperCode(module.packageName, wrapperModuleWithoutImpl.name, showCode(wrapperPackage))
 
         wrapperSlices = updateWrapperSlices(wrapperSlices, wrapperModuleWithoutImpl)
       }
@@ -65,9 +65,9 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
 
     wrappersPackage
   }
-  def getWrappersHome = snConfig.home + "/src/main/scala/wrappers"
-  def saveWrapperCode(fileName: String, wrapperCode: String) = {
-    val wrapperFile = FileUtil.file(getWrappersHome, fileName + ".scala")
+  def getWrappersHome = snConfig.home + "/src/main/scala"
+  def saveWrapperCode(packageName: String, fileName: String, wrapperCode: String) = {
+    val wrapperFile = FileUtil.file(getWrappersHome, packageName, fileName + ".scala")
     wrapperFile.mkdirs()
     FileUtil.write(wrapperFile, wrapperCode)
   }

@@ -39,26 +39,14 @@ class ScalanizerPluginState[G <: Global](val scalanizer: Scalanizer[G]) extends 
 
   /** Mapping between modules and another modules used by them. */
   val dependenceOfModule = Map[String, List[String]](
-    "Nums" -> List("LinearAlgebra"),
-    "NumMonoids" -> List("Nums","LinearAlgebra"),
-    "Cols" -> List(/*"NumMonoids",*/"LinearAlgebra"),
-    "Vecs" -> List("NumMonoids", "Cols", "LinearAlgebra"),
-    "Matrs" -> List("NumMonoids", "Cols", "Vecs", "LinearAlgebra"),
-    "MatrOps" -> List("Nums", "NumMonoids", "Vecs", "Matrs", "LinearAlgebra"),
-    "LinearAlgebra" -> List("NumMonoids", "Cols", "Vecs", "Matrs"),
-    "LinearAlgebraOps" -> List("LinearAlgebra")
+    "Cols" -> List("LinearAlgebra"),
+    "LinearAlgebra" -> List("NumMonoids", "Cols", "Vecs", "Matrs")
   )
 
   /** Mapping of module name to the package where it is defined. */
   val packageOfModule = Map[String, String](
-    "Nums" -> "scalanizer",
-    "NumMonoids" -> "scalanizer",
     "Cols" -> "scalanizer.collections",
-    "Vecs" -> "scalanizer.linalgebra",
-    "Matrs" -> "scalanizer.linalgebra",
-    "MatrOps" -> "scalanizer.linalgebra",
-    "LinearAlgebra" -> "scalanizer.linalgebra",
-    "LinearAlgebraOps" -> "scalanizer.linalgebra"
+    "LinearAlgebra" -> "scalanizer.linalgebra"
   )
 
   /** Mapping of external type names to their wrappers. */

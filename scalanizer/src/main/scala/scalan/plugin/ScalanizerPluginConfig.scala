@@ -5,7 +5,7 @@ import scalan.meta.scalanizer.ScalanizerConfig
 
 class ScalanizerPluginConfig extends ScalanizerConfig {
   /** The folder where the app is located and where the generated code will be stored. */
-  val home = "/Users/slesarenko/Projects/scalan/scalanizer-demo"
+  val home = "/Users/slesarenko/Projects/github/scalan/morphic/library"
 
   /** The flag indicates that generated code (virtualized code, boilerplate and type wrappers)
     * should be stored on the file system. */
@@ -40,7 +40,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
   /** The types that shouldn't be Rep[]. */
   val typeClasses             = List("Elem", "Cont", "ClassTag")
 
-  /** Config for Scalan META. */
+  /** Config for scalan-meta. */
   val codegenConfig = CodegenConfig(
     name = "Scalan Plugin",
     srcPath = "/",
@@ -54,7 +54,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
       ,"LinearAlgebraOps.scala"
     ),
     Map.empty,
-    baseContextTrait = "ScalanDsl",
+    baseContextTrait = "scalan.Scalan",
     seqContextTrait = "ScalanStd",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
