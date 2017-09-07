@@ -39,7 +39,7 @@ class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx[Global
     entities.foreach { man =>
       println(s"  generating ${man.file}")
       val g = createFileGenerator(getCodegen, man.entityDef, man.config)
-      val implCode = g.getImplFile
+      val implCode = g.emitImplFile
       saveEntity(man.file, implCode)
     }
   }

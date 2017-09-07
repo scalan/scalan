@@ -376,6 +376,7 @@ class MetaCodegen extends ScalanAstExtensions {
 
   case class EntityTemplateData(m: SModuleDef, t: STraitDef) extends TemplateData(m, t) {
     def elemTypeUse(toType: String = typeUse) = s"${name}Elem[${join(tpeArgNames, toType)}]"
+    val typesWithElems = boundedTpeArgString(false)
   }
 
   case class ConcreteClassTemplateData(m: SModuleDef, c: SClassDef) extends TemplateData(m, c) {

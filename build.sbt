@@ -63,6 +63,13 @@ lazy val lmsBackendSettings = itSettings ++ scalaVirtualizedSettings ++ Seq(
     // we know we use LMS snapshot here, ignore it
     releaseSnapshotDependencies := Seq.empty)
 
+val libraryDefSettings = commonSettings ++ Seq(
+  scalacOptions ++= Seq(
+          "-Xplugin:scalanizer/target/scala-2.11/scalanizer-assembly-0.3.0-SNAPSHOT.jar"
+    //    , "-Xgenerate-phase-graph"
+  )
+)
+
 lazy val allConfigDependency = "compile->compile;test->test"
 
 cancelable in Global := true
@@ -86,6 +93,23 @@ lazy val meta = Project("scalan-meta", file("meta"))
       ),
     fork in Test := true,
     fork in run := true)
+
+lazy val scalanizer = Project("scalanizer", file("scalanizer"))
+  .dependsOn(meta)
+  .settings(commonSettings,
+    publishArtifact in (Compile, packageBin) := false,
+    assemblyOption in assembly ~= { _.copy(includeScala = false, includeDependency = true) },
+    artifact in (Compile, assembly) := {
+      val art = (artifact in (Compile, assembly)).value
+      art.copy(classifier = Some("assembly"))
+    },
+    addArtifact(artifact in (Compile, assembly), assembly)
+  )
+
+lazy val librarydef = Project("librarydef", file("librarydef"))
+  .dependsOn(meta)
+  .settings(libraryDefSettings,
+    libraryDependencies ++= Seq())
 
 lazy val core = Project("scalan-core", file("core"))
   .dependsOn(common % allConfigDependency, meta)
@@ -172,7 +196,7 @@ lazy val extraClassPathTask = TaskKey[String]("extraClassPath") // scalan.plugin
 //}.value
 
 lazy val root = Project("scalan", file("."))
-  .aggregate(common, meta, core, lmsBackendCore/*,
+  .aggregate(common, meta, scalanizer, librarydef, core, lmsBackendCore/*,
     collections, linalg, graphs, pointers, effects,
     lmsBackendCollections, lmsBackendLinAlg, lmsBackendPointers, lmsBackendIT,
     luaBackendCore, examples*/)

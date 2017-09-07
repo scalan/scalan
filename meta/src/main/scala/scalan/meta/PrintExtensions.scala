@@ -1,6 +1,9 @@
 package scalan.meta
 
 object PrintExtensions {
+  implicit class AnyExtension[A](x: A) {
+      def when(p: A => Boolean, show: A => String, default: String = "") = if (p(x)) show(x) else default
+  }
   implicit class IterableExtensions[A](val it: Iterable[A]) extends AnyVal
   {
     def opt(show: Iterable[A] => String = _.mkString, default: String = ""): String =
