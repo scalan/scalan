@@ -15,11 +15,9 @@ trait Cols {self: LinearAlgebra =>
   }
 
   object Col {
-//    def apply[T](arr: Array[T]): Col[T] = fromArray(arr)
     def fromArray[T](arr: Array[T]): Col[T] = new ColOverArray(arr)
     @HotSpot(KernelType.Scala)
     def ddmvm(v: Array[Double]): Int = {
-//      scalanizer.collections.implOfCols.HotSpotKernels.ddmvmKernel(v)
       val c = Col.fromArray(v)
       c.length
     }

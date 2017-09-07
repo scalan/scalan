@@ -5,7 +5,7 @@ import scala.tools.nsc._
 import scalan.meta.ScalanAst._
 
 object WrapFrontend {
-  val name = "scalanizer-frontend"
+  val name = "scalanizer-wrapfrontend"
 }
 
 /** The component builds wrappers. */
@@ -182,7 +182,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     )
 
     val module = SModuleDef(
-      packageName = "wrappers",
+      packageName = wrapPackage(externalTypeSym.enclosingPackage.name),
       imports = imports,
       name = wmod(externalTypeSym.nameString),
       entityRepSynonym = None,

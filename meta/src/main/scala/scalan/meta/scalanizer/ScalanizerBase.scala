@@ -11,15 +11,17 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
   def snConfig: ScalanizerConfig
   def config: CodegenConfig = snConfig.codegenConfig
 
+  /** Gets module name by its entity. TODO: Should be a general solution. */
+  def mod(name: String) = name + "s"
   /** Converts the name of external type to the name of its wrapper. */
   def wrap(name: String) = "W" + name
   /** Converts the name of external type to the name of the module which
     * contains a wrapper for the type. */
-  def wmod(name: String) = "W" + name + "s"
+  def wmod(name: String) = "W" + mod(name)
   /** Gets name of companion by entity name */
   def comp(name: String) = name + "Companion"
-  /** Gets module name by its entity. TODO: Should be a general solution. */
-  def mod(name: String) = name + "s"
+  /** Gets name of the target package to put wrapper based on original package name */
+  def wrapPackage(packageName: String) = packageName
 
   /** Classification of external types by their names. */
   def isPrimitive(name: String): Boolean = {

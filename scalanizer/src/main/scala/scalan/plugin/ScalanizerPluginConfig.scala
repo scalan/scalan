@@ -31,11 +31,11 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     "LinearAlgebra" -> Set(),
 //    "Num" -> Set("DoubleNum"),
 //    "NumMonoid" -> Set("PlusMonoid"),
-    "Col" -> Set("ColOverArray"),
+    "Col" -> Set("ColOverArray")
 //    "Vec" -> Set("DenseVec"),
 //    "Matr" -> Set("DenseMatr"),
 //    "MatrOp" -> Set("BaseMatrOp"),
-    "LinearAlgebraOp" -> Set("LA")
+//    "LinearAlgebraOp" -> Set("LA")
   )
   /** The types that shouldn't be Rep[]. */
   val typeClasses             = List("Elem", "Cont", "ClassTag")
@@ -51,7 +51,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
 //      ,"Vecs.scala"
 //      ,"Matrs.scala"
 //      ,"MatrOps.scala"
-      ,"LinearAlgebraOps.scala"
+//      ,"LinearAlgebraOps.scala"
     ),
     Map.empty,
     baseContextTrait = "scalan.Scalan",
