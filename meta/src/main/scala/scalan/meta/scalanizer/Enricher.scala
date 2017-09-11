@@ -94,7 +94,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
   def updateSelf(module: SModuleDef) = {
     module.copy(selfType = Some(SSelfTypeDef(
       name = "self",
-      components = selfModuleComponents(module, "Dsl")
+      components = selfModuleComponents(module, "Module")
     )))
   }
 

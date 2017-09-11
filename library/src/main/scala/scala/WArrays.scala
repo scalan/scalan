@@ -1,10 +1,13 @@
 package scala {
   import scalan._
-  import impl._
-  import scala.Array
-  import scala.wrappers.WrappersDsl
 
-  trait WArrays extends Base with TypeWrappers { self: WrappersDsl =>
+  import impl._
+
+  import scala.Array
+
+  import scala.wrappers.WrappersModule
+
+  trait WArrays extends Base with TypeWrappers { self: WrappersModule =>
     trait WArray[T] extends TypeWrapper[Array[T], WArray[T]] { self =>
       implicit def eeT: Elem[T];
       def wrappedValue: Rep[Array[T]];

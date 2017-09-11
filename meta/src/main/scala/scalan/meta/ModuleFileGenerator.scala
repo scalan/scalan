@@ -189,12 +189,9 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     // note: currently can't cache them properly due to cyclical dependency between
     // baseType elem and wrapper elem
     val baseTypeElem = e.optBaseType.opt { bt =>
-      // hack to work around arrayElement being defined in Scalan
-      // and arrays being wrapped in scalanizer-demo
-      val overrideOpt = if (e.baseInstanceName == "Array") "override " else ""
       val defOrVal = if (e.tpeArgs.isEmpty) "lazy val" else "def"
       val declaration =
-        s"implicit $overrideOpt$defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${e.typesWithElems}: Elem[${e.baseTypeUse}]"
+        s"implicit $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${e.typesWithElems}: Elem[${e.baseTypeUse}]"
       val wrapperElemType = if (e.isCont)
         "WrapperElem1[_, _, CBase, CW] forSome { type CBase[_]; type CW[_] }"
       else
@@ -413,14 +410,13 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         case Some(bt) if className == s"${e.name}Impl" =>
           val externalMethods = e.entity.getMethodsWithAnnotation(ExternalAnnotation)
           val externalMethodsStr = externalMethods.rep(md => externalMethod(md), "\n    ")
-          val implicitArgsWithVals = c.implicitArgsDecl("val ")
           s"""
             |  // default wrapper implementation
-            |  abstract class ${e.name}Impl${tpeArgsDecl}(val wrappedValue: Rep[${e.baseTypeUse}])${implicitArgsWithVals} extends ${e.typeUse} with Def[${e.name}Impl${tpeArgsDecl}] {
+            |  abstract class ${e.name}Impl${tpeArgsDecl}(val wrappedValue: Rep[${e.baseTypeUse}])${c.implicitArgsDecl("val ")} extends ${e.typeUse} with Def[${e.name}Impl${tpeArgsDecl}] {
             |    lazy val selfType = element[${e.name}Impl${tpeArgsDecl}]
             |    $externalMethodsStr
             |  }
-            |  case class ${e.name}ImplCtor${tpeArgsDecl}(override val wrappedValue: Rep[${e.baseTypeUse}])${implicitArgsWithVals} extends ${e.name}Impl${tpeArgsUse}(${fields.rep()}) {
+            |  case class ${e.name}ImplCtor${tpeArgsDecl}(override val wrappedValue: Rep[${e.baseTypeUse}])${c.implicitArgsDecl("override val ")} extends ${e.name}Impl${tpeArgsUse}(${fields.rep()}) {
             |  }
             |  trait ${e.name}ImplCompanion
             |""".stripAndTrim
@@ -632,7 +628,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       |
       |${concreteClasses.mkString("\n\n")}
       |
-      |  registerModule(${module.name}_Module)
+      |  registerModule(${module.name}Module)
       |
       |$companionExpString
       |
@@ -650,7 +646,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
 
   def emitModuleSerialization = {
     s"""
-      |object ${module.name}_Module extends scalan.ModuleInfo {
+      |object ${module.name}Module extends scalan.ModuleInfo {
       |  val dump = "${Serialization.save(module.clean)}"
       |}
        """.stripMargin
@@ -658,14 +654,14 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
 
   def emitDslTraits = {
     List(
-      List((module.hasDsl, "", "Defs"))).flatten.collect {
-      case (hasDslTrait, dslTraitSuffix, traitSuffix) if !hasDslTrait =>
-        val DslName = module.name + "Dsl"
+      List((module.hasDsl, "Defs"))).flatten.collect {
+      case (hasDslTrait, traitSuffix) if !hasDslTrait =>
+        val moduleTraitName = module.name + "Module"
         val selfTypeStr = module.selfType match {
-          case Some(SSelfTypeDef(_, List(STraitCall(DslName, Nil)))) => ""
-          case _ => s" {${module.selfTypeString(dslTraitSuffix)}}"
+          case Some(SSelfTypeDef(_, List(STraitCall(`moduleTraitName`, Nil)))) => ""
+          case _ => s" {${module.selfTypeString("")}}"
         }
-        s"trait $DslName$dslTraitSuffix extends impl.${module.name}$traitSuffix$selfTypeStr"
+        s"trait $moduleTraitName extends impl.${module.name}$traitSuffix$selfTypeStr"
     }.mkString("\n")
   }
 

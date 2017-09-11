@@ -62,16 +62,16 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
 //        showTree("serializedAst", unitName, serializedModuleDef)
 
         /** Replace of hot spots by optimized kernels in the original Scala AST of current compilation unit. */
-        val accelAst = transformHotSpots(moduleDef, unit)
+//        val accelAst = transformHotSpots(moduleDef, unit)
 //        showTree("accelAst", unitName, accelAst)
 
         /** Staged Ast is package which contains virtualized Tree + boilerplate */
-        val objectHotSpotKernels = getHotSpotKernels(moduleDef)
-        val objectHotSpotManager = getHotSpotManager(moduleDef)
-        val stagedAst = getStagedAst(
-              moduleDef, virtAst, boilerplate, extensions, serializedModuleDef,
-              objectHotSpotKernels,
-              objectHotSpotManager)
+//        val objectHotSpotKernels = getHotSpotKernels(moduleDef)
+//        val objectHotSpotManager = getHotSpotManager(moduleDef)
+//        val stagedAst = getStagedAst(
+//              moduleDef, virtAst, boilerplate, extensions, serializedModuleDef,
+//              objectHotSpotKernels,
+//              objectHotSpotManager)
 //        showTree("stagedAst", unitName, stagedAst)
 
         if (snConfig.save) {
@@ -80,11 +80,11 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
 
         if (snConfig.read) {
           /** Discards the generated code and load it from FS. */
-          unit.body = accelAst
+//          unit.body = accelAst
         }
         else
         {
-          unit.body = combineAst(accelAst, stagedAst)
+//          unit.body = combineAst(accelAst, stagedAst)
         }
 
 //        if (snConfig.debug)

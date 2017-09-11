@@ -3,14 +3,14 @@ package scala
 import scalan._
 import impl._
 import scala.Array
+import scala.wrappers.WrappersModule
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scala.wrappers.WrappersDsl
 
 package impl {
 // Abs -----------------------------------
 trait WArraysDefs extends scalan.Scalan with WArrays {
-  self: WrappersDsl =>
+  self: WrappersModule =>
 
   // entityProxy: single proxy for each type family
   implicit def proxyWArray[T](p: Rep[WArray[T]]): WArray[T] = {
@@ -164,7 +164,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   implicit def isoWArrayImpl[T](implicit eeT: Elem[T]): Iso[WArrayImplData[T], WArrayImpl[T]] =
     reifyObject(new WArrayImplIso[T]()(eeT))
 
-  registerModule(WArrays_Module)
+  registerModule(WArraysModule)
 
   lazy val WArray: Rep[WArrayCompanionCtor] = new WArrayCompanionCtor {
   }
@@ -225,9 +225,9 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   }
 }
 
-object WArrays_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVVz2/cRBR+62Szv0KbBCVSDy0hcoVKy25BgoJyQCHZoMI2ieqorZaq1aw9u50ytgf7berl0Bs9wAUhTkgcKsotQkJcgDsS4tB/gDMH1IBQD62EBGJm/GuzzVJ6wIeRPX5+75vv+97z7m9QDANYDG3CiVd3KZK6pe9XQjStc77T53SNdjf3Pjj26xenHhgw24apayRcC3kbKvFNMxLZvYVOC2bXmec0PWQ4MF2dAqHeims0VI3GQTXMoa+WW1Ahnk1D9IMQ4dn444btc05tZL7XYK7bR9LhtNFiIcr4yY7vDN6Dm2C0YMb2PTugSK1VTsKQhsl+mar0LHuu6OfBpshrPApwOyAMJT5ZYyaOP0+FNfB8b+AiHEqgbQoFS8bUaCQkEWddwXWZyRaUmCv8ANOqJVnhmu+kj5MekRsw17pOdkhDVu01LAyY11PJBLHfJT26IUNUeFGeIaS8uz0QNEleC9HZVy8SACCkqi9pZPWctHpGWl2RZlo0YISz94l6uRX40QDiqzABEKkUpx6TIs1Am55jfnjZfuehVXMN9XGksJQ1opJM9MwYh2l9JLk/nv8kvP/m7TMGVNtQZeFKJ8SA2Djsg4SvGvE8HzXmjEIS9KSES+Mk1FVWZMyITyq27wriyUwJmdNSKc5shipY7T2V6DOG/BIKmoYakShk5x3XUdpMq4TzrXtHXji+17xkZBZISlRkSku2VJAmRZi6uBIEZJAkV+sMQmFbM6yWapSv5X8pntHw3L3fnR9Ow2UDCgl5Sa3/ppdMMffqZ98fp1tfGVBua3+vc9LTyil21mhot6Hs79Ag3i/tEK7uDlSv5NAu6XNMOB0mY0KSgbA4tjUFVUwta8sX0uPXYtNu+B4117fMB9ZPn+4qTwYwHb+Je/Vvduavnw91UdsVYfpGQISgzgXC+zQlufgExKvlmA5aGPrgSKGQINPvESYo3U5TTTY5dYezq2X+kfQI1dgBqsnzMkqno+N8pn259+ed76yPv3zNgKm3oNiVAoQtKHb8vuekhpeTEmmEb6R7I26UBicBcbMBukNkw8uGRFhIRekj440LyX4shbwWQQPNzjKfqrOQIFaf1c96cUI0T367e4PdPbGu1Rg+/GMtmc7nr2/dmv/jztWn9Qgpdxi6RJinn2CApP3+Pw4I2G+lmoq8qH0XoyupZTH3wtyoOcwDvVcdmrYLWYRiuxo73vJdOrt0n125/RHqpi9E+/84m53rcsAv6zxHdZ6XR7BON6PVlIwXR2HNjZlFI4C0JWSvHY7tvDpMbmwVkZ/6dQl/aYzmVsKylP3mw883nr/7zS96kFaVXrLvvexnm4sT26osu05ppO7rOdRXMgi5ZWVoKZm8chJoJAkwtb49ImUqo/wXj5BxTqf9B1i5xcZrCQAA"
+object WArraysModule extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAALVWz28bRRR+3sTxrxCSoETqoSVEWyFosQsSFJQDComDCm4SdaO2MhVovDt2p8zuDrvP6ZpDb/QAF4Q4IXGoKLcICXEB7kiIQ/8BzhxQA0I9tBISiJnZX44b0/ZQH0a7s2/f++b7vvfWe39AMQxgKbQJJ17dpUjqlr5eDdG0zvpOn9N12t3a/+jY71+dvGvAXBumLpNwPeRtqMQXzUhk1xY6LZjbYJ7T9JDhwHR1CoR6K67RUDUah9Uwh95aaUGFeDYN0Q9ChGfilxu2zzm1kfleg7luH0mH00aLhSjjJzu+M/gAroHRglnb9+yAIrXWOAlDGib7ZarSs+y+ou8HWyKvcT/AnYAwlPhkjdk4/hwV1sDzvYGLMJNA2xIKloyp0UhIIs64gusyky0oMVf4AaZVS7LCZd9Jbyc9IjdgvnWF7JKGrNprWBgwr6eSCWK/T3p0U4ao8KI8Q0h5d2cgaJK8FqJzoF4kAEBIVV/SyOo5afWMtLoizbRowAhnHxL1cDvwowHEv8IEQKRSnHxAijQDbXqO+fEl+517Vs011MuRwlLWiEoy0dNjHKb1keT+fO6z8M6bN04bUG1DlYWrnRADYuOwDxK+asTzfNSYMwpJ0JMSLo+TUFdZlTEjPqnYviuIJzMlZE5LpTizGapgtfdEos8Y8ksoaBpqRKKQnXdcR2kzrRHOt28feeH4fvOikVkgKVGRKS3ZUkGaFGHqwmoQkEGSXK2zCIUdzbBaqlG+lv+neEbDs7f/dH46BZcMKCTkJbUeTi+ZYv7VL348Tre/MaDc1v7e4KSnlVPsrNPQbkPZ36VBvF/aJVxdHapeyaFd0ueYcDpMxoQkA2FpbGsKqpha0ZYvpMevxabd9D1qbmybd61fPt9TngxgOn4S9+q/7PQ/v850UdsVYfpqQISgznnC+zQlufgIxKvlmA5aHHrhSKGQINPPESYo3UlTTTY5dYezq2XhvvQI1dgBqsnzMkqno+N8pn25//fNH6xPv37NgKm3oNiVAoQtKHb8vuekhpeTEmmEb6R7I26UBicBcbMBuktkw8uGRFhMRekj443zyX4shfwtgQaanWUhVWcxQaxeq5/x4oRonvh+7yq79dyGVmP48A+0ZDqfv71+feGvm+89pUdIucPQJcI89QgDJO33xzgg4KCVairygvZdjK6klqXcC/Oj5jAP9V51aNouZhGK7WrseMt36dzyHfbujU9QN30hOvjF2epckQN+Rec5qvO8PIJ1uhmtpWS8OAprfswsGgGkLSF77cnYzmvD5MZWEfmpX5fwl8dobiUsS9mv3fty8/lb3/2mB2lV6SX73ss+trk4sa3KsuuURuq6nkN9JYOQW1aGlpLJKyeBRpIAU+vbB+mZSWWM/8+M8HFWZ/4P0bBRYG4JAAA="
 }
 }
 
-trait WArraysDsl extends impl.WArraysDefs {self: WrappersDsl =>}
+trait WArraysModule extends impl.WArraysDefs {self: WrappersModule =>}

@@ -1,5 +1,7 @@
 package scalan.plugin
 
+import java.io.File
+
 import scalan.util.FileUtil
 import scala.tools.nsc._
 import scalan.meta.ScalanAst._
@@ -25,7 +27,8 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   def newPhase(prev: Phase) = new StdPhase(prev) {
     override def run(): Unit = {
       var wrapperSlices = initWrapperSlices
-      snState.wrappers foreach { case (_, WrapperDescr(module, _)) =>
+      snState.wrappers foreach { case (_, WrapperDescr(m, _)) =>
+        val module = m.copy(imports = m.imports :+ SImportStat("scala.wrappers.WrappersModule"))
         /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
         val boilerplate = genWrapperBoilerplate(module)
         saveWrapperBoilerplate(module.packageName, module.name, boilerplate)
@@ -78,7 +81,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   }
 
   def initWrapperSlices: WrapperSlices = {
-    val dsl = STraitDef("WrappersDsl",
+    val dsl = STraitDef("WrappersModule",
           tpeArgs = Nil,
           ancestors = List(STraitCall("ScalanDsl", Nil)),
           body = Nil, selfType = None, companion = None)
@@ -87,7 +90,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   }
 
   def updateWrapperSlices(slices: WrapperSlices, module: SModuleDef): WrapperSlices = {
-    val absAncestors = slices.abs.ancestors :+ STraitCall(module.name + "Dsl", Nil)
+    val absAncestors = slices.abs.ancestors :+ STraitCall(module.name + "Module", Nil)
 
     WrapperSlices(
       abs = slices.abs.copy(ancestors = absAncestors)
@@ -95,7 +98,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   }
 
   /** Puts all wrappers to the cake WrappersDsl.
-    * Stores them into the file: <home>/scala/wrappers/Wrappers.scala */
+    * Stores them into the file: <home>/scala/wrappers/WrappersModule.scala */
   def saveWrapperSlices(cake: WrapperSlices): Unit = {
     implicit val genCtx = GenCtx(module = null, toRep = false)
     val absCake = genTrait(cake.abs)
@@ -109,11 +112,11 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
         }
      """
 
-    saveWrapperSlices(showCode(cakePackage))
+    val wrapperFile = FileUtil.file(getWrappersHome, "scala/wrappers", cake.abs.name + ".scala")
+    saveWrapperSlices(wrapperFile, showCode(cakePackage))
   }
 
-  def saveWrapperSlices(cakes: String): Unit = {
-    val wrapperFile = FileUtil.file(getWrappersHome, "scala/wrappers", "Wrappers.scala")
+  def saveWrapperSlices(wrapperFile: File, cakes: String): Unit = {
     wrapperFile.mkdirs()
     FileUtil.write(wrapperFile, cakes)
   }

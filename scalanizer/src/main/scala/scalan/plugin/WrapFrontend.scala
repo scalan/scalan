@@ -130,7 +130,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     List(STraitCall("ExCompanion" + kind.toString, List(STraitCall(wClassName, Nil))))
 
   /** Creates Meta Module for an external type symbol. For example:
-    * trait WCols extends Base with TypeWrappers { self: WrappersDsl =>
+    * trait WCols extends Base with TypeWrappers { self: Wrappers =>
     *   trait WCol[A] extends TypeWrapper[Col[A], WCol[A]] { self =>
     *     def arr: Array[A]
     *   };
