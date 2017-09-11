@@ -766,6 +766,8 @@ object ScalanAst {
   }
 
   case class WrapperConfig(name: String, annotations: List[String] = Nil)
+  case class NonWrapper(name: String)
+
   object WrapperConfig {
     def default(name: String) = WrapperConfig(name)
   }

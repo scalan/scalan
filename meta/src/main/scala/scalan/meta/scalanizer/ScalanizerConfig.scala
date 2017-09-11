@@ -1,7 +1,7 @@
 package scalan.meta.scalanizer
 
 import scalan.meta.CodegenConfig
-import scalan.meta.ScalanAst.WrapperConfig
+import scalan.meta.ScalanAst.{WrapperConfig, NonWrapper}
 
 trait ScalanizerConfig {
   /** The folder where the app is located and where the generated code will be stored. */
@@ -41,4 +41,6 @@ trait ScalanizerConfig {
   def wrappersCodegenConfig: CodegenConfig
 
   def wrapperConfigs: Map[String, WrapperConfig]
+
+  def nonWrappers: Map[String, NonWrapper]
 }

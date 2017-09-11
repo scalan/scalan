@@ -4,7 +4,7 @@ import java.lang.annotation.Annotation
 
 import scalan.{FunctorType, ContainerType}
 import scalan.meta.CodegenConfig
-import scalan.meta.ScalanAst.WrapperConfig
+import scalan.meta.ScalanAst.{WrapperConfig, NonWrapper}
 import scalan.meta.scalanizer.ScalanizerConfig
 
 class ScalanizerPluginConfig extends ScalanizerConfig {
@@ -84,8 +84,12 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
   )
   val wrapperConfigs = List[WrapperConfig](
     WrapperConfig(
-      name = "scala.Array",
+      name = "Array",
       annotations = List(classOf[ContainerType], classOf[FunctorType]).map(_.getSimpleName)
     )
+  ).map(w => (w.name, w)).toMap
+
+  val nonWrappers = List[NonWrapper](
+    NonWrapper(name = "Predef")
   ).map(w => (w.name, w)).toMap
 }

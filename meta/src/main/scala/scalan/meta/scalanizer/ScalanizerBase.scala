@@ -46,13 +46,17 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
   def isModule(name: String): Boolean = {
     snConfig.concreteClassesOfEntity.keys.map(mod(_)).toSet.contains(name)
   }
+  def isNonWrapper(name: String): Boolean = {
+    snConfig.nonWrappers.keys.toSet.contains(name)
+  }
   def isWrapper(name: String): Boolean = {
-    !Set(
+    val ok = !Set(
       isPrimitive _, isStandardType _,
       isEntity _, isEntityCompanion _,
       isClass _, isClassCompanion _,
-      isModule _
+      isModule _, isNonWrapper _
     ).exists(_(name))
+    ok
   }
 
   def getParents(externalType: Type) = {

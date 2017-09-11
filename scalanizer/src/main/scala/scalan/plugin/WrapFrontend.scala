@@ -14,6 +14,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   import scalanizer.global._
 
   val phaseName: String = WrapFrontend.name
+
   override def description: String = "Building wrappers for external types"
 
   val runsAfter = List("typer")
@@ -22,15 +23,14 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   def newPhase(prev: Phase) = new StdPhase(prev) {
     def apply(unit: CompilationUnit) {
       val unitName = unit.source.file.name
-
       if (snConfig.codegenConfig.entityFiles.contains(unitName)) {
-//        /* Collect all methods with the HotSpot annotation. */
-//        val hotSpotFilter = new FilterTreeTraverser(isHotSpotTree)
-//        hotSpotFilter.traverse(unit.body)
-//        /* Traversing through the hot spots and building of type wrappers. */
-//        hotSpotFilter.hits foreach { hotSpot =>
-//          new ForeachTreeTraverser(catchWrapperUsage).traverse(hotSpot)
-//        }
+        //        /* Collect all methods with the HotSpot annotation. */
+        //        val hotSpotFilter = new FilterTreeTraverser(isHotSpotTree)
+        //        hotSpotFilter.traverse(unit.body)
+        //        /* Traversing through the hot spots and building of type wrappers. */
+        //        hotSpotFilter.hits foreach { hotSpot =>
+        //          new ForeachTreeTraverser(catchWrapperUsage).traverse(hotSpot)
+        //        }
         new ForeachTreeTraverser(catchWrapperUsage).traverse(unit.body)
       }
     }
@@ -50,22 +50,33 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   def isWrapperSym(sym: Symbol): Boolean = {
     !sym.hasPackageFlag && sym.isClass && isWrapper(sym.nameString)
   }
+
   def isWrapperType(tpe: Type): Boolean = isWrapperSym(tpe.typeSymbol)
 
+  def catchSpecialWrapper(tree: Tree): Boolean = tree match {
+    case sel@q"scala.Predef.doubleArrayOps($v).${TermName("map")}" => true
+    case q"$x.Array.canBuildFrom" =>
+    //      updateWrapperSpecial()
+      true
+    case _ => false
+  }
+
   /** For each method call, create type wrapper if the external type should be wrapped. */
-  def catchWrapperUsage(tree: Tree): Unit = tree match {
-    case sel @ Select(objSel @ Apply(TypeApply(_, _), _), member) if isWrapperType(objSel.tpe) =>
-      updateWrapper(objSel.tpe, member, sel.tpe, sel.symbol)
-    case sel @ Select(objSel @ Select(_, obj), member) if isWrapperType(objSel.tpe) =>
-      updateWrapper(objSel.tpe, member, sel.tpe, sel.symbol)
-    case sel @ Select(objSel, member) if isWrapperType(objSel.tpe) =>
-      updateWrapper(objSel.tpe, member, sel.tpe, sel.symbol)
-    case _ => ()
+  def catchWrapperUsage(tree: Tree): Unit = if (!catchSpecialWrapper(tree)) {
+    tree match {
+      case sel@Select(objSel@Apply(TypeApply(_, _), _), member) if isWrapperType(objSel.tpe) =>
+        updateWrapper(objSel.tpe, member, sel.tpe, sel.symbol)
+      case sel@Select(objSel@Select(_, obj), member) if isWrapperType(objSel.tpe) =>
+        updateWrapper(objSel.tpe, member, sel.tpe, sel.symbol)
+      case sel@Select(objSel, member) if isWrapperType(objSel.tpe) =>
+        updateWrapper(objSel.tpe, member, sel.tpe, sel.symbol)
+      case _ => ()
+    }
   }
 
   /** Form the list of method arguments in terms of Meta AST by using symbols from Scala AST. */
   def formMethodArgs(args: List[Symbol]): List[SMethodArg] = {
-    args.map{arg =>
+    args.map { arg =>
       val tpe = parseType(arg.tpe)
       val isTypeDesc = tpe match {
         case STraitCall("Elem", _) => true
@@ -82,13 +93,14 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   }
 
   def formMethodTypeArgs(targs: List[Symbol]): List[STpeArg] = {
-    targs.map{targ =>
+    targs.map { targ =>
       STpeArg(
         name = targ.nameString,
         bound = None, contextBound = Nil, tparams = Nil
       )
     }
   }
+
   def formMethodRes(res: Type): STpeExpr = parseType(res)
 
   def formExternalMethodDef(name: String,
@@ -111,18 +123,16 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   /** Gets the list of ancestors of the external type in term of Meta AST. */
   def getExtTypeAncestors(externalType: Type): List[STraitCall] = {
     def convToMetaType(types: List[Type]): List[STraitCall] = {
-      types map parseType collect {case t: STraitCall => t}
+      types map parseType collect { case t: STraitCall => t }
     }
-    val ancestors = convToMetaType(getParents(externalType))
 
+    val ancestors = convToMetaType(getParents(externalType))
     ancestors.filterNot(a => isIgnoredExternalType(a.name))
   }
 
   /** Gets names of an external type, its class and its module. */
-  def wrapperNames(externalType: Type): (String, String, String) = {
-    val externalName = externalType.typeSymbol.nameString
+  def wrapperNames(externalName: String): (String, String, String) = {
     val className = wrap(externalName)
-
     (externalName, className, comp(className))
   }
 
@@ -131,42 +141,46 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
 
   /** Creates Meta Module for an external type symbol. For example:
     * trait WCols extends Base with TypeWrappers { self: Wrappers =>
-    *   trait WCol[A] extends TypeWrapper[Col[A], WCol[A]] { self =>
-    *     def arr: Array[A]
-    *   };
-    *   trait WColCompanion extends ExCompanion1[WCol]
+    * trait WCol[A] extends TypeWrapper[Col[A], WCol[A]] { self =>
+    * def arr: Array[A]
+    * };                  originalEntityAncestors
+    * trait WColCompanion extends ExCompanion1[WCol]
     * }
     * where
-    *   externalType is "class Col"
-    *   one of the members is "def arr: Array[A]"
+    * externalType is "class Col"
+    * one of the members is "def arr: Array[A]"
     * */
   def createWrapper(externalType: Type, members: List[SBodyItem]): WrapperDescr = {
     val externalTypeSym = externalType.typeSymbol
     val clazz = externalTypeSym.companionClass
-    val (externalName, wClassName, companionName) = wrapperNames(externalType)
-    val wrapperConf = snConfig.wrapperConfigs.getOrElse(externalTypeSym.fullName, WrapperConfig.default(externalTypeSym.fullName))
     val isCompanion = externalTypeSym.isModuleClass
-
-    val tpeArgs = clazz.typeParams.map{ param =>
+    val tpeArgs = clazz.typeParams.map { param =>
       STpeArg(
         name = param.nameString,
         bound = None, contextBound = Nil, tparams = Nil
       )
     }
-    val typeParams = clazz.typeParams.map{ param =>
-      STraitCall(name = param.nameString, tpeSExprs = Nil)
+    val originalEntityAncestors = getExtTypeAncestors(externalType)
+    val ownerChain = externalTypeSym.ownerChain.map(_.nameString)
+    createWrapperSpecial(externalTypeSym.enclosingPackage.name, externalType.typeSymbol.nameString, tpeArgs, originalEntityAncestors, isCompanion, members, ownerChain)
+  }
+
+  def createWrapperSpecial(packageName: String, externalTypeName: String, tpeArgs: STpeArgs, originalEntityAncestors: List[STraitCall],
+                           isCompanion: Boolean, members: List[SBodyItem], ownerChain: List[String]): WrapperDescr = {
+    val (externalName, wClassName, companionName) = wrapperNames(externalTypeName)
+    val wrapperConf = snConfig.wrapperConfigs.getOrElse(externalTypeName, WrapperConfig.default(externalTypeName))
+    val typeParams = tpeArgs.map { arg =>
+      STraitCall(name = arg.name, tpeSExprs = Nil)
     }
     val baseType = if (isCompanion) STraitCall(externalName + ".type", typeParams)
-                   else STraitCall(externalName, typeParams)
-    val originalEntityAncestors = getExtTypeAncestors(externalType)
+    else STraitCall(externalName, typeParams)
     val entityAncestors = STraitCall("TypeWrapper", List(baseType, STraitCall(wClassName, typeParams))) :: originalEntityAncestors
     val entityAnnotations = wrapperConf.annotations.map { a => STraitOrClassAnnotation(a, Nil) }
-
     val entity = STraitDef(
       name = wClassName,
       tpeArgs = tpeArgs,
       ancestors = entityAncestors,
-      body =  if (isCompanion) Nil else members,
+      body = if (isCompanion) Nil else members,
       selfType = Some(SSelfTypeDef("self", Nil)),
       companion = Some(STraitDef(
         name = companionName,
@@ -180,14 +194,13 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     val imports = List(
       SImportStat("scalan._"),
       SImportStat("impl._"),
-      SImportStat(externalTypeSym.fullName)
+      SImportStat(s"$packageName.$externalTypeName")
     )
-
     val module = SModuleDef(
-      packageName = wrapPackage(externalTypeSym.enclosingPackage.name),
+      packageName = wrapPackage(packageName),
       imports = imports,
-      name = wmod(externalTypeSym.nameString),
-      entityRepSynonym = Some(STpeDef("RepWArray", List(STpeArg("T")), STraitCall("WArray", List(STraitCall("T", Nil))))),
+      name = wmod(externalTypeName),
+      entityRepSynonym = None,
       entityOps = entity, entities = List(entity),
       concreteSClasses = Nil, methods = Nil,
       selfType = Some(SSelfTypeDef(
@@ -197,18 +210,13 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       body = Nil, stdDslImpls = None,
       ancestors = List(STraitCall("TypeWrappers", Nil))
     )
-    val ownerChain = externalTypeSym.ownerChain.map(_.nameString)
-
-    //createDependencies(externalType)
     WrapperDescr(module, ownerChain, wrapperConf)
   }
 
   /** Adds a method or a value to the wrapper. It checks the external type symbol
     * to determine where to put the method (value) - into class or its companion. */
-  def addMember(externalType: Type, member: SMethodDef, wrapperDescr: WrapperDescr): WrapperDescr = {
+  def addMember(isCompanion: Boolean, member: SMethodDef, wrapperDescr: WrapperDescr): WrapperDescr = {
     val module = wrapperDescr.module
-    val isCompanion = externalType.typeSymbol.isModuleClass
-
     def isAlreadyAdded = {
       if (isCompanion) {
         module.entityOps.companion match {
@@ -239,6 +247,14 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     }
   }
 
+  //  def updateWrapperSpecial(externalTypeName: String, member: SMethodDef): Unit = {
+  //    val updatedWrapper = snState.wrappers.get(externalTypeName) match {
+  //      case None =>  createWrapper(objType, List(member))
+  //      case Some(wrapperDescr) => addMember(objType, member, wrapperDescr)
+  //    }
+  //
+  //    snState.wrappers(externalTypeName) = updatedWrapper
+  //  }
   /** Create/update Meta AST of the module for the external type. It assembles
     * Meta AST of a method (value) by its Scala's Type. */
   def updateWrapper(objType: Type,
@@ -248,75 +264,85 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     val pre = objType.typeSymbol.typeSignature
     val memberType = methodSym.tpe.asSeenFrom(pre, owner)
     val member = memberType match {
-      case method @ (_:NullaryMethodType | _:MethodType) =>
+      case method@(_: NullaryMethodType | _: MethodType) =>
+
         /** Not polymorphic methods like:
-         *   trait Col[A] {
-         *     def arr: Array[A]
-         *     def apply(i: Int): A
-         *   }
-         */
+          * trait Col[A] {
+          * def arr: Array[A]
+          * def apply(i: Int): A
+          * }
+          */
         val (args, res) = uncurryMethodType(method)
         formExternalMethodDef(methodName.toString, Nil, args, res)
-      case PolyType(typeArgs, method @ (_:NullaryMethodType | _:MethodType)) =>
+      case PolyType(typeArgs, method@(_: NullaryMethodType | _: MethodType)) =>
+
         /** Methods that have type parameters like:
-         * object Col {
-         *   def apply[T: ClassTag](arr: Array[T]): Col[T] = fromArray(arr)
-         *   def fromArray[T: ClassTag](arr: Array[T]): Col[T] = new ColOverArray(arr)
-         * }
-         */
+          * object Col {
+          * def apply[T: ClassTag](arr: Array[T]): Col[T] = fromArray(arr)
+          * def fromArray[T: ClassTag](arr: Array[T]): Col[T] = new ColOverArray(arr)
+          * }
+          */
         val tpeArgs = formMethodTypeArgs(typeArgs)
         val (args, res) = uncurryMethodType(method)
-
         formExternalMethodDef(methodName.toString, tpeArgs, args, res)
-      case TypeRef(_,sym,_) =>
+      case TypeRef(_, sym, _) =>
+
         /** Example: arr.length where
-         * arr has type MyArr[Int] and
-         * class MyArr[T] {
-         *   val length = 0
-         * }
-         */
+          * arr has type MyArr[Int] and
+          * class MyArr[T] {
+          * val length = 0
+          * }
+          */
         formExternalMethodDef(methodName.toString, Nil, Nil, formMethodRes(sym.tpe))
       case _ => throw new NotImplementedError(s"memberType = ${showRaw(memberType)}")
     }
     val updatedWrapper = snState.wrappers.get(externalTypeName) match {
-      case None =>  createWrapper(objType, List(member))
-      case Some(wrapperDescr) => addMember(objType, member, wrapperDescr)
+      case None => createWrapper(objType, List(member))
+      case Some(wrapperDescr) => addMember(objType.typeSymbol.isModuleClass, member, wrapperDescr)
     }
-
     snState.wrappers(externalTypeName) = updatedWrapper
     createMemberDependencies(memberType)
+  }
+
+  def updateWrapperSpecial(packageName: String, externalTypeName: String, tpeArgs: STpeArgs, originalEntityAncestors: List[STraitCall],
+                           isCompanion: Boolean, member: SMethodDef, ownerChain: List[String]): Unit = {
+    val updatedWrapper = snState.wrappers.get(externalTypeName) match {
+      case None => createWrapperSpecial(packageName, externalTypeName, tpeArgs, originalEntityAncestors, isCompanion, List(member), ownerChain)
+      case Some(wrapperDescr) => addMember(isCompanion, member, wrapperDescr)
+    }
+    snState.wrappers(externalTypeName) = updatedWrapper
   }
 
   /** Converts curried method type its uncurried Meta AST representation. */
   def uncurryMethodType(method: Type): (List[SMethodArgs], STpeExpr) = {
     def addArgSection(sections: List[SMethodArgs], args: List[Symbol]): List[SMethodArgs] = {
       val methodArgs = formMethodArgs(args)
-
       if (methodArgs.isEmpty) sections
       else sections :+ SMethodArgs(methodArgs)
     }
+
     @tailrec
     def loop(currMethod: Type, currArgs: List[SMethodArgs]): (List[SMethodArgs], STpeExpr) = {
       currMethod match {
         case NullaryMethodType(method) => loop(method, currArgs)
         case MethodType(args, method: MethodType) => loop(method, addArgSection(currArgs, args))
         case MethodType(args, resType) => (addArgSection(currArgs, args), parseType(resType))
-        case tref @ (_:AbstractTypeRef | _:NoArgsTypeRef | _:ArgsTypeRef) =>
+        case tref@(_: AbstractTypeRef | _: NoArgsTypeRef | _: ArgsTypeRef) =>
           (currArgs, parseType(tref))
       }
     }
+
     loop(method, Nil)
   }
 
   /** For the given type, find all dependencies and wrap them. */
   def createDependencies(objType: Type): Unit = {
     val parentDecls = objType.typeSymbol.typeSignature match {
-      case PolyType(_, ClassInfoType(parents,_,_)) => parents
-      case ClassInfoType(parents,_,_) => parents
+      case PolyType(_, ClassInfoType(parents, _, _)) => parents
+      case ClassInfoType(parents, _, _) => parents
       case _ => Nil
     }
-
-    parentDecls foreach {parent =>
+    parentDecls foreach { parent =>
       val name = parent.typeSymbol.nameString
       if (!isIgnoredExternalType(name) && !snState.wrappers.keySet.contains(name)) {
         snState.wrappers(name) = createWrapper(parent, Nil)
