@@ -21,7 +21,7 @@ class VirtBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   }
   def newPhase(prev: Phase) = new StdPhase(prev) {
     override def run(): Unit = {
-      saveCombinedCake("scalanizer.linalgebra", "LinearAlgebra")
+//      saveCombinedCake("scalanizer.linalgebra", "LinearAlgebra")
     }
     def apply(unit: CompilationUnit): Unit = ()
   }
