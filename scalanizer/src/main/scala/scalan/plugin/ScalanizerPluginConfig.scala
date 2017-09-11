@@ -1,6 +1,10 @@
 package scalan.plugin
 
+import java.lang.annotation.Annotation
+
+import scalan.{FunctorType, ContainerType}
 import scalan.meta.CodegenConfig
+import scalan.meta.ScalanAst.WrapperConfig
 import scalan.meta.scalanizer.ScalanizerConfig
 
 class ScalanizerPluginConfig extends ScalanizerConfig {
@@ -28,7 +32,6 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
 
   /** Mapping of entities and their concrete classes. */
   val concreteClassesOfEntity = Map[String, Set[String]](
-    "LinearAlgebra" -> Set(),
 //    "Num" -> Set("DoubleNum"),
 //    "NumMonoid" -> Set("PlusMonoid"),
     "Col" -> Set("ColOverArray")
@@ -55,8 +58,8 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     ),
     Map.empty,
     baseContextTrait = "scalan.Scalan",
-    seqContextTrait = "ScalanStd",
-    stagedContextTrait = "ScalanExp",
+    seqContextTrait = "",
+    stagedContextTrait = "",
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scala.reflect._"
@@ -64,4 +67,25 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     isAlreadyRep = false,
     isStdEnabled = false
   )
+  val wrappersCodegenConfig = CodegenConfig(
+    name = "Wrappers Config",
+    srcPath = "/",
+    entityFiles = List[String](),
+    Map.empty,
+    baseContextTrait = "scalan.Scalan",
+    seqContextTrait = "",
+    stagedContextTrait = "",
+    extraImports = List(
+      "scala.reflect.runtime.universe._",
+      "scala.reflect._"
+    ),
+    isAlreadyRep = false,
+    isStdEnabled = false
+  )
+  val wrapperConfigs = List[WrapperConfig](
+    WrapperConfig(
+      name = "scala.Array",
+      annotations = List(classOf[ContainerType], classOf[FunctorType]).map(_.getSimpleName)
+    )
+  ).map(w => (w.name, w)).toMap
 }

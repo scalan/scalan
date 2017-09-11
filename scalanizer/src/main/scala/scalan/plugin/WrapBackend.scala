@@ -27,7 +27,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   def newPhase(prev: Phase) = new StdPhase(prev) {
     override def run(): Unit = {
       var wrapperSlices = initWrapperSlices
-      snState.wrappers foreach { case (_, WrapperDescr(m, _)) =>
+      snState.wrappers foreach { case (_, WrapperDescr(m, _, config)) =>
         val module = m.copy(imports = m.imports :+ SImportStat("scala.wrappers.WrappersModule"))
         /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
         val boilerplate = genWrapperBoilerplate(module)
@@ -49,7 +49,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   /** Calls Scalan Meta to generate boilerplate code for the wrapper. */
   def genWrapperBoilerplate(module: SModuleDef): String = {
     val gen = new scalan.meta.ModuleFileGenerator(
-      ScalanCodegen, module, snConfig.codegenConfig)
+      ScalanCodegen, module, snConfig.wrappersCodegenConfig)
     val implCode = gen.emitImplFile
     implCode
   }

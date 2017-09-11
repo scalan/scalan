@@ -173,20 +173,21 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
   }
 
   def genElemsByTypeArgs(tpeArgs: List[STpeArg]): List[SMethodDef] = {
-    def genImplicit(tpeArg: STpeArg, methodPrefix: String, resPrefix: String) =
+    def genImplicit(tpeArg: STpeArg, methodPrefix: String, descTypeName: String) =
       SMethodDef(name = methodPrefix + tpeArg.name,
         tpeArgs = Nil, argSections = Nil,
-        tpeRes = Some(STraitCall(resPrefix, List(STraitCall(tpeArg.name, Nil)))),
+        tpeRes = Some(STraitCall(descTypeName, List(STraitCall(tpeArg.name, Nil)))),
         isImplicit = true, isOverride = false,
         overloadId = None, annotations = Nil,
         body = None, isTypeDesc = true)
 
-    def genElem(tpeArg: STpeArg) = genImplicit(tpeArg, "ee", "Elem")
-    def genCont(tpeArg: STpeArg) = genImplicit(tpeArg, "ce", "Cont")
+    def genElem(tpeArg: STpeArg) = genImplicit(tpeArg, "e", "Elem")
+    def genCont(tpeArg: STpeArg) = genImplicit(tpeArg, "c", "Cont")
 
-    tpeArgs.map{tpeArg =>
-      if (tpeArg.tparams.isEmpty) genElem(tpeArg)
-      else genCont(tpeArg)
+    tpeArgs.map{ targ =>
+      if (targ.tparams.isEmpty) genElem(targ)
+      else if (targ.tparams.size == 1) genCont(targ)
+      else !!!(s"Cannot create descriptor method for a high-kind tpeArg with with more than one type arguments: $targ")
     }
   }
 

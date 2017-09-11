@@ -91,10 +91,10 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   }
   def formMethodRes(res: Type): STpeExpr = parseType(res)
 
-  def formMethodDef(name: String,
-                    tpeArgs: List[STpeArg],
-                    argSections: List[SMethodArgs],
-                    tpeRes: STpeExpr): SMethodDef = {
+  def formExternalMethodDef(name: String,
+                            tpeArgs: List[STpeArg],
+                            argSections: List[SMethodArgs],
+                            tpeRes: STpeExpr): SMethodDef = {
     SMethodDef(
       name = name,
       tpeArgs = tpeArgs,
@@ -144,6 +144,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     val externalTypeSym = externalType.typeSymbol
     val clazz = externalTypeSym.companionClass
     val (externalName, wClassName, companionName) = wrapperNames(externalType)
+    val wrapperConf = snConfig.wrapperConfigs.getOrElse(externalTypeSym.fullName, WrapperConfig.default(externalTypeSym.fullName))
     val isCompanion = externalTypeSym.isModuleClass
 
     val tpeArgs = clazz.typeParams.map{ param =>
@@ -159,6 +160,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
                    else STraitCall(externalName, typeParams)
     val originalEntityAncestors = getExtTypeAncestors(externalType)
     val entityAncestors = STraitCall("TypeWrapper", List(baseType, STraitCall(wClassName, typeParams))) :: originalEntityAncestors
+    val entityAnnotations = wrapperConf.annotations.map { a => STraitOrClassAnnotation(a, Nil) }
 
     val entity = STraitDef(
       name = wClassName,
@@ -172,8 +174,8 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         ancestors = mkCompanionAncestors(wClassName, kind = typeParams.length),
         body = if (isCompanion) members else Nil,
         selfType = None, companion = None
-      ))
-//      , annotations = if (typeParams.isEmpty) Nil else List(STraitOrClassAnnotation("ContainerType", Nil))
+      )),
+      annotations = entityAnnotations
     )
     val imports = List(
       SImportStat("scalan._"),
@@ -198,7 +200,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     val ownerChain = externalTypeSym.ownerChain.map(_.nameString)
 
     //createDependencies(externalType)
-    WrapperDescr(module, ownerChain)
+    WrapperDescr(module, ownerChain, wrapperConf)
   }
 
   /** Adds a method or a value to the wrapper. It checks the external type symbol
@@ -247,33 +249,33 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     val memberType = methodSym.tpe.asSeenFrom(pre, owner)
     val member = memberType match {
       case method @ (_:NullaryMethodType | _:MethodType) =>
-        /* Not polymorphic methods like:
+        /** Not polymorphic methods like:
          *   trait Col[A] {
          *     def arr: Array[A]
          *     def apply(i: Int): A
          *   }
-         **/
+         */
         val (args, res) = uncurryMethodType(method)
-        formMethodDef(methodName.toString, Nil, args, res)
+        formExternalMethodDef(methodName.toString, Nil, args, res)
       case PolyType(typeArgs, method @ (_:NullaryMethodType | _:MethodType)) =>
-        /* Methods that have type parameters like:
+        /** Methods that have type parameters like:
          * object Col {
          *   def apply[T: ClassTag](arr: Array[T]): Col[T] = fromArray(arr)
          *   def fromArray[T: ClassTag](arr: Array[T]): Col[T] = new ColOverArray(arr)
          * }
-         **/
+         */
         val tpeArgs = formMethodTypeArgs(typeArgs)
         val (args, res) = uncurryMethodType(method)
 
-        formMethodDef(methodName.toString, tpeArgs, args, res)
+        formExternalMethodDef(methodName.toString, tpeArgs, args, res)
       case TypeRef(_,sym,_) =>
-        /* Example: arr.length where
+        /** Example: arr.length where
          * arr has type MyArr[Int] and
          * class MyArr[T] {
          *   val length = 0
          * }
-         **/
-        formMethodDef(methodName.toString, Nil, Nil, formMethodRes(sym.tpe))
+         */
+        formExternalMethodDef(methodName.toString, Nil, Nil, formMethodRes(sym.tpe))
       case _ => throw new NotImplementedError(s"memberType = ${showRaw(memberType)}")
     }
     val updatedWrapper = snState.wrappers.get(externalTypeName) match {

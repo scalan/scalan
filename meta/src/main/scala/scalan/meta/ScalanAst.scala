@@ -1,5 +1,7 @@
 package scalan.meta
 
+import java.lang.annotation.Annotation
+
 import com.typesafe.config.ConfigUtil
 
 import scala.reflect.internal.ModifierFlags
@@ -763,7 +765,11 @@ object ScalanAst {
 //    }
   }
 
-  case class WrapperDescr(module: SModuleDef, ownerChain: List[String])
+  case class WrapperConfig(name: String, annotations: List[String] = Nil)
+  object WrapperConfig {
+    def default(name: String) = WrapperConfig(name)
+  }
+  case class WrapperDescr(module: SModuleDef, ownerChain: List[String], config: WrapperConfig)
 
   case class KernelType(name: String, confKey: String)
 
