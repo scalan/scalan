@@ -361,8 +361,8 @@ object ScalanAst {
 
   case class STpeArg(
                       name: String,
-                      bound: Option[STpeExpr],
-                      contextBound: List[String],
+                      bound: Option[STpeExpr] = None,
+                      contextBound: List[String] = Nil,
                       tparams: List[STpeArg] = Nil,
                       flags: Long = ModifierFlags.PARAM)
   {

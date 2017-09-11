@@ -187,7 +187,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       packageName = wrapPackage(externalTypeSym.enclosingPackage.name),
       imports = imports,
       name = wmod(externalTypeSym.nameString),
-      entityRepSynonym = None,
+      entityRepSynonym = Some(STpeDef("RepWArray", List(STpeArg("T")), STraitCall("WArray", List(STraitCall("T", Nil))))),
       entityOps = entity, entities = List(entity),
       concreteSClasses = Nil, methods = Nil,
       selfType = Some(SSelfTypeDef(
