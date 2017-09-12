@@ -210,23 +210,18 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
           |    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[$name[A]]
           |    def lift[A](implicit evA: Elem[A]) = element[$name[A]]
           |    def unlift[A](implicit eFT: Elem[$name[A]]) =
-          |      cast${e.name}Element(eFT${(!isWrapper).opt(s".asInstanceOf[Elem[${e.name}[A]]]")}).eA
-          |    def getElem[A](fa: Rep[$name[A]]) = ${
-          if (isWrapper)
-            s"fa.selfType1"
-          else
-            s"""!!!("Operation is not supported by $name container " + fa)"""
-        }
+          |      cast${e.name}Element(eFT${(!isWrapper).opt(s".asInstanceOf[Elem[${e.name}[A]]]")}).${e.implicitArgs(0).name}
+          |    def getElem[A](fa: Rep[$name[A]]) = fa.elem
           |    def unapply[T](e: Elem[_]) = e match {
           |      ${
           if (isWrapper)
             s"case e: ${e.name}Elem[_,_] => Some(e.asElem[${e.name}[T]])"
           else
             s"case e: BaseTypeElem1[_,_,_] if e.wrapperElem.isInstanceOf[${e.name}Elem[_,_]] => Some(e.asElem[$name[T]])"
-        }
+          }
           |      case _ => None
           |    }
-          |    ${isFunctor.opt(s"def map[A:Elem,B:Elem](xs: Rep[$name[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))")}
+          |    ${isFunctor.opt(s"def map[A,B](xs: Rep[$name[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))")}
           |  }
            """.stripMargin
       }
@@ -236,11 +231,11 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |  implicit def cast${e.name}Element${e.tpeArgsDecl}(elem: Elem[${e.typeUse}]): $entityElem =
         |    elem.asInstanceOf[$entityElem]
         |
-         |  ${e.optBaseType.opt(bt => container(bt.name, false, false))}
+        |  ${e.optBaseType.opt(bt => container(bt.name, false, false))}
         |
-         |  ${container(e.name, e.isFunctor, true)}
+        |  ${container(e.name, e.isFunctor, true)}
         |
-         |  case class ${e.name}Iso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, ${e.name}] {
+        |  case class ${e.name}Iso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, ${e.name}] {
         |    lazy val selfType = new ConcreteIsoElem[${e.name}[A], ${e.name}[B], ${e.name}Iso[A, B]](eFrom, eTo).
         |      asInstanceOf[Elem[IsoUR[${e.name}[A], ${e.name}[B]]]]
         |    def cC = container[${e.name}]
@@ -248,7 +243,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |    def to(x: Rep[${e.name}[A]]) = x.map(innerIso.toFun)
         |  }
         |
-         |  def ${StringUtil.lowerCaseFirst(e.name)}Iso[A, B](innerIso: Iso[A, B]) =
+        |  def ${StringUtil.lowerCaseFirst(e.name)}Iso[A, B](innerIso: Iso[A, B]) =
         |    reifyObject(${e.name}Iso[A, B](innerIso)).asInstanceOf[Iso1[A, B, ${e.name}]]
         |""".stripAndTrim
     }
@@ -335,7 +330,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |  // familyElem
         |  class $elemTypeDecl${e.implicitArgsDecl("_")}
         |    extends $parentElem {
-        |${e.implicitArgs.opt(_.rep(a => s"    ${(e.entity.isInheritedDeclared(a.name, e.module)).opt("override ")}def ${a.name} = _${a.name}", "\n"))}
+        |${e.implicitArgs.rep(a => s"    ${(e.entity.isInheritedDeclared(a.name, e.module)).opt("override ")}def ${a.name} = _${a.name}", "\n")}
         |    ${overrideIfHasParent}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
         |    ${overrideIfHasParent}lazy val typeArgs = TypeArgs(${e.tpeSubstStr})
         |    override lazy val tag = {
