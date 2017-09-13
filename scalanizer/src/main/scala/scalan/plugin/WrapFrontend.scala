@@ -71,13 +71,13 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     if (!catchSpecialWrapper(tree)) {
       tree match {
         case sel@Select(obj@Apply(TypeApply(_, _), _), member) if isWrapperType(obj.tpe) =>
-          inform(show(obj.tpe))
+          inform(s"${show(sel)}: ${show(obj.tpe)}")
           updateWrapper(obj.tpe, member, sel.tpe, sel.symbol)
         case sel@Select(obj@Select(_, _), member) if isWrapperType(obj.tpe) =>
-          inform(show(obj.tpe))
+          inform(s"${show(sel)}: ${show(obj.tpe)}")
           updateWrapper(obj.tpe, member, sel.tpe, sel.symbol)
         case sel@Select(obj, member) if isWrapperType(obj.tpe) =>
-          inform(show(obj.tpe))
+          inform(s"${show(sel)}: ${show(obj.tpe)}")
           updateWrapper(obj.tpe, member, sel.tpe, sel.symbol)
         case _ => ()
       }
@@ -130,13 +130,13 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   }
 
   /** Gets the list of ancestors of the external type in term of Meta AST. */
-  def getExtTypeAncestors(externalType: Type): List[STraitCall] = {
+  def getExtTypeAncestors(externalType: Type): List[STypeApply] = {
     def convToMetaType(types: List[Type]): List[STraitCall] = {
       types map parseType collect { case t: STraitCall => t }
     }
 
     val ancestors = convToMetaType(getParents(externalType))
-    ancestors.filterNot(a => isIgnoredExternalType(a.name))
+    ancestors.filterNot(a => isIgnoredExternalType(a.name)).map(_.toTypeApply)
   }
 
   /** Gets names of an external type, its class and its module. */
@@ -146,7 +146,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   }
 
   def mkCompanionAncestors(wClassName: String, kind: Int) =
-    List(STraitCall("ExCompanion" + kind.toString, List(STraitCall(wClassName, Nil))))
+    List(STraitCall("ExCompanion" + kind.toString, List(STraitCall(wClassName, Nil))).toTypeApply)
 
   /** Creates Meta Module for an external type symbol. For example:
     * trait WCols extends Base with TypeWrappers { self: Wrappers =>
@@ -174,7 +174,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     createWrapperSpecial(externalTypeSym.enclosingPackage.name, externalType.typeSymbol.nameString, tpeArgs, originalEntityAncestors, isCompanion, members, ownerChain)
   }
 
-  def createWrapperSpecial(packageName: String, externalTypeName: String, tpeArgs: STpeArgs, originalEntityAncestors: List[STraitCall],
+  def createWrapperSpecial(packageName: String, externalTypeName: String, tpeArgs: STpeArgs, originalEntityAncestors: List[STypeApply],
                            isCompanion: Boolean, members: List[SBodyItem], ownerChain: List[String]): WrapperDescr = {
     val (externalName, wClassName, companionName) = wrapperNames(externalTypeName)
     val wrapperConf = snConfig.wrapperConfigs.getOrElse(externalTypeName, WrapperConfig.default(externalTypeName))
@@ -183,7 +183,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     }
     val baseType = if (isCompanion) STraitCall(externalName + ".type", typeParams)
     else STraitCall(externalName, typeParams)
-    val entityAncestors = STraitCall("TypeWrapper", List(baseType, STraitCall(wClassName, typeParams))) :: originalEntityAncestors
+    val entityAncestors = STraitCall("TypeWrapper", List(baseType, STraitCall(wClassName, typeParams))).toTypeApply :: originalEntityAncestors
     val entityAnnotations = wrapperConf.annotations.map { a => STraitOrClassAnnotation(a, Nil) }
     val entity = STraitDef(
       name = wClassName,
@@ -217,7 +217,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         components = List(STraitCall("Wrappers", Nil))
       )),
       body = Nil, stdDslImpls = None,
-      ancestors = List(STraitCall("TypeWrappers", Nil))
+      ancestors = List(STraitCall("TypeWrappers", Nil).toTypeApply)
     )
     WrapperDescr(module, ownerChain, wrapperConf)
   }
@@ -313,7 +313,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     createMemberDependencies(memberType)
   }
 
-  def updateWrapperSpecial(packageName: String, externalTypeName: String, tpeArgs: STpeArgs, originalEntityAncestors: List[STraitCall],
+  def updateWrapperSpecial(packageName: String, externalTypeName: String, tpeArgs: STpeArgs, originalEntityAncestors: List[STypeApply],
                            isCompanion: Boolean, member: SMethodDef, ownerChain: List[String]): Unit = {
     val updatedWrapper = snState.wrappers.get(externalTypeName) match {
       case None => createWrapperSpecial(packageName, externalTypeName, tpeArgs, originalEntityAncestors, isCompanion, List(member), ownerChain)

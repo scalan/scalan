@@ -140,9 +140,9 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
 
     testTrait("trait A", traitA)
     testTrait("trait A extends B",
-      traitA.copy(ancestors = L(TC("B", Nil))))
+      traitA.copy(ancestors = L(TC("B", Nil).toTypeApply)))
     testTrait("trait A extends B with C",
-      traitA.copy(ancestors = L(TC("B", Nil), TC("C", Nil))))
+      traitA.copy(ancestors = L(TC("B", Nil).toTypeApply, TC("C", Nil).toTypeApply)))
     testTrait("trait Edge[V,E]", traitEdgeVE)
     testTrait("trait Edge[V,E]{}", traitEdgeVE)
     testTrait("trait Edge[V,E]{ def f[A <: T](x: A, y: (A,T)): Int }",
@@ -184,9 +184,9 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
       CD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), SClassArgs(Nil), SClassArgs(Nil), Nil, Nil, None, None, false)
     testSClass("class A", classA)
     testSClass("class A extends B",
-      classA.copy(ancestors = L(TC("B", Nil))))
+      classA.copy(ancestors = L(TC("B", Nil).toTypeApply)))
     testSClass("class A extends B with C",
-      classA.copy(ancestors = L(TC("B", Nil), TC("C", Nil))))
+      classA.copy(ancestors = L(TC("B", Nil).toTypeApply, TC("C", Nil).toTypeApply)))
     testSClass("class Edge[V,E]", classEdgeVE)
     testSClass("class Edge[V,E](val x: V){ def f[A <: T](x: A, y: (A,T)): Int }",
       classEdgeVE.copy(
@@ -216,7 +216,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
     val entity = TD("Observable", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,false, None, Nil, None, true)), None, None)
-    val obsImpl1 = CD("ObservableImpl1", tpeArgA, SClassArgs(Nil), SClassArgs(argEA), ancObsA, Nil, None, None, false)
+    val obsImpl1 = CD("ObservableImpl1", tpeArgA, SClassArgs(Nil), SClassArgs(argEA), ancObsA.map(_.toTypeApply), Nil, None, None, false)
     val obsImpl2 = obsImpl1.copy(name = "ObservableImpl2")
 
     testModule(
@@ -230,7 +230,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
         None,
         stdDslImpls = Some(SDeclaredImplementations(Map())),
         expDslImpls = Some(SDeclaredImplementations(Map())),
-        ancestors = L(STraitCall("ScalanDsl", Nil))))
+        ancestors = L(STraitCall("ScalanDsl", Nil).toTypeApply)))
   }
 
   val testModule =

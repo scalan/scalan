@@ -398,7 +398,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       val fieldsWithType = clazz.args.argNamesAndTypes(config)
       val fieldTypes = clazz.args.argUnrepTypes(module, config)
       val implicitArgsDecl = c.implicitArgsDecl()
-      val parent = clazz.ancestors.head
+      val parent = clazz.ancestors.head.tpe
       val parentTpeArgsStr = parent.tpeSExprs.rep()
       val elemTypeDecl = c.name + "Elem" + tpeArgsDecl
       lazy val defaultImpl = e.optBaseType match {

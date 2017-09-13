@@ -336,7 +336,7 @@ class MetaCodegen extends ScalanAstExtensions {
     val baseInstanceName = entity.baseInstanceName
     val baseTypeDecl = baseTypeName + tpeArgsDecl
     val baseTypeUse = baseTypeName + tpeArgsUse
-    val firstAncestorType = entity.ancestors.headOption
+    val firstAncestorType = entity.ancestors.headOption.map(_.tpe)
     val entityRepSynonymOpt = module.entityRepSynonym
     val allArgs = entity.args.args ++ entity.implicitArgs.args
 

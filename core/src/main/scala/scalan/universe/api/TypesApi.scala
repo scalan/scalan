@@ -242,10 +242,10 @@ trait TypesApi { self: Scalan =>
     lazy val extendsTypes: Seq[TypeDesc] = {
       val env: TypeArgSubst = entityDef.tpeArgs.map(tpeArg => (tpeArg.name, ArgElem(tpeArg))).toMap
       val ancestors = entityDef.ancestors.iterator.filter {
-        case STraitCall("Def", List(a)) if a.name == this.name => false
+        case STypeApply(STraitCall("Def", List(a)),_) if a.name == this.name => false
         case _ => true
       }
-      val types = ancestors.map(Type(_, env))
+      val types = ancestors.map(a => Type(a.tpe, env))
       types.toSeq
     }
 

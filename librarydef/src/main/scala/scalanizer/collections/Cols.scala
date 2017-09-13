@@ -18,7 +18,8 @@ trait Cols {self: LinearAlgebra =>
     def fromArray[T](arr: Array[T]): Col[T] = new ColOverArray(arr)
     @HotSpot(KernelType.Scala)
     def ddmvm(v: Array[Double]): Int = {
-      val c = Col.fromArray(v.map(d => d))
+//      val xs = Array.fill(v.length)(0)
+      val c = Col.fromArray(/*xs.zip*/(v).map(d => d))
       c.length
     }
   }

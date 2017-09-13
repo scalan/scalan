@@ -40,6 +40,7 @@ object ScalanAst {
   /** Invocation of a trait with arguments */
   case class STraitCall(val name: String, override val tpeSExprs: List[STpeExpr]) extends STpeExpr {
     override def toString = name + tpeSExprs.asTypeParams()
+    def toTypeApply = STypeApply(this, Nil)
   }
 
   case class STpePrimitive(val name: String, defaultValueString: String) extends STpeExpr {
@@ -260,8 +261,11 @@ object ScalanAst {
                      override val exprType: Option[STpeExpr] = None) extends SExpr
   case class SApply(fun: SExpr, ts: List[STpeExpr], argss: List[List[SExpr]],
                     override val exprType: Option[STpeExpr] = None) extends SExpr
-  case class STypeApply(fun: SExpr, ts: List[STpeExpr],
+  case class SExprApply(fun: SExpr, ts: List[STpeExpr],
                         override val exprType: Option[STpeExpr] = None) extends SExpr
+  case class STypeApply(tpe: STraitCall, ts: List[SExpr] = Nil) extends SExpr {
+    override val exprType: Option[STpeExpr] = Some(tpe)
+  }
   case class SSelect(expr: SExpr, tname: String,
                      override val exprType: Option[STpeExpr] = None) extends SExpr
   case class SBlock(init: List[SExpr], last: SExpr,
@@ -445,7 +449,7 @@ object ScalanAst {
   abstract class STraitOrClassDef extends SBodyItem {
     def name: String
     def tpeArgs: List[STpeArg]
-    def ancestors: List[STraitCall]
+    def ancestors: List[STypeApply]
     def body: List[SBodyItem]
     def selfType: Option[SSelfTypeDef]
     def companion: Option[STraitOrClassDef]
@@ -472,7 +476,7 @@ object ScalanAst {
     }
 
     def getAncestorTraits(module: SModuleDef): List[STraitOrClassDef] = {
-      ancestors.filter(tc => module.isEntity(tc.name)).map(tc => module.getEntity(tc.name))
+      ancestors.filter(a => module.isEntity(a.tpe.name)).map(a => module.getEntity(a.tpe.name))
     }
 
     def getAvailableFields(module: SModuleDef): Set[String] = {
@@ -521,7 +525,7 @@ object ScalanAst {
   case class STraitDef(
                         name: String,
                         tpeArgs: List[STpeArg],
-                        ancestors: List[STraitCall],
+                        ancestors: List[STypeApply],
                         body: List[SBodyItem],
                         selfType: Option[SSelfTypeDef],
                         companion: Option[STraitOrClassDef],
@@ -566,8 +570,8 @@ object ScalanAst {
   final val BaseTypeTraitName = "TypeWrapper"
 
   implicit class STraitOrClassDefOps(td: STraitOrClassDef) {
-    def optBaseType: Option[STpeExpr] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {
-      case Some(STraitCall(_, h :: _)) => Some(h)
+    def optBaseType: Option[STpeExpr] = td.ancestors.find(a => a.tpe.name == BaseTypeTraitName) match {
+      case Some(STypeApply(STraitCall(_, h :: _), _)) => Some(h)
       case _ => None
     }
     def baseTypeName: String = optBaseType match {
@@ -582,7 +586,7 @@ object ScalanAst {
                         tpeArgs: List[STpeArg],
                         args: SClassArgs,
                         implicitArgs: SClassArgs,
-                        ancestors: List[STraitCall],
+                        ancestors: List[STypeApply],
                         body: List[SBodyItem],
                         selfType: Option[SSelfTypeDef],
                         companion: Option[STraitOrClassDef],
@@ -600,7 +604,7 @@ object ScalanAst {
 
   case class SObjectDef(
                          name: String,
-                         ancestors: List[STraitCall],
+                         ancestors: List[STypeApply],
                          body: List[SBodyItem]) extends STraitOrClassDef {
 
     val args = SClassArgs(Nil)
@@ -649,7 +653,7 @@ object ScalanAst {
                                hasDsl: Boolean = false,
                                hasDslStd: Boolean = false,
                                hasDslExp: Boolean = false,
-                               ancestors: List[STraitCall] = List())
+                               ancestors: List[STypeApply] = List())
   {
     def getFullName(shortName: String): String = s"$packageName.$name.$shortName"
     def isEqualName(shortName: String, fullName: String): Boolean =
@@ -734,7 +738,7 @@ object ScalanAst {
         tpeArgs = entity.tpeArgs,
         args = SClassArgs(List(SClassArg(false, false, true, "wrappedValueOfBaseType", bt, None))),
         implicitArgs = entity.implicitArgs,
-        ancestors = List(STraitCall(entity.name, typeUseExprs)),
+        ancestors = List(STraitCall(entity.name, typeUseExprs).toTypeApply),
         body = List(
 
         ),

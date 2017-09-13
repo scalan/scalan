@@ -56,7 +56,7 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     * def wrappedValue: Rep[Array[T]]; */
   def addWrappedValue(module: SModuleDef): SModuleDef = {
     val resType = module.entityOps.ancestors.collect {
-      case STraitCall("TypeWrapper", List(importedType, _)) => importedType
+      case STypeApply(STraitCall("TypeWrapper", List(importedType, _)),_) => importedType
     }.headOption
     val wrappedValue = SMethodDef(
       name = "wrappedValue",
@@ -97,7 +97,7 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     * is filtered. */
   def defaultWrapperImpl(module: SModuleDef): SModuleDef = {
     val wrapperTypes = module.entityOps.ancestors.collect {
-      case STraitCall("TypeWrapper", h :: _) => h
+      case STypeApply(STraitCall("TypeWrapper", h :: _),_) => h
     }
 
     if (wrapperTypes.isEmpty) module
@@ -153,11 +153,11 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         else super.methodTransform(method)
       }
       override def classArgTransform(classArg: SClassArg) = classArg
-      override def entityAncestorTransform(ancestor: STraitCall): STraitCall = {
-        if (ancestor.name == "TypeWrapper")
+      override def entityAncestorTransform(ancestor: STypeApply): STypeApply = {
+        if (ancestor.tpe.name == "TypeWrapper")
           ancestor
         else
-          typeTransformer.traitCallTransform(ancestor)
+          ancestor.copy(tpe = typeTransformer.traitCallTransform(ancestor.tpe))
       }
     }
     val wrappedModule = snState.externalTypes.foldLeft(module){(acc, externalTypeName) =>
@@ -171,8 +171,8 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     * if inheritance of type wrappers is not supported. */
   def filterAncestors(module: SModuleDef): SModuleDef = {
     class filterAncestorTransformer extends MetaAstTransformer {
-      override def entityAncestorsTransform(ancestors: List[STraitCall]): List[STraitCall] = {
-        ancestors.filter(_.name == "TypeWrapper")
+      override def entityAncestorsTransform(ancestors: List[STypeApply]): List[STypeApply] = {
+        ancestors.filter(_.tpe.name == "TypeWrapper")
       }
     }
 

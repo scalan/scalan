@@ -204,12 +204,12 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
     q"object $tname extends ..$parents { ..$body }"
   }
 
-  def genParents(ancestors: List[STraitCall])(implicit ctx: GenCtx): List[Tree] = {
+  def genParents(ancestors: List[STypeApply])(implicit ctx: GenCtx): List[Tree] = {
     val parents = Select(Ident("scala"), TypeName("AnyRef"))
 
-    parents :: ancestors.map{ancestor =>
-      val tpt = TypeName(ancestor.name)
-      val tpts = ancestor.tpeSExprs.map(genTypeExpr)
+    parents :: ancestors.map { a =>
+      val tpt = TypeName(a.tpe.name)
+      val tpts = a.tpe.tpeSExprs.map(genTypeExpr)
 
       tq"$tpt[..$tpts]"
     }
@@ -389,8 +389,8 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
       q"${TypeName(sSuper.name)}.super[${TypeName(sSuper.qual)}].${TermName(sSuper.field)}"
     case annotated: SAnnotated =>
       q"${genExpr(annotated.expr)}: @${TypeName(annotated.annot)}"
-    case typeApply: STypeApply =>
-      q"${genExpr(typeApply.fun)}[..${typeApply.ts.map(genTypeExpr)}]"
+    case exprApply: SExprApply =>
+      q"${genExpr(exprApply.fun)}[..${exprApply.ts.map(genTypeExpr)}]"
     case tuple: STuple => q"Tuple(..${tuple.exprs.map(genExpr)})"
     case bi: SBodyItem => genBodyItem(bi)
     case unknown => throw new NotImplementedError(s"genExpr($unknown)")

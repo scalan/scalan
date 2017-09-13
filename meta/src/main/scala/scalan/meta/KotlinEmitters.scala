@@ -1,6 +1,6 @@
 package scalan.meta
 
-import scalan.meta.ScalanAst.{STraitCall, SClassArg, SValDef, STpeArgs, STpeExpr, STpeFunc, SExpr, STpeArg, STpeEmpty, SModuleDef, SClassDef, STpeTuple, STpeSingleton, STpeSelectFromTT, SClassArgs, STpeTypeBounds, STpePrimitive, SBodyItem, STpeAnnotated, STpeExistential}
+import scalan.meta.ScalanAst.{STraitCall, SClassArg, SValDef, STpeArgs, STpeExpr, STpeFunc, SExpr, STpeArg, STpeEmpty, SModuleDef, SClassDef, STpeTuple, STpeSingleton, STypeApply, STpeSelectFromTT, SClassArgs, STpeTypeBounds, STpePrimitive, SBodyItem, STpeAnnotated, STpeExistential}
 import PrintExtensions._
 
 trait Emitters {
@@ -20,11 +20,11 @@ class KotlinEmitters(implicit val ctx: GenCtx) extends Emitters {
 
   def emit[T](x: T)(implicit e: CodeEmitter[T]): String = e(x)
 
-  def genParents(ancestors: List[STraitCall])(implicit ctx: GenCtx): List[String] = {
-    ancestors.map { ancestor =>
-      val tpt = ancestor.name
-      val tpts = ancestor.tpeSExprs.map(genTypeExpr)
-      s"$tpt${tpts.optList("<", ">")}"
+  def genParents(ancestors: List[STypeApply])(implicit ctx: GenCtx): List[String] = {
+    ancestors.map { a =>
+      val tpeName = a.tpe.name
+      val tpts = a.tpe.tpeSExprs.map(genTypeExpr)
+      s"$tpeName${tpts.optList("<", ">")}"
     }
   }
 

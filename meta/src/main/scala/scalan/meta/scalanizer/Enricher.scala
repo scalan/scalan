@@ -9,10 +9,9 @@ import scalan.util.FileUtil
 trait Enricher[G <: Global] extends ScalanizerBase[G] {
   /** Module parent is replaced by the parent with its extension. */
   def composeParentWithExt(module: SModuleDef) = {
-    val parentsWithExts = module.ancestors.map{ancestor =>
-      ancestor.copy(name = ancestor.name + "Dsl")
+    val parentsWithExts = module.ancestors.map { a =>
+      a.copy(tpe = a.tpe.copy(name = a.tpe.name + "Dsl"))
     }
-
     module.copy(ancestors = parentsWithExts)
   }
 
@@ -50,8 +49,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
 
   /** Extends the module by Base from Scalan */
   def addModuleAncestors(module: SModuleDef) = {
-    val newAncestors = STraitCall(name = "Base", tpeSExprs = List()) :: module.ancestors
-
+    val newAncestors = STraitCall(name = "Base", tpeSExprs = List()).toTypeApply :: module.ancestors
     module.copy(ancestors = newAncestors)
   }
 
@@ -61,9 +59,8 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
       name = "Def",
       tpeSExprs = List(STraitCall(module.entityOps.name,
                                   module.entityOps.tpeArgs.map(arg => STraitCall(arg.name, List()))))
-    ) :: module.entityOps.ancestors
+    ).toTypeApply :: module.entityOps.ancestors
     val newEntity = module.entityOps.copy(ancestors = newAncestors)
-
     module.copy(entityOps = newEntity, entities = List(newEntity))
   }
 
@@ -220,13 +217,12 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
       module.entities.find(entity => entity.name == ancestor.name)
     }
     lazy val ancestorPairs: List[(STpeExpr, STpeArg)] = {
-      val ancestors: List[STraitCall] = clazz.ancestors
+      val ancestors = clazz.ancestors
 
-      ancestors.flatMap { (ancestor: STraitCall) =>
-        val optEntity: Option[STraitDef] = getEntityByAncestor(ancestor)
-
+      ancestors.flatMap { a =>
+        val optEntity = getEntityByAncestor(a.tpe)
         optEntity match {
-          case Some(entity) => ancestor.tpeSExprs zip entity.tpeArgs
+          case Some(entity) => a.tpe.tpeSExprs zip entity.tpeArgs
           case None => List[(STpeExpr, STpeArg)]()
         }
       }
@@ -262,7 +258,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
       SMethodDef(name = classArg.name, tpeArgs = Nil, argSections = Nil,
         tpeRes = Some(classArg.tpe),
         isImplicit = false, isOverride = false, overloadId = None, annotations = Nil,
-        body = Some(STypeApply(SIdent("element"), unpackElem(classArg).toList)),
+        body = Some(SExprApply(SIdent("element"), unpackElem(classArg).toList)),
         isTypeDesc = true)
     }
     val newClasses = module.concreteSClasses.map{clazz =>
@@ -337,7 +333,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
 
   def genExtensions(moduleName: String,
                     selfModuleType: Option[SSelfTypeDef],
-                    moduleAncestors: List[STraitCall]
+                    moduleAncestors: List[STypeApply]
                     ): List[STraitDef] = {
     val boilerplateSuffix = Map("Dsl" -> "Abs", "DslStd" -> "Std", "DslExp" -> "Exp")
     val extensions = snState.subcakesOfModule(moduleName)
@@ -349,9 +345,9 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
         name = "self",
         components = selfComponentsWithSuffix(moduleName, selfModuleType, extSuffix)
       )
-      val boilerplate = STraitCall(moduleName + boilerplateSuffix(extSuffix), Nil)
-      val ancestors: List[STraitCall] = moduleAncestors map {
-        ancestor => ancestor.copy(name = ancestor.name + extSuffix)
+      val boilerplate = STraitCall(moduleName + boilerplateSuffix(extSuffix), Nil).toTypeApply
+      val ancestors = moduleAncestors map {
+        a => a.copy(tpe = a.tpe.copy(name = a.tpe.name + extSuffix))
       }
 
       STraitDef(
@@ -484,7 +480,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
   def fixEvidences(module: SModuleDef) = {
     new MetaAstTransformer {
       def implicitElem(tpeSExprs: List[STpeExpr]) = {
-        STypeApply(
+        SExprApply(
           SSelect(
             SIdent("Predef"),
             "implicitly"
@@ -495,12 +491,12 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
 
       override def identTransform(ident: SIdent): SExpr = ident match {
         case SIdent(name, Some(STraitCall("ClassTag", targs))) if name.startsWith("evidence$") =>
-          super.typeApplyTransform(implicitElem(targs))
+          super.exprApplyTransform(implicitElem(targs))
         case _ => super.identTransform(ident)
       }
       override def selectTransform(select: SSelect): SExpr = select match {
         case SSelect(_, name, Some(STraitCall("ClassTag", targs))) if name.startsWith("evidence$") =>
-          super.typeApplyTransform(implicitElem(targs))
+          super.exprApplyTransform(implicitElem(targs))
         case _ => super.selectTransform(select)
       }
     }.moduleTransform(module)

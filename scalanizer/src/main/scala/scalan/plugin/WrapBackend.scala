@@ -83,14 +83,14 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   def initWrapperSlices: WrapperSlices = {
     val dsl = STraitDef("WrappersModule",
           tpeArgs = Nil,
-          ancestors = List(STraitCall("ScalanDsl", Nil)),
+          ancestors = List(STraitCall("ScalanDsl", Nil).toTypeApply),
           body = Nil, selfType = None, companion = None)
 
     WrapperSlices(dsl)
   }
 
   def updateWrapperSlices(slices: WrapperSlices, module: SModuleDef): WrapperSlices = {
-    val absAncestors = slices.abs.ancestors :+ STraitCall(module.name + "Module", Nil)
+    val absAncestors = slices.abs.ancestors :+ STraitCall(module.name + "Module", Nil).toTypeApply
 
     WrapperSlices(
       abs = slices.abs.copy(ancestors = absAncestors)

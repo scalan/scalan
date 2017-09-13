@@ -91,7 +91,7 @@ trait ScalanParsers[G <: Global] {
       tpeArgs = entity.tpeArgs,
       args = SClassArgs(List(SClassArg(false, false, true, "wrappedValue", valueType, None))),
       implicitArgs = entity.implicitArgs,
-      ancestors = List(STraitCall(entity.name, typeUseExprs)),
+      ancestors = List(STraitCall(entity.name, typeUseExprs).toTypeApply),
       body = List(),
       selfType = None,
       companion = None,
@@ -224,7 +224,7 @@ trait ScalanParsers[G <: Global] {
 
   def traitDef(td: ClassDef, parentScope: Option[ImplDef]): STraitDef = {
     val tpeArgs = this.tpeArgs(td.tparams, Nil)
-    val ancestors = this.ancestors(td.impl.parents)
+    val ancestors = this.ancestors(td.impl.parents).map(_.toTypeApply)
     val body = td.impl.body.flatMap(optBodyItem(_, Some(td)))
     val selfType = this.selfType(td.impl.self)
     val name = td.name.toString
@@ -234,7 +234,7 @@ trait ScalanParsers[G <: Global] {
   }
 
   def classDef(cd: ClassDef, parentScope: Option[ImplDef]): SClassDef = {
-    val ancestors = this.ancestors(cd.impl.parents)
+    val ancestors = this.ancestors(cd.impl.parents).map(_.toTypeApply)
     val constructor = (cd.impl.body.collect {
       case dd: DefDef if dd.name == nme.CONSTRUCTOR => dd
     }) match {
@@ -262,7 +262,7 @@ trait ScalanParsers[G <: Global] {
   }
 
   def objectDef(od: ModuleDef): SObjectDef = {
-    val ancestors = this.ancestors(od.impl.parents)
+    val ancestors = this.ancestors(od.impl.parents).map(_.toTypeApply)
     val body = od.impl.body.flatMap(optBodyItem(_, Some(od)))
     SObjectDef(od.name, ancestors, body)
   }
@@ -524,7 +524,7 @@ trait ScalanParsers[G <: Global] {
     case q"$tpname.this" => SThis(tpname, tree2Type(tree))
     case q"$expr: @$annot" => SAnnotated(parseExpr(expr), annot.toString, tree2Type(tree))
     case TypeApply(fun: Tree, args: List[Tree]) =>
-      STypeApply(parseExpr(fun), args.map(tpeExpr), tree2Type(tree))
+      SExprApply(parseExpr(fun), args.map(tpeExpr), tree2Type(tree))
     case q"$expr match { case ..$cases } " => parseMatch(expr, cases)
     case q"{ case ..$cases }" => parseMatch(EmptyTree, cases)
     case Apply(TypeApply(fun, targs), args) =>

@@ -81,9 +81,9 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
 
       apply.copy(fun = newFun, argss = newArgss)
     }
-    def typeApplyTransform(typeApply: STypeApply): STypeApply = {
-      val newFun = exprTransform(typeApply.fun)
-      typeApply.copy(fun = newFun)
+    def exprApplyTransform(exprApply: SExprApply): SExprApply = {
+      val newFun = exprTransform(exprApply.fun)
+      exprApply.copy(fun = newFun)
     }
     def thisTransform(sthis: SThis): SThis = sthis
     def constrTransform(constr: SContr): SContr = {
@@ -111,7 +111,7 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
       case c: SConst => constTransform(c)
       case ident: SIdent => identTransform(ident)
       case apply: SApply => applyTransform(apply)
-      case typeApply: STypeApply => typeApplyTransform(typeApply)
+      case exprApply: SExprApply => exprApplyTransform(exprApply)
       case select: SSelect => selectTransform(select)
       case constr: SContr => constrTransform(constr)
       case sthis: SThis => thisTransform(sthis)
@@ -182,8 +182,8 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
       }
     }
 
-    def entityAncestorTransform(ancestor: STraitCall): STraitCall = ancestor
-    def entityAncestorsTransform(ancestors: List[STraitCall]): List[STraitCall] = {
+    def entityAncestorTransform(ancestor: STypeApply): STypeApply = ancestor
+    def entityAncestorsTransform(ancestors: List[STypeApply]): List[STypeApply] = {
       ancestors mapConserve entityAncestorTransform
     }
 
@@ -273,9 +273,9 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
       val newTs = apply.ts mapConserve typeTransformer.typeTransform
       super.applyTransform(apply.copy(ts = newTs))
     }
-    override def typeApplyTransform(typeApply: STypeApply): STypeApply = {
-      val newTs = typeApply.ts mapConserve typeTransformer.typeTransform
-      super.typeApplyTransform(typeApply.copy(ts = newTs))
+    override def exprApplyTransform(exprApply: SExprApply): SExprApply = {
+      val newTs = exprApply.ts mapConserve typeTransformer.typeTransform
+      super.exprApplyTransform(exprApply.copy(ts = newTs))
     }
     override def valdefTransform(valdef: SValDef): SValDef = {
       val newTpe = valdef.tpe.map(typeTransformer.typeTransform _)
@@ -305,7 +305,6 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
 
       traitCall.copy(name = newName, tpeSExprs = newArgs)
     }
-
     def tpeDefArgTransform(tpeArg: STpeArg): STpeArg = tpeArg
     def tpeDefArgsTransform(tpeArgs: STpeArgs): STpeArgs = {
       tpeArgs mapConserve tpeDefArgTransform
@@ -365,8 +364,10 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
       val newTpe = typeRenamer.typeTransform(arg.tpe)
       arg.copy(tpe = newTpe)
     }
-    override def entityAncestorTransform(ancestor: STraitCall): STraitCall = {
-      typeRenamer.traitCallTransform(ancestor)
+    override def entityAncestorTransform(ancestor: STypeApply): STypeApply = {
+      val newTpe = typeRenamer.traitCallTransform(ancestor.tpe)
+      val newTs = ancestor.ts.mapConserve(exprTransform)
+      ancestor.copy(tpe = newTpe, ts = newTs)
     }
   }
 
