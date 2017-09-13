@@ -1,12 +1,12 @@
 package scalan.it.lms
 
-import scalan.common.{MetaTestsDsl, SegmentsDsl}
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.primitives.{StructExamples, StructItTests}
-import scalan.{ScalanDsl}
+import scalan.ScalanDsl
+import scalan.common.{MetaTestsModule, SegmentsModule}
 
 class LmsStructItTests extends StructItTests {
-  class ProgExp extends ScalanDsl with StructExamples with SegmentsDsl with MetaTestsDsl
+  class ProgExp extends ScalanDsl with StructExamples with SegmentsModule with MetaTestsModule
 
   val progStaged = new LmsCompilerScala(new ProgExp)
 

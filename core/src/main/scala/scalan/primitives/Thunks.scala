@@ -3,12 +3,12 @@ package scalan.primitives
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.{ViewsDsl, Scalan}
+import scalan.{ViewsModule, Scalan}
 import scala.reflect.runtime.universe._
 import scalan.common.Lazy
 import scalan.util.Covariant
 
-trait Thunks extends Functions with ViewsDsl with GraphVizExport with Effects { self: Scalan =>
+trait Thunks extends Functions with ViewsModule with GraphVizExport with Effects { self: Scalan =>
   type Th[+T] = Rep[Thunk[T]]
   trait Thunk[+A] { def value: A }
   class ThunkCompanion {

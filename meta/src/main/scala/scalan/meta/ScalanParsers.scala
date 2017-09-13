@@ -126,16 +126,16 @@ trait ScalanParsers[G <: Global] {
       case i: Import => importStat(i)
     }
     val moduleTraitTree = statements.collect {
-      case cd: ClassDef if cd.mods.isTrait && !cd.name.contains("Dsl") => cd
+      case cd: ClassDef if cd.mods.isTrait && !cd.name.contains("Module") => cd
     } match {
       case Seq(only) => only
-      case seq => !!!(s"There must be exactly one module trait in file, found ${seq.length}")
+      case seq => !!!(s"There must be exactly one trait with entity definition in a file, found ${seq.length}")
     }
     val moduleTrait = traitDef(moduleTraitTree, Some(moduleTraitTree))
     val moduleName = moduleTrait.name
 
     val hasDsl =
-      findClassDefByName(fileTree.stats, moduleName + "Dsl").isDefined
+      findClassDefByName(fileTree.stats, moduleName + "Module").isDefined
 
     val dslStdModuleOpt = findClassDefByName(fileTree.stats, moduleName + "DslStd")
     val dslExpModuleOpt = findClassDefByName(fileTree.stats, moduleName + "DslExp")

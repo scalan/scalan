@@ -18,7 +18,7 @@ import scalan.compilation.GraphVizConfig
  - no SourceContext, withPos
  - mirroring implemented in Scalan way (though consistent with LMS)
  */
-trait Structs extends Effects with StructItemsDsl with StructKeysDsl { self: Scalan =>
+trait Structs extends Effects with StructItemsModule with StructKeysModule { self: Scalan =>
   // TODO consider if T type parameter is needed here and for AbstractStruct
   // It's only useful if we'll have some static typing on structs later (Shapeless' records?)
   abstract class StructTag[T <: Struct](implicit val typeTag: TypeTag[T]) {

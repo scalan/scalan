@@ -1,6 +1,8 @@
 package scalan.common
 
-trait MetaTests { self: MetaTestsDsl =>
+import scalan.Scalan
+
+trait MetaTests { self: MetaTestsModule =>
 
   type RMetaTest[T] = Rep[MetaTest[T]]
   trait MetaTest[T] extends Def[MetaTest[T]] { self =>
@@ -35,4 +37,4 @@ trait MetaTests { self: MetaTestsDsl =>
   }
 }
 
-trait MetaTestsDsl extends impl.MetaTestsDefs
+trait MetaTestsModule extends impl.MetaTestsDefs

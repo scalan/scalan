@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 package impl {
 // Abs -----------------------------------
 trait ExceptionsDefs extends scalan.Scalan with Exceptions {
-  self: ExceptionsDsl =>
+  self: Scalan =>
 
   // entityProxy: single proxy for each type family
   implicit def proxySThrowable(p: Rep[SThrowable]): SThrowable = {
@@ -157,7 +157,7 @@ trait ExceptionsDefs extends scalan.Scalan with Exceptions {
   implicit def isoSThrowableImpl: Iso[SThrowableImplData, SThrowableImpl] =
     reifyObject(new SThrowableImplIso())
 
-  registerModule(Exceptions_Module)
+  registerModule(ExceptionsModule)
 
   lazy val SThrowable: Rep[SThrowableCompanionCtor] = new SThrowableCompanionCtor {
     def apply(msg: Rep[String]): Rep[SThrowable] =
@@ -219,9 +219,9 @@ trait ExceptionsDefs extends scalan.Scalan with Exceptions {
   }
 }
 
-object Exceptions_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVVO2wURxj+72xyT5AfikQSiRhrDQjBnRUKEFYSWfY5SnTYFmswOhBobnd8HjK7O+zMmb0UpIICuihKESkFSqI0KFKULnUiRVGUIm1qCsRDiAKqIGZmZ/fOxsujYIvR7My//+P7vv/fW/dhBw9hgjuIIr/mYYFqtt7PcmHZJwK3S/E8Xlu6d3XPne8PPc7DaAveWkd8ntMWlOJNI2Lp3hZuE0YXiO82fEFEz/K0CwG1ZhyjrmLUt4thDXw104QS8h3MRRByAXvjj+tOQCl2BAn8OvG8rkBtiutNwoW0H24Hbu8SXIF8E0acwHdCLLA9RxHnmJvzIlbuSfpe0u+9JdaP8XyCKyEiQuYnY4zE9icxs3t+4Pc8AbtMaktMpSVtKjhiEohPPUZ1mOEmFIjHglAkUQsywnrgJq/DPpIHMNa8iDZQXUbt1G0REr+jnDHkfI46eFGaKPMdsgaO6dpKj2HjvMKFuylexACASVY/0JnV+qDVUtBqCjTLxiFBlHyB1OVyGEQ9iJ/cEECkXBx6iYvEA274rnX9nHP2iV3x8urjSOVS1BkVpKP3MxSm+ZHg/nnyK/7ok5tH81BuQZnw2TYXIXLEoA4MXhXk+4HQOacQorAjKZzMolBHmZU2W3RScgKPIV96MmBWJVOUOEQoY3W20/CTAX5BMJyY5iOWS+vN6igtpjlE6fLddw5P3WucyacSMCFK0qUtWypMnAoo2yvrYXBZoa5RVUvZAJwdKi16/90H7h/TcC4POQOV8fxq7EgXY8e+/W0KL/+ch2JLq3mBoo7mSWExj7nTgmKwgcP4vLCBqNpty1XBxWuoS4VBcLD0IVm6gInMRmRY4TKjBZ5Lyq/EEl0MfGwtLFuP7b++vqUUGEI1vok78yk5+v9/u9aEFqeA6uUQMYbd04h243EwImBINrbBxJyUsoA38KvlPW08rt/lPOhzpVpSGwx8+1LIk2nzy7Vrbz/84cK4bohimwgPMWv6NdohUe8blDtsBquiLFc1rnF2BbVMJNfZKi4PDIvx9E6RW44ptAMPj04+Iudv3hBaxblo88Bcal+U82lG+3lX+5nakly1Ec0l1U8PXqll76slpMmU4hnvVzI3iGhMNFPr2Fbi1bqvL5eaLK6WIYF57FAUYlfpB3vylxOTe+Sbj1c/2716SgNQdbVRfJP2zPY/yBOIzehpfuAF01waWQ2PiZ7aHPn9w3+//PunH3Wz9OuXHDYiBzMTtGLy7wpC06ImM4qyjZKktK88+W7x4D+/3tajr6w0KXvXT3+PfQFGW7pxZz+6/OMNgCtgWCnVJKHW42r56BnOBU043wgAAA=="
+object ExceptionsModule extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAALVVS4gcRRj+p3eSeRp2swSjiCbLaESXmcUcIgwS1t1ZUSa7S3rjwhiUmu7a2YrV3WV3zaZbQjyZg95EPAgegoqXIIg3EREfICIechOPElB8IDkkJ8V69Cu727t6sA9FVfVf/+P7vr/q2u9wIPDhWGAhity2gzlqm2o+H/CWecazxxQv4o2V3169/5d3Z28ZMDWAg5soWAzoAGp60gtZOje53YepJeLaPZcTHrUc5YJDu69jdGSMzm4xWrlT3T7UkGvhgHt+wOG4PtyxPEqxxYnndojjjDkaUtzpk4AL+/LQs6OX4DIYfZi0PNfyMcfmAkVBgIN4v4qle5Kua2odrbAsxs4E13xEuMhPxJjU9mcxMyPXcyOHw6E4tRUm0xI2DRwyAcTTDqMqTLkPFeIwz+dJ1IqIsOnZybLsIrEBh/sX0BbqiKijjsl94o6kM4asF9EILwsTaX5A1BBgurEWMRw7bwTcviNeyACACVYfU5m1M9DaKWhtCVrLxD5BlLyM5M9V3wsj0F9pAiCULmb3cZF4wD3Xbr123nruttlwDHk4lLlUVUYV4eiBAoUpfgS435x9I7j51NVTBtQHUCfB/DDgPrJ4XgcxXg3kuh5XOacQIn8kKJwpolBFmRc223RSszyHIVd4isFsCqYosQiXxnLvrpifAvArnOHE1AhZKa23qKPk2XnGaPTlpc8u/XTfD1MGTEhdhszPuZ0QbvcoRylyAVEqyjF4ElxErWu6TM/BUzM3yfNXX+cGlPpQCu/U18rwgqCzG/rQ1Ce0ev8mp/768dAGN2L2C4tI4n9a+fyLn2+cLhupjmOcaqIAU9wLfpIch7q5tul7F6V0lDTkcDSd1WO9FAdNOTzx6x/213NwXlWmmE8A+FdiEy4OP/72Jw/i1Q8NqA5Ucy5RNFKykxws4sAaQNXbwr7er2whKme7Sq9i4w00pjxmLg+CZvFYIYsMS4S6ql9LSfkNTciy5+LW0mrrlvntm9ckH/L/EQ7Niz5iDNvPIjrW19jdHCbEhRQXH+/UdmKtEY5xlsNxZXyvWot7LKNHXiXKIHd2X2yTW/KjK1eO/PneC9OqkatDwh3EWnP/oY2Trvsf2xRyYE2qcToBriFPrSuMdaYVOTyU/N5NxBrSuR1SztDN1jrOo3sk0OyFC0m1c3lS5XBiW5DufkEVjaL5prO8F/JYaoqZHO/ZTrkcZzOhTAvy2wXkL2KLIh/bUjnYEY+kpvXkW6fXnzm6fk51atNWRvpP2ha7P+lnEOuqG+jhPd4fYdTqOYxHcnLyqyeuv/LdB++rqyurXzDWCy3M4qCNOP8xJzQtaqagKDPWkBD15dvvLD/y/cc31D1Xl2oU7emmD3omvXBbHx7U/nKocihLceZIf1IOS/8AcpORB4oJAAA="
 }
 }
 
-trait ExceptionsDsl extends impl.ExceptionsDefs
+trait ExceptionsModule extends impl.ExceptionsDefs {self: Scalan =>}

@@ -10,7 +10,7 @@ class ConverterTests extends BaseCtxTests {
 //    lazy val t20 = fun { in: Rep[Array[Interval]] => in.convertTo[Array[Slice]] }
   }
 
-  class ConvProgStaged extends TestContext with ConvProg with SegmentsDsl {
+  class ConvProgStaged extends TestContext with ConvProg with SegmentsModule {
   }
 //  class ConvProgStd extends ScalanDslStd with ConvProg with SegmentsDslStd {
 //  }

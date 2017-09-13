@@ -72,7 +72,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     import c._
     val fields = clazz.args.argNames
     val fieldsWithType = clazz.args.argNamesAndTypes(config)
-    val parent = clazz.ancestors.head
+    val parent = clazz.ancestors.head.tpe
     val b = c.extractionBuilder()
 
     s"""

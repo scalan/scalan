@@ -4,7 +4,6 @@ import java.io.File
 import java.lang.reflect.Method
 
 import scala.language.reflectiveCalls
-import scalan.common.{SegmentsDsl}
 import scalan._
 
 class ExceptionTests extends BaseCtxTests {

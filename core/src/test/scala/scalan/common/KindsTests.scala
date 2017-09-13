@@ -5,7 +5,7 @@ import scalan._
 
 class KindsTests extends BaseCtxTests {
 
-  class ConvProgStaged extends TestContext with KindsExamples with KindsDsl {
+  class ConvProgStaged extends TestContext with KindsExamples with KindsModule {
   }
 //  class ConvProgStd extends ScalanDslStd with KindsExamples with KindsDslStd {
 //  }

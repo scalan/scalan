@@ -1,13 +1,13 @@
 package scalan.common
 
-import scalan.Base
+import scalan.{Base, Scalan}
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
 trait KindsDefs extends scalan.Scalan with Kinds {
-  self: KindsDsl =>
+  self: KindsModule =>
 
   // entityProxy: single proxy for each type family
   implicit def proxyKind[F[_], A](p: Rep[Kind[F, A]]): Kind[F, A] = {
@@ -232,7 +232,7 @@ implicit val eB = p._2.elem.eRange.typeArgs("A")._1.asElem[B]
   implicit def isoBind[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Iso[BindData[F, S, B], Bind[F, S, B]] =
     reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
 
-  registerModule(Kinds_Module)
+  registerModule(KindsModule)
 
   lazy val Kind: Rep[KindCompanionCtor] = new KindCompanionCtor {
   }
@@ -297,9 +297,9 @@ implicit val eB = f.elem.eRange.typeArgs("A")._1.asElem[B]
   }
 }
 
-object Kinds_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAMVXTWwbRRQeO3ZsJ2mbtKIqoj8mchUoxa7ooaAIgZ3YJK2bRNlCUaiIxrtjd8vu7LI7DmsO5UQPcEEIIUDiUNGKS1QJkBBwBgkh1APixokDB9SAUA+thATizexvHK/jFCF8GO2M376f733fzOz6byhtWyhvy1jDtKgThouSeC7brCCdNZS2RmZJc3Hj9cO/fnT8ThJNrKDhi9ietbUVlHMfqo4ZPEtMqaOJmkqVKmUq6xR04YKhYt2NUeIxSr1iFCJvTddRDlOZ2MywbIYedF8uyYamEZmpBi2put5muKGRUl21GdinGobSeRldRsk6GpcNKluEEWlGw7ZNbG89S7h7NZjnxLyzaIYxtiZ4zsIqg/wgxrhrv0xMqUMN2tEZ2u2ltmjytMBmlDgmADGvm5oIk6qjjKqbhsX8qBmIcNFQ/GmKYlhAe+uX8BouQdRWSWKWSlvcmYnll3CLLIAJN09DDTbRmuc6JvGcj9pM2RTPMRFCJnT1MZFZMQStGIBW5KAVJGKpWFNfxfzPJctwOsj9JYYQcriL49u48D2QKlUKb1yQX7grjepJ/rLDc8mKjDLg6EgMw0R/ANxvl9+2bz9z9VQSjaygEdUuN2xmYZlFeeDhNYopNZjIOYAQWy1o4WRcC0WUMth08SQnG7qJKXjywByDTmmqrDJuzNd2ef2JAT/DTOKbJh0zEdQbpyhBphmsaUu37n/06Eb1+WRAAS9EDlxKICnLd8pQ6gwow3PNx3GGErUQXz4tiykfRpxwzPbJJMBk6tbvyjcn0IUkSnhIeoEHax642Pv4B18dJUs3kii7Ishe03BLtJFDNUtseQVljTViueuZNazxp56tzCikidsa8wCOIjMEyDCUj9WpSThs04L/Cb/8UZfBCwYlhdpS4Y703TvrnKAWGnP/cYX7t3rqr592N5ngLuCJfWSHQOxd0MdjPeK6lAydTEzeVl+8+iYTqCaczfpebFwCOU2L9470Adjfej65cuW+P66t7hPqyDZUpmOzcGIH2vCp/B9yHwWouKw8EM75kAdU9ywT1rboTDRwPvJGBOcHEn4PhRFDSVL2G5CqakTv05MYB3ItcDBjUNZTT9GmMjTs5iscBGI4FNcrgcbGn9e+lN66/kQSDZ9G6Saw3K6jdMNoU8WHGc4mRhxW8de69A+wYgvrwZG1hmGLhTYztN9nfpupWuk5b93lO/zyKMSTFxQp8OmeFqs+bfd7JXG/xXnqRmSFR75Yf0W9+XBNaCJEZq6Py7ANc5FejCU2gz3AflaJ0dgWnqCuNvdT7gBxpS1xY8I0e4Sx0OF4ctTaVP5x/v19ew6t/iw2/WHF0LEq2HUQOGLBxiA4cNDbecN0/jVuUfSmxHhsALnuqkC4exSr1E+sUZDvSe2V7R3sXO0pXm5U6/E030ZbfAgjzA0mnRCUflaVXm49EDJeZzfXOgTnx45l0PuI2yTCLv7sgFZnetPKv+j8fy3YsnuF43thVlOg82KMzmeJrGGLKPw2TnT4WnCP4pPvPnX+9IHzz4rLwJgijNx/gvtM72+bs9icFhfxh/pcxMGoUNVN1uEPJ79+8ofXvv/4erBpZ73q0qLrAL+XOhz/undL4BVNxlQkeYc+sOjy3Q8Xjt387Bexe43w6wNcqmjwWRMeYk7XvpsVoeEjJcIqaDa/T0S48ykfPv8HT3OQ+pIOAAA="
+object KindsModule extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAAMVXW2gcVRg+O9lkN7tpmzS09sG2MV3rrewW+1AlSNlcVpJOk5CpFmIxnJ05m06dmzNn46yU+mQf9EVEBAWFaosvQRBftEiRVkFE+iC+iE8iBcUq0ocWBMX/nLl2MrNJKuI+HObMnvNfvu/7/3Nm9TfU69hoxJGxho2qTiiuSvy57tCKdMxU2hqZJK25Gy/v+eX9A7cENLSI+k5hZ9LRFlG/9zDlWuGzRBURDTVUQ5kyqEo7FZ2boKgqej5qzEctzUcltmtMRP3YkIlDTduh6D5vc002NY3IVDWNmqrrbYqbGqmJqkNhfb5pKp3n0VkkiGhQNg3ZJpRIExp2HOL474uEmVfDeT+fd+asyMfaAI/bWKUQH/gY9NYvEEvqGKbR0Sna6oc2Z7GwYE2ZuBYAMa1bGneTF1FB1S3TpoHXAng4ZSrBNG9geIG2i6fxCq6B1+WaRG3VWGbGLCw/h5fJLCxhy3shB4doreMdi/jGyw5V7vDnWgghC1h9lEdWjUCrhqBVGWgVidgq1tQXMftz3jbdDvJ+uR6EXGbiwDomAgtkylAqr5yUn7ktlXWBbXZZLEUeUQEM7c1QGOcHwP1q4XXn5pPnDwuotIhKqlNvOtTGMo3rwMerjA3DpDzmEEJsLwOFo1kUci91WJPQSb9s6hY2wJIP5gAwpamyStli9m6Lz08G+AVqkWCp4Fq5MN+simJ765alda6euXzmp3u/HxJQD9Ola9kxsz1gtks6XJETWNMgHYEGzsFryaNLMnUyNHpTffb8q1RAORHl3Dv1Ndc8DXSOuTYa8HZ46v1bPfzXD1tbVPDZz0wi8P9Z4fMrP18/khdCHfs49UMCEvQFOwiOovxRKG8fHzbeQ1GuEYmETet8yoYSl8+uxLzYJaaQ4gd+/V358iA6yRPnwgjw2ZAWwcT2x96+dD+Z/1BAxUVeuw0NL3NVMoomiSMvoqK5QmzvfWEFa+wpVZkFhbRwW6M+sXGMPJJHMkm2CANwjJdzLki/7PE1axqk0piv3JK+fmOV0cX+3wEQ4gDMHmhSCbST8JZiNTrcBZegAX507tyOPy4sDfMaLTZVqmOrcnATFRoU1H9YgSjM0ctrbzRnw34Q4rYFQtu2MRF3vD+2I4baaC6Ani+iSCD1AM78lEb0LghnGJAboYEJ06CpBRGniKI+L15uINTw7iyuOBo3/rzwqfTaxccF1DeDelsgTkdEvU2zbSgBzHBCUuLS8eBdooABVmxjPTw4VzA0eqCZop2BYNtU1WpP++89mcJvBEV4soRiCU6mrlgKpL3TT4nZrU4bnkdaeeST1RfUaw81eFOKkBG7mIxoEGNcDORisQz6qg+4WL85jSeokdY0pzXqQQnyu1XnBiJIegw0tsZNK8WNjfZkS6bRNuTvpt8a3rZ76Ufey/sUU8cq19w+UI4NhwZXxj6/jUbh/AsE07oQG6sbKOIt4+DuLktY6lbCcZDvqgeMr29g8z0gz9KNd4Bs8a9TcWyYSdbHegUVgdJt1XiaWR+Egs9sdgn2wAmz6ZJIP9LeSy/NhKo2Ibaj6WILbjX/HzFrOl00vhtFxQ73akb1TxJZwzZR2PcD0eH7xju2D7155MTMrhNP8VvUgMIXef+EV5b0r7Fj2Brjl8cHu3w6wKLKlG7RDns49MUT3770zQcXwwZf9LPr5fwD/H7ocFXQ/RsFy2g0IyPJvyCAns7efmf24WsfX+c9rcSuGnBvMsIPsejAcxPduMxde5+mMTEB3+z6EZPPJTZc/gd8MPb9Rw8AAA=="
 }
 }
 
-trait KindsDsl extends impl.KindsDefs
+trait KindsModule extends impl.KindsDefs

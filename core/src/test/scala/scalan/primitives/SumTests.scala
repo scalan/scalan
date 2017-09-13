@@ -2,12 +2,12 @@ package scalan.primitives
 
 import scala.language.reflectiveCalls
 import scalan.BaseCtxTests
-import scalan.common.{CommonExamples, SegmentsDsl, ViewExamples}
+import scalan.common.{CommonExamples, SegmentsModule, ViewExamples}
 
 class SumTests extends BaseCtxTests {
 
   test("IsSumMapLambda") {
-    val ctx = new TestContext with SegmentsDsl {
+    val ctx = new TestContext with SegmentsModule {
       lazy val t1 = fun { x: Rep[Int|Unit] => x.mapSum(l => l + 1, r => r) }
     }
     import ctx._
@@ -15,7 +15,7 @@ class SumTests extends BaseCtxTests {
   }
 
   test("constant propagation from If to SumFold") {
-    val ctx = new TestContext("fromIfToSumFold") with SegmentsDsl {
+    val ctx = new TestContext("fromIfToSumFold") with SegmentsModule {
       lazy val t1 = fun { x: Rep[Int] =>
         val s = IF (x > 0) THEN { (x + 1).asLeft[Int] } ELSE { (x + 2).asRight[Int] }
         s.fold(l => l + 1, r => r - 2)

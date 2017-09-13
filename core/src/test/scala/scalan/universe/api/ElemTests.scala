@@ -2,11 +2,11 @@ package scalan.universe.api
 
 import scala.language.reflectiveCalls
 import scalan._
-import scalan.common.{SegmentsDsl, KindsDsl}
+import scalan.common.{KindsModule, SegmentsModule}
 import scalan.universe.api.UniverseUtils._
 
 class ElemTests extends BaseCtxTests { suite =>
-  class Ctx extends TestContext with SegmentsDsl with KindsDsl with TypesApi {
+  class Ctx extends TestContext with SegmentsModule with KindsModule with TypesApi {
     val eInt      = element[Int]
     val eDouble   = element[Double]
     val eSegment  = element[Segment]

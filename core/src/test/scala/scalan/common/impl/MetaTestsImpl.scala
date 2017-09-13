@@ -1,12 +1,13 @@
 package scalan.common
 
+import scalan.Scalan
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
 trait MetaTestsDefs extends scalan.Scalan with MetaTests {
-  self: MetaTestsDsl =>
+  self: MetaTestsModule =>
 
   // entityProxy: single proxy for each type family
   implicit def proxyMetaTest[T](p: Rep[MetaTest[T]]): MetaTest[T] = {
@@ -307,7 +308,7 @@ implicit val eR = p._2.elem
   implicit def isoMT2[T, R](implicit eT: Elem[T], eR: Elem[R]): Iso[MT2Data[T, R], MT2[T, R]] =
     reifyObject(new MT2Iso[T, R]()(eT, eR))
 
-  registerModule(MetaTests_Module)
+  registerModule(MetaTestsModule)
 
   lazy val MetaTest: Rep[MetaTestCompanionCtor] = new MetaTestCompanionCtor {
   }
@@ -483,8 +484,8 @@ implicit val eR = values.elem
   }
 }
 
-object MetaTests_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVXTWwbRRQeb35sJ26VBKiKEDQER6S02KEFFRQhFBIHUjk/ZJ0UhapovDtJp+zPsDs2NofChQrBAYQQByQOVVv1ElVCXIBKXAAJIdQDV84cUAOqemgFEog3sz9e/6yTqqoPo53Zt997873vvRlv/Yn6XAeNuho2sJUzCcc5VT5PuzyrLth6xSCzZGNp+71H/rhw+JaChtdR/2nszrrGOkp7D4UaC59VrhfR8By19ILFKa9nTQnBUa7o+cgLH/lOPrKRr6aKKI0tjbjcdlyOHvU+zmu2YRCNU9vKU9OscFw2SL5IXQ72vWVbr7+JziKliIY029Icwok6Y2DXJa6/niICnobztJzXl1jDR3uAJQdTDvGBjyHPfoUwtW7ZVt3kaK8f2hITYYHNIKkxIGLeZIZ001tESWoy2+GB1yR4OG3rwbTXwrCARopncBXnwetmXuUOtTYFGMPaG3iTLIKJMO+DPbjE2CjVGfHBB12uN/mrMYQQg6wekZHlGqTlQtJygrSsShyKDfo2Fi+XHbtWR94v0YNQTUAc3gEiQCAFS89+cFJ77bY6aCri45qIJSUjSgLQgRiFyfwAuT+tfOLefOn8MQUNrKMB6k6XXe5gjUd14PM1iC3L5jLmkELsbEIKx+JSKL1Mg02LTtKabTJsAZJPZgYyZVCNcmEs1vb4+YkhP8kZCUyVGkuE+42rKCmmGWwYy9cffHJ8u/CqEkrAd5EGSBVKyglAOUotAEoJSAjhH4uDZ2TZoSZovEqe+f7q6o3vFvukhxGdbOCKwdewUSGevHx/Dd/ClTJxkKPeVYtysTRQa4ypLrsK+X38+l/6j5PopIISflb8TexOCAAx8uzn346T5SsKSq3Lwpkz8KaUhKB9lrjaOkrZVeJ468kqNsRTR1kk/U37yYqy3AMsczQaW/OMiBRMyVpKBNsf9Kph0bZIdm45e0v9+dMtIXYHZbw3XhP4jx7797e9G1zWAbDpQn3IkIY46oHe4XMhxvs5SkzC6rzVke8BD1a1TTI8dpOeOv8hl8wmas39Yql8BspzSn53oAvJQSv78ty5B25cfP0+WW2pMuUmZtnJO6i1oDTuYS0hSUKji+xvzMUwCsxmFkqTM1Gvo63mQC3YtLzKJCIZGGovL385UQqdNedFwkdsHwo1Ih1BxnXMcUzGW4FjEDprRgzjbQHJb9qjSrRiEoOYAWZvIZh026+k76kGvijgh+NbD2Rv+5+L36gfX3pOQf3HUd8GVKZbRH1lu2LpgSzgbOakxl8M1lr6H8gAO9gMj+wqhiMGZMnRvqBaK5wa+TV/3atR+I2iRp7D3UDA+/yAxVe5ecvD49lDX2+9Ra8dnJNVGsnFTuroUl2MlCrMIE9f/fvU++++zGSptrXzjqSH05WOmtu18pJwhaJQwnclvv6qOCS6YazsiHEvBKyQ0m7lGwew0g2gnXup/yNR/YvxlS56E8NaF6uGj7Woowj6IdQcVg/067vpV03aCS28+YTvsWW5Q6sdDnx26LfRG8odc9Ua6EcNhAmotVxMrc0SzcAO0cW1l5hwLffOqKOfvXDi+P4Tq7L0Mro08t6Eh33nPxELmE3JG+9ElxsvGGULJuN18XD0h+d/feeXy5fC/pHyd5cO08PRHj98OBtN/wgVuxqL2ZXqn4iQ8rO3v1h84tpXv8vb24A4W+HWYYX/IaK3tmYZZEL38K8goghRkwAfyfsFMVz+HxE+a+8DDgAA"
+object MetaTestsModule extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAALVXW2gcVRg+O9lkL0lrktJa8NIY19rashtbpZYgJeaiKZsLmU0Da6icnTlJp87lOHN2nZVSfbGIvoiIguJDscWXKBRf1EoRqyAiffBNfJSCYpXShxYFxf+cuexkd2ebIJ2Hw5wz//m///L9/zmz9gfqdmw05ChYx2beIAznZfE+5rCcPGOpVZ1MkJW5a6/e/9uH+29KaKCMek5gZ8LRyyjjvUy6NHyXmVpEA1OaqU6aTGP1nCFUMJQvehgFjlFoh5GL7Botogw2FeIwy3YYesDbXFAsXScK0yyzoBlGleGKTgpFzWEgn6xYav0FdBpJRdSvWKZiE0bkcR07DnH89TTh6rVwnhHz+hxtYLQaWLKxxsA+wOj35BcIleumZdYNhrb6ps1RbhbI9BKXQiCmDaoLmGQRpTSDWjYLUFOAcMJSg2nSxLCABosncQ0XAHW1IDNbM1e5MoqV5/EqmQURLt4NPjhEXynVKfGV9zpMXYfnUoQQhaweEJblG0HLh0HL86DlZGJrWNdewvzjvG25deQ9iS6EXK5i/21UBBrIpKnmXl9Wnr0l9xoS3+xyW9LCohQo2hXDMJEfCO53C285N54+e0hC2TLKas5YxWE2VliUB368erFpWkzYHIYQ26uQwuG4FAqUMZBp4klGsQyKTdDkB7MPMqVrisa4MF/b4ucnJvgpRkkgKrk0EfobV1F87xilev3yqUunfrn3pwEJdXFeutSOqO0CtR3cEYwcx7oO7kgsAAfUrJcu2TLIwPAN7fjZN5iEEkWUcNfza65yEtI56tqoz9vhsfdf7dA/P29dYZKf/VgnAvwvU199/evVI0kp5LEfpww4IENfsAPjGErPgJYSZDKM0YNx6imZtzUDCrVGHr98cfH6pdlugTCokhVc1dkxrFeJVyM+XgObQ0l79jKUXDQ1xpeygoo7BR8b83QH/0K6PPz7n+q3I2hZBFGQLIj1hngNKgafeO+Lh8j8JxJKl0UfmNLxqmA4T/cEcZQySls1YnvrqRrW+Vtblqd8932SROPtEWYoljCU8GSMitaQCNzv9XI/a5kkNzWfuyl///YaTz3/vh0C6EBdC+y7GeqCnuc7zcd7GEqMwOq0GQlxNlLz2zrEJmioF86c2X793HPbRM2nKxozMM2NbKLigwK9gxWNQtp4fu1qzPmwG9jWN1MaGY+i7m4Wh0CBTNOnvkQknv1+0PxoN9eKv5woNZH4cAupBWhk13CYcAEPWVUxwzFZbYaI0dCeF3zY10IGsafVqkSzTqITI9CZnAwm8Z5nXRHURxv6eTXeF99RIKfX/j73ufzm+cMS6jmKulegzJwi6q5YVVMNyAL3BkZc9lSw1tTWgBzYxkZ4nahhOP6ArAztCEqvyjS9cMxf9woOniHUyH7oDRi8wzeY78pPm54+ltv32dqL2pW9U6IRR3KxGc50qD9KSlWqk8cu/nX8tVeeoaK7tXTstgkIpwst+eAj3jwfU3Dp06Dc/xcle2r8ROikY+G2Ou4ErSVS2iip4xQsdFLQmgVRFQeiVcHHpQ4s5MNyB6kGxnIUKKK9gOJZ2QV9fr3RG+1t3vh+e0aFq+kIXGEDzXogQG/TsaOXlE1HsNnwdxsa+FmYj6nFCaLo2CYqv74TA34vvFPu4DtHlo7uXFoUpdmnCiHvS3jKt/8ZmsF0VNzd9nS4uYNQbtKgrM5fDn7z5I8v//DR+bDXpH3vMmGiGNrimw+nq+Efwtyr4RivZP9MheSfvvXB7CNXPr0qLnBZfjrDdcMM/4WiF7f1hLgrhPf+ECNE4MUKCJHUf8yHC/8BGu1pFs4OAAA="
 }
 }
 

@@ -2,11 +2,11 @@ package scalan.universe.api
 
 import scala.language.reflectiveCalls
 import scalan.BaseCtxTests
-import scalan.common.SegmentsDsl
+import scalan.common.SegmentsModule
 
 class UniverseUtilsTests extends BaseCtxTests { suite =>
   import UniverseUtils._
-  class Ctx extends TestContext with SegmentsDsl {
+  class Ctx extends TestContext with SegmentsModule {
   }
 
   def f(i: Int) = (1 to i).toIterator

@@ -34,7 +34,7 @@ trait Specializations extends Views with Converters { self: Scalan =>
   }
 }
 
-trait SpecializationsDsl extends impl.SpecializationsDefs with TypesApi with Expressions { scalan: Scalan =>
+trait SpecializationsModule extends impl.SpecializationsDefs with TypesApi with Expressions { scalan: Scalan =>
 
   trait AbstractSpecKey[F] {
     def format: F

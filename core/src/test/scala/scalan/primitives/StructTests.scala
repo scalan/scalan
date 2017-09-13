@@ -6,7 +6,7 @@ import scalan.common._
 import scalan.compilation.{DummyCompiler, StructsCompiler}
 import scalan.it.BaseItTests
 
-trait StructExamples extends Scalan with SegmentsDsl with MetaTestsDsl {
+trait StructExamples extends Scalan with SegmentsModule with MetaTestsModule {
   def eInt = IntElement
 
   lazy val t1 = fun({ (in: Rep[Int]) =>
@@ -112,7 +112,7 @@ trait StructExamples extends Scalan with SegmentsDsl with MetaTestsDsl {
 class StructTests extends BaseViewTests {
 
   class Ctx extends TestCompilerContext {
-    class ScalanCake extends ScalanDsl with StructExamples with SegmentsDsl with MetaTestsDsl {
+    class ScalanCake extends ScalanDsl with StructExamples with SegmentsModule with MetaTestsModule {
       def containsTuples(g: PGraph): Boolean = {
         g.scheduleAll.exists(tp => tp.rhs match {
           case First(_) => true
@@ -425,7 +425,7 @@ class StructTests extends BaseViewTests {
   }
 }
 
-abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDsl with SegmentsDsl with MetaTestsDsl with StructExamples) {
+abstract class StructItTests extends BaseItTests[StructExamples](new ScalanDsl with SegmentsModule with MetaTestsModule with StructExamples) {
   import progStd._
 
   test("t1") {

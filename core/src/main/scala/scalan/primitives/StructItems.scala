@@ -5,7 +5,7 @@ import scalan._
 import scala.reflect.runtime.universe._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 
-trait StructItems extends ViewsDsl with Entities  { self: Structs with Scalan =>
+trait StructItems extends ViewsModule with Entities  { self: Structs with Scalan =>
 
   trait StructItem[@uncheckedVariance +Val, Schema <: Struct] extends Def[StructItem[Val @uncheckedVariance, Schema]] {
     def eVal: Elem[Val @uncheckedVariance]
@@ -21,7 +21,7 @@ trait StructItems extends ViewsDsl with Entities  { self: Structs with Scalan =>
 
 }
 
-trait StructItemsDsl extends impl.StructItemsDefs { self: Structs with Scalan =>
+trait StructItemsModule extends impl.StructItemsDefs { self: Structs with Scalan =>
 
   def struct_getItem[S <: Struct](s: Rep[S], i: Int)(implicit o1: Overloaded1): Rep[StructItem[_,S]] = {
     val value = s.getUntyped(i)

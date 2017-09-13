@@ -3,7 +3,7 @@ package scalan
 import scalan.common.OverloadHack
 import scalan.common.OverloadHack.Overloaded2
 
-trait Converters extends ViewsDsl { self: Scalan =>
+trait Converters extends ViewsModule { self: Scalan =>
 
   type Conv[T,R] = Rep[Converter[T,R]]
   trait Converter[T,R] extends Def[Converter[T,R]] {
@@ -113,7 +113,7 @@ trait Converters extends ViewsDsl { self: Scalan =>
   }
 }
 
-trait ConvertersDsl extends impl.ConvertersDefs { self: Scalan =>
+trait ConvertersModule extends impl.ConvertersDefs { self: Scalan =>
 
   def identityConv[A](implicit elem: Elem[A]): Conv[A, A] = IdentityConv[A]()(elem)
 

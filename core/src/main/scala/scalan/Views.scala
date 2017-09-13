@@ -5,7 +5,7 @@ import scala.language.higherKinds
 import scala.collection.mutable.{Map => MutMap}
 import scalan.common.Lazy
 
-trait Views extends TypeDescs with Proxy { self: ViewsDsl with Scalan =>
+trait Views extends TypeDescs with Proxy { self: ViewsModule with Scalan =>
   type Iso[From, To] = Rep[IsoUR[From, To]]
 
   // TODO try to find a way to generate eTo such that equals and hashCode can refer to it (see commented code)
@@ -216,14 +216,14 @@ trait Views extends TypeDescs with Proxy { self: ViewsDsl with Scalan =>
   }
 }
 
-trait ViewsDsl extends impl.ViewsDefs { self: Scalan =>
+trait ViewsModule extends impl.ViewsDefs { self: Scalan =>
   /**
     * The base type of all isos for user-defined types
     */
   trait EntityIso[From, To] extends IsoUR[From, To] with Product {
     override def canEqual(other: Any) = getClass == other.getClass
     override def equals(other: Any) = other match {
-      case i: ViewsDsl#EntityIso[_, _] =>
+      case i: ViewsModule#EntityIso[_, _] =>
         // Comparing productArity is unnecessary since it should be equal when the classes are equal and
         // in case it isn't, we do little extra work
         (this eq i) || (getClass == i.getClass && productIterator.sameElements(i.productIterator))

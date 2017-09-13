@@ -1,8 +1,8 @@
 package scalan.common
 
-import scalan.Base
+import scalan.{Base, Scalan}
 
-trait Kinds extends Base { self: KindsDsl =>
+trait Kinds extends Base { self: KindsModule =>
   type RKind[F[_],A] = Rep[Kind[F,A]]
 
   sealed trait Kind[F[_], A] extends Def[Kind[F,A]] {

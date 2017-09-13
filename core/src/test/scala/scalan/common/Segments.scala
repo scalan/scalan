@@ -3,7 +3,7 @@ package scalan.common
 import scala.reflect.runtime.universe._
 import scalan._
 
-trait Segments { self: SegmentsDsl =>
+trait Segments { self: SegmentsModule =>
 
   type RSeg = Rep[Segment]
   trait Segment extends Def[Segment] { self =>

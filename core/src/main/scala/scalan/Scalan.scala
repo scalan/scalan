@@ -3,7 +3,7 @@ package scalan
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
 import scalan.staged.{Transforming, Expressions}
-import scalan.util.ExceptionsDsl
+import scalan.util.ExceptionsModule
 
 abstract class Scalan
   extends Base
@@ -34,12 +34,12 @@ abstract class Scalan
   with Effects
   with RewriteRules
   with GraphVizExport
-  with ViewsDsl
+  with ViewsModule
   with Thunks
   with Structs
-  with ConvertersDsl
+  with ConvertersModule
 
 class ScalanDsl
   extends Scalan
   with Expressions
-  with ExceptionsDsl
+  with ExceptionsModule

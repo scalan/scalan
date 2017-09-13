@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scalan._
 
-trait StructKeys extends ViewsDsl with Entities  { self: Structs with Scalan =>
+trait StructKeys extends ViewsModule with Entities  { self: Structs with Scalan =>
 
   type SKey[S <: Struct] = Rep[StructKey[S]]
   trait StructKey[Schema <: Struct] extends Def[StructKey[Schema]] {
@@ -32,7 +32,7 @@ trait StructKeys extends ViewsDsl with Entities  { self: Structs with Scalan =>
 
 }
 
-trait StructKeysDsl extends impl.StructKeysDefs {self: Structs with Scalan =>
+trait StructKeysModule extends impl.StructKeysDefs {self: Structs with Scalan =>
   type KSet = Rep[KeySet]
   trait KeySet {
     def keys: Seq[String]
