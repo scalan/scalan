@@ -276,22 +276,26 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
     module.copy(concreteSClasses = newClasses)
   }
 
-  def genImplicitMethodArgs(method: SMethodDef): SMethodDef = {
-    def genImplicit(tpeArg: STpeArg, valPrefix: String, resPrefix: String) = {
+  def genImplicitMethodArgs(module: SModuleDef, method: SMethodDef): SMethodDef = {
+    def genImplicit(tpeArg: STpeArg, valPrefix: String, descTypeName: String) = {
       SMethodArg(impFlag = true, overFlag = false,
         name = valPrefix + tpeArg.name,
-        tpe = STraitCall(resPrefix, List(STraitCall(tpeArg.name, Nil))),
+        tpe = STraitCall(descTypeName, List(STraitCall(tpeArg.name, Nil))),
         default = None, annotations = Nil, isTypeDesc = true)
     }
     def genElem(tpeArg: STpeArg) = genImplicit(tpeArg, "em", "Elem")
     def genCont(tpeArg: STpeArg) = genImplicit(tpeArg, "cm", "Cont")
     def genImplicitVals(tpeArgs: List[STpeArg]): List[SMethodArg] = {
-      tpeArgs.map{tpeArg =>
-        if (tpeArg.tparams.isEmpty) genElem(tpeArg)
-        else genCont(tpeArg)
+      tpeArgs.map { arg =>
+        if (arg.tparams.isEmpty) genElem(arg)
+        else genCont(arg)
       }
     }
-    val args = genImplicitVals(method.tpeArgs) match {
+    def notExtractable(tpeArg: STpeArg): Boolean = {
+      !method.allArgs.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
+    }
+
+    val args = genImplicitVals(method.tpeArgs.filter(notExtractable)) match {
       case Nil => method.argSections
       case as => method.argSections ++ List(SMethodArgs(as))
     }
@@ -301,7 +305,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
 
   def genMethodsImplicits(module: SModuleDef) = {
     def genBodyItem(item: SBodyItem): SBodyItem = item match {
-      case m: SMethodDef => genImplicitMethodArgs(m)
+      case m: SMethodDef => genImplicitMethodArgs(module, m)
       case _ => item
     }
     def genCompanion(companion: Option[STraitOrClassDef]) = companion match {

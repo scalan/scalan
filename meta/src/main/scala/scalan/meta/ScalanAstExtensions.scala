@@ -91,7 +91,7 @@ trait ScalanAstExtensions {
     }
 
     def declaration(config: CodegenConfig, includeOverride: Boolean) = {
-      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
+      val typesDecl = md.tpeArgs.declString
       val argss = md.argSections.rep(sec => s"(${sec.argNamesAndTypes(config).rep()})", "")
       s"${includeOverride.opt("override ")}def ${md.name}$typesDecl$argss: ${explicitReturnType(config)}"
     }

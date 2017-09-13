@@ -177,7 +177,7 @@ class MetaCodegen extends ScalanAstExtensions {
       }
 
       def reasonToSkipMethod(m: SMethodDef): Option[String] = {
-        (m.explicitArgs.filter { arg => arg.tpe.isInstanceOf[STpeFunc] } match {
+        (m.explicitArgs.filter { arg => arg.tpe.isInstanceOf[STpeFunc] && config.isAlreadyRep } match {
           case Seq() => None
           case nonEmpty => Some(s"Method has function arguments ${nonEmpty.rep(_.name)}")
         }).orElse {

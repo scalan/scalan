@@ -221,7 +221,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
           }
           |      case _ => None
           |    }
-          |    ${isFunctor.opt(s"def map[A,B](xs: Rep[$name[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))")}
+          |    ${isFunctor.opt(s"def map[A,B](xs: Rep[$name[A]])(f: Rep[A] => Rep[B]) = { implicit val eA = unlift(xs.elem); xs.map(fun(f))}")}
           |  }
            """.stripMargin
       }

@@ -34,7 +34,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
     def lift[A](implicit evA: Elem[A]) = element[Array[A]]
     def unlift[A](implicit eFT: Elem[Array[A]]) =
       castWArrayElement(eFT.asInstanceOf[Elem[WArray[A]]]).eT
-    def getElem[A](fa: Rep[Array[A]]) = !!!("Operation is not supported by Array container " + fa)
+    def getElem[A](fa: Rep[Array[A]]) = fa.elem
     def unapply[T](e: Elem[_]) = e match {
       case e: BaseTypeElem1[_,_,_] if e.wrapperElem.isInstanceOf[WArrayElem[_,_]] => Some(e.asElem[Array[T]])
       case _ => None
@@ -51,15 +51,15 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
       case e: WArrayElem[_,_] => Some(e.asElem[WArray[T]])
       case _ => None
     }
-    def map[A,B](xs: Rep[WArray[A]])(f: Rep[A] => Rep[B]) = ??? //xs.map(fun(f))
+    def map[A,B](xs: Rep[WArray[A]])(f: Rep[A] => Rep[B]) = { implicit val eA = unlift(xs.elem); xs.map(fun(f))}
   }
 
   case class WArrayIso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, WArray] {
     lazy val selfType = new ConcreteIsoElem[WArray[A], WArray[B], WArrayIso[A, B]](eFrom, eTo).
       asInstanceOf[Elem[IsoUR[WArray[A], WArray[B]]]]
     def cC = container[WArray]
-    def from(x: Rep[WArray[B]]) = ??? //x.map(innerIso.fromFun)
-    def to(x: Rep[WArray[A]]) = ??? //x.map(innerIso.toFun)
+    def from(x: Rep[WArray[B]]) = x.map(innerIso.fromFun)
+    def to(x: Rep[WArray[A]]) = x.map(innerIso.toFun)
   }
 
   def wArrayIso[A, B](innerIso: Iso[A, B]) =
@@ -124,6 +124,11 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
       methodCallEx[Int](self,
         this.getClass.getMethod("length"),
         List())
+
+    def map[B](f: Rep[T => B]): Rep[WArray[B]] =
+      methodCallEx[WArray[B]](self,
+        this.getClass.getMethod("map", classOf[AnyRef]),
+        List(f.asInstanceOf[AnyRef]))
   }
   case class WArrayImplCtor[T](override val wrappedValue: Rep[Array[T]])(implicit override val eT: Elem[T]) extends WArrayImpl[T](wrappedValue) {
   }
@@ -266,6 +271,18 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
         case _ => None
       }
     }
+
+    object map {
+      def unapply(d: Def[_]): Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "map" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object WArrayCompanionMethods {
@@ -300,29 +317,29 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
       implicit val eAB = compIso.eTo
       ViewWArray(arr, compIso)
 
-//    case WArrayMethods.map(xs, f) => (xs, f) match {
-//      case (_, Def(IdentityLambda())) =>
-//        xs
-//      case (xs: RepWArray[a] @unchecked, LambdaResultHasViews(f, iso: Iso[b, c])) =>
-//        val f1 = f.asRep[a => c]
-//        implicit val eB = iso.eFrom
-//        val s = xs.map(f1 >> iso.fromFun)
-//        val res = ViewWArray(s, iso)
-//        res
-//      case (HasViews(source, Def(contIso: WArrayIso[a, b])), f: RFunc[_, c]@unchecked) =>
-//        val f1 = f.asRep[b => c]
-//        val iso = contIso.innerIso
-//        implicit val eC = f1.elem.eRange
-//        source.asRep[WArray[a]].map(iso.toFun >> f1)
-//      case _ =>
-//        super.rewriteDef(d)
-//    }
+    case WArrayMethods.map(xs, f) => (xs, f) match {
+      case (_, Def(IdentityLambda())) =>
+        xs
+      case (xs: RepWArray[a] @unchecked, LambdaResultHasViews(f, iso: Iso[b, c])) =>
+        val f1 = f.asRep[a => c]
+        implicit val eB = iso.eFrom
+        val s = xs.map(f1 >> iso.fromFun)
+        val res = ViewWArray(s, iso)
+        res
+      case (HasViews(source, Def(contIso: WArrayIso[a, b])), f: RFunc[_, c]@unchecked) =>
+        val f1 = f.asRep[b => c]
+        val iso = contIso.innerIso
+        implicit val eC = f1.elem.eRange
+        source.asRep[WArray[a]].map(iso.toFun >> f1)
+      case _ =>
+        super.rewriteDef(d)
+    }
     case _ => super.rewriteDef(d)
   }
 }
 
 object WArraysModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWz28bRRR+3sbxrzRNghKph5YQbYWA1C5IUKocUHBsVDBx6EYtMhVovDt2p8zOLrvjdM2hN3qAC0I9IXGoKLcICXEB7kiIQ/+BnkFCDQj10EpIIObH7nrjxi094MNodvbN99773vfeevd3yIcBLIc2oohVXcxR1VL79ZCb1pueM6B4A/faex8d/+3L1XsGzHdg+hIKN0LagZLeNCI/3VvcacF8kzCnwTjhQ9NVEByqLe2jJn3UDvJhZm6ttaCEmI1D7gUhh6f05ZrtUYptTjxWI6474KhLca1FQi7sp7qeM/wAroLRgjnbY3aAObbqFIUhDuPzIpbwJH0uqedh2x/5eDDA7QARLuITPua0/TnsW0PmsaHLYTYOre3LsIRNBUe+IOKs61PlZqoFBeL6XsATrwXh4ZLnJI9TDIkDWGhdRjuoJrz2axYPCOtLMB/Z76M+3hQm0jwvcggx7W0PfRyDV0Lu7PMX+QDgi6q+oCKrjkirpqRVJWmmhQOCKPkQyZdbgRcNQf9yhwAiCbH6CIgEATeYY3580X7nvlVxDXk5krEUVUQFAfTkBIWp+ghyfzr3WXj3tRunDSh3oEzC9W7IA2TzrA5iviqIMY+rmFMKUdAXJVyZVELlZV3YjOmkZHuuj5hAismcEZWixCZcGsuzw3F9JpBf4D5OTI3Iz6X5TuooJaY6onTrztGTJ/YabxupBGIXJQFpiZYKElAO0xfWgwANY3C5znHIbSuG5VKORmvxIc5TGp6+84fz4ym4aEAuJi/29d/qJSAWXv78hxN462sDih2l7yZFfVU5yc4GDu0OFL0dHOjzwg6icndg9QoO7qEB5TGnWTIOCTI4LE9sTR9LptaU5HNJ+hUt2k2PYbO5Zd6zfr6+KzUZwIx+o3v1H3L679uzPa7kymHmSoB8HzvnER3ghOT8YxAvl+PKaClz4WguF0em3nMw8HaCNNWg2M2Cy2XxAXQOZS0A2eMjL7JMxybJTMly76+b31uffnXGgOnXId8T/IctyHe9AXMSvYtByXHEX03OxsQo9I0C5KbzcweJfhf9yGEpqcmAE1o7H5/rSojfMqhA01wWk+IsxRHLa9WzTANy87nvdq+QW880VTGyyT9Skcl4/ubatcU/b773hJogxS7hLvLNU48xP5J2/x/nA+xXUkVaXlCy09EV5LI80sLCuDjMA6WXYenkw1hqB7p90/yJuXrm143rb6ghdGTEizKLU8qOBw6H60IwiDAcJFnqGf+KyKY5YLbgOX2RCW0pPZAaKOs2tDwXz6/cJe/e+ISrSZSL9n8G293L4quzpnI8pnBeHGNwphHVkxI9P07WwoQBORaQEqpI7Yhusnq25FrA/qgWDRH+ygSOrbj2QoxX73+x+eytb39RxJalisQwYuk/gJFktNiLYhZI5ch9dRTqS2kIo0YSpoX4cyDGk4okDkyub+2nZzYRl/6TNcaHpZD/BdH6nKgDCgAA"
+  val dump = "H4sIAAAAAAAAALVWzW8bRRR/3sbxV5omQYnUQ0uItkJAYhfUqlSRkII/UMHEVjZqkalA492xO2V3dtkdp2sOvdEDXBDqCYlDRblFSIgLcEdCHPoPcAYJNSDUQyshgZiP/XDcuGkP9WE0O/vmvd/7vd97690/IRv4sByYyEa07GCGyobcbwRMN952rYGNa7jX2vv45B9frd7XYL4D01dQUAvsDhTUph56yd5gVhPmG4RadcoIG+qOdMGg3FQxKiJG5aAY+sit9SYUEDVxwFw/YPCculwxXdvGJiMurRDHGTDUtXGlSQLG7ae6rjX8EK6D1oQ506Wmjxk2qjYKAhxE53ks3JPkuSCfhy0vjfEwwG0fEcbx8Rhzyn4Le8aQunToMJiNoLU8AYvblHDocSIuOJ4tw0w1IUccz/VZHDXHI1xxrfhxiiJ+AAvNq2gHVXjUfsVgPqF94cxD5geojze5iTDP8hwCbPe2hx6OnJcCZu2LF3oA4PGqviKRlVPSyglpZUGabmCfIJt8hMTLtu+GQ1C/zBGAULhYPcRF7AHXqaV/ctl894FRcjRxORRY8hJRjjt6doLCZH04uT9vfR7ce+PWOQ2KHSiSYKMbMB+ZbFQHEV8lRKnLJOaEQuT3eQlXJpVQRtngNmM6KZiu4yHKPUVkzvBK2cQkTBiLs6NRfSaQn2Mejk210Msk+U7qKCmmKrLt9t3ja6f26u9oiQSiEAXu0uAt5cdOGUxf2vB9NIyci3WOQWZbMiyWYpiu+UcET2h4/u5f1k+n4bIGmYi8KNbj1Yu7WHj1ix9P4fY3GuQ7Ut8NG/Vl5QQ7NRyYHci7O9hX57kdZIvdgdXLWbiHBjaLOB0l4wgng8HyxNb0sGBqXUo+E6dfUqLddCnWG239vvHLzV2hSR9m1BvVq/+Rc//+OttjUq4MZq75yPOwdRHZAxyTnH2IeLEsHsy8WE5Kq6WRG8czmQiafM9Aw9ux+6m6jZ3DvTMoKgWIJk+jiDqdmKQzqcu9f27/YHz29XkNpt+EbI8XIGhCtusOqBULnk9KhkP2enw2pkYucOQjJxmgO4g3PG9IBktxUQaM2JWL0bkqBf8tgwSa5LIYV2cpQiyulS9Q5ZDpL32/e43ceaEhqzGa/KGSjOfztzduLP59+/1n5AjJdwlzkKeffoIBEvf7UxwQsL+HS8LyktSdQpcTy3KqhYXHk94IS2uPYqnlq/5N8if66vnfazffklPoWMqLNItSGp0PDI5WuWAQodiPs1RD/jWeTWNATc5z8mIE2lJyIDRQVH1ouA6eX7lH3rv1KZOjKBPu/w62ulf5Z2dd5nhC+jkzxuBMPazGJXp5nKyFCRNyDJAUKk/tmGqy6mjJlYC9tBY1Dn9lAsdGVHsuxusPvtx88c53v0lii0JFfBrR5C9AKhkl9jyfBUI5Yr+WQj2bQEgbiZvmou8Bn08SSQRMrO399MzG4lL/ssb42JKe/wcIHe6nBAoAAA=="
 }
 }
 

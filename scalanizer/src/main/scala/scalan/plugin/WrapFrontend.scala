@@ -54,25 +54,34 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   def isWrapperType(tpe: Type): Boolean = isWrapperSym(tpe.typeSymbol)
 
   def catchSpecialWrapper(tree: Tree): Boolean = tree match {
-    case sel@q"scala.Predef.doubleArrayOps($v).${TermName("map")}" => true
-    case q"$x.Array.canBuildFrom" =>
-    //      updateWrapperSpecial()
+    case sel@q"$x.Predef.doubleArrayOps($v).${TermName("map")}" =>
+      val tT = STpeArg("T")
+      val tB = STpeArg("B")
+      updateWrapperSpecial("scala", "Array", List(tT), Nil, false,
+        SMethodDef("map", List(tB),
+          List(SMethodArgs(List(SMethodArg(false, false, "f", STpeFunc(tT.toTraitCall, tB.toTraitCall), None)))),
+          Some(STraitCall("Array", List(tB.toTraitCall))), false, false, None, List(SMethodAnnotation("External", Nil))), Nil)
       true
+    case q"$x.Array.canBuildFrom" => true // make sure it is ignored
     case _ => false
   }
 
   /** For each method call, create type wrapper if the external type should be wrapped. */
-  def catchWrapperUsage(tree: Tree): Unit = if (!catchSpecialWrapper(tree)) {
-    tree match {
-      case sel@Select(objSel@Apply(TypeApply(_, _), _), member) if isWrapperType(objSel.tpe) =>
-        updateWrapper(objSel.tpe, member, sel.tpe, sel.symbol)
-      case sel@Select(objSel@Select(_, obj), member) if isWrapperType(objSel.tpe) =>
-        updateWrapper(objSel.tpe, member, sel.tpe, sel.symbol)
-      case sel@Select(objSel, member) if isWrapperType(objSel.tpe) =>
-        updateWrapper(objSel.tpe, member, sel.tpe, sel.symbol)
-      case _ => ()
+  def catchWrapperUsage(tree: Tree): Unit =
+    if (!catchSpecialWrapper(tree)) {
+      tree match {
+        case sel@Select(obj@Apply(TypeApply(_, _), _), member) if isWrapperType(obj.tpe) =>
+          inform(show(obj.tpe))
+          updateWrapper(obj.tpe, member, sel.tpe, sel.symbol)
+        case sel@Select(obj@Select(_, _), member) if isWrapperType(obj.tpe) =>
+          inform(show(obj.tpe))
+          updateWrapper(obj.tpe, member, sel.tpe, sel.symbol)
+        case sel@Select(obj, member) if isWrapperType(obj.tpe) =>
+          inform(show(obj.tpe))
+          updateWrapper(obj.tpe, member, sel.tpe, sel.symbol)
+        case _ => ()
+      }
     }
-  }
 
   /** Form the list of method arguments in terms of Meta AST by using symbols from Scala AST. */
   def formMethodArgs(args: List[Symbol]): List[SMethodArg] = {
@@ -143,7 +152,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     * trait WCols extends Base with TypeWrappers { self: Wrappers =>
     * trait WCol[A] extends TypeWrapper[Col[A], WCol[A]] { self =>
     * def arr: Array[A]
-    * };                  originalEntityAncestors
+    * };
     * trait WColCompanion extends ExCompanion1[WCol]
     * }
     * where

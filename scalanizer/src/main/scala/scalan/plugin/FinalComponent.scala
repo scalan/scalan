@@ -41,24 +41,24 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
       val unitName = unit.source.file.name
       if (snConfig.codegenConfig.entityFiles.contains(unitName)) try {
 //        showTree("body", unitName, unit.body)
-        val moduleDef = parse(unitName, unit.body)
-        val enrichedModuleDef = pipeline(moduleDef)
+//        val moduleDef = parse(unitName, unit.body)
+//        val enrichedModuleDef = pipeline(moduleDef)
 
         /** Generates a virtualized version of original Scala AST, wraps types by Rep[] and etc. */
-        val virtAst = genScalaAst(enrichedModuleDef, unit.body)
+//        val virtAst = genScalaAst(enrichedModuleDef, unit.body)
 //        showTree("virtAst", unitName, virtAst)
 
         /** Invoking of Scalan META to produce boilerplate code */
-        val boilerplate = genBoilerplate(enrichedModuleDef)
+//        val boilerplate = genBoilerplate(enrichedModuleDef)
 //        showTree("boilerplate", unitName, boilerplate)
 
         /** Checking of user's extensions like SegmentDsl, SegmentDslStd and SegmentDslExp */
-        val extensions: List[Tree] = getExtensions(moduleDef)
+//        val extensions: List[Tree] = getExtensions(moduleDef)
 //        for ((e,i) <- extensions.zipWithIndex)
 //          showTree(s"extensions$i", unitName, e)
 
         /** Serialize Virtualized AST for passing to run-time. */
-        val serializedModuleDef = serializeModuleDef(moduleDef)
+//        val serializedModuleDef = serializeModuleDef(moduleDef)
 //        showTree("serializedAst", unitName, serializedModuleDef)
 
         /** Replace of hot spots by optimized kernels in the original Scala AST of current compilation unit. */
