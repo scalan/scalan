@@ -187,7 +187,7 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
   def genTypeArg(arg: STpeArg)(implicit ctx: GenCtx): TypeDef = {
     val tpname = TypeName(arg.name)
     val tparams = arg.tparams.map(genTypeArg)
-    val mods = Modifiers(Flag.PARAM)
+    val mods = Modifiers(Flag.PARAM, tpnme.EMPTY, arg.annotations.map(genAnnotation(_)))
     val tpt = arg.bound match {
       case Some(tpe) => TypeBoundsTree(TypeTree(), genTypeExpr(tpe))
       case None => TypeTree()

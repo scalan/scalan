@@ -91,6 +91,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
 
   val nonWrappers = List[NonWrapper](
     NonWrapper(name = "Predef"),
+    NonWrapper(name = "<byname>"),
     NonWrapper(name = "ArrayOps"),
     NonWrapper(name = "CanBuildFrom")
   ).map(w => (w.name, w)).toMap

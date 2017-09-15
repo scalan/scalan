@@ -1,8 +1,11 @@
 package scalan.plugin
 
 import scala.annotation.tailrec
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.tools.nsc._
 import scalan.meta.ScalanAst._
+import scalan.util.CollectionUtil.TraversableOps
 
 object WrapFrontend {
   val name = "scalanizer-wrapfrontend"
@@ -93,7 +96,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         case _ => false
       }
       SMethodArg(
-        impFlag = false, overFlag = false,
+        impFlag = arg.isImplicit, overFlag = false,
         name = arg.nameString,
         tpe = tpe,
         default = None, annotations = Nil, isTypeDesc = isTypeDesc
@@ -116,10 +119,35 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
                             tpeArgs: List[STpeArg],
                             argSections: List[SMethodArgs],
                             tpeRes: STpeExpr): SMethodDef = {
+    val reifiedArgs = mutable.Set[STpeArg]()
+    val argsWithoutClassTags = argSections.filterMap { section =>
+      val filteredArgs = section.args.filterMap { arg =>
+        arg.tpe match {
+          case STraitCall("ClassTag", List(tT)) =>
+            tpeArgs.find(t => t.name == tT.name) match {
+              case Some(tpeArg) =>
+                reifiedArgs += tpeArg
+                None  // filter the arg out of section
+              case None =>
+                // this ClassTag doesn't relate to type arguments so leave it in the section
+                Some(arg)
+            }
+          case _ =>
+            Some(arg)
+        }
+      }
+      if (filteredArgs.isEmpty) None // filter out the section
+      else Some(section.copy(args = filteredArgs))
+    }
+    val annotatedArgs = tpeArgs.map(a =>
+      if (reifiedArgs.contains(a))
+        a.copy(annotations = STypeArgAnnotation("Reified", Nil) :: a.annotations)
+      else
+        a)
     SMethodDef(
       name = name,
-      tpeArgs = tpeArgs,
-      argSections = argSections,
+      tpeArgs = annotatedArgs,
+      argSections = argsWithoutClassTags,
       tpeRes = Some(tpeRes),
       isImplicit = false, isOverride = false,
       overloadId = None,
@@ -159,43 +187,45 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     * externalType is "class Col"
     * one of the members is "def arr: Array[A]"
     * */
-  def createWrapper(externalType: Type, members: List[SBodyItem]): WrapperDescr = {
+  def createWrapper(externalType: Type): WrapperDescr = {
     val externalTypeSym = externalType.typeSymbol
-    val clazz = externalTypeSym.companionClass
     val isCompanion = externalTypeSym.isModuleClass
+    val clazz = if (isCompanion) externalTypeSym.companionClass else externalTypeSym
     val tpeArgs = clazz.typeParams.map { param =>
-      STpeArg(
-        name = param.nameString,
-        bound = None, contextBound = Nil, tparams = Nil
-      )
+      STpeArg(name = param.nameString, bound = None, contextBound = Nil, tparams = Nil)
     }
     val originalEntityAncestors = getExtTypeAncestors(externalType)
     val ownerChain = externalTypeSym.ownerChain.map(_.nameString)
-    createWrapperSpecial(externalTypeSym.enclosingPackage.name, externalType.typeSymbol.nameString, tpeArgs, originalEntityAncestors, isCompanion, members, ownerChain)
+    createWrapperSpecial(
+      externalTypeSym.enclosingPackage.name,
+      externalType.typeSymbol.nameString, tpeArgs,
+      originalEntityAncestors,
+      ownerChain)
   }
 
-  def createWrapperSpecial(packageName: String, externalTypeName: String, tpeArgs: STpeArgs, originalEntityAncestors: List[STypeApply],
-                           isCompanion: Boolean, members: List[SBodyItem], ownerChain: List[String]): WrapperDescr = {
+  /** Create wrapper module for a new type externalTypeName */
+  def createWrapperSpecial(packageName: String, externalTypeName: String, tpeArgs: STpeArgs,
+                           originalEntityAncestors: List[STypeApply],
+                           ownerChain: List[String]): WrapperDescr = {
     val (externalName, wClassName, companionName) = wrapperNames(externalTypeName)
     val wrapperConf = snConfig.wrapperConfigs.getOrElse(externalTypeName, WrapperConfig.default(externalTypeName))
     val typeParams = tpeArgs.map { arg =>
       STraitCall(name = arg.name, tpeSExprs = Nil)
     }
-    val baseType = if (isCompanion) STraitCall(externalName + ".type", typeParams)
-    else STraitCall(externalName, typeParams)
+    val baseType = STraitCall(externalName, typeParams)
     val entityAncestors = STraitCall("TypeWrapper", List(baseType, STraitCall(wClassName, typeParams))).toTypeApply :: originalEntityAncestors
     val entityAnnotations = wrapperConf.annotations.map { a => STraitOrClassAnnotation(a, Nil) }
     val entity = STraitDef(
       name = wClassName,
       tpeArgs = tpeArgs,
       ancestors = entityAncestors,
-      body = if (isCompanion) Nil else members,
+      body = Nil,
       selfType = Some(SSelfTypeDef("self", Nil)),
       companion = Some(STraitDef(
         name = companionName,
         tpeArgs = Nil,
         ancestors = mkCompanionAncestors(wClassName, kind = typeParams.length),
-        body = if (isCompanion) members else Nil,
+        body = Nil,
         selfType = None, companion = None
       )),
       annotations = entityAnnotations
@@ -222,48 +252,6 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     WrapperDescr(module, ownerChain, wrapperConf)
   }
 
-  /** Adds a method or a value to the wrapper. It checks the external type symbol
-    * to determine where to put the method (value) - into class or its companion. */
-  def addMember(isCompanion: Boolean, member: SMethodDef, wrapperDescr: WrapperDescr): WrapperDescr = {
-    val module = wrapperDescr.module
-    def isAlreadyAdded = {
-      if (isCompanion) {
-        module.entityOps.companion match {
-          case Some(companion) => companion.body.contains(member)
-          case None => false
-        }
-      } else module.entityOps.body.contains(member)
-    }
-
-    if (isAlreadyAdded) {
-      wrapperDescr
-    } else {
-      val updatedEntity = if (isCompanion) {
-        val updatedCompanion = module.entityOps.companion match {
-          case Some(companion: STraitDef) =>
-            val updatedBody = member :: companion.body
-            Some(companion.copy(body = updatedBody))
-          case _ => throw new IllegalArgumentException(module.entityOps.companion.toString)
-        }
-        module.entityOps.copy(companion = updatedCompanion)
-      } else {
-        val updatedBody = member :: module.entityOps.body
-        module.entityOps.copy(body = updatedBody)
-      }
-      wrapperDescr.copy(
-        module = module.copy(entityOps = updatedEntity, entities = List(updatedEntity))
-      )
-    }
-  }
-
-  //  def updateWrapperSpecial(externalTypeName: String, member: SMethodDef): Unit = {
-  //    val updatedWrapper = snState.wrappers.get(externalTypeName) match {
-  //      case None =>  createWrapper(objType, List(member))
-  //      case Some(wrapperDescr) => addMember(objType, member, wrapperDescr)
-  //    }
-  //
-  //    snState.wrappers(externalTypeName) = updatedWrapper
-  //  }
   /** Create/update Meta AST of the module for the external type. It assembles
     * Meta AST of a method (value) by its Scala's Type. */
   def updateWrapper(objType: Type,
@@ -305,21 +293,58 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         formExternalMethodDef(methodName.toString, Nil, Nil, formMethodRes(sym.tpe))
       case _ => throw new NotImplementedError(s"memberType = ${showRaw(memberType)}")
     }
-    val updatedWrapper = snState.wrappers.get(externalTypeName) match {
-      case None => createWrapper(objType, List(member))
-      case Some(wrapperDescr) => addMember(objType.typeSymbol.isModuleClass, member, wrapperDescr)
-    }
+    val wrapper = snState.wrappers.getOrElse(externalTypeName, {
+      createWrapper(objType)
+    })
+    val updatedWrapper = addMember(objType.typeSymbol.isModuleClass, member, wrapper)
     snState.wrappers(externalTypeName) = updatedWrapper
     createMemberDependencies(memberType)
   }
 
   def updateWrapperSpecial(packageName: String, externalTypeName: String, tpeArgs: STpeArgs, originalEntityAncestors: List[STypeApply],
                            isCompanion: Boolean, member: SMethodDef, ownerChain: List[String]): Unit = {
-    val updatedWrapper = snState.wrappers.get(externalTypeName) match {
-      case None => createWrapperSpecial(packageName, externalTypeName, tpeArgs, originalEntityAncestors, isCompanion, List(member), ownerChain)
-      case Some(wrapperDescr) => addMember(isCompanion, member, wrapperDescr)
-    }
+    val wrapper = snState.wrappers.getOrElse(externalTypeName, {
+      createWrapperSpecial(packageName, externalTypeName, tpeArgs, originalEntityAncestors, ownerChain)
+    })
+    val updatedWrapper = addMember(isCompanion, member, wrapper)
     snState.wrappers(externalTypeName) = updatedWrapper
+  }
+
+  /** Adds a method or a value to the wrapper. It checks the external type symbol
+    * to determine where to put the method (value) - into class or its companion. */
+  def addMember(isCompanion: Boolean, member: SMethodDef, wrapper: WrapperDescr): WrapperDescr = {
+    val module = wrapper.module
+
+    def isAlreadyAdded = {
+      if (isCompanion) {
+        module.entityOps.companion match {
+          case Some(companion) => companion.body.contains(member)
+          case None => false
+        }
+      }
+      else
+        module.entityOps.body.contains(member)
+    }
+
+    if (isAlreadyAdded) {
+      wrapper
+    } else {
+      val updatedEntity = if (isCompanion) {
+        val updatedCompanion = module.entityOps.companion match {
+          case Some(companion: STraitDef) =>
+            val updatedBody = member :: companion.body
+            Some(companion.copy(body = updatedBody))
+          case _ => throw new IllegalArgumentException(module.entityOps.companion.toString)
+        }
+        module.entityOps.copy(companion = updatedCompanion)
+      } else {
+        val updatedBody = member :: module.entityOps.body
+        module.entityOps.copy(body = updatedBody)
+      }
+      wrapper.copy(
+        module = module.copy(entityOps = updatedEntity, entities = List(updatedEntity))
+      )
+    }
   }
 
   /** Converts curried method type its uncurried Meta AST representation. */
@@ -354,7 +379,8 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     parentDecls foreach { parent =>
       val name = parent.typeSymbol.nameString
       if (!isIgnoredExternalType(name) && !snState.wrappers.keySet.contains(name)) {
-        snState.wrappers(name) = createWrapper(parent, Nil)
+        val wrapperDescr = createWrapper(parent)
+        snState.wrappers(name) = wrapperDescr
       }
     }
   }
@@ -365,7 +391,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       def traverse(tp: Type): Unit = tp match {
         case TypeRef(pre, sym, args) if isWrapperSym(sym) =>
           if (!snState.wrappers.contains(sym.nameString)) {
-            val module = createWrapper(sym.tpe, Nil)
+            val module = createWrapper(sym.tpe)
             snState.wrappers(sym.nameString) = module
           }
         case _ => mapOver(tp)

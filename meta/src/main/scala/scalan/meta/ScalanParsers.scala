@@ -571,6 +571,9 @@ trait ScalanParsers[G <: Global] {
     case NoType | NoPrefix => STpeEmpty()
     case const: ConstantType => STpeConst(SConst(const.value.value, Some(parseType(const.underlying))))
     case thisType: ThisType => STpeThis(thisType.sym.nameString)
+    case tref: TypeRef if global.definitions.isByNameParamType(tref) =>
+       val ty = parseType(tref.args(0))
+       STraitCall("Thunk", List(ty))
     case tref: TypeRef => parseTypeRef(tref)
     case single: SingleType => STpeSingle(parseType(single.pre), single.sym.nameString)
     case TypeBounds(lo, hi) => STpeTypeBounds(parseType(lo), parseType(hi))

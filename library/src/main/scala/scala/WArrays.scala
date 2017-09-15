@@ -13,10 +13,12 @@ package scala {
       implicit def eT: Elem[T];
       def wrappedValue: Rep[Array[T]];
       @External def apply(i: Rep[Int]): Rep[T];
-      @External def length: Rep[Int];
-      @External def map[B](f: Rep[scala.Function1[T, B]]): Rep[WArray[B]]
+      @External def map[B](f: Rep[scala.Function1[T, B]]): Rep[WArray[B]];
+      @External def length: Rep[Int]
     };
-    trait WArrayCompanion extends ExCompanion1[WArray];
+    trait WArrayCompanion extends ExCompanion1[WArray] {
+      @External def fill[@Reified T](n: Rep[Int])(elem: Rep[Thunk[T]]): Rep[WArray[T]]
+    };
     def DefaultOfArray[T](implicit eT: Elem[T]): Rep[Array[T]] = toRep(null.asInstanceOf[Array[T]])
   }
 }

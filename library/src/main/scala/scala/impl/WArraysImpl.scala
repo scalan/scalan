@@ -120,15 +120,15 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
         this.getClass.getMethod("apply", classOf[AnyRef]),
         List(i.asInstanceOf[AnyRef]))
 
-    def length: Rep[Int] =
-      methodCallEx[Int](self,
-        this.getClass.getMethod("length"),
-        List())
-
     def map[B](f: Rep[T => B]): Rep[WArray[B]] =
       methodCallEx[WArray[B]](self,
         this.getClass.getMethod("map", classOf[AnyRef]),
         List(f.asInstanceOf[AnyRef]))
+
+    def length: Rep[Int] =
+      methodCallEx[Int](self,
+        this.getClass.getMethod("length"),
+        List())
   }
   case class WArrayImplCtor[T](override val wrappedValue: Rep[Array[T]])(implicit override val eT: Elem[T]) extends WArrayImpl[T](wrappedValue) {
   }
@@ -210,6 +210,10 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   registerModule(WArraysModule)
 
   lazy val WArray: Rep[WArrayCompanionCtor] = new WArrayCompanionCtor {
+    def fill[T](n: Rep[Int])(elem: Rep[Thunk[T]]): Rep[WArray[T]] =
+      methodCallEx[WArray[T]](self,
+        this.getClass.getMethod("fill", classOf[AnyRef], classOf[AnyRef]),
+        List(n.asInstanceOf[AnyRef], elem.asInstanceOf[AnyRef]))
   }
 
   case class ViewWArray[A, B](source: Rep[WArray[A]], override val innerIso: Iso[A, B])
@@ -260,18 +264,6 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
       }
     }
 
-    object length {
-      def unapply(d: Def[_]): Option[Rep[WArray[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "length" =>
-          Some(receiver).asInstanceOf[Option[Rep[WArray[T]] forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Rep[WArray[T]] forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object map {
       def unapply(d: Def[_]): Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "map" =>
@@ -283,9 +275,32 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
         case _ => None
       }
     }
+
+    object length {
+      def unapply(d: Def[_]): Option[Rep[WArray[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "length" =>
+          Some(receiver).asInstanceOf[Option[Rep[WArray[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[WArray[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object WArrayCompanionMethods {
+    object fill {
+      def unapply(d: Def[_]): Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(n, elem, _*), _) if receiver.elem == WArrayCompanionElem && method.getName == "fill" =>
+          Some((n, elem)).asInstanceOf[Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object UserTypeWArray {
@@ -339,7 +354,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 }
 
 object WArraysModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWzW8bRRR/3sbxV5omQYnUQ0uItkJAYhfUqlSRkII/UMHEVjZqkalA492xO2V3dtkdp2sOvdEDXBDqCYlDRblFSIgLcEdCHPoPcAYJNSDUQyshgZiP/XDcuGkP9WE0O/vmvd/7vd97690/IRv4sByYyEa07GCGyobcbwRMN952rYGNa7jX2vv45B9frd7XYL4D01dQUAvsDhTUph56yd5gVhPmG4RadcoIG+qOdMGg3FQxKiJG5aAY+sit9SYUEDVxwFw/YPCculwxXdvGJiMurRDHGTDUtXGlSQLG7ae6rjX8EK6D1oQ506Wmjxk2qjYKAhxE53ks3JPkuSCfhy0vjfEwwG0fEcbx8Rhzyn4Le8aQunToMJiNoLU8AYvblHDocSIuOJ4tw0w1IUccz/VZHDXHI1xxrfhxiiJ+AAvNq2gHVXjUfsVgPqF94cxD5geojze5iTDP8hwCbPe2hx6OnJcCZu2LF3oA4PGqviKRlVPSyglpZUGabmCfIJt8hMTLtu+GQ1C/zBGAULhYPcRF7AHXqaV/ctl894FRcjRxORRY8hJRjjt6doLCZH04uT9vfR7ce+PWOQ2KHSiSYKMbMB+ZbFQHEV8lRKnLJOaEQuT3eQlXJpVQRtngNmM6KZiu4yHKPUVkzvBK2cQkTBiLs6NRfSaQn2Mejk210Msk+U7qKCmmKrLt9t3ja6f26u9oiQSiEAXu0uAt5cdOGUxf2vB9NIyci3WOQWZbMiyWYpiu+UcET2h4/u5f1k+n4bIGmYi8KNbj1Yu7WHj1ix9P4fY3GuQ7Ut8NG/Vl5QQ7NRyYHci7O9hX57kdZIvdgdXLWbiHBjaLOB0l4wgng8HyxNb0sGBqXUo+E6dfUqLddCnWG239vvHLzV2hSR9m1BvVq/+Rc//+OttjUq4MZq75yPOwdRHZAxyTnH2IeLEsHsy8WE5Kq6WRG8czmQiafM9Aw9ux+6m6jZ3DvTMoKgWIJk+jiDqdmKQzqcu9f27/YHz29XkNpt+EbI8XIGhCtusOqBULnk9KhkP2enw2pkYucOQjJxmgO4g3PG9IBktxUQaM2JWL0bkqBf8tgwSa5LIYV2cpQiyulS9Q5ZDpL32/e43ceaEhqzGa/KGSjOfztzduLP59+/1n5AjJdwlzkKeffoIBEvf7UxwQsL+HS8LyktSdQpcTy3KqhYXHk94IS2uPYqnlq/5N8if66vnfazffklPoWMqLNItSGp0PDI5WuWAQodiPs1RD/jWeTWNATc5z8mIE2lJyIDRQVH1ouA6eX7lH3rv1KZOjKBPu/w62ulf5Z2dd5nhC+jkzxuBMPazGJXp5nKyFCRNyDJAUKk/tmGqy6mjJlYC9tBY1Dn9lAsdGVHsuxusPvtx88c53v0lii0JFfBrR5C9AKhkl9jyfBUI5Yr+WQj2bQEgbiZvmou8Bn08SSQRMrO399MzG4lL/ssb42JKe/wcIHe6nBAoAAA=="
+  val dump = "H4sIAAAAAAAAALVWTWwbRRR+3iRd/6Rp0qiFQgIhLCAg2AUOBXKo3CRGBZOEbtQiU4HGu2N3yv4Mu+N0jare6AFuqCckDhVIXCIQ4oIQQgiEhDj0jjiiIhBQVT20EhIV87O73jhxUg74MJqdffN+vu97b73xF4yEAcyEFnKQV3YxQ2VT7qshM8yXfLvj4EXcWvnz7ft+/3DupgYTDdhzBoWLodOAgtosRTTdm8yuw0SNePaSxwjrGq50waBcVzEqIkZluxhG5tZ8HQrIs3DI/CBk8IC6XLF8x8EWI75XIa7bYajp4EqdhIzbDzd9u/smXACtDuOW71kBZthccFAY4jA+z2PhnqTPBfncXaG9GFsTXAsQYTw/HmNc2Z/A1Ox6vtd1GYzFqa1QkRa3KeGIciCOu9SRYYbroBOX+gFLouo8whnfTh6HPcQPYH/9LFpHFR61XTFZQLy2cEaR9QZq42VuIsxHeA0hdlprXYpj56WQ2ZviRRQAKGf1KZlZuQdaOQWtLEAzTBwQ5JC3kHi5GvhRF9QvNwQQCRdzu7hIPOAlzzbeOW29esssuZq4HIlc8jIjnTu6f4DCJD8c3B9OvBfeeP7yEQ2KDSiSsNoMWYAsltVBjFcJeZ7PZM4phChocwpnB1Eoo1S5TZ9OCpbvUuRxTzGYo5wph1iECWNxtjfmZwD4OqM4MdUimkvrHdRR4m6VUqf73fmvz/8y9dOEBkNClxENMm6HuNsdypGKXECOw8vRWBKcRy0qukzfxROzN8hrl99lGuTqkIs262uleZbTOR8FMKpuKPXeJkf++XmsxbSY/YFFJPG/0r/59rerR4e1VMcxTgVegMnnQpAkx2DPqWoQoG6MkFjvYpBbkzIRS1Eq5u6+5/wOaaSsPvLHNfv7w3Ba1iq1kEByR/LjLvY/8/6XD+HVTzTIN2S71hzUlkIUrCzi0GpA3l/HgTrX15EjdtuKUbdxC3UcFnOZhUXxOjOQV4oFZvOyg3NJ+SVF0bLvYaO2atw0f7y0IRgS7w8wGD0XIEqxfRI5HZzgOrIFa7FM9YEbQywWQ1pNZ27M5HJxDvI9Aw2vJe6Hlxzs7u6dQVGRLoZTL4ogZHqQtGQ/ffr3sY8fvOfe2xroL8BIiyMdbgv1SNPveHbSu3zoMxyxY8lZnyZ5r6IAuem3YB3x2cVnC4ODCSEdRpzKyfhc0cB/M9CDId1NJfQcjCsRd8vHPeWVGY9/sXGOXHm0JnspC8qumky+N59dvHjg+kevT8qRmG8S5iJqHP4PAzGZX//jwIOMCMblOplopCRunZLaVJnqYnm4p5dDdybPo5nTFLsndsJuJVBtnaJCjLlnf1289KIcU/t6aEmzuNDs2GCwd4FrCREPp1NZfcpqvK5ax7M4+umLTGrT6UE+A8ZzO6A0uhQtJJQ82Q/IoT5AXt4yHPuCSony9PeptlvIkq2kS3vIT3IcZwfgaMascxleuPXB8mNXPr8qwSsK/fBB5KV/ZnpiUTLP8+kgNCP2T/dSnU9T6LUQN9XjjwKfWDKTDDivbP5SjCVSUv8X+5BoSM//AlaoXrrOCgAA"
 }
 }
 

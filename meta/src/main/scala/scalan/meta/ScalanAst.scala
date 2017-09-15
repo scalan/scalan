@@ -175,6 +175,7 @@ object ScalanAst {
   case class STuplePath(base: STpeExpr, index: Int, tail: STpePath) extends SBasedPath
   case class SDomPath(base: STpeExpr, tail: STpePath) extends SBasedPath
   case class SRangePath(base: STpeExpr, tail: STpePath) extends SBasedPath
+  case class SThunkPath(base: STpeExpr, tail: STpePath) extends SBasedPath
   case class SStructPath(base: STpeExpr, fieldName: String, tail: STpePath) extends SBasedPath
   case class SEntityPath(base: STpeExpr, entity: STraitOrClassDef, tyArgName: String, tail: STpePath) extends SBasedPath
 
@@ -201,6 +202,8 @@ object ScalanAst {
           None
         }
         findInTuple(t)
+      case STraitCall("Thunk", List(tT)) =>
+        find(module, tT, argName).map(tail => SThunkPath(tpe, tail))
       case s @ STpeStruct(_) =>
         def findInStruct(s: STpeStruct): Option[STpePath] = {
           for ((fn, ft) <- s.fields) {
@@ -241,12 +244,14 @@ object ScalanAst {
   case class STraitOrClassAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
   case class SMethodAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
   case class SArgAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
+  case class STypeArgAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
 
   final val ConstructorAnnotation = classOf[Constructor].getSimpleName
   final val ExternalAnnotation = classOf[External].getSimpleName
   final val ArgListAnnotation = classOf[ArgList].getSimpleName
   final val ContainerTypeAnnotation = classOf[ContainerType].getSimpleName
   final val FunctorTypeAnnotation = classOf[FunctorType].getSimpleName
+  final val ReifiedTypeArgAnnotation = classOf[Reified].getSimpleName
 
   // SExpr universe --------------------------------------------------------------------------
   trait SExpr {
@@ -368,7 +373,8 @@ object ScalanAst {
                       bound: Option[STpeExpr] = None,
                       contextBound: List[String] = Nil,
                       tparams: List[STpeArg] = Nil,
-                      flags: Long = ModifierFlags.PARAM)
+                      flags: Long = ModifierFlags.PARAM,
+                      annotations: List[STypeArgAnnotation] = Nil)
   {
     def isHighKind = tparams.nonEmpty
     val variance =

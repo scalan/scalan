@@ -287,6 +287,9 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
     testPath(module, "(Int, A)", "A", t => Some(STuplePath(t, 1, SNilPath)))
     testPath(module, "(B, A)", "A", t => Some(STuplePath(t, 1, SNilPath)))
 
+    testPath(module, "Thunk[A]", "A", t => Some(SThunkPath(t, SNilPath)))
+    testPath(module, "Thunk[B]", "A", _ => None)
+
     val t1 = STpeStruct(List(("a", parseType("A"))))
     testStructPath(module, t1, "A", Some(SStructPath(t1, "a", SNilPath)))
     val t2 = parseType("(A,Int)")

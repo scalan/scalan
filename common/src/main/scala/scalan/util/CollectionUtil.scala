@@ -1,7 +1,8 @@
 package scalan.util
 
 import scala.collection.{Seq, mutable}
-import mutable.{ArrayBuffer, HashMap}
+import mutable.{HashMap, ArrayBuffer}
+import scala.collection.generic.CanBuildFrom
 
 object CollectionUtil {
 
@@ -73,4 +74,19 @@ object CollectionUtil {
     res.toMap
   }
 
+  implicit class TraversableOps[A, Source[X] <: Traversable[X]](xs: Source[A]) {
+    def filterMap[B](f: A => Option[B])(implicit cbf: CanBuildFrom[Source[A], B, Source[B]]): Source[B] = {
+       val b = cbf()
+       for (x <- xs) {
+         f(x) match {
+           case Some(y) =>
+             b += y
+           case None =>
+         }
+       }
+       b.result()
+    }
+  }
 }
+
+
