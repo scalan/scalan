@@ -50,9 +50,9 @@ trait ScalanParsers[G <: Global] {
     throw new IllegalStateException(msg)
   }
 
-  def parse(name: String, tree: Tree) = tree match {
+  def moduleDefFromTree(name: String, tree: Tree): SModuleDef = tree match {
     case pd: PackageDef =>
-      entityModule(pd)
+      moduleDefFromPackageDef(pd)
     case tree =>
       throw new Exception(s"Unexpected tree in $name:\n\n$tree")
   }
@@ -119,7 +119,7 @@ trait ScalanParsers[G <: Global] {
     hasClass && hasModule && hasMethod
   }
 
-  def entityModule(fileTree: PackageDef) = {
+  def moduleDefFromPackageDef(fileTree: PackageDef): SModuleDef = {
     val packageName = fileTree.pid.toString
     val statements = fileTree.stats
     val imports = statements.collect {

@@ -13,17 +13,21 @@ class VirtBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   import scalanizer.global._
 
   val phaseName: String = VirtBackend.name
+
   override def description: String = "Generating of Scala AST for virtualized cake."
+
   override val runsAfter = List(WrapBackend.name)
+
+  def newPhase(prev: Phase) = new StdPhase(prev) {
+    override def run(): Unit = {
+      //      saveCombinedCake("scalanizer.linalgebra", "LinearAlgebra")
+    }
+    def apply(unit: CompilationUnit): Unit = ()
+  }
+
   def getCombinedCakeHome(namespace: String) = {
     val namespacePath = namespace.split('.').mkString("/")
     s"${snConfig.home}/src/main/scala/$namespacePath/impl"
-  }
-  def newPhase(prev: Phase) = new StdPhase(prev) {
-    override def run(): Unit = {
-//      saveCombinedCake("scalanizer.linalgebra", "LinearAlgebra")
-    }
-    def apply(unit: CompilationUnit): Unit = ()
   }
 
   /** Puts all modules to the cakes <name>Dsl, <name>DslStd and <name>DslExp.
@@ -33,11 +37,13 @@ class VirtBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
     val ns = genRefs(namespace.split('.').toList).asInstanceOf[RefTree]
     val imports = List(q"import scalan._")
     val absCake = q"trait ${TypeName(name + "Dsl")} extends Scalan with WrappersDsl with ColsDsl"
-    val stdCake = q"""
+    val stdCake =
+      q"""
                   trait ${TypeName(name + "DslStd")}
                     extends WrappersDslStd with ${TypeName(name + "Dsl")}
                   """
-    val expCake = q"""
+    val expCake =
+      q"""
                   trait ${TypeName(name + "DslExp")}
                     extends WrappersDslExp
                     with ${TypeName(name + "Dsl")}
@@ -45,15 +51,16 @@ class VirtBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
                   """
     val objectSE = q"object StagedEvaluation {..${imports ++ List(absCake, stdCake, expCake)}}"
     val cake = PackageDef(ns,
-                List(PackageDef(
-                  Ident(TermName("implOf"+name)),
-                  List(
-                    q"import wrappers._",
-                    q"import scalanizer.collections.implOfCols.StagedEvaluation._",
-                    objectSE)
-                )))
+      List(PackageDef(
+        Ident(TermName("implOf" + name)),
+        List(
+          q"import wrappers._",
+          q"import scalanizer.collections.implOfCols.StagedEvaluation._",
+          objectSE)
+      )))
     saveCombinedCake(namespace, name, showCode(cake))
   }
+
   def saveCombinedCake(namespace: String, name: String, cake: String): Unit = {
     val cakeFile = FileUtil.file(getCombinedCakeHome(namespace), name + "Impl.scala")
     cakeFile.mkdirs()

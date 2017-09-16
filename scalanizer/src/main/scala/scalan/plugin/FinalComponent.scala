@@ -1,5 +1,6 @@
 package scalan.plugin
 
+import scala.reflect.io.Path
 import scala.tools.nsc._
 import scalan.meta.ScalanAst.SModuleDef
 import scalan.util.Serialization
@@ -15,7 +16,7 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
   val phaseName: String = FinalComponent.name
   override def description: String = "Code virtualization and specialization"
 
-  val runsAfter = List(CheckExtensions.name)
+  val runsAfter = List(WrapBackend.name)
 
   /** Transformations of Scalan AST */
   val pipeline = scala.Function.chain(Seq(
@@ -41,14 +42,18 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
       val unitName = unit.source.file.name
       if (snConfig.codegenConfig.entityFiles.contains(unitName)) try {
 //        showTree("body", unitName, unit.body)
-//        val moduleDef = parse(unitName, unit.body)
-//        val enrichedModuleDef = pipeline(moduleDef)
+        val moduleDef = moduleDefFromTree(unitName, unit.body)
 
         /** Generates a virtualized version of original Scala AST, wraps types by Rep[] and etc. */
-//        val virtAst = genScalaAst(enrichedModuleDef, unit.body)
+        val enrichedModuleDef = pipeline(moduleDef)
+
+        /** Scala AST of virtualized module */
+        val virtAst = genModuleFile(enrichedModuleDef, unit.body)
+        val nameOnly = Path(unitName).stripExtension
+        saveWrapperCode(moduleDef.packageName, nameOnly, showCode(virtAst))
 //        showTree("virtAst", unitName, virtAst)
 
-        /** Invoking of Scalan META to produce boilerplate code */
+        /** produce boilerplate code using ModuleFileGenerator*/
 //        val boilerplate = genBoilerplate(enrichedModuleDef)
 //        showTree("boilerplate", unitName, boilerplate)
 
@@ -78,17 +83,6 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
 //          saveImplCode(unit.source.file.file, showCode(stagedAst))
         }
 
-        if (snConfig.read) {
-          /** Discards the generated code and load it from FS. */
-//          unit.body = accelAst
-        }
-        else
-        {
-//          unit.body = combineAst(accelAst, stagedAst)
-        }
-
-//        if (snConfig.debug)
-//          saveDebugCode(unitName, showCode(unit.body))
       } catch {
         case e: Exception => print(s"Error: failed to parse ${unitName} due to " + e.printStackTrace())
       }

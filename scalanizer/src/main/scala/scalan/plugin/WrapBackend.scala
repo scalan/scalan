@@ -31,7 +31,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
         val module = m.copy(imports = m.imports :+ SImportStat("scala.wrappers.WrappersModule"))
         /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
         val boilerplate = genWrapperBoilerplate(module)
-        saveWrapperBoilerplate(module.packageName, module.name, boilerplate)
+        saveWrapperCode(module.packageName + ".impl", module.name + "Impl", boilerplate)
 
         /** Form source code of the wrapper and store it. */
         val wrapperModuleWithoutImpl = module.copy(concreteSClasses = Nil)
@@ -57,7 +57,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   /** Generates Scala AST for the given wrapper (without implementation). */
   def genWrapperPackage(module: SModuleDef): Tree = {
     implicit val genCtx = GenCtx(module = module, toRep = true)
-    val scalaAst = genModule(module)
+    val scalaAst = genModuleTrait(module)
     val imports = module.imports.map(genImport(_))
     val selfType = Some(SSelfTypeDef("self", List(STraitCall("Wrappers", Nil))))
 //    val extensions = genExtensions(module.name, selfType, Nil).map(
@@ -67,17 +67,6 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
     val wrappersPackage = PackageDef(Ident(TermName(module.packageName)), pkgStats)
 
     wrappersPackage
-  }
-  def getWrappersHome = snConfig.home + "/src/main/scala"
-  def saveWrapperCode(packageName: String, fileName: String, wrapperCode: String) = {
-    val wrapperFile = FileUtil.file(getWrappersHome, packageName, fileName + ".scala")
-    wrapperFile.mkdirs()
-    FileUtil.write(wrapperFile, wrapperCode)
-  }
-  def saveWrapperBoilerplate(packageName: String, fileName: String, boilerplate: String): Unit = {
-    val boilerplateFile = FileUtil.file(getWrappersHome, packageName, "impl", fileName + "Impl.scala")
-    boilerplateFile.mkdirs()
-    FileUtil.write(boilerplateFile, boilerplate)
   }
 
   def initWrapperSlices: WrapperSlices = {
@@ -102,7 +91,6 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   def saveWrapperSlices(cake: WrapperSlices): Unit = {
     implicit val genCtx = GenCtx(module = null, toRep = false)
     val absCake = genTrait(cake.abs)
-
     val cakePackage =
       q"""
         package scala.wrappers {
@@ -111,13 +99,8 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
           $absCake
         }
      """
-
-    val wrapperFile = FileUtil.file(getWrappersHome, "scala/wrappers", cake.abs.name + ".scala")
-    saveWrapperSlices(wrapperFile, showCode(cakePackage))
+    val code = showCode(cakePackage)
+    saveWrapperCode("scala.wrappers", cake.abs.name, code)
   }
 
-  def saveWrapperSlices(wrapperFile: File, cakes: String): Unit = {
-    wrapperFile.mkdirs()
-    FileUtil.write(wrapperFile, cakes)
-  }
 }

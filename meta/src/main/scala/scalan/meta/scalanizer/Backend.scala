@@ -18,16 +18,23 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
 
   case class GenCtx(module: SModuleDef, toRep: Boolean = true)
 
-  def genScalaAst(module: SModuleDef, orig: Tree): Tree = orig match {
-    case q"package $ref { ..$body }" =>
+  def genModuleFile(module: SModuleDef, orig: Tree): Tree = orig match {
+    case q"package $ref { ..$_ }" =>
       implicit val ctx = GenCtx(module, true)
-      val virtBody = List[Tree](genModule(module))
-
-      q"package $ref { ..$virtBody }"
-    case tree => throw new IllegalArgumentException("Module must be in a package")
+      val moduleBody = List[Tree](genModuleTrait(module))
+      val imports = module.imports.map(genImport(_))
+      PackageDef(ref,
+        imports ++ moduleBody
+      )
+//      q"""package $ref {
+//        ..$imports
+//        ..$moduleBody
+//      }"""
+    case tree =>
+      throw new IllegalArgumentException("Module must be in a package")
   }
 
-  def genModule(module: SModuleDef)(implicit ctx: GenCtx): Tree = {
+  def genModuleTrait(module: SModuleDef)(implicit ctx: GenCtx): Tree = {
     val methods = module.methods.map(m => genMethod(m)(ctx.copy(toRep = !m.isTypeDesc)))
     val newstats =
       module.entityRepSynonym.map(genTypeDef).toList :::
@@ -37,7 +44,6 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
     val name = TypeName(module.name)
     val moduleParents = genParents(module.ancestors)
     val res = q"trait $name extends ..$moduleParents { $newSelf => ..$newstats }"
-
     res
   }
 
@@ -237,6 +243,7 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
 
   def genTypeExpr(tpeExpr: STpeExpr)(implicit ctx: GenCtx): Tree = tpeExpr match {
     case STpeEmpty() => tq""
+    case STpeConst(const) => tq"${ConstantType(Constant(const.c))}"
     case STpePrimitive(name: String, _) => tq"${TypeName(name)}"
     case STraitCall(name: String, tpeSExprs: List[STpeExpr]) =>
       val targs = tpeSExprs.map(genTypeExpr)

@@ -83,7 +83,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
   }
 
   def testModule(prog: String, expected: SModuleDef) {
-    test(TopLevel, prog, expected) { case tree: PackageDef => entityModule(tree) }
+    test(TopLevel, prog, expected) { case tree: PackageDef => moduleDefFromPackageDef(tree) }
   }
 
   def testTrait(prog: String, expected: STraitDef) {
@@ -271,7 +271,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
 
   def makeModule(moduleText: String): SModuleDef = {
     val pkg = parseString(TopLevel, reactiveModule).asInstanceOf[PackageDef]
-    val module = entityModule(pkg)
+    val module = moduleDefFromPackageDef(pkg)
     module
   }
 

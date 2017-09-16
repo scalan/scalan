@@ -3,6 +3,7 @@ package scalan.meta.scalanizer
 import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
 import scalan.meta.{ScalanParsers, CodegenConfig}
+import scalan.util.FileUtil
 
 trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
   import global._
@@ -389,4 +390,13 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
   }
   /** The external types that should be rejected during virtualization. */
   def isIgnoredExternalType(typeName: String) = Set("Object", "Any", "AnyRef").contains(typeName)
+
+  def getWrappersHome = snConfig.home + "/src/main/scala"
+
+  def saveWrapperCode(packageName: String, fileName: String, wrapperCode: String) = {
+    val packagePath = packageName.split('.').mkString("/")
+    val wrapperFile = FileUtil.file(getWrappersHome, packagePath, fileName + ".scala")
+    wrapperFile.mkdirs()
+    FileUtil.write(wrapperFile, wrapperCode)
+  }
 }

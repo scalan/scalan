@@ -4,7 +4,7 @@ import scalan.meta.ScalanAst.KernelType
 import scalan.meta.scalanizer.HotSpot
 import scalanizer.linalgebra.LinearAlgebra
 
-trait Cols {self: LinearAlgebra =>
+trait Cols {
   trait Col[A] {
     def arr: Array[A]
     def length: Int

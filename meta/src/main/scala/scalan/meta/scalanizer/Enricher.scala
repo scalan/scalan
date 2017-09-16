@@ -26,13 +26,13 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
 
   /** Imports scalan._ and other packages needed by Scalan and further transformations. */
   def addImports(module: SModuleDef) = {
-    val usedModules = snState.dependenceOfModule.getOrElse(module.name, List())
-    val usedImports = usedModules.map(getImportByName)
+//    val usedModules = snState.dependenceOfModule.getOrElse(module.name, List())
+//    val usedImports = usedModules.map(getImportByName)
     val usersImport = module.imports.collect{
       case imp @ SImportStat("scalan.compilation.KernelTypes._") => imp
     }
 
-    module.copy(imports = SImportStat("scalan._") :: (usedImports ++ usersImport))
+    module.copy(imports = SImportStat("scalan._") :: (usersImport))
   }
 
   /** Introduces a synonym for the entity. If name of the entity is Matr, the method adds:
@@ -152,10 +152,9 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
   def saveImplCode(file: File, implCode: String) = {
     val fileName = file.getName.split('.')(0)
     val folder = file.getParentFile
+
     val implFile = FileUtil.file(folder, "impl", s"${fileName}Impl.scala")
-
     implFile.mkdirs()
-
     FileUtil.write(implFile, implCode)
   }
 
