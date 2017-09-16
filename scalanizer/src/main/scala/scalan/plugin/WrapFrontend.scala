@@ -54,17 +54,70 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     !sym.hasPackageFlag && sym.isClass && isWrapper(sym.nameString)
   }
 
-  def isWrapperType(tpe: Type): Boolean = isWrapperSym(tpe.typeSymbol)
+  def isWrapperType(tpe: Type): Boolean = {
+    val res = isWrapperSym(tpe.typeSymbol)
+//    inform(s"isWrapperType(${show(tpe)}) == $res")
+    res
+  }
+
+  def registerArrayMap() = {
+    val tT = STpeArg("T")
+    val tB = STpeArg("B")
+    updateWrapperSpecial("scala", "Array", List(tT), Nil, false,
+      SMethodDef("map", List(tB),
+        List(SMethodArgs(List(SMethodArg(false, false, "f", STpeFunc(tT.toTraitCall, tB.toTraitCall), None)))),
+        Some(STraitCall("Array", List(tB.toTraitCall))),
+        false, false, None, List(SMethodAnnotation("External", Nil))), Nil)
+  }
+
+  def registerArrayZip() = {
+    val tT = STpeArg("T")
+    val tB = STpeArg("B")
+    updateWrapperSpecial("scala", "Array", List(tT), Nil, false,
+      SMethodDef("zip", List(tB),
+        List(SMethodArgs(List(SMethodArg(false, false, "ys", STraitCall("Array", List(tB.toTraitCall)), None)))),
+        Some(STraitCall("Array", List(STpeTuple(List(tT.toTraitCall, tB.toTraitCall))))),
+        false, false, None, List(SMethodAnnotation("External", Nil))), Nil)
+  }
+
+  private val arrayOps: Set[TermName] = Set(
+    TermName("genericWrapArray"),
+    TermName("genericArrayOps"),
+    TermName("wrapRefArray"),
+    TermName("wrapDoubleArray"),
+    TermName("doubleArrayOps"),
+    TermName("intArrayOps"),
+    TermName("refArrayOps")
+    )
+  def isArrayOps(ops: TermName) =
+    arrayOps.contains(ops.asInstanceOf[TermName])
+
+  object IsArrayOps {
+    def unapply(tree: Tree): Option[TermName] = tree match {
+      case q"$_.Predef.$ops($_).$method" if isArrayOps(ops) => Some(method)
+      case q"$_.Predef.$ops[$_]($_).$method" if isArrayOps(ops) => Some(method)
+      case _ => None
+    }
+  }
 
   def catchSpecialWrapper(tree: Tree): Boolean = tree match {
-    case sel@q"$x.Predef.doubleArrayOps($v).${TermName("map")}" =>
-      val tT = STpeArg("T")
-      val tB = STpeArg("B")
-      updateWrapperSpecial("scala", "Array", List(tT), Nil, false,
-        SMethodDef("map", List(tB),
-          List(SMethodArgs(List(SMethodArg(false, false, "f", STpeFunc(tT.toTraitCall, tB.toTraitCall), None)))),
-          Some(STraitCall("Array", List(tB.toTraitCall))), false, false, None, List(SMethodAnnotation("External", Nil))), Nil)
+    case IsArrayOps(method) =>
+//      inform(s"catchSpecialWrapper(${show(q"$x.Predef.$ops($v).$method")})")
+      method.decoded match {
+        case "map" => registerArrayMap()
+        case "zip" => registerArrayZip()
+      }
       true
+//    case sel@q"$x.Predef.$y($z)" =>
+//      //      inform(s"catchSpecialWrapper(${show(q"$x.Predef.$y")})")
+//      false
+//    case sel@q"$x.Predef.$y[$t]($z)" =>
+//      //      inform(s"catchSpecialWrapper(${show(q"$x.Predef.$y")})")
+//      false
+    case sel@q"$x.Predef.$y" =>
+//      inform(s"catchSpecialWrapper(${show(q"$x.Predef.$y")})")
+      false
+
     case q"$x.Array.canBuildFrom" => true // make sure it is ignored
     case _ => false
   }
@@ -82,7 +135,8 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         case sel@Select(obj, member) if isWrapperType(obj.tpe) =>
           inform(s"${show(sel)}: ${show(obj.tpe)}")
           updateWrapper(obj.tpe, member, sel.tpe, sel.symbol)
-        case _ => ()
+        case _ =>
+//          inform(s"UNCATCHED(${show(tree)})")
       }
     }
 

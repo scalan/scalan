@@ -336,7 +336,7 @@ class MetaCodegen extends ScalanAstExtensions {
     val baseInstanceName = entity.baseInstanceName
     val baseTypeDecl = baseTypeName + tpeArgsDecl
     val baseTypeUse = baseTypeName + tpeArgsUse
-    val firstAncestorType = entity.ancestors.headOption.map(_.tpe)
+    val firstAncestorType = entity.firstAncestorType
     val entityRepSynonymOpt = module.entityRepSynonym
     val allArgs = entity.args.args ++ entity.implicitArgs.args
 
@@ -347,11 +347,7 @@ class MetaCodegen extends ScalanAstExtensions {
 
     def isCont = tpeArgs.length == 1 && entity.hasAnnotation(ContainerTypeAnnotation)
     def isFunctor = tpeArgs.length == 1 && entity.hasAnnotation(FunctorTypeAnnotation)
-
-    def isWrapper = firstAncestorType match {
-      case Some(STraitCall("TypeWrapper", _)) => true
-      case _ => false
-    }
+    def isWrapper = entity.isWrapper
 
     def boundedTpeArgString(withTags: Boolean = false) = tpeArgs.getBoundedTpeArgString(withTags)
 

@@ -19,18 +19,24 @@ trait Cols {self: LinearAlgebra =>
     @HotSpot(KernelType.Scala)
     def ddmvm(v: Array[Double]): Int = {
       val xs = Array.fill(v.length)(0)
-      val c = Col.fromArray(/*xs.zip*/(v).map(d => d))
+      val c = xs.zip(v).map(d => d)
       c.length
     }
   }
+
+//  scala.this.Predef.refArrayOps[(Int, Double)](
+//    scala.this.Predef.intArrayOps(xs).zip[Int, Double, Array[(Int, Double)]](
+//       scala.this.Predef.wrapDoubleArray(v))(scala.this.Array.canBuildFrom[(Int, Double)]((ClassTag.apply[(Int, Double)](classOf[scala.Tuple2]): scala.reflect.ClassTag[(Int, Double)]))
+//       )
+//  ).map
 
   class ColOverArray[A](val arr: Array[A]) extends Col[A] {
     def length = arr.length
     def apply(i: Int) = arr(i)
   }
-  object ColOverArray {
-    def fromArray[T](arr: Array[T]): Col[T] = new ColOverArray(arr)
-  }
+//  object ColOverArray {
+//    def fromArray[T](arr: Array[T]): Col[T] = new ColOverArray(arr)
+//  }
 //  class PairCol[A, B](val as: Col[A], val bs: Col[B]) extends Col[(A, B)] {
 //    def arr: Array[(A, B)] = (as.arr zip bs.arr)
 //    def length = as.length

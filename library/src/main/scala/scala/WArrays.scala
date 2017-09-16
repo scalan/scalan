@@ -13,6 +13,7 @@ package scala {
       implicit def eT: Elem[T];
       def wrappedValue: Rep[Array[T]];
       @External def apply(i: Rep[Int]): Rep[T];
+      @External def zip[B](ys: Rep[WArray[B]]): Rep[WArray[scala.Tuple2[T, B]]];
       @External def map[B](f: Rep[scala.Function1[T, B]]): Rep[WArray[B]];
       @External def length: Rep[Int]
     };

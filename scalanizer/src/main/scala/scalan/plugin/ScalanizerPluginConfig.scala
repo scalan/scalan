@@ -93,6 +93,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     NonWrapper(name = "Predef"),
     NonWrapper(name = "<byname>"),
     NonWrapper(name = "ArrayOps"),
+    NonWrapper(name = "WrappedArray"),
     NonWrapper(name = "CanBuildFrom")
   ).map(w => (w.name, w)).toMap
 }
