@@ -205,9 +205,9 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
         default = None, annotations = Nil, isTypeDesc = true)
     }
     def genElem(valName: String, typeName: STpeExpr) =
-      genImplicit("e", valName, "Elem", typeName)
+      genImplicit("", valName, "Elem", typeName)
     def genCont(valName: String, typeName: STpeExpr) =
-      genImplicit("c", valName, "Cont", typeName)
+      genImplicit("", valName, "Cont", typeName)
     def genImplicitArg(isFirstKind: Boolean, valName: String, typeName: STpeExpr): SClassArg = {
       if (isFirstKind) genElem(valName, typeName)
       else genCont(valName, typeName)
@@ -260,7 +260,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
         body = Some(SExprApply(SIdent("element"), unpackElem(classArg).toList)),
         isTypeDesc = true)
     }
-    val newClasses = module.concreteSClasses.map{clazz =>
+    val newClasses = module.concreteSClasses.map { clazz =>
       val (definedElems, elemArgs) = genImplicitClassArgs(module, clazz) partition isElemAlreadyDefined
       val newImplicitArgs = SClassArgs(clazz.implicitArgs.args ++ elemArgs)
       val newBody = definedElems.map(convertElemValToMethod) ++ clazz.body

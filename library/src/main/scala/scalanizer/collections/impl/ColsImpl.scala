@@ -41,23 +41,23 @@ package scalanizer.collections {
         override def toString = "Col"
       };
       implicit def proxyColCompanionCtor(p: Rep[ColCompanionCtor]): ColCompanionCtor = proxyOps[ColCompanionCtor](p);
-      case class ColOverArrayCtor[A](override val arr: Rep[WArray[A]])(implicit eeA: Elem[A]) extends ColOverArray[A](arr) with Def[ColOverArray[A]] {
+      case class ColOverArrayCtor[A](override val arr: Rep[WArray[A]])(implicit eA: Elem[A]) extends ColOverArray[A](arr) with Def[ColOverArray[A]] {
         lazy val selfType = element[ColOverArray[A]]
       };
-      class ColOverArrayElem[A](val iso: Iso[ColOverArrayData[A], ColOverArray[A]])(implicit val eeA: Elem[A]) extends ColElem[A, ColOverArray[A]] with ConcreteElem[ColOverArrayData[A], ColOverArray[A]] {
+      class ColOverArrayElem[A](val iso: Iso[ColOverArrayData[A], ColOverArray[A]])(implicit override val eA: Elem[A]) extends ColElem[A, ColOverArray[A]] with ConcreteElem[ColOverArrayData[A], ColOverArray[A]] {
         override lazy val parent: Option[(Elem[_$3] forSome { 
           type _$3
         })] = Some(colElement(element[A]));
-        override lazy val typeArgs = TypeArgs("A".->(eeA.->(scalan.util.Invariant)));
+        override lazy val typeArgs = TypeArgs("A".->(eA.->(scalan.util.Invariant)));
         override def convertCol(x: Rep[Col[A]]) = ColOverArray(x.arr);
         override def getDefaultRep = ColOverArray(element[WArray[A]].defaultRepValue);
         override lazy val tag = {
-          implicit val tagA = eeA.tag;
+          implicit val tagA = eA.tag;
           weakTypeTag[ColOverArray[A]]
         }
       };
       type ColOverArrayData[A] = WArray[A];
-      class ColOverArrayIso[A](implicit eeA: Elem[A]) extends EntityIso[ColOverArrayData[A], ColOverArray[A]] with Def[ColOverArrayIso[A]] {
+      class ColOverArrayIso[A](implicit eA: Elem[A]) extends EntityIso[ColOverArrayData[A], ColOverArray[A]] with Def[ColOverArrayIso[A]] {
         override def from(p: Rep[ColOverArray[A]]) = p.arr;
         override def to(p: Rep[WArray[A]]) = {
           val arr = p;
@@ -65,22 +65,22 @@ package scalanizer.collections {
         };
         lazy val eFrom = element[WArray[A]];
         lazy val eTo = new ColOverArrayElem[A](self);
-        lazy val selfType = new ColOverArrayIsoElem[A](eeA);
+        lazy val selfType = new ColOverArrayIsoElem[A](eA);
         def productArity = 1;
-        def productElement(n: Int) = eeA
+        def productElement(n: Int) = eA
       };
-      case class ColOverArrayIsoElem[A](eeA: Elem[A]) extends Elem[ColOverArrayIso[A]] {
-        def getDefaultRep = reifyObject(new ColOverArrayIso[A]()(eeA));
+      case class ColOverArrayIsoElem[A](eA: Elem[A]) extends Elem[ColOverArrayIso[A]] {
+        def getDefaultRep = reifyObject(new ColOverArrayIso[A]()(eA));
         lazy val tag = {
-          implicit val tagA = eeA.tag;
+          implicit val tagA = eA.tag;
           weakTypeTag[ColOverArrayIso[A]]
         };
-        lazy val typeArgs = TypeArgs("A".->(eeA.->(scalan.util.Invariant)))
+        lazy val typeArgs = TypeArgs("A".->(eA.->(scalan.util.Invariant)))
       };
       class ColOverArrayCompanionCtor extends CompanionDef[ColOverArrayCompanionCtor] with ColOverArrayCompanion {
         def selfType = ColOverArrayCompanionElem;
         override def toString = "ColOverArrayCompanion";
-        @scalan.OverloadId("fromFields") def apply[A](arr: Rep[WArray[A]])(implicit eeA: Elem[A]): Rep[ColOverArray[A]] = mkColOverArray(arr);
+        @scalan.OverloadId("fromFields") def apply[A](arr: Rep[WArray[A]])(implicit eA: Elem[A]): Rep[ColOverArray[A]] = mkColOverArray(arr);
         def unapply[A](p: Rep[Col[A]]) = unmkColOverArray(p)
       };
       lazy val ColOverArrayRep: Rep[ColOverArrayCompanionCtor] = new ColOverArrayCompanionCtor();
@@ -91,10 +91,10 @@ package scalanizer.collections {
         protected def getDefaultRep = ColOverArrayRep
       };
       implicit def proxyColOverArray[A](p: Rep[ColOverArray[A]]): ColOverArray[A] = proxyOps[ColOverArray[A]](p);
-      implicit class ExtendedColOverArray[A](p: Rep[ColOverArray[A]])(implicit eeA: Elem[A]) {
-        def toData: Rep[ColOverArrayData[A]] = isoColOverArray(eeA).from(p)
+      implicit class ExtendedColOverArray[A](p: Rep[ColOverArray[A]])(implicit eA: Elem[A]) {
+        def toData: Rep[ColOverArrayData[A]] = isoColOverArray(eA).from(p)
       };
-      implicit def isoColOverArray[A](implicit eeA: Elem[A]): Iso[ColOverArrayData[A], ColOverArray[A]] = reifyObject(new ColOverArrayIso[A]()(eeA));
+      implicit def isoColOverArray[A](implicit eA: Elem[A]): Iso[ColOverArrayData[A], ColOverArray[A]] = reifyObject(new ColOverArrayIso[A]()(eA));
       registerModule(ColsModule);
       lazy val Col: Rep[ColCompanionCtor] = {
         final class $anon extends ColCompanionCtor;
@@ -147,7 +147,7 @@ package scalanizer.collections {
         }
       };
       object ColOverArrayCompanionMethods;
-      def mkColOverArray[A](arr: Rep[WArray[A]])(implicit eeA: Elem[A]): Rep[ColOverArray[A]] = new ColOverArrayCtor[A](arr);
+      def mkColOverArray[A](arr: Rep[WArray[A]])(implicit eA: Elem[A]): Rep[ColOverArray[A]] = new ColOverArrayCtor[A](arr);
       def unmkColOverArray[A](p: Rep[Col[A]]) = p.elem.asInstanceOf[(Elem[_$10] forSome { 
         type _$10
       })] match {
@@ -264,7 +264,7 @@ package scalanizer.collections {
     }
 
     object ColsModule extends scalan.ModuleInfo {
-      val dump = "H4sIAAAAAAAAALVWXWgcRRyf27vkvkJoog1Rq6bpBT97VyzSYpBwTS6Sck1CtzV4FmVud3LdOrs7zs6ld1LqWx/0TcQH0YeC0pegiC9FREQriEgffBMfpSCIIn2wKFj8z+zH7V1v0/jgPgwzs//5f/x+v/nvbv+GRjyOZjwDU+yUbSJwWVfzqidK+gnXbFOyRDbf+8s4v547mtfQZAONnsXekkcbKO9Pah0WzXVh1tHEsuWYNUdYoluylQuBynU/RkXGqAyLUYqdmq+jabnc4Jgxwgd8Pb07X/2HwWUeOwbxhMs9gfb7PiqGSykxhOU6Fcu22wI3KanULU+Afabpmt1X0UWUrqM9husYnAiiL1LsecQL9nNEureidV6tu2usF+POPE9xbAlIE2Ls8e1PEqZ3Hdfp2gKNB6mtMZkW2BRJhwG2KzajKsxIHWUtm7lchFGzEOGsa4bLjINhA03Wz+EtXIGorYouuOW0pDOGjVdwi6yCiTQfhRo8QjdPdRkJnBc9YfbF6zCEEGOglKdUauUeauUItbJEraQTbmFqvYbly3XudrrIf1JphDrSxZN3cRF6IDXHLL1xxnjxll60NXm4I5PJq5Ry4OjhBNUqggDdb0++5d187vIRDRUaqGB51aYnODZEXAgBYEXsOK5QOUcYYt4CDmeTOFRRqmAzIJS84doMO+ApQHMMqKKWYQlpLPfGA4IS0M8KRkLTNCAf1Zt0S+XZKmO0+/WFLy78vO/HCc0XZofxmNs0uN2hHCXJRUwplKOJMDhELfh06a5NJmZvWi9dflNoKFVHqU6/wNaa54DO+Q5HY/4JX763rSP//DS+KbSA/cQiwvifZ7/86pcbCxkNaf045aEAHXoND5MTKL3o0gAeOU4LlKoqjcihqORy38A6v0MOEaWP/Pq7+c0hdEYVqoQQ4rEr7YGLyaPvfjZH1j/SUK6hLusyxS2lQknJEvGMBsq5W4T7+9ktTOVsqBKzJtnEbSoCIuOY+KTOJJLKiARsXt3fVFh+0edn1XVIaXm99Kf+3dvbkh75fgpAxZyHcI5uVDnH3btgXIxdzHt3ACdse59curT3jw9evkddzFzTEjZmpUP/4VqGt+j/vHZRjX5dD/XWcpgD9e0F9a0BhQqixXj4udi5GHb7UynU8zsHUBNSDVHN1CixfWM57IvDK9BYPJY6HUnxwSS0VT0f/33syoH7H7itoexxNLIJGvOG4jrSdNuOGWIHHztBOuJYuJfuxw6wwhzb0TdwC0PLBu4Emgql2BYWrTwf7PsChGcmVr6aRWqCQqaCQuTR8orjOxWlJ65un7euP7asOkgclRiyB1FsMREIMQA2DYrrF/Au2oY/1u5oHgNSiEU6uAvFSBaHCEVVtRJnVY7PJEAmh3o0WxjMudrzI+9iOUEdS8SgmBNTfuSJDT8hvhoOv7OwcXx647TqfGOmMvLfRG1m+C/TCczmVYN/dIfPOxiVajYTXTk5fO3ZH17//sqHEa/5QBEZSY8I5QA/AjzmzYsqm02oTA/uNdB+8db7q49f//SG+pYUZIeAnudEf009SUedPdBDQabg/03GJACpyaYRI/20HF74F84IKlhGCwAA"
+      val dump = "H4sIAAAAAAAAALVWXWgcRRyf27vkvkJoog1Rq6bpBT97VyzSYpBwTS6Sck1CtzV4FmVud3LdOrs7zs6ld1LqWx/0TcQH0YeC0pegiC9FREQriEgffBMfpSCIIn2wKFj8z+zH7V1v0/jgPgwzs//5f/x+v/nvbv+GRjyOZjwDU+yUbSJwWVfzqidK+gnXbFOyRDbf+8s4v547mtfQZAONnsXekkcbKO9Pah0WzXVh1tHEsuWYNUdYoluylQuBynU/RkXGqAyLUYqdmq+jabnc4Jgxwgd8Pb07X/2HwWUeOwbxhMs9gfb7PiqGSykxhOU6Fcu22wI3KanULU+Afabpmt1X0UWUrqM9husYnAiiL1LsecQL9nNEureidV6tu2usF+POPE9xbAlIE2Ls8e1PEqZ3Hdfp2gKNB6mtMZkW2BRJhwG2KzajKsxIHWUtm7lchFGzEOGsa4bLjINhA03Wz+EtXIGorYouuOW0pDOGjVdwi6yCiTQfhRo8QjdPdRkJnBc9YfbF6zCEEGOglKdUauUeauUItbJEraQTbmFqvYbly3XudrrIf1JphDrSxZN3cRF6IDXHLL1xxnjxll60NXm4I5PJq5Ry4OjhBNUqggDdb0++5d187vIRDRUaqGB51aYnODZEXAgBYEXsOK5QOUcYYt4CDmeTOFRRqmAzIJS84doMO+ApQHMMqKKWYQlpLPfGA4IS0M8KRkLTNCAf1Zt0S+XZKmO0+/WFLy78vO/HCc0XZofxmNs0uN2hHCXJRUwplKOJMDhELfh06a5NJmZvWi9dflNoKFVHqU6/wNaa54DO+Q5HY/4JX763rSP//DS+KbSA/cQiwvifZ7/86pcbCxkNaf045aEAHXoND5MTKL3o0gAeOU4LlKoqjcihqORy38A6v0MOEaWP/Pq7+c0hdEYVqoQQ4rEr7YGLyaPvfjZH1j/SUK6hLusyxS2lQknJEvGMBsq5W4T7+9ktTOVsqBKzJtnEbSoCIuOY+KTOJJLKiARsXt3fVFh+0edn1XVIaXm99Kf+3dvbkh75fgpAxZyHcI5uVDnH3btgXIxdzHt3ACdse59curT3jw9evkddzFzTEjZmpUP/4VqGt+j/vHZRjX5dD/XWcpgD9e0F9a0BhQqixXj4udi5GHb7UynU8zsnkEaqIaiZGiW2byuHfXF0BRqLh1KHIyU+mAS2Kufjv49dOXD/A7c1lD2ORjZBYt5QWEeabtsxQ+jgWydIRxwL99L90AFUmGM7+gRuYejYQJ1AU6ES28KileeDfV9/8MzEqlezSExQyFRQiDxaXnF8p6L0xNXt89b1x5ZVA4mjEgP2IIotJgIdBsCmQXD9+t1F1/DH2h29Y0AJsUgHdyEYyeIQnaiqVuKsyvGZBMjkUI9mC4M5V3t+5FUsJ6hjiRgUc2LKbzyx4R/EV8PhdxY2jk9vnFaNb8xURv6bqMsM/2M6gdm86u+P7vB1B6NSzWaiKyeHrz37w+vfX/kw4jUfKCIj6RGhHOA/gMe8eVFlswmV6cG1Btov3np/9fHrn95Qn5KCbBDQ8pzop6kn6aixB3ooyBT8n8mYBCA12TNipJ+Wwwv/AuCg2YtFCwAA"
     }
   }
 }
