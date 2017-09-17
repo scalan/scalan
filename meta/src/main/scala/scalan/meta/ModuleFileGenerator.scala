@@ -345,7 +345,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |
          |    def convert${e.name}(x: Rep[${e.typeUse}]): Rep[$toArgName] = {
         |      x.elem${e.t.isHighKind.opt(".asInstanceOf[Elem[_]]")} match {
-        |        case _: $wildcardElem => x.asRep[$toArgName]
+        |        case e: $wildcardElem => x.asRep[$toArgName]
         |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e", x)
         |      }
         |    }
@@ -656,7 +656,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
           case Some(SSelfTypeDef(_, List(STraitCall(`moduleTraitName`, Nil)))) => ""
           case _ => s" {${module.selfTypeString("")}}"
         }
-        s"trait $moduleTraitName extends impl.${module.name}$traitSuffix$selfTypeStr"
+        s"trait $moduleTraitName extends ${module.packageName}.impl.${module.name}$traitSuffix$selfTypeStr"
     }.mkString("\n")
   }
 

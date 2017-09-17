@@ -8,7 +8,8 @@ import scalan.meta.{ModuleFileGenerator, ScalanCodegen}
 trait Backend[G <: Global] extends ScalanizerBase[G] {
   import global._
 
-  def genBoilerplate(module: SModuleDef): Tree = {
+  /** Generate boilerplate for virtualized user-defined module */
+  def genUDModuleBoilerplate(module: SModuleDef): Tree = {
     val entityGen = new ModuleFileGenerator(ScalanCodegen, module, snConfig.codegenConfig)
     val implCode = entityGen.emitImplFile
     val boilerplate = newUnitParser(implCode, "<impl>").parse()
@@ -17,13 +18,15 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
 
   case class GenCtx(module: SModuleDef, toRep: Boolean = true)
 
-  def genModuleFile(module: SModuleDef, orig: Tree): Tree = orig match {
+  /** Generate file for virtualized user-defined module */
+  def genUDModuleFile(module: SModuleDef, orig: Tree): Tree = orig match {
     case q"package $ref { ..$_ }" =>
       implicit val ctx = GenCtx(module, true)
       val moduleBody = List[Tree](genModuleTrait(module))
       val imports = module.imports.map(genImport(_))
       PackageDef(ref,
-        imports ++ moduleBody
+        imports ++ moduleBody :+
+        q"trait ${TypeName(module.name + "Module")} extends impl.ColsDefs with scala.wrappers.WrappersModule"
       )
 //      q"""package $ref {
 //        ..$imports

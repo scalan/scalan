@@ -48,13 +48,13 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
         val enrichedModuleDef = pipeline(moduleDef)
 
         /** Scala AST of virtualized module */
-        val virtAst = genModuleFile(enrichedModuleDef, unit.body)
+        val virtAst = genUDModuleFile(enrichedModuleDef, unit.body)
         val nameOnly = Path(unitName).stripExtension
-//        saveWrapperCode(enrichedModuleDef.packageName, nameOnly, showCode(virtAst))
+        saveWrapperCode(enrichedModuleDef.packageName, nameOnly, showCode(virtAst))
 //        showTree("virtAst", unitName, virtAst)
 
         /** produce boilerplate code using ModuleFileGenerator*/
-        val boilerplate = genBoilerplate(enrichedModuleDef)
+        val boilerplate = genUDModuleBoilerplate(enrichedModuleDef.copy(hasDsl = true))
         saveWrapperCode(enrichedModuleDef.packageName + ".impl", nameOnly + "Impl", showCode(boilerplate))
 //        showTree("boilerplate", unitName, boilerplate)
 

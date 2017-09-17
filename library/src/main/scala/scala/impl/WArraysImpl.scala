@@ -83,7 +83,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 
     def convertWArray(x: Rep[WArray[T]]): Rep[To] = {
       x.elem match {
-        case _: WArrayElem[_, _] => x.asRep[To]
+        case e: WArrayElem[_, _] => x.asRep[To]
         case e => !!!(s"Expected $x to have WArrayElem[_, _], but got $e", x)
       }
     }

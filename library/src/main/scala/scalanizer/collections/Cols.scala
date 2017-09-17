@@ -1,5 +1,4 @@
 package scalanizer.collections {
-  import scala.wrappers.WrappersModule
   import scalan._
 
   trait Cols extends Base { self: ColsModule =>
@@ -24,5 +23,6 @@ package scalanizer.collections {
     };
     trait ColOverArrayCompanion
   }
-  trait ColsModule extends impl.ColsDefs with WrappersModule { }
+
+  trait ColsModule extends impl.ColsDefs with scala.wrappers.WrappersModule
 }

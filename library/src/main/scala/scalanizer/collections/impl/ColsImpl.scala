@@ -26,7 +26,7 @@ package scalanizer.collections {
           tryConvert(element[Col[A]], this, x, conv)
         };
         def convertCol(x: Rep[Col[A]]): Rep[To] = x.elem match {
-          case (_: ColElem[(_), (_)]) => x.asRep[To]
+          case (e @ ((_): ColElem[(_), (_)])) => x.asRep[To]
           case (e @ _) => !!!(StringContext("Expected ", " to have ColElem[_, _], but got ", "").s(x, e), x)
         };
         override def getDefaultRep: Rep[To] = ???
@@ -41,7 +41,7 @@ package scalanizer.collections {
         override def toString = "Col"
       };
       implicit def proxyColCompanionCtor(p: Rep[ColCompanionCtor]): ColCompanionCtor = proxyOps[ColCompanionCtor](p);
-      case class ColOverArrayCtor[A](override val arr: Rep[WArray[A]])(implicit eA: Elem[A]) extends ColOverArray[A](arr) with Def[ColOverArray[A]] {
+      case class ColOverArrayCtor[A](override val arr: Rep[WArray[A]])(implicit eeA: Elem[A]) extends ColOverArray[A](arr) with Def[ColOverArray[A]] {
         lazy val selfType = element[ColOverArray[A]]
       };
       class ColOverArrayElem[A](val iso: Iso[ColOverArrayData[A], ColOverArray[A]])(implicit val eeA: Elem[A]) extends ColElem[A, ColOverArray[A]] with ConcreteElem[ColOverArrayData[A], ColOverArray[A]] {
@@ -151,7 +151,7 @@ package scalanizer.collections {
       def unmkColOverArray[A](p: Rep[Col[A]]) = p.elem.asInstanceOf[(Elem[_$10] forSome { 
         type _$10
       })] match {
-        case (_: ColOverArrayElem[A] @unchecked) => Some(p.asRep[ColOverArray[A]].arr)
+        case ((_): ColOverArrayElem[A] @unchecked) => Some(p.asRep[ColOverArray[A]].arr)
         case _ => None
       };
       object ColMethods {
