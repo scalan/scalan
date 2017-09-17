@@ -50,11 +50,12 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
         /** Scala AST of virtualized module */
         val virtAst = genModuleFile(enrichedModuleDef, unit.body)
         val nameOnly = Path(unitName).stripExtension
-        saveWrapperCode(moduleDef.packageName, nameOnly, showCode(virtAst))
+//        saveWrapperCode(enrichedModuleDef.packageName, nameOnly, showCode(virtAst))
 //        showTree("virtAst", unitName, virtAst)
 
         /** produce boilerplate code using ModuleFileGenerator*/
-//        val boilerplate = genBoilerplate(enrichedModuleDef)
+        val boilerplate = genBoilerplate(enrichedModuleDef)
+        saveWrapperCode(enrichedModuleDef.packageName + ".impl", nameOnly + "Impl", showCode(boilerplate))
 //        showTree("boilerplate", unitName, boilerplate)
 
         /** Checking of user's extensions like SegmentDsl, SegmentDslStd and SegmentDslExp */

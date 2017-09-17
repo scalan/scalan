@@ -375,4 +375,4 @@ object WArraysModule extends scalan.ModuleInfo {
 }
 }
 
-trait WArraysModule extends impl.WArraysDefs {self: WrappersModule =>}
+trait WArraysModule extends scala.impl.WArraysDefs {self: WrappersModule =>}

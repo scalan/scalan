@@ -11,8 +11,7 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
   def genBoilerplate(module: SModuleDef): Tree = {
     val entityGen = new ModuleFileGenerator(ScalanCodegen, module, snConfig.codegenConfig)
     val implCode = entityGen.emitImplFile
-    val implCodeFile = new BatchSourceFile("<impl>", implCode)
-    val boilerplate = newUnitParser(new CompilationUnit(implCodeFile)).parse()
+    val boilerplate = newUnitParser(implCode, "<impl>").parse()
     boilerplate
   }
 
