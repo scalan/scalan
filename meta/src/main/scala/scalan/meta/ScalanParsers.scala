@@ -119,9 +119,9 @@ trait ScalanParsers[G <: Global] {
     hasClass && hasModule && hasMethod
   }
 
-  def moduleDefFromPackageDef(fileTree: PackageDef): SModuleDef = {
-    val packageName = fileTree.pid.toString
-    val statements = fileTree.stats
+  def moduleDefFromPackageDef(packageDef: PackageDef): SModuleDef = {
+    val packageName = packageDef.pid.toString
+    val statements = packageDef.stats
     val imports = statements.collect { case i: Import => importStat(i) }
     val moduleTraitTree = statements.collect {
       case cd: ClassDef if cd.mods.isTrait && !cd.name.contains("Module") => cd
@@ -132,7 +132,7 @@ trait ScalanParsers[G <: Global] {
     val moduleTrait = traitDef(moduleTraitTree, Some(moduleTraitTree))
     val moduleName = moduleTrait.name
 
-    val hasDsl = findClassDefByName(fileTree.stats, moduleName + "Module").isDefined
+    val hasDsl = findClassDefByName(packageDef.stats, moduleName + "Module").isDefined
 
     val defs = moduleTrait.body
 
@@ -237,10 +237,10 @@ trait ScalanParsers[G <: Global] {
     val (args, implicitArgs) = constructor.vparamss match {
       case Seq() =>
         (classArgs(List.empty), classArgs(List.empty))
-      case Seq(nonImplConArgs) =>
-        (classArgs(nonImplConArgs), classArgs(List.empty))
-      case Seq(nonImplConArgs, implConArgs) =>
-        (classArgs(nonImplConArgs), classArgs(implConArgs))
+      case Seq(nonImplicitConArgs) =>
+        (classArgs(nonImplicitConArgs), classArgs(List.empty))
+      case Seq(nonImplicitConArgs, implicitConArgs) =>
+        (classArgs(nonImplicitConArgs), classArgs(implicitConArgs))
       case seq => !!!(s"Constructor of class ${cd.name} has more than 2 parameter lists, not supported")
     }
     val tpeArgs = this.tpeArgs(cd.tparams, constructor.vparamss.lastOption.getOrElse(Nil))
@@ -494,7 +494,83 @@ trait ScalanParsers[G <: Global] {
     case tpe => Some(parseType(tpe))
   }
 
+  def mkArrayMapMethod(tItem: STpeArg) = {
+    val tB = STpeArg("B")
+    SMethodDef("map", List(tB),
+      List(SMethodArgs(List(SMethodArg(false, false, "f", STpeFunc(tItem.toTraitCall, tB.toTraitCall), None)))),
+      Some(STraitCall("Array", List(tB.toTraitCall))),
+      false, false, None, List(SMethodAnnotation("External", Nil)))
+  }
+
+  def mkArrayZipMethod(tItem: STpeArg) = {
+    val tB = STpeArg("B")
+    SMethodDef("zip", List(tB),
+      List(SMethodArgs(List(SMethodArg(false, false, "ys", STraitCall("Array", List(tB.toTraitCall)), None)))),
+      Some(STraitCall("Array", List(STpeTuple(List(tItem.toTraitCall, tB.toTraitCall))))),
+      false, false, None, List(SMethodAnnotation("External", Nil)))
+  }
+
+  def applyArrayFill(f: SExpr, tyArg: Option[STpeExpr], arg1: SExpr, arg2: SExpr) = {
+    SApply(f, tyArg.toList, List(List(arg1), List(SApply(SIdent("Thunk"), Nil, List(List(arg2))))))
+  }
+
+  def applyArrayMap(xs: SExpr, ts: List[STpeExpr], f: SExpr) = {
+    SApply(SSelect(xs, "map"), ts, List(List(f)))
+  }
+
+  def applyArrayZip(xs: SExpr, ts: List[STpeExpr], ys: SExpr) = {
+    SApply(SSelect(xs, "zip"), ts, List(List(ys)))
+  }
+
+  private lazy val arrayImplicitWrappers: Set[TermName] = Set(
+    TermName("genericWrapArray"),
+    TermName("genericArrayOps"),
+    TermName("wrapRefArray"),
+    TermName("wrapDoubleArray"),
+    TermName("doubleArrayOps"),
+    TermName("intArrayOps"),
+    TermName("refArrayOps")
+  )
+  def isArrayImplicitWrapperName(ops: TermName) = arrayImplicitWrappers.contains(ops.asInstanceOf[TermName])
+
+  object IsArrayImplicitWrapper {
+    def unapply(tree: Tree): Option[Tree] = tree match {
+      case obj @ q"$_.Predef.$ops($arg)" if isArrayImplicitWrapperName(ops) => Some(arg)
+      case obj @ q"$_.Predef.$ops[$tpe]($arg)" if isArrayImplicitWrapperName(ops) => Some(arg)
+      case _ => None
+    }
+  }
+
+  object IsArrayWrapperMethod {
+    def unapply(tree: Tree): Option[(Tree, Name)] = tree match {
+      case q"${obj @ IsArrayImplicitWrapper(_)}.$m" => Some((obj, m))
+      case _ => None
+    }
+  }
+
+  object ApplyArrayWrapperMethod {
+    def unapply(tree: Tree): Option[(Tree, Name, List[Tree], List[Tree])] = tree match {
+      case Apply(TypeApply(IsArrayWrapperMethod(obj, m), tyArgs), args) =>
+        Some((obj, m, tyArgs, args))
+      case Apply(IsArrayWrapperMethod(obj, m), args) =>
+        Some((obj, m, Nil, args))
+      case Apply(ApplyArrayWrapperMethod(obj, m, tyArgs, args), _) =>
+        Some((obj, m, tyArgs, args))
+      case _ => None
+    }
+  }
+
   def parseExpr(tree: Tree): SExpr = tree match {
+    case q"${f @ q"scala.Array.fill"}[$tpe]($arg1)($arg2)($_)" =>
+      applyArrayFill(parseExpr(f), Some(parseType(tpe.tpe)), parseExpr(arg1), parseExpr(arg2))
+    case ApplyArrayWrapperMethod(obj, m, tyArgs, args) =>
+      m.decoded match {
+        case "map" =>
+          applyArrayMap(parseExpr(obj), Nil,  parseExpr(args(0)))
+        case "zip" =>
+          applyArrayZip(parseExpr(obj), Nil, parseExpr(args(0)))
+      }
+    case IsArrayImplicitWrapper(arg) => parseExpr(arg)
     case EmptyTree => SEmpty(tree2Type(tree))
     case Literal(Constant(c)) => SConst(c, tree2Type(tree))
     case Ident(TermName(name)) => SIdent(name, tree2Type(tree))
@@ -561,7 +637,7 @@ trait ScalanParsers[G <: Global] {
 
   def parseType(tpe: Type): STpeExpr = tpe match {
     case NoType | NoPrefix => STpeEmpty()
-    case const: ConstantType => STpeConst(SConst(const.value.value, Some(parseType(const.underlying))))
+    case const: ConstantType => parseType(const.underlying) //STpeConst(SConst(const.value.value, Some(parseType(const.underlying))))
     case thisType: ThisType => STpeThis(thisType.sym.nameString)
     case tref: TypeRef if global.definitions.isByNameParamType(tref) =>
        val ty = parseType(tref.args(0))
