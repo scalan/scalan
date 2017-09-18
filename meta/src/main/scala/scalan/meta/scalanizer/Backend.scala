@@ -8,10 +8,15 @@ import scalan.meta.{ModuleFileGenerator, ScalanCodegen}
 trait Backend[G <: Global] extends ScalanizerBase[G] {
   import global._
 
-  /** Generate boilerplate for virtualized user-defined module */
-  def genUDModuleBoilerplate(module: SModuleDef): Tree = {
+  /** Generate boilerplate text for virtualized user-defined module */
+  def genUDModuleBoilerplateText(module: SModuleDef): String = {
     val entityGen = new ModuleFileGenerator(ScalanCodegen, module, snConfig.codegenConfig)
-    val implCode = entityGen.emitImplFile
+    entityGen.emitImplFile
+  }
+
+  /** Generate boilerplate Tree for virtualized user-defined module */
+  def genUDModuleBoilerplateTree(module: SModuleDef): Tree = {
+    val implCode = genUDModuleBoilerplateText(module)
     val boilerplate = newUnitParser(implCode, "<impl>").parse()
     boilerplate
   }

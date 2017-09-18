@@ -29,14 +29,18 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
       var wrapperSlices = initWrapperSlices
       snState.wrappers foreach { case (_, WrapperDescr(m, _, config)) =>
         val module = m.copy(imports = m.imports :+ SImportStat("scala.wrappers.WrappersModule"))
-        /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
-        val boilerplate = genWrapperBoilerplate(module)
-        saveWrapperCode(module.packageName + ".impl", module.name + "Impl", boilerplate)
 
-        /** Form source code of the wrapper and store it. */
+        /** Form source code of the wrapper module and store it in a file */
         val wrapperModuleWithoutImpl = module.copy(concreteSClasses = Nil)
         val wrapperPackage = genWrapperPackage(wrapperModuleWithoutImpl)
-        saveWrapperCode(module.packageName, wrapperModuleWithoutImpl.name, showCode(wrapperPackage))
+        saveWrapperCode(
+          wrapperModuleWithoutImpl.packageName,
+          wrapperModuleWithoutImpl.name,
+          showCode(wrapperPackage))
+
+        /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
+        val boilerplateText = genWrapperBoilerplateText(module)
+        saveWrapperCode(module.packageName + ".impl", module.name + "Impl", boilerplateText)
 
         wrapperSlices = updateWrapperSlices(wrapperSlices, wrapperModuleWithoutImpl)
       }
@@ -47,7 +51,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   }
 
   /** Calls Scalan Meta to generate boilerplate code for the wrapper. */
-  def genWrapperBoilerplate(module: SModuleDef): String = {
+  def genWrapperBoilerplateText(module: SModuleDef): String = {
     val gen = new scalan.meta.ModuleFileGenerator(
       ScalanCodegen, module, snConfig.wrappersCodegenConfig)
     val implCode = gen.emitImplFile
@@ -65,7 +69,6 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
 //    )
     val pkgStats = imports :+ scalaAst
     val wrappersPackage = PackageDef(Ident(TermName(module.packageName)), pkgStats)
-
     wrappersPackage
   }
 

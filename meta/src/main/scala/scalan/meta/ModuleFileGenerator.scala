@@ -267,7 +267,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
               s"EntityElem[$toArgName]"
             }
           (None, parentElem)
-        case Some(STraitCall(TypeWrapperDefName, _)) =>
+        case Some(TypeWrapperTpe(_)) =>
           val parentElem =
             if (e.isCont) {
               s"WrapperElem1[${join(e.tpeArgNames, toArgName, e.baseTypeName, e.name)}](${e.tpeArgNames.rep("_e" + _)}, container[${e.baseTypeName}], container[${e.name}])"

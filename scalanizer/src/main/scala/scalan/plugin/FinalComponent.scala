@@ -54,8 +54,8 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
 //        showTree("virtAst", unitName, virtAst)
 
         /** produce boilerplate code using ModuleFileGenerator*/
-        val boilerplate = genUDModuleBoilerplate(enrichedModuleDef.copy(hasDsl = true))
-        saveWrapperCode(enrichedModuleDef.packageName + ".impl", nameOnly + "Impl", showCode(boilerplate))
+        val boilerplateText = genUDModuleBoilerplateText(enrichedModuleDef.copy(hasDsl = true))
+        saveWrapperCode(enrichedModuleDef.packageName + ".impl", nameOnly + "Impl", boilerplateText)
 //        showTree("boilerplate", unitName, boilerplate)
 
         /** Checking of user's extensions like SegmentDsl, SegmentDslStd and SegmentDslExp */

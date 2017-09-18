@@ -632,6 +632,8 @@ object ScalanAst {
   }
 
   object TypeWrapperTpe {
+    def apply(wrappedType: STraitCall, wrapperType: STraitCall) =
+      STraitCall(TypeWrapperDefName, List(wrappedType, wrapperType))
     def unapply(tc: STraitCall): Option[STraitCall] = tc match {
       case STraitCall(TypeWrapperDefName, List(w@STraitCall(_, _), _)) => Some(w)
       case _ => None
@@ -639,7 +641,7 @@ object ScalanAst {
   }
 
   /** Extracts first argument of TypeWrapperDef from ancestors */
-  object IsWrapperEntity {
+  object WrapperEntity {
     def unapply(e: STraitOrClassDef): Option[STraitCall] =
       e.ancestors.map(_.tpe).collectFirst { case TypeWrapperTpe(w) => w }
   }
@@ -692,10 +694,7 @@ object ScalanAst {
   final val TypeWrapperDefName = "TypeWrapperDef"
 
   implicit class STraitOrClassDefOps(td: STraitOrClassDef) {
-    def optBaseType: Option[STpeExpr] = td.ancestors.find(a => a.tpe.name == TypeWrapperDefName) match {
-      case Some(STypeApply(STraitCall(_, h :: _), _)) => Some(h)
-      case _ => None
-    }
+    def optBaseType: Option[STraitCall] = WrapperEntity.unapply(td)
 
     def baseTypeName: String = optBaseType match {
       case Some(STraitCall(name, _)) => name
@@ -805,7 +804,7 @@ object ScalanAst {
 
     def findWrapperEntity(wrappedTypeName: String): Option[(STraitOrClassDef, STraitCall)] = {
       entities.collectFirst {
-        case e@IsWrapperEntity(w) if w.name == wrappedTypeName => (e, w)
+        case e@WrapperEntity(w) if w.name == wrappedTypeName => (e, w)
       }
     }
 

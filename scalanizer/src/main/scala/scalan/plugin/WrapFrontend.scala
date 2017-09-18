@@ -267,7 +267,8 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       STraitCall(name = arg.name, tpeSExprs = Nil)
     }
     val baseType = STraitCall(externalName, typeParams)
-    val entityAncestors = STraitCall(TypeWrapperDefName, List(baseType, STraitCall(wClassName, typeParams))).toTypeApply :: originalEntityAncestors
+    val wrapperAncestor = TypeWrapperTpe(baseType, STraitCall(wClassName, typeParams)).toTypeApply
+    val entityAncestors = wrapperAncestor :: originalEntityAncestors
     val entityAnnotations = wrapperConf.annotations.map { a => STraitOrClassAnnotation(a, Nil) }
     val entity = STraitDef(
       name = wClassName,
