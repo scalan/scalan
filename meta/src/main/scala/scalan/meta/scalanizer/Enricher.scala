@@ -5,6 +5,7 @@ import java.io.File
 import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
 import scalan.util.FileUtil
+import scalan.util.CollectionUtil._
 
 trait Enricher[G <: Global] extends ScalanizerBase[G] {
   /** Module parent is replaced by the parent with its extension. */
@@ -195,49 +196,47 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
     module.copy(entityOps = newEntity, entities = List(newEntity))
   }
 
-  def genImplicitClassArgs(module: SModuleDef, clazz: SClassDef): List[SClassArg] = {
-    def genImplicit(argPrefix: String, argSuffix: String,
-                    typePrefix: String, typeSuffix: STpeExpr) = {
-      SClassArg(impFlag = true,
-        overFlag = false, valFlag = false,
-        name = argPrefix + argSuffix,
-        tpe = STraitCall(typePrefix, List(typeSuffix)),
-        default = None, annotations = Nil, isTypeDesc = true)
-    }
-    def genElem(valName: String, typeName: STpeExpr) =
-      genImplicit("", valName, "Elem", typeName)
-    def genCont(valName: String, typeName: STpeExpr) =
-      genImplicit("", valName, "Cont", typeName)
-    def genImplicitArg(isFirstKind: Boolean, valName: String, typeName: STpeExpr): SClassArg = {
-      if (isFirstKind) genElem(valName, typeName)
-      else genCont(valName, typeName)
-    }
-    def getEntityByAncestor(ancestor: STraitCall): Option[STraitDef] = {
-      module.entities.find(entity => entity.name == ancestor.name)
-    }
-    lazy val ancestorPairs: List[(STpeExpr, STpeArg)] = {
-      val ancestors = clazz.ancestors
+  def genClassArg(argPrefix: String, argName: String, descName: String, descArg: STpeExpr) = {
+    SClassArg(impFlag = true,
+      overFlag = false, valFlag = false,
+      name = argPrefix + argName,
+      tpe = STraitCall(descName, List(descArg)),
+      default = None, annotations = Nil, isTypeDesc = true)
+  }
+  def genElemClassArg(argName: String, tpe: STpeExpr) = genClassArg("e", argName, "Elem", tpe)
+  def genContClassArg(argName: String, tpe: STpeExpr) = genClassArg("c", argName, "Cont", tpe)
+  def genImplicitClassArg(isHighKind: Boolean, argName: String, tpe: STpeExpr): SClassArg = {
+    if (!isHighKind) genElemClassArg(argName, tpe)
+    else genContClassArg(argName, tpe)
+  }
 
-      ancestors.flatMap { a =>
-        val optEntity = getEntityByAncestor(a.tpe)
+  def genImplicitClassArgs(module: SModuleDef, clazz: SClassDef): List[SClassArg] = {
+    lazy val ancestorSubst: List[(STpeArg, STpeExpr)] = {
+      clazz.ancestors.flatMap { a =>
+        val optEntity = module.findEntity(a.tpe.name)
         optEntity match {
-          case Some(entity) => a.tpe.tpeSExprs zip entity.tpeArgs
-          case None => List[(STpeExpr, STpeArg)]()
+          case Some(entity) => entity.tpeArgs zip a.tpe.tpeSExprs
+          case None => List[(STpeArg, STpeExpr)]()
         }
       }
     }
-    def tpeArg2Expr(tpeArg: STpeArg): STpeExpr = STraitCall(tpeArg.name, Nil)
-    val classImplicits = clazz.tpeArgs.map { tpeArg =>
-      ancestorPairs.find(pair => tpeArg2Expr(tpeArg) == pair._1) match {
-        case Some((aParam, eParam)) => aParam match {
-          case _: STraitCall => genImplicitArg(eParam.tparams.isEmpty, "e"+eParam.name, aParam)
-          case _ => throw new NotImplementedError(s"genImplicitClassArgs: $eParam")
+    def notExtractable(tpeArg: STpeArg): Boolean = {
+      !clazz.args.args.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
+    }
+    val classImplicits = clazz.tpeArgs.filter(notExtractable).map { clsArg =>
+      val argTpe = clsArg.toTraitCall
+      val substOpt = ancestorSubst.find { case (tyArg, tpe) => tpe == argTpe }
+      val res = substOpt match {
+        case Some((tyArg, tpe)) => tpe match {
+          case _: STraitCall => genImplicitClassArg(tyArg.tparams.nonEmpty, tyArg.name, tpe) // NOTE: tpe == argTpe
+          case _ => throw new NotImplementedError(s"genImplicitClassArgs: $clsArg")
         }
-        case None => genImplicitArg(tpeArg.tparams.isEmpty, "c"+tpeArg.name, tpeArg2Expr(tpeArg))
-    }}
-    val entityImplicits = ancestorPairs.map{pair =>
-      val (ancestorParam, entityParam) = pair
-      genImplicitArg(entityParam.tparams.isEmpty, "e"+entityParam.name, ancestorParam)
+        case None => genImplicitClassArg(clsArg.tparams.nonEmpty, clsArg.name, clsArg.toTraitCall)
+      }
+      res
+    }
+    val entityImplicits = ancestorSubst.map { case (entityParam, ancestorParam) =>
+      genImplicitClassArg(entityParam.tparams.nonEmpty, entityParam.name, ancestorParam)
     }
 
     (entityImplicits ++ classImplicits).distinct
