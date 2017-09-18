@@ -5,7 +5,7 @@ import scalan._
 trait Exceptions extends Base with TypeWrappers { self: Scalan =>
 
   type RThrow = Rep[Throwable]
-  trait SThrowable extends TypeWrapper[Throwable, SThrowable] { self =>
+  trait SThrowable extends TypeWrapperDef[Throwable, SThrowable] { self =>
     @External def getMessage: Rep[String]
     @External def initCause (cause: Rep[SThrowable]) : Rep[SThrowable]
   }

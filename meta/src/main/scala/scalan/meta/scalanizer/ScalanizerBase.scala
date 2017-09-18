@@ -283,7 +283,7 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
       super.valdefTransform(valdef.copy(tpe = newTpe))
     }
   }
-  class ExtType2WrapperTransformer(name: String) extends MetaAstReplacer(name, wrap)
+  class External2WrapperTypeTransformer(name: String) extends MetaAstReplacer(name, wrap)
 
   /** Transforming of Meta AST related to types (children of STpeExpr)*/
   class MetaTypeTransformer {

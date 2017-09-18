@@ -26,7 +26,7 @@ package scalanizer.collections {
           tryConvert(element[Col[A]], this, x, conv)
         };
         def convertCol(x: Rep[Col[A]]): Rep[To] = x.elem match {
-          case (e @ ((_): ColElem[(_), (_)])) => x.asRep[To]
+          case ((_): ColElem[(_), (_)]) => x.asRep[To]
           case (e @ _) => !!!(StringContext("Expected ", " to have ColElem[_, _], but got ", "").s(x, e), x)
         };
         override def getDefaultRep: Rep[To] = ???

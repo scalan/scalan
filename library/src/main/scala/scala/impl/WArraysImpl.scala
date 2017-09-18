@@ -17,10 +17,6 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
     proxyOps[WArray[T]](p)(scala.reflect.classTag[WArray[T]])
   }
 
-  //proxyBT: TypeWrapper proxy
-  //implicit def proxyArray[T:Elem](p: Rep[Array[T]]): WArray[T] =
-  //  proxyOps[WArray[T]](p.asRep[WArray[T]])
-
   implicit def unwrapValueOfWArray[T](w: Rep[WArray[T]]): Rep[Array[T]] = w.wrappedValue
 
   implicit def arrayElement[T:Elem]: Elem[Array[T]] =
@@ -83,7 +79,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 
     def convertWArray(x: Rep[WArray[T]]): Rep[To] = {
       x.elem match {
-        case e: WArrayElem[_, _] => x.asRep[To]
+        case _: WArrayElem[_, _] => x.asRep[To]
         case e => !!!(s"Expected $x to have WArrayElem[_, _], but got $e", x)
       }
     }
@@ -371,7 +367,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 }
 
 object WArraysModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWX2gcRRj/bpP07nIxbWINNZqaxitFrXdVlFYiaJo/pXomIRtaTIsytztJp+6fcXcu2ZPSxz7om/RJ9KEg+BIU8aWIiCiC+NB38VEqgijSB4uCxW9mdvf2LrkkPngPw8zsN9+f3+8339zmb9AXBjAeWsQhXsWlglRMNZ8KRdl8xbcbDp2hq+//ZW0sFk4VDRhegX2XSDgTOitQ1JPZiKdzU9g1GJpjnj3rCSaaZVe5EFCp6RhVGaO6XYxy5tRkDQ7J5fmAcE6DDl/P7s1X+2F0WSSeRUPhB6GAI9pH1fIdh1qC+V6VuW5DkLpDqzUWCrTvrft28024Cj01OGD5nhVQQc1ph4QhDeP9ApXuWbouqnVzgbdibM1zOSBMYJoY44C2X6LcbHq+13QFDMapLXCZFtqUaMQR27Mud1SYvhrkmcv9QCRR8xjhkm8ny16P4AYM1y6TdVLFqGtVUwTMW5POOLHeIGt0Hk2k+T6sIaTO6nKT09h5KRR2W7yIAwDnqJSnVWqVFmqVFLWKRK1s0oARh71F5MfFwI+aoH+5HoBIuji+i4vEA5317PLbF60Ld82Sa8jDkUymqFIqoKNHuqhWEYTofrf0bnjnzI2TBvSvQD8Lp+qhCIglskKIASsRz/OFyjnFkARryOFENw5VlCm06RBK0fJdTjz0FKM5gFQ5zGJCGsu9wZigLujnBaeJaU/Ec2m93W6pPDvFudP85sqXV356+IchQwsz4kHGbQ+63aEcJclp4jhYjiGS4Bi1X9Nl+i4dmrjDXrvxjjAgV4Nc1C6whfplpHMyCmBAn9DyvcdO/vPj4KowYva7FpHE/yL/1de/3H6h1wCjHaciFmBirwmS5ATsOz8VBKQZIyTHQwJyy0omcigpxTzYsS7ukEbK6rFff7e/PQEXVa1KCwkke5Ifuhg+9d7nR+nixwYUVtR9nXPImhKiZGWGhtYKFPx1Guj9/Dpx5GxbMeZtukoajoi5zMKieR3vyiunErNJdYVzSfklTdG879Hy3GL5T/P765uSIfl9RMDAhmqd9jniNGiCa98WrOUw1gFuDLEcjiqrw5kTR3K5OAf1XYBBlxP3vbMOdXf3LqBfky67UyuKJGSsm7TUffrk79MfPTr60D0D8i9B3yoiHW4LdV/db3h2cnex6wsaidPJXk87+HhXSUDc9DFYJ9i7sLcIGEkIaQjmVM/F+5oG/I1DC4Z0NpbQMxJXIs9Wznraqyg/cXNzg916bE7dpSwou2oyeXA+vXbtgT8+fP1+1RILdSZcwssn/kNDTPrX/9jwICOCITUeTDRSkqfiZ11byeFYSy+je5Pni5ndFLsnd8JuIdDXOkWFlY8/9/PM9ZdVm9rfQkuZxYVm24aA+6ZRS4R5NO3K+ik7g3XNNTwL0U8/ZFI7nG4UM2BM7oDSwGw0nVDyVCcgox2ALG1pjh1BlUQx/f362k1nydbS5S3kDyKOE11wNGPWUYZX734w//itz24r8PqlfrAReem/mZZYtMyL2B2kZuT8mVaqz6cptK4QmubjRwE7lsokA86r7S/FYCIl/b+xA4kLyvO/d5pDYiILAAA="
+  val dump = "H4sIAAAAAAAAALVWX2gcRRj/bpP07nIxbWINNZqaxitFrXdVlFYiaJo/pXomIRtaTIsytztJp+6fcXcu2ZPSxz7om/RJ9KEg+BIU8aWIiCiC+NB38VEqgijSB4uCxW9mdvf2LrkkPngPw8zsN9+f3+8339zmb9AXBjAeWsQhXsWlglRMNZ8KRdl8xbcbDp2hq+//ZW0sFk4VDRhegX2XSDgTOitQ1JPZiKdzU9g1GJpjnj3rCSaaZVe5EFCp6RhVGaO6XYxy5tRkDQ7J5fmAcE6DDl/P7s1X+2F0WSSeRUPhB6GAI9pH1fIdh1qC+V6VuW5DkLpDqzUWCrTvrft28024Cj01OGD5nhVQQc1ph4QhDeP9ApXuWbouqnVzgbdibM1zOSBMYJoY44C2X6LcbHq+13QFDMapLXCZFtqUaMQR27Mud1SYvhrkmcv9QCRR8xjhkm8ny16P4AYM1y6TdVLFqGtVUwTMW5POOLHeIGt0Hk2k+T6sIaTO6nKT09h5KRR2W7yIAwDnqJSnVWqVFmqVFLWKRK1s0oARh71F5MfFwI+aoH+5HoBIuji+i4vEA5317PLbF60Ld82Sa8jDkUymqFIqoKNHuqhWEYTofrf0bnjnzI2TBvSvQD8Lp+qhCIglskKIASsRz/OFyjnFkARryOFENw5VlCm06RBK0fJdTjz0FKM5gFQ5zGJCGsu9wZigLujnBaeJaU/Ec2m93W6pPDvFudP85sqXV356+IchQwsz4kHGbQ+63aEcJclp4jhYjiGS4Bi1X9Nl+i4dmrjDXrvxjjAgV4Nc1C6whfplpHMyCmBAn9DyvcdO/vPj4KowYva7FpHE/yL/1de/3H6h1wCjHaciFmBirwmS5ATsOz8VBKQZIyTHQwJyy0omcigpxTzYsS7ukEbK6rFff7e/PQEXVa1KCwkke5Ifuhg+9d7nR+nixwYUVtR9nXPImhKiZGWGhtYKFPx1Guj9/Dpx5GxbMeZtukoajoi5zMKieR3vyiunErNJdYVzSfklTdG879Hy3GL5T/P765uSIfl9RMDAhmqd9jniNGiCa98WrOUw1gFuDLEcjiqrw5kTR3K5OAf1XYBBlxP3vbMOdXf3LqBfky67UyuKJGSsm7TUffrk79MfPTr60D0D8i9B3yoiHW4LdV/db3h2cnex6wsaidPJXk87+HhXSUDc9DFYJ9i7sLcIGEkIaQjmVM/F+5oG/I1DC4Z0NpbQMxJXIs9Wznraqyg/cXNzg916bE7dpSwou2oyeXA+vXbtgT8+fP1+1RILdSZcwssn/kNDTPrX/9jwICOCITUeTDQyKE/FzzpWow3lcKwlmdG9KfTFzG4K35M7wbcQ6JudAsPKx5/7eeb6y6pT7W8BpsziWrOdQ8B90ygnwjyaNmb9mp0RUJpreBYSkH7IpHY43Shm8JjcAaiB2Wg6YeWpTkBGOwBZ2tIfO4IqlWL6+/XNm87yrdXLW8gfRBwnuuBoxsQjd1fvfjD/+K3Pbivw+qWEsBd56R+all600ovYIKRs5PyZVqrPpym0bhGa5uN3AZuWyiQDzqvtj8VgrKZQ/3XsQOKC8vwvuzIyoiULAAA="
 }
 }
 

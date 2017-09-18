@@ -24,13 +24,13 @@ trait HotSpots[G <: Global] extends ScalanizerBase[G] with Enricher[G] with Back
 
     def transformExternalTypes(expr: SValDef): SValDef = {
       snState.externalTypes.foldLeft(expr) { (acc, externalTypeName) =>
-        new ExtType2WrapperTransformer(externalTypeName).valdefTransform(acc)
+        new External2WrapperTypeTransformer(externalTypeName).valdefTransform(acc)
       }
     }
 
     def transformExternalTypes(expr: STpeExpr): STpeExpr = {
       snState.externalTypes.foldLeft(expr) { (acc, externalTypeName) =>
-        new ExtType2WrapperTransformer(externalTypeName).typeTransformer.typeTransform(acc)
+        new External2WrapperTypeTransformer(externalTypeName).typeTransformer.typeTransform(acc)
       }
     }
 

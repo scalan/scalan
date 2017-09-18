@@ -6,11 +6,11 @@ import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.util.Invariant
 
 trait TypeWrappers extends GraphVizExport with Base { scalan: Scalan =>
-  trait TypeWrapper[TBase, TWrapper] extends Def[TWrapper] {
+  trait TypeWrapperDef[TBase, TWrapper] extends Def[TWrapper] {
     def wrappedValue: Rep[TBase]
   }
 
-  class BaseTypeElem[TBase, TWrapper <: TypeWrapper[TBase, TWrapper]]
+  class BaseTypeElem[TBase, TWrapper <: TypeWrapperDef[TBase, TWrapper]]
   (val wrapperElem: Elem[TWrapper])(implicit tag: WeakTypeTag[TBase])
   // null can be used because getDefaultRep is overridden
     extends BaseElem[TBase](null.asInstanceOf[TBase]) { self =>
@@ -22,7 +22,7 @@ trait TypeWrappers extends GraphVizExport with Base { scalan: Scalan =>
       s"${super.getName(f)}{base type, wrapper: ${f(wrapperElem)}}"
   }
 
-  class BaseTypeElem1[A, CBase[_], TWrapper <: TypeWrapper[CBase[A], TWrapper]]
+  class BaseTypeElem1[A, CBase[_], TWrapper <: TypeWrapperDef[CBase[A], TWrapper]]
   (wrapperElem: Elem[TWrapper])(implicit val eItem: Elem[A], val cont: Cont[CBase])
     extends BaseTypeElem[CBase[A], TWrapper](wrapperElem)(cont.tag(eItem.tag)) {
     override def equals(other: Any) = other match {
@@ -65,7 +65,7 @@ trait TypeWrappers extends GraphVizExport with Base { scalan: Scalan =>
     case _ => false
   }
 
-  protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase] =
+  protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapperDef[TBase, TWrapper]]): Rep[TBase] =
     x.asInstanceOf[Rep[TBase]]
 
   override protected def nodeColor(td: TypeDesc)(implicit config: GraphVizConfig) = td match {
@@ -103,7 +103,7 @@ trait TypeWrappers extends GraphVizExport with Base { scalan: Scalan =>
 
   override def rewriteDef[T](d: Def[T]) = d match {
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
-    case mc @ MethodCall(Def(wrapper: TypeWrapper[_, _]), m, args, neverInvoke) if !isValueAccessor(m) =>
+    case mc @ MethodCall(Def(wrapper: TypeWrapperDef[_, _]), m, args, neverInvoke) if !isValueAccessor(m) =>
       val resultElem = mc.selfType
       val wrapperIso = getIsoByElem(resultElem)
       wrapperIso match {

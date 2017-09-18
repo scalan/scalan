@@ -38,7 +38,7 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
           genMethodsImplicits _,
           defaultMethod _,
           defaultWrapperImpl _,
-          extType2WrapperInWrappers _,
+          replaceExternalTypeByWrapper _,
           /** Currently, inheritance of type wrappers is not supported.
             * Print warnings and remove ancestors. */
           filterAncestors _
@@ -55,13 +55,13 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   /** Adding of a method which return original external type. For example:
     * def wrappedValue: Rep[Array[T]]; */
   def addWrappedValue(module: SModuleDef): SModuleDef = {
-    val resType = module.entityOps.ancestors.collect {
-      case STypeApply(STraitCall("TypeWrapper", List(importedType, _)),_) => importedType
+    val wrappedType = module.entityOps.ancestors.collect {
+      case STypeApply(TypeWrapperTpe(wrappedType),_) => wrappedType
     }.headOption
     val wrappedValue = SMethodDef(
       name = "wrappedValue",
       tpeArgs = Nil, argSections = Nil,
-      tpeRes = resType,
+      tpeRes = wrappedType,
       isImplicit = false, isOverride = false, overloadId = None,
       annotations = Nil, body = None, isTypeDesc = false
     )
@@ -97,7 +97,7 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     * is filtered. */
   def defaultWrapperImpl(module: SModuleDef): SModuleDef = {
     val wrapperTypes = module.entityOps.ancestors.collect {
-      case STypeApply(STraitCall("TypeWrapper", h :: _),_) => h
+      case STypeApply(TypeWrapperTpe(w), _) => w
     }
 
     if (wrapperTypes.isEmpty) module
@@ -145,8 +145,8 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     * The external type Array is replaced by its wrapper WArray
     * trait Col[A] { def arr: WArray[A]; }
     * */
-  def extType2WrapperInWrappers(module: SModuleDef): SModuleDef = {
-    class TypeInWrappersTransformer(name: String) extends ExtType2WrapperTransformer(name) {
+  def replaceExternalTypeByWrapper(module: SModuleDef): SModuleDef = {
+    class TypeInWrappersTransformer(name: String) extends External2WrapperTypeTransformer(name) {
       override def methodTransform(method: SMethodDef): SMethodDef = {
         if (method.name == "wrappedValue")
           method
@@ -154,7 +154,7 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       }
       override def classArgTransform(classArg: SClassArg) = classArg
       override def entityAncestorTransform(ancestor: STypeApply): STypeApply = {
-        if (ancestor.tpe.name == "TypeWrapper")
+        if (ancestor.tpe.name == TypeWrapperDefName)
           ancestor
         else
           ancestor.copy(tpe = typeTransformer.traitCallTransform(ancestor.tpe))
@@ -167,12 +167,12 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     wrappedModule
   }
 
-  /** Discards all ancestors of the entity except TypeWrapper. It could be used as temporary solution
+  /** Discards all ancestors of the entity except TypeWrapperDef. It could be used as temporary solution
     * if inheritance of type wrappers is not supported. */
   def filterAncestors(module: SModuleDef): SModuleDef = {
     class filterAncestorTransformer extends MetaAstTransformer {
       override def entityAncestorsTransform(ancestors: List[STypeApply]): List[STypeApply] = {
-        ancestors.filter(_.tpe.name == "TypeWrapper")
+        ancestors.filter(_.tpe.name == TypeWrapperDefName)
       }
     }
 

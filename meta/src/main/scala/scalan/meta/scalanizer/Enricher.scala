@@ -419,7 +419,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
 
   def externalTypeToWrapper(module: SModuleDef) = {
     val wrappedModule = snState.externalTypes.foldLeft(module){(acc, externalTypeName) =>
-      new ExtType2WrapperTransformer(externalTypeName).moduleTransform(acc)
+      new External2WrapperTypeTransformer(externalTypeName).moduleTransform(acc)
     }
 
     wrappedModule

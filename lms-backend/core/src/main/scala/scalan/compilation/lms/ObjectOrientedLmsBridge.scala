@@ -79,7 +79,7 @@ trait ObjectOrientedLmsBridge extends LmsBridge with MethodMappingDSL {
                 case Some(typeMapping) =>
                   lms.Static(staticReceiverString(typeMapping))
                 case None =>
-                  // TODO handle this case, at least for TypeWrapper
+                  // TODO handle this case, at least for TypeWrapperDef
                   !!!(s"Add mapping for unmapped companion ${receiver.toStringWithDefinition}", receiver)
               }
             } else {

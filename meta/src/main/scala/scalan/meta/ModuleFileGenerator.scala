@@ -179,11 +179,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     val hasCompanion = entityCompOpt.isDefined
     val proxyBT = e.optBaseType.opt { bt =>
       s"""
-        |  //proxyBT: TypeWrapper proxy
-        |  //implicit def proxy${e.baseTypeName}${e.typesWithElems}(p: Rep[${e.baseTypeUse}]): ${e.typeUse} =
-        |  //  proxyOps[${e.typeUse}](p.asRep[${e.typeUse}])
-        |
-         |  implicit def unwrapValueOf${e.typeDecl}(w: Rep[${e.typeUse}]): Rep[${e.baseTypeUse}] = w.wrappedValue
+        |  implicit def unwrapValueOf${e.typeDecl}(w: Rep[${e.typeUse}]): Rep[${e.baseTypeUse}] = w.wrappedValue
         |""".stripAndTrim
     }
     // note: currently can't cache them properly due to cyclical dependency between
@@ -271,7 +267,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
               s"EntityElem[$toArgName]"
             }
           (None, parentElem)
-        case Some(STraitCall("TypeWrapper", _)) =>
+        case Some(STraitCall(TypeWrapperDefName, _)) =>
           val parentElem =
             if (e.isCont) {
               s"WrapperElem1[${join(e.tpeArgNames, toArgName, e.baseTypeName, e.name)}](${e.tpeArgNames.rep("_e" + _)}, container[${e.baseTypeName}], container[${e.name}])"
@@ -282,7 +278,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         case Some(parent@STraitCall(parentName, parentTpeArgs)) =>
           (Some(parent), s"${parentName}Elem[${join(parentTpeArgs, toArgName)}]")
         case Some(p) => !!!(s"Unsupported parent type $p of the entity ${e.name}")
-        case None => !!!(s"Entity ${e.name} must extend Def, TypeWrapper, or another entity")
+        case None => !!!(s"Entity ${e.name} must extend Def, TypeWrapperDef, or another entity")
       }
       val overrideIfHasParent = optParent.ifDefined("override ")
       val elemMethodName = entityElemMethodName(e.name)
@@ -345,7 +341,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |
          |    def convert${e.name}(x: Rep[${e.typeUse}]): Rep[$toArgName] = {
         |      x.elem${e.t.isHighKind.opt(".asInstanceOf[Elem[_]]")} match {
-        |        case e: $wildcardElem => x.asRep[$toArgName]
+        |        case _: $wildcardElem => x.asRep[$toArgName]
         |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e", x)
         |      }
         |    }

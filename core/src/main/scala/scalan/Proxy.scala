@@ -648,10 +648,10 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
         try {
           val paramElemMap = extractElems(elemsWithTypes, scalaMethod.typeParams.toSet, Map.empty)
           val elemMap = instanceElemMap ++ paramElemMap
-          // check if return type is a TypeWrapper
+          // check if return type is a TypeWrapperDef
           val baseType = tpe.baseType(TypeWrapperSym) match {
             case NoType => definitions.NothingTpe
-            // e.g. Throwable from TypeWrapper[Throwable, SThrowable]
+            // e.g. Throwable from TypeWrapperDef[Throwable, SThrowable]
             case TypeRef(_, _, params) => params(0).asSeenFrom(tpe, scalaMethod.owner)
             case unexpected => !!!(s"unexpected result from ${tpe1}.baseType(BaseTypeEx): $unexpected")
           }
@@ -693,7 +693,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
     val EitherSym = typeOf[_ | _].typeSymbol
     val Function1Sym = typeOf[_ => _].typeSymbol
 
-    val TypeWrapperSym = typeOf[TypeWrapper[_, _]].typeSymbol
+    val TypeWrapperSym = typeOf[TypeWrapperDef[_, _]].typeSymbol
 
     val ElementSym = typeOf[Elem[_]].typeSymbol
     val ContSym = typeOf[Cont[Any]].typeSymbol

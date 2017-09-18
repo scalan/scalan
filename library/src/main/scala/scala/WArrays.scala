@@ -9,7 +9,7 @@ package scala {
 
   trait WArrays extends Base with TypeWrappers { self: WrappersModule =>
     type RepWArray[T] = Rep[WArray[T]];
-    @ContainerType @FunctorType trait WArray[T] extends TypeWrapper[Array[T], WArray[T]] { self =>
+    @ContainerType @FunctorType trait WArray[T] extends TypeWrapperDef[Array[T], WArray[T]] { self =>
       implicit def eT: Elem[T];
       def wrappedValue: Rep[Array[T]];
       @External def apply(i: Rep[Int]): Rep[T];
