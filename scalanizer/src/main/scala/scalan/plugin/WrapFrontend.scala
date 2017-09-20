@@ -26,7 +26,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   def newPhase(prev: Phase) = new StdPhase(prev) {
     def apply(unit: CompilationUnit) {
       val unitName = unit.source.file.name
-      if (snConfig.codegenConfig.entityFiles.contains(unitName)) {
+      if (isModuleUnit(unitName)) {
         //        /* Collect all methods with the HotSpot annotation. */
         //        val hotSpotFilter = new FilterTreeTraverser(isHotSpotTree)
         //        hotSpotFilter.traverse(unit.body)
@@ -317,7 +317,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       createWrapper(objType)
     })
     val updatedWrapper = addMember(objType.typeSymbol.isModuleClass, member, wrapper)
-    snState.wrappers(externalTypeName) = updatedWrapper
+    snState.updateWrapper(externalTypeName, updatedWrapper)
     createMemberDependencies(memberType)
   }
 
@@ -327,7 +327,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       createWrapperSpecial(packageName, externalTypeName, tpeArgs, originalEntityAncestors, ownerChain)
     })
     val updatedWrapper = addMember(isCompanion, member, wrapper)
-    snState.wrappers(externalTypeName) = updatedWrapper
+    snState.updateWrapper(externalTypeName, updatedWrapper)
   }
 
   /** Adds a method or a value to the wrapper. It checks the external type symbol

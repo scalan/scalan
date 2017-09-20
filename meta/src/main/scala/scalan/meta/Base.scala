@@ -16,7 +16,9 @@ case class CodegenConfig(
     "scalan.meta.ScalanAst._"),
   isAlreadyRep: Boolean = true,
   isStdEnabled: Boolean = true
-)
+) {
+  def isEntityFile(fileName: String) = entityFiles.contains(fileName)
+}
 
 object Base {
   lazy val config = {

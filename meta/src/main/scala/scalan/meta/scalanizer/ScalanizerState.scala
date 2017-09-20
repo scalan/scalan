@@ -1,7 +1,7 @@
 package scalan.meta.scalanizer
 
 import scala.tools.nsc.Global
-import scalan.meta.ScalanAst.{SValDef, STpeExpr, STpeFunc, STpeEmpty, STpeTuple, KernelType, SFunc, WrapperDescr}
+import scalan.meta.ScalanAst.{SValDef, STpeExpr, STpeFunc, STpeEmpty, SModuleDef, STpeTuple, KernelType, SFunc, WrapperDescr}
 
 /** The object contains the current state and temporary data of the Scalanizer. */
 trait ScalanizerState[G <: Global] {
@@ -25,6 +25,21 @@ trait ScalanizerState[G <: Global] {
   /** Mapping of external type names to their wrappers. */
   val wrappers: Map[String, WrapperDescr]
 
+  def updateWrapper(typeName: String, descr: WrapperDescr) = {
+    wrappers(typeName) = descr
+  }
   /** Names of external types. They must be read only after the WrapFrontend phase. */
   def externalTypes = wrappers.keySet
+
+  val modules: Map[String, SModuleDef]
+
+  def getModule(packageName: String, unitName: String): SModuleDef = {
+    val key = s"$packageName.$unitName"
+    modules(key)
+  }
+
+  def addModule(unitName: String, module: SModuleDef) = {
+    val key = s"${module.packageName}.$unitName"
+    modules(key) = module
+  }
 }

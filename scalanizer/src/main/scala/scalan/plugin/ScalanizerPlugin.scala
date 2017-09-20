@@ -19,6 +19,7 @@ class ScalanizerPlugin(val global: Global) extends Plugin { plugin =>
       new WrapFrontend(this)
     , new WrapEnricher(this)
     , new WrapBackend(this)
+    , new VirtFrontend(this)
 //    , new VirtBackend(this)
 //    , new CheckExtensions(this)
     , new FinalComponent(this)

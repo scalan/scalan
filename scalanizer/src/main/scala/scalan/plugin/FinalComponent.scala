@@ -16,10 +16,10 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
   val phaseName: String = FinalComponent.name
   override def description: String = "Code virtualization and specialization"
 
-  val runsAfter = List(WrapBackend.name)
+  val runsAfter = List(VirtFrontend.name)
 
   /** Transformations of Scalan AST */
-  val pipeline = scala.Function.chain(Seq(
+  val moduleVirtualizationPipeline = scala.Function.chain(Seq(
     fixExistentialType _,
     externalTypeToWrapper _,
     composeParentWithExt _,
@@ -40,12 +40,13 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
   def newPhase(prev: Phase) = new StdPhase(prev) {
     def apply(unit: CompilationUnit): Unit = {
       val unitName = unit.source.file.name
-      if (snConfig.codegenConfig.entityFiles.contains(unitName)) try {
+      if (isModuleUnit(unitName)) try {
 //        showTree("body", unitName, unit.body)
-        val moduleDef = moduleDefFromTree(unitName, unit.body)
+        val packageName = getModulePackage(unit)
+        val moduleDef = snState.getModule(packageName, unitName)
 
         /** Generates a virtualized version of original Scala AST, wraps types by Rep[] and etc. */
-        val enrichedModuleDef = pipeline(moduleDef)
+        val enrichedModuleDef = moduleVirtualizationPipeline(moduleDef)
 
         /** Scala AST of virtualized module */
         val virtAst = genUDModuleFile(enrichedModuleDef, unit.body)
