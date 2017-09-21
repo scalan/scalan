@@ -19,6 +19,8 @@ trait ScalanParsers[G <: Global] {
   lazy val compiler: Compiler = global
   import compiler._
 
+  implicit val context = new AstContext
+  
   implicit def nameToString(name: Name): String = name.toString
 
   implicit class OptionListOps[A](opt: Option[List[A]]) {

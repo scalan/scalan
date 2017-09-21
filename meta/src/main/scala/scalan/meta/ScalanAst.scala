@@ -1,9 +1,12 @@
 package scalan.meta
 
 import java.lang.annotation.Annotation
+
 import com.typesafe.config.ConfigUtil
+
 import scala.reflect.internal.ModifierFlags
 import PrintExtensions._
+import scala.collection.mutable.{Map => MMap}
 import scalan._
 import scalan.util.{Covariant, Contravariant, Invariant}
 
@@ -769,6 +772,13 @@ object ScalanAst {
 
   type Entity = STraitOrClassDef
 
+  class AstContext {
+    /** Mapping of external type names to their wrappers. */
+    val wrappers = MMap[String, WrapperDescr]()
+
+    val modules = MMap[String, SModuleDef]()
+  }
+
   case class SModuleDef(
                          packageName: String,
                          imports: List[SImportStat],
@@ -785,7 +795,7 @@ object ScalanAst {
                          hasDsl: Boolean = false,
                          hasDslStd: Boolean = false,
                          hasDslExp: Boolean = false,
-                         ancestors: List[STypeApply] = List()) {
+                         ancestors: List[STypeApply] = List())(@transient implicit val context: AstContext) {
     def getFullName(shortName: String): String = s"$packageName.$name.$shortName"
 
     def isEqualName(shortName: String, fullName: String): Boolean =

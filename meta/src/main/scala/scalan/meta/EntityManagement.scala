@@ -21,8 +21,8 @@ class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx[Global
   protected val entities = config.entityFiles.flatMap { f =>
     val file = FileUtil.file(config.srcPath, f)
     try {
-      val d = parseEntityModule(file)
-      Some(new EntityManager(d.name, file, d, config))
+      val module = parseEntityModule(file)
+      Some(new EntityManager(module.name, file, module, config))
     } catch {
       case e: Exception =>
         logger.error(s"Failed to parse file at $file (relative to ${FileUtil.currentWorkingDir})", e)

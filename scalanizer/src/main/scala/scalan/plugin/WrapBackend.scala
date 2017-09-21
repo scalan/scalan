@@ -27,7 +27,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   def newPhase(prev: Phase) = new StdPhase(prev) {
     override def run(): Unit = {
       var wrapperSlices = initWrapperSlices
-      snState.wrappers foreach { case (_, WrapperDescr(m, _, config)) =>
+      snState.forEachWrapper { case (_, WrapperDescr(m, _, config)) =>
         val module = m.copy(imports = m.imports :+ SImportStat("scala.wrappers.WrappersModule"))
 
         /** Form source code of the wrapper module and store it in a file */

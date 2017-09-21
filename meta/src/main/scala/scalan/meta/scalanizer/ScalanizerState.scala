@@ -22,24 +22,30 @@ trait ScalanizerState[G <: Global] {
     * For example "Cols" -> "scalanizer.collections" */
   val packageOfModule: Map[String, String]
 
-  /** Mapping of external type names to their wrappers. */
-  val wrappers: Map[String, WrapperDescr]
-
   def updateWrapper(typeName: String, descr: WrapperDescr) = {
-    wrappers(typeName) = descr
+    scalanizer.context.wrappers(typeName) = descr
   }
   /** Names of external types. They must be read only after the WrapFrontend phase. */
-  def externalTypes = wrappers.keySet
+  def externalTypes = scalanizer.context.wrappers.keySet
 
-  val modules: Map[String, SModuleDef]
+  def hasWrapper(typeName: String) = scalanizer.context.wrappers.contains(typeName)
+  def getWrapper(typeName: String) = scalanizer.context.wrappers.get(typeName)
+
+  def forEachWrapper(action: ((String, WrapperDescr)) => Unit) = {
+    scalanizer.context.wrappers.foreach(action)
+  }
+
+  def transformWrappers(transformer: ((String, WrapperDescr)) => WrapperDescr) = {
+    scalanizer.context.wrappers.transform(scala.Function.untupled(transformer))
+  }
 
   def getModule(packageName: String, unitName: String): SModuleDef = {
     val key = s"$packageName.$unitName"
-    modules(key)
+    scalanizer.context.modules(key)
   }
 
   def addModule(unitName: String, module: SModuleDef) = {
     val key = s"${module.packageName}.$unitName"
-    modules(key) = module
+    scalanizer.context.modules(key) = module
   }
 }

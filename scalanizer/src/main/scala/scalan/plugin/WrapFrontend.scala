@@ -313,9 +313,9 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         formExternalMethodDef(methodName.toString, Nil, Nil, formMethodRes(sym.tpe))
       case _ => throw new NotImplementedError(s"memberType = ${showRaw(memberType)}")
     }
-    val wrapper = snState.wrappers.getOrElse(externalTypeName, {
+    val wrapper = snState.getWrapper(externalTypeName).getOrElse {
       createWrapper(objType)
-    })
+    }
     val updatedWrapper = addMember(objType.typeSymbol.isModuleClass, member, wrapper)
     snState.updateWrapper(externalTypeName, updatedWrapper)
     createMemberDependencies(memberType)
@@ -323,9 +323,9 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
 
   def updateWrapperSpecial(packageName: String, externalTypeName: String, tpeArgs: STpeArgs, originalEntityAncestors: List[STypeApply],
                            isCompanion: Boolean, member: SMethodDef, ownerChain: List[String]): Unit = {
-    val wrapper = snState.wrappers.getOrElse(externalTypeName, {
+    val wrapper = snState.getWrapper(externalTypeName).getOrElse {
       createWrapperSpecial(packageName, externalTypeName, tpeArgs, originalEntityAncestors, ownerChain)
-    })
+    }
     val updatedWrapper = addMember(isCompanion, member, wrapper)
     snState.updateWrapper(externalTypeName, updatedWrapper)
   }
@@ -396,11 +396,12 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       case ClassInfoType(parents, _, _) => parents
       case _ => Nil
     }
+    val externalTypes = snState.externalTypes
     parentDecls foreach { parent =>
       val name = parent.typeSymbol.nameString
-      if (!isIgnoredExternalType(name) && !snState.wrappers.keySet.contains(name)) {
+      if (!isIgnoredExternalType(name) && !externalTypes.contains(name)) {
         val wrapperDescr = createWrapper(parent)
-        snState.wrappers(name) = wrapperDescr
+        snState.updateWrapper(name, wrapperDescr)
       }
     }
   }
@@ -410,9 +411,10 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     class DependencyTraverser extends TypeTraverser {
       def traverse(tp: Type): Unit = tp match {
         case TypeRef(pre, sym, args) if isWrapperSym(sym) =>
-          if (!snState.wrappers.contains(sym.nameString)) {
-            val module = createWrapper(sym.tpe)
-            snState.wrappers(sym.nameString) = module
+          val typeName = sym.nameString
+          if (!snState.hasWrapper(typeName)) {
+            val w = createWrapper(sym.tpe)
+            snState.updateWrapper(typeName, w)
           }
         case _ => mapOver(tp)
       }

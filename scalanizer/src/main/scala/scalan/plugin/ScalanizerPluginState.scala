@@ -48,9 +48,4 @@ class ScalanizerPluginState[G <: Global](val scalanizer: Scalanizer[G]) extends 
     "Cols" -> "scalanizer.collections",
     "LinearAlgebra" -> "scalanizer.linalgebra"
   )
-
-  /** Mapping of external type names to their wrappers. */
-  val wrappers = Map[String, WrapperDescr]()
-
-  val modules = Map[String, SModuleDef]()
 }
