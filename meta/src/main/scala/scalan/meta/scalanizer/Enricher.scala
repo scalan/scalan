@@ -211,19 +211,18 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
   }
 
   def genImplicitClassArgs(module: SModuleDef, clazz: SClassDef): List[SClassArg] = {
-    lazy val ancestorSubst: List[(STpeArg, STpeExpr)] = {
+    val ancestorSubst: List[(STpeArg, STpeExpr)] = {
       clazz.ancestors.flatMap { a =>
-        val optEntity = module.findEntity(a.tpe.name)
-        optEntity match {
-          case Some(entity) => entity.tpeArgs zip a.tpe.tpeSExprs
+        val ancestorEnt_? = module.findEntity(a.tpe.name, globalSearch = true)
+        ancestorEnt_? match {
+          case Some(e) =>
+            val pairs = e.tpeArgs zip a.tpe.tpeSExprs
+            pairs.filterNot { case (a, t) => e.isExtractableArg(module, a) }
           case None => List[(STpeArg, STpeExpr)]()
         }
       }
     }
-    def notExtractable(tpeArg: STpeArg): Boolean = {
-      !clazz.args.args.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
-    }
-    val classImplicits = clazz.tpeArgs.filter(notExtractable).map { clsArg =>
+    val classImplicits = clazz.tpeArgs.filterNot(a => clazz.isExtractableArg(module, a)).map { clsArg =>
       val argTpe = clsArg.toTraitCall
       val substOpt = ancestorSubst.find { case (tyArg, tpe) => tpe == argTpe }
       val res = substOpt match {
@@ -235,11 +234,11 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
       }
       res
     }
-    val entityImplicits = ancestorSubst.map { case (entityParam, ancestorParam) =>
-      genImplicitClassArg(entityParam.tparams.nonEmpty, entityParam.name, ancestorParam)
-    }
+//    val entityImplicits = ancestorSubst.map { case (tyArg, ancestorParam) =>
+//      genImplicitClassArg(tyArg.tparams.nonEmpty, tyArg.name, ancestorParam)
+//    }
 
-    (entityImplicits ++ classImplicits).distinct
+    (classImplicits).distinct
   }
 
   def genClassesImplicits(module: SModuleDef) = {
@@ -285,11 +284,8 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
         else genCont(arg)
       }
     }
-    def notExtractable(tpeArg: STpeArg): Boolean = {
-      !method.allArgs.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
-    }
 
-    val args = genImplicitVals(method.tpeArgs.filter(notExtractable)) match {
+    val args = genImplicitVals(method.tpeArgs.filterNot(a => method.isExtractableArg(module, a))) match {
       case Nil => method.argSections
       case as => method.argSections ++ List(SMethodArgs(as))
     }

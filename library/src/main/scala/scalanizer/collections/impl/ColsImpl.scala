@@ -56,8 +56,9 @@ trait ColsDefs extends scalan.Scalan with Cols {
     proxyOps[ColCompanionCtor](p)
 
   case class ColOverArrayCtor[A]
-      (override val arr: Rep[WArray[A]])(implicit eA: Elem[A])
+      (override val arr: Rep[WArray[A]])
     extends ColOverArray[A](arr) with Def[ColOverArray[A]] {
+    implicit val eA = arr.elem.asInstanceOf[WArrayElem[A, _]].eT
     lazy val selfType = element[ColOverArray[A]]
   }
   // elem for concrete class
@@ -65,12 +66,11 @@ trait ColsDefs extends scalan.Scalan with Cols {
     extends ColElem[A, ColOverArray[A]]
     with ConcreteElem[ColOverArrayData[A], ColOverArray[A]] {
     override lazy val parent: Option[Elem[_]] = Some(colElement(element[A]))
-    override lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
+    override lazy val typeArgs = TypeArgs()
 
     override def convertCol(x: Rep[Col[A]]) = ColOverArray(x.arr)
     override def getDefaultRep = ColOverArray(element[WArray[A]].defaultRepValue)
     override lazy val tag = {
-      implicit val tagA = eA.tag
       weakTypeTag[ColOverArray[A]]
     }
   }
@@ -96,10 +96,9 @@ trait ColsDefs extends scalan.Scalan with Cols {
   case class ColOverArrayIsoElem[A](eA: Elem[A]) extends Elem[ColOverArrayIso[A]] {
     def getDefaultRep = reifyObject(new ColOverArrayIso[A]()(eA))
     lazy val tag = {
-      implicit val tagA = eA.tag
       weakTypeTag[ColOverArrayIso[A]]
     }
-    lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
+    lazy val typeArgs = TypeArgs()
   }
   // 4) constructor and deconstructor
   class ColOverArrayCompanionCtor extends CompanionDef[ColOverArrayCompanionCtor] with ColOverArrayCompanion {
@@ -107,7 +106,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
     override def toString = "ColOverArrayCompanion"
 
     @scalan.OverloadId("fromFields")
-    def apply[A](arr: Rep[WArray[A]])(implicit eA: Elem[A]): Rep[ColOverArray[A]] =
+    def apply[A](arr: Rep[WArray[A]]): Rep[ColOverArray[A]] =
       mkColOverArray(arr)
 
     def unapply[A](p: Rep[Col[A]]) = unmkColOverArray(p)
@@ -126,8 +125,11 @@ trait ColsDefs extends scalan.Scalan with Cols {
   implicit def proxyColOverArray[A](p: Rep[ColOverArray[A]]): ColOverArray[A] =
     proxyOps[ColOverArray[A]](p)
 
-  implicit class ExtendedColOverArray[A](p: Rep[ColOverArray[A]])(implicit eA: Elem[A]) {
-    def toData: Rep[ColOverArrayData[A]] = isoColOverArray(eA).from(p)
+  implicit class ExtendedColOverArray[A](p: Rep[ColOverArray[A]]) {
+    def toData: Rep[ColOverArrayData[A]] = {
+      implicit val eA = p.elem.asInstanceOf[ColOverArrayElem[A]].eA
+      isoColOverArray(eA).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -169,7 +171,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
   }
 
   def mkColOverArray[A]
-    (arr: Rep[WArray[A]])(implicit eA: Elem[A]): Rep[ColOverArray[A]] = {
+    (arr: Rep[WArray[A]]): Rep[ColOverArray[A]] = {
     new ColOverArrayCtor[A](arr)
   }
   def unmkColOverArray[A](p: Rep[Col[A]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -219,12 +221,12 @@ trait ColsDefs extends scalan.Scalan with Cols {
 
   object ColCompanionMethods {
     object fromArray {
-      def unapply(d: Def[_]): Option[(Rep[WArray[T]], Elem[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(arr, emT, _*), _) if receiver.elem == ColCompanionElem && method.getName == "fromArray" =>
-          Some((arr, emT)).asInstanceOf[Option[(Rep[WArray[T]], Elem[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[Rep[WArray[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == ColCompanionElem && method.getName == "fromArray" =>
+          Some(arr).asInstanceOf[Option[Rep[WArray[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[WArray[T]], Elem[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[WArray[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -245,7 +247,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
 }
 
 object ColsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWXWgcRRyf27vkvkJoYhuiVk3jBT97VyxSMUi4JhdJuSah23p4FmVud+66dXZ3OjsX7yRUfOmDvokIKj4UlL4ERXwRERE/QET64Jv4KAVBFOmDBcHif2Y/bu96l8YH92GYmf3P/+P3+81/d+d3NOZxNOcZmGKnaBOBi7qalz1R0E+6ZpuSFdK8UHv37e3JV/draLqOxs9hb8WjdZT1J5UOi+a6MKtoatVyzIojLNEt2MqFQMWqH6MkY5SGxSjETi1W0axc1jhmjPABX4/vzVf/YXCZxY5BPOFyT6BDvo+S4VJKDGG5Tsmy7bbADUpKVcsTYJ9quGb3ArqIklW0z3AdgxNB9GWKPY94wX6GSPdWtM6qdXeD9WLcmudpji0BaUKMfb79KcL0ruM6XVugySC1DSbTAps86TDAds1mVIUZq6K0ZTOXizBqGiKcc81wmXIwbKDp6nm8hUsQtVXSBbeclnTGsPEibpF1MJHm41CDR2jzdJeRwHneE2ZfvA5DCDEGSnlMpVbsoVaMUCtK1Ao64Ram1stYvtzkbqeL/CeRRKgjXTx6GxehB1JxzMJrZ43nbuh5W5OHOzKZrEopA47uG6FaRRCg+92pN7zrT18+pqFcHeUsr9zwBMeGiAshACyPHccVKucIQ8xbwOH8KA5VlDLYDAgla7g2ww54CtCcAKqoZVhCGsu9yYCgEeinBSOhaRKQj+oddUvl2TJjtPv19hfbvxz8aUrzhdlhPOY2CW53KUdJchlTCuVoIgwOUXM+Xbprk6n569bzl18XGkpUUaLTL7CNxnmgc7HD0YR/wpfvTevYPz9PNoUWsD+yiDD+5+kvv/r12lJKQ1o/TlkoQIdew8PkBEouuzSAR46zAiXKSiNyyCu53Dmwzu6SQ0TpA7/9YX57BJ1VhSohhHjsSXvgYvqJdz5bIJsfaihTV5d1leKWUqGkZIV4Rh1l3C3C/f30FqZyNlSJaZM0cZuKgMg4Jj6pcyNJZUQCtqjubyIsP+/zs+46pLC6WfhL//7NHUmPfD8DoGLOQzjHa2XOcfc2GOdjF3P/LuCEbe/jS5cO/Pn+C3eoi5lpWMLGrHDkP1zL8Bb9n9cuqtGv697eWg4LoL4DoL4NoFBBtBwPvxA7F8PuUCKBen4XBNJIOQQ1VaHE9m3lcDCOrkAT8VDqcKTEe0aBrcr56O/jV+6/6+6bGkqfQGNNkJg3FNaxhtt2zBA6+NYJ0hHHw71kP3QAFebYjj6BWxg6NlAn0EyoxLawaOmZYN/XHzxzserVLBITFDITFCKPFtcc36koPPLpzkvW1YdWVQOJoxID9jCKLaYCHQbAJkFw/frdQ9fwx8otvWNACbFIh/cgGMniEJ2oqtbirMrxyRGQyaEazZYGcy73/MirWByhjhViUMyJKb/xxIZ/EF8NR99aqp2YrZ1RjW/CVEb+m6jLDP9jOonZourvD+7ydQejQsVmoisnR7956sdXfrjyQcRrNlBEStIjQjnAfwCPefOiyuZHVKYH1xpov3jjvfWHr35yTX1KcrJBQMtzop+mnqSjxh7oISdT8H8mYxKA1GTPiJF+Rg7P/gtdccSZRQsAAA=="
+  val dump = "H4sIAAAAAAAAALVWS4gcRRiu6dndeS1LdjXL+l7XWXxmJhhDlEHWyeyOJEx2lnR0YQxKTXfNbMd+lNU1a7eEeMtBD4KKB8FDQMnBxSBeRETEB4hIDt7EowQEUSQHA4LBv6of0zOZ2awH51BU1fz1P77v+6t653c06TK06GrYxHbJIhyXVDmvuryonnD0nklWSeeND3eesg5vvaWguRaa2sLuqmu2UC6YrHk0nqtcb6DZumHrazY3uF+0pAuOSo0gRlnEKI+KUUycqjTQglhuMkwpYUO+Du/N1+BhcJnDtkZc7jCXo3sDH2XNMU2iccOxy4Zl9Thum6TcMFwO9hNtR/dfQudQuoH2aY6tMcKJWjOx6xI33M8S4d6I1zm59pu0H+PGPE8xbHBIE2LsC+xPEqr6tmP7FkczYWpNKtICmwLxKGB7zKKmDDPZQBnDog7jUdQMRNhy9Gg5YWPYQHONM3gblyFqt6xyZthd4Yxi7UXcJetgIsynoAaXmJ1TPiWh84LL9YF4HkUIUQpKeVSmVuqjVopRKwnUiiphBjaNV7D4c4M5no+CXyqNkCdcPHITF5EHsmbrxddOa89dUwuWIg57IpmcTCkLju4Zo1pJEKD73ck33atPXziioHwL5Q232nY5wxpPCiEErIBt2+Ey5xhDzLrA4dI4DmWUKtgMCSWnORbFNngK0ZwGqkxDM7gwFnszIUFj0M9wSiLTNCAf1zuuS8XZKqWm//XZL87+cudPs0ogTI+yhNs0uN2lHCnJGjZNKEfhUXCImg/oUh2LzC5dNZ6/8DpXUKqBUt6gwJrtM0BnxWNoOjgRyPe6ceSfn2c6XAnZH1tEFP/zzJdf/XplZUJByiBOOShAhbuGRclxlK45ZgiPGBc4SlWlRsRQkHK5bWid2yWHmNL7f/tD//YgOi0LlUKI8NiT9sDF3OPvfrZMNj5SULYlm7Vu4q5UoaBklbhaC2WdbcKC/cw2NsVspBIzOungnslDIpOYBKQujiWVEgFYRfZvKiq/EPCz7tikWN8o/qV+//aOoEf8Pw+gYsYiOKc2q4xh/yYYFxKNeesu4ETX3sfnz+//8/0XbpGNmW0b3MK0ePA/tGXURf9n28U1BnXd3V+LYRnUtx/U1wQKJUS1ZPjl4XMcTSeNpU2spbvGwSUTuvT30Yv33X7HdQVljqPJDojEHQnMZNvp2XpUPLxWnHj8aLSXHiweisUMW/Ejto3hzgXwOZqPtNTjhll+NtwPFAS/xT4uy2FloRygkPmwEHG0dMwOnPLiw5/uvGxcfrAur4CkahKyOoASi9lQSaHe0iCZQQXuoe+DceWG7h/iMhHpwB4oFyyOYFpWVUuyKsbHxkAmhno8e2I450rfj2im0hh1rBLNxIzo4pUmFnxFBGo49M7K5vGFzWfk1TWtS6Pgn/ieGP3NcwLTiryhH9jlfQaj4ppFuS8mh7558sdXf7j4QcxrLlTEhKCHR3KAl5wlvLlxZUtjKlPDxgTaz117b/2hy59ckY9BXrQ4XFp2/NnTl3R8NYd6yIsUgs/BhAQgNdH1CdKbYlD/Bdooj2EHCwAA"
 }
 }
 

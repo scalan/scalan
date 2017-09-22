@@ -390,6 +390,10 @@ object ScalanAst {
     extends SBodyItem {
     def externalOpt: Option[SMethodAnnotation] = annotations.find(_.annotationClass == "External")
 
+    def isExtractableArg(module: SModuleDef, tpeArg: STpeArg): Boolean = {
+      allArgs.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
+    }
+
     def explicitArgs = argSections.flatMap(_.args.filterNot(_.impFlag))
 
     def allArgs = argSections.flatMap(_.args)
@@ -562,6 +566,9 @@ object ScalanAst {
 
     def implicitArgs: SClassArgs
 
+    def isExtractableArg(module: SModuleDef, tpeArg: STpeArg): Boolean = {
+      args.args.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
+    }
     def firstAncestorType = ancestors.headOption.map(_.tpe)
 
     def isWrapper = firstAncestorType match {
@@ -777,6 +784,14 @@ object ScalanAst {
     val wrappers = MMap[String, WrapperDescr]()
 
     val modules = MMap[String, SModuleDef]()
+
+    def findEntityInOtherModules(entityName: String, referencedInModule: SModuleDef): Option[(SModuleDef, STraitOrClassDef)] = {
+      val allModules = wrappers.valuesIterator.map(_.module) ++ modules.valuesIterator
+      allModules collectFirst scala.Function.unlift { m =>
+        if (m.name == referencedInModule.name) None
+        else m.findEntity(entityName, globalSearch = false).map { e => (m, e) }
+      }
+    }
   }
 
   case class SModuleDef(
@@ -802,14 +817,21 @@ object ScalanAst {
       if (fullName == getFullName(shortName)) true
       else shortName == fullName
 
-    def findEntity(entityName: String): Option[STraitOrClassDef] = {
+    def findEntity(entityName: String, globalSearch: Boolean = false): Option[STraitOrClassDef] = {
       def isEqualName(shortName: String, fullName: String): Boolean =
         fullName == shortName || fullName == s"$packageName.$entityName.$shortName"
 
       def findByName(es: List[STraitOrClassDef]) =
         es.find(e => isEqualName(e.name, entityName))
 
-      findByName(entities).orElse(findByName(concreteSClasses))
+      val local = findByName(entities)
+        .orElse(findByName(concreteSClasses))
+      val res = local.orElse {
+        if (globalSearch)
+          context.findEntityInOtherModules(entityName, this).map(_._2)
+        else None
+      }
+      res
     }
 
     def findWrapperEntity(wrappedTypeName: String): Option[(STraitOrClassDef, STraitCall)] = {
@@ -819,7 +841,7 @@ object ScalanAst {
     }
 
     def getEntity(name: String): STraitOrClassDef = {
-      findEntity(name).getOrElse {
+      findEntity(name, globalSearch = true).getOrElse {
         sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
       }
     }
@@ -873,7 +895,7 @@ object ScalanAst {
     }
 
     object FindEntity {
-      def unapply(name: String): Option[STraitOrClassDef] = findEntity(name)
+      def unapply(name: String): Option[STraitOrClassDef] = findEntity(name, globalSearch = true)
     }
 
     object FindWrapperEntity {
