@@ -228,8 +228,8 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
         L(obsImpl1, obsImpl2),
         Nil,
         None,
-        stdDslImpls = Some(SDeclaredImplementations(Map())),
-        expDslImpls = Some(SDeclaredImplementations(Map())),
+//        stdDslImpls = Some(SDeclaredImplementations(Map())),
+//        expDslImpls = Some(SDeclaredImplementations(Map())),
         ancestors = L(STraitCall("ScalanDsl", Nil).toTypeApply)))
   }
 

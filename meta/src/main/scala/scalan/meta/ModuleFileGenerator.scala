@@ -413,10 +413,12 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
             |""".stripAndTrim
         case Some(_) => ""
         case None =>
+          val extractableElems = c.extractionBuilder().extractableImplicits
           s"""
             |  case class ${c.typeDecl("Ctor")}
             |      (${fieldsWithType.rep(f => s"override val $f")})${implicitArgsDecl}
             |    extends ${c.typeUse}(${fields.rep()})${clazz.selfType.opt(t => s" with ${t.tpe}")} with Def[${c.typeUse}] {
+            |    $extractableElems
             |    lazy val selfType = element[${c.typeUse}]
             |  }
             |""".stripAndTrim

@@ -308,6 +308,27 @@ class MetaCodegen extends ScalanAstExtensions {
       |${e.companion.opt(methodExtractorsString1(_, true))}""".stripMargin
   }
 
+  // methods to extract elements from data arguments
+  class ElemExtractionBuilder(module: SModuleDef, entity: STraitOrClassDef, argSubst: Map[String, String]) {
+    val extractionExprs: List[Option[String]] = extractImplicitElems(module, entity.args.args, entity.tpeArgs, argSubst)
+    val extractableArgs: Map[String,(STpeArg, String)] = entity.tpeArgs.zip(extractionExprs)
+      .collect { case (arg, Some(expr)) => (arg.name, (arg, expr)) }.toMap
+    val extractableImplicits: String = {
+      extractableArgs.map { case (tyArgName, (arg, expr)) =>
+        val kind = if (arg.isHighKind) "c" else "e"
+        s"implicit val $kind$tyArgName = $expr"
+      }.mkString(";\n")
+    }
+
+    def isExtractable(a: SClassArg): Boolean = a.tpe match {
+      case STraitCall("Elem", List(STraitCall(tyArgName, Nil))) =>
+        extractableArgs.contains(tyArgName)
+      case STraitCall("Cont", List(STraitCall(tyArgName, Nil))) =>
+        extractableArgs.contains(tyArgName)
+      case _ => false
+    }
+  }
+
   abstract class TemplateData(val module: SModuleDef, val entity: STraitOrClassDef) {
     val name = entity.name
     val tpeArgs = entity.tpeArgs
@@ -368,6 +389,9 @@ class MetaCodegen extends ScalanAstExtensions {
 
     def companionName = name + "Companion"
     def companionAbsName = name + "CompanionCtor"
+
+    def extractionBuilder(argSubst: Map[String, String] = Map()) =
+      new ElemExtractionBuilder(module, entity, argSubst)
   }
 
   case class EntityTemplateData(m: SModuleDef, t: STraitDef) extends TemplateData(m, t) {
@@ -377,28 +401,6 @@ class MetaCodegen extends ScalanAstExtensions {
 
   case class ConcreteClassTemplateData(m: SModuleDef, c: SClassDef) extends TemplateData(m, c) {
     val elemTypeUse = name + "Elem" + tpeArgsUse
-
-    // methods to extract elements from data arguments
-    class ExtractionBuilder(argSubst: Map[String, String]) {
-      val extractionExprs = extractImplicitElems(m, c.args.args, c.tpeArgs, argSubst)
-      val extractableArgs: Map[String,(STpeArg, String)] = c.tpeArgs.zip(extractionExprs)
-        .collect { case (arg, Some(expr)) => (arg.name, (arg, expr)) }.toMap
-      def isExtractable(a: SClassArg): Boolean = a.tpe match {
-        case STraitCall("Elem", List(STraitCall(tyArgName, Nil))) =>
-          extractableArgs.contains(tyArgName)
-        case STraitCall("Cont", List(STraitCall(tyArgName, Nil))) =>
-          extractableArgs.contains(tyArgName)
-        case _ => false
-      }
-      val extractableImplicits = {
-        extractableArgs.map { case (tyArgName, (arg, expr)) =>
-          val kind = if (arg.isHighKind) "c" else "e"
-          s"implicit val $kind$tyArgName = $expr"
-        }.mkString(";\n")
-      }
-    }
-
-    def extractionBuilder(argSubst: Map[String, String] = Map()) = new ExtractionBuilder(argSubst)
   }
 }
 

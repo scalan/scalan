@@ -158,15 +158,10 @@ trait ScalanParsers[G <: Global] {
       case md: SMethodDef if !isInternalMethodOfCompanion(md, moduleTrait) => md
     }
 
-    val declaredStdImplementations = parseDeclaredImplementations(traits ++ classes, None)
-    val declaredExpImplementations = parseDeclaredImplementations(traits ++ classes, None)
-
     SModuleDef(packageName, imports, moduleName,
       entityRepSynonym, entity, traits, classes, methods,
       moduleTrait.selfType, Nil,
-      Some(declaredStdImplementations),
-      Some(declaredExpImplementations),
-      hasDsl, false, false, moduleTrait.ancestors)
+      hasDsl, moduleTrait.ancestors)
   }
 
   def importStat(i: Import): SImportStat = {

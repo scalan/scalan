@@ -266,7 +266,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         name = "self",
         components = List(STraitCall("Wrappers", Nil))
       )),
-      body = Nil, stdDslImpls = None,
+      body = Nil,
       ancestors = List(STraitCall("TypeWrappers", Nil).toTypeApply)
     )
     WrapperDescr(module, ownerChain, wrapperConf)

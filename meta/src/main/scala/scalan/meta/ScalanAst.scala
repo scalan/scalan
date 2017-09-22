@@ -569,6 +569,11 @@ object ScalanAst {
     def isExtractableArg(module: SModuleDef, tpeArg: STpeArg): Boolean = {
       args.args.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
     }
+
+    def extractableTypeArgs(module: SModuleDef): List[STpeArg] = {
+      tpeArgs.filter(a => isExtractableArg(module, a))
+    }
+
     def firstAncestorType = ancestors.headOption.map(_.tpe)
 
     def isWrapper = firstAncestorType match {
@@ -805,11 +810,7 @@ object ScalanAst {
                          methods: List[SMethodDef],
                          selfType: Option[SSelfTypeDef],
                          body: List[SBodyItem] = Nil,
-                         stdDslImpls: Option[SDeclaredImplementations] = None,
-                         expDslImpls: Option[SDeclaredImplementations] = None,
                          hasDsl: Boolean = false,
-                         hasDslStd: Boolean = false,
-                         hasDslExp: Boolean = false,
                          ancestors: List[STypeApply] = List())(@transient implicit val context: AstContext) {
     def getFullName(shortName: String): String = s"$packageName.$name.$shortName"
 
@@ -859,10 +860,6 @@ object ScalanAst {
       }
     }
 
-    def hasStdImplFor(traitName: String) = hasDeclaredImplFor(traitName, stdDslImpls)
-
-    def hasExpImplFor(traitName: String) = hasDeclaredImplFor(traitName, expDslImpls)
-
     def clean = {
       val _entities = entities.map(_.clean)
       val _concreteSClasses = concreteSClasses.map(_.clean)
@@ -876,8 +873,6 @@ object ScalanAst {
         methods = Nil,
         body = Nil,
         hasDsl = false,
-        hasDslStd = false,
-        hasDslExp = false,
         ancestors = Nil
       )
     }
@@ -906,43 +901,6 @@ object ScalanAst {
 
   object SModuleDef {
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
-
-    def wrapperImpl(entity: STraitDef, bt: STpeExpr): SClassDef = {
-      val entityName = entity.name
-      val entityImplName = entityName + "Impl"
-      val typeUseExprs = entity.tpeArgs.map(tpeUseExpr(_))
-      SClassDef(
-        name = entityImplName,
-        tpeArgs = entity.tpeArgs,
-        args = SClassArgs(List(SClassArg(false, false, true, "wrappedValueOfBaseType", bt, None))),
-        implicitArgs = entity.implicitArgs,
-        ancestors = List(STraitCall(entity.name, typeUseExprs).toTypeApply),
-        body = List(
-        ),
-        selfType = None,
-        companion = None,
-        //            companion = defs.collectFirst {
-        //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
-        //            },
-        true, Nil
-      )
-    }
-
-    //    def apply(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SModuleDef = {
-    //      val moduleName = moduleTrait.name
-    //      val defs = moduleTrait.body
-    //      val classes = entity.optBaseType match {
-    //        case Some(bt) =>
-    //          val repBaseType = STraitCall("Rep", List(bt))
-    //          wrapperImpl(entity, repBaseType) :: moduleTrait.getConcreteClasses
-    //        case None => moduleTrait.getConcreteClasses
-    //      }
-    //      val methods = defs.collect { case md: SMethodDef => md }
-    //
-    //      SModuleDef(packageName, imports, moduleName,
-    //        entityRepSynonym, entity, traits, classes, methods,
-    //        moduleTrait.selfType, Nil, None, moduleTrait.ancestors)
-    //    }
   }
 
   case class WrapperConfig(name: String, annotations: List[String] = Nil)
