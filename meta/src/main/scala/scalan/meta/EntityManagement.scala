@@ -21,7 +21,7 @@ class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx[Global
   protected val entities = config.entityFiles.flatMap { f =>
     val file = FileUtil.file(config.srcPath, f)
     try {
-      val module = parseEntityModule(file)
+      val module = parseEntityModule(file, config.isVirtualized)
       Some(new EntityManager(module.name, file, module, config))
     } catch {
       case e: Exception =>

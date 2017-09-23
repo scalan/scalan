@@ -471,31 +471,6 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
     }.moduleTransform(module)
   }
 
-  def fixEvidences(module: SModuleDef) = {
-    new MetaAstTransformer {
-      def implicitElem(tpeSExprs: List[STpeExpr]) = {
-        SExprApply(
-          SSelect(
-            SIdent("Predef"),
-            "implicitly"
-          ),
-          tpeSExprs map (tpe => STraitCall("Elem", List(tpe)))
-        )
-      }
-
-      override def identTransform(ident: SIdent): SExpr = ident match {
-        case SIdent(name, Some(STraitCall("ClassTag", targs))) if name.startsWith("evidence$") =>
-          super.exprApplyTransform(implicitElem(targs))
-        case _ => super.identTransform(ident)
-      }
-      override def selectTransform(select: SSelect): SExpr = select match {
-        case SSelect(_, name, Some(STraitCall("ClassTag", targs))) if name.startsWith("evidence$") =>
-          super.exprApplyTransform(implicitElem(targs))
-        case _ => super.selectTransform(select)
-      }
-    }.moduleTransform(module)
-  }
-
   def fixExistentialType(module: SModuleDef) = {
     new MetaAstTransformer {
       def containsExistential(tpe: STpeExpr): Boolean = {
@@ -529,5 +504,43 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
         } else super.applyTransform(apply)
       }
     }.moduleTransform(module)
+  }
+
+  def fixEvidences(module: SModuleDef) = {
+    new MetaAstTransformer {
+      def implicitElem(tpeSExprs: List[STpeExpr]) = {
+        SExprApply(
+          SSelect(
+            SIdent("Predef"),
+            "implicitly"
+          ),
+          tpeSExprs map (tpe => STraitCall("Elem", List(tpe)))
+        )
+      }
+
+      override def identTransform(ident: SIdent): SExpr = ident match {
+        case SIdent(name, Some(STraitCall("ClassTag", targs))) if name.startsWith("evidence$") =>
+          super.exprApplyTransform(implicitElem(targs))
+        case _ => super.identTransform(ident)
+      }
+      override def selectTransform(select: SSelect): SExpr = select match {
+        case SSelect(_, name, Some(STraitCall("ClassTag", targs))) if name.startsWith("evidence$") =>
+          super.exprApplyTransform(implicitElem(targs))
+        case _ => super.selectTransform(select)
+      }
+    }.moduleTransform(module)
+  }
+
+  def addModuleTrait(module: SModuleDef) = {
+    if (module.moduleTrait.isEmpty) {
+      val mainName = module.name
+      val mt = STraitDef(
+        name = SModuleDef.moduleTraitName(mainName),
+        tpeArgs = Nil,
+        ancestors = List(STraitCall(s"impl.${mainName}Defs"), STraitCall("scala.wrappers.WrappersModule")).map(STypeApply(_)),
+        body = Nil, selfType = None, companion = None)
+      module.copy(moduleTrait = Some(mt))
+    }
+    else module
   }
 }

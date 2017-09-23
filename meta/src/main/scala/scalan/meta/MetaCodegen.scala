@@ -138,14 +138,14 @@ class MetaCodegen extends ScalanAstExtensions {
     * @param m the module we are working in
     * @param dataArgs data arguments which we can use to extract elements from
     * @param tpeArgs the type arguments for which elements should be extracted
-    * @return a list with either Some(element extraction expression) or None for some type arguments
+    * @return a list, where for each type argument either Some(element extraction expression) or None is returned
     */
   def extractImplicitElems(m: SModuleDef, dataArgs: List[SClassArg], tpeArgs: List[STpeArg], argSubst: Map[String, String] = Map()): List[Option[String]] = {
     def subst(arg: String) = argSubst.getOrElse(arg, arg)
     tpeArgs.map { ta =>
       val paths = for {
             da <- dataArgs
-            argTpe <- PartialFunction.condOpt(da.tpe) { case STraitCall("Rep", List(argTpe)) => argTpe }
+            argTpe <- da.tpe.unRep(m, m.isVirtualized)
             path <- STpePath.find(m, argTpe, ta.name)
           } yield (da, path)
 
@@ -177,7 +177,7 @@ class MetaCodegen extends ScalanAstExtensions {
       }
 
       def reasonToSkipMethod(m: SMethodDef): Option[String] = {
-        (m.explicitArgs.filter { arg => arg.tpe.isInstanceOf[STpeFunc] && config.isAlreadyRep } match {
+        (m.explicitArgs.filter { arg => arg.tpe.isInstanceOf[STpeFunc] && config.isVirtualized } match {
           case Seq() => None
           case nonEmpty => Some(s"Method has function arguments ${nonEmpty.rep(_.name)}")
         }).orElse {
@@ -189,7 +189,7 @@ class MetaCodegen extends ScalanAstExtensions {
             case _ => None
           }
         }.orElse {
-          m.tpeRes.filter(!_.isRep(module, config)).map {
+          m.tpeRes.filter(!_.isRep(module, config.isVirtualized)).map {
             returnTpe => s"Method's return type $returnTpe is not a Rep"
           }
         }
@@ -213,7 +213,7 @@ class MetaCodegen extends ScalanAstExtensions {
             val returnType = {
               val receiverType = s"Rep[${e.name + e.tpeArgs.asTypeParams(_.name)}]"
               val argTypes = methodArgs.map { arg =>
-                if (config.isAlreadyRep || arg.isTypeDesc)
+                if (config.isVirtualized || arg.isTypeDesc)
                   arg.tpe.toString
                 else
                   "Rep[" + arg.tpe.toString + "]"

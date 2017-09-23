@@ -20,4 +20,15 @@ object ScalaNameUtil {
   }
   
   def isOpName(name: String) = !name.isEmpty && opChars.contains(name.last)
+
+  object PackageAndName {
+    def unapply(name: String): Option[(List[String], String)] = {
+      val parts = name.split('.')
+      if (parts.length > 1)
+        Some((parts.slice(0, parts.length - 1).toList, parts.last))
+      else
+        None
+    }
+  }
+
 }

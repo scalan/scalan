@@ -3,7 +3,8 @@ package scalan.meta.scalanizer
 import scala.reflect.internal.util.BatchSourceFile
 import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
-import scalan.meta.{ModuleFileGenerator, ScalanCodegen}
+import scalan.meta.{ScalanCodegen, ModuleFileGenerator}
+import scalan.util.ScalaNameUtil.PackageAndName
 
 trait Backend[G <: Global] extends ScalanizerBase[G] {
   import global._
@@ -27,16 +28,14 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
   def genUDModuleFile(module: SModuleDef, orig: Tree): Tree = orig match {
     case q"package $ref { ..$_ }" =>
       implicit val ctx = GenCtx(module, true)
-      val moduleBody = List[Tree](genModuleTrait(module))
       val imports = module.imports.map(genImport(_))
+      val moduleBody = List[Tree](genModuleTrait(module))
+      val moduleTrait = module.moduleTrait.map(genTrait(_))
       PackageDef(ref,
-        imports ++ moduleBody :+
-        q"trait ${TypeName(module.name + "Module")} extends impl.ColsDefs with scala.wrappers.WrappersModule"
+        imports ++
+        moduleBody ++
+        moduleTrait.toList
       )
-//      q"""package $ref {
-//        ..$imports
-//        ..$moduleBody
-//      }"""
     case tree =>
       throw new IllegalArgumentException("Module must be in a package")
   }
@@ -168,13 +167,6 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
     q"$mods val $tname: $tpt = $expr"
   }
 
-  def genRefs(refs: List[String])(implicit ctx: GenCtx): Tree = {
-    if (refs.length == 1)
-      Ident(TermName(refs.head))
-    else
-      q"${genRefs(refs.init)}.${TermName(refs.last)}"
-  }
-
   def genImport(imp: SImportStat)(implicit ctx: GenCtx): Tree = {
     val impParts = imp.name.split('.').toList
     val refs = genRefs(impParts.init)
@@ -217,12 +209,32 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
     q"object $tname extends ..$parents { ..$body }"
   }
 
+  def genRefs(refs: List[String])(implicit ctx: GenCtx): Tree = {
+    if (refs.length == 1)
+      Ident(TermName(refs.head))
+    else
+      q"${genRefs(refs.init)}.${TermName(refs.last)}"
+  }
+
+  def genTypeRefs(refs: List[String])(implicit ctx: GenCtx): Tree = {
+    if (refs.length == 1)
+      tq"${TypeName(refs.head)}"
+    else
+      tq"${genRefs(refs.init)}.${TypeName(refs.last)}"
+  }
+
+  def genTypeName(typeName: String)(implicit ctx: GenCtx): Tree = typeName match {
+    case PackageAndName(packageNames, typeName) =>
+      genTypeRefs(packageNames :+ typeName)
+    case simpleName => genTypeRefs(List(simpleName))
+  }
+
   def genParents(ancestors: List[STypeApply])(implicit ctx: GenCtx): List[Tree] = {
     val parents = Select(Ident("scala"), TypeName("AnyRef"))
 
-    parents :: ancestors.map { a =>
-      val tpt = TypeName(a.tpe.name)
-      val tpts = a.tpe.tpeSExprs.map(genTypeExpr)
+    parents :: ancestors.map { anc =>
+      val tpt = genTypeName(anc.tpe.name)
+      val tpts = anc.tpe.tpeSExprs.map(genTypeExpr)
 
       tq"$tpt[..$tpts]"
     }

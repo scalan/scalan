@@ -23,7 +23,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     lazy val msgRepRetType = s"Invalid method $md. External methods should have return type of type Rep[T] for some T."
     val allArgs = md.allArgs
     val returnType = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
-    val unreppedReturnType = returnType.unRep(module, config).getOrElse(!!!(msgRepRetType))
+    val unreppedReturnType = returnType.unRep(module, config.isVirtualized).getOrElse(!!!(msgRepRetType))
     val argClassesStr = allArgs.rep(_ => s", classOf[AnyRef]", "")
     val elemClassesStr = (for {
       a <- md.tpeArgs
@@ -392,7 +392,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       import c.{implicitArgsOrParens, implicitArgsUse, tpeArgsDecl, tpeArgsUse}
       val fields = clazz.args.argNames
       val fieldsWithType = clazz.args.argNamesAndTypes(config)
-      val fieldTypes = clazz.args.argUnrepTypes(module, config)
+      val fieldTypes = clazz.args.argUnrepTypes(module, config.isVirtualized)
       val implicitArgsDecl = c.implicitArgsDecl()
       val parent = clazz.ancestors.head.tpe
       val parentTpeArgsStr = parent.tpeSExprs.rep()
@@ -413,12 +413,11 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
             |""".stripAndTrim
         case Some(_) => ""
         case None =>
-          val extractableElems = c.extractionBuilder().extractableImplicits
           s"""
             |  case class ${c.typeDecl("Ctor")}
             |      (${fieldsWithType.rep(f => s"override val $f")})${implicitArgsDecl}
             |    extends ${c.typeUse}(${fields.rep()})${clazz.selfType.opt(t => s" with ${t.tpe}")} with Def[${c.typeUse}] {
-            |    $extractableElems
+            |    ${c.extractionBuilder().extractableImplicits}
             |    lazy val selfType = element[${c.typeUse}]
             |  }
             |""".stripAndTrim
@@ -646,16 +645,15 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
   }
 
   def emitDslTraits = {
-    List(
-      List((module.hasDsl, "Defs"))).flatten.collect {
-      case (hasDslTrait, traitSuffix) if !hasDslTrait =>
-        val moduleTraitName = module.name + "Module"
+    if (module.moduleTrait.isEmpty) {
+        val moduleTraitName = module.getModuleTraitName
         val selfTypeStr = module.selfType match {
           case Some(SSelfTypeDef(_, List(STraitCall(`moduleTraitName`, Nil)))) => ""
           case _ => s" {${module.selfTypeString("")}}"
         }
-        s"trait $moduleTraitName extends ${module.packageName}.impl.${module.name}$traitSuffix$selfTypeStr"
-    }.mkString("\n")
+        s"trait $moduleTraitName extends ${module.packageName}.impl.${module.name}Defs$selfTypeStr"
+    }
+    else ""
   }
 
   def emitImplFile: String = {

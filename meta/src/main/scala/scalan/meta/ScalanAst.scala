@@ -41,7 +41,7 @@ object ScalanAst {
   case class STpeSingle(pre: STpeExpr, name: String) extends STpeExpr
 
   /** Invocation of a trait with arguments */
-  case class STraitCall(val name: String, override val tpeSExprs: List[STpeExpr]) extends STpeExpr {
+  case class STraitCall(val name: String, override val tpeSExprs: List[STpeExpr] = Nil) extends STpeExpr {
     override def toString = name + tpeSExprs.asTypeParams()
 
     def toTypeApply = STypeApply(this, Nil)
@@ -114,33 +114,30 @@ object ScalanAst {
       case _ => self
     }
 
-    def unRep(module: SModuleDef, config: CodegenConfig): Option[STpeExpr] = self match {
-      case t if !config.isAlreadyRep => Some(t)
-      case STraitCall("Elem", Seq(t)) => Some(self)
-      case STraitCall("Rep", Seq(t)) => Some(t)
-      case STraitCall("RFunc", Seq(a, b)) =>
+    def unRep(module: SModuleDef, isVirtualized: Boolean): Option[STpeExpr] = self match {
+      case t if !isVirtualized => Some(t)
+      case STraitCall("Elem", Seq(t)) =>  // Elem[t] --> self
+        Some(self)
+      case STraitCall("Rep", Seq(t)) =>   // Rep[t] --> t
+        Some(t)
+      case STraitCall("RFunc", Seq(a, b)) =>  // RFunc[a,b] --> a => b
         Some(STpeFunc(a, b))
-      case STraitCall(name, args) =>
-        val typeSynonyms = config.entityTypeSynonyms ++
-          module.entityRepSynonym.toSeq.map(typeSyn => typeSyn.name -> module.entityOps.name).toMap
-        typeSynonyms.get(name)
-          // convert e.g. RVector or RepVector to Vector
-          .orElse {
-          def withoutPrefix(prefix: String, fallback: Option[String]) = {
-            val indexAfterPrefix = prefix.length
-            if (name.startsWith(prefix) && name(indexAfterPrefix).isUpper)
-              Some(name.substring(indexAfterPrefix))
-            else
-              fallback
-          }
-
-          withoutPrefix("R", withoutPrefix("Rep", Some(name.stripSuffix("Rep")).filter(_ != name)))
-        }
-          .map(unReppedName => STraitCall(unReppedName, args))
+      case module.TypeSynonim(entityName, tyargs) => // RepCol[args] --> Col[args]
+        Some(STraitCall(entityName, tyargs))
+//      case STraitCall(name, args) =>
+//        def withoutPrefix(prefix: String): Option[String] = {
+//          val indexAfterPrefix = prefix.length
+//          if (name.startsWith(prefix) && name(indexAfterPrefix).isUpper)
+//            Some(name.substring(indexAfterPrefix))
+//          else
+//            None
+//        }
+//        // handle cases like RSeg, RepInt, IntRep
+//        val unReppedName = withoutPrefix("R").orElse(withoutPrefix("Rep").orElse(Some(name.stripSuffix("Rep")))).filter(_ != name)
       case _ => None
     }
 
-    def isRep(module: SModuleDef, config: CodegenConfig) = unRep(module, config) match {
+    def isRep(module: SModuleDef, isVirtualized: Boolean) = unRep(module, isVirtualized) match {
       case Some(_) => true
       case None => false
     }
@@ -263,9 +260,9 @@ object ScalanAst {
         findInStruct(s)
       case STraitCall(`argName`, Nil) =>
         Some(SNilPath)
-      case tc@STraitCall(module.FindEntity(e), args) =>
+      case tc@STraitCall(module.Entity(e), args) =>
         findInEntity(module, e, tc, argName)
-      case tc@STraitCall(module.FindWrapperEntity(e, w), args) =>
+      case tc@STraitCall(module.WrapperEntity(e, _), args) =>
         findInEntity(module, e, tc, argName)
       case _ => None
     }
@@ -790,17 +787,23 @@ object ScalanAst {
 
     val modules = MMap[String, SModuleDef]()
 
+    def allModules: Iterator[SModuleDef] = wrappers.valuesIterator.map(_.module) ++ modules.valuesIterator
+
     def findEntityInOtherModules(entityName: String, referencedInModule: SModuleDef): Option[(SModuleDef, STraitOrClassDef)] = {
-      val allModules = wrappers.valuesIterator.map(_.module) ++ modules.valuesIterator
       allModules collectFirst scala.Function.unlift { m =>
         if (m.name == referencedInModule.name) None
         else m.findEntity(entityName, globalSearch = false).map { e => (m, e) }
       }
     }
+    def entityTypeSynonyms: Map[String, String] = {
+      allModules
+        .flatMap(m => m.entityRepSynonym.map((m, _)))
+        .map { case (m, syn) => syn.name -> m.entityOps.name }
+        .toMap
+    }
   }
 
-  case class SModuleDef(
-                         packageName: String,
+  case class SModuleDef( packageName: String,
                          imports: List[SImportStat],
                          name: String,
                          entityRepSynonym: Option[STpeDef],
@@ -809,9 +812,11 @@ object ScalanAst {
                          concreteSClasses: List[SClassDef],
                          methods: List[SMethodDef],
                          selfType: Option[SSelfTypeDef],
-                         body: List[SBodyItem] = Nil,
-                         hasDsl: Boolean = false,
-                         ancestors: List[STypeApply] = List())(@transient implicit val context: AstContext) {
+                         ancestors: List[STypeApply],
+                         moduleTrait: Option[STraitDef],
+                         isVirtualized: Boolean)
+                       (@transient implicit val context: AstContext) {
+    def getModuleTraitName: String = SModuleDef.moduleTraitName(name)
     def getFullName(shortName: String): String = s"$packageName.$name.$shortName"
 
     def isEqualName(shortName: String, fullName: String): Boolean =
@@ -837,7 +842,7 @@ object ScalanAst {
 
     def findWrapperEntity(wrappedTypeName: String): Option[(STraitOrClassDef, STraitCall)] = {
       entities.collectFirst {
-        case e@WrapperEntity(w) if w.name == wrappedTypeName => (e, w)
+        case e@ScalanAst.WrapperEntity(w) if w.name == wrappedTypeName => (e, w)
       }
     }
 
@@ -871,8 +876,7 @@ object ScalanAst {
         entities = _entities,
         concreteSClasses = _concreteSClasses,
         methods = Nil,
-        body = Nil,
-        hasDsl = false,
+        moduleTrait = None,
         ancestors = Nil
       )
     }
@@ -889,17 +893,28 @@ object ScalanAst {
       """)
     }
 
-    object FindEntity {
+    object Entity {
       def unapply(name: String): Option[STraitOrClassDef] = findEntity(name, globalSearch = true)
     }
 
-    object FindWrapperEntity {
+    object WrapperEntity {
       def unapply(name: String): Option[(STraitOrClassDef, STraitCall)] = findWrapperEntity(name)
+    }
+
+    object TypeSynonim {
+      def unapply(tpe: STpeExpr): Option[(String, List[STpeExpr])] = tpe match {
+        case STraitCall(n, args) =>
+          val typeSynonyms = context.entityTypeSynonyms ++ entityRepSynonym.map(syn => syn.name -> entityOps.name)
+          typeSynonyms.get(name).map(entityName => (entityName, args))
+        case _ => None
+      }
     }
 
   }
 
   object SModuleDef {
+    /** Module trait name related to main trait */
+    def moduleTraitName(mainTraitName: String) = mainTraitName + "Module"
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
   }
 

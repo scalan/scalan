@@ -22,10 +22,10 @@ trait ScalanParsersEx[G <: Global] extends ScalanParsers[G] {
     run.cancel()
   }
 
-  def parseEntityModule(file: File) = {
+  def parseEntityModule(file: File, isVirtualized: Boolean) = {
     val sourceFile = compiler.getSourceFile(file.getPath)
     val tree = parseFile(sourceFile)
-    moduleDefFromTree(file.getPath, tree)
+    moduleDefFromTree(file.getPath, tree, isVirtualized)
   }
 
   def parseFile(source: SourceFile): compiler.Tree = {

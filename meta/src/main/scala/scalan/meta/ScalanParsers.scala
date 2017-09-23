@@ -52,9 +52,9 @@ trait ScalanParsers[G <: Global] {
     throw new IllegalStateException(msg)
   }
 
-  def moduleDefFromTree(name: String, tree: Tree): SModuleDef = tree match {
+  def moduleDefFromTree(name: String, tree: Tree, isVirtualized: Boolean): SModuleDef = tree match {
     case pd: PackageDef =>
-      moduleDefFromPackageDef(pd)
+      moduleDefFromPackageDef(pd, isVirtualized)
     case tree =>
       throw new Exception(s"Unexpected tree in $name:\n\n$tree")
   }
@@ -76,7 +76,7 @@ trait ScalanParsers[G <: Global] {
     SDeclaredImplementations(m)
   }
 
-  def findClassDefByName(trees: List[Tree], name: String) =
+  def findClassDefByName(trees: List[Tree], name: String): Option[ClassDef] =
     trees.collectFirst {
       case cd: ClassDef if cd.name.toString == name => cd
     }
@@ -121,22 +121,22 @@ trait ScalanParsers[G <: Global] {
     hasClass && hasModule && hasMethod
   }
 
-  def moduleDefFromPackageDef(packageDef: PackageDef): SModuleDef = {
+  def moduleDefFromPackageDef(packageDef: PackageDef, isVirtualized: Boolean): SModuleDef = {
     val packageName = packageDef.pid.toString
     val statements = packageDef.stats
     val imports = statements.collect { case i: Import => importStat(i) }
-    val moduleTraitTree = statements.collect {
+    val mainTraitTree = statements.collect {
       case cd: ClassDef if cd.mods.isTrait && !cd.name.contains("Module") => cd
     } match {
       case List(only) => only
       case seq => !!!(s"There must be exactly one trait with entity definition in a file, found ${seq.map(_.name.toString)}")
     }
-    val moduleTrait = traitDef(moduleTraitTree, Some(moduleTraitTree))
-    val moduleName = moduleTrait.name
+    val mainTrait = traitDef(mainTraitTree, Some(mainTraitTree))
+    val moduleName = mainTrait.name
 
-    val hasDsl = findClassDefByName(packageDef.stats, moduleName + "Module").isDefined
+    val moduleTrait = findClassDefByName(statements, moduleName + "Module").map(cd => traitDef(cd, Some(cd)))
 
-    val defs = moduleTrait.body
+    val defs = mainTrait.body
 
     val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
 
@@ -147,7 +147,7 @@ trait ScalanParsers[G <: Global] {
       throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
     }
 
-    val concreteClasses = moduleTrait.getConcreteClasses.filterNot(isInternalClassOfCompanion(_, moduleTrait))
+    val concreteClasses = mainTrait.getConcreteClasses.filterNot(isInternalClassOfCompanion(_, mainTrait))
     val classes = entity.optBaseType match {
       case Some(bt) =>
         wrapperImpl(entity, bt, true) :: concreteClasses
@@ -155,13 +155,13 @@ trait ScalanParsers[G <: Global] {
         concreteClasses
     }
     val methods = defs.collect {
-      case md: SMethodDef if !isInternalMethodOfCompanion(md, moduleTrait) => md
+      case md: SMethodDef if !isInternalMethodOfCompanion(md, mainTrait) => md
     }
 
     SModuleDef(packageName, imports, moduleName,
       entityRepSynonym, entity, traits, classes, methods,
-      moduleTrait.selfType, Nil,
-      hasDsl, moduleTrait.ancestors)
+      mainTrait.selfType, mainTrait.ancestors,
+      moduleTrait, isVirtualized)
   }
 
   def importStat(i: Import): SImportStat = {
@@ -204,9 +204,9 @@ trait ScalanParsers[G <: Global] {
 
   def findCompanion(name: String, parentScope: Option[ImplDef]) = parentScope match {
     case Some(scope) => scope.impl.body.collect {
-      case c: ClassDef if config.isAlreadyRep && c.name.toString == name + "Companion" =>
+      case c: ClassDef if config.isVirtualized && c.name.toString == name + "Companion" =>
         if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
-      case m: ModuleDef if !config.isAlreadyRep && !m.mods.isSynthetic && m.name.toString == name => objectDef(m)
+      case m: ModuleDef if !config.isVirtualized && !m.mods.isSynthetic && m.name.toString == name => objectDef(m)
     }.headOption
     case None => None
   }

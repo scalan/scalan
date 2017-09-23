@@ -3,20 +3,16 @@ package scalan.meta
 import java.util.Properties
 import java.io.FileReader
 
-case class CodegenConfig(
-  name: String,
-  srcPath: String,
-  entityFiles: List[String],
-  entityTypeSynonyms: Map[String, String] = Map.empty,
-  baseContextTrait: String = "scalan.Scalan",
-  seqContextTrait: String = "scalan.ScalanDslStd",
-  stagedContextTrait: String = "scalan.ScalanDslExp",
-  extraImports: List[String] = List(
-    "scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}",
-    "scalan.meta.ScalanAst._"),
-  isAlreadyRep: Boolean = true,
-  isStdEnabled: Boolean = true
-) {
+case class CodegenConfig(name: String,
+                         srcPath: String,
+                         entityFiles: List[String],
+                         entityTypeSynonyms: Map[String, String] = Map.empty,
+                         baseContextTrait: String = "scalan.Scalan",
+                         seqContextTrait: String = "scalan.ScalanDslStd",
+                         stagedContextTrait: String = "scalan.ScalanDslExp",
+                         extraImports: List[String] = List("scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}", "scalan.meta.ScalanAst._"),
+                         isVirtualized: Boolean = true,
+                         isStdEnabled: Boolean = true) {
   def isEntityFile(fileName: String) = entityFiles.contains(fileName)
 }
 

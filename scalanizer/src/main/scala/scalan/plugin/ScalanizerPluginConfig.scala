@@ -64,7 +64,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
       "scala.reflect.runtime.universe._",
       "scala.reflect._"
     ),
-    isAlreadyRep = false,
+    isVirtualized = false,
     isStdEnabled = false
   )
   val wrappersCodegenConfig = CodegenConfig(
@@ -79,7 +79,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
       "scala.reflect.runtime.universe._",
       "scala.reflect._"
     ),
-    isAlreadyRep = false,
+    isVirtualized = false,
     isStdEnabled = false
   )
   val wrapperConfigs = List[WrapperConfig](

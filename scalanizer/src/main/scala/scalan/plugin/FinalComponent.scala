@@ -31,7 +31,8 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
     cleanUpClassTags _, replaceClassTagByElem _, eliminateClassTagApply _,
     genEntityImpicits _, genClassesImplicits _, genMethodsImplicits _,
     fixEntityCompanionName _,
-    fixEvidences _
+    fixEvidences _,
+    addModuleTrait _
   ))
 
   def showTree(prefix: String, name: String, tree: Tree) =
@@ -55,7 +56,7 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
 //        showTree("virtAst", unitName, virtAst)
 
         /** produce boilerplate code using ModuleFileGenerator*/
-        val boilerplateText = genUDModuleBoilerplateText(enrichedModuleDef.copy(hasDsl = true))
+        val boilerplateText = genUDModuleBoilerplateText(enrichedModuleDef)
         saveWrapperCode(enrichedModuleDef.packageName + ".impl", nameOnly + "Impl", boilerplateText)
 //        showTree("boilerplate", unitName, boilerplate)
 

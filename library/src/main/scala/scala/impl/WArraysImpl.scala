@@ -181,7 +181,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
     override def toString = "WArrayImplCompanion"
 
     @scalan.OverloadId("fromFields")
-    def apply[T](wrappedValue: Rep[Array[T]])(implicit eT: Elem[T]): Rep[WArrayImpl[T]] =
+    def apply[T](wrappedValue: Rep[Array[T]]): Rep[WArrayImpl[T]] =
       mkWArrayImpl(wrappedValue)
 
     def unapply[T](p: Rep[WArray[T]]) = unmkWArrayImpl(p)
@@ -230,7 +230,8 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   }
 
   def mkWArrayImpl[T]
-    (wrappedValue: Rep[Array[T]])(implicit eT: Elem[T]): Rep[WArrayImpl[T]] = {
+    (wrappedValue: Rep[Array[T]]): Rep[WArrayImpl[T]] = {
+    implicit val eT = wrappedValue.elem.typeArgs("T")._1.asElem[T]
     new WArrayImplCtor[T](wrappedValue)
   }
   def unmkWArrayImpl[T](p: Rep[WArray[T]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -367,7 +368,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 }
 
 object WArraysModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWX2gcRRj/bvPncrmYNrGGGk1N45Wi1rsqlioRbJo/pXomIRtaTIsytztJpu6fcXcu3ZPSxz7og6B9EnwoCD4YlOKLiIgogvjQd/FRKoIo0gcLgsVvZnb39i65JD54D8PM7Dffn9/vN9/c5u/QEwYwHlrEIV7ZpYKUTTWfCkXJfNm36w6doavvfLx5yj2x/p4BwyvQu07CmdBZgYKezEY8nZvCrsLQHPPsWU8w0Si5yoWAclXHqMgYle1ilDKnJqtwUC7PB4RzGrT5OrE3X62H0WWBeBYNhR+EAg5rHxXLdxxqCeZ7Fea6dUFqDq1UWSjQvrvm24034Cp0VWG/5XtWQAU1px0ShjSM9/uodM/SdUGtGwu8GWNrnssBYQLTxBj7tf0S5WbD872GK2AwTm2By7TQpkgjjtiedbmjwvRUIc9c7gciiZrHCOu+nSy7PYIbMFy9RDZIBaOuVUwRMG9NOuPEep2s0Xk0kea9WENIndXlBqex82Io7JZ4EQcAzlEpT6vUyk3UyilqZYlayaQBIw57k8iPi4EfNUD/cl0AkXRxbBcXiQc669mlty5aF+6aRdeQhyOZTEGl1IeOHumgWkUQovv90rvhnTM3ThrQvwL9LJyqhSIglsgKIQasSDzPFyrnFEMSrCGHE504VFGm0KZNKAXLdznx0FOM5gBS5TCLCWks9wZjgjqgnxecJqZdEc+l9Xa6pfLsFOdO49srX135+eEfhwwtzIgHGbdd6HaHcpQkp4njYDmGSIJj1H5Nl+m7dGjiDnv1xtvCgFwVclGrwBZql5DOySiAAX1Cy/ceO/nPT4OrwojZ71hEEv/L/Nff/Hr7hW4DjFacCliAib0mSJIT0Ht+KghII0ZIjgcF5JaVTORQVIp5sG1d2CGNlNWjv/1hf3ccLqpalRYSSPYkP3Qx/Oz7Xxyhi58Y0Lei7uucQ9aUECUrMzS0VqDP36CB3s9vEEfOthVj3qarpO6ImMssLJrX8Y68cioxm1RXOJeUX9QUzfseLc0tlv4yf7i+KRmS30cEDFxWrdM+R5w6TXDt2YK1HMbawI0hlsMRZXUoc+JwLhfnoL4LMOhy4r571qHu7t4F9GvSZXdqRpGEjHWSlrpPn/59+qNHRx+6Z0D+RehZRaTDbaHuqfl1z07uLnZ9QSNxOtnragUf7yoJiJs+BhsEexf2FgEjCSF1wZzKuXhf04C/cWjCkM7GEnpG4krk2fJZT3sVpSc+37zMbj02p+5SFpRdNZk8ODevXXvgzw9fu1+1xL4aEy7hpeP/oSEm/et/bHiQEcGQGg8kGhmUp+JnHavRhnI42pTM6N4Ueiqzm8L35E7wLQT6ZqfAsNKx536Zuf6S6lT7moAps7jWbOcQcN80yokwj6aNWb9mZwQU5+qehQSkHzKpHUo3Chk8JncAamA2mk5YeaodkNE2QJa29Me2oEqlmP4+ffOms3xr9fIm8gcQx4kOOJox8cjd1bsfzD9+67PbCrx+KSHsRV76h6apF630AjYIKRs5f6aZ6vNpCs1bhKb5+F3ApqUyyYDzSutjMRirKdR/HduQuKA8/wt6/bnvJQsAAA=="
+  val dump = "H4sIAAAAAAAAALVWXWgcVRS+O9l0k9lNYqOp2GgT4/pX624rSJUosk02tromoRNSWINyd/bueuv8XGfuprMlFHzpg75Jn4Q+FARfgiJ9UESkKIL40HfxRZCKIIoUsSBYPPfO3NnZTTZbH9yHYebOud895/u+c2a3f0PDvodmfRNb2CnYhOOCIe9LPs8br7j1lkUWSWPr8p/6j2+f/1RDE1U0Rv116vEWtuh5Uq+gsbLDKW/nbRnN0eFKCFcUcMXd4PLRjvkKmlxrM2K0HdehdoxQHIyQ3AYw95zxMGPE60nl2GCg7o0ANYodk/jc9XyOHgz3F03XsojJqesUqW23OK5ZpFihPof4u0zXMT3CibFgYd8n/lvoAkpX0AgRkDR+HpXP7RXWwd2Z15qHKYe0BG4Yf5owWWfb5mg8SmeFiVQgJkNt5npcHZEBuDfcunrMhjRITLG0r4LSDoYYNFk5izdxEU5tFg3uUacJYFmGzTdxkyxDiAjPQA0+sRqCark9YIgxBn55SqZR6LBSiFkpCFbyBvGosAcWL1c9N2ij8JcaQigQEEcGQCgEUnbq+Xc2zFdvGVlbE5sDWd4oYMz0sa3UAUj89vR7/s0XrxzXkF5FOvVLNZ972ORJjRVV2HFcLtNVS2nsNUGquX5SyVNKEAPUpWtuva10Nl2bYQeQIs5zIJJFTcpFsFibiHTYlWRQkTOiQtMBS8X19mtTsbfEmNX+euvLrZ/u/36/hoaE/wLmJWCHAHaPcqRLFrBlQTkaV4fDqXqolOHaZP/cTfralXe5hlIVlAq6fbRSOwtKzgceyoU7Qpfepsf/+WG8wbVI+L5FqPO/yFz76pcbL6Q1pHXzNAoFGGUoSiXH0b4zJc/D7Yghcb2Po9SauNHFJReI68GeZ32PNGJVH/319/o3R9GGrFV6QVFyR/YDiMln3v/8YbL6kYZGqrJTlyzclEYUqiwS36yiEXeTeOF6ZhNb4m5XM2bqpIFbVlcbR7SEus721ZURwdk8NC+0nyo/G0q07Dokv7Sa/8v47tK2UEi8v5ej3Dk5Fevr2GoRxevwDq7F5VAPuRHF4vKIjJpJ7JhLpaIc5HuONLKm4NNli9iD0TnSQ9FPQVd1ThGCPNDPWrKfPv77xIcPHZy+raHMS2i4AUz7u1I9XHNbTl31Lgx3TgJ+Qq2lu8mHXsUetuOZv4lhbMFs4eiAEqTFqVVcj9ZDGeA3izo0xHeHlDwHokrE3sIpJ0Tl+Sc+2z5Hrz++JHspScpAT6rvyicXL0798cHrd8uROFKj3MYsf/Q/DEQ1v/7HgYcSJpiU1ynlkXGxK/piQzVhoLg81rHM9J05tJRYjel7ci/6Vryws2NiaP7Isz8vXnpZTqqJDmEyLKo1OTk4GlsAO2HqkHgw6/LlSY6ySy3HBAHiF4nUZuIFPcHHc3sQlSsHC0qVY72ETPcQYuyYjz2HSpdC+hNh5y0k9Q7dyzrMTwGPc314NCLhQbsLty4vH75+9YYkTxcWglnkxH9lOn4Jna7DgBC2EfdPd1J9vruB1FjJRN8FGFoykwQ51e6PxXjkJj/8R9jDxMa/4a16jCELAAA="
 }
 }
 

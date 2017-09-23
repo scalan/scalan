@@ -25,21 +25,27 @@ trait ScalanAstExtensions {
     }
   }
 
+  implicit class SMethodOrClassArgOps(arg: SMethodOrClassArg) {
+    def unrepType(module: SModuleDef) =
+      if (module.isVirtualized) arg.tpe.unRep(module, module.isVirtualized)
+      else arg.tpe
+  }
+
   implicit class SMethodOrClassArgsOps(as: SMethodOrClassArgs) {
     def argNames = as.args.map(a => a.name)
 
     def argNamesAndTypes(config: CodegenConfig) = {
       as.args.map { arg =>
-        if (config.isAlreadyRep || arg.isTypeDesc)
+        if (config.isVirtualized || arg.isTypeDesc)
           s"${arg.name}: ${arg.tpe}"
         else
           s"${arg.name}: Rep[${arg.tpe}]"
       }
     }
 
-    def argUnrepTypes(module: SModuleDef, config: CodegenConfig) = {
-      if (config.isAlreadyRep) {
-        as.args.map(a => a.tpe.unRep(module, config).getOrElse {
+    def argUnrepTypes(module: SModuleDef, isVirtualized: Boolean) = {
+      if (isVirtualized) {
+        as.args.map(a => a.tpe.unRep(module, isVirtualized).getOrElse {
           sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
         })
       } else as.args.map(_.tpe)
@@ -86,7 +92,7 @@ trait ScalanAstExtensions {
       def error = throw new IllegalStateException(s"Explicit return type required for method $md")
 
       val tRes = md.tpeRes.getOrElse(error)
-      if (config.isAlreadyRep) tRes.toString
+      if (config.isVirtualized) tRes.toString
       else s"Rep[$tRes]"
     }
 
