@@ -217,12 +217,12 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
         ancestorEnt_? match {
           case Some(e) =>
             val pairs = e.tpeArgs zip a.tpe.tpeSExprs
-            pairs.filterNot { case (a, t) => e.isExtractableArg(module, a) }
+            pairs//.filterNot { case (a, t) => e.isExtractableArg(module, a) }
           case None => List[(STpeArg, STpeExpr)]()
         }
       }
     }
-    val classImplicits = clazz.tpeArgs.filterNot(a => clazz.isExtractableArg(module, a)).map { clsArg =>
+    val classImplicits = clazz.tpeArgs/*.filterNot(a => clazz.isExtractableArg(module, a))*/.map { clsArg =>
       val argTpe = clsArg.toTraitCall
       val substOpt = ancestorSubst.find { case (tyArg, tpe) => tpe == argTpe }
       val res = substOpt match {
@@ -285,7 +285,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
       }
     }
 
-    val args = genImplicitVals(method.tpeArgs.filterNot(a => method.isExtractableArg(module, a))) match {
+    val args = genImplicitVals(method.tpeArgs/*.filterNot(a => method.isExtractableArg(module, a))*/) match {
       case Nil => method.argSections
       case as => method.argSections ++ List(SMethodArgs(as))
     }
@@ -542,5 +542,55 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
       module.copy(moduleTrait = Some(mt))
     }
     else module
+  }
+
+  def optimizeMethodImplicits(m: SMethodDef, module: SModuleDef): SMethodDef = {
+    val explicitArgs = m.explicitArgs
+    val newSections = m.argSections.map(as => SMethodArgs(as.args.filter {
+      case arg @ TypeDescArg(_,tyName) if arg.impFlag =>
+        !canBeExtracted(module, explicitArgs, tyName)
+      case _ => true
+    }))
+    m.copy(argSections = newSections)
+  }
+
+  def optimizeTraitImplicits(t: STraitDef, module: SModuleDef): STraitDef = {
+    val newBody = t.body.map {
+      case m: SMethodDef => optimizeMethodImplicits(m, module)
+      case item => item
+    }
+    t.copy(
+      body = newBody
+    )
+  }
+
+  def canBeExtracted(module: SModuleDef, args: List[SMethodOrClassArg], tyName: String) = {
+    val res = args.exists(a => STpePath.find(module, a.tpe, tyName).isDefined)
+    res
+  }
+
+  def optimizeClassImplicits(c: SClassDef, module: SModuleDef): SClassDef = {
+    if (c.args.args.isEmpty) c
+    else {
+      val newArgs = c.implicitArgs.args.filter { impArg => impArg.tpe match {
+        case TypeDescArg(_,tyName) =>
+          val explicitArgs = c.args.args
+          !canBeExtracted(module, explicitArgs, tyName)
+        case _ => true
+      }}
+      c.copy(
+        implicitArgs = SClassArgs(newArgs)
+      )
+    }
+  }
+
+  def optimizeModuleImplicits(module: SModuleDef): SModuleDef = {
+    val newEntities = module.entities.map(e => optimizeTraitImplicits(e, module))
+    val newClasses = module.concreteSClasses.map(c => optimizeClassImplicits(c, module))
+    module.copy(
+      entityOps = newEntities(0),
+      entities = newEntities,
+      concreteSClasses = newClasses
+    )
   }
 }

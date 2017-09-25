@@ -91,7 +91,7 @@ trait ScalanParsers[G <: Global] {
     SClassDef(
       name = entityImplName,
       tpeArgs = entity.tpeArgs,
-      args = SClassArgs(List(SClassArg(false, false, true, "wrappedValue", valueType, None))),
+      args = SClassArgs(List(SClassArg(false, false, true, "wrappedValue", valueType, None, Nil, false))),
       implicitArgs = entity.implicitArgs,
       ancestors = List(STraitCall(entity.name, typeUseExprs).toTypeApply),
       body = List(),
@@ -256,16 +256,16 @@ trait ScalanParsers[G <: Global] {
     SObjectDef(od.name, ancestors, body)
   }
 
-  def classArgs(vds: List[ValDef]): SClassArgs = SClassArgs(vds.filter(!isEvidenceParam(_)).map(classArg))
-
   def classArg(vd: ValDef): SClassArg = {
     val tpe = tpeExpr(vd.tpt)
     val default = optExpr(vd.rhs)
     val isOverride = vd.mods.isAnyOverride
     val isVal = vd.mods.isParamAccessor
     val annotations = parseAnnotations(vd)((n,as) => new SArgAnnotation(n, as.map(parseExpr)))
-    SClassArg(vd.mods.isImplicit, isOverride, isVal, vd.name, tpe, default, annotations)
+    SClassArg(vd.mods.isImplicit, isOverride, isVal, vd.name, tpe, default, annotations, false)
   }
+
+  def classArgs(vds: List[ValDef]): SClassArgs = SClassArgs(vds.filter(!isEvidenceParam(_)).map(classArg))
 
   def traitCall(tree: Tree): STraitCall = tree match {
     case ident: Ident =>

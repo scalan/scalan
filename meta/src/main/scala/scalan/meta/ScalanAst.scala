@@ -421,12 +421,12 @@ object ScalanAst {
           !relatedClassTag.isEmpty
         }
 
-        val (currImp, currNonImp) = splitArgSections(argSections)
-
         def isAdded(arg: SMethodArg): Boolean = arg match {
           case SMethodArg(_, _, _, STraitCall("Elem" | "Cont", tpeArgs), _, _, _) => !existsClassTag(tpeArgs)
           case _ => false
         }
+
+        val (currImp, currNonImp) = splitArgSections(argSections)
 
         val newCurrImp = currImp map { s => s.copy(args = s.args.filterNot(isAdded(_))) } filter {
           !_.args.isEmpty
@@ -670,22 +670,22 @@ object ScalanAst {
 
     val args = SClassArgs(Nil)
     lazy val implicitArgs: SClassArgs = {
-      val implicitElems = body.collect {
+      val implicitMethods = body.collect {
         case SMethodDef(name, _, _, Some(elemOrCont), _, _, _, _, _, true) =>
           (name, elemOrCont)
       }
       val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map { a =>
-        val optDef = implicitElems.collectFirst {
-          case (methName, elem@STraitCall(_, List(STraitCall(name, _)))) if name == a.name =>
-            (methName, elem)
-          case (methName, elem@STraitCall(_, List(STpeAnnotated(STraitCall(name, _), _)))) if name == a.name =>
-            (methName, elem)
+        val optMeth: Option[(String, STraitCall)] = implicitMethods.collectFirst {
+          case (methName, tpeRes@STraitCall(_, List(STraitCall(name, _)))) if name == a.name =>
+            (methName, tpeRes)
+          case (methName, tpeRes@STraitCall(_, List(STpeAnnotated(STraitCall(name, _), _)))) if name == a.name =>
+            (methName, tpeRes)
         }
-        optDef match {
+        optMeth match {
           case None =>
             Left(a)
-          case Some((name, tyElem)) =>
-            Right(SClassArg(true, false, true, name, tyElem, None, Nil, true))
+          case Some((methName, tpeRes)) =>
+            Right(SClassArg(true, false, true, methName, tpeRes, None, Nil, true))
         }
       }
       val missingElems = args.filter(_.isLeft)
@@ -916,6 +916,20 @@ object ScalanAst {
     /** Module trait name related to main trait */
     def moduleTraitName(mainTraitName: String) = mainTraitName + "Module"
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
+  }
+
+  object TypeDescTpe {
+    def unapply(tpe: STpeExpr): Option[(String, STpeExpr)] = tpe match {
+      case STraitCall(tname, List(arg)) if tname == "Elem" || tname == "Cont" => Some((tname, arg))
+      case _ => None
+    }
+  }
+
+  object TypeDescArg {
+    def unapply(arg: SMethodOrClassArg): Option[(String, String)] = arg.tpe match {
+      case TypeDescTpe(descName, STraitCall(typeName, Nil)) => Some((descName, typeName))
+      case _ => None
+    }
   }
 
   case class WrapperConfig(name: String, annotations: List[String] = Nil)
