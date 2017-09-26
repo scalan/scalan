@@ -50,12 +50,14 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
         val enrichedModuleDef = moduleVirtualizationPipeline(moduleDef)
 
         /** Scala AST of virtualized module */
-        val virtAst = genUDModuleFile(enrichedModuleDef, unit.body)
+        val optimizedImplicits = optimizeModuleImplicits(enrichedModuleDef)
+        val virtAst = genUDModuleFile(optimizedImplicits, unit.body)
         val nameOnly = Path(unitName).stripExtension
-        saveWrapperCode(enrichedModuleDef.packageName, nameOnly, showCode(virtAst))
+        saveWrapperCode(optimizedImplicits.packageName, nameOnly, showCode(virtAst))
 //        showTree("virtAst", unitName, virtAst)
 
-        /** produce boilerplate code using ModuleFileGenerator*/
+        /** produce boilerplate code using ModuleFileGenerator
+          * Note: we need enriched module with all implicits in there place for correct boilerplate generation */
         val boilerplateText = genUDModuleBoilerplateText(enrichedModuleDef)
         saveWrapperCode(enrichedModuleDef.packageName + ".impl", nameOnly + "Impl", boilerplateText)
 //        showTree("boilerplate", unitName, boilerplate)

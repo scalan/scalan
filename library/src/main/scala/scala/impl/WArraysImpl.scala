@@ -116,15 +116,15 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
         this.getClass.getMethod("apply", classOf[AnyRef]),
         List(i.asInstanceOf[AnyRef]))
 
-    def zip[B](ys: Rep[WArray[B]]): Rep[WArray[(T, B)]] =
+    def zip[B](ys: Rep[WArray[B]])(emB: Elem[B]): Rep[WArray[(T, B)]] =
       methodCallEx[WArray[(T, B)]](self,
-        this.getClass.getMethod("zip", classOf[AnyRef]),
-        List(ys.asInstanceOf[AnyRef]))
+        this.getClass.getMethod("zip", classOf[AnyRef], classOf[AnyRef]),
+        List(ys.asInstanceOf[AnyRef], emB.asInstanceOf[AnyRef]))
 
-    def map[B](f: Rep[T => B]): Rep[WArray[B]] =
+    def map[B](f: Rep[T => B])(emB: Elem[B]): Rep[WArray[B]] =
       methodCallEx[WArray[B]](self,
-        this.getClass.getMethod("map", classOf[AnyRef]),
-        List(f.asInstanceOf[AnyRef]))
+        this.getClass.getMethod("map", classOf[AnyRef], classOf[AnyRef]),
+        List(f.asInstanceOf[AnyRef], emB.asInstanceOf[AnyRef]))
 
     def length: Rep[Int] =
       methodCallEx[Int](self,
@@ -211,10 +211,10 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   registerModule(WArraysModule)
 
   lazy val WArray: Rep[WArrayCompanionCtor] = new WArrayCompanionCtor {
-    def fill[T](n: Rep[Int])(elem: Rep[Thunk[T]]): Rep[WArray[T]] =
+    def fill[T](n: Rep[Int])(elem: Rep[Thunk[T]])(emT: Elem[T]): Rep[WArray[T]] =
       methodCallEx[WArray[T]](self,
-        this.getClass.getMethod("fill", classOf[AnyRef], classOf[AnyRef]),
-        List(n.asInstanceOf[AnyRef], elem.asInstanceOf[AnyRef]))
+        this.getClass.getMethod("fill", classOf[AnyRef], classOf[AnyRef], classOf[AnyRef]),
+        List(n.asInstanceOf[AnyRef], elem.asInstanceOf[AnyRef], emT.asInstanceOf[AnyRef]))
   }
 
   case class ViewWArray[A, B](source: Rep[WArray[A]], override val innerIso: Iso[A, B])
@@ -267,24 +267,24 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
     }
 
     object zip {
-      def unapply(d: Def[_]): Option[(Rep[WArray[T]], Rep[WArray[B]]) forSome {type T; type B}] = d match {
-        case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "zip" =>
-          Some((receiver, ys)).asInstanceOf[Option[(Rep[WArray[T]], Rep[WArray[B]]) forSome {type T; type B}]]
+      def unapply(d: Def[_]): Option[(Rep[WArray[T]], Rep[WArray[B]], Elem[B]) forSome {type T; type B}] = d match {
+        case MethodCall(receiver, method, Seq(ys, emB, _*), _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "zip" =>
+          Some((receiver, ys, emB)).asInstanceOf[Option[(Rep[WArray[T]], Rep[WArray[B]], Elem[B]) forSome {type T; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[WArray[T]], Rep[WArray[B]]) forSome {type T; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[WArray[T]], Rep[WArray[B]], Elem[B]) forSome {type T; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object map {
-      def unapply(d: Def[_]): Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "map" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}]]
+      def unapply(d: Def[_]): Option[(Rep[WArray[T]], Rep[T => B], Elem[B]) forSome {type T; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, emB, _*), _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "map" =>
+          Some((receiver, f, emB)).asInstanceOf[Option[(Rep[WArray[T]], Rep[T => B], Elem[B]) forSome {type T; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[WArray[T]], Rep[T => B], Elem[B]) forSome {type T; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -305,12 +305,12 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 
   object WArrayCompanionMethods {
     object fill {
-      def unapply(d: Def[_]): Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(n, elem, _*), _) if receiver.elem == WArrayCompanionElem && method.getName == "fill" =>
-          Some((n, elem)).asInstanceOf[Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Int], Rep[Thunk[T]], Elem[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(n, elem, emT, _*), _) if receiver.elem == WArrayCompanionElem && method.getName == "fill" =>
+          Some((n, elem, emT)).asInstanceOf[Option[(Rep[Int], Rep[Thunk[T]], Elem[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Int], Rep[Thunk[T]], Elem[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

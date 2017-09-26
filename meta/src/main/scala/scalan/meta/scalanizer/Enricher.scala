@@ -559,9 +559,21 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
       case m: SMethodDef => optimizeMethodImplicits(m, module)
       case item => item
     }
+    val newCompanion = t.companion.map(optimizeComponentImplicits(_, module))
     t.copy(
-      body = newBody
+      body = newBody,
+      companion = newCompanion
     )
+  }
+
+  def optimizeObjectImplicits(t: SObjectDef, module: SModuleDef): SObjectDef = {
+    t
+  }
+
+  def optimizeComponentImplicits(t: STraitOrClassDef, module: SModuleDef): STraitOrClassDef = t match {
+    case c: SClassDef => optimizeClassImplicits(c, module)
+    case o: SObjectDef => optimizeObjectImplicits(o, module)
+    case t: STraitDef => optimizeTraitImplicits(t, module)
   }
 
   def canBeExtracted(module: SModuleDef, args: List[SMethodOrClassArg], tyName: String) = {
@@ -572,7 +584,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
   def optimizeClassImplicits(c: SClassDef, module: SModuleDef): SClassDef = {
     if (c.args.args.isEmpty) c
     else {
-      val newArgs = c.implicitArgs.args.filter { impArg => impArg.tpe match {
+      val newArgs = c.implicitArgs.args.filter { _ match {
         case TypeDescArg(_,tyName) =>
           val explicitArgs = c.args.args
           !canBeExtracted(module, explicitArgs, tyName)

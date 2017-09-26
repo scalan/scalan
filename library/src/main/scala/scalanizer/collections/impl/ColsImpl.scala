@@ -56,7 +56,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
     proxyOps[ColCompanionCtor](p)
 
   case class ColOverArrayCtor[A]
-      (override val arr: Rep[WArray[A]])
+      (override val arr: Rep[WArray[A]])(implicit eA: Elem[A])
     extends ColOverArray[A](arr) with Def[ColOverArray[A]] {
     implicit val eA = arr.elem.typeArgs("T")._1.asElem[A]
     lazy val selfType = element[ColOverArray[A]]
@@ -66,11 +66,12 @@ trait ColsDefs extends scalan.Scalan with Cols {
     extends ColElem[A, ColOverArray[A]]
     with ConcreteElem[ColOverArrayData[A], ColOverArray[A]] {
     override lazy val parent: Option[Elem[_]] = Some(colElement(element[A]))
-    override lazy val typeArgs = TypeArgs()
+    override lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
 
     override def convertCol(x: Rep[Col[A]]) = ColOverArray(x.arr)
     override def getDefaultRep = ColOverArray(element[WArray[A]].defaultRepValue)
     override lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[ColOverArray[A]]
     }
   }
@@ -96,9 +97,10 @@ trait ColsDefs extends scalan.Scalan with Cols {
   case class ColOverArrayIsoElem[A](eA: Elem[A]) extends Elem[ColOverArrayIso[A]] {
     def getDefaultRep = reifyObject(new ColOverArrayIso[A]()(eA))
     lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[ColOverArrayIso[A]]
     }
-    lazy val typeArgs = TypeArgs()
+    lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class ColOverArrayCompanionCtor extends CompanionDef[ColOverArrayCompanionCtor] with ColOverArrayCompanion {
@@ -125,11 +127,8 @@ trait ColsDefs extends scalan.Scalan with Cols {
   implicit def proxyColOverArray[A](p: Rep[ColOverArray[A]]): ColOverArray[A] =
     proxyOps[ColOverArray[A]](p)
 
-  implicit class ExtendedColOverArray[A](p: Rep[ColOverArray[A]]) {
-    def toData: Rep[ColOverArrayData[A]] = {
-      implicit val eA = p.elem.typeArgs("T")._1.asElem[A]
-      isoColOverArray(eA).from(p)
-    }
+  implicit class ExtendedColOverArray[A](p: Rep[ColOverArray[A]])(implicit eA: Elem[A]) {
+    def toData: Rep[ColOverArrayData[A]] = isoColOverArray(eA).from(p)
   }
 
   // 5) implicit resolution of Iso
@@ -222,12 +221,12 @@ trait ColsDefs extends scalan.Scalan with Cols {
 
   object ColCompanionMethods {
     object fromArray {
-      def unapply(d: Def[_]): Option[Rep[WArray[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == ColCompanionElem && method.getName == "fromArray" =>
-          Some(arr).asInstanceOf[Option[Rep[WArray[T]] forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[WArray[T]], Elem[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(arr, emT, _*), _) if receiver.elem == ColCompanionElem && method.getName == "fromArray" =>
+          Some((arr, emT)).asInstanceOf[Option[(Rep[WArray[T]], Elem[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[WArray[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[WArray[T]], Elem[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -248,7 +247,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
 }
 
 object ColsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTYgcRRR+2zOb2Z3dJGZ1I0Yl62ZcMcp0FCTiCjrZn6CMu0s6JLAGpaanZqzYP2V1zToTloCXHPQmnoQcAoKXRREPioiIIoiH3MWLIIGAKBLEQCDBV9VdPT2Tmd314ByKrppXX733fd+r7q0/YDQSMBO5xCNB2aeSlB39XIlkyXklrLc8ukgbm5f/Lv76zoUvLNi/DntZdIYJ2SIeu0DrVdi7FEgmOyVfR0s4Wo3hbAVnD4IrJTvmqzB1usOp0wnCgPkpgr0zQnYbwtx3VhDOqehL5amdgXo3ItQ4CVwayVBEEh6J99tu6HnUlSwMbOb7LUlqHrWrLJIYf48bBq6gkjoLHokiGr0FFyFfhTGqIFk6H9fzzirv4t6d12lBmMS0FG4cf4pyXWfHl7AvSWeVq1QwpsB8Hgppjigg3Bth3UwnYho0plraU4V8QDAGpqrnyQax8dSm7UjBgiaCTXDivkmadAVDVHgBa4io11BU6+1tDpxz9MvTOo1yl5VyykpZsVJyqGDKHkT9uSbCdgfi30gOoK0gntwBwiDQpaBeevec++pNZ8K31Oa2Lm8cMQ4Psa3WAUn88dT70Y2TV45bUFyHIosqtUgK4sqsxoYqEgSh1OmapTwRTZRqdphU+pQKxiB1+VpY7xid3dDnJECkhPNJFMljLpMqWK3tT3QYSDKqKDk1oXnkPK13WJuqvRXOvc73m99s/vbQzwcsyCn/tbnIwOYQdptytEsWiOdhOZY0h+OpxVgpJ/Tpgdkb7LUr70kLRqow0u710WrtPCo53xYwGe+IXXqHHb/9y76GtBLhhxZhzv+68O1316+9kLfA6uVpHAtwlrAok5yE3ELoJfSo8QEJIxX1UFTDZFuNh/rmxW1ySCV97Pc/6z8cg3O6UG0Ew8euvIcQU89++NWjdO0TC8bWdZsue6SpXagkWaSRuw5j4QYV8Xphg3jqaaATC3XaIC2vp4cTTmJRZ4aKyqkibB5dhL1nyp+I9VkJA1paXiv94/z0wZaSR/1/P5JKhDB07jlbEYJ0duDYMKvG6W3IMbfbZ5cuTf/10ev36sYcqzHpE1469h/a0nTR/9l2aY1xXYe7czXMofum0X2rKKGmaCF7/Fz/PgmT2WAdk3rp4WF06YQ+vXXi4yOHHrxjQeFlGG2gSaKBxIzWwlZQN8XjS0nStjxh1vK9xWOxRBA/fVdtELxukXwJB42XWpJ59plkPXYQ/ma6vMwllSV2wEIOJoWoreWXghhUlp74cuttdvXxZX0FZF2TsVUZMpOpxEmJ33JomV4H7qLv4/HFu7q/T8vMSeVdSK5UHKC0rmoxq6oanxlCmRpOpk/P9ef8fG9kvFFCXtUsDcf4ZhSZt2eU9t7sEDM5iduRy4s3L68cvfr5NX3DFlXf4E0QpF8RXZ+k911CclGlEH86ZXjF1FQr/QtzM/IcTAoAAA=="
+  val dump = "H4sIAAAAAAAAALVWT2hcRRj/9u2mm2zS1kZTsVoa4zOlVXarlwo56CZNxLJNQl9pIRZl9u3sOvX9GefNxt0SCl560Jt4EnooCF6CIh4UERGLIB56Fy+CFARRpEgLBYvfzHvz9m26m8SDexjezH7zm+/7/X7fvLf5B4xEAqYjl3gkKPtUkrKjn6uRtJ0zYaPt0VO0uXHt79Iv71z+woL9a7CXReeZkG3iscu0UYO9i4Fksmv7OlrC8VoMV1FwlUFwdrJjrgaT57qcOt0gDJifIlR2RshuQ5hHLgjCORVbUnluZ6D+jQg1RgKXRjIUkYQn4/0VN/Q86koWBhXm+21J6h6t1FgkMf4hNwxcQSV1FjwSRTR6C65AoQajVEGydD6m590V3sN9MK9zgjCJaSncOP4s5brOri9hX5LOClepYEyR+TwU0hxRRLg3woaZjsc0aEy1tKcGhYBgDEzWLpF1UsFTWxVHCha0EGycE/dN0qLLGKLCi1hDRL2molpv73DgnKNfntdplHuslFNWyooV26GCKXsQ9eeqCDtdiH+5PEBHQTy7A4RBoItBw373ovvqXWfct9Tmji5vDDGODLGt1gFJ/OHs+9Htl6+ftKC0BiUWVeuRFMSVWY0NVSQIQqnTNUsFIloo1cwwqfQpVYxB6gr1sNE1Oruhz0mASAnnEyiSx1wmVbBa25/oMJBkVFFyakILyHla77A2VXurnHvdGxvfbPz6xE8HLMgr/3W4yMDmEXabcrRLFojnYTmWNIfjqaVYKSf06YGZ2+y16+9JC3I1yHX6fbRSv4RKznUETMQ7YpfeZyf/+XlfU1qJ8EOLMOd/Xfz2u99uvViwwOrnaQwLcBaxKJOchPxC6CX0qPExCbmqeiipYaKjxkNb5qVtckglPfr7n43vT8BFXag2guFjV95DiMkXPvzqabr6iQWja7pNlzzS0i5UkpyikbsGo+E6FfF6cZ146mmgE4sN2iRtr6+HE05iUaeHisqpImwOXYS9Z8ofj/VZDgNqL63ad5wfP9hU8qj/H0VSiRCGzj0XqkKQ7g4cG2bVOLUNOeZ2++zq1am/Pnr9Yd2Yo3UmfcLtE/+hLU0X/Z9tl9YY13WkN1fDLLpvCt23ghJqihayx89m9mW4m8nloIc7K8GiVUNqYdGjfhyrhsNZdiVMZI/Sm1MnHh5Gti7n03vzHz916PH7FhRPw0gTLRYNpHWkHraDhqEOX2mSduS8WSv0U4dUEUH89E23TvCyRukkHDRObEvmVc4n67H/8DedqV4/pWbCQg4mhait5VeCGFTaz3y5+Ta7eWxJXyBZVjLEliEzmUx8mBCbR8P1+3cXt0Y8Lj1wd2xxQuak8i4Mo1Qc4BNd1emsqmqcG0KZGs6kTy9tzXm+P9I4raBqloZjfK+KzLs3Sjt3ZoiZnKRXkMsrd68tH7/5+S19P5dU1+E9EqTfID2fpLdlQnJJpRB/eGV4xdRUI/4LBMrDDooKAAA="
 }
 }
 
