@@ -25,7 +25,6 @@ trait ColsDefs extends scalan.Scalan with Cols {
       weakTypeTag[Col[A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Def[_]]) = {
-      implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Col[A]] => convertCol(x) }
       tryConvert(element[Col[A]], this, x, conv)
     }
@@ -56,7 +55,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
     proxyOps[ColCompanionCtor](p)
 
   case class ColOverArrayCtor[A]
-      (override val arr: Rep[WArray[A]])(implicit eA: Elem[A])
+      (override val arr: Rep[WArray[A]])
     extends ColOverArray[A](arr) with Def[ColOverArray[A]] {
     implicit val eA = arr.elem.typeArgs("T")._1.asElem[A]
     lazy val selfType = element[ColOverArray[A]]
@@ -127,8 +126,11 @@ trait ColsDefs extends scalan.Scalan with Cols {
   implicit def proxyColOverArray[A](p: Rep[ColOverArray[A]]): ColOverArray[A] =
     proxyOps[ColOverArray[A]](p)
 
-  implicit class ExtendedColOverArray[A](p: Rep[ColOverArray[A]])(implicit eA: Elem[A]) {
-    def toData: Rep[ColOverArrayData[A]] = isoColOverArray(eA).from(p)
+  implicit class ExtendedColOverArray[A](p: Rep[ColOverArray[A]]) {
+    def toData: Rep[ColOverArrayData[A]] = {
+      implicit val eA = p.arr.elem.typeArgs("T")._1.asElem[A]
+      isoColOverArray(eA).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -171,7 +173,6 @@ trait ColsDefs extends scalan.Scalan with Cols {
 
   def mkColOverArray[A]
     (arr: Rep[WArray[A]]): Rep[ColOverArray[A]] = {
-    implicit val eA = arr.elem.typeArgs("T")._1.asElem[A]
     new ColOverArrayCtor[A](arr)
   }
   def unmkColOverArray[A](p: Rep[Col[A]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -221,12 +222,12 @@ trait ColsDefs extends scalan.Scalan with Cols {
 
   object ColCompanionMethods {
     object fromArray {
-      def unapply(d: Def[_]): Option[(Rep[WArray[T]], Elem[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(arr, emT, _*), _) if receiver.elem == ColCompanionElem && method.getName == "fromArray" =>
-          Some((arr, emT)).asInstanceOf[Option[(Rep[WArray[T]], Elem[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[Rep[WArray[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == ColCompanionElem && method.getName == "fromArray" =>
+          Some(arr).asInstanceOf[Option[Rep[WArray[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[WArray[T]], Elem[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[WArray[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

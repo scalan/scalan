@@ -18,7 +18,8 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     (externalConstrs, externalMethods)
   }
 
-  def externalMethod(md: SMethodDef) = {
+  def externalMethod(method: SMethodDef) = {
+    val md = optimizeMethodImplicits(method, module)
     val msgExplicitRetType = "External methods should be declared with explicit type of returning value (result type)"
     lazy val msgRepRetType = s"Invalid method $md. External methods should have return type of type Rep[T] for some T."
     val allArgs = md.allArgs
@@ -45,7 +46,8 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
   }
 
   def externalConstructor(method: SMethodDef) = {
-    def genConstr(md: SMethodDef) = {
+    def genConstr(method: SMethodDef) = {
+      val md = optimizeMethodImplicits(method, module)
       val allArgs = md.allArgs
       s"""
         |    ${md.declaration(config, false)} =
@@ -80,7 +82,6 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       |
       |  def mk${c.typeDecl}
       |    (${fieldsWithType.rep()})${implicitArgsDecl("", !b.isExtractable(_))}: Rep[${c.typeUse}] = {
-      |    ${b.extractableImplicits}
       |    new ${c.typeUse("Ctor")}(${fields.rep()})
       |  }
       |  def unmk${c.typeDecl}(p: Rep[$parent]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -334,7 +335,6 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |      weakTypeTag[${e.typeUse}].asInstanceOf[WeakTypeTag[$toArgName]]
         |    }
         |    override def convert(x: Rep[Def[_]]) = {
-        |      implicit val e$toArgName: Elem[$toArgName] = this
         |      val conv = fun {x: Rep[${e.typeUse}] => convert${e.name}(x) }
         |      tryConvert(element[${e.typeUse}], this, x, conv)
         |    }
@@ -403,11 +403,12 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
           val externalMethodsStr = externalMethods.rep(md => externalMethod(md), "\n    ")
           s"""
             |  // default wrapper implementation
-            |  abstract class ${e.name}Impl${tpeArgsDecl}(val wrappedValue: Rep[${e.baseTypeUse}])${c.implicitArgsDecl("val ")} extends ${e.typeUse} with Def[${e.name}Impl${tpeArgsDecl}] {
+            |  abstract class ${e.name}Impl${tpeArgsDecl}(val wrappedValue: Rep[${e.baseTypeUse}])${c.optimizeImplicits().implicitArgsDecl("val ")} extends ${e.typeUse} with Def[${e.name}Impl${tpeArgsDecl}] {
+            |    ${c.extractionBuilder().extractableImplicits}
             |    lazy val selfType = element[${e.name}Impl${tpeArgsDecl}]
             |    $externalMethodsStr
             |  }
-            |  case class ${e.name}ImplCtor${tpeArgsDecl}(override val wrappedValue: Rep[${e.baseTypeUse}])${c.implicitArgsDecl("override val ")} extends ${e.name}Impl${tpeArgsUse}(${fields.rep()}) {
+            |  case class ${e.name}ImplCtor${tpeArgsDecl}(override val wrappedValue: Rep[${e.baseTypeUse}])${c.optimizeImplicits().implicitArgsDecl("override val ")} extends ${e.name}Impl${tpeArgsUse}(${fields.rep()}) {
             |  }
             |  trait ${e.name}ImplCompanion
             |""".stripAndTrim
@@ -415,7 +416,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         case None =>
           s"""
             |  case class ${c.typeDecl("Ctor")}
-            |      (${fieldsWithType.rep(f => s"override val $f")})${implicitArgsDecl}
+            |      (${fieldsWithType.rep(f => s"override val $f")})${c.optimizeImplicits().implicitArgsDecl()}
             |    extends ${c.typeUse}(${fields.rep()})${clazz.selfType.opt(t => s" with ${t.tpe}")} with Def[${c.typeUse}] {
             |    ${c.extractionBuilder().extractableImplicits}
             |    lazy val selfType = element[${c.typeUse}]
@@ -552,7 +553,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |    def apply${tpeArgsDecl}(${fieldsWithType.rep()})${val b = c.extractionBuilder(); c.implicitArgsDecl("", !b.isExtractable(_))}: Rep[${c.typeUse}] =
         |      mk$className(${fields.rep()})
         |
-         |    def unapply${tpeArgsDecl}(p: Rep[$parent]) = unmk$className(p)
+        |    def unapply${tpeArgsDecl}(p: Rep[$parent]) = unmk$className(p)
         |  }
         |  lazy val ${c.name}Rep: Rep[${c.companionAbsName}] = new ${c.companionAbsName}
         |  lazy val ${c.name}: ${c.companionAbsName} = proxy${className}Companion(${c.name}Rep)
@@ -560,19 +561,22 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |    proxyOps[${c.companionAbsName}](p)
         |  }
         |
-         |  implicit case object ${className}CompanionElem extends CompanionElem[${c.companionAbsName}] {
+        |  implicit case object ${className}CompanionElem extends CompanionElem[${c.companionAbsName}] {
         |    lazy val tag = weakTypeTag[${c.companionAbsName}]
         |    protected def getDefaultRep = ${className}Rep
         |  }
         |
-         |  implicit def proxy${c.typeDecl}(p: Rep[${c.typeUse}]): ${c.typeUse} =
+        |  implicit def proxy${c.typeDecl}(p: Rep[${c.typeUse}]): ${c.typeUse} =
         |    proxyOps[${c.typeUse}](p)
         |
-         |  implicit class Extended${c.typeDecl}(p: Rep[${c.typeUse}])$implicitArgsDecl {
-        |    def toData: Rep[$dataTpe] = iso$className${implicitArgsUse}.from(p)
+        |  implicit class Extended${c.typeDecl}(p: Rep[${c.typeUse}])${c.optimizeImplicits().implicitArgsDecl()} {
+        |    def toData: Rep[$dataTpe] = {
+        |      ${c.extractionBuilder(prefix = "p.").extractableImplicits}
+        |      iso$className${implicitArgsUse}.from(p)
+        |    }
         |  }
         |
-         |  // 5) implicit resolution of Iso
+        |  // 5) implicit resolution of Iso
         |  implicit def iso${c.typeDecl}${implicitArgsDecl}: Iso[$dataTpe, ${c.typeUse}] =
         |    reifyObject(new ${className}Iso${tpeArgsUse}()$implicitArgsUse)
         |

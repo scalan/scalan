@@ -163,7 +163,7 @@ class MetaCodegen extends ScalanAstExtensions {
 
   def methodExtractorsString(module: SModuleDef, config: CodegenConfig, e: STraitOrClassDef) = {
     def methodExtractorsString1(e: STraitOrClassDef, isCompanion: Boolean) = {
-      val methods = e.body.collect { case m: SMethodDef => m}
+      val methods = e.body.collect { case m: SMethodDef => optimizeMethodImplicits(m, module) }
       val overloadIdsByName = collection.mutable.Map.empty[String, Set[Option[String]]].withDefaultValue(Set())
       methods.foreach { m =>
         val methodName = m.name
@@ -390,18 +390,30 @@ class MetaCodegen extends ScalanAstExtensions {
     def companionName = name + "Companion"
     def companionAbsName = name + "CompanionCtor"
 
-    def extractionBuilder(argSubst: Map[String, String] = Map()) =
+    def extractionBuilder(prefix: String): ElemExtractionBuilder = {
+      val s = entity.args.args.map { a => a.name -> s"p.${a.name}" }.toMap
+      extractionBuilder(s)
+    }
+
+    def extractionBuilder(argSubst: Map[String, String] = Map()): ElemExtractionBuilder =
       new ElemExtractionBuilder(module, entity, argSubst)
   }
 
   case class EntityTemplateData(m: SModuleDef, t: STraitDef) extends TemplateData(m, t) {
     def elemTypeUse(toType: String = typeUse) = s"${name}Elem[${join(tpeArgNames, toType)}]"
     val typesWithElems = boundedTpeArgString(false)
+    def optimizeImplicits(): EntityTemplateData = {
+      this.copy(t = optimizeTraitImplicits(t, m))
+    }
   }
 
   case class ConcreteClassTemplateData(m: SModuleDef, c: SClassDef) extends TemplateData(m, c) {
     val elemTypeUse = name + "Elem" + tpeArgsUse
+    def optimizeImplicits(): ConcreteClassTemplateData = {
+      this.copy(c = optimizeClassImplicits(c, m))
+    }
   }
+
 }
 
 object ScalanCodegen extends MetaCodegen

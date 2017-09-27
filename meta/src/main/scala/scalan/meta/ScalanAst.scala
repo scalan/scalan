@@ -9,6 +9,7 @@ import PrintExtensions._
 import scala.collection.mutable.{Map => MMap}
 import scalan._
 import scalan.util.{Covariant, Contravariant, Invariant}
+import scalan.util.CollectionUtil._
 
 object ScalanAst {
 
@@ -387,9 +388,9 @@ object ScalanAst {
     extends SBodyItem {
     def externalOpt: Option[SMethodAnnotation] = annotations.find(_.annotationClass == "External")
 
-    def isExtractableArg(module: SModuleDef, tpeArg: STpeArg): Boolean = {
-      allArgs.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
-    }
+//    def isExtractableArg(module: SModuleDef, tpeArg: STpeArg): Boolean = {
+//      allArgs.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
+//    }
 
     def explicitArgs = argSections.flatMap(_.args.filterNot(_.impFlag))
 
@@ -563,13 +564,13 @@ object ScalanAst {
 
     def implicitArgs: SClassArgs
 
-    def isExtractableArg(module: SModuleDef, tpeArg: STpeArg): Boolean = {
-      args.args.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
-    }
+//    def isExtractableArg(module: SModuleDef, tpeArg: STpeArg): Boolean = {
+//      args.args.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
+//    }
 
-    def extractableTypeArgs(module: SModuleDef): List[STpeArg] = {
-      tpeArgs.filter(a => isExtractableArg(module, a))
-    }
+//    def extractableTypeArgs(module: SModuleDef): List[STpeArg] = {
+//      tpeArgs.filter(a => isExtractableArg(module, a))
+//    }
 
     def firstAncestorType = ancestors.headOption.map(_.tpe)
 
@@ -957,4 +958,68 @@ object ScalanAst {
     val Lua   = KernelType("Lua")
   }
 
+  def optimizeMethodImplicits(m: SMethodDef, module: SModuleDef): SMethodDef = {
+    val explicitArgs = m.explicitArgs
+    val newSections = m.argSections.filterMap(as => {
+      val newArgs = as.args.filter {
+        case arg@TypeDescArg(_, tyName) if arg.impFlag =>
+          !canBeExtracted(module, explicitArgs, tyName)
+        case _ => true
+      }
+      if (newArgs.nonEmpty) Some(SMethodArgs(newArgs)) else None
+    })
+    m.copy(argSections = newSections)
+  }
+
+  def optimizeTraitImplicits(t: STraitDef, module: SModuleDef): STraitDef = {
+    val newBody = t.body.map {
+      case m: SMethodDef => optimizeMethodImplicits(m, module)
+      case item => item
+    }
+    val newCompanion = t.companion.map(optimizeComponentImplicits(_, module))
+    t.copy(
+      body = newBody,
+      companion = newCompanion
+    )
+  }
+
+  def optimizeObjectImplicits(t: SObjectDef, module: SModuleDef): SObjectDef = {
+    t
+  }
+
+  def optimizeComponentImplicits(t: STraitOrClassDef, module: SModuleDef): STraitOrClassDef = t match {
+    case c: SClassDef => optimizeClassImplicits(c, module)
+    case o: SObjectDef => optimizeObjectImplicits(o, module)
+    case t: STraitDef => optimizeTraitImplicits(t, module)
+  }
+
+  def canBeExtracted(module: SModuleDef, args: List[SMethodOrClassArg], tyName: String) = {
+    val res = args.exists(a => STpePath.find(module, a.tpe, tyName).isDefined)
+    res
+  }
+
+  def optimizeClassImplicits(c: SClassDef, module: SModuleDef): SClassDef = {
+    if (c.args.args.isEmpty) c
+    else {
+      val newArgs = c.implicitArgs.args.filter { _ match {
+        case TypeDescArg(_,tyName) =>
+          val explicitArgs = c.args.args
+          !canBeExtracted(module, explicitArgs, tyName)
+        case _ => true
+      }}
+      c.copy(
+        implicitArgs = SClassArgs(newArgs)
+      )
+    }
+  }
+
+  def optimizeModuleImplicits(module: SModuleDef): SModuleDef = {
+    val newEntities = module.entities.map(e => optimizeTraitImplicits(e, module))
+    val newClasses = module.concreteSClasses.map(c => optimizeClassImplicits(c, module))
+    module.copy(
+      entityOps = newEntities(0),
+      entities = newEntities,
+      concreteSClasses = newClasses
+    )(module.context)
+  }
 }
