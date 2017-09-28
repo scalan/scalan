@@ -9,9 +9,24 @@ import scalan.util.ScalaNameUtil.PackageAndName
 trait Backend[G <: Global] extends ScalanizerBase[G] {
   import global._
 
+  def createModuleTrait(mainModuleName: String) = {
+    val mt = STraitDef(
+      name = SModuleDef.moduleTraitName(mainModuleName),
+      tpeArgs = Nil,
+      ancestors = List(STraitCall(s"impl.${mainModuleName}Defs"), STraitCall("scala.wrappers.WrappersModule")).map(STypeApply(_)),
+      body = Nil, selfType = None, companion = None)
+    mt
+  }
+
   /** Generate boilerplate text for virtualized user-defined module */
   def genUDModuleBoilerplateText(module: SModuleDef): String = {
-    val entityGen = new ModuleFileGenerator(ScalanCodegen, module, snConfig.codegenConfig)
+    val entityGen = new ModuleFileGenerator(
+      ScalanCodegen,
+      module.copy(
+        origModuleTrait = Some(createModuleTrait(module.name)),
+        okEmitOrigModuleTrait = true
+      ),
+      snConfig.codegenConfig)
     entityGen.emitImplFile
   }
 
@@ -24,17 +39,17 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
 
   case class GenCtx(module: SModuleDef, toRep: Boolean = true)
 
+
+
   /** Generate file for virtualized user-defined module */
   def genUDModuleFile(module: SModuleDef, orig: Tree): Tree = orig match {
     case q"package $ref { ..$_ }" =>
       implicit val ctx = GenCtx(module, true)
       val imports = module.imports.map(genImport(_))
       val moduleBody = List[Tree](genModuleTrait(module))
-      val moduleTrait = module.moduleTrait.map(genTrait(_))
       PackageDef(ref,
         imports ++
-        moduleBody ++
-        moduleTrait.toList
+        moduleBody
       )
     case tree =>
       throw new IllegalArgumentException("Module must be in a package")

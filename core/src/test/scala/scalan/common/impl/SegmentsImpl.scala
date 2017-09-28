@@ -24,7 +24,6 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
       weakTypeTag[Segment].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Def[_]]) = {
-      implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Segment] => convertSegment(x) }
       tryConvert(element[Segment], this, x, conv)
     }
@@ -128,7 +127,9 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
     proxyOps[Interval](p)
 
   implicit class ExtendedInterval(p: Rep[Interval]) {
-    def toData: Rep[IntervalData] = isoInterval.from(p)
+    def toData: Rep[IntervalData] = {
+      isoInterval.from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -209,7 +210,9 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
     proxyOps[Slice](p)
 
   implicit class ExtendedSlice(p: Rep[Slice]) {
-    def toData: Rep[SliceData] = isoSlice.from(p)
+    def toData: Rep[SliceData] = {
+      isoSlice.from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -291,7 +294,9 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
     proxyOps[Centered](p)
 
   implicit class ExtendedCentered(p: Rep[Centered]) {
-    def toData: Rep[CenteredData] = isoCentered.from(p)
+    def toData: Rep[CenteredData] = {
+      isoCentered.from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -550,7 +555,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
 }
 
 object SegmentsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTYgcRRSumdndmdnZDDvrDyuKxnHEIDKzGkICg4RlfyQy2R3SiQtjUGq6a2c7VneX3TVrjyzxloPeRDyIHgKKlyCIN5UgJoJIyMGbeJSAIErIweBB8VV1dU/PT++Pkj401V2v3vfe9716VVd+R5Oeiw57OqbYrlqE46omx4ser2inHaNLyTLZ/PAv/Y1m7kQ+jeZaaGoLe8sebaF8MFjxWTTWuNFApVXTNlZsbvJexZIuOKo2AoyawKiNw6jEVtUbaF58briYMeIO+Tq2P1+Di8FlHts68bjjehw9Hvio6Q6lROemY9dMy+py3Kak1jA9DvYTbcfovY4uokwDzeqOrbuEE22JYs8jnvqfI8K9GX3n5XdvnfUxRuM862KTQ5iAMRvYnyFM69mO3bM4KqrQ1pkIC2wKxGfA7SmLUQkz2UBZ02KOy0PULCBsOUb4OWFj+IHmGhfwNq4Baqemcde0O8IZw/pruEPWwESYT0EOHqGbZ3uMKOcFjxsDeD5DCDEGlfKcDK3aZ60asVYVrFU04pqYmm9iMdl0Hb+HgieVQcgXLp7Zw0XogazYRuXt8/rLd7WClRaLfRFMXoaUA0ePJVStFAjY/f7Mu96dFy4fT6PpFpo2vcW2x12s83ghKMIK2LYdLmOOOMRuBzQsJ2koURbBZqhQ8rpjMWyDJ8XmDEhFTd3kwlj8KyqBEtjPckZC04zPUlG+SbtUrF1kjPau7Vzd+eWRn0rpoDB95sbcZsDtLunIklzClEI6aR6CA+p0IJfmWKRUvmO+cvkdnkapBkr5gwW23r4ActZ9F80EK4Ly/cc8/vfPxU2eVuonJhHif5395ttfb52cSKP0IE95SECDXuOGwXGU1UjHgg0k60K8HopGBVUsyYiRgE/99ofx3QI6L9OSsofZ76vSwMXciQ++fJI0P0ujXEtuzVWKO7LmhADLxNNbKOdsEzf4n93GVIzG1l3WIJu4S7mSLc5AIOHhRAkZEfTU5W5NhekXAjXWHJtUVpuVP7Uf3rsixBDzD3Jo/xyrPjLPUQb6UJT1E0lSMdJ0TQu63jY5du2rc7evrk1KteZU6C9h2iVBw1GR97MQsqUWAOlUIFvBl3iPRiGLVxnmiW2MRiVeR/ryFmId4f5ddAr77eeXLj1w++NX75MdIdc2uYVZZeEA/SDcvvdwv6OIhSCvh/vfkhrgrwTcEReKaCkOXR5ew1EuNByaPxQ2FfEuKfoU2SN7qj6ypyREzMOIeElFFZNv/MIpSuwO3zqg8OL97D54K2qgC9mLtElp9X8Y0w7O2JROhFT/hTIXG2bXu0eUlZZkXMTYs9RCw/58LOqcAkwmMQPbMzY7jtYgAzqe3KFU9p/hrIIZk+DQCVMeQt6SP6PmU01oPstEpxiIEdcpInwFbeXo+yc3XpzfOCdPnRlDGgUzUYsffzk9jVldHqVHdrlIgVFlxWK8JwZHrz//41s3Pv1EnsF9BkA0lR1AHlLRQzezVNMTSZUTktJUDwPVLt79aO3pm1/ckkfAtOiGcNTY0dU03voHBS6G6MG1PcYuRxOiScaUlITv/AsgeR8hrwwAAA=="
+  val dump = "H4sIAAAAAAAAALVWTYgcRRSu6Znd+dnd2exoECWQuDshGGRmDUqEFWTZbEQYd5ftNYE1KDXdtZOK/VNW1ywzEnLwkIPexJPgIZBjEMSbShCDIB68eRCPsiCIsuRgTkpeVVf39Pz0zm5C5lB0V733vfe+79XrufM3mgg4OhVY2MFezSUC10z1vByIqvmWb7cdcoHs7O9tZl7+9aPbBprdRjM0uES5aGOHfkjsBppZ9QQV3aqrrAU62wjh6hKuPgquqj2WGqiy1WXE7Hq+R90YoT4eIekGME9f5pgxwgdSeWk8UL8jQBWxZ5FA+DwQ6PnQv275jkMsQX2vTl23LXDTIfUGDQTYH7N8z+JEEHPFwUFAgg/QDZRroAKRkDR+L6r37jrr4Q7ntcUxFZCWxA3tNwlTdXZdgco6nXUmUwGbPHWZz0UUIg9wV307es15GDZQpXEN7+I6hGjVTcGp1wLPWZ/TVsiCiildJhtoimHrfdwia+Apt/JQR0CcHUm3MumwDGMMeuacSqXWY6YWM1OTzFRNwqlsESwPN7jf6aLwl8ki1JEQL46BiBDIqmdXP75ivfPAnHIN6dxRJRYB42RK6yotgMifNj8N7r9x67yBStuoRIPlZiA4tkRSZ03XFPY8X6h0YwYxb4Fc82lyqSjLYAOM5pq+3Y20tnyXYQ+QNK/TIJRDLSqksdyb1fKMJBmUFIxEpjngPK437apK32XGnO6963ev/3HitzkDZWUPdhhPwGYB9oByVCesYMeBcgwRBYeopVAp03fJ3Px9+u6tT4SBMg2U6fS313rzGii51OFoOvQIO/V/ev6/38s7wtDCpxYRxf8u//0Pf+69njOQ0c9TEQowV6GoKDmB8iZpuXBX5EZJLs/FT9Md9XhAxFjAM3/9Y/+4iK6ospTsUfWH6jSAqLz6+TenycaXBipsq4t50cEt1XNSgAsksLZRwd8lPNzP72JHPo3su7xNdnDbiW5lkoFQwlOpEjIi6VnqMHnTovKnQjXWfI9UL25U/zV//uyOFEOePyPgGyCwniLPCpSFkRNXvZAmFSMbnLow4HbJK/e+fXv/7tqEUquiU7+EnTYJx43OvFeFlC2zCJHeDGWbDu/zyThluSzAOfHs4azk8kJP3khkuR4/QKdotH518+bx/dvvPaUmQqFJhYtZdfEI8yC6vk/wvqOYhbCuE713RQ3wNwfcEQ5NtJIMvTDoI1AhMhw4L0dDRa4VTZ8me+hOvTZ0p1SIBMKQeGlNlZBvtOOkQ7yWuHpE4eV67hC8lU3QhYwjbUJZPQ5jW0dnbNIiUqpHoYxjm7aDJ0TZ3IrKi9hjWy0y7J0nsi7qgOkkZuF6Jk5H0RpW4I4md6CUw1d4TIcZUeDAF2ZhIDLt35QkaOtAazOj5xGMCFdPEjmm5lPGlKkHA1Bx48EXa2d/+XpPzdWSHDEwv734315ynvazVo5SCP/gJVIWKCcnz0N2bYRi+AsAAA=="
 }
 }
 

@@ -26,7 +26,6 @@ trait KindsDefs extends scalan.Scalan with Kinds {
       weakTypeTag[Kind[F, A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Def[_]]) = {
-      implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Kind[F, A]] => convertKind(x) }
       tryConvert(element[Kind[F, A]], this, x, conv)
     }
@@ -59,6 +58,7 @@ trait KindsDefs extends scalan.Scalan with Kinds {
   case class ReturnCtor[F[_], A]
       (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
     extends Return[F, A](a) with Def[Return[F, A]] {
+    implicit val eA = a.elem
     lazy val selfType = element[Return[F, A]]
   }
   // elem for concrete class
@@ -132,7 +132,10 @@ trait KindsDefs extends scalan.Scalan with Kinds {
     proxyOps[Return[F, A]](p)
 
   implicit class ExtendedReturn[F[_], A](p: Rep[Return[F, A]])(implicit eA: Elem[A], cF: Cont[F]) {
-    def toData: Rep[ReturnData[F, A]] = isoReturn(eA, cF).from(p)
+    def toData: Rep[ReturnData[F, A]] = {
+      implicit val eA = p.a.elem
+      isoReturn(eA, cF).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -142,6 +145,9 @@ trait KindsDefs extends scalan.Scalan with Kinds {
   case class BindCtor[F[_], S, B]
       (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends Bind[F, S, B](a, f) with Def[Bind[F, S, B]] {
+    implicit val cF = a.elem.typeArgs("F")._1.asCont[F];
+implicit val eS = a.elem.typeArgs("A")._1.asElem[S];
+implicit val eB = f.elem.eRange.typeArgs("A")._1.asElem[B]
     lazy val selfType = element[Bind[F, S, B]]
   }
   // elem for concrete class
@@ -225,7 +231,12 @@ implicit val eB = p._2.elem.eRange.typeArgs("A")._1.asElem[B]
     proxyOps[Bind[F, S, B]](p)
 
   implicit class ExtendedBind[F[_], S, B](p: Rep[Bind[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]) {
-    def toData: Rep[BindData[F, S, B]] = isoBind(eS, eA, cF).from(p)
+    def toData: Rep[BindData[F, S, B]] = {
+      implicit val cF = p.a.elem.typeArgs("F")._1.asCont[F];
+implicit val eS = p.a.elem.typeArgs("A")._1.asElem[S];
+implicit val eB = p.f.elem.eRange.typeArgs("A")._1.asElem[B]
+      isoBind(eS, eA, cF).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -246,7 +257,6 @@ implicit val eB = p._2.elem.eRange.typeArgs("A")._1.asElem[B]
 
   def mkReturn[F[_], A]
     (a: Rep[A])(implicit cF: Cont[F]): Rep[Return[F, A]] = {
-    implicit val eA = a.elem
     new ReturnCtor[F, A](a)
   }
   def unmkReturn[F[_], A](p: Rep[Kind[F, A]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -265,9 +275,6 @@ implicit val eB = p._2.elem.eRange.typeArgs("A")._1.asElem[B]
 
   def mkBind[F[_], S, B]
     (a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]]): Rep[Bind[F, S, B]] = {
-    implicit val cF = a.elem.typeArgs("F")._1.asCont[F];
-implicit val eS = a.elem.typeArgs("A")._1.asElem[S];
-implicit val eB = f.elem.eRange.typeArgs("A")._1.asElem[B]
     new BindCtor[F, S, B](a, f)
   }
   def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -298,7 +305,7 @@ implicit val eB = f.elem.eRange.typeArgs("A")._1.asElem[B]
 }
 
 object KindsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAM1XXWgcRRyf27vk7nJp2qQa4kc1pivxi7tikRaClLvkTtJcPshGA2cxzO3OpVv3Y9ydS/ek1Lc+6JuIoChSVPoSLOKLqKj4ASLSB/FFfBIpCKJIHywKFmdmP3O5vbtUBO9h2Nmb+X/8fr//f2a3fwUDtgUmbRlq0MjriMC8xJ+LNhGlRVNpamgONV77Uz67kjmeFcBYDQyehvacrdVA1n0oOzh4lohSBaMV1VDKBlFJS9S5CQLyVddHgfkodPIhRnbNVMEEm65bEGNktdl6pD9bOzdTk1loyMgmpmUTcI9royCbmoZkoppGQdX1JoF1DRWqqk3o+lTdVFrPgPMgWQUHZNOQLUSQNKtB20a29z6DmHk1mGf5vLWMQx+741yzoEpomNTHAXf9KsJSyzCNlk7AiBfaMmZh0TU55GCK7byONe5moArSqo5Ni/he09TDaVPxpykD0hdgrHoGbsEC9bpZkIilGpvMGIby03ATLdElbPkgzcFGWmOthZFnPGcTZYc/BwMAMKZKeZiHlg9Ryweo5RlqooQsFWrqs5D9uWKZTgu4v0QSAIeZeKiHCd8CKhuK+Pwp+cnrUk4X2GaHBZPlIWWoobtjVMsJouh+tfqife2xi8cEMFQDQ6pdrNvEgjKJCsEDLAcNwyQ85gBDaG1SDqfiOOReinRNm1CysqljaFBLHprDlCpNlVXCFrN3Ix5BMeinCUb+0qSDE0G+cVXK9hYx1lqfn/v43E93fj8quMJ0sBUxm6Rmu6TDJTkLNY2mIxDfOfU65NIlmToanbqmPnXxBSKARBUknJ0CW66foXTOOBYYdne48r2hHvv7h5EGETz2Y5Pw/X+U/vSzn6+eSAlA2IlTliYg0V5j+cERkFqgZe7hw8YJAhKVUCRsWuRTNuS4fG5rm2e7xBRQPP3Lb8qXR8ApnjgXho9PX1qkJsaOv/rBvWjlHQFkarx4Kxrc5KpkFM0hW66BjLmFLPd9egtq7KmjMtMKasCmRjxioxi5JE/GkowRA3CG13PCTz/n8rVkGkisrIh/SF+/tM3oYv+PUwihD2aSdqk2tNvhzUVq9JYuuPgd8N0LF279/a2Ng7xGM3WV6BCLR/ZQoX5B/YcVCIIc3bwmwzkbpqkQ968i0rSM2ajj6ciOCGqHEz70fBEBAir6cKbKGtK7IBxjQK4EBmZNg3QsiChFBAy68XIDgYYPxXHF0bj8V+nS4dvvuCGA9Ekw0KDitDuyMlA3m4biI09PTYIcUvLfJXciT5GGFtSDw3QL0t5PmSdg3Ndwk6ha4Qnvvatc+psMSXFxZolGEi/HL9vwdT/u5cs85OcN1zcRH3x/+6x65f4K71ghbIu97IZELUbY2peIRDXq1YXPVu/2VWojb21X+9qlL9Amj27120cE0i75xLhpdHBjgbviRVVpGvJ3868c3H9o40fe7QcVU4cqV6VIhWTRY4ULRfQabRjOv0CwU59iY6GPMt9Xou5ussilbkUeBfmmukSpt4G9d4kUSzfaI3pUQD8FyIaF9krpq75CjHouLXVy4AGT8diOL8skPZf2XCadD8I3O5drm9L2IMCFzgL070L/G7J2NcNwfCMMkt0Q8jENYg7JGrSQwr5CkE6/ktxT5ujLJ9ZPTqw/zq9iwwpf5P4T3Hs6f9MtQjzDb6D3dfn+oIvEso5Jiz0c/eLRb5/75tLbwUGQ9bIb4HKgbHih0/uG7h2ALKOpmIwk75ZB5XX++utLD1x57ypve0PsvkIvX0bwORcekU5bw85x1+53bkRblH52h4mo6UM2fPIPPmzzFOAPAAA="
+  val dump = "H4sIAAAAAAAAAM1XT4gbVRh/mWQ3u9l/dmsrVqvbNYu1SrKKUGEPkmw3Uht3l51aYVtcXiYv8dX558zLOpHSg4ce9CZeFAQLC14WRbyIFBFFEA896UE8iSwIopQeLAgtfu/NvMlsMpPsVgRzeORNvvf9+f1+3/cm23+gIddBM66GdWwWDMJwQRXfSy7Lqy9Y9ZZOTpHGjZ211NM/vrmloKl1NEHdc9RhLazTN0i9iiaWTEZZO28Ia4ZOVH13Re6uGOcuH5xYqKLps22bqG3TMqkReigO9hA9Bm7ufcnBtk2crlSeHOxo90FwNYpNjbjMclyGjvnni5ql60Rj1DKL1DBaDNd0UqxSl4H9PZplag5hRF3UsesS9zV0GWWqaIRwlzTcj4p9e8Xu+O3N66yDKYO0uF/ffo3Yos62wdBkkM6KzVMBmyw1bMthMkQW3L1i1eU2Y2J4gKarF/EmLkKIZlFlDjWbcHLKcmjTR0HE5EeGq2jMxtqruEmW4SR/lIU6XKI3ONzCxLNTtm2DZp4SqRQ6yBRCZAocmbxKHMolgvmPq47ltZH/SaUR8riLJwa4kB7IklnPv3VBO39LHTMUftgTJY6Cj4cTpCu4ACC/W3vHvfnc1ZMKyq2jHHVLNZc5WGNRngO4xrBpWkykGyKInSbQNZtEl4hSAhtANFOz6m3JtWYZNjbBU4DrOBClU40ybsyfTQX0xIIMTDKbSNMMYB7Wm9Sq/GzJtvX2N5e+vPTrgz8dUFCaa9CznYjbNLjtU45QwiLWdShHYTI4RM35TKmWQQ7M3qQvX32bKShVRSlvt7xWaheByQXPQeP+CV+pd+jJ2z9PNpgSEJ9YhIx/LfvV17/tPJtRkLIbp1EoQF2ComRyDGXOULMe4MPX+xlKVfiXXLgtiS1fxj2+Huna5/rkFFL86O9/1r+dRxdE4UIYEp89aRFcTD/z/hdzZPVjBY2si9at6LgpVMkpOkVcbR2NWJvE8Z9nN7HOv8UqM1snDdzSZd9GMfJJnkkk2SYcwAXP5r0oyx/z+Vq2TJKvrOb/Ur9/d5vTxX+/DyDEEsw0DKQutLvhlaDy9VAfXOSw+/TKlUM3tjYOih4dqVFmYDs/v48OlQ31H3YgCmv06zrW2fPlOAhxao2wlmMuRgMfj5yIoJZPSeiFEUMKKUk4M0s6MfognOBAq4QOFi2TxTZElCKGhv18hYNQw0eTuBJofPJ3+aNHjjxwR0HZ59FQA8TpxrIyVLNaZl0iDxckIx4ry2eZ3cgD0tjBRnhvbmIY+8A8Q4elhluM6sVzwXNfufCZ6ZDi48wLjRReSTbbkLo/HNTLIxROm35sln/88+3X6fXHKmJidWBbHuS3Q9RyhK3JVCSr6aAvJFuDx1e5i7wXe8ZXj75Qlzz69e8eMlB75JMQphETxkEPJYuq0jK1H06/d3Dq6MYvYtoP1y0DU6HKORCSA9eKEMpcMGg76fwLBOPmFF/n99DmE2UId5dNrvZr8ijIdzUlyoMd7H9KZHi50RkxoAP20oB8qXZ3yp76q4PRQNNyXIBxL5LePEpuyzTcS/tuk/iLcCu+XbuUtg8BnokXoHwX+t+Q1TMMO+uHu/2D9VAIL+h0IhgYcIkbwa3CXyRmE+aIGlzdwNnlWx8sn7j+2Y6YJTn+EgBvNGb4D6lz73hdU3BMxPf/EUUIA0z5i8E/Cm/VGCkPAAA="
 }
 }
 

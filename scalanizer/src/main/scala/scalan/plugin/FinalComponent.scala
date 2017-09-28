@@ -19,23 +19,6 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
 
   val runsAfter = List(VirtFrontend.name)
 
-  /** Transformations of Scalan AST */
-  val moduleVirtualizationPipeline = scala.Function.chain(Seq(
-    fixExistentialType _,
-    externalTypeToWrapper _,
-    composeParentWithExt _,
-    addModuleAncestors _, addEntityAncestors _,
-    updateSelf _,
-    repSynonym _,
-    addImports _,
-    checkEntityCompanion _, checkClassCompanion _,
-    cleanUpClassTags _, replaceClassTagByElem _, eliminateClassTagApply _,
-    genEntityImpicits _, genClassesImplicits _, genMethodsImplicits _,
-    fixEntityCompanionName _,
-    fixEvidences _,
-    addModuleTrait _
-  ))
-
   def showTree(prefix: String, name: String, tree: Tree) =
     saveDebugCode(prefix + "_" + name, showCode(tree))
 
@@ -48,7 +31,7 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
         val moduleDef = snState.getModule(packageName, unitName)
 
         /** Generates a virtualized version of original Scala AST, wraps types by Rep[] and etc. */
-        val enrichedModuleDef = moduleVirtualizationPipeline(moduleDef)
+        val enrichedModuleDef = ModuleVirtualizationPipeline(moduleDef)
 
         /** Scala AST of virtualized module */
         val optimizedImplicits = optimizeModuleImplicits(enrichedModuleDef)

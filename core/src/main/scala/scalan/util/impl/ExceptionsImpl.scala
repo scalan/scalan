@@ -28,7 +28,6 @@ trait ExceptionsDefs extends scalan.Scalan with Exceptions {
       weakTypeTag[SThrowable].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Def[_]]) = {
-      implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[SThrowable] => convertSThrowable(x) }
       tryConvert(element[SThrowable], this, x, conv)
     }
@@ -146,7 +145,9 @@ trait ExceptionsDefs extends scalan.Scalan with Exceptions {
     proxyOps[SThrowableImpl](p)
 
   implicit class ExtendedSThrowableImpl(p: Rep[SThrowableImpl]) {
-    def toData: Rep[SThrowableImplData] = isoSThrowableImpl.from(p)
+    def toData: Rep[SThrowableImplData] = {
+      isoSThrowableImpl.from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -216,7 +217,7 @@ trait ExceptionsDefs extends scalan.Scalan with Exceptions {
 }
 
 object ExceptionsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVVTWhcRRyffZtmPwlNWiV+gDU8aZG6Gy3SQpQSNpuibJPQFw2spTL73mQzdd5747zZ5D0p9daD3kQ8iB4KipciiDcREbUgIj30Jh6lIIil9GDxUHE+3lc22aQe3MMw8/Y//4/f7/f/z7U/wYGAgSOBDQn0Gi7isGGp/XzATeus7wwIWkDrH/1tb62UT1UMMNUF4xswWAhIF1T0ph3SdG9xpwMmF7HntD2OeWS6ygUHjY6O0ZQxmrvFMHO35jpgWh7XGKQUsSFfzz+Yr+2XhcsK9GwUcJ8FHDypfTRtnxBkc+x7Tey6Aw57BDU7OODCfqznO9Gb4DIodsBB2/dshjiyWgQGAQri72Uk3eP0XFHnaJlmMXbmucog5iJNEeOgtj+HqBV5vhe5HEzEqS1TmZawqaGQCmxfcilRYQ50QAm71Gc8iVoSETZ8JzmOeVB8AFOdi3ATNkXUftPiDHt96YxC+w3YR0vCRJqPixoCRNZXI4pi57WAO9vihRQAQKlQynMqtUaGWiNFrSFRMy3EMCT4LSj/XGF+GAH9KxQBCKWL4/u4SDygtueY75y3X7tn1VxDXg5lMhWVUlk4emKEahVBAt0fz70X3D1z9aQBql1QxcF8L+AM2jwvhBiwGvQ8n6ucUwwh6wsOZ0ZxqKLMC5shoVRs36XQE55iNOuCKoJtzKWx/DYREzQC/RKnKDEthrSQ1juqS+XdeUpJ9P2lby799vgvk4YWZkhZzm1RuN2jHCXJFiRElGPwJLiIWtV0Wb6LJmfu4gtX3+UGKHRAIdwusOXeRUHnXMhAXd/Q8v0Hn7z/68Q6N2L2RxaRxP+69O13v986PWYAYztOFVGAJWYNS5LjoGqtbjB/S0pHSUMuj6S7WqyX0UFTDo/+cdu5PgvOq8oU8wkADyQ24WLq1IdfPYVWPjdAuau6c5HAvpKd5GABBXYXlP1NxPT30iYkcrer9EoOWocDwmPm8iBoFo+MZJEiidCcathCUn5NE7Lke8hcXDH/sn56/5rkQ/7/MAf1LTUonVchGeg5Ns1BUUykuPj4S2Un1hrhGGe5zCjjx9RZDLKMHjlLlEHu7r7YJmPyiytXHrrzyeuHVCOXe5i7kJqz/6GNk677H9sU5MCaVOvhBLgJeSt+jEQ12lAuRxOL3XSsUX12h5ozgLOzDnV8jxzq7bCVFDyb51Uux4aCvLBfUMWk6L9DWd6tPJyaZSrXR4dZl+szmVYOC/4bI/hfQDaBDDlSPMgVD6Vm9sQHp9denl57RTVr3VFG+p+0M3Z/1s9COqeG0LE9niBhZLZdyiO5OfHDizff/vmzT9X0yuoXjLVDG9E4aC3Of8AxSYuaGVGUFctIKOHyvY+Xnr7x5S016qpSkKJDvfRRz9QXDrXiuPaXQ5WDManPHOktuZz5F8r7eWfhCQAA"
+  val dump = "H4sIAAAAAAAAALVVTYgURxSu6Z04O7Pjrq6RYBSi6wR/0JmNBAwsISzrKIHJ7rK9GFhFqempHctUd1Wqa9YeEQ85eEhuISchB8GjCOIthBCUgOSQWw7BY1gIiEE86CnBV1XdPb0/s6MH51BU1bz3vfe+773qO0/RO6FE+0MPMxxUfaJw1TX76VBV3C94q8PIKbL8bHUh9/Gf39x20NgS2k7Ds1SqDmb0Kmk10PZ6oKjqVnxjrdDRhoWrabjaZnCV2GOqgcYXu4K43YAH1E8RaoMRsm4A8+6XEgtB5LpUPhoMtNYRoIo48EiouAwVOmD9ax5njHiK8qBGfb+jcJORWoOGCux3eDzwJFHEnWE4DEn4NbqO8g00TDQkTc9Fc+7OiR7uxrwWJaYK0tK41n6BCFNn11doNE5nTuhUwKZAfcGlSkIUAO4SbyXHfIDhAo03LuMVXIMQ7ZqrJA3a4DnGJW1bFkxM7bKtgUYE9r7CbTILnvqqAHWEhC1ruo1JJHJCCOiZEyaVao+ZaspMVTNTcYmkukWw/nNe8qiL7C83hFCkIY4NgEgQSD1oVb4975176Y74jnaOTIlFwPigT+saLYDIRwvfh8/P3DrpoNISKtFwuhkqiT2V1TmmawQHAVcm3ZRBLNsg10Q/uUyUabABRvNN3uomWnvcFzgApJjXMgjFqEeVNtZ3Y7E8m5IMSipBEtM8cJ7W229Ute+0EKz78Nov1/7e99dOBw3pHoyEzMAOAewW5ZhOmMGMQTmOSoJD1JJVyuU+2TnxnF649Z1yUK6BctHa9pprXgYlpyKJytbDdur/9OR/j0eXlRML37eIJP7PhV8f/LP6Wd5BzlqeilCAW4eikuQUKrmLlyS/ortG35X08n66K0dmu0XQVMNDT/5t/TaJzpvKjPIJAa/VbAAx/snNnz4k83cdNLxkZvM0w23TdlqDUyT0ltAwXyHS3hdWMNO7TVuv0CLLuMOSwcySYFXc31dFQTRDU5HQw5aUP2IFmeUBqZyer7xwf//hjtZD//+eQuUr5h1sncWsY5+sPQoNweMTFx/fFDdybRmOedbLQWO8z5zhzerJ8znMgDHI+A7kNnkR7924sfvZ7Yu7zCAPN6nysahMvsEYJ1P3FscUZcgaN+vuhLhR7RV/a6Aaa6iXw4nFZn1sWT2xoZt7BPfONtTxLXIo16OZpODJrK56ObIuyKeDgholYf529fKeydJpVRZ63btedb1W115Cq5TqkUdEKtxBFTdtUO0oyuJaJJro0ylurA3Qe/3lj7NH/7i/at6PklYZ2j5Iv5M9SaN1/b3N4mVSVSivRX8FVHDYBioJAAA="
 }
 }
 

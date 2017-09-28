@@ -649,7 +649,10 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
   }
 
   def emitDslTraits = {
-    if (module.moduleTrait.isEmpty) {
+    module.origModuleTrait match {
+      case Some(mt) if module.okEmitOrigModuleTrait =>
+        s"trait ${mt.name} extends ${module.packageName}.${mt.ancestors.rep(a => a.tpe.toString, " with ")}"
+      case _ =>
         val moduleTraitName = module.getModuleTraitName
         val selfTypeStr = module.selfType match {
           case Some(SSelfTypeDef(_, List(STraitCall(`moduleTraitName`, Nil)))) => ""
@@ -657,7 +660,6 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         }
         s"trait $moduleTraitName extends ${module.packageName}.impl.${module.name}Defs$selfTypeStr"
     }
-    else ""
   }
 
   def emitImplFile: String = {

@@ -45,10 +45,13 @@ trait ScalanAstExtensions {
 
     def argUnrepTypes(module: SModuleDef, isVirtualized: Boolean) = {
       if (isVirtualized) {
-        as.args.map(a => a.tpe.unRep(module, isVirtualized).getOrElse {
-          sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
+        as.args.map({ a =>
+          val res = a.tpe.unRep(module, isVirtualized)
+          res.getOrElse { sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.") }
         })
-      } else as.args.map(_.tpe)
+      }
+      else
+        as.args.map(_.tpe)
     }
   }
 

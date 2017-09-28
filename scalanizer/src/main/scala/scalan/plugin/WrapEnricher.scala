@@ -22,6 +22,7 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   /** The phase prepares a wrapper for virtualization. */
   def newPhase(prev: Phase) = new StdPhase(prev) {
     override def run(): Unit = {
+      import ModuleVirtualizationPipeline._
       snState.transformWrappers { case (name, wrapperDescr) =>
         /** Transformations of Wrappers by adding of Elem, Cont and other things. */
         val pipeline = scala.Function.chain(Seq(

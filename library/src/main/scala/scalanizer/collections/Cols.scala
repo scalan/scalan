@@ -23,6 +23,4 @@ package scalanizer.collections {
     };
     trait ColOverArrayCompanion
   }
-
-  trait ColsModule extends impl.ColsDefs with scala.wrappers.WrappersModule
 }

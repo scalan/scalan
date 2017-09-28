@@ -804,18 +804,19 @@ object ScalanAst {
     }
   }
 
-  case class SModuleDef( packageName: String,
-                         imports: List[SImportStat],
-                         name: String,
-                         entityRepSynonym: Option[STpeDef],
-                         entityOps: STraitDef,
-                         entities: List[STraitDef],
-                         concreteSClasses: List[SClassDef],
-                         methods: List[SMethodDef],
-                         selfType: Option[SSelfTypeDef],
-                         ancestors: List[STypeApply],
-                         moduleTrait: Option[STraitDef],
-                         isVirtualized: Boolean)
+  case class SModuleDef(packageName: String,
+                        imports: List[SImportStat],
+                        name: String,
+                        entityRepSynonym: Option[STpeDef],
+                        entityOps: STraitDef,
+                        entities: List[STraitDef],
+                        concreteSClasses: List[SClassDef],
+                        methods: List[SMethodDef],
+                        selfType: Option[SSelfTypeDef],
+                        ancestors: List[STypeApply],
+                        origModuleTrait: Option[STraitDef],  // original module trait declared
+                        isVirtualized: Boolean,
+                        okEmitOrigModuleTrait: Boolean = true)
                        (@transient implicit val context: AstContext) {
     def getModuleTraitName: String = SModuleDef.moduleTraitName(name)
     def getFullName(shortName: String): String = s"$packageName.$name.$shortName"
@@ -877,7 +878,7 @@ object ScalanAst {
         entities = _entities,
         concreteSClasses = _concreteSClasses,
         methods = Nil,
-        moduleTrait = None,
+        origModuleTrait = None,
         ancestors = Nil
       )
     }

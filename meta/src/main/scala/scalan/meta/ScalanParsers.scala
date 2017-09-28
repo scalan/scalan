@@ -133,8 +133,8 @@ trait ScalanParsers[G <: Global] {
     }
     val mainTrait = traitDef(mainTraitTree, Some(mainTraitTree))
     val moduleName = mainTrait.name
-
-    val moduleTrait = findClassDefByName(statements, moduleName + "Module").map(cd => traitDef(cd, Some(cd)))
+    val isDefinedModule = findClassDefByName(statements, moduleName + "Module").isDefined
+//    val moduleTrait = definedModule.map(cd => traitDef(cd, Some(cd)))
 
     val defs = mainTrait.body
 
@@ -161,7 +161,7 @@ trait ScalanParsers[G <: Global] {
     SModuleDef(packageName, imports, moduleName,
       entityRepSynonym, entity, traits, classes, methods,
       mainTrait.selfType, mainTrait.ancestors,
-      moduleTrait, isVirtualized)
+      None, isVirtualized, okEmitOrigModuleTrait = !isDefinedModule)
   }
 
   def importStat(i: Import): SImportStat = {
