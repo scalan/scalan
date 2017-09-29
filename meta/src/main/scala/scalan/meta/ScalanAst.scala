@@ -242,10 +242,13 @@ object ScalanAst {
           }
           None
         }
-
         findInTuple(t)
+      case STraitCall("Rep", List(tT)) =>
+        find(module, tT, argName)
       case STraitCall("Thunk", List(tT)) =>
         find(module, tT, argName).map(tail => SThunkPath(tpe, tail))
+      case module.TypeSynonim(en @ module.Entity(e), args) =>
+        findInEntity(module, e, STraitCall(en, args), argName)
       case s@STpeStruct(_) =>
         def findInStruct(s: STpeStruct): Option[STpePath] = {
           for ((fn, ft) <- s.fields) {
@@ -257,7 +260,6 @@ object ScalanAst {
           }
           None
         }
-
         findInStruct(s)
       case STraitCall(`argName`, Nil) =>
         Some(SNilPath)
@@ -802,6 +804,16 @@ object ScalanAst {
         .map { case (m, syn) => syn.name -> m.entityOps.name }
         .toMap
     }
+
+    def getModule(packageName: String, unitName: String): SModuleDef = {
+      val key = s"$packageName.$unitName"
+      modules(key)
+    }
+
+    def addModule(unitName: String, module: SModuleDef) = {
+      val key = s"${module.packageName}.$unitName"
+      modules(key) = module
+    }
   }
 
   case class SModuleDef(packageName: String,
@@ -907,7 +919,7 @@ object ScalanAst {
       def unapply(tpe: STpeExpr): Option[(String, List[STpeExpr])] = tpe match {
         case STraitCall(n, args) =>
           val typeSynonyms = context.entityTypeSynonyms ++ entityRepSynonym.map(syn => syn.name -> entityOps.name)
-          typeSynonyms.get(name).map(entityName => (entityName, args))
+          typeSynonyms.get(n).map(entityName => (entityName, args))
         case _ => None
       }
     }

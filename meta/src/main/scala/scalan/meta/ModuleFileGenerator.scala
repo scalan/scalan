@@ -572,7 +572,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |  implicit class Extended${c.typeDecl}(p: Rep[${c.typeUse}])${c.optimizeImplicits().implicitArgsDecl()} {
         |    def toData: Rep[$dataTpe] = {
         |      ${c.extractionBuilder(prefix = "p.").extractableImplicits}
-        |      iso$className${implicitArgsUse}.from(p)
+        |      iso$className${c.implicitArgsUse}.from(p)
         |    }
         |  }
         |
@@ -652,13 +652,14 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     module.origModuleTrait match {
       case Some(mt) if module.okEmitOrigModuleTrait =>
         s"trait ${mt.name} extends ${module.packageName}.${mt.ancestors.rep(a => a.tpe.toString, " with ")}"
-      case _ =>
+      case None if module.okEmitOrigModuleTrait =>
         val moduleTraitName = module.getModuleTraitName
         val selfTypeStr = module.selfType match {
           case Some(SSelfTypeDef(_, List(STraitCall(`moduleTraitName`, Nil)))) => ""
           case _ => s" {${module.selfTypeString("")}}"
         }
         s"trait $moduleTraitName extends ${module.packageName}.impl.${module.name}Defs$selfTypeStr"
+      case _ => ""
     }
   }
 

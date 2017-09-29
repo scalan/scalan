@@ -14,14 +14,18 @@ import scala.tools.nsc.Global
 
 class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx[Global] with LazyLogging {
   def getGlobal: Global = new Global(settings, reporter)
+  implicit val context = new AstContext
+
   initCompiler()
 
-  case class EntityManager(name: String, file: File, entityDef: SModuleDef, config: CodegenConfig)
+  case class EntityManager(name: String, file: File, module: SModuleDef, config: CodegenConfig)
 
   protected val entities = config.entityFiles.flatMap { f =>
     val file = FileUtil.file(config.srcPath, f)
     try {
       val module = parseEntityModule(file, config.isVirtualized)
+      val unitName = file.getName
+      context.addModule(unitName, module)
       Some(new EntityManager(module.name, file, module, config))
     } catch {
       case e: Exception =>
@@ -38,7 +42,7 @@ class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx[Global
   def generateAll() = {
     entities.foreach { man =>
       println(s"  generating ${man.file}")
-      val g = createFileGenerator(getCodegen, man.entityDef, man.config)
+      val g = createFileGenerator(getCodegen, man.module, man.config)
       val implCode = g.emitImplFile
       saveEntity(man.file, implCode)
     }

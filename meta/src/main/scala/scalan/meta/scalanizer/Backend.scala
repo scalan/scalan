@@ -25,7 +25,7 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
       module.copy(
         origModuleTrait = Some(createModuleTrait(module.name)),
         okEmitOrigModuleTrait = true
-      ),
+      )(context),
       snConfig.codegenConfig)
     entityGen.emitImplFile
   }

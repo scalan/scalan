@@ -16,7 +16,7 @@ trait StructItems extends ViewsModule with Entities  { self: Structs with Scalan
 
   abstract class StructItemBase[Val, Schema <: Struct]
         (val key: Rep[StructKey[Schema]], val value: Rep[Val])
-        (implicit val eVal: Elem[Val], val eSchema: Elem[Schema])
+//        (implicit val eVal: Elem[Val], val eSchema: Elem[Schema])
     extends StructItem[Val, Schema]
 
 }
@@ -27,7 +27,7 @@ trait StructItemsModule extends impl.StructItemsDefs { self: Structs with Scalan
     val value = s.getUntyped(i)
     val eS = s.elem
     val key = IndexStructKey[S](i)(eS)
-    StructItemBase(key, value)(eS)
+    StructItemBase(key, value)
   }
 
   def struct_setItem[S <: Struct](s: Rep[S], i: Rep[Int], v: Rep[_]): Rep[S] = {

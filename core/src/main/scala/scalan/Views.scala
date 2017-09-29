@@ -48,9 +48,9 @@ trait Views extends TypeDescs with Proxy { self: ViewsModule with Scalan =>
   // TODO we can get eA1 etc. from iso1 and iso2, but this won't work as default arguments
   // because this creates a compiler-generated companion object and conflicts with `def PairIsoUR`
   // in ViewsImpl.scala
-  abstract class PairIso[A1, A2, B1, B2](val iso1: Iso[A1, B1], val iso2: Iso[A2, B2])(
-    implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
+  abstract class PairIso[A1, A2, B1, B2](val iso1: Iso[A1, B1], val iso2: Iso[A2, B2])
     extends IsoUR[(A1, A2), (B1, B2)] {
+    implicit def eA1: Elem[A1]; implicit def eA2: Elem[A2]; implicit def eB1: Elem[B1]; implicit def eB2: Elem[B2]
     lazy val eFrom: Elem[(A1, A2)] = element[(A1, A2)]
     lazy val eTo: Elem[(B1, B2)] = element[(B1, B2)]
 
@@ -92,9 +92,8 @@ trait Views extends TypeDescs with Proxy { self: ViewsModule with Scalan =>
   }
   trait PairIsoCompanion
 
-  abstract class AbsorbFirstUnitIso[A2,B2](val iso2: Iso[A2, B2])(
-    implicit val eA2: Elem[A2], val eB2: Elem[B2])
-    extends IsoUR[A2, (Unit, B2)] {
+  abstract class AbsorbFirstUnitIso[A2,B2](val iso2: Iso[A2, B2]) extends IsoUR[A2, (Unit, B2)] {
+    implicit def eA2: Elem[A2]; implicit def eB2: Elem[B2]
     lazy val eFrom = eA2
     lazy val eTo: Elem[(Unit, B2)] = element[(Unit, B2)]
     def from(b: Rep[(Unit, B2)]) = {
@@ -110,9 +109,8 @@ trait Views extends TypeDescs with Proxy { self: ViewsModule with Scalan =>
     }
   }
 
-  abstract class AbsorbSecondUnitIso[A1,B1](val iso1: Iso[A1, B1])(
-    implicit val eA1: Elem[A1], val eB1: Elem[B1])
-    extends IsoUR[A1, (B1,Unit)] {
+  abstract class AbsorbSecondUnitIso[A1,B1](val iso1: Iso[A1, B1]) extends IsoUR[A1, (B1,Unit)] {
+    implicit def eA1: Elem[A1]; implicit def eB1: Elem[B1]
     lazy val eFrom = eA1
     lazy val eTo: Elem[(B1,Unit)] = element[(B1,Unit)]
     def from(b: Rep[(B1,Unit)]) = {
@@ -128,9 +126,9 @@ trait Views extends TypeDescs with Proxy { self: ViewsModule with Scalan =>
     }
   }
 
-  abstract class SumIso[A1, A2, B1, B2](val iso1: Iso[A1, B1], val iso2: Iso[A2, B2])(
-    implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
+  abstract class SumIso[A1, A2, B1, B2](val iso1: Iso[A1, B1], val iso2: Iso[A2, B2])
     extends IsoUR[A1 | A2, B1 | B2] {
+    implicit def eA1: Elem[A1]; implicit def eA2: Elem[A2]; implicit def eB1: Elem[B1]; implicit def eB2: Elem[B2]
     lazy val eFrom: Elem[A1 | A2] = element[A1 | A2]
     lazy val eTo: Elem[B1 | B2] = element[B1 | B2]
     def from(b: Rep[B1 | B2]) =
@@ -144,8 +142,8 @@ trait Views extends TypeDescs with Proxy { self: ViewsModule with Scalan =>
     }
   }
 
-  abstract class ComposeIso[A, B, C](val iso2: Iso[B, C], val iso1: Iso[A, B])(
-    implicit val eA: Elem[A], val eB: Elem[B], val eC: Elem[C]) extends IsoUR[A, C] {
+  abstract class ComposeIso[A, B, C](val iso2: Iso[B, C], val iso1: Iso[A, B])/*(
+    implicit val eA: Elem[A], val eB: Elem[B], val eC: Elem[C])*/ extends IsoUR[A, C] {
     def eFrom: Elem[A] = iso1.eFrom
     def eTo: Elem[C] = iso2.eTo
     def from(c: Rep[C]) = iso1.from(iso2.from(c))
@@ -157,9 +155,10 @@ trait Views extends TypeDescs with Proxy { self: ViewsModule with Scalan =>
     }
   }
 
-  abstract class FuncIso[A, B, C, D](val iso1: Iso[A, B], val iso2: Iso[C, D])(
-    implicit val eA: Elem[A], val eB: Elem[B], val eC: Elem[C], val eD: Elem[D])
+  abstract class FuncIso[A, B, C, D](val iso1: Iso[A, B], val iso2: Iso[C, D])/*(
+    implicit val eA: Elem[A], val eB: Elem[B], val eC: Elem[C], val eD: Elem[D])*/
     extends IsoUR[A => C, B => D] {
+    implicit def eA: Elem[A]; implicit def eB: Elem[B]; implicit def eC: Elem[C]; implicit def eD: Elem[D]
     lazy val eFrom: Elem[A => C] = element[A => C]
     lazy val eTo: Elem[B => D] = element[B => D]
     def from(f: Rep[B => D]): Rep[A => C] = {
@@ -175,9 +174,10 @@ trait Views extends TypeDescs with Proxy { self: ViewsModule with Scalan =>
     }
   }
 
-  abstract class ConverterIso[A, B](val convTo: Conv[A,B], val convFrom: Conv[B,A])(
-    implicit val eA: Elem[A], val eB: Elem[B])
+  abstract class ConverterIso[A, B](val convTo: Conv[A,B], val convFrom: Conv[B,A])
+//                                   (implicit val eA: Elem[A], val eB: Elem[B])
     extends IsoUR[A,B] {
+    def eA: Elem[A]; def eB: Elem[B]
     def eFrom: Elem[A] = eA
     def eTo: Elem[B] = eB
     def to(a: Rep[A]) = convTo(a)
@@ -208,7 +208,7 @@ trait Views extends TypeDescs with Proxy { self: ViewsModule with Scalan =>
     }
   }
 
-  abstract class ThunkIso[A,B](val innerIso: Iso[A,B])(implicit override val eA: Elem[A], override val eB: Elem[B]) extends Iso1UR[A, B, Thunk] {
+  abstract class ThunkIso[A,B](val innerIso: Iso[A,B]) extends Iso1UR[A, B, Thunk] {
     def cC = container[Thunk]
     def from(x: Th[B]) = x.map(innerIso.fromFun)
     def to(x: Th[A]) = x.map(innerIso.toFun)
@@ -360,11 +360,11 @@ trait ViewsModule extends impl.ViewsDefs { self: Scalan =>
       case pe: PairElem[a,b] => (pe.eFst, pe.eSnd) match {
         case (`UnitElement`, eB) =>
           builder(eB) match { case isoB: Iso[s,b] @unchecked =>
-            AbsorbFirstUnitIso(isoB)(isoB.eFrom, isoB.eTo)
+            AbsorbFirstUnitIso(isoB)
           }
         case (eA, `UnitElement`) =>
           builder(eA) match { case isoA: Iso[s,a] @unchecked =>
-            AbsorbSecondUnitIso(isoA)(isoA.eFrom, isoA.eTo)
+            AbsorbSecondUnitIso(isoA)
           }
         case (eA, eB) =>
           (builder(eA), builder(eB)) match {
@@ -406,10 +406,10 @@ trait ViewsModule extends impl.ViewsDefs { self: Scalan =>
   def identityIso[A](implicit elem: Elem[A]): Iso[A, A] = IdentityIso[A]()(elem)
 
   def pairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[(A1, A2), (B1, B2)] =
-    PairIso[A1, A2, B1, B2](iso1, iso2)(iso1.eFrom, iso2.eFrom, iso1.eTo, iso2.eTo)
+    PairIso[A1, A2, B1, B2](iso1, iso2)
 
   def sumIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[A1 | A2, B1 | B2] =
-    SumIso[A1, A2, B1, B2](iso1, iso2)(iso1.eFrom, iso2.eFrom, iso1.eTo, iso2.eTo)
+    SumIso[A1, A2, B1, B2](iso1, iso2)
 
   def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = {
     if (iso2.isIdentity)
@@ -422,7 +422,7 @@ trait ViewsModule extends impl.ViewsDefs { self: Scalan =>
           val composedIso1 = composeIso(iso2d.iso1, iso1d.iso1.asInstanceOf[Iso[a1, b1]])
           val composedIso2 = composeIso(iso2d.iso2, iso1d.iso2.asInstanceOf[Iso[a2, b2]])
           pairIso(composedIso1, composedIso2)
-        case _ => ComposeIso[A, B, C](iso2, iso1)(iso1.eFrom, iso1.eTo, iso2.eTo)
+        case _ => ComposeIso[A, B, C](iso2, iso1)
       }
   }.asInstanceOf[Iso[A, C]]
 
@@ -442,13 +442,13 @@ trait ViewsModule extends impl.ViewsDefs { self: Scalan =>
   }
 
   def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] =
-    FuncIso[A, B, C, D](iso1, iso2)(iso1.eFrom, iso1.eTo, iso2.eFrom, iso2.eTo)
+    FuncIso[A, B, C, D](iso1, iso2)
 
-  def thunkIso[A,B](iso: Iso[A, B]) = ThunkIso[A, B](iso)(iso.eFrom, iso.eTo).asInstanceOf[Iso1[A, B, Thunk]]
+  def thunkIso[A,B](iso: Iso[A, B]) = ThunkIso[A, B](iso).asInstanceOf[Iso1[A, B, Thunk]]
 
   def converterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A]): Iso[A,B] = {
     val convToElem = convTo.elem.asInstanceOf[ConverterElem[A, B, _]]
-    ConverterIso[A, B](convTo, convFrom)(convToElem.eT, convToElem.eR)
+    ConverterIso[A, B](convTo, convFrom)
   }
 
   def convertBeforeIso[A, B, C](convTo: Conv[A,B], convFrom: Conv[B,A], iso0: Iso[B,C]): Iso[A, C] = composeIso(iso0, converterIso(convTo, convFrom))

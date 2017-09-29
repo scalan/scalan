@@ -391,7 +391,7 @@ class MetaCodegen extends ScalanAstExtensions {
     def companionAbsName = name + "CompanionCtor"
 
     def extractionBuilder(prefix: String): ElemExtractionBuilder = {
-      val s = entity.args.args.map { a => a.name -> s"p.${a.name}" }.toMap
+      val s = entity.args.args.map { a => a.name -> (prefix + a.name) }.toMap
       extractionBuilder(s)
     }
 

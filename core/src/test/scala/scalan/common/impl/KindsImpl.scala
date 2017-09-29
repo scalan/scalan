@@ -56,7 +56,7 @@ trait KindsDefs extends scalan.Scalan with Kinds {
     proxyOps[KindCompanionCtor](p)
 
   case class ReturnCtor[F[_], A]
-      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+      (override val a: Rep[A])(implicit cF: Cont[F])
     extends Return[F, A](a) with Def[Return[F, A]] {
     implicit val eA = a.elem
     lazy val selfType = element[Return[F, A]]
@@ -131,7 +131,7 @@ trait KindsDefs extends scalan.Scalan with Kinds {
   implicit def proxyReturn[F[_], A](p: Rep[Return[F, A]]): Return[F, A] =
     proxyOps[Return[F, A]](p)
 
-  implicit class ExtendedReturn[F[_], A](p: Rep[Return[F, A]])(implicit eA: Elem[A], cF: Cont[F]) {
+  implicit class ExtendedReturn[F[_], A](p: Rep[Return[F, A]])(implicit cF: Cont[F]) {
     def toData: Rep[ReturnData[F, A]] = {
       implicit val eA = p.a.elem
       isoReturn(eA, cF).from(p)
@@ -143,11 +143,11 @@ trait KindsDefs extends scalan.Scalan with Kinds {
     reifyObject(new ReturnIso[F, A]()(eA, cF))
 
   case class BindCtor[F[_], S, B]
-      (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+      (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])
     extends Bind[F, S, B](a, f) with Def[Bind[F, S, B]] {
     implicit val cF = a.elem.typeArgs("F")._1.asCont[F];
 implicit val eS = a.elem.typeArgs("A")._1.asElem[S];
-implicit val eB = f.elem.eRange.typeArgs("A")._1.asElem[B]
+implicit val eA = f.elem.eRange.typeArgs("A")._1.asElem[B]
     lazy val selfType = element[Bind[F, S, B]]
   }
   // elem for concrete class
@@ -230,12 +230,12 @@ implicit val eB = p._2.elem.eRange.typeArgs("A")._1.asElem[B]
   implicit def proxyBind[F[_], S, B](p: Rep[Bind[F, S, B]]): Bind[F, S, B] =
     proxyOps[Bind[F, S, B]](p)
 
-  implicit class ExtendedBind[F[_], S, B](p: Rep[Bind[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]) {
+  implicit class ExtendedBind[F[_], S, B](p: Rep[Bind[F, S, B]]) {
     def toData: Rep[BindData[F, S, B]] = {
       implicit val cF = p.a.elem.typeArgs("F")._1.asCont[F];
 implicit val eS = p.a.elem.typeArgs("A")._1.asElem[S];
 implicit val eB = p.f.elem.eRange.typeArgs("A")._1.asElem[B]
-      isoBind(eS, eA, cF).from(p)
+      isoBind(eS, eB, cF).from(p)
     }
   }
 
@@ -305,7 +305,7 @@ implicit val eB = p.f.elem.eRange.typeArgs("A")._1.asElem[B]
 }
 
 object KindsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAM1XT4gbVRh/mWQ3u9l/dmsrVqvbNYu1SrKKUGEPkmw3Uht3l51aYVtcXiYv8dX558zLOpHSg4ce9CZeFAQLC14WRbyIFBFFEA896UE8iSwIopQeLAgtfu/NvMlsMpPsVgRzeORNvvf9+f1+3/cm23+gIddBM66GdWwWDMJwQRXfSy7Lqy9Y9ZZOTpHGjZ211NM/vrmloKl1NEHdc9RhLazTN0i9iiaWTEZZO28Ia4ZOVH13Re6uGOcuH5xYqKLps22bqG3TMqkReigO9hA9Bm7ufcnBtk2crlSeHOxo90FwNYpNjbjMclyGjvnni5ql60Rj1DKL1DBaDNd0UqxSl4H9PZplag5hRF3UsesS9zV0GWWqaIRwlzTcj4p9e8Xu+O3N66yDKYO0uF/ffo3Yos62wdBkkM6KzVMBmyw1bMthMkQW3L1i1eU2Y2J4gKarF/EmLkKIZlFlDjWbcHLKcmjTR0HE5EeGq2jMxtqruEmW4SR/lIU6XKI3ONzCxLNTtm2DZp4SqRQ6yBRCZAocmbxKHMolgvmPq47ltZH/SaUR8riLJwa4kB7IklnPv3VBO39LHTMUftgTJY6Cj4cTpCu4ACC/W3vHvfnc1ZMKyq2jHHVLNZc5WGNRngO4xrBpWkykGyKInSbQNZtEl4hSAhtANFOz6m3JtWYZNjbBU4DrOBClU40ybsyfTQX0xIIMTDKbSNMMYB7Wm9Sq/GzJtvX2N5e+vPTrgz8dUFCaa9CznYjbNLjtU45QwiLWdShHYTI4RM35TKmWQQ7M3qQvX32bKShVRSlvt7xWaheByQXPQeP+CV+pd+jJ2z9PNpgSEJ9YhIx/LfvV17/tPJtRkLIbp1EoQF2ComRyDGXOULMe4MPX+xlKVfiXXLgtiS1fxj2+Huna5/rkFFL86O9/1r+dRxdE4UIYEp89aRFcTD/z/hdzZPVjBY2si9at6LgpVMkpOkVcbR2NWJvE8Z9nN7HOv8UqM1snDdzSZd9GMfJJnkkk2SYcwAXP5r0oyx/z+Vq2TJKvrOb/Ur9/d5vTxX+/DyDEEsw0DKQutLvhlaDy9VAfXOSw+/TKlUM3tjYOih4dqVFmYDs/v48OlQ31H3YgCmv06zrW2fPlOAhxao2wlmMuRgMfj5yIoJZPSeiFEUMKKUk4M0s6MfognOBAq4QOFi2TxTZElCKGhv18hYNQw0eTuBJofPJ3+aNHjjxwR0HZ59FQA8TpxrIyVLNaZl0iDxckIx4ry2eZ3cgD0tjBRnhvbmIY+8A8Q4elhluM6sVzwXNfufCZ6ZDi48wLjRReSTbbkLo/HNTLIxROm35sln/88+3X6fXHKmJidWBbHuS3Q9RyhK3JVCSr6aAvJFuDx1e5i7wXe8ZXj75Qlzz69e8eMlB75JMQphETxkEPJYuq0jK1H06/d3Dq6MYvYtoP1y0DU6HKORCSA9eKEMpcMGg76fwLBOPmFF/n99DmE2UId5dNrvZr8ijIdzUlyoMd7H9KZHi50RkxoAP20oB8qXZ3yp76q4PRQNNyXIBxL5LePEpuyzTcS/tuk/iLcCu+XbuUtg8BnokXoHwX+t+Q1TMMO+uHu/2D9VAIL+h0IhgYcIkbwa3CXyRmE+aIGlzdwNnlWx8sn7j+2Y6YJTn+EgBvNGb4D6lz73hdU3BMxPf/EUUIA0z5i8E/Cm/VGCkPAAA="
+  val dump = "H4sIAAAAAAAAAM1XX4gbRRif7OUud7l/7dWrWK1ezxzWKsnpS4V7kOSaSG28O25rhbN4TDaTOO3+c3dybqT0sQ/2rfiiIFgoCHIo0hcRKaII4kOffBGfVAqCKNIHi4LFb2Z3NpvcbnJXEczDsDOZ+f78fr/vm93tX9Gw66A5V8M6NvMGYTiviueiy3LqC1a9pZMTpPGjdX3myuU/P1DQvg00Sd0z1GEtrNM3SH0DzVrnywZlqw5t+gdOO5iyKposm4yyds4Qiwwdq/puCtxNIc5NLjixVEUzp9s2UdumZVIjtFAYbCF6DMzc95KDbZs4PaE8NdhQ90EwNYZNjbjMclyGjvjnC5ql60Rj1DIL1DBaDNd0UqhSl8H+fZplag5hRF3WsesS9zV0EaWraJRwkzScj4l5e9Xu2N0Zl4AUwuJ2/f3rxBZ5tg2GpoJwVm0eCuzJUMO2HCZdZMDcq1ZdTtMmhgU0Uz2Ht3ABXDQLKnOo2YST01Y3jfzISBWN21g7j5tkBU7ypQzk4RK9weEWWzw7lbJtG8T0tIgl34EmH0KT59DkVOJQrh3M/1xzLK+N/F9qCCGPm3hygAlpgZTNeu7Ns9rLd9RxQ+GHPZHjGNh4JEHTggxA8uv1K+7t564eV1B2A2WpW6y5zMEaixId4DWOTdNiItwQQuw0ga/5JL6ElyLsAUjTNavelmRrlmFjEywFwE4AUzrVKOOb+dp0wE8sykAls4ncmgbQw3yTapifLdq23v7ywo0LPz303X4FDXERerYTMTsEZvukI6SwjHUd0lGYdA5esz5TqmWQ/fO36StXLzMFpaoo5XXra7V2Dphc8hw04Z/wpXqXHv/7+6kGUwLiE5OQ/j/LfP7Fz7eeTStI6cZpDBJQy5CUDI6h9Clq1gN8+PgAQ6kKf8iG06KY8mHC4+Ohnnm2T0whxY/98lv9q0V0ViQuhCHx2ZUWwcTMM+98ukDWPlTQ6Iao3YqOm0KVnKITxNU20Ki1RRx/PbOFdf4Uq8xMnTRwS5eFG8XIJ3kukWSbcACXPJvXokx/3OdrxTJJrrKW+0P95q1tThf//36AEEswh6Aj9aDdC68ElY+zfXCR3e7jS5dmf7+2eUDU6GiNMgPbucU9VKgsqP+wAlGYo5/Xkc6cD0dBiNPrhLUccznq+GjkRAS1XEpCLzYxpJCihDNd1onRB+EEA1olNLBsmSy2IKIUMTTixysMhBo+nMSVQOOjv0rvP3rowbsKyjyPhhsgTjeWleGa1TLrEnm4IRnxWEmupbuRB6Sxg43w4tzC0PaBeYYOSg23GNULZ4J1X7nwm+uQ4uPME40kXknetil1fzDIl3vInzR93yz3xCfbr9Obj1dEx+rAtjLIboeolQhbU6lIVDNBXUi2BrevUg95L+5oXzv0hXrk0a9+dxGBukM+CW4aMW4c9HCyqCotU/v25NsHpg9v/iC6/UjdMjAVqlwAITlwrQihLASNthPOv0Awrk/xcXEXZT5ZAnf3WORqvyKPgnxPXaI02MDeu0SapxvtEQMqYDcFyIdqb6Xsqr46GA3cWopzMOFFwltEyWU5BPfSnssk/iK8Fl+uPUrbgwBPxQtQvgv9b8ja0Qw743vd9mH3cAgv6HQyaBhwiRvBrcJfJOYT+ogaXN3A2cU7764cu3n9luglWf4SAG80ZviJ1Ll3vJ4uOC78+59EEcIAU/5i8A/c84tPQg8AAA=="
 }
 }
 

@@ -243,7 +243,7 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
         entityOps = newEntityOps,
         entities = newEntities,
         concreteSClasses = newClasses
-      )
+      )(context)
     }
   }
 

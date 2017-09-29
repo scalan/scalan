@@ -28,7 +28,6 @@ trait ConvertersDefs extends Converters {
       weakTypeTag[Converter[T, R]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Def[_]]) = {
-      implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Converter[T, R]] => convertConverter(x) }
       tryConvert(element[Converter[T, R]], this, x, conv)
     }
@@ -134,7 +133,9 @@ trait ConvertersDefs extends Converters {
     proxyOps[IdentityConv[A]](p)
 
   implicit class ExtendedIdentityConv[A](p: Rep[IdentityConv[A]])(implicit eA: Elem[A]) {
-    def toData: Rep[IdentityConvData[A]] = isoIdentityConv(eA).from(p)
+    def toData: Rep[IdentityConvData[A]] = {
+      isoIdentityConv(eA).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -142,8 +143,10 @@ trait ConvertersDefs extends Converters {
     reifyObject(new IdentityConvIso[A]()(eA))
 
   case class BaseConverterCtor[T, R]
-      (override val convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R])
+      (override val convFun: Rep[T => R])
     extends BaseConverter[T, R](convFun) with Def[BaseConverter[T, R]] {
+    implicit val eT = convFun.elem.eDom;
+implicit val eR = convFun.elem.eRange
     lazy val selfType = element[BaseConverter[T, R]]
   }
   // elem for concrete class
@@ -217,8 +220,12 @@ trait ConvertersDefs extends Converters {
   implicit def proxyBaseConverter[T, R](p: Rep[BaseConverter[T, R]]): BaseConverter[T, R] =
     proxyOps[BaseConverter[T, R]](p)
 
-  implicit class ExtendedBaseConverter[T, R](p: Rep[BaseConverter[T, R]])(implicit eT: Elem[T], eR: Elem[R]) {
-    def toData: Rep[BaseConverterData[T, R]] = isoBaseConverter(eT, eR).from(p)
+  implicit class ExtendedBaseConverter[T, R](p: Rep[BaseConverter[T, R]]) {
+    def toData: Rep[BaseConverterData[T, R]] = {
+      implicit val eT = p.convFun.elem.eDom;
+implicit val eR = p.convFun.elem.eRange
+      isoBaseConverter(eT, eR).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -226,8 +233,12 @@ trait ConvertersDefs extends Converters {
     reifyObject(new BaseConverterIso[T, R]()(eT, eR))
 
   case class PairConverterCtor[A1, A2, B1, B2]
-      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
+      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])
     extends PairConverter[A1, A2, B1, B2](conv1, conv2) with Def[PairConverter[A1, A2, B1, B2]] {
+    implicit val eA1 = conv1.elem.typeArgs("T")._1.asElem[A1];
+implicit val eA2 = conv2.elem.typeArgs("T")._1.asElem[A2];
+implicit val eB1 = conv1.elem.typeArgs("R")._1.asElem[B1];
+implicit val eB2 = conv2.elem.typeArgs("R")._1.asElem[B2]
     lazy val selfType = element[PairConverter[A1, A2, B1, B2]]
   }
   // elem for concrete class
@@ -288,12 +299,16 @@ trait ConvertersDefs extends Converters {
     def selfType = PairConverterCompanionElem
     override def toString = "PairConverterCompanion"
     @scalan.OverloadId("fromData")
-    def apply[A1, A2, B1, B2](p: Rep[PairConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] = {
+    def apply[A1, A2, B1, B2](p: Rep[PairConverterData[A1, A2, B1, B2]]): Rep[PairConverter[A1, A2, B1, B2]] = {
+      implicit val eA1 = p._1.elem.typeArgs("T")._1.asElem[A1];
+implicit val eA2 = p._2.elem.typeArgs("T")._1.asElem[A2];
+implicit val eB1 = p._1.elem.typeArgs("R")._1.asElem[B1];
+implicit val eB2 = p._2.elem.typeArgs("R")._1.asElem[B2]
       isoPairConverter[A1, A2, B1, B2].to(p)
     }
 
     @scalan.OverloadId("fromFields")
-    def apply[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
+    def apply[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2]): Rep[PairConverter[A1, A2, B1, B2]] =
       mkPairConverter(conv1, conv2)
 
     def unapply[A1, A2, B1, B2](p: Rep[Converter[(A1, A2), (B1, B2)]]) = unmkPairConverter(p)
@@ -312,8 +327,14 @@ trait ConvertersDefs extends Converters {
   implicit def proxyPairConverter[A1, A2, B1, B2](p: Rep[PairConverter[A1, A2, B1, B2]]): PairConverter[A1, A2, B1, B2] =
     proxyOps[PairConverter[A1, A2, B1, B2]](p)
 
-  implicit class ExtendedPairConverter[A1, A2, B1, B2](p: Rep[PairConverter[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) {
-    def toData: Rep[PairConverterData[A1, A2, B1, B2]] = isoPairConverter(eA1, eA2, eB1, eB2).from(p)
+  implicit class ExtendedPairConverter[A1, A2, B1, B2](p: Rep[PairConverter[A1, A2, B1, B2]]) {
+    def toData: Rep[PairConverterData[A1, A2, B1, B2]] = {
+      implicit val eA1 = p.conv1.elem.typeArgs("T")._1.asElem[A1];
+implicit val eA2 = p.conv2.elem.typeArgs("T")._1.asElem[A2];
+implicit val eB1 = p.conv1.elem.typeArgs("R")._1.asElem[B1];
+implicit val eB2 = p.conv2.elem.typeArgs("R")._1.asElem[B2]
+      isoPairConverter(eA1, eA2, eB1, eB2).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -321,8 +342,12 @@ trait ConvertersDefs extends Converters {
     reifyObject(new PairConverterIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
 
   case class SumConverterCtor[A1, A2, B1, B2]
-      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
+      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])
     extends SumConverter[A1, A2, B1, B2](conv1, conv2) with Def[SumConverter[A1, A2, B1, B2]] {
+    implicit val eA1 = conv1.elem.typeArgs("T")._1.asElem[A1];
+implicit val eA2 = conv2.elem.typeArgs("T")._1.asElem[A2];
+implicit val eB1 = conv1.elem.typeArgs("R")._1.asElem[B1];
+implicit val eB2 = conv2.elem.typeArgs("R")._1.asElem[B2]
     lazy val selfType = element[SumConverter[A1, A2, B1, B2]]
   }
   // elem for concrete class
@@ -383,12 +408,16 @@ trait ConvertersDefs extends Converters {
     def selfType = SumConverterCompanionElem
     override def toString = "SumConverterCompanion"
     @scalan.OverloadId("fromData")
-    def apply[A1, A2, B1, B2](p: Rep[SumConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] = {
+    def apply[A1, A2, B1, B2](p: Rep[SumConverterData[A1, A2, B1, B2]]): Rep[SumConverter[A1, A2, B1, B2]] = {
+      implicit val eA1 = p._1.elem.typeArgs("T")._1.asElem[A1];
+implicit val eA2 = p._2.elem.typeArgs("T")._1.asElem[A2];
+implicit val eB1 = p._1.elem.typeArgs("R")._1.asElem[B1];
+implicit val eB2 = p._2.elem.typeArgs("R")._1.asElem[B2]
       isoSumConverter[A1, A2, B1, B2].to(p)
     }
 
     @scalan.OverloadId("fromFields")
-    def apply[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
+    def apply[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2]): Rep[SumConverter[A1, A2, B1, B2]] =
       mkSumConverter(conv1, conv2)
 
     def unapply[A1, A2, B1, B2](p: Rep[Converter[$bar[A1, A2], $bar[B1, B2]]]) = unmkSumConverter(p)
@@ -407,8 +436,14 @@ trait ConvertersDefs extends Converters {
   implicit def proxySumConverter[A1, A2, B1, B2](p: Rep[SumConverter[A1, A2, B1, B2]]): SumConverter[A1, A2, B1, B2] =
     proxyOps[SumConverter[A1, A2, B1, B2]](p)
 
-  implicit class ExtendedSumConverter[A1, A2, B1, B2](p: Rep[SumConverter[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) {
-    def toData: Rep[SumConverterData[A1, A2, B1, B2]] = isoSumConverter(eA1, eA2, eB1, eB2).from(p)
+  implicit class ExtendedSumConverter[A1, A2, B1, B2](p: Rep[SumConverter[A1, A2, B1, B2]]) {
+    def toData: Rep[SumConverterData[A1, A2, B1, B2]] = {
+      implicit val eA1 = p.conv1.elem.typeArgs("T")._1.asElem[A1];
+implicit val eA2 = p.conv2.elem.typeArgs("T")._1.asElem[A2];
+implicit val eB1 = p.conv1.elem.typeArgs("R")._1.asElem[B1];
+implicit val eB2 = p.conv2.elem.typeArgs("R")._1.asElem[B2]
+      isoSumConverter(eA1, eA2, eB1, eB2).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -416,8 +451,11 @@ trait ConvertersDefs extends Converters {
     reifyObject(new SumConverterIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
 
   case class ComposeConverterCtor[A, B, C]
-      (override val conv2: Conv[B, C], override val conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
+      (override val conv2: Conv[B, C], override val conv1: Conv[A, B])
     extends ComposeConverter[A, B, C](conv2, conv1) with Def[ComposeConverter[A, B, C]] {
+    implicit val eA = conv1.elem.typeArgs("T")._1.asElem[A];
+implicit val eB = conv2.elem.typeArgs("T")._1.asElem[B];
+implicit val eC = conv2.elem.typeArgs("R")._1.asElem[C]
     lazy val selfType = element[ComposeConverter[A, B, C]]
   }
   // elem for concrete class
@@ -475,12 +513,15 @@ trait ConvertersDefs extends Converters {
     def selfType = ComposeConverterCompanionElem
     override def toString = "ComposeConverterCompanion"
     @scalan.OverloadId("fromData")
-    def apply[A, B, C](p: Rep[ComposeConverterData[A, B, C]])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] = {
+    def apply[A, B, C](p: Rep[ComposeConverterData[A, B, C]]): Rep[ComposeConverter[A, B, C]] = {
+      implicit val eA = p._2.elem.typeArgs("T")._1.asElem[A];
+implicit val eB = p._1.elem.typeArgs("T")._1.asElem[B];
+implicit val eC = p._1.elem.typeArgs("R")._1.asElem[C]
       isoComposeConverter[A, B, C].to(p)
     }
 
     @scalan.OverloadId("fromFields")
-    def apply[A, B, C](conv2: Conv[B, C], conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] =
+    def apply[A, B, C](conv2: Conv[B, C], conv1: Conv[A, B]): Rep[ComposeConverter[A, B, C]] =
       mkComposeConverter(conv2, conv1)
 
     def unapply[A, B, C](p: Rep[Converter[A, C]]) = unmkComposeConverter(p)
@@ -499,8 +540,13 @@ trait ConvertersDefs extends Converters {
   implicit def proxyComposeConverter[A, B, C](p: Rep[ComposeConverter[A, B, C]]): ComposeConverter[A, B, C] =
     proxyOps[ComposeConverter[A, B, C]](p)
 
-  implicit class ExtendedComposeConverter[A, B, C](p: Rep[ComposeConverter[A, B, C]])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]) {
-    def toData: Rep[ComposeConverterData[A, B, C]] = isoComposeConverter(eA, eB, eC).from(p)
+  implicit class ExtendedComposeConverter[A, B, C](p: Rep[ComposeConverter[A, B, C]]) {
+    def toData: Rep[ComposeConverterData[A, B, C]] = {
+      implicit val eA = p.conv1.elem.typeArgs("T")._1.asElem[A];
+implicit val eB = p.conv2.elem.typeArgs("T")._1.asElem[B];
+implicit val eC = p.conv2.elem.typeArgs("R")._1.asElem[C]
+      isoComposeConverter(eA, eB, eC).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -508,8 +554,10 @@ trait ConvertersDefs extends Converters {
     reifyObject(new ComposeConverterIso[A, B, C]()(eA, eB, eC))
 
   case class FunctorConverterCtor[A, B, F[_]]
-      (override val itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
+      (override val itemConv: Conv[A, B])(implicit F: Functor[F])
     extends FunctorConverter[A, B, F](itemConv) with Def[FunctorConverter[A, B, F]] {
+    implicit val eA = itemConv.elem.typeArgs("T")._1.asElem[A];
+implicit val eB = itemConv.elem.typeArgs("R")._1.asElem[B]
     lazy val selfType = element[FunctorConverter[A, B, F]]
   }
   // elem for concrete class
@@ -566,7 +614,7 @@ trait ConvertersDefs extends Converters {
     override def toString = "FunctorConverterCompanion"
 
     @scalan.OverloadId("fromFields")
-    def apply[A, B, F[_]](itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]] =
+    def apply[A, B, F[_]](itemConv: Conv[A, B])(implicit F: Functor[F]): Rep[FunctorConverter[A, B, F]] =
       mkFunctorConverter(itemConv)
 
     def unapply[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]) = unmkFunctorConverter(p)
@@ -585,8 +633,12 @@ trait ConvertersDefs extends Converters {
   implicit def proxyFunctorConverter[A, B, F[_]](p: Rep[FunctorConverter[A, B, F]]): FunctorConverter[A, B, F] =
     proxyOps[FunctorConverter[A, B, F]](p)
 
-  implicit class ExtendedFunctorConverter[A, B, F[_]](p: Rep[FunctorConverter[A, B, F]])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]) {
-    def toData: Rep[FunctorConverterData[A, B, F]] = isoFunctorConverter(eA, eB, F).from(p)
+  implicit class ExtendedFunctorConverter[A, B, F[_]](p: Rep[FunctorConverter[A, B, F]])(implicit F: Functor[F]) {
+    def toData: Rep[FunctorConverterData[A, B, F]] = {
+      implicit val eA = p.itemConv.elem.typeArgs("T")._1.asElem[A];
+implicit val eB = p.itemConv.elem.typeArgs("R")._1.asElem[B]
+      isoFunctorConverter(eA, eB, F).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -669,7 +721,9 @@ trait ConvertersDefs extends Converters {
     proxyOps[NaturalConverter[A, F, G]](p)
 
   implicit class ExtendedNaturalConverter[A, F[_], G[_]](p: Rep[NaturalConverter[A, F, G]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G]) {
-    def toData: Rep[NaturalConverterData[A, F, G]] = isoNaturalConverter(eA, cF, cG).from(p)
+    def toData: Rep[NaturalConverterData[A, F, G]] = {
+      isoNaturalConverter(eA, cF, cG).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -741,8 +795,6 @@ trait ConvertersDefs extends Converters {
 
   def mkBaseConverter[T, R]
     (convFun: Rep[T => R]): Rep[BaseConverter[T, R]] = {
-    implicit val eT = convFun.elem.eDom;
-implicit val eR = convFun.elem.eRange
     new BaseConverterCtor[T, R](convFun)
   }
   def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -782,7 +834,7 @@ implicit val eR = convFun.elem.eRange
   }
 
   def mkPairConverter[A1, A2, B1, B2]
-    (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] = {
+    (conv1: Conv[A1, B1], conv2: Conv[A2, B2]): Rep[PairConverter[A1, A2, B1, B2]] = {
     new PairConverterCtor[A1, A2, B1, B2](conv1, conv2)
   }
   def unmkPairConverter[A1, A2, B1, B2](p: Rep[Converter[(A1, A2), (B1, B2)]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -822,7 +874,7 @@ implicit val eR = convFun.elem.eRange
   }
 
   def mkSumConverter[A1, A2, B1, B2]
-    (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] = {
+    (conv1: Conv[A1, B1], conv2: Conv[A2, B2]): Rep[SumConverter[A1, A2, B1, B2]] = {
     new SumConverterCtor[A1, A2, B1, B2](conv1, conv2)
   }
   def unmkSumConverter[A1, A2, B1, B2](p: Rep[Converter[$bar[A1, A2], $bar[B1, B2]]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -861,7 +913,7 @@ implicit val eR = convFun.elem.eRange
   }
 
   def mkComposeConverter[A, B, C]
-    (conv2: Conv[B, C], conv1: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[ComposeConverter[A, B, C]] = {
+    (conv2: Conv[B, C], conv1: Conv[A, B]): Rep[ComposeConverter[A, B, C]] = {
     new ComposeConverterCtor[A, B, C](conv2, conv1)
   }
   def unmkComposeConverter[A, B, C](p: Rep[Converter[A, C]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -903,7 +955,7 @@ implicit val eR = convFun.elem.eRange
   }
 
   def mkFunctorConverter[A, B, F[_]]
-    (itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]] = {
+    (itemConv: Conv[A, B])(implicit F: Functor[F]): Rep[FunctorConverter[A, B, F]] = {
     new FunctorConverterCtor[A, B, F](itemConv)
   }
   def unmkFunctorConverter[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -975,7 +1027,7 @@ implicit val eR = convFun.elem.eRange
 }
 
 object ConvertersModule extends scalan.ModuleInfo {
-  val dump = "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"
+  val dump = "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"
 }
 }
 

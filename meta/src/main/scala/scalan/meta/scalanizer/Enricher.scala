@@ -232,6 +232,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
 
 
   object ModuleVirtualizationPipeline extends (SModuleDef => SModuleDef) {
+    implicit def ctx = context
     def fixExistentialType(module: SModuleDef) = {
       new MetaAstTransformer {
         def containsExistential(tpe: STpeExpr): Boolean = {
@@ -537,18 +538,18 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
       }.moduleTransform(module)
     }
 
-//    def addModuleTrait(module: SModuleDef) = {
-//      if (module.origModuleTrait.isEmpty) {
-//        val mainName = module.name
-//        val mt = STraitDef(
-//          name = SModuleDef.moduleTraitName(mainName),
-//          tpeArgs = Nil,
-//          ancestors = List(STraitCall(s"impl.${mainName}Defs"), STraitCall("scala.wrappers.WrappersModule")).map(STypeApply(_)),
-//          body = Nil, selfType = None, companion = None)
-//        module.copy(origModuleTrait = Some(mt))
-//      }
-//      else module
-//    }
+    def addModuleTrait(module: SModuleDef) = {
+      if (module.origModuleTrait.isEmpty) {
+        val mainName = module.name
+        val mt = STraitDef(
+          name = SModuleDef.moduleTraitName(mainName),
+          tpeArgs = Nil,
+          ancestors = List(STraitCall(s"impl.${mainName}Defs"), STraitCall("scala.wrappers.WrappersModule")).map(STypeApply(_)),
+          body = Nil, selfType = None, companion = None)
+        module.copy(origModuleTrait = Some(mt))
+      }
+      else module
+    }
 
     private val chain = scala.Function.chain(Seq(
       fixExistentialType _,

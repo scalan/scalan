@@ -40,12 +40,10 @@ trait ScalanizerState[G <: Global] {
   }
 
   def getModule(packageName: String, unitName: String): SModuleDef = {
-    val key = s"$packageName.$unitName"
-    scalanizer.context.modules(key)
+    scalanizer.context.getModule(packageName, unitName)
   }
 
   def addModule(unitName: String, module: SModuleDef) = {
-    val key = s"${module.packageName}.$unitName"
-    scalanizer.context.modules(key) = module
+    scalanizer.context.addModule(unitName, module)
   }
 }

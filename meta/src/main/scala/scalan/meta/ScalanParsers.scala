@@ -19,8 +19,8 @@ trait ScalanParsers[G <: Global] {
   lazy val compiler: Compiler = global
   import compiler._
 
-  implicit val context = new AstContext
-  
+  val context: AstContext
+
   implicit def nameToString(name: Name): String = name.toString
 
   implicit class OptionListOps[A](opt: Option[List[A]]) {
@@ -52,7 +52,7 @@ trait ScalanParsers[G <: Global] {
     throw new IllegalStateException(msg)
   }
 
-  def moduleDefFromTree(name: String, tree: Tree, isVirtualized: Boolean): SModuleDef = tree match {
+  def moduleDefFromTree(name: String, tree: Tree, isVirtualized: Boolean)(implicit ctx: AstContext): SModuleDef = tree match {
     case pd: PackageDef =>
       moduleDefFromPackageDef(pd, isVirtualized)
     case tree =>
@@ -121,7 +121,7 @@ trait ScalanParsers[G <: Global] {
     hasClass && hasModule && hasMethod
   }
 
-  def moduleDefFromPackageDef(packageDef: PackageDef, isVirtualized: Boolean): SModuleDef = {
+  def moduleDefFromPackageDef(packageDef: PackageDef, isVirtualized: Boolean)(implicit ctx: AstContext): SModuleDef = {
     val packageName = packageDef.pid.toString
     val statements = packageDef.stats
     val imports = statements.collect { case i: Import => importStat(i) }

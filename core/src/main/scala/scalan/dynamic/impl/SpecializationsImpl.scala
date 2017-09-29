@@ -34,7 +34,6 @@ trait SpecializationsDefs extends scalan.Scalan with Specializations {
       weakTypeTag[IsoFunc[T, R, M]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Def[_]]) = {
-      implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[IsoFunc[T, R, M]] => convertIsoFunc(x) }
       tryConvert(element[IsoFunc[T, R, M]], this, x, conv)
     }
@@ -65,8 +64,11 @@ trait SpecializationsDefs extends scalan.Scalan with Specializations {
     proxyOps[IsoFuncCompanionCtor](p)
 
   case class IsoFuncBaseCtor[T, R, M]
-      (override val func: Rep[T => R], override val metric: Rep[T => M])(implicit eT: Elem[T], eR: Elem[R], eM: Elem[M])
+      (override val func: Rep[T => R], override val metric: Rep[T => M])
     extends IsoFuncBase[T, R, M](func, metric) with Def[IsoFuncBase[T, R, M]] {
+    implicit val eT = func.elem.eDom;
+implicit val eR = func.elem.eRange;
+implicit val eM = metric.elem.eRange
     lazy val selfType = element[IsoFuncBase[T, R, M]]
   }
   // elem for concrete class
@@ -150,8 +152,13 @@ implicit val eM = p._2.elem.eRange
   implicit def proxyIsoFuncBase[T, R, M](p: Rep[IsoFuncBase[T, R, M]]): IsoFuncBase[T, R, M] =
     proxyOps[IsoFuncBase[T, R, M]](p)
 
-  implicit class ExtendedIsoFuncBase[T, R, M](p: Rep[IsoFuncBase[T, R, M]])(implicit eT: Elem[T], eR: Elem[R], eM: Elem[M]) {
-    def toData: Rep[IsoFuncBaseData[T, R, M]] = isoIsoFuncBase(eT, eR, eM).from(p)
+  implicit class ExtendedIsoFuncBase[T, R, M](p: Rep[IsoFuncBase[T, R, M]]) {
+    def toData: Rep[IsoFuncBaseData[T, R, M]] = {
+      implicit val eT = p.func.elem.eDom;
+implicit val eR = p.func.elem.eRange;
+implicit val eM = p.metric.elem.eRange
+      isoIsoFuncBase(eT, eR, eM).from(p)
+    }
   }
 
   // 5) implicit resolution of Iso
@@ -183,9 +190,6 @@ implicit val eM = p._2.elem.eRange
 
   def mkIsoFuncBase[T, R, M]
     (func: Rep[T => R], metric: Rep[T => M]): Rep[IsoFuncBase[T, R, M]] = {
-    implicit val eT = func.elem.eDom;
-implicit val eR = func.elem.eRange;
-implicit val eM = metric.elem.eRange
     new IsoFuncBaseCtor[T, R, M](func, metric)
   }
   def unmkIsoFuncBase[T, R, M](p: Rep[IsoFunc[T, R, M]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -235,7 +239,7 @@ implicit val eM = metric.elem.eRange
 }
 
 object SpecializationsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWW2hcRRiePZtkd7MhbdIa4qUa46a1KrvFIi0EKUmTSMrmQk40EINl9pzZ7dRzGc+ZTc9KrfjSB30TERR9KCh9CUrxRUREvICI9EF8EZ9ECoIopQ8WBYv/zLludk9SUfdhODP7z/dfvm/+ma1fUa/roDFXwwa2yibhuKzK7ymXl9QFW28aZIbU3/pDO7ecP15Q0PA66juD3RnXWEcF/2PWY9G3yvUqGpqjlj5rccpbJVNCcFSu+j4qwkelm49SYtdkFY2K6ZqDGSPONqzHbg+rfTNAFrClEZfbjsvR/T5GRbMNg2ic2laFmmaT45pBKlXqcrDvqdl66zl0AWWraK9mW5pDOFFPGth1iRus54mAp9G8IOetJRb76Ixz1cGUQ5jgY69vv0KY2rJsq2VyNBiEtsREWGBTJB6D2s6bzJBueqsoR01mOzz0mgMPZ2w9nPZYGBbQcPUs3sQV8NqoqNyhVkOAMaw9ixtkEUyEeR/k4BKjvtpiJAAvulxv8+cxhBBjoJRHZWjluGrlqGplUbWSShyKDfo8Fn8uO7bXQv4vk0XIExCP7AIRIpBZSy+9vKE9fVMtmorY7IlgCjKkPADdl6JaSRBU96uVV90bT1w6pqD+ddRP3amayx2s8aQQgoIVsWXZXMYc1RA7DeBwPI1D6WUKbLYJpaDZJsMWIAXVHACqDKpRLozF2mBAUEr1c5yR0DTrsUyUb9opFXunGDNan5//5PxP93w/pPjC9JiTgM0C7A7pSEmexIYB6Sg8dA5e+326VNskQ+M36DOXXuEKylRRxmsX2FLtLNA56TlowN/hy/cWPfbXD4N1rgTspyYR+v849+lnP1870aMgpb1OBUhAhV7jhMFxlJt37bmmpQUlEuMoR5nVWCdiutI+XZBTMRSloO7cNi/sEGVE+qFfftO/PII2ZCmkVMKK3ZY6AWL4+JsfTZDl9xSUX5fHec7ADalTQdoMcbV1lLc3ieOv5zaxIb66ajWnkzpuGjygOlk1n/axVNoZESWdlCc8E6Zf9BlctC1Smlsu/a5+/dqWIFD8P8JRTz2sOdQzC60rSvreNHYZETx9N//Gvj0HTv8oue3TbRNTeUoOVlGvAyKSQR8MipjKpE+VXJyIohbDYY76wLNDuwUnxnIa8HZNBEqQoNJoPIEykdnmVCGrIVLPrEHMrnJMRt0JsLITQGfanQALOwF0psdRMTg709glcZ6CxAPpJIJu3/9z+vIDd919S0G5U6i3DpJ0u2qyt2Y3LT3sgXB7cuLx6XAt265S6HnYwWZ0qW5iuAOgR3M0Eiq3yalReSpY9/UKvzEUl0F+xdw6aCRIRGwtz1s+KC89/OHWOXr18JzfkoTxWjpYXPuN3UzjKm8kS71rRwhfA1cuXrzj+jun98n7Kl+j3MSsdOQf3Fbh5fI/3kYooawhOe6Pzhqk0K67/6Q9+2Ojo0nLUxmt+kwkroSkpHfhLT6fu1L879UgxkRw+0EX5RRdzBDNwA7RxTuMmPBO9Bk/+vqJtVOja0/Kq2dAl0b+P1Gf7/6qXcBsUt7BD+7wAgOj0qzJeEt8HP3i8W9f/Obyu/KkxLXmaI/KiBa/88DzYJCE3gIxBQ1YJDeekpwayAxEc+Hm24sPXf3gmrwV+oVg4d6xordtrE6PtSupz8dLSAPan9BvQpgviOGlvwGYCrWB6AwAAA=="
+  val dump = "H4sIAAAAAAAAALVWT2hcRRiffdlkk02atFtTsVqN6dpglN3qpUIOkrSJRDZ/yAtVYmuZfW92O+37M86bjW+l9NiDvRUvCh4KgiBBkV5ERIoiiIeevIgnlYIgivRgUbD4zby/m92XVdQ9DDuz3/zm+36/33yzOz+jQY+jKc/AFnYqNhG4oqvv854o6yuu2bLIKdL43r1Runb19/c0tH8L7aPeacpFC1v0NWJuoUn34qJNxRqnzWDDJsdU1NC+RUdQ0S7balGg2VpwTFUeU+11TDncMVdDpc02I3rbcR1qxwjV/gjpbQBz3wscM0b4rlSe6g/UuRGgRrBjEE+43BPo0WB/1XAtixiCuk6V2nZL4LpFqjXqCYjfb7iOwYkg+kkLex7xXkGXUb6GhomEpPF8RM3bayzB7c5LUQppSdwgfoMwVWfbFmg8TGeNyVQgpkBt5nIRHVEAuPOuGU3zDoYFVKpdwNu4Ckc0q7rg1GnCzgm3U0a5ZaiGRhk2LuImWYWdcqkAdXjEaki6VYjPcogxBmZ6WuVSSaipxNRUJDVlnXAqvYPlj+vc9dso+OQGEPIlxJN9ICIEsuiY5dfPGC/d1UdtTW72VY0jgPFIhqeVGMDklxvXvDvPXT+hoeIWKlJvvu4Jjg2RFjrkaxQ7jitUujGFmDdBr+ksvdQp8xADlObrrtmOxDZcm2EHkEJix0ApixpUyGC5NhHq05NlkFIwEoXmgfS43qw7LPfOM2a1P7/06aUfHvrmgIYGpAl9xlOwAwC7RznKCiexZUE5mogOh1OLgVK6a5MD03foy9evCg3laijnd/prrX4BlJzzORoLdgRWvUdP/PnteENoofCZRUTnf1K4+dmPt5/Na0jr5GkECtAXoagoOYEKy5671HKMkCI5PiBQblN+KcbTjc7piprKYcyX4+Fd8+IeWcaiz/z0i/nFcXRGUaGsEjH2t9wJEKVn3vr4MbL+voaGt9RtXrJwU/lUinaKeMYWGna3CQ/WC9vYkt96erVgkgZuWdFVTrMWyD6VKTsjktI5n8nbGZU/Gii46jqkvLRe/k3/6o0dKaD8/X6B8o2Ic+BzANpUXPTDWeoyInX6evnNgxNHzn2ntB0yXRtTdUtmamiQg4lU0jMhiZlKBlKpxWNx1nKYFWgITua0V3JyrGYB7/ZE6AQFqoKOplCO5XYdqpHNCCm/aBG7px3TWXcDbOwF0F12N8DKXgDd5Qk0Gt6dBeyRpE4p4pFsEcG3H/yx8O7Rww/e01DheTTYAEt6PT05WHdbjhn1QHgpBfHFQrSW73Qp9DzMsR0/oNsY2j/0aIEORc5tCWpVT4frgV/hM4USGtS3RFuODoWFyK2VZScAFeUnPtp5ld56fCloSTL4xWywhPuz/UITls+mqe7bEaKX/8MrVyZ/fefcQfVeDdepsDErH/8Hr1X0uPyPrxFKOaukxsn4rkEJnb77T9pzMJ7vatLqVsargRKpJyFt6T66Jfezr8T/3g1yNJPAMHpCZ8RI/jJ54bUeDx1jtkGhsKtNgpOmM5ykh9qBEpfvvr06e+vGbdVqi9IF0Myd+P9iIrnPOuUZCvBSfENPkab4C1DUGJZKDAAA"
 }
 }
 

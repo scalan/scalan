@@ -9,6 +9,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
   def getGlobal = new Global(settings, reporter)
   initCompiler()
 
+  implicit val context = new AstContext
   val ast: this.type = this
   import scalan.meta.ScalanAst.
   {

@@ -22,8 +22,11 @@ trait Specializations extends Views with Converters { self: Scalan =>
 
   abstract class IsoFuncBase[T,R,M]
         (val func: Rep[T => R], val metric: Rep[T => M])
-        (implicit val eT: Elem[T], val eR: Elem[R], val eM: Elem[M])
+//        (implicit val eT: Elem[T], val eR: Elem[R], val eM: Elem[M])
     extends IsoFunc[T,R,M] {
+    implicit def eT: Elem[T]
+    implicit def eR: Elem[R]
+    implicit def eM: Elem[M]
     def apply(x: Rep[T]): Rep[R] = func(x)
     override def toString: String = s"${eT.name} iso≈> ${eR.name}"
     override def equals(other: Any): Boolean = other match {

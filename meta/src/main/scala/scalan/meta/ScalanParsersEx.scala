@@ -1,10 +1,12 @@
 package scalan.meta
 
 import java.io.File
+
 import scala.tools.nsc.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
 import scala.reflect.internal.util.SourceFile
+import scalan.meta.ScalanAst.AstContext
 
 trait ScalanParsersEx[G <: Global] extends ScalanParsers[G] {
   val settings = new Settings
@@ -22,7 +24,7 @@ trait ScalanParsersEx[G <: Global] extends ScalanParsers[G] {
     run.cancel()
   }
 
-  def parseEntityModule(file: File, isVirtualized: Boolean) = {
+  def parseEntityModule(file: File, isVirtualized: Boolean)(implicit ctx: AstContext) = {
     val sourceFile = compiler.getSourceFile(file.getPath)
     val tree = parseFile(sourceFile)
     moduleDefFromTree(file.getPath, tree, isVirtualized)

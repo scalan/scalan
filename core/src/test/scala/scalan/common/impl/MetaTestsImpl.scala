@@ -134,9 +134,9 @@ trait MetaTestsDefs extends scalan.Scalan with MetaTests {
     reifyObject(new MT0Iso())
 
   case class MT1Ctor[T]
-      (override val data: Rep[T], override val size: Rep[Int])(implicit elem: Elem[T])
+      (override val data: Rep[T], override val size: Rep[Int])
     extends MT1[T](data, size) with Def[MT1[T]] {
-    implicit val eT = data.elem
+    implicit val elem = data.elem
     lazy val selfType = element[MT1[T]]
   }
   // elem for concrete class
@@ -211,10 +211,10 @@ trait MetaTestsDefs extends scalan.Scalan with MetaTests {
   implicit def proxyMT1[T](p: Rep[MT1[T]]): MT1[T] =
     proxyOps[MT1[T]](p)
 
-  implicit class ExtendedMT1[T](p: Rep[MT1[T]])(implicit elem: Elem[T]) {
+  implicit class ExtendedMT1[T](p: Rep[MT1[T]]) {
     def toData: Rep[MT1Data[T]] = {
       implicit val eT = p.data.elem
-      isoMT1(elem).from(p)
+      isoMT1(eT).from(p)
     }
   }
 
@@ -223,7 +223,7 @@ trait MetaTestsDefs extends scalan.Scalan with MetaTests {
     reifyObject(new MT1Iso[T]()(elem))
 
   case class MT2Ctor[T, R]
-      (override val indices: Rep[T], override val values: Rep[R], override val size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R])
+      (override val indices: Rep[T], override val values: Rep[R], override val size: Rep[Int])
     extends MT2[T, R](indices, values, size) with Def[MT2[T, R]] {
     implicit val eT = indices.elem;
 implicit val eR = values.elem
@@ -307,7 +307,7 @@ implicit val eR = p._2.elem
   implicit def proxyMT2[T, R](p: Rep[MT2[T, R]]): MT2[T, R] =
     proxyOps[MT2[T, R]](p)
 
-  implicit class ExtendedMT2[T, R](p: Rep[MT2[T, R]])(implicit eT: Elem[T], eR: Elem[R]) {
+  implicit class ExtendedMT2[T, R](p: Rep[MT2[T, R]]) {
     def toData: Rep[MT2Data[T, R]] = {
       implicit val eT = p.indices.elem;
 implicit val eR = p.values.elem
@@ -325,7 +325,17 @@ implicit val eR = p.values.elem
   }
 
   object MT0Methods {
-    // WARNING: Cannot generate matcher for method `test`: Method's return type RMetaTest[Unit] is not a Rep
+    object test {
+      def unapply(d: Def[_]): Option[Rep[MT0]] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MT0Elem] && method.getName == "test" =>
+          Some(receiver).asInstanceOf[Option[Rep[MT0]]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[MT0]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object give {
       def unapply(d: Def[_]): Option[Rep[MT0]] = d match {
@@ -367,7 +377,17 @@ implicit val eR = p.values.elem
   }
 
   object MT1Methods {
-    // WARNING: Cannot generate matcher for method `test`: Method's return type RMetaTest[T] is not a Rep
+    object test {
+      def unapply(d: Def[_]): Option[Rep[MT1[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MT1Elem[_]] && method.getName == "test" =>
+          Some(receiver).asInstanceOf[Option[Rep[MT1[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[MT1[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object give {
       def unapply(d: Def[_]): Option[Rep[MT1[T]] forSome {type T}] = d match {
@@ -394,7 +414,17 @@ implicit val eR = p.values.elem
   }
 
   object MT2Methods {
-    // WARNING: Cannot generate matcher for method `test`: Method's return type RMetaTest[(T, R)] is not a Rep
+    object test {
+      def unapply(d: Def[_]): Option[Rep[MT2[T, R]] forSome {type T; type R}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MT2Elem[_, _]] && method.getName == "test" =>
+          Some(receiver).asInstanceOf[Option[Rep[MT2[T, R]] forSome {type T; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[MT2[T, R]] forSome {type T; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object give {
       def unapply(d: Def[_]): Option[Rep[MT2[T, R]] forSome {type T; type R}] = d match {
@@ -421,7 +451,17 @@ implicit val eR = p.values.elem
   }
 
   object MetaTestMethods {
-    // WARNING: Cannot generate matcher for method `test`: Method's return type RMetaTest[T] is not a Rep
+    object test {
+      def unapply(d: Def[_]): Option[Rep[MetaTest[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MetaTestElem[_, _]] && method.getName == "test" =>
+          Some(receiver).asInstanceOf[Option[Rep[MetaTest[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object give {
       def unapply(d: Def[_]): Option[Rep[MetaTest[T]] forSome {type T}] = d match {
@@ -453,7 +493,7 @@ implicit val eR = p.values.elem
 }
 
 object MetaTestsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVXXWhcRRSevdl0k03SmGgrVotpumJadTcplQp5kDRNtLL5Ye82YiyR2buTder9Ge+dXe9KKeJDEX0TXxT6UCj4EhTpi1gpYhHEh775ID5KQBAl9MGiYPHM3J+9+3N3E6X7MOzMPec7c77znZl7t35H/Y6NJhwN69jMGoTjrCr/zzk8oy5Z5apOzpDNne1C4uSP715T0Og6GqHOGrV5Fev0bVLOo5EFk1NezxjSmqPjeQ8uJ+ByneAyvsdsHo0X64yoddMyqREi5HojRN0A5qGXbcwYsVu2MtMbqNkRoAaxqRGHW7bD0RHPP6dZuk40Ti0zRw2jynFJJ7k8dTjYP6BZpmYTTtR5HTsOcd5El1AyjwaIgKThfFDO6yusgdu+r6KNKYdtCVzPvkCYzLNucLTf384KE1sBmxQ1mGXzIEQK4F63ysE0aWJYQOP5C7iGcxCiklO5Tc0KeI5aNq14LMiYwmVfHg0xrL2BK2QZPMVSCvJwiL4p6JYmLkswxkAzJ+RWsg1msiEzWcFMRiU2FRLB4uGqbbl15P0SfQi5AuLpHhABAlkwy5n3z2uv3lWHDEU4uzLFQcB4PEa6shZA5PeFD507L1w9paD0OkpTZ67kcBtrPFpnn64hbJoWl9sNGcR2Bco1GVcuGWUObIDRZMkq14Naa5bBsAlIPq/DUCidapQLY7E26penI8lQSc5IYJoEzsN841pV+M4xptdvXbx58ZfHfhpTUJ/QoMvsCGwfwHZJRyphHus6pKPwIDhETXuVUi2DjE3eoRtXP+AKSuRRwm2W10rpAlRy1rXRsOfhKfUePfXPz/s3ueIXPjaJIP7XqW++/XX7+aSClGaeBiEBdQGSCjbH0cASoBShkiFHR+PgGVm1qQFNWSPP3rpxbufmcr+MMF4mm7iq8zWsV4nXIn68RmwRSpk6xlHynOm1y7ArxkNiSDfm6S75hXJ58rc/yt9No/OSRCmygOtd6Rogxp/75KsnyOpnChpYl8fAoo4rUuGi3GeIo62jAatGbG89VcO6+NdR5Sk/fV8kUb49wUzECoYRUYxZl4m+DtIf8mq/bJkks7ia+VP94aMtUXrx/GEg0IGWlrEf4agPzjc/aTEe5igxDatnzQjFAbFiPNCFm+Dw/OLy5QM71157UPb8QIlyA7PM9B46PmjQ+9jRKJSNl9eRxlwMU6C24aXi9Hw06lSrORAFNi2P9icifI77pPlst/aKv5wotoh4tk3UMmjEKxMWXIaHqpYxxzFVbQ0Rg9BZF2J4pk0M0qd9V4lWTKITI8BMLgST+MyHXUnqTANfdOPh+BMFavr536c/PXro0XsKSr2E+jehzZyO2uovWVWzHOgHXhs4cfnpYC3ZrB/QC7axEb5N1DBchqBfjg4G3VjlVM+t+eteD8JvoiGtKV8lfpaQyEE/EeGaPWt6oDzz1Jdbb9HbxxblAR2p0V601KUvGSlWmU5O3vhr4713XmTy1Gs7yTsWJpwW2uokRm3vOk1Rs0zhGPhfUt1XEzdFN4xCT4z7IXeFFHcr9jiAQjeA9irIbjkR7RYxvtJLimLY6GXaiLYRDRmJM4Pi9dkHN0Hz9nd7+nnjlc7aClfTkXAzuzjOx4LoHc706GvMf+OydfcfNwx968Gm7KHWI367ws1m+IeUuF0nY7pY9e8zoPXS3SvLx29f35YvT2lxM8JVb4afIdGXpmaqR8M9eJ8eEYpFQ0CEfwGhfZ7Ikg4AAA=="
+  val dump = "H4sIAAAAAAAAALVXW4hbRRienM02u9lbN7oVq8XtNuK2arJblAr7INvtrlayFzbpirGsTE5m47TnMp4ziSdSik9F7FvxRaEPBUGQRZG+FCtFLIL40HfxTSkIopQ+WCpY/GfOJSeXk+wqzcOQM5n/++f/vu+fOdn+A/XbFpq0VaxhI6MTjjN5+X3e5un8slmuauQE2frFvJq6dPH+5wraW0Qj1N6gFq9ijb5HykU0YZ5d1ClftWjFDShYmPIcGlk0OOX1tC4nOTqSc9NkRZpspzRpL2Iuh1KFOiP5umEaVA8Qsr0RwmEA8+jrFmaMWC1bme0N1BwIUIPYUInNTcvm6KAbn1VNTSMqp6aRpbpe5bikkWyO2hzW71VNQ7UIJ/kFDds2sd9B51E8hwaIgKTB86B8rq+yBm77viSlsC2B665fJ0zWWdc5GvW2s8rEVmBNgurMtLifIgFwb5tl/zFuYJhAqdwZXMNZSFHJ5rlFjQpEjpnNMoqQPTk0xLB6FlfICkSKqQTUYRNtS9AtlzgshhhjYKajci+ZBjWZgJqMoCadJxYV3sHixzXLdOrI/cT6EHIExHM9IHwEsmiU0x+eVt+8lx/SFRHsyBoHAeOpCE9LMYDJH9Yv2XdfuXJMQckiSlJ7vmRzC6s8LLTH1xA2DJPL7QYUYqsCek1F6SWzzMMaoDReMst1X2zV1Bk2AMkjdhiU0qhKuVgs5sY8fTqyDFJyRvylcSA9qDeqh0XsPGNa/ea5G+d+ffKncQX1CRM6zArB9gFsl3KkFRawpkE5CveTQ9akq1Te1Mn41F26eeUiV1Ash2JOs79WS2dAyTnHQsNuhGvVB/TYPz+PbnHFEz6yCD//N4lvv/vt9stxBSnNPA1CAflFKMrfHEcDy4BSACUDjg5FwTOyZlE4w2iNvHjz+qk7N1b6ZYZUmWzhqsY3sFYlbo94+Rq5RSpl+jBH8VOG2y/Djhj3iyHZeE52qS+wyzO//1n+fgadliRKk/lc78jXAJF66ZOvnyZrXyhooCjPgSUNV6TDhdwniK0W0YBZI5Y7n6hhTXzr6PKEV75nkjDfrmEmIw3DiBBjzmGir/3yh1ztV0yDpJfW0n/lf/xoW0gvfn8MCLShpWXuxznqgwPOK1qMBziKzcDsSSNEsU+sGCe6cOOfnl9duDBx59O3HpE9P1CiXMcsPbOLjvcb9CF2NAps49Z1sPEshmlw2/ByYWYhnHW6dTkQBWtafhqNhfhMeaR5bLf2ijcdK7SYeK7N1DJpKCodCC7Tg6plzHGEqq0pIhA6+0IMz7eZQca07yrWikk0ovuY8UX/IbryYUeSOtvAF914IPpEAU2//Pv4Z4f2P/FAQYnXUP8WtJnd0Vv9JbNqlH3/wHsDJw4/7s/Fm/0DfsEW1oPXiRqGyxD8y9E+vxurnGrZDW/e7UH4TDasNe25xKsSCtnnFSJCMycNF5Snn722/S69dXhJHtAhjXbjpS59yUihyjTywvX7mx+8/yqTp17bSd5RmOBxvU0nMaq792mCGmUKx8D/suqemrgpumGs98R4GHZXSGGnZo8CWO8G0K6C7Jaj4W4R4xu9rCiGzV5LG9k2wylDeWZRtD/74CZo3v5OTz93vNzZW8FsMpRudgfH+bifvcOZHn6N+W9ctu7+48ZCb/VgU/Wg9YjXrnCz6d4hJW7XqYguznv3GdB6/t7llSO3rt6WL09JcTPCVW8E/0PCL03NVI8Fe3D/e4QoFg0BGf4FRMbbOasOAAA="
 }
 }
 

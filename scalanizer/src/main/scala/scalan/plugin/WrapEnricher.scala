@@ -70,7 +70,7 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       body = wrappedValue :: module.entityOps.body
     )
 
-    module.copy(entityOps = updatedEntity, entities = List(updatedEntity))
+    module.copy(entityOps = updatedEntity, entities = List(updatedEntity))(context)
   }
 
   /** Adding of a method which returns default value of external type.
@@ -90,7 +90,7 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       body = Some(SConst(null, Some(baseType))),
       isTypeDesc = false // Workaround: disable virtualization of the method
     )
-    module.copy(methods = defaultOfWrapper :: module.methods)
+    module.copy(methods = defaultOfWrapper :: module.methods)(context)
   }
 
   /** Adding of default implementation of the type wrapper. It is required by
@@ -105,7 +105,7 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     else {
       val wrapperType = wrapperTypes.head
       val wrapperImpl = this.scalanizer.wrapperImpl(module.entityOps, wrapperType, false)
-      module.copy(concreteSClasses = List(wrapperImpl))
+      module.copy(concreteSClasses = List(wrapperImpl))(context)
     }
   }
 
@@ -138,7 +138,7 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     }
     val newEntityOps = module.entityOps.copy(body = entityBody, companion = newEntityCompanion)
 
-    module.copy(entityOps = newEntityOps, entities = List(newEntityOps))
+    module.copy(entityOps = newEntityOps, entities = List(newEntityOps))(context)
   }
 
   /** Replaces external types by their wrappers. For example:

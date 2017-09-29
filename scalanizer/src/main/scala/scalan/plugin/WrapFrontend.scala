@@ -269,7 +269,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       ancestors = List(STraitCall("TypeWrappers", Nil).toTypeApply),
       origModuleTrait = None,
       isVirtualized = false
-    )
+    )(context)
     WrapperDescr(module, ownerChain, wrapperConf)
   }
 
@@ -363,7 +363,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         module.entityOps.copy(body = updatedBody)
       }
       wrapper.copy(
-        module = module.copy(entityOps = updatedEntity, entities = List(updatedEntity))
+        module = module.copy(entityOps = updatedEntity, entities = List(updatedEntity))(context)
       )
     }
   }
