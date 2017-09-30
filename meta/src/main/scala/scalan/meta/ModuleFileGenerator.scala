@@ -5,6 +5,7 @@ import scala.collection.mutable.ArrayBuffer
 import scalan.meta.Base.!!!
 import scalan.meta.PrintExtensions._
 import scalan.meta.ScalanAst._
+import scalan.meta.ScalanAstExtensions._
 import scalan.util.{Serialization, StringUtil, ScalaNameUtil}
 
 class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: CodegenConfig) {

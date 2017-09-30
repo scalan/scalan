@@ -25,7 +25,8 @@ class VirtFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     def apply(unit: CompilationUnit): Unit = {
       val unitName = unit.source.file.name
       if (isModuleUnit(unitName)) {
-        val moduleDef = moduleDefFromTree(unitName, unit.body, false)(scalanizer.context)
+        implicit val ctx = new ParseCtx(false)(scalanizer.context)
+        val moduleDef = moduleDefFromTree(unitName, unit.body)
         snState.addModule(unitName, moduleDef)
       }
     }

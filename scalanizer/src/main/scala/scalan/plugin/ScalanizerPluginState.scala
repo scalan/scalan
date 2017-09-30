@@ -29,7 +29,8 @@ class ScalanizerPluginState[G <: Global](val scalanizer: Scalanizer[G]) extends 
     "WBaseMatrOps" -> Set("WBaseMatrOpsDsl", "WBaseMatrOpsDslStd", "WBaseMatrOpsDslExp")
   )
 
-  scalanizer.snConfig.codegenConfig.entityFiles.foreach { file =>
+  scalanizer.snConfig.unitConfigs.foreach { conf =>
+    val file = conf.entityFile
     val fileNameParts = file.split('.')
     if (!fileNameParts.isEmpty) {
       val moduleName = fileNameParts.head

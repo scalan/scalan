@@ -5,102 +5,57 @@ import com.typesafe.scalalogging.StrictLogging
 class BoilerplateTool extends StrictLogging {
   def coreMainConfig(name: String, entityFile: String) =
     CodegenConfig(
-      name = name, entityFiles = List(entityFile),
+      name = name, entityFile = entityFile,
       srcPath = "../core/src/main/scala",
       baseContextTrait = "" // used like this: trait ${module.name}Defs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
     )
+
+  def coreTestConfig(name: String, entityFile: String) =
+    CodegenConfig(
+      name = name, entityFile = entityFile,
+      srcPath = "../core/src/test/scala",
+      baseContextTrait = "")
 
   lazy val viewsConfig           = coreMainConfig("views", "scalan/Views.scala")
   lazy val convertersConfig      = coreMainConfig("converters", "scalan/Converters.scala")
   lazy val exceptionsConfig      = coreMainConfig("exceptions", "scalan/util/Exceptions.scala")
   lazy val specializationsConfig = coreMainConfig("specializations", "scalan/dynamic/Specializations.scala")
 
-  lazy val coreTestsConfig = CodegenConfig(name = "coretests",
-    srcPath = "../core/src/test/scala",
-    entityFiles = List(
-      "scalan/common/Segments.scala",
-      "scalan/common/Kinds.scala",
-      "scalan/common/MetaTests.scala"
-    )
+  lazy val structKeysConfig = coreMainConfig("structKeys", "scalan/primitives/StructKeys.scala")
+  lazy val structItemsConfig = coreMainConfig("structItems", "scalan/primitives/StructItems.scala")
+
+  lazy val segmentsConfig        = coreTestConfig("segments", "scalan/common/Segments.scala")
+  lazy val kindsConfig           = coreTestConfig("kinds", "scalan/common/Kinds.scala")
+  lazy val metatestsConfig       = coreTestConfig("metatests", "scalan/common/MetaTests.scala")
+
+  val allConfigs = List(
+    viewsConfig, convertersConfig, exceptionsConfig, specializationsConfig,
+    structKeysConfig, structItemsConfig,
+    segmentsConfig, kindsConfig, metatestsConfig
   )
 
-  lazy val collectionsConfig = CodegenConfig(name = "collections",
-    srcPath = "../collections/src/main/scala",
-    entityFiles = List(
-       "scalan/collections/HashSets.scala"
-      , "scalan/collections/Seqs.scala"
-      , "scalan/collections/MultiMap.scala"
-      , "scalan/collections/BitSets.scala"
-      , "scalan/collections/Collections.scala"
-    )
-  )
-
-  lazy val laConfig = CodegenConfig(name = "la",
-    srcPath = "../linear-algebra/src/main/scala",
-    entityFiles = List(
-        "scalan/linalgebra/Vectors.scala"
-      , "scalan/linalgebra/Matrices.scala"
-    )
-  )
-
-  lazy val effectsConfig = CodegenConfig(name = "effects",
-    srcPath = "../effects/src/test/scala/",
-    entityFiles = List(
-      "scalan/monads/IOs.scala",
-      "scalan/monads/Readers.scala",
-      "scalan/monads/States.scala",
-      "scalan/monads/FreeStates.scala",
-      "scalan/monads/FreeMs.scala",
-      "scalan/monads/Processes.scala",
-      "scalan/monads/Frees.scala",
-      "scalan/monads/Coproducts.scala",
-      "scalan/monads/Interactions.scala",
-      "scalan/monads/Auths.scala"
-    )
-  )
-
-  lazy val graphsConfig = CodegenConfig(name = "graphs",
-    srcPath = "../graphs/src/main/scala",
-    entityFiles = List(
-      "scalan/graphs/Graphs.scala",
-      "scalan/graphs/Vertices.scala",
-      "scalan/graphs/Edges.scala",
-      "scalan/graphs/Fronts.scala"
-    )
-  )
-
-  lazy val structsConfig = CodegenConfig(name = "structs",
-    srcPath = "../core/src/main/scala",
-    entityFiles = List(
-      "scalan/primitives/StructKeys.scala",
-      "scalan/primitives/StructItems.scala"
-    ),
-    baseContextTrait = "" // not defined means not declare
-  )
-
-
-  val configsMap = List(
-    viewsConfig, convertersConfig, exceptionsConfig, coreTestsConfig, specializationsConfig, structsConfig,
-    collectionsConfig, graphsConfig, effectsConfig, laConfig
-    ).map(c => c.name -> List(c)).toMap ++
-    Map(
-    "allcore" -> List(viewsConfig, convertersConfig, exceptionsConfig, specializationsConfig, structsConfig, coreTestsConfig)
+  val runGroups = allConfigs.map(c => c.name -> List(c)).toMap ++ // each individual config can be executed
+    Map( // config groups can be declared and executed by name
+      "all" -> allConfigs
     )
 
-  def getConfigs(args: Array[String]): Seq[CodegenConfig] =
-    args.flatMap { arg => configsMap.getOrElse(arg,
-      sys.error(s"Unknown codegen config $arg. Allowed values: ${configsMap.keySet.mkString(", ")}"))
+  def listGroups = runGroups.keySet.mkString(", ")
+
+  def getRequestedConfigs(requestedGroups: Array[String]): Seq[CodegenConfig] =
+    requestedGroups.flatMap { groupName => runGroups.getOrElse(groupName,
+      sys.error(s"Unknown codegen config $groupName. Allowed values: $listGroups"))
     }.distinct
 
   def main(args: Array[String]) {
-    val configs = getConfigs(args)
+    val configs = getRequestedConfigs(args)
 
     if (configs.isEmpty) {
-      logger.warn("BoilerplateTool run without configs")
+      logger.warn(s"BoilerplateTool run without specified config groups. Available: $listGroups")
     } else {
+      val em = new EntityManagement(allConfigs)
       for (c <- configs) {
         println(s"Processing ${c.srcPath}")
-        new EntityManagement(c).generateAll()
+        em.generate(c.name)
         println(s"Ok\n")
       }
     }

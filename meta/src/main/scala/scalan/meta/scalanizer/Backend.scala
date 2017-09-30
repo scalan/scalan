@@ -19,23 +19,23 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
   }
 
   /** Generate boilerplate text for virtualized user-defined module */
-  def genUDModuleBoilerplateText(module: SModuleDef): String = {
+  def genUDModuleBoilerplateText(unitName: String, module: SModuleDef): String = {
     val entityGen = new ModuleFileGenerator(
       ScalanCodegen,
       module.copy(
         origModuleTrait = Some(createModuleTrait(module.name)),
         okEmitOrigModuleTrait = true
       )(context),
-      snConfig.codegenConfig)
+      snConfig.getUnitConfig(unitName))
     entityGen.emitImplFile
   }
 
-  /** Generate boilerplate Tree for virtualized user-defined module */
-  def genUDModuleBoilerplateTree(module: SModuleDef): Tree = {
-    val implCode = genUDModuleBoilerplateText(module)
-    val boilerplate = newUnitParser(implCode, "<impl>").parse()
-    boilerplate
-  }
+//  /** Generate boilerplate Tree for virtualized user-defined module */
+//  def genUDModuleBoilerplateTree(module: SModuleDef): Tree = {
+//    val implCode = genUDModuleBoilerplateText(module)
+//    val boilerplate = newUnitParser(implCode, "<impl>").parse()
+//    boilerplate
+//  }
 
   case class GenCtx(module: SModuleDef, toRep: Boolean = true)
 

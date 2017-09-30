@@ -4,8 +4,9 @@ import scalan.meta.PrintExtensions._
 import scala.collection.mutable.ArrayBuffer
 import scalan.util.{StringUtil, ScalaNameUtil}
 import scalan.meta.ScalanAst._
+import scalan.meta.ScalanAstExtensions._
 
-class MetaCodegen extends ScalanAstExtensions {
+class MetaCodegen {
 
   def dataType(ts: List[STpeExpr]): String = ts match {
     case Nil => "Unit"

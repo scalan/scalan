@@ -784,7 +784,8 @@ object ScalanAst {
 
   type Entity = STraitOrClassDef
 
-  class AstContext {
+  class AstContext(val configs: List[CodegenConfig]) {
+
     /** Mapping of external type names to their wrappers. */
     val wrappers = MMap[String, WrapperDescr]()
 

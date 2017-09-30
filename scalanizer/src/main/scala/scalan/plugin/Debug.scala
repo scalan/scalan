@@ -19,9 +19,9 @@ class Debug(override val plugin: ScalanizerPlugin) extends ScalanizerComponent(p
   def newPhase(prev: Phase) = new StdPhase(prev) {
     def apply(unit: CompilationUnit) {
 
-      if (snConfig.codegenConfig.entityFiles.contains(unit.source.file.name)) {
-        print(showCode(unit.body))
-      }
+//      if (snConfig.codegenConfig.entityFiles.contains(unit.source.file.name)) {
+//        print(showCode(unit.body))
+//      }
     }
   }
 }

@@ -9,5 +9,6 @@ trait Scalanizer[G <: Global]
   extends ScalanizerBase[G]
   with Enricher[G]
   with Backend[G]
-  with HotSpots[G] {
+//  with HotSpots[G]
+{
 }

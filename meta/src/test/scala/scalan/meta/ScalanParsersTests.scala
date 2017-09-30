@@ -9,7 +9,9 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
   def getGlobal = new Global(settings, reporter)
   initCompiler()
 
-  implicit val context = new AstContext
+  implicit val context = new AstContext(BoilerplateToolRun.allConfigs)
+  implicit val ctx = new ParseCtx(true)
+
   val ast: this.type = this
   import scalan.meta.ScalanAst.
   {
@@ -29,8 +31,6 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
   val INT = STpePrimitives("Int")
   val BOOL = STpePrimitives("Boolean")
   val FLOAT = STpePrimitives("Float")
-
-  val config = BoilerplateToolRun.coreTestsConfig
 
   sealed trait TreeKind
   case object TopLevel extends TreeKind
@@ -69,7 +69,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
     }
   }
 
-  def parseType(tpeString: String): STpeExpr = {
+  def parseType(tpeString: String)(implicit ctx: ParseCtx): STpeExpr = {
     val tree = parseString(Type, tpeString)
     val tpe = tpeExpr(tree)
     tpe
@@ -83,21 +83,21 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
     }
   }
 
-  def testModule(prog: String, expected: SModuleDef) {
-    test(TopLevel, prog, expected) { case tree: PackageDef => moduleDefFromPackageDef(tree, true) }
+  def testModule(prog: String, expected: SModuleDef)(implicit ctx: ParseCtx) {
+    test(TopLevel, prog, expected) { case tree: PackageDef => moduleDefFromPackageDef(tree) }
   }
 
-  def testTrait(prog: String, expected: STraitDef) {
+  def testTrait(prog: String, expected: STraitDef)(implicit ctx: ParseCtx) {
     test(Member, prog, expected) { case tree: ClassDef => traitDef(tree, Some(tree)) }
   }
-  def testSClass(prog: String, expected: SClassDef) {
+  def testSClass(prog: String, expected: SClassDef)(implicit ctx: ParseCtx) {
     test(Member, prog, expected) { case tree: ClassDef => classDef(tree, Some(tree)) }
   }
 
-  def testSTpe(prog: String, expected: STpeExpr) {
+  def testSTpe(prog: String, expected: STpeExpr)(implicit ctx: ParseCtx) {
     test(Type, prog, expected)(tpeExpr)
   }
-  def testSMethod(prog: String, expected: SMethodDef) {
+  def testSMethod(prog: String, expected: SMethodDef)(implicit ctx: ParseCtx) {
     test(Member, prog, expected) { case tree: DefDef => methodDef(tree) }
   }
 
@@ -270,9 +270,9 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
     }
   }
 
-  def makeModule(moduleText: String): SModuleDef = {
+  def makeModule(moduleText: String)(implicit ctx: ParseCtx): SModuleDef = {
     val pkg = parseString(TopLevel, reactiveModule).asInstanceOf[PackageDef]
-    val module = moduleDefFromPackageDef(pkg, true)
+    val module = moduleDefFromPackageDef(pkg)
     module
   }
 

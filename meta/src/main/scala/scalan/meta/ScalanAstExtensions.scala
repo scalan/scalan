@@ -6,7 +6,7 @@ package scalan.meta
 import ScalanAst._
 import PrintExtensions._
 
-trait ScalanAstExtensions {
+object ScalanAstExtensions {
 
   implicit class STpeExprOps(t: STpeExpr) {
     def toIdentifier: String = {

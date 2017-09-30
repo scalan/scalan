@@ -11,7 +11,7 @@ abstract class ScalanizerComponent(val plugin: ScalanizerPlugin) extends PluginC
   import global._
 
   def isModuleUnit(unitName: String) = {
-    scalanizer.snConfig.codegenConfig.isEntityFile(unitName)
+    scalanizer.snConfig.unitConfigs.exists(_.name == unitName)
   }
 
   def getModulePackage(unit: global.CompilationUnit) = {

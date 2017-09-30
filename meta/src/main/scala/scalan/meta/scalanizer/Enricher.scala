@@ -5,6 +5,7 @@ import java.io.File
 import scala.tools.nsc.Global
 import scalan.meta.ScalanAst
 import scalan.meta.ScalanAst._
+import scalan.meta.ScalanAstUtils._
 import scalan.util.FileUtil
 import scalan.util.CollectionUtil._
 
@@ -19,216 +20,22 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
     SImportStat(pkgOfModule + "implOf"+name+".StagedEvaluation._")
   }
 
-  /** Appends the given suffix to the type of self. For example:
-    *   trait Matrs {self: LinearAlgebra => ... }
-    * and for the suffix "Dsl", the method extends LinearAlgebra to LinearAlgebraDsl:
-    *   trait Matrs {self: LinearAlgebraDsl => ... }
-    * If the module doesn't have self than self is added with the type of module plus the suffix:
-    *   trait Matrs {...} -> trait Matrs {self: MatrsDsl => ...}
-    * */
-  def selfComponentsWithSuffix(moduleName: String,
-                               selfType: Option[SSelfTypeDef],
-                               suffix: String): List[STpeExpr] = {
-    selfType match {
-      case Some(selfTypeDef) => selfTypeDef.components.map{(c: STpeExpr) => c match {
-        case tr: STraitCall => tr.copy(name = c.name + suffix)
-        case _ => c
-      }}
-      case _ => List(STraitCall(moduleName + suffix, List()))
-    }
-  }
-  def selfModuleComponents(module: SModuleDef, suffix: String): List[STpeExpr] = {
-    selfComponentsWithSuffix(module.name, module.selfType, suffix)
-  }
-
-  /** Creates empty companion trait (no body) for an entity or concrete classes. */
-  def createCompanion(baseName: String) = STraitDef(
-    name = baseName + "Companion",
-    tpeArgs = List(),
-    ancestors = List(),
-    body = List(),
-    selfType = None,
-    companion = None
-  )
-
-  /** Converts and fixes the type of companion. SObjectDef -> STraitDef. */
-  def convertCompanion(comp: STraitOrClassDef): STraitOrClassDef = comp match {
-    case obj: SObjectDef =>
-      STraitDef(name = obj.name + "Companion",
-        tpeArgs = obj.tpeArgs, ancestors = obj.ancestors, body = obj.body, selfType = obj.selfType,
-        companion = obj.companion, annotations = obj.annotations)
-    case _ => comp
-  }
-
-
   def saveDebugCode(fileName: String, code: String) = {
     val folder = new File(snConfig.home)
     val file = FileUtil.file(folder, "debug", fileName)
     file.mkdirs()
-
     FileUtil.write(file, code)
   }
 
   def saveImplCode(file: File, implCode: String) = {
     val fileName = file.getName.split('.')(0)
     val folder = file.getParentFile
-
     val implFile = FileUtil.file(folder, "impl", s"${fileName}Impl.scala")
     implFile.mkdirs()
     FileUtil.write(implFile, implCode)
   }
 
-  def eraseModule(module: SModuleDef) = module
-
-  def firstKindArgs(tpeArgs: List[STpeArg]): List[STpeArg] = {
-    tpeArgs.filter(_.tparams.isEmpty)
-  }
-
-  def highKindArgs(tpeArgs: List[STpeArg]): List[STpeArg] = {
-    tpeArgs.filter(!_.tparams.isEmpty)
-  }
-
-  def genElemsByTypeArgs(tpeArgs: List[STpeArg]): List[SMethodDef] = {
-    def genImplicit(tpeArg: STpeArg, methodPrefix: String, descTypeName: String) =
-      SMethodDef(name = methodPrefix + tpeArg.name,
-        tpeArgs = Nil, argSections = Nil,
-        tpeRes = Some(STraitCall(descTypeName, List(STraitCall(tpeArg.name, Nil)))),
-        isImplicit = true, isOverride = false,
-        overloadId = None, annotations = Nil,
-        body = None, isTypeDesc = true)
-
-    def genElem(tpeArg: STpeArg) = genImplicit(tpeArg, "e", "Elem")
-    def genCont(tpeArg: STpeArg) = genImplicit(tpeArg, "c", "Cont")
-
-    tpeArgs.map{ targ =>
-      if (targ.tparams.isEmpty) genElem(targ)
-      else if (targ.tparams.size == 1) genCont(targ)
-      else !!!(s"Cannot create descriptor method for a high-kind tpeArg with with more than one type arguments: $targ")
-    }
-  }
-
-
-  def genClassArg(argPrefix: String, argName: String, descName: String, descArg: STpeExpr) = {
-    SClassArg(impFlag = true,
-      overFlag = false, valFlag = false,
-      name = argPrefix + argName,
-      tpe = STraitCall(descName, List(descArg)),
-      default = None, annotations = Nil, isTypeDesc = true)
-  }
-  def genElemClassArg(argName: String, tpe: STpeExpr) = genClassArg("e", argName, "Elem", tpe)
-  def genContClassArg(argName: String, tpe: STpeExpr) = genClassArg("c", argName, "Cont", tpe)
-  def genImplicitClassArg(isHighKind: Boolean, argName: String, tpe: STpeExpr): SClassArg = {
-    if (!isHighKind) genElemClassArg(argName, tpe)
-    else genContClassArg(argName, tpe)
-  }
-
-  def genImplicitClassArgs(module: SModuleDef, clazz: SClassDef): List[SClassArg] = {
-    val ancestorSubst: List[(STpeArg, STpeExpr)] = {
-      clazz.ancestors.flatMap { a =>
-        val ancestorEnt_? = module.findEntity(a.tpe.name, globalSearch = true)
-        ancestorEnt_? match {
-          case Some(e) =>
-            val pairs = e.tpeArgs zip a.tpe.tpeSExprs
-            pairs//.filterNot { case (a, t) => e.isExtractableArg(module, a) }
-          case None => List[(STpeArg, STpeExpr)]()
-        }
-      }
-    }
-    val classImplicits = clazz.tpeArgs/*.filterNot(a => clazz.isExtractableArg(module, a))*/.map { clsArg =>
-      val argTpe = clsArg.toTraitCall
-      val substOpt = ancestorSubst.find { case (tyArg, tpe) => tpe == argTpe }
-      val res = substOpt match {
-        case Some((tyArg, tpe)) => tpe match {
-          case _: STraitCall => genImplicitClassArg(tyArg.tparams.nonEmpty, tyArg.name, tpe) // NOTE: tpe == argTpe
-          case _ => throw new NotImplementedError(s"genImplicitClassArgs: $clsArg")
-        }
-        case None => genImplicitClassArg(clsArg.tparams.nonEmpty, clsArg.name, clsArg.toTraitCall)
-      }
-      res
-    }
-//    val entityImplicits = ancestorSubst.map { case (tyArg, ancestorParam) =>
-//      genImplicitClassArg(tyArg.tparams.nonEmpty, tyArg.name, ancestorParam)
-//    }
-
-    (classImplicits).distinct
-  }
-
-
-  def genImplicitMethodArgs(module: SModuleDef, method: SMethodDef): SMethodDef = {
-    def genImplicit(tpeArg: STpeArg, valPrefix: String, descTypeName: String) = {
-      SMethodArg(impFlag = true, overFlag = false,
-        name = valPrefix + tpeArg.name,
-        tpe = STraitCall(descTypeName, List(STraitCall(tpeArg.name, Nil))),
-        default = None, annotations = Nil, isTypeDesc = true)
-    }
-    def genElem(tpeArg: STpeArg) = genImplicit(tpeArg, "em", "Elem")
-    def genCont(tpeArg: STpeArg) = genImplicit(tpeArg, "cm", "Cont")
-    def genImplicitVals(tpeArgs: List[STpeArg]): List[SMethodArg] = {
-      tpeArgs.map { arg =>
-        if (arg.tparams.isEmpty) genElem(arg)
-        else genCont(arg)
-      }
-    }
-
-    val args = genImplicitVals(method.tpeArgs/*.filterNot(a => method.isExtractableArg(module, a))*/) match {
-      case Nil => method.argSections
-      case as => method.argSections ++ List(SMethodArgs(as))
-    }
-
-    method.copy(argSections = joinImplicitArgs(args))
-  }
-
-  def genExtensions(moduleName: String,
-                    selfModuleType: Option[SSelfTypeDef],
-                    moduleAncestors: List[STypeApply]
-                    ): List[STraitDef] = {
-    val boilerplateSuffix = Map("Dsl" -> "Abs", "DslStd" -> "Std", "DslExp" -> "Exp")
-    val extensions = snState.subcakesOfModule(moduleName)
-                     .filterNot(ext => ext.endsWith("Std") && !snConfig.codegenConfig.isStdEnabled)
-
-    (extensions map {extName =>
-      val extSuffix = extName.stripPrefix(moduleName)
-      val selfType: SSelfTypeDef = SSelfTypeDef(
-        name = "self",
-        components = selfComponentsWithSuffix(moduleName, selfModuleType, extSuffix)
-      )
-      val boilerplate = STraitCall(moduleName + boilerplateSuffix(extSuffix), Nil).toTypeApply
-      val ancestors = moduleAncestors map {
-        a => a.copy(tpe = a.tpe.copy(name = a.tpe.name + extSuffix))
-      }
-
-      STraitDef(
-        name = extName,
-        tpeArgs = Nil,
-        ancestors = boilerplate :: ancestors,
-        body = Nil,
-        selfType = Some(selfType),
-        companion = None,
-        annotations = Nil
-      )
-    }).toList
-  }
-
-  def genModuleExtensions(module: SModuleDef): List[STraitDef] = {
-    genExtensions(module.name, module.selfType, module.ancestors)
-  }
-
-
-  /** According to scala docs, a method or constructor can have only one implicit parameter list,
-    * and it must be the last parameter list given. */
-  def joinImplicitArgs(argSections: List[SMethodArgs]): List[SMethodArgs] = {
-    val cleanArgs = argSections.map(_.args)
-    val (imp, nonImp) = cleanArgs.partition {
-      case (m: SMethodArg) :: _ => m.impFlag
-      case _ => false
-    }
-    val newArgs = imp.flatten match {
-      case Nil => nonImp
-      case as => nonImp ++ List(as)
-    }
-
-    newArgs.map(args => SMethodArgs(args))
-  }
+//  def eraseModule(module: SModuleDef) = module
 
 
   object ModuleVirtualizationPipeline extends (SModuleDef => SModuleDef) {
@@ -433,10 +240,8 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
     }
 
     def genEntityImpicits(module: SModuleDef) = {
-
-      val bodyWithImpElems = genElemsByTypeArgs(module.entityOps.tpeArgs) ++ module.entityOps.body
-      val newEntity = module.entityOps.copy(body = bodyWithImpElems)
-
+      val newBody = genDescMethodsByTypeArgs(module.entityOps.tpeArgs) ++ module.entityOps.body
+      val newEntity = module.entityOps.copy(body = newBody)
       module.copy(entityOps = newEntity, entities = List(newEntity))
     }
 
@@ -458,7 +263,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
           isTypeDesc = true)
       }
       val newClasses = module.concreteSClasses.map { clazz =>
-        val (definedElems, elemArgs) = genImplicitClassArgs(module, clazz) partition isElemAlreadyDefined
+        val (definedElems, elemArgs) = genImplicitArgsForClass(module, clazz) partition isElemAlreadyDefined
         val newImplicitArgs = SClassArgs(clazz.implicitArgs.args ++ elemArgs)
         val newBody = definedElems.map(convertElemValToMethod) ++ clazz.body
 

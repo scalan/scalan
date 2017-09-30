@@ -10,7 +10,7 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
 
   def snState : ScalanizerState[G]
   def snConfig: ScalanizerConfig
-  def config: CodegenConfig = snConfig.codegenConfig
+//  def config: CodegenConfig = snConfig.unitConfigs
 
   /** Gets module name by its entity. TODO: Should be a general solution. */
   def mod(name: String) = name + "s"

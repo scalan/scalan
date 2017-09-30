@@ -42,7 +42,7 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
 
         /** produce boilerplate code using ModuleFileGenerator
           * Note: we need enriched module with all implicits in there place for correct boilerplate generation */
-        val boilerplateText = genUDModuleBoilerplateText(enrichedModuleDef)
+        val boilerplateText = genUDModuleBoilerplateText(unitName, enrichedModuleDef)
         saveWrapperCode(enrichedModuleDef.packageName + ".impl", nameOnly + "Impl", boilerplateText)
 //        showTree("boilerplate", unitName, boilerplate)
 
@@ -150,24 +150,24 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
     newTree
   }
 
-  /** Generates extensions like:
-    *   trait MatrsDsl extends MatrsAbs { self: LinearAlgebraDsl => };
-    *   trait MatrsDslExp extends MatrsExp { self: LinearAlgebraDslExp => };
-    * for the module (Matrs).
-    */
-  def getExtensions(module: SModuleDef): List[Tree] = {
-    genModuleExtensions(module).map(extTrait => genTrait(extTrait)(GenCtx(module, false)))
-  }
+//  /** Generates extensions like:
+//    *   trait MatrsDsl extends MatrsAbs { self: LinearAlgebraDsl => };
+//    *   trait MatrsDslExp extends MatrsExp { self: LinearAlgebraDslExp => };
+//    * for the module (Matrs).
+//    */
+//  def getExtensions(module: SModuleDef): List[Tree] = {
+//    genModuleExtensions(module).map(extTrait => genTrait(extTrait)(GenCtx(module, false)))
+//  }
 
   /** Converts Meta AST of a module to base64 string, assings the string to a variable and
     * returns Scala Tree of the variable. */
-  def serializeModuleDef(module: SModuleDef): Tree = {
-    val str = if (snConfig.saveMetaAst) {
-      val erasedModule = eraseModule(module)
-      Serialization.save(erasedModule)
-    } else ""
-    val serialized = Literal(Constant(str))
-
-    q"val serializedMetaAst = $serialized"
-  }
+//  def serializeModuleDef(module: SModuleDef): Tree = {
+//    val str = if (snConfig.saveMetaAst) {
+//      val erasedModule = eraseModule(module)
+//      Serialization.save(erasedModule)
+//    } else ""
+//    val serialized = Literal(Constant(str))
+//
+//    q"val serializedMetaAst = $serialized"
+//  }
 }

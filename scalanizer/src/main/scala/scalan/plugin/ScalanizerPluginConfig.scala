@@ -43,29 +43,31 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
   /** The types that shouldn't be Rep[]. */
   val typeClasses             = List("Elem", "Cont", "ClassTag")
 
-  /** Config for scalan-meta. */
-  val codegenConfig = CodegenConfig(name = "Scalan Plugin",
-    srcPath = "/",
-    entityFiles = List[String](
-//      "Nums.scala"
-//      ,"NumMonoids.scala"
-      "Cols.scala"
-//      ,"Vecs.scala"
-//      ,"Matrs.scala"
-//      ,"MatrOps.scala"
-//      ,"LinearAlgebraOps.scala"
-    ),
-    extraImports = List(
-      "scala.reflect.runtime.universe._",
-      "scala.reflect._"
-    ),
-    isVirtualized = false,
-    isStdEnabled = false
+  private def unitConfig(name: String, entityFile: String) =
+    CodegenConfig(
+      name = name, entityFile = entityFile,
+      srcPath = "/",
+      baseContextTrait = "", // used like this: trait ${module.name}Defs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
+      extraImports = List(
+        "scala.reflect.runtime.universe._",
+        "scala.reflect._"
+      ),
+      isVirtualized = false,
+      isStdEnabled = false
+    )
+
+  /** A list of scalan modules that should be virtualized by scalan-meta. */
+  val unitConfigs = List(
+    unitConfig("Cols.scala", "Cols.scala")
   )
+  def getUnitConfig(unitName: String) = unitConfigs.find(_.name == unitName).getOrElse{
+    sys.error(s"Cannot fing UnitConfig for '$unitName'")
+  }
+
   val wrappersCodegenConfig = CodegenConfig(
     name = "Wrappers Config",
     srcPath = "/",
-    entityFiles = List[String](),
+    entityFile = "",
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scala.reflect._"

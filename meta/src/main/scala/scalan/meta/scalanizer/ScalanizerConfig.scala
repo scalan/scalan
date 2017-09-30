@@ -35,7 +35,8 @@ trait ScalanizerConfig {
   def typeClasses: List[String]
 
   /** Config for Scalan Codegen. */
-  def codegenConfig: CodegenConfig
+  def unitConfigs: List[CodegenConfig]
+  def getUnitConfig(unitName: String): CodegenConfig
 
   /** Config for Scalan Wrapper Codegen */
   def wrappersCodegenConfig: CodegenConfig
