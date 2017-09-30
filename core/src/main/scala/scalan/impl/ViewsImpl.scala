@@ -23,7 +23,7 @@ trait ViewsDefs extends Views {
     def eFrom = _eFrom
     def eTo = _eTo
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = TypeArgs("From" -> (eFrom -> scalan.util.Invariant), "To" -> (eTo -> scalan.util.Invariant))
+    def typeArgs = TypeArgs("From" -> (eFrom -> scalan.util.Invariant), "To" -> (eTo -> scalan.util.Invariant))
     override lazy val tag = {
       implicit val tagFrom = eFrom.tag
       implicit val tagTo = eTo.tag
@@ -116,7 +116,7 @@ trait ViewsDefs extends Views {
     extends IsoURElem[A, A, IdentityIso[A]]
     with ConcreteElem[IdentityIsoData[A], IdentityIso[A]] {
     override lazy val parent: Option[Elem[_]] = Some(isoURElement(element[A], element[A]))
-    override lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
+    override val typeArgs = super.typeArgs ++ TypeArgs("A" -> (eA -> scalan.util.Invariant))
 
     override def convertIsoUR(x: Rep[IsoUR[A, A]]) = IdentityIso()
     override def getDefaultRep = IdentityIso()

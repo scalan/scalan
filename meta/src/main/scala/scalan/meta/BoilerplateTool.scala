@@ -3,73 +3,28 @@ package scalan.meta
 import com.typesafe.scalalogging.StrictLogging
 
 class BoilerplateTool extends StrictLogging {
-  val scalanTypeSynonyms = Map(
-    "Conv" -> "Converter"
-  )
-  lazy val scalanConfig = CodegenConfig(
-    name = "scalan",
-    srcPath = "../core/src/main/scala",
-    entityFiles = List(
-      "scalan/Converters.scala",
-      "scalan/Views.scala"
-    ),
-    scalanTypeSynonyms,
-    baseContextTrait = "", // not defined means not declare
-    seqContextTrait = "",
-    stagedContextTrait = ""
-  )
+  def coreMainConfig(name: String, entityFile: String) =
+    CodegenConfig(
+      name = name, entityFiles = List(entityFile),
+      srcPath = "../core/src/main/scala",
+      baseContextTrait = "" // used like this: trait ${module.name}Defs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
+    )
 
-  val coreTypeSynonyms = scalanTypeSynonyms ++ Map(
-    "RThrow" -> "Throwable",
-    "Arr" -> "Array",
-    "MM" -> "MMap",
-    "BoolRep" -> "Boolean",
-    "ROption" -> "SOption"
-  )
-  lazy val coreConfig = CodegenConfig(
-    name = "core",
-    srcPath = "../core/src/main/scala",
-    entityFiles = List(
-      "scalan/util/Exceptions.scala"
-    ),
-    coreTypeSynonyms,
-    baseContextTrait = "scalan.Scalan",
-    seqContextTrait = "scalan.ScalanStd",
-    stagedContextTrait = "scalan.Scalan"
-  )
+  lazy val viewsConfig           = coreMainConfig("views", "scalan/Views.scala")
+  lazy val convertersConfig      = coreMainConfig("converters", "scalan/Converters.scala")
+  lazy val exceptionsConfig      = coreMainConfig("exceptions", "scalan/util/Exceptions.scala")
+  lazy val specializationsConfig = coreMainConfig("specializations", "scalan/dynamic/Specializations.scala")
 
-  val coreTestsTypeSynonyms = coreTypeSynonyms ++ Map(
-    "RSeg" -> "Segment",
-    "RMetaTest" -> "MetaTest"
-  )
-  lazy val coreTestsConfig = CodegenConfig(
-    name = "coretests",
+  lazy val coreTestsConfig = CodegenConfig(name = "coretests",
     srcPath = "../core/src/test/scala",
     entityFiles = List(
       "scalan/common/Segments.scala",
       "scalan/common/Kinds.scala",
       "scalan/common/MetaTests.scala"
-    ),
-    coreTestsTypeSynonyms
+    )
   )
 
-  val specTypeSynonyms = coreTypeSynonyms ++ Map(
-    "RepIsoFunc" -> "IsoFunc"
-  )
-  lazy val specConfig = CodegenConfig(
-    name = "spec",
-    srcPath = "../core/src/main/scala",
-    entityFiles = List(
-      "scalan/dynamic/Specializations.scala"
-    ),
-    specTypeSynonyms
-  )
-
-  val collectTypeSynonyms = coreTypeSynonyms ++ Map(
-    "Coll" -> "Collection", "PairColl" -> "PairCollection", "NColl" -> "NestedCollection"
-  )
-  lazy val collectionsConfig = CodegenConfig(
-    name = "collections",
+  lazy val collectionsConfig = CodegenConfig(name = "collections",
     srcPath = "../collections/src/main/scala",
     entityFiles = List(
        "scalan/collections/HashSets.scala"
@@ -77,46 +32,18 @@ class BoilerplateTool extends StrictLogging {
       , "scalan/collections/MultiMap.scala"
       , "scalan/collections/BitSets.scala"
       , "scalan/collections/Collections.scala"
-    ),
-    collectTypeSynonyms
+    )
   )
 
-  val laTypeSynonyms = collectTypeSynonyms ++ Map(
-    "Vec" -> "Vector", "Matr" -> "Matrix"
-  )
-  lazy val laConfig = CodegenConfig(
-    name = "la",
+  lazy val laConfig = CodegenConfig(name = "la",
     srcPath = "../linear-algebra/src/main/scala",
     entityFiles = List(
         "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
-    ),
-    laTypeSynonyms
+    )
   )
 
-  val eeTypeSynonyms = coreTypeSynonyms ++ Map(
-    "PS" -> "PSet", "Dist" -> "Distributed", "PA" -> "PArray", "NA" -> "NestedArray", "PM" -> "PMap",
-    "Vec" -> "Vector", "Matr" -> "Matrix"
-  )
-  lazy val eeConfig = CodegenConfig(
-    name = "ee",
-    srcPath = "../../scalan/src/main/scala",
-    entityFiles = List(
-      "scalan/trees/Trees.scala",
-      "scalan/math/Matrices.scala",
-      "scalan/math/Vectors.scala",
-      "scalan/collections/PSets.scala",
-      "scalan/dists/Dists.scala",
-      "scalan/parrays/PArrays.scala"
-    ),
-    eeTypeSynonyms,
-    baseContextTrait = "scalan.ScalanEnterprise",
-    seqContextTrait = "scalan.ScalanEnterpriseStd",
-    stagedContextTrait = "scalan.ScalanEnterpriseExp"
-  )
-
-  lazy val effectsConfig = CodegenConfig(
-    name = "effects",
+  lazy val effectsConfig = CodegenConfig(name = "effects",
     srcPath = "../effects/src/test/scala/",
     entityFiles = List(
       "scalan/monads/IOs.scala",
@@ -132,50 +59,38 @@ class BoilerplateTool extends StrictLogging {
     )
   )
 
-  val graphTypeSynonyms = collectTypeSynonyms ++ Map("PG" -> "Graph", "REdge" -> "EdgeType")
-  lazy val graphConfig = CodegenConfig(
-    name = "graphs",
+  lazy val graphsConfig = CodegenConfig(name = "graphs",
     srcPath = "../graphs/src/main/scala",
     entityFiles = List(
       "scalan/graphs/Graphs.scala",
       "scalan/graphs/Vertices.scala",
       "scalan/graphs/Edges.scala",
       "scalan/graphs/Fronts.scala"
-    ),
-    graphTypeSynonyms
+    )
   )
 
-  lazy val structsConfig = CodegenConfig(
-    name = "structs",
+  lazy val structsConfig = CodegenConfig(name = "structs",
     srcPath = "../core/src/main/scala",
     entityFiles = List(
       "scalan/primitives/StructKeys.scala",
       "scalan/primitives/StructItems.scala"
     ),
-    baseContextTrait = "", // not defined means not declare
-    seqContextTrait = "",
-    stagedContextTrait = ""
+    baseContextTrait = "" // not defined means not declare
   )
+
+
+  val configsMap = List(
+    viewsConfig, convertersConfig, exceptionsConfig, coreTestsConfig, specializationsConfig, structsConfig,
+    collectionsConfig, graphsConfig, effectsConfig, laConfig
+    ).map(c => c.name -> List(c)).toMap ++
+    Map(
+    "allcore" -> List(viewsConfig, convertersConfig, exceptionsConfig, specializationsConfig, structsConfig, coreTestsConfig)
+    )
 
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
     args.flatMap { arg => configsMap.getOrElse(arg,
       sys.error(s"Unknown codegen config $arg. Allowed values: ${configsMap.keySet.mkString(", ")}"))
     }.distinct
-
-  val configsMap = Map(
-    scalanConfig.name -> List(scalanConfig),
-    structsConfig.name -> List(structsConfig),
-    coreConfig.name -> List(coreConfig),
-    coreTestsConfig.name -> List(coreTestsConfig),
-    "allcore" -> List(scalanConfig, coreConfig, structsConfig, coreTestsConfig, specConfig),
-  "collections" -> List(collectionsConfig),
-  "la" -> List(laConfig),
-  "graphs" -> List(graphConfig),
-  "ee" -> List(eeConfig),
-  "effects" -> List(effectsConfig),
-  "lib-all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig, structsConfig),
-  "all" -> List(scalanConfig, coreConfig, coreTestsConfig, collectionsConfig, laConfig, graphConfig, effectsConfig, structsConfig)
-  )
 
   def main(args: Array[String]) {
     val configs = getConfigs(args)
@@ -185,13 +100,11 @@ class BoilerplateTool extends StrictLogging {
     } else {
       for (c <- configs) {
         println(s"Processing ${c.srcPath}")
-        entityManagement(c).generateAll()
+        new EntityManagement(c).generateAll()
         println(s"Ok\n")
       }
     }
   }
-
-  def entityManagement(c: CodegenConfig): EntityManagement = new EntityManagement(c)
 }
 
 object BoilerplateToolRun extends BoilerplateTool {

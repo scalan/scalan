@@ -44,8 +44,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
   val typeClasses             = List("Elem", "Cont", "ClassTag")
 
   /** Config for scalan-meta. */
-  val codegenConfig = CodegenConfig(
-    name = "Scalan Plugin",
+  val codegenConfig = CodegenConfig(name = "Scalan Plugin",
     srcPath = "/",
     entityFiles = List[String](
 //      "Nums.scala"
@@ -56,10 +55,6 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
 //      ,"MatrOps.scala"
 //      ,"LinearAlgebraOps.scala"
     ),
-    Map.empty,
-    baseContextTrait = "scalan.Scalan",
-    seqContextTrait = "",
-    stagedContextTrait = "",
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scala.reflect._"
@@ -71,10 +66,6 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     name = "Wrappers Config",
     srcPath = "/",
     entityFiles = List[String](),
-    Map.empty,
-    baseContextTrait = "scalan.Scalan",
-    seqContextTrait = "",
-    stagedContextTrait = "",
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scala.reflect._"
