@@ -82,7 +82,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       |${methodExtractorsString(c.module, config, clazz)}
       |
       |  def mk${c.typeDecl}
-      |    (${fieldsWithType.rep()})${implicitArgsDecl("", !b.isExtractable(_))}: Rep[${c.typeUse}] = {
+      |    (${fieldsWithType.rep()})${c.optimizeImplicits().implicitArgsDecl()}: Rep[${c.typeUse}] = {
       |    new ${c.typeUse("Ctor")}(${fields.rep()})
       |  }
       |  def unmk${c.typeDecl}(p: Rep[$parent]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -543,7 +543,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
           val sb = c.extractionBuilder(s)
           s"""
             |    @scalan.OverloadId("fromData")
-            |    def apply${tpeArgsDecl}(p: Rep[$dataTpe])${c.implicitArgsDecl("", !sb.isExtractable(_))}: Rep[${c.typeUse}] = {
+            |    def apply${tpeArgsDecl}(p: Rep[$dataTpe])${c.optimizeImplicits().implicitArgsDecl()}: Rep[${c.typeUse}] = {
             |      ${sb.extractableImplicits}
             |      iso$className${c.tpeArgNames.opt(ns => s"[${ns.rep()}]")}.to(p)
             |    }
@@ -551,7 +551,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         })
       }
         |    @scalan.OverloadId("fromFields")
-        |    def apply${tpeArgsDecl}(${fieldsWithType.rep()})${val b = c.extractionBuilder(); c.implicitArgsDecl("", !b.isExtractable(_))}: Rep[${c.typeUse}] =
+        |    def apply${tpeArgsDecl}(${fieldsWithType.rep()})${c.optimizeImplicits().implicitArgsDecl()}: Rep[${c.typeUse}] =
         |      mk$className(${fields.rep()})
         |
         |    def unapply${tpeArgsDecl}(p: Rep[$parent]) = unmk$className(p)

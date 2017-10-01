@@ -5,6 +5,7 @@ import scala.collection.mutable.ArrayBuffer
 import scalan.util.{StringUtil, ScalaNameUtil}
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstExtensions._
+import scalan.meta.ScalanAstUtils.classArgsAsSeenFromAncestors
 
 class MetaCodegen {
 
@@ -312,8 +313,10 @@ class MetaCodegen {
   // methods to extract elements from data arguments
   class ElemExtractionBuilder(module: SModuleDef, entity: STraitOrClassDef, argSubst: Map[String, String]) {
     val extractionExprs: List[Option[String]] = extractImplicitElems(module, entity.args.args, entity.tpeArgs, argSubst)
-    val extractableArgs: Map[String,(STpeArg, String)] = entity.tpeArgs.zip(extractionExprs)
-      .collect { case (arg, Some(expr)) => (arg.name, (arg, expr)) }.toMap
+    val tyArgSubst = classArgsAsSeenFromAncestors(module, entity).map { case (_, (e,a)) => a }
+    val extractableArgs: Map[String,(STpeArg, String)] =
+      tyArgSubst.zip(extractionExprs)
+        .collect { case (arg, Some(expr)) => (arg.name, (arg, expr)) }.toMap
     val extractableImplicits: String = {
       extractableArgs.map { case (tyArgName, (arg, expr)) =>
         val kind = if (arg.isHighKind) "c" else "e"
@@ -377,9 +380,7 @@ class MetaCodegen {
       val tyArgName = tpeArg.name
       val argOpt = allArgs.find { a =>
         a.tpe match {
-          case STraitCall("Elem", List(STpeAnnotated(STraitCall(`tyArgName`, _), _))) => true
-          case STraitCall("Elem", List(STraitCall(`tyArgName`, _))) => true
-          case STraitCall("Cont", List(STraitCall(`tyArgName`, _))) => true
+          case TypeDescTpe(descName, STraitCall(`tyArgName`, _)) => true
           case _ => false
         }
       }

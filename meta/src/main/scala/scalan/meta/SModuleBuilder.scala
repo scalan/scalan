@@ -3,6 +3,7 @@ package scalan.meta
 import scalan.meta.ScalanAstTransformers._
 import scalan.meta.ScalanAstUtils._
 import scalan.meta.ScalanAst._
+import scalan.util.CollectionUtil._
 
 class SModuleBuilder(implicit val context: AstContext) {
 
@@ -206,7 +207,11 @@ class SModuleBuilder(implicit val context: AstContext) {
     }
     val newClasses = module.concreteSClasses.map { clazz =>
       val (definedElems, elemArgs) = genImplicitArgsForClass(module, clazz) partition isElemAlreadyDefined
-      val newImplicitArgs = SClassArgs((clazz.implicitArgs.args ++ elemArgs).distinct)
+      val newArgs = (clazz.implicitArgs.args ++ elemArgs).distinctBy(_.tpe match {
+        case TypeDescTpe(_,ty) => ty
+        case t => t
+      })
+      val newImplicitArgs = SClassArgs(newArgs)
       val newBody = definedElems.map(convertElemValToMethod) ++ clazz.body
 
       clazz.copy(implicitArgs = newImplicitArgs, body = newBody)

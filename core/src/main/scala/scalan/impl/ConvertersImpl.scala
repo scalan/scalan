@@ -453,9 +453,9 @@ implicit val eB2 = p.conv2.elem.typeArgs("R")._1.asElem[B2]
   case class ComposeConverterCtor[A, B, C]
       (override val conv2: Conv[B, C], override val conv1: Conv[A, B])
     extends ComposeConverter[A, B, C](conv2, conv1) with Def[ComposeConverter[A, B, C]] {
-    implicit val eA = conv1.elem.typeArgs("T")._1.asElem[A];
+    implicit val eT = conv1.elem.typeArgs("T")._1.asElem[A];
 implicit val eB = conv2.elem.typeArgs("T")._1.asElem[B];
-implicit val eC = conv2.elem.typeArgs("R")._1.asElem[C]
+implicit val eR = conv2.elem.typeArgs("R")._1.asElem[C]
     lazy val selfType = element[ComposeConverter[A, B, C]]
   }
   // elem for concrete class
@@ -514,9 +514,9 @@ implicit val eC = conv2.elem.typeArgs("R")._1.asElem[C]
     override def toString = "ComposeConverterCompanion"
     @scalan.OverloadId("fromData")
     def apply[A, B, C](p: Rep[ComposeConverterData[A, B, C]]): Rep[ComposeConverter[A, B, C]] = {
-      implicit val eA = p._2.elem.typeArgs("T")._1.asElem[A];
+      implicit val eT = p._2.elem.typeArgs("T")._1.asElem[A];
 implicit val eB = p._1.elem.typeArgs("T")._1.asElem[B];
-implicit val eC = p._1.elem.typeArgs("R")._1.asElem[C]
+implicit val eR = p._1.elem.typeArgs("R")._1.asElem[C]
       isoComposeConverter[A, B, C].to(p)
     }
 
@@ -542,10 +542,10 @@ implicit val eC = p._1.elem.typeArgs("R")._1.asElem[C]
 
   implicit class ExtendedComposeConverter[A, B, C](p: Rep[ComposeConverter[A, B, C]]) {
     def toData: Rep[ComposeConverterData[A, B, C]] = {
-      implicit val eA = p.conv1.elem.typeArgs("T")._1.asElem[A];
+      implicit val eT = p.conv1.elem.typeArgs("T")._1.asElem[A];
 implicit val eB = p.conv2.elem.typeArgs("T")._1.asElem[B];
-implicit val eC = p.conv2.elem.typeArgs("R")._1.asElem[C]
-      isoComposeConverter(eA, eB, eC).from(p)
+implicit val eR = p.conv2.elem.typeArgs("R")._1.asElem[C]
+      isoComposeConverter(eT, eB, eR).from(p)
     }
   }
 
@@ -955,7 +955,7 @@ implicit val eB = p.itemConv.elem.typeArgs("R")._1.asElem[B]
   }
 
   def mkFunctorConverter[A, B, F[_]]
-    (itemConv: Conv[A, B])(implicit F: Functor[F], cF: Cont[F]): Rep[FunctorConverter[A, B, F]] = {
+    (itemConv: Conv[A, B])(implicit F: Functor[F]): Rep[FunctorConverter[A, B, F]] = {
     new FunctorConverterCtor[A, B, F](itemConv)
   }
   def unmkFunctorConverter[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -1027,7 +1027,7 @@ implicit val eB = p.itemConv.elem.typeArgs("R")._1.asElem[B]
 }
 
 object ConvertersModule extends scalan.ModuleInfo {
-  val dump = "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"
+  val dump = "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"
 }
 }
 

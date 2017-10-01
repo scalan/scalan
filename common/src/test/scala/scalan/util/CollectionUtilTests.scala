@@ -1,9 +1,11 @@
 package scalan.util
 
 import scalan.BaseTests
-import scalan.util.CollectionUtil._
+import scala.collection.{Seq, mutable}
 
 class CollectionUtilTests extends BaseTests {
+  import scalan.util.CollectionUtil._
+
   def join(l: Map[Int,Int], r: Map[Int,Int]) =
     outerJoin(l, r)((_,l) => l, (_,r) => r, (k,l,r) => l + r)
   def joinSeqs(l: Seq[Int], r: Seq[Int]) =
@@ -38,4 +40,16 @@ class CollectionUtilTests extends BaseTests {
     assertResult(Seq("b" -> 2, "c" -> 3, "d" -> 4))(joinPairs(Seq(), outer))
     assertResult(Seq("b" -> 4, "c" -> 6, "d" -> 8))(joinPairs(outer, outer))
   }
+
+  test("distinctBy") {
+    val items = Array((1, "a"), (2, "b"), (1, "c")).toIterable
+    val res = items.distinctBy(_._1)
+    assertResult(Array((1, "a"), (2, "b")))(res)
+  }
+
+  test("expandWith") {
+    assertResult(Array((2, 0), (2, 1)))(2.expandWith(x => List.range(0,x)))
+    assertResult(Array((3, 0), (3, 1), (3, 2)))(3.expandWith(x => List.range(0,x)))
+  }
+
 }

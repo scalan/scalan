@@ -3,6 +3,7 @@ package scalan.meta
 import scalan.meta.ScalanAst._
 import scalan.meta.Base._
 import scalan.meta.ScalanAstTransformers.{MetaAstTransformer, MetaTypeTransformer, MetaAstReplacer}
+import scalan.util.CollectionUtil._
 
 object ScalanAstUtils {
 
@@ -95,44 +96,53 @@ object ScalanAstUtils {
   def genImplicitClassArg(tyArg: STpeArg): SClassArg =
     genImplicitClassArg(tyArg.isHighKind, tyArg.name, STraitCall(tyArg.name)) // don't use toTraitCall here
 
-  /**
-    * Example:
+  /** See example to understand the code:
     * trait <e.name>[<e.tpeArgs>] { }
     * <clazz> == class <clazz>[<clsTpeArg>..] extends <ancName>[<ancArgs>]
     */
-  def genImplicitArgsForClass(module: SModuleDef, clazz: SClassDef): List[SClassArg] = {
-    val ancestorArgsSubst: List[(STpeArg, STpeExpr)] =
-      clazz.ancestors.flatMap { anc =>
-        val ancName = anc.tpe.name
-        val ancestorEnt_? = module.findEntity(ancName, globalSearch = true)
-        ancestorEnt_? match {
-          case Some(e) =>
-            val ancArgs = anc.tpe.tpeSExprs
-            e.tpeArgs zip ancArgs
-          case None => List[(STpeArg, STpeExpr)]()
-        }
-      }
-    val classImplicits = clazz.tpeArgs.map { clsTpeArg =>
-      val argTpe = clsTpeArg.toTraitCall
-      val substOpt = ancestorArgsSubst.find { case (eTpeArg, ancArg) => ancArg == argTpe }
-      val res = substOpt match {
-        case Some((eTpeArg, ancArg)) => // clsTpeArg is used as argument of at least one ancestor
-          ancArg match {
-            case _: STraitCall =>
-              // NOTE: ancArg == argTpe and this is how we get code like 'val eB: Elem[A]'
-              genImplicitClassArg(eTpeArg.tparams.nonEmpty, eTpeArg.name, ancArg)
-            case _ => throw new NotImplementedError(s"genImplicitClassArgs: $clsTpeArg")
-          }
+  def argsSubstOfAncestorEntities(module: SModuleDef, clazz: STraitOrClassDef): List[((STraitOrClassDef, STpeArg), STpeExpr)] = {
+    val res = clazz.ancestors.flatMap { anc =>
+      val ancName = anc.tpe.name
+      val ancestorEnt_? = module.findEntity(ancName, globalSearch = true)
+      ancestorEnt_? match {
+        case Some(e) =>
+          val ancArgs = anc.tpe.tpeSExprs
+          e.expandWith(_.tpeArgs) zip ancArgs
         case None =>
-          genImplicitClassArg(clsTpeArg)
+          List[((STraitOrClassDef, STpeArg), STpeExpr)]()
       }
-      res
     }
-    //    val entityImplicits = ancestorSubst.map { case (tyArg, ancestorParam) =>
-    //      genImplicitClassArg(tyArg.tparams.nonEmpty, tyArg.name, ancestorParam)
-    //    }
+    res
+  }
 
-    (classImplicits).distinct
+  /** Checks for each type argument if it is used as argument of ancestor entity.
+    * For each name of type argument returns a pair (e, tyArg)
+    */
+  def classArgsAsSeenFromAncestors(module: SModuleDef, clazz: STraitOrClassDef) = {
+    val subst: List[((STraitOrClassDef, STpeArg), STpeExpr)] = argsSubstOfAncestorEntities(module, clazz)
+    val res = clazz.tpeArgs.map { clsTpeArg =>
+      val argTpe = STraitCall(clsTpeArg.name) // don't use toTraitCall here
+      val substOpt = subst.find { case ((e, eTpeArg), ancArg) => argTpe == ancArg }
+      substOpt match {
+        case Some(((e, eTpeArg), ancArg)) => // clsTpeArg is used as argument of at least one ancestor
+          (clsTpeArg, (e, eTpeArg))
+        case None =>
+          (clsTpeArg, (clazz, clsTpeArg))
+      }
+    }
+    res
+  }
+
+  /** See example to understand the code:
+    * trait <e.name>[<e.tpeArgs>] { }
+    * <clazz> == class <clazz>[<clsTpeArg>..] extends <ancName>[<ancArgs>]
+    */
+  def genImplicitArgsForClass(module: SModuleDef, clazz: STraitOrClassDef): List[SClassArg] = {
+    val argSubst = classArgsAsSeenFromAncestors(module, clazz)
+    val implicitArgs = argSubst.map { case (clsTpeArg, (e, eTpeArg)) =>
+      genImplicitClassArg(eTpeArg.isHighKind, eTpeArg.name, STraitCall(clsTpeArg.name))
+    }
+    implicitArgs
   }
 
   def genImplicitMethodArg(tpeArg: STpeArg, valPrefix: String, descTypeName: String) =

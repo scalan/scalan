@@ -76,8 +76,8 @@ trait Converters extends ViewsModule { self: Scalan =>
 
   abstract class ComposeConverter[A, B, C](val conv2: Conv[B, C], val conv1: Conv[A, B])/*(
     implicit val eA: Elem[A], val eB: Elem[B], val eC: Elem[C])*/ extends Converter[A, C] {
-    val eT: Elem[A] = conv1.eT
-    val eR: Elem[C] = conv2.eR
+//    val eT: Elem[A] = conv1.eT
+//    val eR: Elem[C] = conv2.eR
     def apply(a: Rep[A]) = conv2.apply(conv1.apply(a))
     override def isIdentity = conv1.isIdentity && conv2.isIdentity
     override def equals(other: Any) = other match {

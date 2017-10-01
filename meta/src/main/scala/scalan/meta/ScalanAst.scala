@@ -950,8 +950,10 @@ object ScalanAst {
   }
 
   object TypeDescTpe {
+    val DescNames = Set("Elem", "Cont", "Functor")
     def unapply(tpe: STpeExpr): Option[(String, STpeExpr)] = tpe match {
-      case STraitCall(tname, List(arg)) if tname == "Elem" || tname == "Cont" => Some((tname, arg))
+      case STraitCall(tname, List(STpeAnnotated(arg,_))) if DescNames.contains(tname) => Some((tname, arg))
+      case STraitCall(tname, List(arg)) if DescNames.contains(tname) => Some((tname, arg))
       case _ => None
     }
   }

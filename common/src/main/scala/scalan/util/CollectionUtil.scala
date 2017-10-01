@@ -74,6 +74,14 @@ object CollectionUtil {
     res.toMap
   }
 
+  implicit class AnyOps[A](x: A) {
+    def expandWith[B](f: A => List[B]): List[(A,B)] = {
+      val ys = f(x)
+      List.fill(ys.length)(x) zip ys
+    }
+  }
+
+
   implicit class TraversableOps[A, Source[X] <: Traversable[X]](xs: Source[A]) {
     def filterMap[B](f: A => Option[B])(implicit cbf: CanBuildFrom[Source[A], B, Source[B]]): Source[B] = {
        val b = cbf()
@@ -85,6 +93,18 @@ object CollectionUtil {
          }
        }
        b.result()
+    }
+    def distinctBy[K](key: A => K)(implicit cbf: CanBuildFrom[Source[A], A, Source[A]]): Source[A] = {
+      val keys = mutable.Set[K]()
+      val b = cbf()
+      for (x <- xs) {
+        val k = key(x)
+        if (!keys.contains(k)) {
+          b += x
+          keys += k
+        }
+      }
+      b.result()
     }
   }
 }
