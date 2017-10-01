@@ -4,7 +4,9 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.tools.nsc._
+import scalan.meta.EntityManagement
 import scalan.meta.ScalanAst._
+import scalan.meta.ScalanAstTransformers._
 import scalan.util.CollectionUtil.TraversableOps
 
 object WrapFrontend {

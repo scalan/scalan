@@ -52,7 +52,8 @@ class BoilerplateTool extends StrictLogging {
     if (configs.isEmpty) {
       logger.warn(s"BoilerplateTool run without specified config groups. Available: $listGroups")
     } else {
-      val em = new EntityManagement(allConfigs)
+      val parsers = new Parsers(allConfigs)
+      val em = new EntityManagement(parsers)
       for (c <- configs) {
         println(s"Processing ${c.srcPath}")
         em.generate(c.name)

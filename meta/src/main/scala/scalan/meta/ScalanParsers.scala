@@ -4,11 +4,13 @@
  */
 package scalan.meta
 
+import java.io.File
+
 import scala.language.implicitConversions
 import scala.tools.nsc.Global
-import scala.reflect.internal.util.RangePosition
-import scala.reflect.internal.util.OffsetPosition
+import scala.reflect.internal.util.{RangePosition, OffsetPosition, SourceFile}
 import scalan.meta.ScalanAst._
+import scalan.meta.ScalanAstUtils._
 import java.util.regex.Pattern
 
 trait ScalanParsers[G <: Global] {
@@ -56,6 +58,16 @@ trait ScalanParsers[G <: Global] {
     throw new IllegalStateException(msg)
   }
 
+  def parseEntityModule(file: File)(implicit ctx: ParseCtx) = {
+    val sourceFile = compiler.getSourceFile(file.getPath)
+    val tree = parseFile(sourceFile)
+    moduleDefFromTree(file.getPath, tree)
+  }
+
+  def parseFile(source: SourceFile): compiler.Tree = {
+    compiler.newUnitParser(new compiler.CompilationUnit(source)).parse()
+  }
+
   def moduleDefFromTree(name: String, tree: Tree)(implicit ctx: ParseCtx): SModuleDef = tree match {
     case pd: PackageDef =>
       moduleDefFromPackageDef(pd)
@@ -83,28 +95,6 @@ trait ScalanParsers[G <: Global] {
       case cd: ClassDef if cd.name.toString == name => cd
     }
 
-  def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr))
-
-  def wrapperImpl(entity: STraitDef, bt: STpeExpr, doRep: Boolean): SClassDef = {
-    val entityName = entity.name
-    val entityImplName = entityName + "Impl"
-    val typeUseExprs = entity.tpeArgs.map(tpeUseExpr)
-    val valueType = if (doRep) STraitCall("Rep", List(bt)) else bt
-    SClassDef(
-      name = entityImplName,
-      tpeArgs = entity.tpeArgs,
-      args = SClassArgs(List(SClassArg(false, false, true, "wrappedValue", valueType, None, Nil, false))),
-      implicitArgs = entity.implicitArgs,
-      ancestors = List(STraitCall(entity.name, typeUseExprs).toTypeApply),
-      body = List(),
-      selfType = None,
-      companion = None,
-      //            companion = defs.collectFirst {
-      //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
-      //            },
-      true, Nil
-    )
-  }
 
   def isInternalMethodOfCompanion(md: SMethodDef, declaringDef: STraitOrClassDef): Boolean = {
     val moduleVarName = md.name + global.nme.MODULE_VAR_SUFFIX.toString

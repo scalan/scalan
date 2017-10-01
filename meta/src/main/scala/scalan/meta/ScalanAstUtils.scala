@@ -2,6 +2,7 @@ package scalan.meta
 
 import scalan.meta.ScalanAst._
 import scalan.meta.Base._
+import scalan.meta.ScalanAstTransformers.{MetaAstTransformer, MetaTypeTransformer, MetaAstReplacer}
 
 object ScalanAstUtils {
 
@@ -172,5 +173,29 @@ object ScalanAstUtils {
     }
     method.copy(argSections = joinImplicitArgs(newSections))
   }
+
+  def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr))
+
+  def wrapperImpl(entity: STraitDef, bt: STpeExpr, doRep: Boolean): SClassDef = {
+    val entityName = entity.name
+    val entityImplName = entityName + "Impl"
+    val typeUseExprs = entity.tpeArgs.map(tpeUseExpr)
+    val valueType = if (doRep) STraitCall("Rep", List(bt)) else bt
+    SClassDef(
+      name = entityImplName,
+      tpeArgs = entity.tpeArgs,
+      args = SClassArgs(List(SClassArg(false, false, true, "wrappedValue", valueType, None, Nil, false))),
+      implicitArgs = entity.implicitArgs,
+      ancestors = List(STraitCall(entity.name, typeUseExprs).toTypeApply),
+      body = List(),
+      selfType = None,
+      companion = None,
+      //            companion = defs.collectFirst {
+      //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
+      //            },
+      true, Nil
+    )
+  }
+
 
 }

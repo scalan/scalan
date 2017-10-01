@@ -12,12 +12,18 @@ import scalan.util.FileUtil
 import ScalanAst._
 import scala.tools.nsc.Global
 
-class EntityManagement(val configs: List[CodegenConfig]) extends ScalanParsersEx[Global] with LazyLogging {
+class Parsers(val configs: List[CodegenConfig]) extends ScalanParsersEx[Global] {
   def getGlobal: Global = new Global(settings, reporter)
   implicit val context = new AstContext(configs)
 
   initCompiler()
+}
 
+class EntityManagement[G <: Global](val parsers: ScalanParsers[G]) extends LazyLogging {
+  import parsers._
+  def configs = parsers.context.configs
+  implicit def context = parsers.context
+   
   case class EntityManager(name: String, file: File, module: SModuleDef, config: CodegenConfig)
 
   protected val entities = (for(c <- configs) yield {

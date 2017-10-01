@@ -791,6 +791,22 @@ object ScalanAst {
 
     val modules = MMap[String, SModuleDef]()
 
+    def isEntity(name: String): Boolean = {
+      ??? //snConfig.concreteClassesOfEntity.keySet.contains(name)
+    }
+    def isEntityCompanion(name: String): Boolean = {
+      ??? //snConfig.concreteClassesOfEntity.keys.map(comp(_)).toSet.contains(name)
+    }
+    def isClass(name: String): Boolean = {
+      ??? //snConfig.concreteClassesOfEntity.values.flatten.toSet.contains(name)
+    }
+    def isClassCompanion(name: String): Boolean = {
+      ??? //snConfig.concreteClassesOfEntity.values.flatten.map(comp(_)).toSet.contains(name)
+    }
+    def isModule(name: String): Boolean = {
+      ??? //snConfig.concreteClassesOfEntity.keys.map(mod(_)).toSet.contains(name)
+    }
+
     def allModules: Iterator[SModuleDef] = wrappers.valuesIterator.map(_.module) ++ modules.valuesIterator
 
     def findEntityInOtherModules(entityName: String, referencedInModule: SModuleDef): Option[(SModuleDef, STraitOrClassDef)] = {

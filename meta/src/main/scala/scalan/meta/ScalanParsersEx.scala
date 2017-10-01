@@ -23,14 +23,4 @@ trait ScalanParsersEx[G <: Global] extends ScalanParsers[G] {
     compiler.phase = run.parserPhase
     run.cancel()
   }
-
-  def parseEntityModule(file: File)(implicit ctx: ParseCtx) = {
-    val sourceFile = compiler.getSourceFile(file.getPath)
-    val tree = parseFile(sourceFile)
-    moduleDefFromTree(file.getPath, tree)
-  }
-
-  def parseFile(source: SourceFile): compiler.Tree = {
-    compiler.newUnitParser(new compiler.CompilationUnit(source)).parse()
-  }
 }

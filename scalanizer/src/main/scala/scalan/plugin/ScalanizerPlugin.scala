@@ -2,6 +2,7 @@ package scalan.plugin
 
 import scala.tools.nsc._
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
+import scalan.meta.EntityManagement
 import scalan.meta.ScalanAst.AstContext
 import scalan.meta.scalanizer.{ScalanizerConfig, Scalanizer, ScalanizerState}
 
@@ -9,7 +10,8 @@ class ScalanizerPlugin(val global: Global) extends Plugin { plugin =>
   val scalanizer: Scalanizer[plugin.global.type] = new Scalanizer[plugin.global.type] {
     def getGlobal: plugin.global.type = plugin.global
     val snConfig: ScalanizerConfig = new ScalanizerPluginConfig
-    val context = new AstContext(snConfig.unitConfigs)
+    val entityManagment: EntityManagement[plugin.global.type] = new EntityManagement(this)
+    val context = entityManagment.context
     val snState: ScalanizerState[plugin.global.type] = new ScalanizerPluginState(this)
   }
 

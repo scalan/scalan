@@ -16,11 +16,12 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
 
   val phaseName: String = FinalComponent.name
   override def description: String = "Code virtualization and specialization"
-
   val runsAfter = List(VirtFrontend.name)
 
   def showTree(prefix: String, name: String, tree: Tree) =
     saveDebugCode(prefix + "_" + name, showCode(tree))
+
+  val virtPipeline = new ModuleVirtualizationPipeline()(context)
 
   def newPhase(prev: Phase) = new StdPhase(prev) {
     def apply(unit: CompilationUnit): Unit = {
@@ -31,7 +32,7 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
         val moduleDef = snState.getModule(packageName, unitName)
 
         /** Generates a virtualized version of original Scala AST, wraps types by Rep[] and etc. */
-        val enrichedModuleDef = ModuleVirtualizationPipeline(moduleDef)
+        val enrichedModuleDef = virtPipeline(moduleDef)
 
         /** Scala AST of virtualized module */
         val optimizedImplicits = optimizeModuleImplicits(enrichedModuleDef)
