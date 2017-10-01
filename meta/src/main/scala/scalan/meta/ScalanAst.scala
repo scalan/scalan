@@ -784,6 +784,27 @@ object ScalanAst {
 
   type Entity = STraitOrClassDef
 
+  /** Gets module name by its entity. TODO: Should be a general solution. */
+  def mod(name: String) = name + "s"
+  /** Converts the name of external type to the name of its wrapper. */
+  def wrap(name: String) = "W" + name
+  /** Converts the name of external type to the name of the module which
+    * contains a wrapper for the type. */
+  def wmod(name: String) = "W" + mod(name)
+  /** Gets name of companion by entity name */
+  def comp(name: String) = name + "Companion"
+  /** Gets name of the target package to put wrapper based on original package name */
+  def wrapPackage(packageName: String) = packageName
+
+  /** Classification of external types by their names. */
+  def isPrimitive(name: String): Boolean = {
+    STpePrimitives.keySet.contains(name)
+  }
+  def isStandardType(name: String): Boolean = {
+    Set("Tuple", "Function").exists(name.startsWith(_)) ||
+      Set("ClassTag").contains(name)
+  }
+
   class AstContext(val configs: List[CodegenConfig]) {
 
     /** Mapping of external type names to their wrappers. */
@@ -792,19 +813,23 @@ object ScalanAst {
     val modules = MMap[String, SModuleDef]()
 
     def isEntity(name: String): Boolean = {
-      ??? //snConfig.concreteClassesOfEntity.keySet.contains(name)
+      val res = for (m <- modules.values; e <- m.entities if e.name == name) yield ()
+      res.nonEmpty
     }
     def isEntityCompanion(name: String): Boolean = {
-      ??? //snConfig.concreteClassesOfEntity.keys.map(comp(_)).toSet.contains(name)
+      val res = for (m <- modules.values; e <- m.entities; c <- e.companion if c.name == name) yield ()
+      res.nonEmpty
     }
     def isClass(name: String): Boolean = {
-      ??? //snConfig.concreteClassesOfEntity.values.flatten.toSet.contains(name)
+      val res = for (m <- modules.values; c <- m.concreteSClasses if c.name == name) yield ()
+      res.nonEmpty
     }
     def isClassCompanion(name: String): Boolean = {
-      ??? //snConfig.concreteClassesOfEntity.values.flatten.map(comp(_)).toSet.contains(name)
+      val res = for (m <- modules.values; c <- m.concreteSClasses; comp <- c.companion if comp.name == name) yield ()
+      res.nonEmpty
     }
     def isModule(name: String): Boolean = {
-      ??? //snConfig.concreteClassesOfEntity.keys.map(mod(_)).toSet.contains(name)
+      modules.valuesIterator.map(_.name).toSet.contains(name)
     }
 
     def allModules: Iterator[SModuleDef] = wrappers.valuesIterator.map(_.module) ++ modules.valuesIterator

@@ -46,8 +46,8 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
   private def unitConfig(name: String, entityFile: String) =
     CodegenConfig(
       name = name, entityFile = entityFile,
-      srcPath = "/",
-      baseContextTrait = "", // used like this: trait ${module.name}Defs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
+      srcPath = "librarydef/src/main/scala",
+      baseContextTrait = "scalan.Scalan", // used like this: trait ${module.name}Defs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
       extraImports = List(
         "scala.reflect.runtime.universe._",
         "scala.reflect._"
@@ -58,7 +58,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
 
   /** A list of scalan modules that should be virtualized by scalan-meta. */
   val unitConfigs = List(
-    unitConfig("Cols.scala", "Cols.scala")
+    unitConfig("Cols.scala", "scalanizer/collections/Cols.scala")
   )
   def getUnitConfig(unitName: String) = unitConfigs.find(_.name == unitName).getOrElse{
     sys.error(s"Cannot fing UnitConfig for '$unitName'")
