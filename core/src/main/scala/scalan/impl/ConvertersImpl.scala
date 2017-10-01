@@ -58,21 +58,21 @@ trait ConvertersDefs extends Converters {
     proxyOps[ConverterCompanionCtor](p)
 
   case class IdentityConvCtor[A]
-      ()(implicit eA: Elem[A])
+      ()(implicit eT: Elem[A])
     extends IdentityConv[A]() with Def[IdentityConv[A]] {
     lazy val selfType = element[IdentityConv[A]]
   }
   // elem for concrete class
-  class IdentityConvElem[A](val iso: Iso[IdentityConvData[A], IdentityConv[A]])(implicit val eA: Elem[A])
+  class IdentityConvElem[A](val iso: Iso[IdentityConvData[A], IdentityConv[A]])(implicit override val eT: Elem[A])
     extends ConverterElem[A, A, IdentityConv[A]]
     with ConcreteElem[IdentityConvData[A], IdentityConv[A]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(element[A], element[A]))
-    override lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
+    override lazy val typeArgs = TypeArgs("A" -> (eT -> scalan.util.Invariant))
 
     override def convertConverter(x: Rep[Converter[A, A]]) = IdentityConv()
     override def getDefaultRep = IdentityConv()
     override lazy val tag = {
-      implicit val tagA = eA.tag
+      implicit val tagA = eT.tag
       weakTypeTag[IdentityConv[A]]
     }
   }
@@ -81,7 +81,7 @@ trait ConvertersDefs extends Converters {
   type IdentityConvData[A] = Unit
 
   // 3) Iso for concrete class
-  class IdentityConvIso[A](implicit eA: Elem[A])
+  class IdentityConvIso[A](implicit eT: Elem[A])
     extends EntityIso[IdentityConvData[A], IdentityConv[A]] with Def[IdentityConvIso[A]] {
     override def from(p: Rep[IdentityConv[A]]) =
       ()
@@ -91,29 +91,29 @@ trait ConvertersDefs extends Converters {
     }
     lazy val eFrom = UnitElement
     lazy val eTo = new IdentityConvElem[A](self)
-    lazy val selfType = new IdentityConvIsoElem[A](eA)
+    lazy val selfType = new IdentityConvIsoElem[A](eT)
     def productArity = 1
-    def productElement(n: Int) = eA
+    def productElement(n: Int) = eT
   }
-  case class IdentityConvIsoElem[A](eA: Elem[A]) extends Elem[IdentityConvIso[A]] {
-    def getDefaultRep = reifyObject(new IdentityConvIso[A]()(eA))
+  case class IdentityConvIsoElem[A](eT: Elem[A]) extends Elem[IdentityConvIso[A]] {
+    def getDefaultRep = reifyObject(new IdentityConvIso[A]()(eT))
     lazy val tag = {
-      implicit val tagA = eA.tag
+      implicit val tagA = eT.tag
       weakTypeTag[IdentityConvIso[A]]
     }
-    lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
+    lazy val typeArgs = TypeArgs("A" -> (eT -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class IdentityConvCompanionCtor extends CompanionDef[IdentityConvCompanionCtor] {
     def selfType = IdentityConvCompanionElem
     override def toString = "IdentityConvCompanion"
     @scalan.OverloadId("fromData")
-    def apply[A](p: Rep[IdentityConvData[A]])(implicit eA: Elem[A]): Rep[IdentityConv[A]] = {
+    def apply[A](p: Rep[IdentityConvData[A]])(implicit eT: Elem[A]): Rep[IdentityConv[A]] = {
       isoIdentityConv[A].to(p)
     }
 
     @scalan.OverloadId("fromFields")
-    def apply[A]()(implicit eA: Elem[A]): Rep[IdentityConv[A]] =
+    def apply[A]()(implicit eT: Elem[A]): Rep[IdentityConv[A]] =
       mkIdentityConv()
 
     def unapply[A](p: Rep[Converter[A, A]]) = unmkIdentityConv(p)
@@ -132,15 +132,15 @@ trait ConvertersDefs extends Converters {
   implicit def proxyIdentityConv[A](p: Rep[IdentityConv[A]]): IdentityConv[A] =
     proxyOps[IdentityConv[A]](p)
 
-  implicit class ExtendedIdentityConv[A](p: Rep[IdentityConv[A]])(implicit eA: Elem[A]) {
+  implicit class ExtendedIdentityConv[A](p: Rep[IdentityConv[A]])(implicit eT: Elem[A]) {
     def toData: Rep[IdentityConvData[A]] = {
-      isoIdentityConv(eA).from(p)
+      isoIdentityConv(eT).from(p)
     }
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoIdentityConv[A](implicit eA: Elem[A]): Iso[IdentityConvData[A], IdentityConv[A]] =
-    reifyObject(new IdentityConvIso[A]()(eA))
+  implicit def isoIdentityConv[A](implicit eT: Elem[A]): Iso[IdentityConvData[A], IdentityConv[A]] =
+    reifyObject(new IdentityConvIso[A]()(eT))
 
   case class BaseConverterCtor[T, R]
       (override val convFun: Rep[T => R])
@@ -459,19 +459,19 @@ implicit val eC = conv2.elem.typeArgs("R")._1.asElem[C]
     lazy val selfType = element[ComposeConverter[A, B, C]]
   }
   // elem for concrete class
-  class ComposeConverterElem[A, B, C](val iso: Iso[ComposeConverterData[A, B, C], ComposeConverter[A, B, C]])(implicit val eA: Elem[A], val eB: Elem[B], val eC: Elem[C])
+  class ComposeConverterElem[A, B, C](val iso: Iso[ComposeConverterData[A, B, C], ComposeConverter[A, B, C]])(implicit override val eT: Elem[A], val eB: Elem[B], override val eR: Elem[C])
     extends ConverterElem[A, C, ComposeConverter[A, B, C]]
     with ConcreteElem[ComposeConverterData[A, B, C], ComposeConverter[A, B, C]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(element[A], element[C]))
-    override lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant), "C" -> (eC -> scalan.util.Invariant))
+    override lazy val typeArgs = TypeArgs("A" -> (eT -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant), "C" -> (eR -> scalan.util.Invariant))
 
     override def convertConverter(x: Rep[Converter[A, C]]) = // Converter is not generated by meta
 !!!("Cannot convert from Converter to ComposeConverter: missing fields List(conv2, conv1)")
     override def getDefaultRep = ComposeConverter(element[Converter[B, C]].defaultRepValue, element[Converter[A, B]].defaultRepValue)
     override lazy val tag = {
-      implicit val tagA = eA.tag
+      implicit val tagA = eT.tag
       implicit val tagB = eB.tag
-      implicit val tagC = eC.tag
+      implicit val tagC = eR.tag
       weakTypeTag[ComposeConverter[A, B, C]]
     }
   }
@@ -480,7 +480,7 @@ implicit val eC = conv2.elem.typeArgs("R")._1.asElem[C]
   type ComposeConverterData[A, B, C] = (Converter[B, C], Converter[A, B])
 
   // 3) Iso for concrete class
-  class ComposeConverterIso[A, B, C](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
+  class ComposeConverterIso[A, B, C](implicit eT: Elem[A], eB: Elem[B], eR: Elem[C])
     extends EntityIso[ComposeConverterData[A, B, C], ComposeConverter[A, B, C]] with Def[ComposeConverterIso[A, B, C]] {
     override def from(p: Rep[ComposeConverter[A, B, C]]) =
       (p.conv2, p.conv1)
@@ -490,23 +490,23 @@ implicit val eC = conv2.elem.typeArgs("R")._1.asElem[C]
     }
     lazy val eFrom = pairElement(element[Converter[B, C]], element[Converter[A, B]])
     lazy val eTo = new ComposeConverterElem[A, B, C](self)
-    lazy val selfType = new ComposeConverterIsoElem[A, B, C](eA, eB, eC)
+    lazy val selfType = new ComposeConverterIsoElem[A, B, C](eT, eB, eR)
     def productArity = 3
     def productElement(n: Int) = n match {
-      case 0 => eA
+      case 0 => eT
       case 1 => eB
-      case 2 => eC
+      case 2 => eR
     }
   }
-  case class ComposeConverterIsoElem[A, B, C](eA: Elem[A], eB: Elem[B], eC: Elem[C]) extends Elem[ComposeConverterIso[A, B, C]] {
-    def getDefaultRep = reifyObject(new ComposeConverterIso[A, B, C]()(eA, eB, eC))
+  case class ComposeConverterIsoElem[A, B, C](eT: Elem[A], eB: Elem[B], eR: Elem[C]) extends Elem[ComposeConverterIso[A, B, C]] {
+    def getDefaultRep = reifyObject(new ComposeConverterIso[A, B, C]()(eT, eB, eR))
     lazy val tag = {
-      implicit val tagA = eA.tag
+      implicit val tagA = eT.tag
       implicit val tagB = eB.tag
-      implicit val tagC = eC.tag
+      implicit val tagC = eR.tag
       weakTypeTag[ComposeConverterIso[A, B, C]]
     }
-    lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant), "C" -> (eC -> scalan.util.Invariant))
+    lazy val typeArgs = TypeArgs("A" -> (eT -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant), "C" -> (eR -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class ComposeConverterCompanionCtor extends CompanionDef[ComposeConverterCompanionCtor] {
@@ -550,8 +550,8 @@ implicit val eC = p.conv2.elem.typeArgs("R")._1.asElem[C]
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoComposeConverter[A, B, C](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Iso[ComposeConverterData[A, B, C], ComposeConverter[A, B, C]] =
-    reifyObject(new ComposeConverterIso[A, B, C]()(eA, eB, eC))
+  implicit def isoComposeConverter[A, B, C](implicit eT: Elem[A], eB: Elem[B], eR: Elem[C]): Iso[ComposeConverterData[A, B, C], ComposeConverter[A, B, C]] =
+    reifyObject(new ComposeConverterIso[A, B, C]()(eT, eB, eR))
 
   case class FunctorConverterCtor[A, B, F[_]]
       (override val itemConv: Conv[A, B])(implicit F: Functor[F])
@@ -561,11 +561,11 @@ implicit val eB = itemConv.elem.typeArgs("R")._1.asElem[B]
     lazy val selfType = element[FunctorConverter[A, B, F]]
   }
   // elem for concrete class
-  class FunctorConverterElem[A, B, F[_]](val iso: Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]])(implicit val eA: Elem[A], val eB: Elem[B], val F: Functor[F])
+  class FunctorConverterElem[A, B, F[_]](val iso: Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]])(implicit val F: Functor[F], val eA: Elem[A], val eB: Elem[B])
     extends ConverterElem[F[A], F[B], FunctorConverter[A, B, F]]
     with ConcreteElem[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(element[F[A]], element[F[B]]))
-    override lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant))
+    override lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant), "F" -> (F -> scalan.util.Invariant))
 
     override def convertConverter(x: Rep[Converter[F[A], F[B]]]) = // Converter is not generated by meta
 !!!("Cannot convert from Converter to FunctorConverter: missing fields List(itemConv)")
@@ -581,7 +581,7 @@ implicit val eB = itemConv.elem.typeArgs("R")._1.asElem[B]
   type FunctorConverterData[A, B, F[_]] = Converter[A, B]
 
   // 3) Iso for concrete class
-  class FunctorConverterIso[A, B, F[_]](implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
+  class FunctorConverterIso[A, B, F[_]](implicit F: Functor[F], eA: Elem[A], eB: Elem[B])
     extends EntityIso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] with Def[FunctorConverterIso[A, B, F]] {
     override def from(p: Rep[FunctorConverter[A, B, F]]) =
       p.itemConv
@@ -591,22 +591,22 @@ implicit val eB = itemConv.elem.typeArgs("R")._1.asElem[B]
     }
     lazy val eFrom = element[Converter[A, B]]
     lazy val eTo = new FunctorConverterElem[A, B, F](self)
-    lazy val selfType = new FunctorConverterIsoElem[A, B, F](eA, eB, F)
+    lazy val selfType = new FunctorConverterIsoElem[A, B, F](F, eA, eB)
     def productArity = 3
     def productElement(n: Int) = n match {
-      case 0 => eA
-      case 1 => eB
-      case 2 => F
+      case 0 => F
+      case 1 => eA
+      case 2 => eB
     }
   }
-  case class FunctorConverterIsoElem[A, B, F[_]](eA: Elem[A], eB: Elem[B], F: Functor[F]) extends Elem[FunctorConverterIso[A, B, F]] {
-    def getDefaultRep = reifyObject(new FunctorConverterIso[A, B, F]()(eA, eB, F))
+  case class FunctorConverterIsoElem[A, B, F[_]](F: Functor[F], eA: Elem[A], eB: Elem[B]) extends Elem[FunctorConverterIso[A, B, F]] {
+    def getDefaultRep = reifyObject(new FunctorConverterIso[A, B, F]()(F, eA, eB))
     lazy val tag = {
       implicit val tagA = eA.tag
       implicit val tagB = eB.tag
       weakTypeTag[FunctorConverterIso[A, B, F]]
     }
-    lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant))
+    lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant), "B" -> (eB -> scalan.util.Invariant), "F" -> (F -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class FunctorConverterCompanionCtor extends CompanionDef[FunctorConverterCompanionCtor] with FunctorConverterCompanion {
@@ -637,13 +637,13 @@ implicit val eB = itemConv.elem.typeArgs("R")._1.asElem[B]
     def toData: Rep[FunctorConverterData[A, B, F]] = {
       implicit val eA = p.itemConv.elem.typeArgs("T")._1.asElem[A];
 implicit val eB = p.itemConv.elem.typeArgs("R")._1.asElem[B]
-      isoFunctorConverter(eA, eB, F).from(p)
+      isoFunctorConverter(F, eA, eB).from(p)
     }
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoFunctorConverter[A, B, F[_]](implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] =
-    reifyObject(new FunctorConverterIso[A, B, F]()(eA, eB, F))
+  implicit def isoFunctorConverter[A, B, F[_]](implicit F: Functor[F], eA: Elem[A], eB: Elem[B]): Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] =
+    reifyObject(new FunctorConverterIso[A, B, F]()(F, eA, eB))
 
   case class NaturalConverterCtor[A, F[_], G[_]]
       (override val convFun: Rep[F[A] => G[A]])(implicit eA: Elem[A], cF: Cont[F], cG: Cont[G])
@@ -764,7 +764,7 @@ implicit val eB = p.itemConv.elem.typeArgs("R")._1.asElem[B]
   }
 
   def mkIdentityConv[A]
-    ()(implicit eA: Elem[A]): Rep[IdentityConv[A]] = {
+    ()(implicit eT: Elem[A]): Rep[IdentityConv[A]] = {
     new IdentityConvCtor[A]()
   }
   def unmkIdentityConv[A](p: Rep[Converter[A, A]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -955,7 +955,7 @@ implicit val eB = p.itemConv.elem.typeArgs("R")._1.asElem[B]
   }
 
   def mkFunctorConverter[A, B, F[_]]
-    (itemConv: Conv[A, B])(implicit F: Functor[F]): Rep[FunctorConverter[A, B, F]] = {
+    (itemConv: Conv[A, B])(implicit F: Functor[F], cF: Cont[F]): Rep[FunctorConverter[A, B, F]] = {
     new FunctorConverterCtor[A, B, F](itemConv)
   }
   def unmkFunctorConverter[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]) = p.elem.asInstanceOf[Elem[_]] match {
@@ -1027,7 +1027,7 @@ implicit val eB = p.itemConv.elem.typeArgs("R")._1.asElem[B]
 }
 
 object ConvertersModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAO1ZXWgcRRyf21xyySX9Sk201WoaT1qr5JogRIggd9cktpxJmjsixNIytzeJ0+6Xu3PxTkrxqYh9qz6o4ENBEKRYpC+iImIRxIc++SJ9EJWCIIr0wVLB4szs997u3kdo+1D7sNxuZn7z//8+5m6nF/8AvYYOxgwRSlCZkBGBEyX+OWeQTOlFtVqT0CG09ot6efj8uVsfC2D7KtiCjRWskxqU8OuougpG1FOzMiaLOl43J5R1iEkRbJlVCCaNjMwfEnCgaC6TZctkw5bJWDNmimC43NBQqaGoCpYdhGxrBO80CvPASzrUNKQHSplsDeSfSKEGoCIig6i6QcBec35WVCUJiQSrShbLco3AioSyRWwQOn67qCqijggqFSRoGMh4FZwBySLoRwwSO/cD/L6xqLm4zXVxSmlZDNccv4w03mdDJmCrVc6ixkqhY1JY1lSd2EukKNwratW+TSqQPgDDxZNwA2bpEuvZEtGxsk5nblP9MrIpfUUwqEHxFFxHC3Qme5SifRhIWmN08yF1LQE0TaNmmuK1TLjUTDjUTDBqMiWkY+YdyP64pKv1BjD/JXoAqDOIp1tA2AhoVqlm3jomvnyzNCgLbHKd9zhAMR6L8DQXgzL53fJ548b8hWkBpFdBGhu5ikF0KBKv0BZfg1BRVMLLdSiE+jrVazxKL75Kjo6hlCYrarVhiy2qsgYVimQRO0SVkrCICRvMnm2z9AllmUpJNGQPTVLSnX6jMszm5jRNalw5/dXpXx/5cYcAepgJ65ruge2hsDHtcCsUoCTRdgRiL05XTZtKlVQZ7Ri/gY9fOEcEkCiCRN3vr8XKSarkTF0HQ+YM06q38fS/17auEcESPrIJe/0vU19/89v155MCEPw8DdAGSrO0Kbs4AgYKqrKBdIJ0iyR23UVAIsc+pAO37DJUZ9fdgft0TGGOzvt+/7P67UFwjHfP3WHV4YAxmEGz+QVVQZm5pczfpe/fuch6Z39/kM/Y256B6ZLDz77/+RNo6RMB9K/ywM9JcJ1bmel6CBniKuhXKQHm89QGlNinUDunqmgN1iQ77V5iTWeMRTpDQ4z1GZZ/kHCazRAgoJxNcXJWQnKoCC7LQ9QxQ4er5ubGlOMwDht7opzB43Dpn/xHj+9++LYAUkdA7xpt0wjts7ei1pSqHT26QRNUJ3n7WdLfOY0a1KHs7NsbkO46dGsgYNRmo0awlF2xnlMOzH1sDLg88E+u53QwajXCpk4cVkxQknnqs4uv4atPzvEkmHzwhbcmPLwN8+uIzWGkwct+gy8HqH6uyeBe57HrPhAQM0W52pirKTZmD/36cbR5NFobOkX84fB7O7ftOfEzz2xfVZUh5rvffqqHTjcHzvf+utZu+d6iR2KCYn9nfnr27MhfH57YyXf6/gomMtQyBzvY5+1t+Q7u465jLDHce64A3c5G89BAjuIF7/qZCBWbI1mOi2TZQ3QUwHIcQLNSBGzxle0NNbtORSfGrWa61VB33eluoxNjIw2Va5qEnvni1vE333hB4zt809eNnwkhN+nzsJCbCnIbyKyQD8zIe2e4V7Xz7Pay7E46urHOW1Rr1eJ1QijoVCzoVFsNpT3CHG0nBksQ65uLQQ/KuXQ029imIy4IFGIqFqJJ7xCIfGwVISKEQMRWEUI5DaSPwPYD6aWlVSK9/bccm+8A19NR11G3CctUYDCErWMbMbHN9F6539M7UqrJ/4e3+/AOefm7f7MbfIUr+KlKPNRlzuIikchHr9lldINt5MMz5urc4tdd2y9cUQD5OIB8GwCFOIBCU3sEbGebgNrdL0S3o5a/EPPtD3Wr3LRL51pJEDYo1ASJlc4d3Y8Jkh3TbcqBHe7yu9hrH32x2uzbyr32s6UNHZyyOgoKHOboYPP33NFz7S1+Imj8u5eB+ZhBbgbe7TwDMecW7HrkDpR513dt0XEpCziJsWgUwHwcwHyYxxcgqelQusMeb8e4zBhvhzq3Ffr8ptC9hHiAjoLojPQcQmt+crs9wTPz8FN4HpynnW7bw3H7te9AvQO5N3OM47Z6zScJG532U0d93Gce4FhN62A84kCnZJ3EUTXO3Pxg4cDVy9f50WSanempClKc/zdzD/CCBzx9Jp5HABoedsT3H2qtUDhSHQAA"
+  val dump = "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"
 }
 }
 

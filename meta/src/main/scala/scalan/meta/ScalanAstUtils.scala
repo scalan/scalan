@@ -80,7 +80,7 @@ object ScalanAstUtils {
 
   def genClassArg(argPrefix: String, argName: String, descName: String, descArg: STpeExpr) = {
     SClassArg(impFlag = true,
-      overFlag = false, valFlag = false,
+      overFlag = false, valFlag = true,
       name = argPrefix + argName,
       tpe = STraitCall(descName, List(descArg)),
       default = None, annotations = Nil, isTypeDesc = true)
@@ -93,7 +93,7 @@ object ScalanAstUtils {
     else genContClassArg(argName, tpe)
   }
   def genImplicitClassArg(tyArg: STpeArg): SClassArg =
-    genImplicitClassArg(tyArg.isHighKind, tyArg.name, tyArg.toTraitCall)
+    genImplicitClassArg(tyArg.isHighKind, tyArg.name, STraitCall(tyArg.name)) // don't use toTraitCall here
 
   /**
     * Example:

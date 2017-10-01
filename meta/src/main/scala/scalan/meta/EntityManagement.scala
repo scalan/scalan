@@ -19,6 +19,15 @@ class Parsers(val configs: List[CodegenConfig]) extends ScalanParsersEx[Global] 
   initCompiler()
 }
 
+class EnrichPipeline(implicit val context: AstContext) extends (SModuleDef => SModuleDef) {
+  val moduleBuilder = new SModuleBuilder()
+  import moduleBuilder._
+  private val chain = scala.Function.chain(Seq(
+    genClassesImplicits _
+  ))
+  override def apply(module: Module): Module = chain(module)
+}
+
 class EntityManagement[G <: Global](val parsers: ScalanParsers[G]) extends LazyLogging {
   import parsers._
   def configs = parsers.context.configs
@@ -41,16 +50,17 @@ class EntityManagement[G <: Global](val parsers: ScalanParsers[G]) extends LazyL
     }
   }).flatten.toMap
 
-  def getCodegen: MetaCodegen = ScalanCodegen
-
   def createFileGenerator(codegen: MetaCodegen, module: SModuleDef, config: CodegenConfig) =
     new ModuleFileGenerator(codegen, module, config)
+
+  val enrichPipeline = new EnrichPipeline()
 
   def generate(configName: String) = {
     entities.get(configName) match {
       case Some(man) =>
         println(s"  generating ${man.file}")
-        val g = createFileGenerator(getCodegen, man.module, man.config)
+        val enrichedModule = enrichPipeline(man.module)
+        val g = createFileGenerator(ScalanCodegen, enrichedModule, man.config)
         val implCode = g.emitImplFile
         saveEntity(man.file, implCode)
       case None =>

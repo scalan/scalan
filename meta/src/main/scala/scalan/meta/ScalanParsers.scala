@@ -254,7 +254,8 @@ trait ScalanParsers[G <: Global] {
     val isOverride = vd.mods.isAnyOverride
     val isVal = vd.mods.isParamAccessor
     val annotations = parseAnnotations(vd)((n,as) => new SArgAnnotation(n, as.map(parseExpr)))
-    SClassArg(vd.mods.isImplicit, isOverride, isVal, vd.name, tpe, default, annotations, false)
+    val isTypeDesc = TypeDescTpe.unapply(tpe).isDefined
+    SClassArg(vd.mods.isImplicit, isOverride, isVal, vd.name, tpe, default, annotations, isTypeDesc)
   }
 
   def classArgs(vds: List[ValDef])(implicit ctx: ParseCtx): SClassArgs = SClassArgs(vds.filter(!isEvidenceParam(_)).map(classArg))

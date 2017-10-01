@@ -17,9 +17,8 @@ trait Converters extends ViewsModule { self: Scalan =>
   }
   trait ConverterCompanion
 
-  abstract class IdentityConv[A](implicit val eA: Elem[A]) extends Converter[A, A] {
-    def eT: Elem[A] = eA
-    def eR: Elem[A] = eA
+  abstract class IdentityConv[A](implicit val eT: Elem[A]) extends Converter[A, A] {
+    def eR: Elem[A] = eT
     def apply(x: Rep[A]) = x
     override val convFun = identityFun[A]
     override def isIdentity = true

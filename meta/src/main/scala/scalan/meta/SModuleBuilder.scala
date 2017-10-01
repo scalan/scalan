@@ -206,7 +206,7 @@ class SModuleBuilder(implicit val context: AstContext) {
     }
     val newClasses = module.concreteSClasses.map { clazz =>
       val (definedElems, elemArgs) = genImplicitArgsForClass(module, clazz) partition isElemAlreadyDefined
-      val newImplicitArgs = SClassArgs(clazz.implicitArgs.args ++ elemArgs)
+      val newImplicitArgs = SClassArgs((clazz.implicitArgs.args ++ elemArgs).distinct)
       val newBody = definedElems.map(convertElemValToMethod) ++ clazz.body
 
       clazz.copy(implicitArgs = newImplicitArgs, body = newBody)
