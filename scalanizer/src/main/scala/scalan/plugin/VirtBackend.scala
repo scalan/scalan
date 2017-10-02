@@ -27,7 +27,7 @@ class VirtBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
 
   def getCombinedCakeHome(namespace: String) = {
     val namespacePath = namespace.split('.').mkString("/")
-    s"${snConfig.home}/src/main/scala/$namespacePath/impl"
+    s"${snConfig.targetModuleFolder}/src/main/scala/$namespacePath/impl"
   }
 
   /** Puts all modules to the cakes <name>Dsl, <name>DslStd and <name>DslExp.

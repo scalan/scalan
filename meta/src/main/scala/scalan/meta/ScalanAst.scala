@@ -812,6 +812,10 @@ object ScalanAst {
 
     val modules = MMap[String, SModuleDef]()
 
+    /** The types that shouldn't be Rep[].
+      * For example List("Elem", "Cont", "ClassTag") */
+    val typeClasses = Set("Elem", "Cont", "ClassTag", "Functor")
+
     def isEntity(name: String): Boolean = {
       val res = for (m <- modules.values; e <- m.entities if e.name == name) yield ()
       res.nonEmpty

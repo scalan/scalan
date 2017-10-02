@@ -8,8 +8,7 @@ import scalan.meta.ScalanAst.{WrapperConfig, NonWrapper}
 import scalan.meta.scalanizer.ScalanizerConfig
 
 class ScalanizerPluginConfig extends ScalanizerConfig {
-  /** The folder where the app is located and where the generated code will be stored. */
-  val home = "/Users/slesarenko/Projects/github/scalan/morphic/library"
+  val targetModuleFolder = "library"
 
   /** The flag indicates that generated code (virtualized code, boilerplate and type wrappers)
     * should be stored on the file system. */
@@ -29,19 +28,6 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     * inside virtualized code. */
   var saveMetaAst: Boolean    = true
   def withSaveMetaAst(b: Boolean): ScalanizerConfig = { saveMetaAst = b; this }
-
-  /** Mapping of entities and their concrete classes. */
-  val concreteClassesOfEntity = Map[String, Set[String]](
-//    "Num" -> Set("DoubleNum"),
-//    "NumMonoid" -> Set("PlusMonoid"),
-    "Col" -> Set("ColOverArray")
-//    "Vec" -> Set("DenseVec"),
-//    "Matr" -> Set("DenseMatr"),
-//    "MatrOp" -> Set("BaseMatrOp"),
-//    "LinearAlgebraOp" -> Set("LA")
-  )
-  /** The types that shouldn't be Rep[]. */
-  val typeClasses             = List("Elem", "Cont", "ClassTag")
 
   private def unitConfig(name: String, entityFile: String) =
     CodegenConfig(
@@ -66,8 +52,8 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
 
   val wrappersCodegenConfig = CodegenConfig(
     name = "Wrappers Config",
-    srcPath = "/",
-    entityFile = "",
+    srcPath = "librarydef/src/main/scala",
+    entityFile = "<shouldn't be used>",    // NOTE: there is no any wrapper source files
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scala.reflect._"

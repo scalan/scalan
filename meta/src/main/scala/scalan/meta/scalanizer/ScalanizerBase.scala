@@ -36,7 +36,7 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
     }
   }
 
-  def getWrappersHome = snConfig.home + "/src/main/scala"
+  def getWrappersHome = snConfig.targetModuleFolder + "/src/main/scala"
 
   def saveWrapperCode(packageName: String, fileName: String, wrapperCode: String) = {
     val packagePath = packageName.split('.').mkString("/")

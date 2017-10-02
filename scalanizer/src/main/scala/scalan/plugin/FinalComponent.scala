@@ -27,7 +27,6 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
     def apply(unit: CompilationUnit): Unit = {
       val unitName = unit.source.file.name
       if (isModuleUnit(unitName)) try {
-//        showTree("body", unitName, unit.body)
         val packageName = getModulePackage(unit)
         val moduleDef = snState.getModule(packageName, unitName)
 
@@ -39,13 +38,11 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
         val virtAst = genUDModuleFile(optimizedImplicits, unit.body)
         val nameOnly = Path(unitName).stripExtension
         saveWrapperCode(optimizedImplicits.packageName, nameOnly, showCode(virtAst))
-//        showTree("virtAst", unitName, virtAst)
 
         /** produce boilerplate code using ModuleFileGenerator
           * Note: we need enriched module with all implicits in there place for correct boilerplate generation */
         val boilerplateText = genUDModuleBoilerplateText(unitName, enrichedModuleDef)
         saveWrapperCode(enrichedModuleDef.packageName + ".impl", nameOnly + "Impl", boilerplateText)
-//        showTree("boilerplate", unitName, boilerplate)
 
         /** Checking of user's extensions like SegmentDsl, SegmentDslStd and SegmentDslExp */
 //        val extensions: List[Tree] = getExtensions(moduleDef)

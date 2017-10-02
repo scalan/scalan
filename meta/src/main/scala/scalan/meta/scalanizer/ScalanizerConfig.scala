@@ -4,8 +4,9 @@ import scalan.meta.CodegenConfig
 import scalan.meta.ScalanAst.{WrapperConfig, NonWrapper}
 
 trait ScalanizerConfig {
-  /** The folder where the app is located and where the generated code will be stored. */
-  def home: String
+  /** The folder of the module where the generated code will be stored.
+    * This folder is relative to the project root folder. */
+  def targetModuleFolder: String
 
   /** The flag indicates that generated code (virtualized code, boilerplate and type wrappers)
     * should be stored on the file system. */
@@ -25,14 +26,6 @@ trait ScalanizerConfig {
     * inside virtualized code. */
   def saveMetaAst: Boolean
   def withSaveMetaAst(b: Boolean): ScalanizerConfig
-
-  /** Mapping of entities and their concrete classes.
-    * For example "Vec" -> Set("DenseVec", "SparseVec") */
-  def concreteClassesOfEntity: Map[String, Set[String]]
-
-  /** The types that shouldn't be Rep[].
-    * For example List("Elem", "Cont", "ClassTag") */
-  def typeClasses: List[String]
 
   /** Config for Scalan Codegen. */
   def unitConfigs: List[CodegenConfig]

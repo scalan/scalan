@@ -21,7 +21,7 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
   }
 
   def saveDebugCode(fileName: String, code: String) = {
-    val folder = new File(snConfig.home)
+    val folder = new File("library")  // this is the root of 'library' module
     val file = FileUtil.file(folder, "debug", fileName)
     file.mkdirs()
     FileUtil.write(file, code)
@@ -34,8 +34,6 @@ trait Enricher[G <: Global] extends ScalanizerBase[G] {
     implFile.mkdirs()
     FileUtil.write(implFile, implCode)
   }
-
-//  def eraseModule(module: SModuleDef) = module
 
   class ModuleVirtualizationPipeline(implicit val context: AstContext) extends (SModuleDef => SModuleDef) {
     val moduleBuilder = new SModuleBuilder()

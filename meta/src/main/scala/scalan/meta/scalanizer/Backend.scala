@@ -300,10 +300,10 @@ trait Backend[G <: Global] extends ScalanizerBase[G] {
 
   def repTypeExpr(tpeExpr: STpeExpr)(implicit ctx: GenCtx) = tpeExpr match {
     case STpePrimitive(name: String, _) => tq"Rep[${TypeName(name)}]"
-    case STraitCall(name: String, tpeSExprs: List[STpeExpr]) =>
-      val targs = tpeSExprs.map(genTypeExpr)
+    case STraitCall(name: String, args: List[STpeExpr]) =>
+      val targs = args.map(genTypeExpr)
       val appliedType = tq"${TypeName(name)}[..$targs]"
-      if (snConfig.typeClasses.contains(name))
+      if (ctx.module.context.typeClasses.contains(name))
         appliedType
       else
         tq"Rep[$appliedType]"
