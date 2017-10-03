@@ -11,7 +11,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait SpecializationsDefs extends scalan.Scalan with Specializations {
+trait SpecializationsDefs extends Specializations {
   self: Scalan =>
 
   // entityProxy: single proxy for each type family
@@ -26,7 +26,7 @@ trait SpecializationsDefs extends scalan.Scalan with Specializations {
     def eR = _eR
     def eM = _eM
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = TypeArgs("T" -> (eT -> scalan.util.Invariant), "R" -> (eR -> scalan.util.Invariant), "M" -> (eM -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("T" -> (eT -> scalan.util.Invariant), "R" -> (eR -> scalan.util.Invariant), "M" -> (eM -> scalan.util.Invariant))
     override lazy val tag = {
       implicit val tagT = eT.tag
       implicit val tagR = eR.tag
@@ -76,7 +76,7 @@ implicit val eM = metric.elem.eRange
     extends IsoFuncElem[T, R, M, IsoFuncBase[T, R, M]]
     with ConcreteElem[IsoFuncBaseData[T, R, M], IsoFuncBase[T, R, M]] {
     override lazy val parent: Option[Elem[_]] = Some(isoFuncElement(element[T], element[R], element[M]))
-    override lazy val typeArgs = TypeArgs("T" -> (eT -> scalan.util.Invariant), "R" -> (eR -> scalan.util.Invariant), "M" -> (eM -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("T" -> (eT -> scalan.util.Invariant), "R" -> (eR -> scalan.util.Invariant), "M" -> (eM -> scalan.util.Invariant))
 
     override def convertIsoFunc(x: Rep[IsoFunc[T, R, M]]) = IsoFuncBase(x.func, x.metric)
     override def getDefaultRep = IsoFuncBase(constFun[T, R](element[R].defaultRepValue), constFun[T, M](element[M].defaultRepValue))
@@ -118,7 +118,7 @@ implicit val eM = metric.elem.eRange
       implicit val tagM = eM.tag
       weakTypeTag[IsoFuncBaseIso[T, R, M]]
     }
-    lazy val typeArgs = TypeArgs("T" -> (eT -> scalan.util.Invariant), "R" -> (eR -> scalan.util.Invariant), "M" -> (eM -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("T" -> (eT -> scalan.util.Invariant), "R" -> (eR -> scalan.util.Invariant), "M" -> (eM -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class IsoFuncBaseCompanionCtor extends CompanionDef[IsoFuncBaseCompanionCtor] {
@@ -239,7 +239,7 @@ implicit val eM = p.metric.elem.eRange
 }
 
 object SpecializationsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWT2hcRRiffdlkk02atFtTsVqN6dpglN3qpUIOkrSJRDZ/yAtVYmuZfW92O+37M86bjW+l9NiDvRUvCh4KgiBBkV5ERIoiiIeevIgnlYIgivRgUbD4zby/m92XVdQ9DDuz3/zm+36/33yzOz+jQY+jKc/AFnYqNhG4oqvv854o6yuu2bLIKdL43r1Runb19/c0tH8L7aPeacpFC1v0NWJuoUn34qJNxRqnzWDDJsdU1NC+RUdQ0S7balGg2VpwTFUeU+11TDncMVdDpc02I3rbcR1qxwjV/gjpbQBz3wscM0b4rlSe6g/UuRGgRrBjEE+43BPo0WB/1XAtixiCuk6V2nZL4LpFqjXqCYjfb7iOwYkg+kkLex7xXkGXUb6GhomEpPF8RM3bayzB7c5LUQppSdwgfoMwVWfbFmg8TGeNyVQgpkBt5nIRHVEAuPOuGU3zDoYFVKpdwNu4Ckc0q7rg1GnCzgm3U0a5ZaiGRhk2LuImWYWdcqkAdXjEaki6VYjPcogxBmZ6WuVSSaipxNRUJDVlnXAqvYPlj+vc9dso+OQGEPIlxJN9ICIEsuiY5dfPGC/d1UdtTW72VY0jgPFIhqeVGMDklxvXvDvPXT+hoeIWKlJvvu4Jjg2RFjrkaxQ7jitUujGFmDdBr+ksvdQp8xADlObrrtmOxDZcm2EHkEJix0ApixpUyGC5NhHq05NlkFIwEoXmgfS43qw7LPfOM2a1P7/06aUfHvrmgIYGpAl9xlOwAwC7RznKCiexZUE5mogOh1OLgVK6a5MD03foy9evCg3laijnd/prrX4BlJzzORoLdgRWvUdP/PnteENoofCZRUTnf1K4+dmPt5/Na0jr5GkECtAXoagoOYEKy5671HKMkCI5PiBQblN+KcbTjc7piprKYcyX4+Fd8+IeWcaiz/z0i/nFcXRGUaGsEjH2t9wJEKVn3vr4MbL+voaGt9RtXrJwU/lUinaKeMYWGna3CQ/WC9vYkt96erVgkgZuWdFVTrMWyD6VKTsjktI5n8nbGZU/Gii46jqkvLRe/k3/6o0dKaD8/X6B8o2Ic+BzANpUXPTDWeoyInX6evnNgxNHzn2ntB0yXRtTdUtmamiQg4lU0jMhiZlKBlKpxWNx1nKYFWgITua0V3JyrGYB7/ZE6AQFqoKOplCO5XYdqpHNCCm/aBG7px3TWXcDbOwF0F12N8DKXgDd5Qk0Gt6dBeyRpE4p4pFsEcG3H/yx8O7Rww/e01DheTTYAEt6PT05WHdbjhn1QHgpBfHFQrSW73Qp9DzMsR0/oNsY2j/0aIEORc5tCWpVT4frgV/hM4USGtS3RFuODoWFyK2VZScAFeUnPtp5ld56fCloSTL4xWywhPuz/UITls+mqe7bEaKX/8MrVyZ/fefcQfVeDdepsDErH/8Hr1X0uPyPrxFKOaukxsn4rkEJnb77T9pzMJ7vatLqVsargRKpJyFt6T66Jfezr8T/3g1yNJPAMHpCZ8RI/jJ54bUeDx1jtkGhsKtNgpOmM5ykh9qBEpfvvr06e+vGbdVqi9IF0Myd+P9iIrnPOuUZCvBSfENPkab4C1DUGJZKDAAA"
+  val dump = "H4sIAAAAAAAAALVWT2hcRRiffdlkk02atKmpWK2m6dpglN3qpUIOkjSbEtn8IS9EWIth9u3sOu17b8b3ZuNbKT32YG/Fi4KHgiBIUKQXERGxCOKhJy/iqUpBEEV6sChY/Gben30vuy+roHsYdma/7zfz/X6/+Wb3fkGDroOmXQOb2C5aROCirr4vuKKgr7J6yyRLpPEDuzl5/dofH2jocBUdou42dUQLm/QNUq+iKXapbFGx7tCmn7DlYCoq6FDZFlS0C5ZaFGiu4m9TktuUem1TCDLmK2hyq82J3raZTa0IodQfIZ4GMA+95GDOibPvKM/2B0omAtQItg3iCua4Ap3080sGM01iCMrsErWslsA1k5Qq1BUQf9hgtuEQQfRzJnZd4r6GrqBsBQ0TCUmj+Yiat9d5B7f7XIpSOJbE9eM3CVd1ti2BxoPjrHN5FIjJUYszR4Rb5ADuVVYPp1kbwwKarFzEu7gEWzRLunCo3YTMCZaUUaYMVdAox8Yl3CRrkCmXclCHS8yGpFuFeDyDOOdgpufUWYodaooRNUVJTUEnDpXewfLHDYd5beR/MgMIeRLimT4QIQIp2/XCmxeMl+/ro5Ymkz1V4whgPJHiaSUGMPn15nX33vkbZzWUr6I8dRdqrnCwIeJCB3yNYttmQh03ohA7TdBrJk0vtcsCxACl2Rqrt0OxDWZxbANSQOwYKGVSgwoZLNcmAn16sgxSCk7C0CyQHtWbdodl7gLnZvvW5c8v//jYd0c0NCBN6HEnBjsAsAeUo6xwDpsmlKOJcHPYNe8rpTOLHJm5R1+5cU1oKFNBGS/pr/XaRVBy3nPQmJ/hW/UBPfvX9+MNoQXCpxYR7v9Z7osvf7r7QlZDWpKnEShAL0NR4eEEyq24bLllGwFFcnxEoMyW/JKPppvJ6aqaymHMk+PxffP8AaeMRJ/9+df6V2fQBUWFskrI2D9yJ0BMPv/Op0+SjQ81NFxVt3nZxE3lUynaEnGNKhpmu8Tx13O72JTfeno1VycN3DLDqxxnzZd9OlV2TiSl8x6XtzMsf9RXcI3ZpLC8Ufhd/+atPSmg/P1hgbKNkHPgcwDaVFT042nqciJ1+nbl7aMTJ3buKG2H6szCVN2S2QoadMBE6tCzAYmpSvpSqcXT0anlMCfQEOzs0F6Hk2MpDXi/JwInKFAVdCqGcjqTSW6qka0QKVs2idXTjvFTdwNs+tFyWNqX3l10d/pqenp3aQKNBvdmEbukU6MU8ES6gODZj/5cfP/U8UcfaCj3IhpsgB3dnn4crLGWXQ/7H7ySgnhiMVzLJh0K/Q472Ioez10MrR/6s0DHQte2BDVL28G671X4TKMOCdG386GHjwWVyNziiu2jisLTn+y9Tm8/tez3Ixm8fQBah7xq31i9Extnu29DCB/+j69enfrtvZ2j6rkarlFhYV448y8eq/Bt+R8fIxQz16Qap6KrBiUkrfefdGd/NLp6tLqU0aovRexFiLv6IOES1/NgjRNXsW9ozDn7i9lJ+gaiJ3ROjM4/Jje41+OBY+ptUChoalPgpJkUJ+mBdqDElfvvrs3dvnlXddq8dAH0cjv6u9iR3ONJeYZ8vBjf0NSkKf4GvHQLMUkMAAA="
 }
 }
 

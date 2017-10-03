@@ -23,7 +23,7 @@ trait StructItemsDefs extends StructItems {
     def eVal = _eVal
     def eSchema = _eSchema
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = TypeArgs("Val" -> (eVal -> scalan.util.Covariant), "Schema" -> (eSchema -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Val" -> (eVal -> scalan.util.Covariant), "Schema" -> (eSchema -> scalan.util.Invariant))
     override lazy val tag = {
       implicit val tagAnnotatedVal = eVal.tag
       implicit val tagSchema = eSchema.tag
@@ -71,7 +71,7 @@ implicit val eSchema = key.elem.typeArgs("Schema")._1.asElem[Schema]
     extends StructItemElem[Val, Schema, StructItemBase[Val, Schema]]
     with ConcreteElem[StructItemBaseData[Val, Schema], StructItemBase[Val, Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(structItemElement(element[Val], element[Schema]))
-    override lazy val typeArgs = TypeArgs("Val" -> (eVal -> scalan.util.Invariant), "Schema" -> (eSchema -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Val" -> (eVal -> scalan.util.Invariant), "Schema" -> (eSchema -> scalan.util.Invariant))
 
     override def convertStructItem(x: Rep[StructItem[Val, Schema]]) = StructItemBase(x.key, x.value)
     override def getDefaultRep = StructItemBase(element[StructKey[Schema]].defaultRepValue, element[Val].defaultRepValue)
@@ -110,7 +110,7 @@ implicit val eSchema = key.elem.typeArgs("Schema")._1.asElem[Schema]
       implicit val tagSchema = eSchema.tag
       weakTypeTag[StructItemBaseIso[Val, Schema]]
     }
-    lazy val typeArgs = TypeArgs("Val" -> (eVal -> scalan.util.Invariant), "Schema" -> (eSchema -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Val" -> (eVal -> scalan.util.Invariant), "Schema" -> (eSchema -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class StructItemBaseCompanionCtor extends CompanionDef[StructItemBaseCompanionCtor] {
@@ -202,7 +202,7 @@ implicit val eSchema = p.key.elem.typeArgs("Schema")._1.asElem[Schema]
 }
 
 object StructItemsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWXWgcVRS+O7vpZjfpT6KpWBXTZIpay271pUIQSdJEatckdEqUNSh3Z262t5mf6527cVZKwZc+WHwpPgk+FARBgiJ5KSJSFEF86Lv0rVIQpCJ9MChYPPfO726yG/PQfRhm7t7znXO+77tnZuMeGvA5GvdNbGO34hCBK4a6n/aFbrzuWS2bnCard7zN0WtX//5CQ4fqaD/1lykXLWzT94lVR2Pe2pxDxSKnzTDgPMdU1ND+OVdQ0dYdtSjQ8VqYpirTVHdKo0cRUzU0er7NiNF2PZc6CUJ1d4RsGMA8+gbHjBHeVcoLuwN1BgJUCbsm8YXHfYGOhvFV07NtYgrquVXqOC2BGzap1qgvYP8h03NNTgQxZm3s+8R/F11GhRoaJBKSJs8l9dxeZCnu9roUpVCWxA33nyNM9dl2BDoQlbPIZCmwp0gd5nERpygC3AXPih8LLoYFNFq7iNdxFVI0q4bg1G1C5EGvU0YZsq+Ghhg213CTLECkXCpCHz6xVyXdakvAcogxBmZ6UdVSSampJNRUJDW6QTiV3sHyzyXuBW0U/nJ5hAIJcWIXiBiBzLmW/uGK+daWMeRoMjhQPZYA4+kenlZiAJM/nbvm33/1+ikNleuoTP3phi84NkVW6IivIey6nlDlJhRi3gS9JnrppbJMwx6gtNDwrHYstuk5DLuAFBE7DErZ1KRCbpZrByN9dmQZpBSMxFsLQHrSb68zLGOnGbPbP1z67tKvT/4yoqG8NGHAeAY2D7B92lFWmMW2De1oIk4OWcuhUobnkJGJ+/Tt61eFhnI1lAs6/bXYuAhKTgUcDYcRoVUf0FP/3j6wKrRI+J5NxPm/Ld78/re7rxQ0pHXyVIIGjDloKi5OoDKYumWKM4I4EUvy+rhA+WVsy9tyvLDPMC8QB6s1eRkO5PVI13O5T4GJ3s/8/of140m0olhQLonJ+l/GBIjRlz755hhZ+lJDg3V1kOdt3FQWlXqdJr5ZR4PeOuHhenEd2/JuR5sWLbKKW3Z8irOEhYqP91ScEcnmVMDkwYzbHwrFW/Bcos8v6X8ZP3+8IbWT/z8GxK6RdkIyDKhO2kuhHmejPaX+7A+HR1lP0svLswINQL8t0jtLIm4WKgVQ245mQvRcV4ICAYQYrTBn93RPtspukCIJm+qD06ttGOepcWewT9K6pX2e6nVE1Fz46p+ZzyePPPFAQ8XX0MAq+MLf0RgDDa/lWvEMgjeVIIGYidcKnVaBmYM5dpIX2DqG8QszUqDDsX1agtrV5Wg9NA38xlHKibrLnj2ODketyODKGTeEFfrzNzbeo7eemw+Hgtx8tgNOLY2lNCqykkTl7cwubXNVv3MYv2q/vnJl7M/P3nlEvSAGG1Q4mOkn9/B6iKf5Qxz/KGOp0U5e8tBCp+G2z0OOJvu4KeyKWJObH9x7uXHiIzVzB1Sz6QxRt8fkuB1puUC7uUas2Ad7nLfhdWXb1FUnNtVXualzvGdPSOqX3F7sN+vF9hPYuult3ag/HPvJ65tpRVHIUJc0MEFGouoYp/BxTdeJHyXmaKKHaEbkFVD+8tanC8dvbd5VmpWl62Bku8kHYWqxoGt8FsNK/G69ZJKMMjDRpDP/A8IzkB1ADAAA"
+  val dump = "H4sIAAAAAAAAALVWX2gcRRif21x6uUv6J9FUrIppssVay131pUJQSdKktJ5J6NaIZ1Hmdueu0+w/d+finpSCL32w+FJ8EnwoCIIERfJSikhRBPGh7+KbUhCkIn0wKFj8ZmZnb/cul7SC9zDszc33+77v9/vNt7d+Bw2GAZoITWxjt+wQhsuGeJ4JmW684lktm5wgjZ+9jbGrV/76TEP7amg3DVdowFrYpu8Sq4bGvdV5h7KlgDZlwNkAU1ZFu+ddRllbd8QmQ0eqMk2Fp6lslUaPI6araOxs2ydG2/Vc6iQIlZ0R0mEA8/BrAfZ9EnSV8uzOQNlAgCpi1yQh84KQoYMyvmJ6tk1MRj23Qh2nxXDdJpUqDRmc32d6rhkQRow5G4chCd9Gl1C+ioYIh6TJ96L43l7yO7i9dQlKoSyOK8+fIb7os+0wtCcuZ8nnpcCZAnV8L2AqRQHgznuW+pp3MWygseoFvIYrkKJZMVhA3SZE7vWyMvKQXVU07GNzFTfJIkTyrQL0ERK7wekWRyI/h3zfBzM9J2opd6gpJ9SUOTW6QQLKvYP5j8uBF7WR/OQGEIo4xNEdIBQCmXct/f1z5hubxrCj8eBI9FgEjCf7eFqIAUx+f+ZqePfkteMaKtVQiYYz9ZAF2GRpoWO+hrHrekyUm1CIgyboNdlPL5FlBs4Apfm6Z7WV2Kbn+NgFpJjYEVDKpiZl/DDf2xvrsyXLICXziTqaB9KTfvvdYR474/t2+9uLX1/85fEfRzU0wE0Y+UEKdgBgt2lHWGEO2za0ozGVHLKWpFKG55DRybv0zWtXmIZyVZSLsv5aql8AJaejAI3ICGnVe/T4Pz/taTAtFr5vEyr/V4Wb3/x6+6W8hrQsT0VowJiHplRxDJXA1C2TnWLEiVni66MMDaxgmz+W1MYuwzxPHCz2+DIS8fVA1/fSNgUmej/12+/Wd8fQOcGCcIki676MCRBjz3904xBZ/lxDQzVxkRds3BQW5XqdIKFZQ0PeGgnkfmEN2/xpS5sWLNLALVvd4jRhUvGJvor7hLM5Hfn8Yqr2h6V4i55L9IVl/U/jhw/XuXb890eA2FXSTkiGAZWlvSj1eDk+U9ye/RF5lfUkPV8OMzQI/bZI/yyJuGmoDoA4djAVoudy2QR5AggKLT9v93VPuspukAKRTckgvrx4f03DMO/YdhaHpFM1N88T/S6ImApf/D376dSBx+5pqHAaDTbAFeGWthisey3XUhMI3lOMRGxW7eWzRoGJgwPsJK+vNQzDFyYkQ/uVeVqM2pWVeF9aBj4TqMNI8jSjrLQ/7oTHlk+5EpXpz1xff4feenpBTgR++HQGTWyNd1gUXCXoYjmZPC322Gm7C6jesV9evjz+xydvPSTeDEN1yhzs68ce4L2gxvj/OPdRyk1jWU4GoIWs13oHYYCmtjGS7IpYUxvv3XmhfvQDMWwHRbOd4SEeD/E5O9pywcvmKrGUBR5w0Mr19Z5xK65qVtvD2bmevhwdr+R6nJcupct6c56yHsPWTW/zeu0/Wq+3u8XuFl/N3gUIGe6SBkbHaFydH1D4V03XSBgnDtBkH9GM2Cug/KXNjxeP3Nq4LTQrcdfBrHaTf4Idi0Vdc7MgKwm79eJJUsrASOTO/Bfl16BWOQwAAA=="
 }
 }
 

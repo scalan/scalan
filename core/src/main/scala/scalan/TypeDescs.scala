@@ -40,7 +40,8 @@ trait TypeDescs extends Base { self: Scalan =>
     // classTag.runtimeClass is cheap, no reason to make it lazy
     final def runtimeClass: Class[_] = classTag.runtimeClass
 
-    def typeArgs: ListMap[String, (TypeDesc, Variance)]
+    def buildTypeArgs: ListMap[String, (TypeDesc, Variance)] = ListMap()
+    lazy val typeArgs: ListMap[String, (TypeDesc, Variance)] = buildTypeArgs
     def typeArgsIterator = typeArgs.valuesIterator.map(_._1)
     final def copyWithTypeArgs(args: Iterator[TypeDesc]) = {
       try {
@@ -213,7 +214,7 @@ trait TypeDescs extends Base { self: Scalan =>
       case _ => false
     }
 
-    lazy val typeArgs = {
+    override def buildTypeArgs = {
       assert(noTypeArgs)
       TypeArgs()
     }
@@ -236,7 +237,7 @@ trait TypeDescs extends Base { self: Scalan =>
       weakTypeTag[(A, B)]
     }
     override def getName(f: TypeDesc => String) = s"(${f(eFst)}, ${f(eSnd)})"
-    lazy val typeArgs = ListMap("A" -> (eFst -> Covariant), "B" -> (eSnd -> Covariant))
+    override def buildTypeArgs = ListMap("A" -> (eFst -> Covariant), "B" -> (eSnd -> Covariant))
     protected def getDefaultRep = Pair(eFst.defaultRepValue, eSnd.defaultRepValue)
   }
 
@@ -247,7 +248,7 @@ trait TypeDescs extends Base { self: Scalan =>
       weakTypeTag[A | B]
     }
     override def getName(f: TypeDesc => String) = s"(${f(eLeft)} | ${f(eRight)})"
-    lazy val typeArgs = ListMap("A" -> (eLeft -> Covariant), "B" -> (eRight -> Covariant))
+    override def buildTypeArgs = ListMap("A" -> (eLeft -> Covariant), "B" -> (eRight -> Covariant))
     protected def getDefaultRep = mkLeft[A, B](eLeft.defaultRepValue)(eRight)
   }
 
@@ -258,7 +259,7 @@ trait TypeDescs extends Base { self: Scalan =>
       weakTypeTag[A => B]
     }
     override def getName(f: TypeDesc => String) = s"${f(eDom)} => ${f(eRange)}"
-    lazy val typeArgs = ListMap("A" -> (eDom -> Contravariant), "B" -> (eRange -> Covariant))
+    override def buildTypeArgs = ListMap("A" -> (eDom -> Contravariant), "B" -> (eRange -> Covariant))
     protected def getDefaultRep = {
       val defaultB = eRange.defaultRepValue
       fun[A, B](_ => defaultB)(Lazy(eDom))
@@ -269,7 +270,7 @@ trait TypeDescs extends Base { self: Scalan =>
     protected def getDefaultRep = toRep(null.asInstanceOf[Any])(this)
     val tag = ReflectionUtil.createArgTypeTag(tyArg.name).asInstanceOf[WeakTypeTag[Any]]
     def argName = tyArg.name
-    lazy val typeArgs = {
+    override def buildTypeArgs = {
       assert(noTypeArgs)
       TypeArgs()
     }

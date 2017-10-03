@@ -121,14 +121,14 @@ object ScalanAstUtils {
   def classArgsAsSeenFromAncestors(module: SModuleDef, clazz: STraitOrClassDef) = {
     val subst: List[((STraitOrClassDef, STpeArg), STpeExpr)] = argsSubstOfAncestorEntities(module, clazz)
     val res = clazz.tpeArgs.map { clsTpeArg =>
-      val argTpe = STraitCall(clsTpeArg.name) // don't use toTraitCall here
-      val substOpt = subst.find { case ((e, eTpeArg), ancArg) => argTpe == ancArg }
-      substOpt match {
-        case Some(((e, eTpeArg), ancArg)) => // clsTpeArg is used as argument of at least one ancestor
-          (clsTpeArg, (e, eTpeArg))
-        case None =>
+//      val argTpe = STraitCall(clsTpeArg.name) // don't use toTraitCall here
+//      val substOpt = subst.find { case ((e, eTpeArg), ancArg) => argTpe == ancArg }
+//      substOpt match {
+//        case Some(((e, eTpeArg), ancArg)) => // clsTpeArg is used as argument of at least one ancestor
+//          (clsTpeArg, (e, eTpeArg))
+//        case None =>
           (clsTpeArg, (clazz, clsTpeArg))
-      }
+//      }
     }
     res
   }

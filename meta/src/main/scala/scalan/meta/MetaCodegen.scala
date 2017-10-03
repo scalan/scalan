@@ -317,10 +317,13 @@ class MetaCodegen {
     val extractableArgs: Map[String,(STpeArg, String)] =
       tyArgSubst.zip(extractionExprs)
         .collect { case (arg, Some(expr)) => (arg.name, (arg, expr)) }.toMap
-    val extractableImplicits: String = {
+    def extractableImplicits(inClassBody: Boolean): String = {
       extractableArgs.map { case (tyArgName, (arg, expr)) =>
         val kind = if (arg.isHighKind) "c" else "e"
-        s"implicit val $kind$tyArgName = $expr"
+        val name = kind + tyArgName
+        val isInheritedDefinition = entity.isInheritedDefined(name, module)
+        val over = if (inClassBody && isInheritedDefinition) " override" else ""
+        s"implicit$over val $name = $expr"
       }.mkString(";\n")
     }
 

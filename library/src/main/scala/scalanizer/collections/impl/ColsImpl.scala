@@ -19,7 +19,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
     extends EntityElem[To] {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("A" -> (eA -> scalan.util.Invariant))
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[Col[A]].asInstanceOf[WeakTypeTag[To]]
@@ -65,7 +65,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
     extends ColElem[A, ColOverArray[A]]
     with ConcreteElem[ColOverArrayData[A], ColOverArray[A]] {
     override lazy val parent: Option[Elem[_]] = Some(colElement(element[A]))
-    override lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("A" -> (eA -> scalan.util.Invariant))
 
     override def convertCol(x: Rep[Col[A]]) = ColOverArray(x.arr)
     override def getDefaultRep = ColOverArray(element[WArray[A]].defaultRepValue)
@@ -99,7 +99,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
       implicit val tagA = eA.tag
       weakTypeTag[ColOverArrayIso[A]]
     }
-    lazy val typeArgs = TypeArgs("A" -> (eA -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("A" -> (eA -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class ColOverArrayCompanionCtor extends CompanionDef[ColOverArrayCompanionCtor] with ColOverArrayCompanion {

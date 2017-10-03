@@ -26,7 +26,7 @@ trait Kinds extends Base { self: KindsModule =>
 
   abstract class Bind[F[_],S,B]
         (val a: Rep[Kind[F, S]], val f: Rep[S => Kind[F,B]]) extends Kind[F,B] {
-
+    val eA = f.elem.eRange.typeArgs("A")._1.asElem[B]
     override def flatMap[R](f1: Rep[B] => Rep[Kind[F,R]]): Rep[Kind[F,R]] = {
       a.flatMap((s: Rep[S]) => f(s).flatMap(f1))
     }

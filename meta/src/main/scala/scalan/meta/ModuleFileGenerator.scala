@@ -330,7 +330,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |    extends $parentElem {
         |${e.implicitArgs.rep(a => s"    ${(e.entity.isInheritedDeclared(a.name, e.module)).opt("override ")}def ${a.name} = _${a.name}", "\n")}
         |    ${overrideIfHasParent}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
-        |    ${overrideIfHasParent}lazy val typeArgs = TypeArgs(${e.tpeSubstStr})
+        |    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs(${e.tpeSubstStr})
         |    override lazy val tag = {
         |${implicitTagsFromElems(e)}
         |      weakTypeTag[${e.typeUse}].asInstanceOf[WeakTypeTag[$toArgName]]
@@ -405,7 +405,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
           s"""
             |  // default wrapper implementation
             |  abstract class ${e.name}Impl${tpeArgsDecl}(val wrappedValue: Rep[${e.baseTypeUse}])${c.optimizeImplicits().implicitArgsDecl("val ")} extends ${e.typeUse} with Def[${e.name}Impl${tpeArgsDecl}] {
-            |    ${c.extractionBuilder().extractableImplicits}
+            |    ${c.extractionBuilder().extractableImplicits(true)}
             |    lazy val selfType = element[${e.name}Impl${tpeArgsDecl}]
             |    $externalMethodsStr
             |  }
@@ -419,7 +419,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
             |  case class ${c.typeDecl("Ctor")}
             |      (${fieldsWithType.rep(f => s"override val $f")})${c.optimizeImplicits().implicitArgsDecl()}
             |    extends ${c.typeUse}(${fields.rep()})${clazz.selfType.opt(t => s" with ${t.tpe}")} with Def[${c.typeUse}] {
-            |    ${c.extractionBuilder().extractableImplicits}
+            |    ${c.extractionBuilder().extractableImplicits(true)}
             |    lazy val selfType = element[${c.typeUse}]
             |  }
             |""".stripAndTrim
@@ -497,7 +497,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |    extends ${parent.name}Elem[${join(parentTpeArgsStr, c.typeUse)}]
         |    with $concreteElemSuperType {
         |    override lazy val parent: Option[Elem[_]] = Some($parentElem)
-        |    override lazy val typeArgs = TypeArgs(${c.tpeSubstStr})
+        |    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs(${c.tpeSubstStr})
         |    ${e.isWrapper.opt("override lazy val eTo: Elem[_] = this")}
         |    override def convert${parent.name}(x: Rep[$parent]) = $converterBody
         |    override def getDefaultRep = $className(${fieldTypes.rep(zeroSExpr(e.entity)(_))})
@@ -531,7 +531,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |${implicitTagsFromElems(c)}
         |      weakTypeTag[${className}Iso$tpeArgsUse]
         |    }
-        |    lazy val typeArgs = TypeArgs(${c.tpeSubstStr})
+        |    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs(${c.tpeSubstStr})
         |  }
         |  // 4) constructor and deconstructor
         |  class ${c.companionAbsName} extends CompanionDef[${c.companionAbsName}]${hasCompanion.opt(s" with ${c.companionName}")} {
@@ -544,7 +544,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
           s"""
             |    @scalan.OverloadId("fromData")
             |    def apply${tpeArgsDecl}(p: Rep[$dataTpe])${c.optimizeImplicits().implicitArgsDecl()}: Rep[${c.typeUse}] = {
-            |      ${sb.extractableImplicits}
+            |      ${sb.extractableImplicits(false)}
             |      iso$className${c.tpeArgNames.opt(ns => s"[${ns.rep()}]")}.to(p)
             |    }
             """.stripAndTrim
@@ -572,7 +572,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |
         |  implicit class Extended${c.typeDecl}(p: Rep[${c.typeUse}])${c.optimizeImplicits().implicitArgsDecl()} {
         |    def toData: Rep[$dataTpe] = {
-        |      ${c.extractionBuilder(prefix = "p.").extractableImplicits}
+        |      ${c.extractionBuilder(prefix = "p.").extractableImplicits(false)}
         |      iso$className${c.implicitArgsUse}.from(p)
         |    }
         |  }

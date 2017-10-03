@@ -22,6 +22,7 @@ trait MetaTests { self: MetaTestsModule =>
   trait MT0Companion
 
   abstract class MT1[T](val data: Rep[T], val size: Rep[Int]) extends MetaTest[T] {
+    val elem = data.elem
     def test: RMetaTest[T] = ???
     def give: Rep[T] = ???
   }

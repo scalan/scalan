@@ -72,7 +72,7 @@ trait Structs extends Effects with StructItemsModule with StructKeysModule { sel
     lazy val fieldsString: String = fieldsString(_.name)
     def findFieldIndex(fieldName: String): Int = fields.iterator.map(_._1).indexOf(fieldName)
 
-    lazy val typeArgs = TypeArgs()
+    override def buildTypeArgs = TypeArgs()
     override protected def _copyWithTypeArgs(args: Iterator[TypeDesc]) = {
       val fields1 = for ((name, elem) <- fields) yield (name, args.next().asInstanceOf[Elem[_]])
       structElement(structTag, fields1)

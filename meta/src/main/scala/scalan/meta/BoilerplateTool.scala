@@ -14,7 +14,7 @@ class BoilerplateTool extends StrictLogging {
     CodegenConfig(
       name = name, entityFile = entityFile,
       srcPath = "../core/src/test/scala",
-      baseContextTrait = "")
+      baseContextTrait = "scalan.Scalan")
 
   lazy val viewsConfig           = coreMainConfig("views", "scalan/Views.scala")
   lazy val convertersConfig      = coreMainConfig("converters", "scalan/Converters.scala")

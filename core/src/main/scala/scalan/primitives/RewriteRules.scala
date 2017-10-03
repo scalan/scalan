@@ -19,7 +19,7 @@ trait RewriteRules extends Base { self: Scalan =>
       implicit val tag1 = eA.tag
       implicitly[WeakTypeTag[Rewrite[A]]]
     }
-    lazy val typeArgs = TypeArgs("A" -> (eA -> Invariant))
+    override def buildTypeArgs = TypeArgs("A" -> (eA -> Invariant))
   }
 
   implicit def rewriteElement[A](implicit eA: Elem[A]): Elem[Rewrite[A]] =

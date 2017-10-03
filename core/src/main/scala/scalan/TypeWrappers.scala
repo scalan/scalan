@@ -34,7 +34,7 @@ trait TypeWrappers extends GraphVizExport with Base { scalan: Scalan =>
             eItem == other.eItem)
       case _ => false
     }
-    override lazy val typeArgs =
+    override def buildTypeArgs =
       TypeArgs("A" -> (eItem -> Invariant), "CBase" -> (cont -> Invariant), "TWrapper" -> (wrapperElem -> Invariant))
   }
 

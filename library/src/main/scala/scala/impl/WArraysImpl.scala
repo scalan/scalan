@@ -66,7 +66,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
     extends WrapperElem1[T, To, Array, WArray](_eT, container[Array], container[WArray]) {
     def eT = _eT
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = TypeArgs("T" -> (eT -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("T" -> (eT -> scalan.util.Invariant))
     override lazy val tag = {
       implicit val tagT = eT.tag
       weakTypeTag[WArray[T]].asInstanceOf[WeakTypeTag[To]]
@@ -139,7 +139,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
     extends WArrayElem[T, WArrayImpl[T]]
     with ConcreteElem1[T, WArrayImplData[T], WArrayImpl[T], WArray] {
     override lazy val parent: Option[Elem[_]] = Some(wArrayElement(element[T]))
-    override lazy val typeArgs = TypeArgs("T" -> (eT -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("T" -> (eT -> scalan.util.Invariant))
     override lazy val eTo: Elem[_] = this
     override def convertWArray(x: Rep[WArray[T]]) = WArrayImpl(x.wrappedValue)
     override def getDefaultRep = WArrayImpl(DefaultOfArray[T])
@@ -173,7 +173,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
       implicit val tagT = eT.tag
       weakTypeTag[WArrayImplIso[T]]
     }
-    lazy val typeArgs = TypeArgs("T" -> (eT -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("T" -> (eT -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class WArrayImplCompanionCtor extends CompanionDef[WArrayImplCompanionCtor] {

@@ -19,7 +19,7 @@ trait StructKeysDefs extends StructKeys {
     extends EntityElem[To] {
     def eSchema = _eSchema
     lazy val parent: Option[Elem[_]] = None
-    lazy val typeArgs = TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
     override lazy val tag = {
       implicit val tagSchema = eSchema.tag
       weakTypeTag[StructKey[Schema]].asInstanceOf[WeakTypeTag[To]]
@@ -64,7 +64,7 @@ trait StructKeysDefs extends StructKeys {
     extends StructKeyElem[Schema, IndexStructKey[Schema]]
     with ConcreteElem[IndexStructKeyData[Schema], IndexStructKey[Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(structKeyElement(element[Schema]))
-    override lazy val typeArgs = TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
 
     override def convertStructKey(x: Rep[StructKey[Schema]]) = IndexStructKey(x.index)
     override def getDefaultRep = IndexStructKey(0)
@@ -98,7 +98,7 @@ trait StructKeysDefs extends StructKeys {
       implicit val tagSchema = eSchema.tag
       weakTypeTag[IndexStructKeyIso[Schema]]
     }
-    lazy val typeArgs = TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class IndexStructKeyCompanionCtor extends CompanionDef[IndexStructKeyCompanionCtor] {
@@ -145,7 +145,7 @@ trait StructKeysDefs extends StructKeys {
     extends StructKeyElem[Schema, NameStructKey[Schema]]
     with ConcreteElem[NameStructKeyData[Schema], NameStructKey[Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(structKeyElement(element[Schema]))
-    override lazy val typeArgs = TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
 
     override def convertStructKey(x: Rep[StructKey[Schema]]) = NameStructKey(x.name)
     override def getDefaultRep = NameStructKey("")
@@ -179,7 +179,7 @@ trait StructKeysDefs extends StructKeys {
       implicit val tagSchema = eSchema.tag
       weakTypeTag[NameStructKeyIso[Schema]]
     }
-    lazy val typeArgs = TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
   }
   // 4) constructor and deconstructor
   class NameStructKeyCompanionCtor extends CompanionDef[NameStructKeyCompanionCtor] {
@@ -303,7 +303,7 @@ trait StructKeysDefs extends StructKeys {
 }
 
 object StructKeysModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAL1WXWgcRRz/3+aul1w+2pymYlUar6diK3dRkIp5kKRNSvRMQrdGiEWZ25tcpt2PcXcu7knpYx/sW/FJ8KEgCBIU6YuoFLEI4kPfxTelIIhS+mBRsPifmd292+SuaYR6D8Pt7Pw/fh8zs5u/Qy7wYTKwiE3cikMFqZjq/0wgyuarXqNl0+N07WfvSvHSxb8+MWDfKoyyYIX5okVs9i5trMKEd3bOYWLJZ00dcMonTNRgdM4VTLTLjpoUcLimy1RlmWqvMuUoYroGxVNtTs2267nMSTJUd87QHYZpHnzdJ5xTf0srz+6cKB2IqYaIa9FAeH4g4HEdX7U826aWYJ5bZY7TEqRu02qNBQLX77M81/KpoOYxmwQBDd6G85CtwSCVKVnyPKSe20u8k3d7X4pSbEvm1etPUq5wth0BY1E7S1y2gmvyzOGeL+ISeUy37jXix6xLcAKKtTNkg1SxRLNqCp+5TYzc66VllCF7ajDMiXWWNOkiRsqpPOIIqL0m6VZLQp4Bzjma6TnVS6VDTSWhpiKpKZvUZ9I7RL5c9r2wDfqXGQAIZYpndkgRZ6BzbqP83mnrjdvmsGPI4FBhHMIcB/t4WomBTH5/8lJw68TlowYUVqHAgpl6IHxiiW6hI76Giet6QrWbUEj8JupV6qeXqjKDa5DSbN1rtGOxLc/hxMVMEbEjqJTNLCbkYjm3N9KnJ8sopeA0XppF0hO8/fawjJ3h3G5fO3f13C+P/jhuwIA0Ycj9rrQDmPYucJQVjhHbRjiGiItj1YJWyvQcOl66xd68fFEYkKlBJkz7a6l+BpWcDn0Y0RHaqnfY0X9+GlsTRiR8XxBx/a/z33z7642XsgYYaZ6GEIA5h6Di5gQMoalblniFtiOS5PiwgD2mtU4dIp8KchgJ5Xhgy3PhLu0k6j712x+N76bgtMKsPBFTc082xBTFFz748gm6/KkBg6tq287bpKkMKdU5TgNrFQa9Derr+fwGseW/nqbMN+gaadnxnu2mR+s72VdfTiV30yGX2zCGP6ylWvRcWp5fLv9p/vD+plRKvn9IQI65DRrGrA7ggZSgPtRPR06XfYaXBdugz1/76rWbVxdzSspi1PoKsVtUH0ZR5x0UUtPMFFZacEVHp0gtOTyp6h/sUruUieGo9wLyVIsfd52ds6lzL/YYQUOPLUjAias6JSXkx/pDRpk/+3v240MHHrljQP5lyK2hgkFPCXN1r+U24rMBbxBBQzEbz2XTouJZQHziJBfLBsFjEc8uAftjoVuC2dWVaF7Li79J0BLLcaKDWwFLcBfSVCDE/RFEmbSy4Opyonzki8132PWn59Um1lypnGOZLmKL6WK725sntu3NbULDFqEVTz28KccjAoxSSSOOjPa/e2lU3qQ9rSTHF/+7TnKY7a6141EUf1t8fuHCxM2P3npA3YiDdSYcwstTu7gP4+vrPt530N9SAwghzf7uTKZHu7fVOmwrqVK3y/0UT47rqkB3SCENDL04HmnL49M1iOr6UOojuxkRjbSdv/3h4uHrV26oo7ggJcMj300+H7uP4DSTed1I0EGq6ZVFuojEvSFl/RfXnwYCbgwAAA=="
+  val dump = "H4sIAAAAAAAAAL1WXYgbRRyfbJLmkvtoL3oVq9IzjYqtJKcgFe9B7tpcOY13R7eeEIsy2Uxy0+7HuDuJGyl97IN9Kz4JPhQEQQ5F+iIqRSyC+NB38U0pCKKUPlgstPifmd3Nbi/p9YSahyE7O/+P38fM7OafKOu5aNYzsIntikU4rujy/4LHy/rrTqtrkqOk/atzqXjh/D+faWhPA01Sb526vItN+j5pNdCMc7pmUb7q0o4KOOFiyutosmZzyvtlS05ydLCuylRFmeqwMuUgYr6Oiif6jOh927GpFWWobp8hHgZpHn7TxYwR965Wnt8+UTIQUuWxbRCPO67H0ZMqvmo4pkkMTh27Si2ry3HTJNU69Tis32M4tuESTvQjJvY84r2LzqJMHY0RkZJGz3n53F9lg7xb+5KUQlsir1p/nDCJs29xNBW0s8pEK7AmRy3muDwskYN0G04rfMzYGCZQsX4K93AVSnSqOnep3YHI3U5SRhGyq47GGTZO4w5ZgUgxlQMcHjHbgm65xGcpxBgDM70ge6kMqKlE1FQENWWduFR4B4uXa67j95H6pdII+SLFc9ukCDOQmt0qf3DSeOumPm5pItiXGPOQY/8IT0sxgMkfj1/wbhy7eFhDhQYqUG+h6XEXGzwudMDXOLZth8t2Iwqx2wG9SqP0klUWYA1Qmmk6rX4otuFYDNuQKSB2ApQyqUG5WCzmdgf6DGUZpOSMhEszQHqEd9QeFrELjJn9K2cun/nt8Z+nNZQWJvSZG0ubhrT3gCOtcASbJsDReFgcqhaUUrpjkenSDfr2xfNcQ6k6SvlJf602T4GS876LJlSEsuodevj2L1NtrgXCjwQR1v829933v197JaMhLclTHgDoNQAVNsdRHkzdNfhrpB+QJMZHOdqlGxvEwuKpIIYJX4z77nou3KOdSN1n/vir9cMcOikxS0+E1NyXDSFF8aWPvn6KrH2uobGG3LZLJu5IQwp1jhLPaKAxp0dcNZ/rYVP8G2rKXIu0cdcM92ycHqXv7Eh9GRHczftMbMMQ/riSasWxSXlprfy3/tOHm0Ip8f4RjrLUbhE/ZDUNB1KE+sAoHRlZcylcFrRHXrzyzRvXL69kpZTFoPV1bHaJOoyCzgcohKapOai0bPOBToFaYnha1t8fU7uUSgVw5HuOckSJH3adqZnEuh97TIChp5YF4MhVg5IC8hOjIYPMX9xa/PTAvsfuaCj3Ksq2QUFvqITZptO1W+HZADcIJz5fDOcySVHhLMAutqKLpYfhWISzi6O9odBdTs3qejCv5IXfLFISi3FmgFsCi3AXklQAxL0BRJG0smyrcrx86KvN9+jVZ5fkJlZcyZxTqRixxWSxne3NY1v25hahI98GQkuehnhTjIc40kolhTgw2v/upUlxkw61khhf/u86iWExXmvboyj8tvjy3LmZ65+885C8EcealFuYled2cB+G19cDvO/QaEulAUKS/Z2ZTI3mcKsN2JZSJW6XBymeGDdkgXhIIQkMvDgdaMvC09UL6rqoNEJ2PSAaaDt78+OVg1cvXZNHcUFIBke+HX0+xo/gJJM51Yg3QKroFUViRMLeELL+C2tb8HxuDAAA"
 }
 }
 
