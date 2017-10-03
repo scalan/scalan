@@ -235,10 +235,10 @@ implicit val eR = p.convFun.elem.eRange
   case class PairConverterCtor[A1, A2, B1, B2]
       (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])
     extends PairConverter[A1, A2, B1, B2](conv1, conv2) with Def[PairConverter[A1, A2, B1, B2]] {
-    implicit val eA1 = conv1.elem.typeArgs("T")._1.asElem[A1];
-implicit val eA2 = conv2.elem.typeArgs("T")._1.asElem[A2];
-implicit val eB1 = conv1.elem.typeArgs("R")._1.asElem[B1];
-implicit val eB2 = conv2.elem.typeArgs("R")._1.asElem[B2]
+    implicit val eA1 = conv1.eT //elem.typeArgs("T")._1.asElem[A1];
+implicit val eA2 = conv2.eT //elem.typeArgs("T")._1.asElem[A2];
+implicit val eB1 = conv1.eR //elem.typeArgs("R")._1.asElem[B1];
+implicit val eB2 = conv2.eR //elem.typeArgs("R")._1.asElem[B2]
     lazy val selfType = element[PairConverter[A1, A2, B1, B2]]
   }
   // elem for concrete class
@@ -300,10 +300,10 @@ implicit val eB2 = conv2.elem.typeArgs("R")._1.asElem[B2]
     override def toString = "PairConverterCompanion"
     @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[PairConverterData[A1, A2, B1, B2]]): Rep[PairConverter[A1, A2, B1, B2]] = {
-      implicit val eA1 = p._1.elem.typeArgs("T")._1.asElem[A1];
-implicit val eA2 = p._2.elem.typeArgs("T")._1.asElem[A2];
-implicit val eB1 = p._1.elem.typeArgs("R")._1.asElem[B1];
-implicit val eB2 = p._2.elem.typeArgs("R")._1.asElem[B2]
+      implicit val eA1 = p._1.eT //elem.typeArgs("T")._1.asElem[A1];
+implicit val eA2 = p._2.eT //elem.typeArgs("T")._1.asElem[A2];
+implicit val eB1 = p._1.eR //elem.typeArgs("R")._1.asElem[B1];
+implicit val eB2 = p._2.eR //elem.typeArgs("R")._1.asElem[B2]
       isoPairConverter[A1, A2, B1, B2].to(p)
     }
 
@@ -344,10 +344,10 @@ implicit val eB2 = p.conv2.elem.typeArgs("R")._1.asElem[B2]
   case class SumConverterCtor[A1, A2, B1, B2]
       (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])
     extends SumConverter[A1, A2, B1, B2](conv1, conv2) with Def[SumConverter[A1, A2, B1, B2]] {
-    implicit val eA1 = conv1.elem.typeArgs("T")._1.asElem[A1];
-implicit val eA2 = conv2.elem.typeArgs("T")._1.asElem[A2];
-implicit val eB1 = conv1.elem.typeArgs("R")._1.asElem[B1];
-implicit val eB2 = conv2.elem.typeArgs("R")._1.asElem[B2]
+    implicit val eA1 = conv1.eT //elem.typeArgs("T")._1.asElem[A1];
+implicit val eA2 = conv2.eT //elem.typeArgs("T")._1.asElem[A2];
+implicit val eB1 = conv1.eR //elem.typeArgs("R")._1.asElem[B1];
+implicit val eB2 = conv2.eR //elem.typeArgs("R")._1.asElem[B2]
     lazy val selfType = element[SumConverter[A1, A2, B1, B2]]
   }
   // elem for concrete class
@@ -409,10 +409,10 @@ implicit val eB2 = conv2.elem.typeArgs("R")._1.asElem[B2]
     override def toString = "SumConverterCompanion"
     @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[SumConverterData[A1, A2, B1, B2]]): Rep[SumConverter[A1, A2, B1, B2]] = {
-      implicit val eA1 = p._1.elem.typeArgs("T")._1.asElem[A1];
-implicit val eA2 = p._2.elem.typeArgs("T")._1.asElem[A2];
-implicit val eB1 = p._1.elem.typeArgs("R")._1.asElem[B1];
-implicit val eB2 = p._2.elem.typeArgs("R")._1.asElem[B2]
+      implicit val eA1 = p._1.eT //elem.typeArgs("T")._1.asElem[A1];
+implicit val eA2 = p._2.eT //elem.typeArgs("T")._1.asElem[A2];
+implicit val eB1 = p._1.eR //elem.typeArgs("R")._1.asElem[B1];
+implicit val eB2 = p._2.eR //elem.typeArgs("R")._1.asElem[B2]
       isoSumConverter[A1, A2, B1, B2].to(p)
     }
 
@@ -438,10 +438,10 @@ implicit val eB2 = p._2.elem.typeArgs("R")._1.asElem[B2]
 
   implicit class ExtendedSumConverter[A1, A2, B1, B2](p: Rep[SumConverter[A1, A2, B1, B2]]) {
     def toData: Rep[SumConverterData[A1, A2, B1, B2]] = {
-      implicit val eA1 = p.conv1.elem.typeArgs("T")._1.asElem[A1];
-implicit val eA2 = p.conv2.elem.typeArgs("T")._1.asElem[A2];
-implicit val eB1 = p.conv1.elem.typeArgs("R")._1.asElem[B1];
-implicit val eB2 = p.conv2.elem.typeArgs("R")._1.asElem[B2]
+      implicit val eA1 = p.conv1.eT //elem.typeArgs("T")._1.asElem[A1];
+implicit val eA2 = p.conv2.eT //elem.typeArgs("T")._1.asElem[A2];
+implicit val eB1 = p.conv1.eR //elem.typeArgs("R")._1.asElem[B1];
+implicit val eB2 = p.conv2.eR //elem.typeArgs("R")._1.asElem[B2]
       isoSumConverter(eA1, eA2, eB1, eB2).from(p)
     }
   }
@@ -453,9 +453,9 @@ implicit val eB2 = p.conv2.elem.typeArgs("R")._1.asElem[B2]
   case class ComposeConverterCtor[A, B, C]
       (override val conv2: Conv[B, C], override val conv1: Conv[A, B])
     extends ComposeConverter[A, B, C](conv2, conv1) with Def[ComposeConverter[A, B, C]] {
-    implicit val eA = conv1.elem.typeArgs("T")._1.asElem[A];
-implicit val eB = conv2.elem.typeArgs("T")._1.asElem[B];
-implicit val eC = conv2.elem.typeArgs("R")._1.asElem[C]
+    implicit val eA = conv1.eT //elem.typeArgs("T")._1.asElem[A];
+implicit val eB = conv2.eT //elem.typeArgs("T")._1.asElem[B];
+implicit val eC = conv2.eR //elem.typeArgs("R")._1.asElem[C]
     lazy val selfType = element[ComposeConverter[A, B, C]]
   }
   // elem for concrete class
@@ -514,9 +514,9 @@ implicit val eC = conv2.elem.typeArgs("R")._1.asElem[C]
     override def toString = "ComposeConverterCompanion"
     @scalan.OverloadId("fromData")
     def apply[A, B, C](p: Rep[ComposeConverterData[A, B, C]]): Rep[ComposeConverter[A, B, C]] = {
-      implicit val eA = p._2.elem.typeArgs("T")._1.asElem[A];
-implicit val eB = p._1.elem.typeArgs("T")._1.asElem[B];
-implicit val eC = p._1.elem.typeArgs("R")._1.asElem[C]
+      implicit val eA = p._2.eT //elem.typeArgs("T")._1.asElem[A];
+implicit val eB = p._1.eT //elem.typeArgs("T")._1.asElem[B];
+implicit val eC = p._1.eR //elem.typeArgs("R")._1.asElem[C]
       isoComposeConverter[A, B, C].to(p)
     }
 
@@ -542,9 +542,9 @@ implicit val eC = p._1.elem.typeArgs("R")._1.asElem[C]
 
   implicit class ExtendedComposeConverter[A, B, C](p: Rep[ComposeConverter[A, B, C]]) {
     def toData: Rep[ComposeConverterData[A, B, C]] = {
-      implicit val eA = p.conv1.elem.typeArgs("T")._1.asElem[A];
-implicit val eB = p.conv2.elem.typeArgs("T")._1.asElem[B];
-implicit val eC = p.conv2.elem.typeArgs("R")._1.asElem[C]
+      implicit val eA = p.conv1.eT //elem.typeArgs("T")._1.asElem[A];
+implicit val eB = p.conv2.eT //elem.typeArgs("T")._1.asElem[B];
+implicit val eC = p.conv2.eR //elem.typeArgs("R")._1.asElem[C]
       isoComposeConverter(eA, eB, eC).from(p)
     }
   }
@@ -556,8 +556,8 @@ implicit val eC = p.conv2.elem.typeArgs("R")._1.asElem[C]
   case class FunctorConverterCtor[A, B, F[_]]
       (override val itemConv: Conv[A, B])(implicit F: Functor[F])
     extends FunctorConverter[A, B, F](itemConv) with Def[FunctorConverter[A, B, F]] {
-    implicit val eA = itemConv.elem.typeArgs("T")._1.asElem[A];
-implicit val eB = itemConv.elem.typeArgs("R")._1.asElem[B]
+    implicit val eA = itemConv.eT //elem.typeArgs("T")._1.asElem[A];
+implicit val eB = itemConv.eR //elem.typeArgs("R")._1.asElem[B]
     lazy val selfType = element[FunctorConverter[A, B, F]]
   }
   // elem for concrete class
@@ -635,8 +635,8 @@ implicit val eB = itemConv.elem.typeArgs("R")._1.asElem[B]
 
   implicit class ExtendedFunctorConverter[A, B, F[_]](p: Rep[FunctorConverter[A, B, F]])(implicit F: Functor[F]) {
     def toData: Rep[FunctorConverterData[A, B, F]] = {
-      implicit val eA = p.itemConv.elem.typeArgs("T")._1.asElem[A];
-implicit val eB = p.itemConv.elem.typeArgs("R")._1.asElem[B]
+      implicit val eA = p.itemConv.eT //elem.typeArgs("T")._1.asElem[A];
+implicit val eB = p.itemConv.eR //elem.typeArgs("R")._1.asElem[B]
       isoFunctorConverter(F, eA, eB).from(p)
     }
   }

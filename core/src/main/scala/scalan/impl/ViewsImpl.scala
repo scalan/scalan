@@ -194,10 +194,10 @@ trait ViewsDefs extends Views {
   case class PairIsoCtor[A1, A2, B1, B2]
       (override val iso1: Iso[A1, B1], override val iso2: Iso[A2, B2])
     extends PairIso[A1, A2, B1, B2](iso1, iso2) with Def[PairIso[A1, A2, B1, B2]] {
-    implicit val eA1 = iso1.elem.typeArgs("From")._1.asElem[A1];
-implicit val eA2 = iso2.elem.typeArgs("From")._1.asElem[A2];
-implicit val eB1 = iso1.elem.typeArgs("To")._1.asElem[B1];
-implicit val eB2 = iso2.elem.typeArgs("To")._1.asElem[B2]
+    implicit val eA1 = iso1.eFrom //elem.typeArgs("From")._1.asElem[A1];
+implicit val eA2 = iso2.eFrom //elem.typeArgs("From")._1.asElem[A2];
+implicit val eB1 = iso1.eTo //elem.typeArgs("To")._1.asElem[B1];
+implicit val eB2 = iso2.eTo //elem.typeArgs("To")._1.asElem[B2]
     lazy val selfType = element[PairIso[A1, A2, B1, B2]]
   }
   // elem for concrete class
@@ -303,8 +303,8 @@ implicit val eB2 = p.iso2.elem.typeArgs("To")._1.asElem[B2]
   case class AbsorbFirstUnitIsoCtor[A2, B2]
       (override val iso2: Iso[A2, B2])
     extends AbsorbFirstUnitIso[A2, B2](iso2) with Def[AbsorbFirstUnitIso[A2, B2]] {
-    implicit val eA2 = iso2.elem.typeArgs("From")._1.asElem[A2];
-implicit val eB2 = iso2.elem.typeArgs("To")._1.asElem[B2]
+    implicit val eA2 = iso2.eFrom //elem.typeArgs("From")._1.asElem[A2];
+implicit val eB2 = iso2.eTo //elem.typeArgs("To")._1.asElem[B2]
     lazy val selfType = element[AbsorbFirstUnitIso[A2, B2]]
   }
   // elem for concrete class
@@ -394,8 +394,8 @@ implicit val eB2 = p.iso2.elem.typeArgs("To")._1.asElem[B2]
   case class AbsorbSecondUnitIsoCtor[A1, B1]
       (override val iso1: Iso[A1, B1])
     extends AbsorbSecondUnitIso[A1, B1](iso1) with Def[AbsorbSecondUnitIso[A1, B1]] {
-    implicit val eA1 = iso1.elem.typeArgs("From")._1.asElem[A1];
-implicit val eB1 = iso1.elem.typeArgs("To")._1.asElem[B1]
+    implicit val eA1 = iso1.eFrom //elem.typeArgs("From")._1.asElem[A1];
+implicit val eB1 = iso1.eTo //elem.typeArgs("To")._1.asElem[B1]
     lazy val selfType = element[AbsorbSecondUnitIso[A1, B1]]
   }
   // elem for concrete class
@@ -485,10 +485,10 @@ implicit val eB1 = p.iso1.elem.typeArgs("To")._1.asElem[B1]
   case class SumIsoCtor[A1, A2, B1, B2]
       (override val iso1: Iso[A1, B1], override val iso2: Iso[A2, B2])
     extends SumIso[A1, A2, B1, B2](iso1, iso2) with Def[SumIso[A1, A2, B1, B2]] {
-    implicit val eA1 = iso1.elem.typeArgs("From")._1.asElem[A1];
-implicit val eA2 = iso2.elem.typeArgs("From")._1.asElem[A2];
-implicit val eB1 = iso1.elem.typeArgs("To")._1.asElem[B1];
-implicit val eB2 = iso2.elem.typeArgs("To")._1.asElem[B2]
+    implicit val eA1 = iso1.eFrom //elem.typeArgs("From")._1.asElem[A1];
+implicit val eA2 = iso2.eFrom //elem.typeArgs("From")._1.asElem[A2];
+implicit val eB1 = iso1.eTo //elem.typeArgs("To")._1.asElem[B1];
+implicit val eB2 = iso2.eTo //elem.typeArgs("To")._1.asElem[B2]
     lazy val selfType = element[SumIso[A1, A2, B1, B2]]
   }
   // elem for concrete class
@@ -594,9 +594,9 @@ implicit val eB2 = p.iso2.elem.typeArgs("To")._1.asElem[B2]
   case class ComposeIsoCtor[A, B, C]
       (override val iso2: Iso[B, C], override val iso1: Iso[A, B])
     extends ComposeIso[A, B, C](iso2, iso1) with Def[ComposeIso[A, B, C]] {
-    implicit val eA = iso1.elem.typeArgs("From")._1.asElem[A];
-implicit val eB = iso2.elem.typeArgs("From")._1.asElem[B];
-implicit val eC = iso2.elem.typeArgs("To")._1.asElem[C]
+    implicit val eA = iso1.eFrom //elem.typeArgs("From")._1.asElem[A];
+implicit val eB = iso2.eFrom //elem.typeArgs("From")._1.asElem[B];
+implicit val eC = iso2.eTo //elem.typeArgs("To")._1.asElem[C]
     lazy val selfType = element[ComposeIso[A, B, C]]
   }
   // elem for concrete class
@@ -697,10 +697,10 @@ implicit val eC = p.iso2.elem.typeArgs("To")._1.asElem[C]
   case class FuncIsoCtor[A, B, C, D]
       (override val iso1: Iso[A, B], override val iso2: Iso[C, D])
     extends FuncIso[A, B, C, D](iso1, iso2) with Def[FuncIso[A, B, C, D]] {
-    implicit val eA = iso1.elem.typeArgs("From")._1.asElem[A];
-implicit val eB = iso1.elem.typeArgs("To")._1.asElem[B];
-implicit val eC = iso2.elem.typeArgs("From")._1.asElem[C];
-implicit val eD = iso2.elem.typeArgs("To")._1.asElem[D]
+    implicit val eA = iso1.eFrom //elem.typeArgs("From")._1.asElem[A];
+implicit val eB = iso1.eTo //elem.typeArgs("To")._1.asElem[B];
+implicit val eC = iso2.eFrom //elem.typeArgs("From")._1.asElem[C];
+implicit val eD = iso2.eTo //elem.typeArgs("To")._1.asElem[D]
     lazy val selfType = element[FuncIso[A, B, C, D]]
   }
   // elem for concrete class
@@ -806,8 +806,8 @@ implicit val eD = p.iso2.elem.typeArgs("To")._1.asElem[D]
   case class ConverterIsoCtor[A, B]
       (override val convTo: Conv[A, B], override val convFrom: Conv[B, A])
     extends ConverterIso[A, B](convTo, convFrom) with Def[ConverterIso[A, B]] {
-    implicit val eA = convTo.elem.typeArgs("T")._1.asElem[A];
-implicit val eB = convTo.elem.typeArgs("R")._1.asElem[B]
+    implicit val eA = convTo.eT //elem.typeArgs("T")._1.asElem[A];
+implicit val eB = convTo.eR //elem.typeArgs("R")._1.asElem[B]
     lazy val selfType = element[ConverterIso[A, B]]
   }
   // elem for concrete class
@@ -903,8 +903,8 @@ implicit val eB = p.convTo.elem.typeArgs("R")._1.asElem[B]
   case class ThunkIsoCtor[A, B]
       (override val innerIso: Iso[A, B])
     extends ThunkIso[A, B](innerIso) with Def[ThunkIso[A, B]] {
-    implicit override val eA = innerIso.elem.typeArgs("From")._1.asElem[A];
-implicit override val eB = innerIso.elem.typeArgs("To")._1.asElem[B]
+    implicit override val eA = innerIso.eFrom //innerIso.elem.typeArgs("From")._1.asElem[A];
+implicit override val eB = innerIso.eTo //innerIso.elem.typeArgs("To")._1.asElem[B]
     lazy val selfType = element[ThunkIso[A, B]]
   }
   // elem for concrete class
