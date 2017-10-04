@@ -47,9 +47,9 @@ class CollectionUtilTests extends BaseTests {
     assertResult(Array((1, "a"), (2, "b")))(res)
   }
 
-  test("expandWith") {
-    assertResult(Array((2, 0), (2, 1)))(2.expandWith(x => List.range(0,x)))
-    assertResult(Array((3, 0), (3, 1), (3, 2)))(3.expandWith(x => List.range(0,x)))
+  test("zipWithExpandedBy") {
+    assertResult(Array((2, 0), (2, 1)))(2.zipWithExpandedBy(x => List.range(0,x)))
+    assertResult(Array((3, 0), (3, 1), (3, 2)))(3.zipWithExpandedBy(x => List.range(0,x)))
   }
 
 }

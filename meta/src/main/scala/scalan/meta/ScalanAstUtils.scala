@@ -107,7 +107,7 @@ object ScalanAstUtils {
       ancestorEnt_? match {
         case Some(e) =>
           val ancArgs = anc.tpe.tpeSExprs
-          e.expandWith(_.tpeArgs) zip ancArgs
+          e.zipWithExpandedBy(_.tpeArgs) zip ancArgs
         case None =>
           List[((STraitOrClassDef, STpeArg), STpeExpr)]()
       }

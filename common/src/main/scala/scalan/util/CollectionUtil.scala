@@ -75,7 +75,7 @@ object CollectionUtil {
   }
 
   implicit class AnyOps[A](x: A) {
-    def expandWith[B](f: A => List[B]): List[(A,B)] = {
+    def zipWithExpandedBy[B](f: A => List[B]): List[(A,B)] = {
       val ys = f(x)
       List.fill(ys.length)(x) zip ys
     }
