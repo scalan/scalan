@@ -169,6 +169,22 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
                                     (onInvokeSuccess: AnyRef => A)
                                     (onInvokeException: Throwable => A)
                                     (onNoMethodFound: => A): A = {
+    def tryInvoke(obj: Any, m: Method) = try {
+        val res = m.invoke(obj, args: _*)
+        onInvokeSuccess(res)
+      } catch {
+        case e: Exception => onInvokeException(baseCause(e))
+      }
+    def tryInvokeElem(e: Elem[_]) = try {
+        findTypeDescPropertyOfElem(e, m) match {
+          case Some(elemMethod) =>
+            tryInvoke(e, elemMethod)
+          case _ =>
+            onNoMethodFound
+        }
+      } catch {
+        case e: Exception => onInvokeException(baseCause(e))
+      }
     receiver match {
       case Def(d) =>
         @tailrec
@@ -185,18 +201,32 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
 
         findMethodLoop(m) match {
           case Some(m1) =>
-            try {
-              val invokeResult = m1.invoke(d, args: _*)
-              onInvokeSuccess(invokeResult)
-            } catch {
-              case e: Exception =>
-                onInvokeException(baseCause(e))
-            }
+            tryInvoke(d, m1)
           case None =>
-            onNoMethodFound
+            tryInvokeElem(d.selfType)
         }
       case _ =>
-        onNoMethodFound
+        // when receiver is Lambda variable (there is no Def) it still has Elem,
+        // so when we are accessing one of the descriptior properties
+        // we can find a method in the elem with the same name and use it to return requested desciptor
+        // TODO check invariant that all the nodes and their elems have equal descriptors
+        val e = receiver.elem
+        tryInvokeElem(e)
+    }
+  }
+
+  protected def findTypeDescPropertyOfElem(e: Elem[_], nodeMethod: Method) = {
+    try {
+      val elemClass = e.getClass
+      val elemMethod = elemClass.getMethod(nodeMethod.getName, nodeMethod.getParameterTypes: _*)
+      val returnType = getMethodReturnTypeFromElem(e, elemMethod)
+      returnType match {
+        case TypeRef(_, sym, List(tpe1)) if scalan.meta.ScalanAst.TypeDescTpe.DescNames.contains(sym.name.toString) =>
+          Some(elemMethod)
+        case _ => None
+      }
+    } catch {
+      case _: NoSuchMethodException => None
     }
   }
 
@@ -596,6 +626,14 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
 
   def isStagedType(symName: String) =
     symName == "Rep" || symName == "Exp"
+
+  protected def getMethodReturnTypeFromElem(e: Elem[_], m: Method): Type = {
+    val tpe = tpeFromElem(e)
+    val scalaMethod = findScalaMethod(tpe, m)
+    // http://stackoverflow.com/questions/29256896/get-precise-return-type-from-a-typetag-and-a-method
+    val returnType = scalaMethod.returnType.asSeenFrom(tpe, scalaMethod.owner).dealias
+    returnType
+  }
 
   protected def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = {
     val e = receiver.elem

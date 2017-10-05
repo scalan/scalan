@@ -67,8 +67,8 @@ trait Converters extends ViewsModule { self: Scalan =>
 //    (implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
     extends Converter[(A1 | A2), (B1 | B2)] {
     def eA1: Elem[A1]; def eA2: Elem[A2]; def eB1: Elem[B1]; def eB2: Elem[B2]
-    val eT = sumElement(eA1, eA2)
-    val eR = sumElement(eB1, eB2)
+    lazy val eT = sumElement(eA1, eA2)
+    lazy val eR = sumElement(eB1, eB2)
     def apply(x: Rep[(A1|A2)]) = { x.mapSumBy(conv1.convFun, conv2.convFun) }
     override def isIdentity = conv1.isIdentity && conv2.isIdentity
   }

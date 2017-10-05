@@ -1,6 +1,6 @@
 package scalan
 
-import scalan.common.{KindsModule, KindsExamples, MetaTestsModule}
+import scalan.common.{KindsModule, KindsExamples, MetaTestsModule, SegmentsModule}
 import scala.reflect.runtime.universe._
 
 abstract class AbstractElemTests extends BaseNestedTests {
@@ -35,7 +35,7 @@ abstract class AbstractElemTests extends BaseNestedTests {
 
 /** See also scalan.collections.MoreElemTests in collections subproject */
 class ElemTests extends AbstractElemTests {
-  class Ctx extends super.Ctx with KindsExamples with KindsModule with MetaTestsModule
+  class Ctx extends super.Ctx with KindsExamples with KindsModule with MetaTestsModule with SegmentsModule
 
   val ctx = new Ctx
   import ctx._
@@ -117,6 +117,16 @@ class ElemTests extends AbstractElemTests {
 //    }
   }
 
+  describe("Elem extraction from arguments") {
+    it("in PairIso constructor") {
+      type TIso = IsoUR[(Int, Int), Segment]
+      val p = fun { p: Rep[(TIso, TIso)] =>
+        val Pair(iso1, iso2) = p
+        PairIso(iso1, iso2)
+      }
+//      emit("p", p)
+    }
+  }
   // locally available to infer implicit arguments for
   implicit lazy val AnyElement = ctx.AnyElement
   implicit lazy val NothingElement = ctx.NothingElement
