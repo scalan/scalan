@@ -126,11 +126,11 @@ class MetaCodegen {
           emit(s"$prefix.asInstanceOf[FuncElem[_,_]].eRange", t, typed)
       case SStructPath(_, fn, t) =>
         emit(s"""$prefix.asInstanceOf[StructElem[_]]("$fn")""", t, false)
-      case SEntityPath(STraitCall(name, args), e, tyArgName, t) =>
-        val argIndex = e.tpeArgs.zipWithIndex.find { case (a, i) => a.name == tyArgName }.get._2
+      case SEntityPath(STraitCall(name, args), e, tyArg, t) =>
+        val argIndex = e.tpeArgIndex(tyArg.name)
         val argTy = args(argIndex)
-        val kind = if (e.tpeArgs(argIndex).isHighKind) "Cont" else "Elem"
-        emit(s"""$prefix.typeArgs("$tyArgName")._1.as$kind[$argTy]""", t, true)
+        val descName = tyArg.descName
+        emit(s"""$prefix.typeArgs("${tyArg.name}")._1.as$descName[$argTy]""", t, true)
       case _ => sys.error(s"emit($tailPath)")
     }
     emit(prefixExpr, tailPath, true)
@@ -146,20 +146,20 @@ class MetaCodegen {
     def subst(arg: String) = argSubst.getOrElse(arg, arg)
     tpeArgs.map { ta =>
       val paths = for {
-            da <- dataArgs
+            da <- dataArgs.iterator
             argTpe <- da.tpe.unRep(m, m.isVirtualized)
             path <- STpePath.find(m, argTpe, ta.name)
           } yield (da, path)
 
-      if (paths.nonEmpty) {
-        val (da, path) = paths.head
-        val expr = emitImplicitElemDeclByTpePath(s"${subst(da.name)}.elem", path)
-        Some(expr)
+      val expr = paths.find(_ => true).map {
+        case (da, SEntityPath(_, e, tyArg, tail)) =>
+          val prefix = s"${subst(da.name)}.${tyArg.classOrMethodArgName}"
+          emitImplicitElemDeclByTpePath(prefix, tail)
+        case (da, path) =>
+          val prefix = s"${subst(da.name)}.elem"
+          emitImplicitElemDeclByTpePath(prefix, path)
       }
-      else {
-        // the element cannot be extracted from data
-        None
-      }
+      expr
     }
   }
 

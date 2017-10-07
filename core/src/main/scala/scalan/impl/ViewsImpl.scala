@@ -194,10 +194,10 @@ trait ViewsDefs extends Views {
   case class PairIsoCtor[A1, A2, B1, B2]
       (override val iso1: Iso[A1, B1], override val iso2: Iso[A2, B2])
     extends PairIso[A1, A2, B1, B2](iso1, iso2) with Def[PairIso[A1, A2, B1, B2]] {
-    implicit val eA1 = iso1.eFrom //elem.typeArgs("From")._1.asElem[A1];
-implicit val eA2 = iso2.eFrom //elem.typeArgs("From")._1.asElem[A2];
-implicit val eB1 = iso1.eTo //elem.typeArgs("To")._1.asElem[B1];
-implicit val eB2 = iso2.eTo //elem.typeArgs("To")._1.asElem[B2]
+    implicit val eA1 = iso1.eFrom;
+implicit val eA2 = iso2.eFrom;
+implicit val eB1 = iso1.eTo;
+implicit val eB2 = iso2.eTo
     lazy val selfType = element[PairIso[A1, A2, B1, B2]]
   }
   // elem for concrete class
@@ -259,10 +259,10 @@ implicit val eB2 = iso2.eTo //elem.typeArgs("To")._1.asElem[B2]
     override def toString = "PairIsoCompanion"
     @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[PairIsoData[A1, A2, B1, B2]]): Rep[PairIso[A1, A2, B1, B2]] = {
-      implicit val eA1 = p._1.elem.typeArgs("From")._1.asElem[A1];
-implicit val eA2 = p._2.elem.typeArgs("From")._1.asElem[A2];
-implicit val eB1 = p._1.elem.typeArgs("To")._1.asElem[B1];
-implicit val eB2 = p._2.elem.typeArgs("To")._1.asElem[B2]
+      implicit val eA1 = p._1.eFrom;
+implicit val eA2 = p._2.eFrom;
+implicit val eB1 = p._1.eTo;
+implicit val eB2 = p._2.eTo
       isoPairIso[A1, A2, B1, B2].to(p)
     }
 
@@ -288,10 +288,10 @@ implicit val eB2 = p._2.elem.typeArgs("To")._1.asElem[B2]
 
   implicit class ExtendedPairIso[A1, A2, B1, B2](p: Rep[PairIso[A1, A2, B1, B2]]) {
     def toData: Rep[PairIsoData[A1, A2, B1, B2]] = {
-      implicit val eA1 = p.iso1.elem.typeArgs("From")._1.asElem[A1];
-implicit val eA2 = p.iso2.elem.typeArgs("From")._1.asElem[A2];
-implicit val eB1 = p.iso1.elem.typeArgs("To")._1.asElem[B1];
-implicit val eB2 = p.iso2.elem.typeArgs("To")._1.asElem[B2]
+      implicit val eA1 = p.iso1.eFrom;
+implicit val eA2 = p.iso2.eFrom;
+implicit val eB1 = p.iso1.eTo;
+implicit val eB2 = p.iso2.eTo
       isoPairIso(eA1, eA2, eB1, eB2).from(p)
     }
   }
@@ -303,8 +303,8 @@ implicit val eB2 = p.iso2.elem.typeArgs("To")._1.asElem[B2]
   case class AbsorbFirstUnitIsoCtor[A2, B2]
       (override val iso2: Iso[A2, B2])
     extends AbsorbFirstUnitIso[A2, B2](iso2) with Def[AbsorbFirstUnitIso[A2, B2]] {
-    implicit val eA2 = iso2.eFrom //elem.typeArgs("From")._1.asElem[A2];
-implicit val eB2 = iso2.eTo //elem.typeArgs("To")._1.asElem[B2]
+    implicit val eA2 = iso2.eFrom;
+implicit val eB2 = iso2.eTo
     lazy val selfType = element[AbsorbFirstUnitIso[A2, B2]]
   }
   // elem for concrete class
@@ -381,8 +381,8 @@ implicit val eB2 = iso2.eTo //elem.typeArgs("To")._1.asElem[B2]
 
   implicit class ExtendedAbsorbFirstUnitIso[A2, B2](p: Rep[AbsorbFirstUnitIso[A2, B2]]) {
     def toData: Rep[AbsorbFirstUnitIsoData[A2, B2]] = {
-      implicit val eA2 = p.iso2.elem.typeArgs("From")._1.asElem[A2];
-implicit val eB2 = p.iso2.elem.typeArgs("To")._1.asElem[B2]
+      implicit val eA2 = p.iso2.eFrom;
+implicit val eB2 = p.iso2.eTo
       isoAbsorbFirstUnitIso(eA2, eB2).from(p)
     }
   }
@@ -394,8 +394,8 @@ implicit val eB2 = p.iso2.elem.typeArgs("To")._1.asElem[B2]
   case class AbsorbSecondUnitIsoCtor[A1, B1]
       (override val iso1: Iso[A1, B1])
     extends AbsorbSecondUnitIso[A1, B1](iso1) with Def[AbsorbSecondUnitIso[A1, B1]] {
-    implicit val eA1 = iso1.eFrom //elem.typeArgs("From")._1.asElem[A1];
-implicit val eB1 = iso1.eTo //elem.typeArgs("To")._1.asElem[B1]
+    implicit val eA1 = iso1.eFrom;
+implicit val eB1 = iso1.eTo
     lazy val selfType = element[AbsorbSecondUnitIso[A1, B1]]
   }
   // elem for concrete class
@@ -472,8 +472,8 @@ implicit val eB1 = iso1.eTo //elem.typeArgs("To")._1.asElem[B1]
 
   implicit class ExtendedAbsorbSecondUnitIso[A1, B1](p: Rep[AbsorbSecondUnitIso[A1, B1]]) {
     def toData: Rep[AbsorbSecondUnitIsoData[A1, B1]] = {
-      implicit val eA1 = p.iso1.elem.typeArgs("From")._1.asElem[A1];
-implicit val eB1 = p.iso1.elem.typeArgs("To")._1.asElem[B1]
+      implicit val eA1 = p.iso1.eFrom;
+implicit val eB1 = p.iso1.eTo
       isoAbsorbSecondUnitIso(eA1, eB1).from(p)
     }
   }
@@ -485,10 +485,10 @@ implicit val eB1 = p.iso1.elem.typeArgs("To")._1.asElem[B1]
   case class SumIsoCtor[A1, A2, B1, B2]
       (override val iso1: Iso[A1, B1], override val iso2: Iso[A2, B2])
     extends SumIso[A1, A2, B1, B2](iso1, iso2) with Def[SumIso[A1, A2, B1, B2]] {
-    implicit val eA1 = iso1.eFrom //elem.typeArgs("From")._1.asElem[A1];
-implicit val eA2 = iso2.eFrom //elem.typeArgs("From")._1.asElem[A2];
-implicit val eB1 = iso1.eTo //elem.typeArgs("To")._1.asElem[B1];
-implicit val eB2 = iso2.eTo //elem.typeArgs("To")._1.asElem[B2]
+    implicit val eA1 = iso1.eFrom;
+implicit val eA2 = iso2.eFrom;
+implicit val eB1 = iso1.eTo;
+implicit val eB2 = iso2.eTo
     lazy val selfType = element[SumIso[A1, A2, B1, B2]]
   }
   // elem for concrete class
@@ -550,10 +550,10 @@ implicit val eB2 = iso2.eTo //elem.typeArgs("To")._1.asElem[B2]
     override def toString = "SumIsoCompanion"
     @scalan.OverloadId("fromData")
     def apply[A1, A2, B1, B2](p: Rep[SumIsoData[A1, A2, B1, B2]]): Rep[SumIso[A1, A2, B1, B2]] = {
-      implicit val eA1 = p._1.elem.typeArgs("From")._1.asElem[A1];
-implicit val eA2 = p._2.elem.typeArgs("From")._1.asElem[A2];
-implicit val eB1 = p._1.elem.typeArgs("To")._1.asElem[B1];
-implicit val eB2 = p._2.elem.typeArgs("To")._1.asElem[B2]
+      implicit val eA1 = p._1.eFrom;
+implicit val eA2 = p._2.eFrom;
+implicit val eB1 = p._1.eTo;
+implicit val eB2 = p._2.eTo
       isoSumIso[A1, A2, B1, B2].to(p)
     }
 
@@ -579,10 +579,10 @@ implicit val eB2 = p._2.elem.typeArgs("To")._1.asElem[B2]
 
   implicit class ExtendedSumIso[A1, A2, B1, B2](p: Rep[SumIso[A1, A2, B1, B2]]) {
     def toData: Rep[SumIsoData[A1, A2, B1, B2]] = {
-      implicit val eA1 = p.iso1.elem.typeArgs("From")._1.asElem[A1];
-implicit val eA2 = p.iso2.elem.typeArgs("From")._1.asElem[A2];
-implicit val eB1 = p.iso1.elem.typeArgs("To")._1.asElem[B1];
-implicit val eB2 = p.iso2.elem.typeArgs("To")._1.asElem[B2]
+      implicit val eA1 = p.iso1.eFrom;
+implicit val eA2 = p.iso2.eFrom;
+implicit val eB1 = p.iso1.eTo;
+implicit val eB2 = p.iso2.eTo
       isoSumIso(eA1, eA2, eB1, eB2).from(p)
     }
   }
@@ -594,9 +594,9 @@ implicit val eB2 = p.iso2.elem.typeArgs("To")._1.asElem[B2]
   case class ComposeIsoCtor[A, B, C]
       (override val iso2: Iso[B, C], override val iso1: Iso[A, B])
     extends ComposeIso[A, B, C](iso2, iso1) with Def[ComposeIso[A, B, C]] {
-    implicit val eA = iso1.eFrom //elem.typeArgs("From")._1.asElem[A];
-implicit val eB = iso2.eFrom //elem.typeArgs("From")._1.asElem[B];
-implicit val eC = iso2.eTo //elem.typeArgs("To")._1.asElem[C]
+    implicit val eA = iso1.eFrom;
+implicit val eB = iso2.eFrom;
+implicit val eC = iso2.eTo
     lazy val selfType = element[ComposeIso[A, B, C]]
   }
   // elem for concrete class
@@ -655,9 +655,9 @@ implicit val eC = iso2.eTo //elem.typeArgs("To")._1.asElem[C]
     override def toString = "ComposeIsoCompanion"
     @scalan.OverloadId("fromData")
     def apply[A, B, C](p: Rep[ComposeIsoData[A, B, C]]): Rep[ComposeIso[A, B, C]] = {
-      implicit val eA = p._2.elem.typeArgs("From")._1.asElem[A];
-implicit val eB = p._1.elem.typeArgs("From")._1.asElem[B];
-implicit val eC = p._1.elem.typeArgs("To")._1.asElem[C]
+      implicit val eA = p._2.eFrom;
+implicit val eB = p._1.eFrom;
+implicit val eC = p._1.eTo
       isoComposeIso[A, B, C].to(p)
     }
 
@@ -683,9 +683,9 @@ implicit val eC = p._1.elem.typeArgs("To")._1.asElem[C]
 
   implicit class ExtendedComposeIso[A, B, C](p: Rep[ComposeIso[A, B, C]]) {
     def toData: Rep[ComposeIsoData[A, B, C]] = {
-      implicit val eA = p.iso1.elem.typeArgs("From")._1.asElem[A];
-implicit val eB = p.iso2.elem.typeArgs("From")._1.asElem[B];
-implicit val eC = p.iso2.elem.typeArgs("To")._1.asElem[C]
+      implicit val eA = p.iso1.eFrom;
+implicit val eB = p.iso2.eFrom;
+implicit val eC = p.iso2.eTo
       isoComposeIso(eA, eB, eC).from(p)
     }
   }
@@ -697,10 +697,10 @@ implicit val eC = p.iso2.elem.typeArgs("To")._1.asElem[C]
   case class FuncIsoCtor[A, B, C, D]
       (override val iso1: Iso[A, B], override val iso2: Iso[C, D])
     extends FuncIso[A, B, C, D](iso1, iso2) with Def[FuncIso[A, B, C, D]] {
-    implicit val eA = iso1.eFrom //elem.typeArgs("From")._1.asElem[A];
-implicit val eB = iso1.eTo //elem.typeArgs("To")._1.asElem[B];
-implicit val eC = iso2.eFrom //elem.typeArgs("From")._1.asElem[C];
-implicit val eD = iso2.eTo //elem.typeArgs("To")._1.asElem[D]
+    implicit val eA = iso1.eFrom;
+implicit val eB = iso1.eTo;
+implicit val eC = iso2.eFrom;
+implicit val eD = iso2.eTo
     lazy val selfType = element[FuncIso[A, B, C, D]]
   }
   // elem for concrete class
@@ -762,10 +762,10 @@ implicit val eD = iso2.eTo //elem.typeArgs("To")._1.asElem[D]
     override def toString = "FuncIsoCompanion"
     @scalan.OverloadId("fromData")
     def apply[A, B, C, D](p: Rep[FuncIsoData[A, B, C, D]]): Rep[FuncIso[A, B, C, D]] = {
-      implicit val eA = p._1.elem.typeArgs("From")._1.asElem[A];
-implicit val eB = p._1.elem.typeArgs("To")._1.asElem[B];
-implicit val eC = p._2.elem.typeArgs("From")._1.asElem[C];
-implicit val eD = p._2.elem.typeArgs("To")._1.asElem[D]
+      implicit val eA = p._1.eFrom;
+implicit val eB = p._1.eTo;
+implicit val eC = p._2.eFrom;
+implicit val eD = p._2.eTo
       isoFuncIso[A, B, C, D].to(p)
     }
 
@@ -791,10 +791,10 @@ implicit val eD = p._2.elem.typeArgs("To")._1.asElem[D]
 
   implicit class ExtendedFuncIso[A, B, C, D](p: Rep[FuncIso[A, B, C, D]]) {
     def toData: Rep[FuncIsoData[A, B, C, D]] = {
-      implicit val eA = p.iso1.elem.typeArgs("From")._1.asElem[A];
-implicit val eB = p.iso1.elem.typeArgs("To")._1.asElem[B];
-implicit val eC = p.iso2.elem.typeArgs("From")._1.asElem[C];
-implicit val eD = p.iso2.elem.typeArgs("To")._1.asElem[D]
+      implicit val eA = p.iso1.eFrom;
+implicit val eB = p.iso1.eTo;
+implicit val eC = p.iso2.eFrom;
+implicit val eD = p.iso2.eTo
       isoFuncIso(eA, eB, eC, eD).from(p)
     }
   }
@@ -806,8 +806,8 @@ implicit val eD = p.iso2.elem.typeArgs("To")._1.asElem[D]
   case class ConverterIsoCtor[A, B]
       (override val convTo: Conv[A, B], override val convFrom: Conv[B, A])
     extends ConverterIso[A, B](convTo, convFrom) with Def[ConverterIso[A, B]] {
-    implicit val eA = convTo.eT //elem.typeArgs("T")._1.asElem[A];
-implicit val eB = convTo.eR //elem.typeArgs("R")._1.asElem[B]
+    implicit val eA = convTo.eT;
+implicit val eB = convTo.eR
     lazy val selfType = element[ConverterIso[A, B]]
   }
   // elem for concrete class
@@ -863,8 +863,8 @@ implicit val eB = convTo.eR //elem.typeArgs("R")._1.asElem[B]
     override def toString = "ConverterIsoCompanion"
     @scalan.OverloadId("fromData")
     def apply[A, B](p: Rep[ConverterIsoData[A, B]]): Rep[ConverterIso[A, B]] = {
-      implicit val eA = p._1.elem.typeArgs("T")._1.asElem[A];
-implicit val eB = p._1.elem.typeArgs("R")._1.asElem[B]
+      implicit val eA = p._1.eT;
+implicit val eB = p._1.eR
       isoConverterIso[A, B].to(p)
     }
 
@@ -890,8 +890,8 @@ implicit val eB = p._1.elem.typeArgs("R")._1.asElem[B]
 
   implicit class ExtendedConverterIso[A, B](p: Rep[ConverterIso[A, B]]) {
     def toData: Rep[ConverterIsoData[A, B]] = {
-      implicit val eA = p.convTo.elem.typeArgs("T")._1.asElem[A];
-implicit val eB = p.convTo.elem.typeArgs("R")._1.asElem[B]
+      implicit val eA = p.convTo.eT;
+implicit val eB = p.convTo.eR
       isoConverterIso(eA, eB).from(p)
     }
   }
@@ -903,8 +903,8 @@ implicit val eB = p.convTo.elem.typeArgs("R")._1.asElem[B]
   case class ThunkIsoCtor[A, B]
       (override val innerIso: Iso[A, B])
     extends ThunkIso[A, B](innerIso) with Def[ThunkIso[A, B]] {
-    implicit override val eA = innerIso.eFrom //innerIso.elem.typeArgs("From")._1.asElem[A];
-implicit override val eB = innerIso.eTo //innerIso.elem.typeArgs("To")._1.asElem[B]
+    implicit override val eA = innerIso.eFrom;
+implicit override val eB = innerIso.eTo
     lazy val selfType = element[ThunkIso[A, B]]
   }
   // elem for concrete class
@@ -980,8 +980,8 @@ implicit override val eB = innerIso.eTo //innerIso.elem.typeArgs("To")._1.asElem
 
   implicit class ExtendedThunkIso[A, B](p: Rep[ThunkIso[A, B]]) {
     def toData: Rep[ThunkIsoData[A, B]] = {
-      implicit val eA = p.innerIso.elem.typeArgs("From")._1.asElem[A];
-implicit val eB = p.innerIso.elem.typeArgs("To")._1.asElem[B]
+      implicit val eA = p.innerIso.eFrom;
+implicit val eB = p.innerIso.eTo
       isoThunkIso(eA, eB).from(p)
     }
   }
@@ -1520,7 +1520,7 @@ implicit val eB = p.innerIso.elem.typeArgs("To")._1.asElem[B]
 }
 
 object ViewsModule extends scalan.ModuleInfo {
-  val dump = "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"
+  val dump = "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"
 }
 }
 

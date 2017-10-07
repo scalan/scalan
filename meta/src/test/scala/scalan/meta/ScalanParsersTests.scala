@@ -300,20 +300,20 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
 
     val entity = module.getEntity("Observable")
     testPath(module, "Observable[Int]", "A", _ => None)
-    testPath(module, "Observable[A]", "A", t => Some(SEntityPath(t, entity, "A", SNilPath)))
+    testPath(module, "Observable[A]", "A", t => Some(SEntityPath(t, entity, STpeArg("A"), SNilPath)))
 
     {
       val t1 = parseType("A => Int")
-      testPath(module, "Observable[A => Int]", "A", t => Some(SEntityPath(t, entity, "A", SDomPath(t1, SNilPath))))
+      testPath(module, "Observable[A => Int]", "A", t => Some(SEntityPath(t, entity, STpeArg("A"), SDomPath(t1, SNilPath))))
     }
     {
       val t1 = parseType("Int => A")
-      testPath(module, "Observable[Int => A]", "A", t => Some(SEntityPath(t, entity, "A", SRangePath(t1, SNilPath))))
+      testPath(module, "Observable[Int => A]", "A", t => Some(SEntityPath(t, entity, STpeArg("A"), SRangePath(t1, SNilPath))))
     }
     {
       val t1 = parseType("Observable[A]")
       testPath(module, "Observable[Observable[A]]", "A",
-        t => Some(SEntityPath(t, entity, "A", SEntityPath(t1, entity, "A", SNilPath))))
+        t => Some(SEntityPath(t, entity, STpeArg("A"), SEntityPath(t1, entity, STpeArg("A"), SNilPath))))
     }
   }
 

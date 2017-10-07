@@ -63,7 +63,7 @@ trait StructItemsDefs extends StructItems {
       (override val key: Rep[StructKey[Schema]], override val value: Rep[Val])
     extends StructItemBase[Val, Schema](key, value) with Def[StructItemBase[Val, Schema]] {
     implicit val eVal = value.elem;
-implicit val eSchema = key.elem.typeArgs("Schema")._1.asElem[Schema]
+implicit val eSchema = key.eSchema
     lazy val selfType = element[StructItemBase[Val, Schema]]
   }
   // elem for concrete class
@@ -119,7 +119,7 @@ implicit val eSchema = key.elem.typeArgs("Schema")._1.asElem[Schema]
     @scalan.OverloadId("fromData")
     def apply[Val, Schema <: Struct](p: Rep[StructItemBaseData[Val, Schema]]): Rep[StructItemBase[Val, Schema]] = {
       implicit val eVal = p._2.elem;
-implicit val eSchema = p._1.elem.typeArgs("Schema")._1.asElem[Schema]
+implicit val eSchema = p._1.eSchema
       isoStructItemBase[Val, Schema].to(p)
     }
 
@@ -146,7 +146,7 @@ implicit val eSchema = p._1.elem.typeArgs("Schema")._1.asElem[Schema]
   implicit class ExtendedStructItemBase[Val, Schema <: Struct](p: Rep[StructItemBase[Val, Schema]]) {
     def toData: Rep[StructItemBaseData[Val, Schema]] = {
       implicit val eVal = p.value.elem;
-implicit val eSchema = p.key.elem.typeArgs("Schema")._1.asElem[Schema]
+implicit val eSchema = p.key.eSchema
       isoStructItemBase(eVal, eSchema).from(p)
     }
   }
@@ -202,7 +202,7 @@ implicit val eSchema = p.key.elem.typeArgs("Schema")._1.asElem[Schema]
 }
 
 object StructItemsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWX2gcRRif21x6uUv6J9FUrIppssVay131pUJQSdKktJ5J6NaIZ1Hmdueu0+w/d+finpSCL32w+FJ8EnwoCIIERfJSikhRBPGh7+KbUhCkIn0wKFj8ZmZnb/cul7SC9zDszc33+77v9/vNt7d+Bw2GAZoITWxjt+wQhsuGeJ4JmW684lktm5wgjZ+9jbGrV/76TEP7amg3DVdowFrYpu8Sq4bGvdV5h7KlgDZlwNkAU1ZFu+ddRllbd8QmQ0eqMk2Fp6lslUaPI6araOxs2ydG2/Vc6iQIlZ0R0mEA8/BrAfZ9EnSV8uzOQNlAgCpi1yQh84KQoYMyvmJ6tk1MRj23Qh2nxXDdJpUqDRmc32d6rhkQRow5G4chCd9Gl1C+ioYIh6TJ96L43l7yO7i9dQlKoSyOK8+fIb7os+0wtCcuZ8nnpcCZAnV8L2AqRQHgznuW+pp3MWygseoFvIYrkKJZMVhA3SZE7vWyMvKQXVU07GNzFTfJIkTyrQL0ERK7wekWRyI/h3zfBzM9J2opd6gpJ9SUOTW6QQLKvYP5j8uBF7WR/OQGEIo4xNEdIBQCmXct/f1z5hubxrCj8eBI9FgEjCf7eFqIAUx+f+ZqePfkteMaKtVQiYYz9ZAF2GRpoWO+hrHrekyUm1CIgyboNdlPL5FlBs4Apfm6Z7WV2Kbn+NgFpJjYEVDKpiZl/DDf2xvrsyXLICXziTqaB9KTfvvdYR474/t2+9uLX1/85fEfRzU0wE0Y+UEKdgBgt2lHWGEO2za0ozGVHLKWpFKG55DRybv0zWtXmIZyVZSLsv5aql8AJaejAI3ICGnVe/T4Pz/taTAtFr5vEyr/V4Wb3/x6+6W8hrQsT0VowJiHplRxDJXA1C2TnWLEiVni66MMDaxgmz+W1MYuwzxPHCz2+DIS8fVA1/fSNgUmej/12+/Wd8fQOcGCcIki676MCRBjz3904xBZ/lxDQzVxkRds3BQW5XqdIKFZQ0PeGgnkfmEN2/xpS5sWLNLALVvd4jRhUvGJvor7hLM5Hfn8Yqr2h6V4i55L9IVl/U/jhw/XuXb890eA2FXSTkiGAZWlvSj1eDk+U9ye/RF5lfUkPV8OMzQI/bZI/yyJuGmoDoA4djAVoudy2QR5AggKLT9v93VPuspukAKRTckgvrx4f03DMO/YdhaHpFM1N88T/S6ImApf/D376dSBx+5pqHAaDTbAFeGWthisey3XUhMI3lOMRGxW7eWzRoGJgwPsJK+vNQzDFyYkQ/uVeVqM2pWVeF9aBj4TqMNI8jSjrLQ/7oTHlk+5EpXpz1xff4feenpBTgR++HQGTWyNd1gUXCXoYjmZPC322Gm7C6jesV9evjz+xydvPSTeDEN1yhzs68ce4L2gxvj/OPdRyk1jWU4GoIWs13oHYYCmtjGS7IpYUxvv3XmhfvQDMWwHRbOd4SEeD/E5O9pywcvmKrGUBR5w0Mr19Z5xK65qVtvD2bmevhwdr+R6nJcupct6c56yHsPWTW/zeu0/Wq+3u8XuFl/N3gUIGe6SBkbHaFydH1D4V03XSBgnDtBkH9GM2Cug/KXNjxeP3Nq4LTQrcdfBrHaTf4Idi0Vdc7MgKwm79eJJUsrASOTO/Bfl16BWOQwAAA=="
+  val dump = "H4sIAAAAAAAAALVWTYgcRRSu6Z3N/OzmZ0c3oihuNh2MMcxELxEWlc1mNySOu0s6rjgGpaa7dlLZ/im7a9YeCQEvOSR4MOQkeAh4kkXQvQQJEhRBPOQu3pSAIBHJwSWHiK+qunu6Z3Z2E8E5FD019b733vd99XrW7qLhwEcTgYlt7FYdwnHVkM/TAdeNNzyrbZPjZPlXb71y9cr9LzS0p4F20mCJ+ryNbfohsRpo3FuZdShf8GlLBZzxMeV1tHPW5ZR3dEducnSortLURJraZmn0KGKqjipnOowYHddzqZMg1LZHSIcBzONv+Zgx4veU8uL2QNlAgCph1yQB9/yAo30qvmZ6tk1MTj23Rh2nzXHTJrU6DTic32N6rukTTowZGwcBCd5HF1G+jopEQNLke0l+7yywLm5/XZJSKEvgqvOnCZN9dhyOdkXlLDBRCpwpUId5Po9TFADunGfFX/Muhg1UqZ/Hq7gGKVo1g/vUbUHkbi8rowjZUUcjDJsruEXmIVJsFaCPgNjLgm55JGQ5xBgDM70ka6l2qakm1FQFNbpBfCq8g8WPi74XdpD65IYQCgXE4W0gYgQy61r65bPmOxvGiKOJ4FD2WAKMZwd4WooBTP54+mpw78T1oxoqN1CZBtPNgPvY5GmhI75GsOt6XJabUIj9Fug1OUgvmWUazgCl+aZndWKxTc9h2AWkiNhRUMqmJuXisNjbHemzKcsgJWckPpoH0pN+B91hETvNmN35/sK3F357+ucxDQ0JE4bMT8EOAewW7UgrzGDbhnY0HieHrGWllOE5ZGzyHn33+hWuoVwd5cKsvxaa50HJqdBHoypCWfUfevTBL7uWuRYJP7CJOP/Nwq3vfr/zWl5DWpanEjRgzEJTcXEclcHUbZOf5MSJWBLrkxwNLWFbPJbjjR2GeY44WO6JZTQU61M938tbFJjo/dwff1o/HEFnJQvSJTFZD2VMgKi8/Ok3B8jilxoqNuRFnrNxS1pU6HWcBGYDFb1V4qv9wiq2xdOmNi1YZBm37fgWpwlTik8MVJwRweZUyMTFjNsfUeLNey7R5xb1v42frq0J7cTvTwCxK6STkAwDKkt7SenxenSmtDX7o+oq60l6sRzkaBj6bZPBWRJx01BdAHlsXypEz+WyCfIEEGK0/Kw90D3pKntBCkQ1pYLE8urDNQ3DvGvbYzgg3aqFeZ4ZdEHkVCg++OS+ce3y1xoqnELDy+CKYFNbDDe9tmvFEwjeU5yE/Fi8l88aBSYO9rGTvL5WMQxfmJAc7Y3N0+bUri1F+8oy8JlAXUaSp+nYSnujTkRs9aSrULn+wo21D+jt5+fURBCHT2XQ5NZ4l0XJVYIulxPJ03yfnba6gPE79qtLl8b/+vy9x+Sbodik3MFMP/II74V4jP+Pcx+l3FTJcjIELWS91j8IfbR/CyOproi1f/2ju680D38sh+2wbLY7POTjATFnx9oueNlcIVZsgUcctGp9u2/cyqua1fZgdq6nL0fXK7k+56VL6bHejBdbj2Prlrdxo/Efrdff3Xxvi29m7wKEjPRIA6NjLKqO+RT+VdNVEkSJfTQ5QDQj8goof3Hjs/lDt9fvSM3KwnUwq93kn2DXYmHP3CyoSoJevUSSlDIwEoUz/wUrBSSpOQwAAA=="
 }
 }
 

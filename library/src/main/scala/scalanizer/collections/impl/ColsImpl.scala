@@ -57,7 +57,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
   case class ColOverArrayCtor[A]
       (override val arr: Rep[WArray[A]])
     extends ColOverArray[A](arr) with Def[ColOverArray[A]] {
-    implicit val eA = arr.elem.typeArgs("T")._1.asElem[A]
+    implicit val eA = arr.eT
     lazy val selfType = element[ColOverArray[A]]
   }
   // elem for concrete class
@@ -128,7 +128,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
 
   implicit class ExtendedColOverArray[A](p: Rep[ColOverArray[A]]) {
     def toData: Rep[ColOverArrayData[A]] = {
-      implicit val eA = p.arr.elem.typeArgs("T")._1.asElem[A]
+      implicit val eA = p.arr.eT
       isoColOverArray(eA).from(p)
     }
   }
@@ -248,7 +248,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
 }
 
 object ColsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWX4gbRRyebHLNXe76L3oVq9LzTE+sklRfKh4iaZorarwc3dJCLMpkM4nT7u6Ms5MzkdLHPti34pPgQ0EQ5FCkLyIiUhHEh76XvikFQSylDxYLFn8zu7PZXJPL+eA+DDOz8/v3fd9vdjf+RFOBQAuBg13sFz0icdHW83IgC/ZbrNV1yTHS/pVdzV++9PcXFtrTQDtpcIoK2cUu/ZC0Gmienat6VNYF7YQGJwWmsoZ2Vn1JZb/g6U2JDtXCMCUVpjQqTCGyWK6h/Mk+J3bfZz71Yg+lyR6SZuDm0dMCc07EplRenOxo2BBczWDfIYFkIpDo6dC+5DDXJY6kzC9Rz+tK3HRJqUYDCef3OMx3BJHErrg4CEjwPrqAMjU0TZRLGq9n9Lpf5wO/D+elIYW0lN/w/AnCdZ19T6JdUTp1rlKBM1nqcSakCZEFd++xlllmfAwbKF87i9dxCUJ0SrYU1O+A5W42TKMy2VFDsxw753CHrIKl2spCHQFx2wpufaTHUYpzDmJ6SedSHEBTjKEpKmgKNhFUaQerl2uC9foofFJphHrKxQsTXBgPpOq3Ch+dcd6+Z896ljLu6RpnwMeBMZrWZACSP5+4HNw9fuWIhXINlKNBuRlIgR2ZJDrCaxb7PpM63RhCLDrA1+I4vnSUMpwBSDNN1uobsh3mceyDpwjYOWDKpQ6V6rDa2x3xMxJloFJyYo5mAPS43nE9rGzLnLv9H89/f/63J2/stVBaibDHRcJtGtxuUY6WQgW7LpRjSRMcouZCpmzmkb2Ld+k7Vy5JC6VqKNUb1le9eRaYXO4JNBdahFJ9QI/8c3NXW1oR8WOLMPG/y/5w7fdbr2UsZA3jNAMF2FUoyiQnUbrC3AgeNT4uUaqsJjk1zPXUuH/TOrdFDjGlz/5xu/XTYXRGF6qFYPDYlvbARf7lT749SNa+tNB0Q/fqios7WoWKkmMkcBpomq0TEe5n17GrZiOVmG2RNu66plGTmISkLowllRMF2DKoCHrPlD8b8rPKfFJYWSv8Zf/y8YaiR71/DEDFQhg4d5wuC4H7EzA2yKpxfgtwzBX39cWL83c+e/cR3ZjTTSo9zAuH/0Nbmi76P9surjGs68BgrYYlUN88qK8OFGqIKsnwSwm7BHaLqVTEgj4kkUXKBtRM1SXeRJwlmksG1W5iTT41DnZd2Ff3j37+zP4nHlgo+waaaoPYgpEATzVZ128ZEOELJ0lPHjV7mWEQATQssBd/+NYxXNtAokT7jCa7krqlU9F+qER4Fgb4LsWzV4xC90WVKNvi637oVRae/2bjA3r9uRV9lyRhSeBWRIlFPpJkBGgatDcM8TYukHA8/tA1skkUiUjFbWhH0ThCMrqqN5O0qvHVLTBbjWflzTlXhk/mQGSmXNBehDF8YkXiMxzETbw4Rk121DaA5YV7n64eun71lr6qc6oB4Urx43+SgVDiizMCOafyCH9BErhCfqon/wVRwpMIsgoAAA=="
+  val dump = "H4sIAAAAAAAAALVWT4hbRRyevGSbbHb7L7oVRem6xBVrSaqXiotITLNFjZulr7QQizJ5mcRp33szzpusiZQee2hPlp4EDwVPsgjai4iIKAXx0Lt4UwqCKNKDpYcWfzPvzcvLNtlsD32HYWbe/P593/eb9zb/RjOBQIuBg13slzwiccnW80ogi/Y7rN1zyTHS+Z1dL1y5fPcLC+1rot00OEWF7GGXfkzaTbTAztU8KhuCdkODkwJTWUe7a76kclD09KZEh+phmLIKUx4XphhZrNRR4eSAE3vgM596sYfydA9JM3Dz+GmBOSdiSyovTXc0agiuZrHvkEAyEUj0bGhfdpjrEkdS5pep5/UkbrmkXKeBhPP7HOY7gkhiV10cBCT4EF1AmTrKEeWSxutZvR40+NDvg3lpSCEt5Tc8f4JwXefAk2hPlE6Dq1TgTJZ6nAlpQmTB3QesbZYZH8MGKtTP4g1chhDdsi0F9btguZeN0qhMdtXRHMfOOdwla2CptrJQR0DcjoJbH+lzlOKcg5he1rmUhtCUYmhKCpqiTQRV2sHq5bpg/QEKn1Qaob5ycXiKC+OB1Px28dIZ59079pxnKeO+rnEWfBycoGlNBiD584krwe3j145aKN9EeRpUWoEU2JFJoiO85rDvM6nTjSHEogt8LU3iS0epwBmANNNi7YEh22Eexz54ioCdB6Zc6lCpDqu9vRE/Y1EGKiUn5mgGQI/rndTDyrbCuTv46fz35/94+tf9FkorEfa5SLhNg9ttytFSqGLXhXIsaYJD1HzIlM08sn/pNn3v2mVpoVQdpfqj+mq0zgKTK32B5kOLUKr36dF7v+3pSCsifmIRJv532R9+/PPW6xkLWaM4zUIBdg2KMslJlK4yN4JHjU9KlKqoSV4N8301PrVlnd8mh5jS5//6p33jCDqjC9VCMHjsSHvgovDKp98+R9a/tFCuqXt11cVdrUJFyTESOE2UYxtEhPvZDeyq2VglZtukg3uuadQkJiGpixNJ5UQBtgIqgt4z5c+F/KwxnxRX14v/2b9c3VT0qPdPAKhYCAPnrtMVIfBgCsYGWTUubAOOueK+unhx4d/P339MN2auRaWHefHIQ7Sl6aJH2XZxjWFdB4drNSyD+hZAfQ2gUENUTYZfTtglsFtKpSIW9CGJLFIxoGZqLvGm4izRfDKodhNr8plJsOvCcvc+uWtfvfS1hbJvoZkOiC0YC/BMi/X8tgERvnCS9OUbZi8zCiKAhgX24g/fBoZrG0iU6IDRZE9St3wq2g+VCM/iEN/lePaqUeiBqBJlW3rTD73K4ovfbH5Eb76wqu+SJCwJ3EoosShEkowATYP2RiHewQUSjscfuEa2iCIRqbQD7Sgax0hGV/V2klY1vrYNZmvxrLI15+royTyIzJQL2oswhk+sSHyGg7iJlyaoyY7aBrC8cOeztUM3r9/SV3VeNSBcKX78TzIUSnxxRiDnVR7hL0gCV8hP9eT/u/fF5bIKAAA="
 }
 }
 

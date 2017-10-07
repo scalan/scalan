@@ -145,8 +145,8 @@ trait KindsDefs extends scalan.Scalan with Kinds {
   case class BindCtor[F[_], S, B]
       (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])
     extends Bind[F, S, B](a, f) with Def[Bind[F, S, B]] {
-    implicit val cF = a.elem.typeArgs("F")._1.asCont[F];
-implicit val eS = a.elem.typeArgs("A")._1.asElem[S];
+    implicit val cF = a.cF;
+implicit val eS = a.eA;
 implicit val eB = f.elem.eRange.typeArgs("A")._1.asElem[B]
     lazy val selfType = element[Bind[F, S, B]]
   }
@@ -204,8 +204,8 @@ implicit val eB = f.elem.eRange.typeArgs("A")._1.asElem[B]
     override def toString = "BindCompanion"
     @scalan.OverloadId("fromData")
     def apply[F[_], S, B](p: Rep[BindData[F, S, B]]): Rep[Bind[F, S, B]] = {
-      implicit val cF = p._1.elem.typeArgs("F")._1.asCont[F];
-implicit val eS = p._1.elem.typeArgs("A")._1.asElem[S];
+      implicit val cF = p._1.cF;
+implicit val eS = p._1.eA;
 implicit val eB = p._2.elem.eRange.typeArgs("A")._1.asElem[B]
       isoBind[F, S, B].to(p)
     }
@@ -232,8 +232,8 @@ implicit val eB = p._2.elem.eRange.typeArgs("A")._1.asElem[B]
 
   implicit class ExtendedBind[F[_], S, B](p: Rep[Bind[F, S, B]]) {
     def toData: Rep[BindData[F, S, B]] = {
-      implicit val cF = p.a.elem.typeArgs("F")._1.asCont[F];
-implicit val eS = p.a.elem.typeArgs("A")._1.asElem[S];
+      implicit val cF = p.a.cF;
+implicit val eS = p.a.eA;
 implicit val eB = p.f.elem.eRange.typeArgs("A")._1.asElem[B]
       isoBind(cF, eS, eB).from(p)
     }
@@ -305,7 +305,7 @@ implicit val eB = p.f.elem.eRange.typeArgs("A")._1.asElem[B]
 }
 
 object KindsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAMVXT2gcVRh/O7vJJpt/bWoqVqtp3GCtshu9VMhBN2lWatckZEKFWAxvZ9+ur51/zryNs1J6swdzsnixoFAQBAmK9CIiIoogHnryIp5UCoIo0oNFweL33sybnd3MZDeKuIfHvtn3/fv9ft/3Znd+QQOug6ZdDevYLBiE4YIqvpdclleftWpNnZwi9R+s65NXtv94T0EHNtAYdc9ShzWxTl8htQ00ZV1YMihbcWjDN1h3MGUVNLZkMspaeUM8ZOhExQ9T5GGKcWHygcV8BU2ut2yitkzLpEboodjbQ9QM3Nz1nINtmzhdqTzW21GnIbgaxqZGXGY5LkPHfPuiZuk60Ri1zCI1jCbDVZ0UK9RlcP6AZpmaQxhRF3XsusR9CV1CmQoaItwlDffDYt9asdt+d+clIIW0uF///BqxRZ0tg6HxIJ0Vm6cCZ7LUsC2HyRBZcPeiVZPbjInhAZqsnMdbuAghGkWVOdRsgOWE1UkjNxmsoBEbaxdwgyyDJX+UhTpcotc53OKIZ6dStm2DmB4XuRTa0BRCaAocmrxKHMq1g/mPq47ltZD/SaUR8riLR3u4kB7IklnLv3ZOe/62OmIo3NgTNQ6DjwcSNC3IACS/Wrvi3nr62kkF5TZQjrqlqsscrLEo0QFeI9g0LSbSDSHETgP4mkniS0QpwRmANFO1ai1JtmYZNjbBUwDsKDClU40yfpg/mwj4iUUZqGQ2kUczAHpYb1IPc9uSbeutLy5+evHH+749qKA0F6FnOxG3aXC7RzlCCotY16EchcngEDXnM6VaBjk4c4u+cG2bKShVQSmvU18r1fPA5LznoFHfwpfqHXryr+/G60wJiE8sQsb/JPvZ5z/dfDKjIKUTp2EoQF2ComRyDGXOULMW4MPXexhKlfmXXLgtiS1fRj2+Huna5/bIKaT4oZ9/rX05h86JwoUwJD59aRFcTD5x9eNZsvq+goY2RO+WddwQquQUnSKutoGGrC3i+M+zW1jn32KVma2ROm7qsnGjGPkkTyeSbBMO4Lxn816U5Y/4fC1bJsmXV/O/q1+/scPp4r/fDRBiCWYaJlIX2t3wSlD5OrUHLnLafXj58tRv72weEj06VKXMwHZ+bh8dKhvqP+xAFNbo13WsvefLcRDixBphTcdcjAY+HrGIoJZPpQLoxSGGFK0s4cwsWiaL1bOPbYIDUgodLOnE6EkRQ4N+vsJBqOGjSVwJND74c+HdB4/ce0dB2WfQQB3E6cayMlC1mmZNIg83JCMeW5DPMp3IA9LYwUZ4cW5hGPvAPEOHpYabjOrFs8FzX7nwmW6T4uPMkYoUXk4+til1fziol0conDb92Cz/yEc7L9MbD5fFxGrDtrynX74sht+WI3SNpyJpTQaNIenqPb8Wuthb3zW/dgks7O1AH3s1cB8ZqLv0kxCmHhPGQfcnq6rcNLVvTr95aOLo5vdi3A/WLANTIctZUJID94pQymwwadvp/AsE4wYVX+f66POxBQj3f3W56p/my1Nd5mof5gvJ5rshgix5qdEB0Uv+r/Z5rtLdJv1113bbrOfZ1+NCjHqRBOdQclem4V7ad5fEX4Rvx3drl9D2ob8z8fqT70L98tXntPyHdHXA0cEAX692+ofTAyG8INSxYF7AJW4Etwp/kZhJGCNqcHUDZ5duv7V84sb1m2KU5PhLALzRmOFfpPa943UNwRER3/9LFCEMMOUvBn8DWoB9KEIPAAA="
+  val dump = "H4sIAAAAAAAAAMVXT2gcVRh/O9lkk82/NjUVxWoaNlir7EYvFXLQTZqV2nUTMqFCLIa3s2/X184/Z97GWSm92UNzaunFgkLBkwRBexERKYogHnryIp5UCoIo0oOlh4rfezNvdnYzk90o4h4e+2bf9+/3+33fm935DQ26DppxNaxjM28QhvOq+F50WU59xao1dXKS1H+ybk5d3b7/oYIObKBx6p6hDmtinb5Nahto2jq/bFC24tCGb7DuYMrKaHzZZJS1coZ4yNDxsh+mwMMU4sLkAouFMppab9lEbZmWSY3QQ6G3h6gZuHnoVQfbNnG6Unm2t6NOQ3A1gk2NuMxyXIaO+vYFzdJ1ojFqmQVqGE2GqzoplKnL4PwBzTI1hzCiLunYdYn7JrqI0mU0TLhLGu5HxL61Yrf97s5LQAppcb/++TViizpbBkMTQTorNk8FzmSoYVsOkyEy4O4Nqya3aRPDAzRVPoe3cAFCNAoqc6jZAMtJq5NGbjJURqM21s7jBqmAJX+UgTpcotc53OKIZ6dStm2DmJ4TueTb0ORDaPIcmpxKHMq1g/mPq47ltZD/SQ0g5HEXz/RwIT2QZbOWu3xWe+2eOmoo3NgTNY6AjycSNC3IACS/Wbvq3n3pxgkFZTdQlrrFqsscrLEo0QFeo9g0LSbSDSHETgP4mk3iS0QpwhmANF21ai1JtmYZNjbBUwDsGDClU40yfpg/mwz4iUUZqGQ2kUfTAHpYb1IPc9uibeutry58ceHnx74/qKABLkLPdiJuB8DtHuUIKSxhXYdyFCaDQ9Ssz5RqGeTg7F36+o1tpqBUGaW8Tn2tVM8Bkwueg8Z8C1+qf9ETD36YqDMlID6xCBn/88ytL3+580JaQUonTiNQgLoMRcnkGEqfpmYtwIevjzCUKvEv2XBbFFu+jHl8fbRrn90jp5DiJ3/9vfb1PDorChfCkPj0pUVwMfX89c/myOpHChreEL1b0nFDqJJTdJK42gYatraI4z/PbGGdf4tVZqZG6ripy8aNYuSTPJNIsk04gAuezXtRlj/q81WxTJIrreb+VL+9tsPp4r8/DBBiCeYATKQutLvhlaDydXoPXOS0+/jSpek/Ptg8JHp0uEqZge3c/D46VDbUf9iBKKzRr+toe8+XYyDEyTXCmo65FA18LGIRQS2XSgXQi0MMKVpJwpleskwWq2cf2wQHpBg6WNaJ0ZMihob8fIWDUMNHkrgSaAw/uHJfvXb5EwVlXkaDdRCnG8vKYNVqmjWJPNyQjHhsUT5LdyIPSGMHG+HFuYVh7APzDB2WGm4yqhfOBM995cJnpk2KjzNHKlJ4KfnYptT94aBeHiF/yvRjs9zTn+68RW8/VRITqw1bZU+/fFkKv1UidE2kImlNBY0h6eo9vxa72FvfNb92CSzs7UAfezVwHxmou/STEKYeE8ZBjyerqtQ0te9OvXto8sjmj2LcD9UsA1MhyzlQkgP3ilDKXDBp2+n8CwTjBhVf5/vo8/FFCPd/dbnqn+bLi13mah/mi8nmuyGCLHmp0QHRS/7v9Hmu3N0m/XXXdtus59krcSHGvEiC8yi5KwfgXtp3l8RfhO/Hd2uX0Pahv9Px+pPvQv3y1ee0/Id0dcDRwQBfr3f6h9ODIbwg1PFgXsAlbgS3Cn+RmE0YI2pwdQNnF++9Vzl+++YdMUqy/CUA3mjM8C9S+97xuobgqIjv/yWKEAaY8heDvwHnaXNpQg8AAA=="
 }
 }
 

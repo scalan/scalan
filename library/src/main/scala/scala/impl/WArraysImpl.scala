@@ -108,7 +108,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 
   // default wrapper implementation
   abstract class WArrayImpl[T](val wrappedValue: Rep[Array[T]]) extends WArray[T] with Def[WArrayImpl[T]] {
-    implicit val eT = wrappedValue.elem.typeArgs("T")._1.asElem[T]
+    implicit val eT = wrappedValue.eT
     lazy val selfType = element[WArrayImpl[T]]
 
     def apply(i: Rep[Int]): Rep[T] =
@@ -202,7 +202,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 
   implicit class ExtendedWArrayImpl[T](p: Rep[WArrayImpl[T]]) {
     def toData: Rep[WArrayImplData[T]] = {
-      implicit val eT = p.wrappedValue.elem.typeArgs("T")._1.asElem[T]
+      implicit val eT = p.wrappedValue.eT
       isoWArrayImpl(eT).from(p)
     }
   }
@@ -370,7 +370,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 }
 
 object WArraysModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWXWgcRRyf21x6yV0+2mgqNtrEeH7VetcKUiWKXJOLrZ5J6IYUzqDM7c2d0+7HODuX7knpYx/sW+mT4ENBECQo0pciIkURxIe+i29KRRBF+mBRsPif2Z29vUsuqQ/ew7A7M/+v3+/3/+9t/oYGfY5mfAvb2C04ROCCqZ5Lvsibr3v1lk0WSONH79rE5Ut/fWygvVU0Sv01ykUL2/RdUq+iSe9s2aFimdNmaLDKMRUVNFp2BRXtvKM2BTpUCcMUZZjidmHykcVcBU2sthkx267nUif2UNzdQ9IM3Nx/mmPGCO9J5ejujroNwdUwdi3iC4/7Aj0S2hctz7aJJajnFqnjtASu2aRYob6A+3stz7U4EcSct7HvE/8ddAGlK2iISJc0fh9W7+1l1vG7NS8FKaQl/Yb3TxGm6mw7Ao1F6SwzmQrcyVCHeVzoEBlw97ZX169pF8MGmqicwRu4CCGaRVNw6jbBctzrplGa7KmgHMPWWdwkS2AptzJQh0/shoRbXQkYSjHGQEzPqlwKHWgKMTQFCU3eJJxK7WB5uMK9oI3CX2oAoUC6OLyLC+2BlN16/r116407Zs4xpHGgahwGH9N9NK3IACS/PXXZv/3K1WMGylZRlvqlmi84tkSS6AivHHZdT6h0YwgxbwJfs/34UlFKcAcgTde8eluTbXkOwy54ioAdAaZsalEhL8u98YifbVEGKgUj+mo6YKm43n49LG1LjNntr89/ef6nh77fZ6ABKcKA8YTbAXC7QzlKCvPYtqEcQ+jgEDUbMmV6Dtk3e5u+efWSMFCqglJBt76Wa2eAybmAo5HQIpTqXXrsnx/GGsKIiO9bhI7/RebGV7/cejltIKMbp2EowCxDUTo5gfacLnGO2xFCcn1QoNSqfMjKZSSQ64Ge9+wOacSsPvHr7/VvjqB1VavSgobknuQHLiaef//zx8jKJwYaqqp2XbRxUwlRsrJAfKuKhrwNwsP9zAa25dO2YszUSQO3bN2rSVhCXmf68sqIxGwOuhfaT5efCyla8lySX1zJ/2l+d2VTMiTPHxBo5JwajfU1bLeIxnVwC9ZyOdgDbgSxXB5Xt6YTFrOpVJSDOhfIIKvafbpsE2d37wJlQ9JPQld1okhCHu4nLdVPn/59/KNHD0zdNVDmVTTYAKT9baEerHktt657Fya8IIE4rvfS3eBDr2KOnXjwb2AYWzBbBNqvCWkJahfXov2QBvjNoA4M8dNBTc/+qBJpWzjphl5F/unrm+fozacWVS8lQdlVk/rj8tnFi5N/fPjWfWokDtWocDDLH/kPA1HPr/9x4KGECCbUOqk1Miatos82VBNelMuTHclM3ZtCS4ndGL5ndoJvmYedHQND84df+HnhymtqUo13AFPXolqTk0Og0XmQE6YuiQdzVh2eECi32HItICA+SKQ2HW9kE3i8uANQI+VgXrNytBeQqR5AzC3zsSeoUimkPx523nyS71C9rIP8JOA42wdHMyIeuLtw54OlQzev3VLgZaWEYBa58f+Zjl5CpWdhQEjZyOfnOqm+1N1AcCuT+CTAgBlUmSTAqXZ/LMYiNfnhH6IeJNb/BZvLO9k+CwAA"
+  val dump = "H4sIAAAAAAAAALVWS2wbRRgeb5w6cV5tIEVQaEJkXqXYLRIqKCBkHAcKJo66USqZCDRej820+xhmx+kaVT320J6ockLiUIkTipCglwohhEBIiEPviBuoCAmBUA9UPRTxz+zOeu3ESTngw2h3Zv7X933/v976Aw37HM35Fraxm3eIwHlTPRd9kTPf9BptmyyS5s/etekrl+98YqD9NTRB/TXKRRvb9H3SqKEZ72zZoaLKaSs0WOWYigqaKLuCik7OUZsCHamEYQoyTGGnMLnIYqGCplc7jJgd13OpE3so7O0haQZu7j/NMWOE96VyfG9HvYbgahS7FvGFx32BHg3tC5Zn28QS1HML1HHaAtdtUqhQX8D9/ZbnWpwIYpZs7PvEfw9dQOkKGiHSJY3fR9V7p8q6frfnpSCFtKTf8P4pwlSdHUegySidKpOpwJ0MdZjHhQ6RAXfveg39mnYxbKDpyhm8gQsQolUwBaduCyynvF4apcm+Chpj2DqLW2QZLOVWBurwid2UcKsrAUMpxhiI6VmVS74LTT6GJi+hyZmEU6kdLA9XuBd0UPhLDSEUSBdH93ChPZCy28hdWrfeum2OOYY0DlSNo+BjdoCmFRmA5Penrvi3Xr16wkDZGspSv1j3BceWSBId4TWGXdcTKt0YQsxbwNf8IL5UlCLcAUjTda/R0WRbnsOwC54iYMeBKZtaVMjLcm8q4mdHlIFKwYi+mg5YKq53UA9L2yJjdufb81+d/+XhHw8YaEiKMGA84XYI3O5SjpJCCds2lGMIHRyiZkOmTM8hB+Zv0bevXhYGSlVQKujVV7V+BphcCDgaDy1Cqf5DT9z9abIpjIj4gUXo+F9mvv7mt5svpw1k9OI0CgWYZShKJyfQvtNFznEnQkiuDwqUWpUPWbmMB3J9qO89u0saMatP/P5n47tjaF3VqrSgIbkn+YGL6ec//OIxsvKpgUZqql2XbNxSQpSsLBLfqqERb4PwcD+zgW35tKMYMw3SxG1b92oSlpDXuYG8MiIxW4DuhfbT5Y+FFC17LsktreT+Nn/Y3JIMyfMHBBo/p0ZjYw3bbaJxHd6GtVwO94EbQSyXx9Wt2YTFfCoV5aDOBTLIqnafLtvE2du7QNmQ9JPQVd0okpBHBklL9dPI3Q/umJuXPjdQ5nU03ASk/R2hHq57bbehexcmvCCBeEXvpXvBh17FHDvx4N/AMLZgtgh0UBPSFtQurEX7IQ3wm0NdGOKnw5qeg1El0jZ/0g29itzT17fO0RtPLaleSoKypyb1x+Wzixdn/vr4nfvUSBypU+Fgljv2Hwainl//48BDCRFMq3VGa2RSWkWfbagmvCiXJ7uSOXRvCi0mdmP4ntkNvioPOzsGhuaOvvDr4uYbalJNdQFT16Jak5NDoIkSyAlTl8SDOasOXxNobKntWkBAfJBIbTbeyCbweHEXoMbLQUmzcrwfkEN9gJjb5mNfUKVSSH8q7LxSku9QvayL/AzgOD8ARzMiHri7cPuj5SM3rt1U4GWlhGAWufH/ma5eQqVnYUBI2cjn57qpvtTbQHArk/gkwIAZVpkkwKn1fiwmIzX54R+iPiTW/wX9dLOSPgsAAA=="
 }
 }
 

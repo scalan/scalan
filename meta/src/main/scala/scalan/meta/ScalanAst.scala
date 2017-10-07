@@ -205,7 +205,7 @@ object ScalanAst {
 
   case class SStructPath(base: STpeExpr, fieldName: String, tail: STpePath) extends SBasedPath
 
-  case class SEntityPath(base: STpeExpr, entity: STraitOrClassDef, tyArgName: String, tail: STpePath) extends SBasedPath
+  case class SEntityPath(base: STpeExpr, entity: STraitOrClassDef, tyArg: STpeArg, tail: STpePath) extends SBasedPath
 
   object STpePath {
     def findInEntity(module: SModuleDef, e: STraitOrClassDef,
@@ -214,7 +214,7 @@ object ScalanAst {
       for (i <- args.indices) {
         find(module, args(i), argName) match {
           case Some(tailPath) =>
-            return Some(SEntityPath(tc, e, e.tpeArgs(i).name, tailPath))
+            return Some(SEntityPath(tc, e, e.tpeArgs(i), tailPath))
           case None =>
         }
       }
@@ -458,6 +458,8 @@ object ScalanAst {
                       flags: Long = ModifierFlags.PARAM,
                       annotations: List[STypeArgAnnotation] = Nil) {
     def isHighKind = tparams.nonEmpty
+    def classOrMethodArgName: String = if (isHighKind) "c" + name else "e" + name
+    def descName: String = if (isHighKind) "Cont" else "Elem"
 
     val variance =
       if (hasFlag(ModifierFlags.COVARIANT))
@@ -509,7 +511,8 @@ object ScalanAst {
     def isArgList = annotations.exists(a => a.annotationClass == ArgListAnnotation)
     def isTypeDesc: Boolean
   }
-
+  object SMethodOrClassArg {
+  }
   case class SMethodArg(
                          impFlag: Boolean,
                          overFlag: Boolean,
@@ -566,13 +569,9 @@ object ScalanAst {
 
     def implicitArgs: SClassArgs
 
-//    def isExtractableArg(module: SModuleDef, tpeArg: STpeArg): Boolean = {
-//      args.args.exists(a => STpePath.find(module, a.tpe, tpeArg.name).isDefined)
-//    }
-
-//    def extractableTypeArgs(module: SModuleDef): List[STpeArg] = {
-//      tpeArgs.filter(a => isExtractableArg(module, a))
-//    }
+    def tpeArgIndex(tpeArgName: String) = {
+      tpeArgs.zipWithIndex.find { case (a, i) => a.name == tpeArgName }.get._2
+    }
 
     def firstAncestorType = ancestors.headOption.map(_.tpe)
 
