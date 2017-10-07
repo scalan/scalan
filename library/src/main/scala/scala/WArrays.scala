@@ -3,8 +3,6 @@ package scala {
 
   import impl._
 
-  import scala.Array
-
   import scala.wrappers.WrappersModule
 
   trait WArrays extends Base { self: WrappersModule =>
@@ -18,7 +16,6 @@ package scala {
     };
     trait WArrayCompanion extends ExCompanion1[WArray] {
       @External def fill[@Reified T](n: Rep[Int])(elem: Rep[Thunk[T]]): Rep[WArray[T]]
-    };
-    def DefaultOfWArray[T](implicit eT: Elem[T]): Rep[WArray[T]] = toRep(null.asInstanceOf[WArray[T]])
+    }
   }
 }

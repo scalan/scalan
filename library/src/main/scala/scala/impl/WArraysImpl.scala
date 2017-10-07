@@ -57,12 +57,14 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
       val conv = fun {x: Rep[WArray[T]] => convertWArray(x) }
       tryConvert(element[WArray[T]], this, x, conv)
     }
+
     def convertWArray(x: Rep[WArray[T]]): Rep[To] = {
       x.elem match {
         case _: WArrayElem[_, _] => x.asRep[To]
         case e => !!!(s"Expected $x to have WArrayElem[_, _], but got $e", x)
       }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -214,7 +216,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 }
 
 object WArraysModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWS2wbRRgeb5w6cV5tIEVQaEJkXqXYLRIqKCBkHAcKJo66USqZCDRej820+xhmx+kaVT320J6ockLiUIkTipCglwohhEBIiEPviBuoCAmBUA9UPRTxz+zOeu3ESTngw2h3Zv7X933/v976Aw37HM35Fraxm3eIwHlTPRd9kTPf9BptmyyS5s/etekrl+98YqD9NTRB/TXKRRvb9H3SqKEZ72zZoaLKaSs0WOWYigqaKLuCik7OUZsCHamEYQoyTGGnMLnIYqGCplc7jJgd13OpE3so7O0haQZu7j/NMWOE96VyfG9HvYbgahS7FvGFx32BHg3tC5Zn28QS1HML1HHaAtdtUqhQX8D9/ZbnWpwIYpZs7PvEfw9dQOkKGiHSJY3fR9V7p8q6frfnpSCFtKTf8P4pwlSdHUegySidKpOpwJ0MdZjHhQ6RAXfveg39mnYxbKDpyhm8gQsQolUwBaduCyynvF4apcm+Chpj2DqLW2QZLOVWBurwid2UcKsrAUMpxhiI6VmVS74LTT6GJi+hyZmEU6kdLA9XuBd0UPhLDSEUSBdH93ChPZCy28hdWrfeum2OOYY0DlSNo+BjdoCmFRmA5Penrvi3Xr16wkDZGspSv1j3BceWSBId4TWGXdcTKt0YQsxbwNf8IL5UlCLcAUjTda/R0WRbnsOwC54iYMeBKZtaVMjLcm8q4mdHlIFKwYi+mg5YKq53UA9L2yJjdufb81+d/+XhHw8YaEiKMGA84XYI3O5SjpJCCds2lGMIHRyiZkOmTM8hB+Zv0bevXhYGSlVQKujVV7V+BphcCDgaDy1Cqf5DT9z9abIpjIj4gUXo+F9mvv7mt5svpw1k9OI0CgWYZShKJyfQvtNFznEnQkiuDwqUWpUPWbmMB3J9qO89u0saMatP/P5n47tjaF3VqrSgIbkn+YGL6ec//OIxsvKpgUZqql2XbNxSQpSsLBLfqqERb4PwcD+zgW35tKMYMw3SxG1b92oSlpDXuYG8MiIxW4DuhfbT5Y+FFC17LsktreT+Nn/Y3JIMyfMHBBo/p0ZjYw3bbaJxHd6GtVwO94EbQSyXx9Wt2YTFfCoV5aDOBTLIqnafLtvE2du7QNmQ9JPQVd0okpBHBklL9dPI3Q/umJuXPjdQ5nU03ASk/R2hHq57bbehexcmvCCBeEXvpXvBh17FHDvx4N/AMLZgtgh0UBPSFtQurEX7IQ3wm0NdGOKnw5qeg1El0jZ/0g29itzT17fO0RtPLaleSoKypyb1x+Wzixdn/vr4nfvUSBypU+Fgljv2Hwainl//48BDCRFMq3VGa2RSWkWfbagmvCiXJ7uSOXRvCi0mdmP4ntkNvioPOzsGhuaOvvDr4uYbalJNdQFT16Jak5NDoIkSyAlTl8SDOasOXxNobKntWkBAfJBIbTbeyCbweHEXoMbLQUmzcrwfkEN9gJjb5mNfUKVSSH8q7LxSku9QvayL/AzgOD8ARzMiHri7cPuj5SM3rt1U4GWlhGAWufH/ma5eQqVnYUBI2cjn57qpvtTbQHArk/gkwIAZVpkkwKn1fiwmIzX54R+iPiTW/wX9dLOSPgsAAA=="
+  val dump = "H4sIAAAAAAAAAIVWTWwbRRR+3jh1EuevgRSBoLRhJaAUb1sp4ien4DoSYOKKjVoUKtB4PTbT7s4ss+OyRlWPlWi5gHLlgMQJ5QK9cOKCuHDoHXEDwQW1QhyoeijizexP1iZu9rDyzs773nvf971Z796ByUjCscgjPuG1gCpSc83v9UjZ7lui0/fpWdr9Vdxa+vzm/a8tWNyGORadZ1L1ic8+pp1tWBaXGwFTLcl6ScCWJEw1Ya7BFVMDOzCLCk40kzSOTuPsl8ZOI9aasLQ1CKk74IKzIEdwDkYohiHMoxckCUMqR0o5fTDQcCBCTRPu0UgJGSk4nsQ7nvB96ikmuMOCoK9I26dOk0UK9y96gnuSKurWfRJFNPoQrkG5CVNUQ7L8edo8D1rhHu7/6zKUYlkaN9n/Ng1Nn4NAwXxaTivUpeCeCgtCIVWWooJwH4hO9ljmBBdgqXmJXCEOpug5rpKM9zByQQzLqEMONaEaEu8y6dFNjNRLFewjon5X0222xCGUwjBEM50xtdT2qKnl1NQ0NbZLJdPeIfrlOSniASRXaQIg1hAnD4DIEGiDd+wbF71377nVwNLBsS5mxjQ6jUBPjzF2Ruc3168v//XV+49YMLMNU22mAhLap4pap5RVCedCmYpzFonsoWQr4yQzqq/jHmS13BadQaa3J4KQcERKuZ1FsXzmMaU367WFVKJ9iUY1VUizrWXkPe923Bjr2PUw9Ac/XP3+6m9P/nzYggntwziUBdgJhH1IO4ayOvF9bMdSWXLMOpOI5YqAHl75m7335U1lQakJpXjYYq32JRRzLZYwm0Qkbv2XvfTgl/muslLtxzaR5T/zTrdd2/r0EwusYZ6msQG3gU1lxSmYQI1TevT9cQWHLqxLSQbDi6UtYxt9m4337k8UVnOSX3xYfS2ZqJ6bhdknX/nj7M6bptiFPROZbWndxkh5yXN1wRVhnObaJHZ+RkF1o889NGX+Ii1tPGm5B5/9827nx1Nw0ShTTJjjJFmWzX0eCvwsFV4gV7ONuJ4Z+HSRRn07OsKjM/KcJHmukFRCNXHDpuDU3jhn/+P+tLOrzaDfP4aELCSK1YtTs2qCTfFH0/IkrIwhwU3HB71w7d4Xmydu3/rdyDGjBxGzcjV0MBpVUmIUlPXw5eI/NU58M5FTDz677+7c+NaCyhsw2fVJL9r35Jhsiz7vZNOPnwlFY/VatlYedjVOO5EkyL8eVwiefXg6KTiSjWpfMd85n66v4YlgrmOQ07ya/zqesX4k7UTH1l7nCaqyX/hu9yN2+/kNM42j87A4jIXsVArTtKrwv4QGLfjl5eE5m08/qlHygRkxx6v/AZfb8gCOCAAA"
 }
 }
 

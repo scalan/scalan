@@ -13,7 +13,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
 
   val e = EntityTemplateData(module, module.entityOps)
 
-  def getCompanionMethods(e: EntityTemplateData) = e.entity.companion.filter(_ => e.optBaseType.isDefined).map { comp =>
+  def getCompanionMethods(e: EntityTemplateData) = e.entity.companion.map { comp =>
     val externalConstrs = comp.getMethodsWithAnnotation(ConstructorAnnotation)
     val externalMethods = comp.getMethodsWithAnnotation(ExternalAnnotation)
     (externalConstrs, externalMethods)
@@ -264,7 +264,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         case Some(STraitCall("Def", _)) =>
           val parentElem =
             if (e.isCont) {
-              s"EntityElem1[${e.tpeArgsUse}, $toArgName, ${e.name}](${e.tpeArgNames.rep("e" + _)}, container[${e.name}])"
+              s"EntityElem1[${e.tpeArgNames.rep()}, $toArgName, ${e.name}](${e.tpeArgNames.rep("_e" + _)}, container[${e.name}])"
             } else {
               s"EntityElem[$toArgName]"
             }

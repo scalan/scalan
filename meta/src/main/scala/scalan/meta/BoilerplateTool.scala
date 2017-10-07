@@ -18,7 +18,6 @@ class BoilerplateTool extends StrictLogging {
 
   lazy val viewsConfig           = coreMainConfig("views", "scalan/Views.scala")
   lazy val convertersConfig      = coreMainConfig("converters", "scalan/Converters.scala")
-  lazy val exceptionsConfig      = coreMainConfig("exceptions", "scalan/util/Exceptions.scala")
   lazy val specializationsConfig = coreMainConfig("specializations", "scalan/dynamic/Specializations.scala")
 
   lazy val structKeysConfig = coreMainConfig("structKeys", "scalan/primitives/StructKeys.scala")
@@ -29,7 +28,7 @@ class BoilerplateTool extends StrictLogging {
   lazy val metatestsConfig       = coreTestConfig("metatests", "scalan/common/MetaTests.scala")
 
   val allConfigs = List(
-    viewsConfig, convertersConfig, exceptionsConfig, specializationsConfig,
+    viewsConfig, convertersConfig, specializationsConfig,
     structKeysConfig, structItemsConfig,
     segmentsConfig, kindsConfig, metatestsConfig
   )

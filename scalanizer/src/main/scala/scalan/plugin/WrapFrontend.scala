@@ -234,8 +234,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       STraitCall(name = arg.name, tpeSExprs = Nil)
     }
     val baseType = STraitCall(externalName, typeParams)
-    val wrapperAncestor = TypeWrapperTpe(baseType, STraitCall(wClassName, typeParams)).toTypeApply
-    val entityAncestors = wrapperAncestor :: originalEntityAncestors
+    val entityAncestors = originalEntityAncestors
     val entityAnnotations = wrapperConf.annotations.map { a => STraitOrClassAnnotation(a, Nil) }
     val entity = STraitDef(
       name = wClassName,
@@ -254,8 +253,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     )
     val imports = List(
       SImportStat("scalan._"),
-      SImportStat("impl._"),
-      SImportStat(s"$packageName.$externalTypeName")
+      SImportStat("impl._")
     )
     val module = SModuleDef(
       packageName = wrapPackage(packageName),
@@ -268,7 +266,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         name = "self",
         components = List(STraitCall("Wrappers", Nil))
       )),
-      ancestors = List(STraitCall("TypeWrappers", Nil).toTypeApply),
+      ancestors = Nil,
       origModuleTrait = None,
       isVirtualized = false
     )(context)

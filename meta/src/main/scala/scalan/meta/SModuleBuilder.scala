@@ -386,7 +386,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   def filterAncestors(module: SModuleDef): SModuleDef = {
     class filterAncestorTransformer extends MetaAstTransformer {
       override def entityAncestorsTransform(ancestors: List[STypeApply]): List[STypeApply] = {
-        ancestors.filter(_.tpe.name == TypeWrapperDefName)
+        ancestors.filter(_.tpe.isDef)
       }
     }
 
@@ -401,7 +401,6 @@ class SModuleBuilder(implicit val context: AstContext) {
       new TypeNameTransformer("To", module.name + "To").moduleTransform _
     ))
     val nonConflictModule = pipeline(module)
-
     nonConflictModule
   }
 }

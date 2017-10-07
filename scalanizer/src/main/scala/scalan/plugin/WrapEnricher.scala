@@ -35,8 +35,8 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         /** Transformations of Wrappers by adding of Elem, Cont and other things. */
         val pipeline = scala.Function.chain(Seq(
           preventNameConflict _,
-          addWrappedValue _,
           addBaseToAncestors _,
+          addEntityAncestors _,
           updateSelf _,
           repSynonym _,
           checkEntityCompanion _,
@@ -45,8 +45,6 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
           preventNameConflict _,
           genEntityImpicits _,
           genMethodsImplicits _,
-          defaultMethod _,
-          defaultWrapperImpl _,
           replaceExternalTypeByWrapper _,
           /** Currently, inheritance of type wrappers is not supported.
             * Print warnings and remove ancestors. */

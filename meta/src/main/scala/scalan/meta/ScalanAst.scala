@@ -44,7 +44,7 @@ object ScalanAst {
   /** Invocation of a trait with arguments */
   case class STraitCall(val name: String, override val tpeSExprs: List[STpeExpr] = Nil) extends STpeExpr {
     override def toString = name + tpeSExprs.asTypeParams()
-
+    def isDef = (name == "Def")
     def toTypeApply = STypeApply(this, Nil)
   }
 
