@@ -55,6 +55,21 @@ object ScalanAstExtensions {
     }
   }
 
+  implicit class SMethodArgsListOps(sections: List[SMethodArgs]) {
+    def splitArgSections(): (List[SMethodArgs], List[SMethodArgs]) = {
+      sections partition {
+        _ match {
+          case SMethodArgs((arg: SMethodOrClassArg) :: _) => arg.impFlag
+          case _ => false
+        }
+      }
+    }
+    def joinArgSections() = {
+      val newSingleSection = sections.flatMap(_.args)
+      List(SMethodArgs(newSingleSection))
+    }
+  }
+
   implicit class STpeArgsOps(args: STpeArgs) {
     def decls = args.map(_.declaration)
 

@@ -6,6 +6,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.tools.nsc._
 import scalan.meta.EntityManagement
 import scalan.meta.ScalanAst._
+import scalan.meta.ScalanAstExtensions._
 import scalan.meta.ScalanAstTransformers._
 import scalan.util.CollectionUtil.TraversableOps
 
@@ -168,7 +169,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     SMethodDef(
       name = name,
       tpeArgs = annotatedArgs,
-      argSections = argsWithoutClassTags,
+      argSections = argsWithoutClassTags.joinArgSections(),
       tpeRes = Some(tpeRes),
       isImplicit = false, isOverride = false,
       overloadId = None,

@@ -10,6 +10,7 @@ import scala.collection.mutable.{Map => MMap}
 import scalan._
 import scalan.util.{Covariant, Contravariant, Invariant}
 import scalan.util.CollectionUtil._
+import ScalanAstExtensions._
 
 object ScalanAst {
 
@@ -408,15 +409,6 @@ object ScalanAst {
 
     def cleanedArgs: List[SMethodArgs] = getOriginal match {
       case Some(method) =>
-        def splitArgSections(sections: List[SMethodArgs]): (List[SMethodArgs], List[SMethodArgs]) = {
-          sections partition {
-            _ match {
-              case SMethodArgs((arg: SMethodArg) :: _) => arg.impFlag
-              case _ => false
-            }
-          }
-        }
-
         def existsClassTag(tpeArgs: List[STpeExpr]): Boolean = {
           val relatedClassTag = (getOriginal map (_.argSections map (_.args))).toList.flatten.flatten collectFirst {
             case marg@SMethodArg(_, _, _, STraitCall("ClassTag", origTpeArgs), _, _, _) if origTpeArgs == tpeArgs => marg
@@ -429,7 +421,7 @@ object ScalanAst {
           case _ => false
         }
 
-        val (currImp, currNonImp) = splitArgSections(argSections)
+        val (currImp, currNonImp) = argSections.splitArgSections()
 
         val newCurrImp = currImp map { s => s.copy(args = s.args.filterNot(isAdded(_))) } filter {
           !_.args.isEmpty

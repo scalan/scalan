@@ -15,7 +15,7 @@ package scala {
       @External def length: Rep[Int]
     };
     trait WArrayCompanion extends ExCompanion1[WArray] {
-      @External def fill[@Reified T](n: Rep[Int])(elem: Rep[Thunk[T]]): Rep[WArray[T]]
+      @External def fill[@Reified T](n: Rep[Int], elem: Rep[Thunk[T]]): Rep[WArray[T]]
     }
   }
 }

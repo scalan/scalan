@@ -86,10 +86,12 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   registerModule(WArraysModule)
 
   lazy val WArray: Rep[WArrayCompanionCtor] = new WArrayCompanionCtor {
-    def fill[T](n: Rep[Int])(elem: Rep[Thunk[T]]): Rep[WArray[T]] =
-      methodCallEx[WArray[T]](self,
-        this.getClass.getMethod("fill", classOf[AnyRef], classOf[AnyRef]),
-        List(n.asInstanceOf[AnyRef], elem.asInstanceOf[AnyRef]))
+    def fill[T](n: Rep[Int], elem: Rep[Thunk[T]]): Rep[WArray[T]] = {
+      implicit val eT = elem.elem.eItem
+      mkMethodCall(self,
+        this.getClass.getMethod("fill", classOf[Exp[_]], classOf[Exp[_]]),
+        List(n.asInstanceOf[AnyRef], elem.asInstanceOf[AnyRef]), true, element[WArray[T]]).asRep[WArray[T]]
+    }
   }
 
   case class ViewWArray[A, B](source: Rep[WArray[A]], override val innerIso: Iso[A, B])

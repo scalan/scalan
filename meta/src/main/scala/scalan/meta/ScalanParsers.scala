@@ -501,7 +501,7 @@ trait ScalanParsers[G <: Global] {
   }
 
   def applyArrayFill(f: SExpr, tyArg: Option[STpeExpr], arg1: SExpr, arg2: SExpr) = {
-    SApply(f, tyArg.toList, List(List(arg1), List(SApply(SIdent("Thunk"), Nil, List(List(arg2))))))
+    SApply(f, tyArg.toList, List(List(arg1, SApply(SIdent("Thunk"), Nil, List(List(arg2))))))
   }
 
   def applyArrayMap(xs: SExpr, ts: List[STpeExpr], f: SExpr) = {
