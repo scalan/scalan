@@ -2,7 +2,6 @@ package scala
 
 import scalan._
 import impl._
-import scala.Array
 import scala.wrappers.WrappersModule
 import scala.reflect.runtime.universe._
 import scala.reflect._
@@ -17,25 +16,8 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
     proxyOps[WArray[T]](p)(scala.reflect.classTag[WArray[T]])
   }
 
-  implicit def unwrapValueOfWArray[T](w: Rep[WArray[T]]): Rep[Array[T]] = w.wrappedValue
-
-  implicit def arrayElement[T:Elem]: Elem[Array[T]] =
-    element[WArray[T]].asInstanceOf[WrapperElem1[_, _, CBase, CW] forSome { type CBase[_]; type CW[_] }].baseElem.asInstanceOf[Elem[Array[T]]]
-
   implicit def castWArrayElement[T](elem: Elem[WArray[T]]): WArrayElem[T, WArray[T]] =
     elem.asInstanceOf[WArrayElem[T, WArray[T]]]
-
-  implicit lazy val containerArray: Cont[Array] = new Cont[Array] {
-    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Array[A]]
-    def lift[A](implicit evA: Elem[A]) = element[Array[A]]
-    def unlift[A](implicit eFT: Elem[Array[A]]) =
-      castWArrayElement(eFT.asInstanceOf[Elem[WArray[A]]]).eT
-    def getElem[A](fa: Rep[Array[A]]) = fa.elem
-    def unapply[T](e: Elem[_]) = e match {
-      case e: BaseTypeElem1[_,_,_] if e.wrapperElem.isInstanceOf[WArrayElem[_,_]] => Some(e.asElem[Array[T]])
-      case _ => None
-    }
-  }
 
   implicit lazy val containerWArray: Functor[WArray] = new Functor[WArray] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[WArray[A]]
@@ -63,7 +45,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 
   // familyElem
   class WArrayElem[T, To <: WArray[T]](implicit _eT: Elem[T])
-    extends WrapperElem1[T, To, Array, WArray](_eT, container[Array], container[WArray]) {
+    extends EntityElem1[T, To, WArray](_eT, container[WArray]) {
     def eT = _eT
     lazy val parent: Option[Elem[_]] = None
     override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("T" -> (eT -> scalan.util.Invariant))
@@ -75,24 +57,17 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
       val conv = fun {x: Rep[WArray[T]] => convertWArray(x) }
       tryConvert(element[WArray[T]], this, x, conv)
     }
-
     def convertWArray(x: Rep[WArray[T]]): Rep[To] = {
       x.elem match {
         case _: WArrayElem[_, _] => x.asRep[To]
         case e => !!!(s"Expected $x to have WArrayElem[_, _], but got $e", x)
       }
     }
-    lazy val baseElem =
-      new BaseTypeElem1[T, Array, WArray[T]](this.asInstanceOf[Elem[WArray[T]]])(
-        element[T], container[Array])
-    lazy val eTo: Elem[_] = new WArrayImplElem[T](isoWArrayImpl(eT))(eT)
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def wArrayElement[T](implicit eT: Elem[T]): Elem[WArray[T]] =
-    elemCache.getOrElseUpdate(
-      (classOf[WArrayElem[T, WArray[T]]], Seq(eT)),
-      new WArrayElem[T, WArray[T]]).asInstanceOf[Elem[WArray[T]]]
+    cachedElem[WArrayElem[T, WArray[T]]](eT)
 
   implicit case object WArrayCompanionElem extends CompanionElem[WArrayCompanionCtor] {
     lazy val tag = weakTypeTag[WArrayCompanionCtor]
@@ -105,111 +80,6 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   }
   implicit def proxyWArrayCompanionCtor(p: Rep[WArrayCompanionCtor]): WArrayCompanionCtor =
     proxyOps[WArrayCompanionCtor](p)
-
-  // default wrapper implementation
-  abstract class WArrayImpl[T](val wrappedValue: Rep[Array[T]]) extends WArray[T] with Def[WArrayImpl[T]] {
-    implicit val eT = wrappedValue.eT
-    lazy val selfType = element[WArrayImpl[T]]
-
-    def apply(i: Rep[Int]): Rep[T] =
-      methodCallEx[T](self,
-        this.getClass.getMethod("apply", classOf[AnyRef]),
-        List(i.asInstanceOf[AnyRef]))
-
-    def zip[B](ys: Rep[WArray[B]]): Rep[WArray[(T, B)]] =
-      methodCallEx[WArray[(T, B)]](self,
-        this.getClass.getMethod("zip", classOf[AnyRef]),
-        List(ys.asInstanceOf[AnyRef]))
-
-    def map[B](f: Rep[T => B]): Rep[WArray[B]] =
-      methodCallEx[WArray[B]](self,
-        this.getClass.getMethod("map", classOf[AnyRef]),
-        List(f.asInstanceOf[AnyRef]))
-
-    def length: Rep[Int] =
-      methodCallEx[Int](self,
-        this.getClass.getMethod("length"),
-        List())
-  }
-  case class WArrayImplCtor[T](override val wrappedValue: Rep[Array[T]]) extends WArrayImpl[T](wrappedValue) {
-  }
-  trait WArrayImplCompanion
-  // elem for concrete class
-  class WArrayImplElem[T](val iso: Iso[WArrayImplData[T], WArrayImpl[T]])(implicit override val eT: Elem[T])
-    extends WArrayElem[T, WArrayImpl[T]]
-    with ConcreteElem1[T, WArrayImplData[T], WArrayImpl[T], WArray] {
-    override lazy val parent: Option[Elem[_]] = Some(wArrayElement(element[T]))
-    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("T" -> (eT -> scalan.util.Invariant))
-    override lazy val eTo: Elem[_] = this
-    override def convertWArray(x: Rep[WArray[T]]) = WArrayImpl(x.wrappedValue)
-    override def getDefaultRep = WArrayImpl(DefaultOfArray[T])
-    override lazy val tag = {
-      implicit val tagT = eT.tag
-      weakTypeTag[WArrayImpl[T]]
-    }
-  }
-
-  // state representation type
-  type WArrayImplData[T] = Array[T]
-
-  // 3) Iso for concrete class
-  class WArrayImplIso[T](implicit eT: Elem[T])
-    extends EntityIso[WArrayImplData[T], WArrayImpl[T]] with Def[WArrayImplIso[T]] {
-    override def from(p: Rep[WArrayImpl[T]]) =
-      p.wrappedValue
-    override def to(p: Rep[Array[T]]) = {
-      val wrappedValue = p
-      WArrayImpl(wrappedValue)
-    }
-    lazy val eFrom = element[Array[T]]
-    lazy val eTo = new WArrayImplElem[T](self)
-    lazy val selfType = new WArrayImplIsoElem[T](eT)
-    def productArity = 1
-    def productElement(n: Int) = eT
-  }
-  case class WArrayImplIsoElem[T](eT: Elem[T]) extends Elem[WArrayImplIso[T]] {
-    def getDefaultRep = reifyObject(new WArrayImplIso[T]()(eT))
-    lazy val tag = {
-      implicit val tagT = eT.tag
-      weakTypeTag[WArrayImplIso[T]]
-    }
-    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("T" -> (eT -> scalan.util.Invariant))
-  }
-  // 4) constructor and deconstructor
-  class WArrayImplCompanionCtor extends CompanionDef[WArrayImplCompanionCtor] {
-    def selfType = WArrayImplCompanionElem
-    override def toString = "WArrayImplCompanion"
-
-    @scalan.OverloadId("fromFields")
-    def apply[T](wrappedValue: Rep[Array[T]]): Rep[WArrayImpl[T]] =
-      mkWArrayImpl(wrappedValue)
-
-    def unapply[T](p: Rep[WArray[T]]) = unmkWArrayImpl(p)
-  }
-  lazy val WArrayImplRep: Rep[WArrayImplCompanionCtor] = new WArrayImplCompanionCtor
-  lazy val WArrayImpl: WArrayImplCompanionCtor = proxyWArrayImplCompanion(WArrayImplRep)
-  implicit def proxyWArrayImplCompanion(p: Rep[WArrayImplCompanionCtor]): WArrayImplCompanionCtor = {
-    proxyOps[WArrayImplCompanionCtor](p)
-  }
-
-  implicit case object WArrayImplCompanionElem extends CompanionElem[WArrayImplCompanionCtor] {
-    lazy val tag = weakTypeTag[WArrayImplCompanionCtor]
-    protected def getDefaultRep = WArrayImplRep
-  }
-
-  implicit def proxyWArrayImpl[T](p: Rep[WArrayImpl[T]]): WArrayImpl[T] =
-    proxyOps[WArrayImpl[T]](p)
-
-  implicit class ExtendedWArrayImpl[T](p: Rep[WArrayImpl[T]]) {
-    def toData: Rep[WArrayImplData[T]] = {
-      implicit val eT = p.wrappedValue.eT
-      isoWArrayImpl(eT).from(p)
-    }
-  }
-
-  // 5) implicit resolution of Iso
-  implicit def isoWArrayImpl[T](implicit eT: Elem[T]): Iso[WArrayImplData[T], WArrayImpl[T]] =
-    reifyObject(new WArrayImplIso[T]()(eT))
 
   registerModule(WArraysModule)
 
@@ -229,33 +99,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
     }
   }
 
-  object WArrayImplMethods {
-  }
-
-  def mkWArrayImpl[T]
-    (wrappedValue: Rep[Array[T]]): Rep[WArrayImpl[T]] = {
-    new WArrayImplCtor[T](wrappedValue)
-  }
-  def unmkWArrayImpl[T](p: Rep[WArray[T]]) = p.elem.asInstanceOf[Elem[_]] match {
-    case _: WArrayImplElem[T] @unchecked =>
-      Some((p.asRep[WArrayImpl[T]].wrappedValue))
-    case _ =>
-      None
-  }
-
   object WArrayMethods {
-    object wrappedValue {
-      def unapply(d: Def[_]): Option[Rep[WArray[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "wrappedValue" =>
-          Some(receiver).asInstanceOf[Option[Rep[WArray[T]] forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Rep[WArray[T]] forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object apply {
       def unapply(d: Def[_]): Option[(Rep[WArray[T]], Rep[Int]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "apply" =>

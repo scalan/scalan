@@ -59,7 +59,7 @@ class ElemTests extends AbstractElemTests {
       elementsShouldBeEqual[Int | Int, Int | Int]
       elementsShouldNotBeEqual[Int | Int, Int]
 
-      elementsShouldBeEqual[SThrowable, SThrowable]
+//      elementsShouldBeEqual[SThrowable, SThrowable]
       elementsShouldBeEqual[Thunk[Int], Thunk[Int]]
     }
 

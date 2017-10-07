@@ -3,7 +3,6 @@ package scalan
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
 import scalan.staged.{Transforming, Expressions}
-import scalan.util.ExceptionsModule
 
 abstract class Scalan
   extends Base
@@ -42,4 +41,3 @@ abstract class Scalan
 class ScalanDsl
   extends Scalan
   with Expressions
-  with ExceptionsModule
