@@ -107,7 +107,7 @@ lazy val scalanizer = Project("scalanizer", file("scalanizer"))
   )
 
 lazy val librarydef = Project("librarydef", file("librarydef"))
-  .dependsOn(meta)
+  .dependsOn(meta, scalanizer)
   .settings(libraryDefSettings,
     libraryDependencies ++= Seq())
 

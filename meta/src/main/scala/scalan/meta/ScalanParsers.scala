@@ -58,6 +58,8 @@ trait ScalanParsers[G <: Global] {
     throw new IllegalStateException(msg)
   }
 
+  def inform(msg: String) = global.inform(msg)
+
   def parseEntityModule(file: File)(implicit ctx: ParseCtx) = {
     val sourceFile = compiler.getSourceFile(file.getPath)
     val tree = parseFile(sourceFile)

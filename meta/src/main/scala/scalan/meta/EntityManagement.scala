@@ -38,14 +38,16 @@ class EntityManagement[G <: Global](val parsers: ScalanParsers[G]) extends LazyL
   protected val entities = (for(c <- configs) yield {
     val file = FileUtil.file(c.srcPath, c.entityFile)
     try {
-      println(s"  parsing ${file}")
+      inform(s"  parsing ${file} (relative to ${FileUtil.currentWorkingDir })")
       val module = parseEntityModule(file)(new ParseCtx(c.isVirtualized))
       val unitName = file.getName
       context.addModule(unitName, module)
       Some((c.name, new EntityManager(module.name, file, module, c)))
     } catch {
       case e: Exception =>
-        logger.error(s"Failed to parse file at $file (relative to ${FileUtil.currentWorkingDir})", e)
+        val msg = s"Failed to parse file at $file (relative to ${FileUtil.currentWorkingDir })"
+        inform(msg)
+        logger.error(msg, e)
         None
     }
   }).flatten.toMap
