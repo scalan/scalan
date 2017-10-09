@@ -226,8 +226,8 @@ trait Thunks extends Functions with ViewsModule with GraphVizExport with Effects
     case _ => super.formatDef(d)
   }
 
-  override protected def nodeColor(td: TypeDesc)(implicit config: GraphVizConfig) = td match {
+  override protected def nodeColor(td: TypeDesc, d: Def[_])(implicit config: GraphVizConfig) = td match {
     case _: ThunkElem[_] => "red"
-    case _ => super.nodeColor(td)
+    case _ => super.nodeColor(td, d)
   }
 }

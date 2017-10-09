@@ -386,10 +386,6 @@ trait ViewsModule extends impl.ViewsDefs { self: Scalan =>
         val iso = builder(ae.eItem)
         thunkIso(iso)
 
-      case we: WrapperElem[base, ext] @unchecked =>
-        val eExt = we.eTo
-        val iso = builder(eExt)
-        iso
       //    case ee1: EntityElem1[_,_,_] =>
       //      val iso = getIsoByElem(ee1.eItem)
       //      TODO implement using ContIso

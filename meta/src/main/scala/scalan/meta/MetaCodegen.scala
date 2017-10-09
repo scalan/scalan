@@ -124,6 +124,11 @@ class MetaCodegen {
           emit(s"$prefix.eRange", t, typed)
         else
           emit(s"$prefix.asInstanceOf[FuncElem[_,_]].eRange", t, typed)
+      case SThunkPath(_, t) =>
+        if (typed)
+          emit(s"$prefix.eItem", t, typed)
+        else
+          emit(s"$prefix.asInstanceOf[ThunkElem[_]].eItem", t, typed)
       case SStructPath(_, fn, t) =>
         emit(s"""$prefix.asInstanceOf[StructElem[_]]("$fn")""", t, false)
       case SEntityPath(STraitCall(name, args), e, tyArg, t) =>
@@ -142,24 +147,27 @@ class MetaCodegen {
     * @param tpeArgs the type arguments for which elements should be extracted
     * @return a list, where for each type argument either Some(element extraction expression) or None is returned
     */
-  def extractImplicitElems(m: SModuleDef, dataArgs: List[SClassArg], tpeArgs: List[STpeArg], argSubst: Map[String, String] = Map()): List[Option[String]] = {
+  def extractImplicitElems(
+                            m: SModuleDef, dataArgs: List[SMethodOrClassArg],
+                            tpeArgs: List[STpeArg],
+                            argSubst: Map[String, String] = Map()): List[(STpeArg, Option[String])] = {
     def subst(arg: String) = argSubst.getOrElse(arg, arg)
+
     tpeArgs.map { ta =>
       val paths = for {
-            da <- dataArgs.iterator
-            argTpe <- da.tpe.unRep(m, m.isVirtualized)
-            path <- STpePath.find(m, argTpe, ta.name)
-          } yield (da, path)
-
+          da <- dataArgs.iterator
+          argTpe <- da.tpe.unRep(m, m.isVirtualized)
+          path <- STpePath.find(m, argTpe, ta.name)
+        } yield (da, path)
       val expr = paths.find(_ => true).map {
         case (da, SEntityPath(_, e, tyArg, tail)) =>
-          val prefix = s"${subst(da.name)}.${tyArg.classOrMethodArgName}"
+          val prefix = s"${subst(da.name) }.${tyArg.classOrMethodArgName }"
           emitImplicitElemDeclByTpePath(prefix, tail)
         case (da, path) =>
-          val prefix = s"${subst(da.name)}.elem"
+          val prefix = s"${subst(da.name) }.elem"
           emitImplicitElemDeclByTpePath(prefix, path)
       }
-      expr
+      (ta, expr)
     }
   }
 
@@ -312,7 +320,8 @@ class MetaCodegen {
 
   // methods to extract elements from data arguments
   class ElemExtractionBuilder(module: SModuleDef, entity: STraitOrClassDef, argSubst: Map[String, String]) {
-    val extractionExprs: List[Option[String]] = extractImplicitElems(module, entity.args.args, entity.tpeArgs, argSubst)
+    val extractionExprs: List[Option[String]] =
+       extractImplicitElems(module, entity.args.args, entity.tpeArgs, argSubst).map(_._2)
     val tyArgSubst = classArgsAsSeenFromAncestors(module, entity).map { case (_, (e,a)) => a }
     val extractableArgs: Map[String,(STpeArg, String)] =
       tyArgSubst.zip(extractionExprs)

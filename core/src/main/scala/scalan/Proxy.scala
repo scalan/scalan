@@ -686,15 +686,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
         try {
           val paramElemMap = extractElems(elemsWithTypes, scalaMethod.typeParams.toSet, Map.empty)
           val elemMap = instanceElemMap ++ paramElemMap
-          // check if return type is a TypeWrapperDef
-          val baseType = tpe.baseType(TypeWrapperSym) match {
-            case NoType => definitions.NothingTpe
-            // e.g. Throwable from TypeWrapperDef[Throwable, SThrowable]
-            case TypeRef(_, _, params) => params(0).asSeenFrom(tpe, scalaMethod.owner)
-            case unexpected => !!!(s"unexpected result from ${tpe1}.baseType(BaseTypeEx): $unexpected")
-          }
-
-          elemFromType(tpe1, elemMap, baseType)
+          elemFromType(tpe1, elemMap, definitions.NothingTpe)
         } catch {
           case e: Exception =>
             !!!(s"Failure to get result elem for method $m on type $tpe\nReturn type: $returnType", e)
@@ -705,11 +697,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
   }
 
   private def tpeFromElem(e: Elem[_]): Type = {
-    val tag = e match {
-      case baseTypeElem: BaseTypeElem[_, _] => baseTypeElem.wrapperElem.tag
-      case _ => e.tag
-    }
-    tag.tpe
+    e.tag.tpe
   }
 
   private object Symbols {
@@ -730,8 +718,6 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
     val Tuple2Sym = typeOf[(_, _)].typeSymbol
     val EitherSym = typeOf[_ | _].typeSymbol
     val Function1Sym = typeOf[_ => _].typeSymbol
-
-    val TypeWrapperSym = typeOf[TypeWrapperDef[_, _]].typeSymbol
 
     val ElementSym = typeOf[Elem[_]].typeSymbol
     val ContSym = typeOf[Cont[Any]].typeSymbol

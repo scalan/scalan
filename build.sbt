@@ -106,14 +106,14 @@ lazy val scalanizer = Project("scalanizer", file("scalanizer"))
     addArtifact(artifact in (Compile, assembly), assembly)
   )
 
-lazy val library = Project("library", file("library"))
-  .dependsOn(common, core)
-  .settings(commonSettings,
-    libraryDependencies ++= Seq())
-
 lazy val librarydef = Project("librarydef", file("librarydef"))
   .dependsOn(meta)
   .settings(libraryDefSettings,
+    libraryDependencies ++= Seq())
+
+lazy val library = Project("library", file("library"))
+  .dependsOn(common, core, librarydef)
+  .settings(commonSettings,
     libraryDependencies ++= Seq())
 
 lazy val core = Project("scalan-core", file("core"))
@@ -145,9 +145,9 @@ lazy val core = Project("scalan-core", file("core"))
 //  .dependsOn(collections % allConfigDependency)
 //  .settings(commonSettings)
 
-lazy val lmsBackendCore = Project("scalan-lms-backend-core", file("lms-backend") / "core")
-  .dependsOn(core % "compile->compile;it->test")
-  .configs(IntegrationTest).settings(lmsBackendSettings)
+//lazy val lmsBackendCore = Project("scalan-lms-backend-core", file("lms-backend") / "core")
+//  .dependsOn(core % "compile->compile;it->test")
+//  .configs(IntegrationTest).settings(lmsBackendSettings)
 
 //lazy val lmsBackendCollections = Project("scalan-lms-backend-collections", file("lms-backend") / "collections")
 //  .dependsOn(lmsBackendCore, collections % "compile->compile;it->test")
@@ -201,7 +201,7 @@ lazy val extraClassPathTask = TaskKey[String]("extraClassPath") // scalan.plugin
 //}.value
 
 lazy val root = Project("scalan", file("."))
-  .aggregate(common, meta, scalanizer, librarydef, core, lmsBackendCore/*,
+  .aggregate(common, meta, scalanizer, librarydef, core, library/*, lmsBackendCore,
     collections, linalg, graphs, pointers, effects,
     lmsBackendCollections, lmsBackendLinAlg, lmsBackendPointers, lmsBackendIT,
     luaBackendCore, examples*/)

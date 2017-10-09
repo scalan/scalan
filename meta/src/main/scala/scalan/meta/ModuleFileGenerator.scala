@@ -7,6 +7,7 @@ import scalan.meta.PrintExtensions._
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstExtensions._
 import scalan.util.{Serialization, StringUtil, ScalaNameUtil}
+import scalan.util.CollectionUtil._
 
 class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: CodegenConfig) {
   import codegen._
@@ -26,7 +27,12 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     val allArgs = md.allArgs
     val returnType = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
     val unreppedReturnType = returnType.unRep(module, config.isVirtualized).getOrElse(!!!(msgRepRetType))
-    val argClassesStr = allArgs.rep(_ => s", classOf[AnyRef]", "")
+    val elemDecls = extractImplicitElems(module, method.allArgs, method.tpeArgs, Map())
+      .filterMap {
+        case (ta, Some(expr)) => Some((ta, expr))
+        case _ => None
+      }
+    val argClassesStr = allArgs.rep(_ => s", classOf[Rep[_]]", "")
     val elemClassesStr = (for {
       a <- md.tpeArgs
       cb <- a.contextBound
@@ -37,12 +43,15 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       cb <- a.contextBound
     } yield s"${if (cb == "Elem") "element" else "weakTypeTag"}[${a.name}]"
     val finalArgs =
-      join(allArgs.rep(a => s"${a.name}.asInstanceOf[AnyRef]"), elemArgs)
+      join(allArgs.rep(a => s"${a.name}"), elemArgs)
     s"""
-      |    ${md.declaration(config, md.body.isDefined)} =
-      |      methodCallEx[$unreppedReturnType](self,
+      |    ${md.declaration(config, md.body.isDefined)} = {
+      |      ${elemDecls.rep({ case (ta, expr) => s"implicit val e${ta.name} = $expr" }, "\n")}
+      |      mkMethodCall(self,
       |        this.getClass.getMethod("${md.name}"$finalArgClasses),
-      |        List($finalArgs))
+      |        List($finalArgs),
+      |        true, element[$unreppedReturnType]).asRep[$unreppedReturnType]
+      |    }
       |""".stripMargin
   }
 

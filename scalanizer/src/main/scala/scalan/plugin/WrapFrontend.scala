@@ -246,7 +246,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       companion = Some(STraitDef(
         name = companionName,
         tpeArgs = Nil,
-        ancestors = mkCompanionAncestors(wClassName, kind = typeParams.length),
+        ancestors = Nil, //mkCompanionAncestors(wClassName, kind = typeParams.length),
         body = Nil,
         selfType = None, companion = None
       )),

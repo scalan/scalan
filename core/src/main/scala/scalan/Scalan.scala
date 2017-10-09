@@ -8,7 +8,6 @@ abstract class Scalan
   extends Base
   with Debugging
   with TypeDescs
-  with TypeWrappers
   with Metadata
   with Proxy
   with Tuples

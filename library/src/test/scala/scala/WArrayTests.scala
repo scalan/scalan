@@ -10,12 +10,6 @@ class WArrayTests extends BaseCtxTests {
         lazy val t2 = fun { (xs: Rep[WArray[Int]]) => xs(10) }
         lazy val t3 = fun { (xs: Rep[WArray[Int]]) => xs.zip(WArray.fill(xs.length, Thunk(10))) }
         lazy val t4 = fun { (xs: Rep[WArray[Int]]) => xs.map(fun {x => x + 1}) }
-    //
-    //    lazy val t3 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.wrappedValue)}
-    //    lazy val t4 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.wrappedValue).wrappedValue}
-    //
-    //    lazy val t5 = fun { (msg: Rep[String]) => SThrowable(msg)}
-    //    lazy val t6 = fun { (msg: Rep[String]) => SThrowable(msg).getMessage }
   }
 
   test("WArray methods") {
