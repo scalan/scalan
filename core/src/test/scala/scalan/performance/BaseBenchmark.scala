@@ -3,7 +3,7 @@ package scalan.performance
 import org.scalameter.Aggregator
 import org.scalameter.api._
 
-import scalan.ScalanDsl
+import scalan.Scalan
 
 trait BaseBenchmark extends PerformanceTest {
   lazy val warmer: Executor.Warmer = new Executor.Warmer.Default

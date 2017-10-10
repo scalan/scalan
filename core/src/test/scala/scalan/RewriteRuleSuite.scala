@@ -12,7 +12,7 @@ trait RewriteRuleSuite[A] extends BaseShouldTests {
 
   def getCtx: TestCtx
 
-  trait TestCtx extends ScalanDsl {
+  trait TestCtx extends Scalan {
     def testLemma: RRewrite[A]
     def testExpr(): Exp[A]
     def expected: Exp[A]

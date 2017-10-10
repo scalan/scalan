@@ -1,9 +1,9 @@
 package scalan.it.smoke
 
-import scalan.ScalanDsl
+import scalan.Scalan
 import scalan.it.BaseItTests
 
-trait SmokeProg extends ScalanDsl {
+trait SmokeProg extends Scalan {
 
   lazy val simpleArith = fun {x: Rep[Int] => x*x + 2}
 
@@ -308,7 +308,7 @@ trait SmokeProg extends ScalanDsl {
 /**
  *  Tests that very simple examples are run correctly
  */
-abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanDsl with SmokeProg) {
+abstract class SmokeItTests extends BaseItTests[SmokeProg](new Scalan with SmokeProg) {
   test("simpleArith") {
     compareOutputWithStd(_.simpleArith)(2)
   }

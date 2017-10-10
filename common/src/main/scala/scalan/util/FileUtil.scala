@@ -31,12 +31,6 @@ object FileUtil {
 
   def write(file: File, text: String):Unit = withFile(file) { _.print(text) }
 
-  def captureStdOutAndErr(func: => Unit): String = {
-    val out = new ByteArrayOutputStream
-    withStdOutAndErr(new PrintStream(out))(func)
-    out.toString
-  }
-
   def withStdOutAndErr(out: PrintStream)(func: => Unit): Unit = {
     val oldStdOut = System.out
     val oldStdErr = System.err
@@ -46,10 +40,17 @@ object FileUtil {
       Console.withOut(out)(Console.withErr(out)(func))
     } finally {
       out.flush()
-      out.close()
       System.setOut(oldStdOut)
       System.setErr(oldStdErr)
     }
+  }
+
+  def captureStdOutAndErr(func: => Unit): String = {
+    val out = new ByteArrayOutputStream
+    val ps = new PrintStream(out)
+    try { withStdOutAndErr(ps)(func) }
+    finally { ps.close() }
+    out.toString
   }
 
   def copy(source: File, target: File): Unit =
@@ -222,7 +223,7 @@ object FileUtil {
         fileName.substring(0, n)
     }
 
-  def withExtension(fileName: String, extension: String): String =
+  def replaceOrAppendExtension(fileName: String, extension: String): String =
     s"${stripExtension(fileName)}.$extension"
 
   def modifyName(file: File)(f: String => String): File = {

@@ -1,9 +1,9 @@
 package scalan.compilation
 
-import scalan.ScalanDsl
+import scalan.Scalan
 import scalan.primitives.{Structs}
 
-trait StructsCompiler[+ScalanCake <: ScalanDsl with Structs] extends Compiler[ScalanCake] {
+trait StructsCompiler[+ScalanCake <: Scalan with Structs] extends Compiler[ScalanCake] {
   import scalan._
 
   override def graphPasses(compilerConfig: CompilerConfig) = {

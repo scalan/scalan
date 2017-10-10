@@ -4,7 +4,6 @@ import java.lang.reflect.Method
 
 import scalan._
 import scalan.common.Lazy
-import scalan.staged.Expressions
 import scalan.universe.api.TypesApi
 import scalan.universe.api.UniverseUtils._
 
@@ -37,7 +36,7 @@ trait Specializations extends Views with Converters { self: Scalan =>
   }
 }
 
-trait SpecializationsModule extends impl.SpecializationsDefs with TypesApi with Expressions { scalan: Scalan =>
+trait SpecializationsModule extends impl.SpecializationsDefs with TypesApi { scalan: Scalan =>
 
   trait AbstractSpecKey[F] {
     def format: F

@@ -168,7 +168,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
   }
 
   val reactiveTrait =
-    """trait Reactive extends ScalanDsl {
+    """trait Reactive extends Scalan {
       |  type Obs[A] = Rep[Observable[A]]
       |  trait Observable[A] {
       |    implicit def eA: Elem[A]
@@ -200,7 +200,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
   val reactiveModule =
     """package scalan.rx
      |import scalan._
-     |trait Reactive extends ScalanDsl {
+     |trait Reactive extends Scalan {
      |  type Obs[A] = Rep[Observable[A]]
      |  trait Observable[A] {
      |    implicit def eA: Elem[A]
@@ -231,12 +231,12 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx[Global] {
         None,
 //        stdDslImpls = Some(SDeclaredImplementations(Map())),
 //        expDslImpls = Some(SDeclaredImplementations(Map())),
-        ancestors = L(STraitCall("ScalanDsl", Nil).toTypeApply), None, true))
+        ancestors = L(STraitCall("Scalan", Nil).toTypeApply), None, true))
   }
 
   val testModule =
     """package scalan.test
-      |trait Module extends ScalanDsl {
+      |trait Module extends Scalan {
       |  type Obs[A] = Rep[Observable[A]]
       |  @ContainerType
       |  trait Cont[A] extends Def[Cont[A]] {

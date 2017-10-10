@@ -2,11 +2,11 @@ package scalan.util
 
 import scala.reflect.runtime.universe._
 import scalan.common.{SegmentsModule}
-import scalan.{ScalanDsl, BaseCtxTests}
+import scalan.{Scalan, BaseCtxTests}
 
 class ReflectionTests extends BaseCtxTests {
 
-  trait ReflectionExamples extends ScalanDsl with SegmentsModule {
+  trait ReflectionExamples extends Scalan with SegmentsModule {
   }
 
   test("paramMirrors") {

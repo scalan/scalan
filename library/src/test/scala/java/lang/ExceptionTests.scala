@@ -4,7 +4,7 @@ import scala.language.reflectiveCalls
 import scalan._
 
 class ExceptionTests extends BaseCtxTests {
-  trait ThrowableExamples extends ScalanDsl {
+  trait ThrowableExamples extends Scalan {
 //    lazy val tElem = element[Throwable]
 
 //    lazy val t1 = fun { (t: Rep[SThrowable]) => t.getMessage }
@@ -55,7 +55,7 @@ class ExceptionTests extends BaseCtxTests {
   }
 
 //  test("throwablesSeq") {
-//    val ctx = new ScalanDslExp with ThrowableExamples {
+//    val ctx = new Scalan with ThrowableExamples {
 //      def test() = {
 //        //assert(!isInlineThunksOnForce, "precondition for tests")
 //

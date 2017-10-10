@@ -9,7 +9,7 @@ import scalan.compilation.DummyCompiler
 class SimpleArrayBufferTests extends BaseCtxTests  {
 
   class Ctx(testName: String) extends TestCompilerContext(testName) {
-    override val compiler = new DummyCompiler(new ScalanDsl)
+    override val compiler = new DummyCompiler(new Scalan)
   }
 
   test("NonUnifiedEmptyArrayBuffer") {

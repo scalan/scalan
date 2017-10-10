@@ -204,7 +204,7 @@ trait GraphVizExport { self: Scalan =>
         case "dot" =>
           dotGraphFile
         case format =>
-          val convertedFileName = FileUtil.withExtension(dotFileName, format)
+          val convertedFileName = FileUtil.replaceOrAppendExtension(dotFileName, format)
           try {
             ProcessUtil.launch(Seq("dot", s"-T$format", "-o", convertedFileName, dotFileName), directory)
             GraphFile(new File(directory, convertedFileName), format)

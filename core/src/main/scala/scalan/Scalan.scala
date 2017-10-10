@@ -2,9 +2,9 @@ package scalan
 
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
-import scalan.staged.{Transforming, Expressions}
+import scalan.staged.Transforming
 
-abstract class Scalan
+class Scalan
   extends Base
   with Debugging
   with TypeDescs
@@ -37,6 +37,3 @@ abstract class Scalan
   with Structs
   with ConvertersModule
 
-class ScalanDsl
-  extends Scalan
-  with Expressions

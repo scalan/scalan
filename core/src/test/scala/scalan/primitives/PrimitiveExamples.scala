@@ -1,8 +1,8 @@
 package scalan.primitives
 
-import scalan.ScalanDsl
+import scalan.Scalan
 
-trait PrimitiveExamples extends ScalanDsl {
+trait PrimitiveExamples extends Scalan {
   lazy val id = fun {(x: Rep[Int]) => x}
   lazy val inc = fun {(x: Rep[Int]) => x + 1}
   lazy val curred = fun {(x: Rep[Int]) => fun {(y: Rep[Int]) => x + y }}

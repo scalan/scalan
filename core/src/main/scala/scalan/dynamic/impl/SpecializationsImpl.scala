@@ -3,7 +3,6 @@ package scalan.dynamic
 import java.lang.reflect.Method
 import scalan._
 import scalan.common.Lazy
-import scalan.staged.Expressions
 import scalan.universe.api.TypesApi
 import scalan.universe.api.UniverseUtils._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}

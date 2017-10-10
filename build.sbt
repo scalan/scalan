@@ -173,6 +173,14 @@ lazy val core = Project("scalan-core", file("core"))
 //    libraryDependencies += "org.luaj" % "luaj-jse" % "3.0.1"
 //  )
 
+lazy val luaBackend = Project("scalan-kotlin-backend", file("kotlin-backend")).
+  dependsOn(core % "compile->compile;it->test").
+  configs(IntegrationTest)
+  .settings(itSettings)
+  .settings(
+//    libraryDependencies += "org.luaj" % "luaj-jse" % "3.0.1"
+  )
+
 lazy val extraClassPathTask = TaskKey[String]("extraClassPath") // scalan.plugins.extraClassPath
 
 // Requires luaBackendCore and lmsBackendLinAlg to be compiled but not on classpath,

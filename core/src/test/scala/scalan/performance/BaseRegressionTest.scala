@@ -1,7 +1,7 @@
 package scalan.performance
 
 import org.scalameter.api._
-import scalan.ScalanDsl
+import scalan.Scalan
 import org.scalameter.reporting.RegressionReporter
 import java.io.File
 
