@@ -7,10 +7,10 @@ trait ProgramGraphs extends AstGraphs { self: Scalan =>
   type PGraph = ProgramGraph[MapTransformer]
 
   // immutable program graph
-  case class ProgramGraph[Ctx <: Transformer : TransformerOps](roots: List[Exp[_]], mapping: Ctx)
+  case class ProgramGraph[Ctx <: Transformer : TransformerOps](roots: List[Sym], mapping: Ctx)
   	  extends AstGraph {
-    def this(roots: List[Exp[_]]) { this(roots, implicitly[TransformerOps[Ctx]].empty) }
-    def this(root: Exp[_]) { this(List(root)) }
+    def this(roots: List[Sym]) { this(roots, implicitly[TransformerOps[Ctx]].empty) }
+    def this(root: Sym) { this(List(root)) }
 
     override def boundVars = Nil
     override def freeVars = Set()

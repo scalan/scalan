@@ -223,7 +223,7 @@ trait GraphVizExport { self: Scalan =>
     def show(config: GraphVizConfig): Unit = showGraphs(symbols: _*)(config)
   }
 
-  def showGraphs(roots: Exp[_]*)(implicit config: GraphVizConfig): Unit =
+  def showGraphs(roots: Sym*)(implicit config: GraphVizConfig): Unit =
     showGraphs(new PGraph(roots.toList))
 
   def showGraphs(graph: AstGraph)(implicit config: GraphVizConfig): Unit = {

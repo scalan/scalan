@@ -172,17 +172,17 @@ trait AstGraphs extends Transforming { self: Scalan =>
       *  @param deps  dependence relation between a definition and symbols
       *  @return      a `Seq` of local definitions on which `sym` depends or empty if `sym` is itself non-local
       */
-    def buildLocalScheduleFrom(syms: Seq[ExpAny], deps: ExpAny => List[ExpAny]): Schedule =
+    def buildLocalScheduleFrom(syms: Seq[Sym], deps: Sym => List[Sym]): Schedule =
       for {
         s <- syms if isLocalDef(s)
         tp <- buildScheduleForResult(List(s), deps(_).filter(isLocalDef))
       }
       yield tp
 
-    def buildLocalScheduleFrom(sym: ExpAny, deps: ExpAny => List[ExpAny]): Schedule =
+    def buildLocalScheduleFrom(sym: Sym, deps: Sym => List[Sym]): Schedule =
       buildLocalScheduleFrom(List(sym), deps)
 
-    def buildLocalScheduleFrom(sym: ExpAny): Schedule = buildLocalScheduleFrom(sym, (_: ExpAny).getDeps)
+    def buildLocalScheduleFrom(sym: Sym): Schedule = buildLocalScheduleFrom(sym, (_: Sym).getDeps)
 
     def projectionTreeFrom(root: Exp[_]): ProjectionTree = {
       ProjectionTree(root, s => {
@@ -212,7 +212,7 @@ trait AstGraphs extends Transforming { self: Scalan =>
       def getLocalUnusedSchedule(s: Exp[_]): Schedule = {
         if (usedSet.contains(s)) Seq()
         else {
-          val sch = buildLocalScheduleFrom(s, (_: ExpAny).getDeps.filterNot(usedSet.contains))
+          val sch = buildLocalScheduleFrom(s, (_: Sym).getDeps.filterNot(usedSet.contains))
           sch
         }
       }
@@ -221,8 +221,8 @@ trait AstGraphs extends Transforming { self: Scalan =>
         * @param syms starting symbols
         * @return sequence of symbols that 1) local 2) in shallow dependence relation 3) not yet marked
         */
-      def getLocalUnusedShallowSchedule(syms: Seq[ExpAny]): Schedule = {
-        val sch = buildLocalScheduleFrom(syms, (_: ExpAny).getShallowDeps.filterNot(usedSet.contains))
+      def getLocalUnusedShallowSchedule(syms: Seq[Sym]): Schedule = {
+        val sch = buildLocalScheduleFrom(syms, (_: Sym).getShallowDeps.filterNot(usedSet.contains))
         sch
       }
 

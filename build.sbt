@@ -112,7 +112,7 @@ lazy val librarydef = Project("librarydef", file("librarydef"))
     libraryDependencies ++= Seq())
 
 lazy val library = Project("library", file("library"))
-  .dependsOn(common, core, librarydef)
+  .dependsOn(common % allConfigDependency, core % allConfigDependency, librarydef)
   .settings(commonSettings,
     libraryDependencies ++= Seq())
 

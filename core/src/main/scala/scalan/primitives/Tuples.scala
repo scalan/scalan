@@ -227,18 +227,18 @@ trait Tuples extends Base { self: Scalan =>
   }
 
   object TupleProjection {
-    def apply[A,B](t: Exp[(A,B)], i: Int): ExpAny = i match {
+    def apply[A,B](t: Exp[(A,B)], i: Int): Sym = i match {
       case 1 => t._1
       case 2 => t._2
     }
-    def unapply(p: ExpAny): Option[Int] = p match {
+    def unapply(p: Sym): Option[Int] = p match {
       case Def(First(_)) => Some(1)
       case Def(Second(_)) => Some(2)
       case _ => None
     }
   }
 
-  def projectionIndex(p: ExpAny): Int = p match {
+  def projectionIndex(p: Sym): Int = p match {
     case TupleProjection(i) => i
     case _ => !!!("tuple projection expected", p)
   }

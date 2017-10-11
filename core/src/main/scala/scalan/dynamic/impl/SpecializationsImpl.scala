@@ -1,7 +1,6 @@
 package scalan.dynamic
 
 import java.lang.reflect.Method
-
 import scalan.{Lazy, _}
 import scalan.universe.api.TypesApi
 import scalan.universe.api.UniverseUtils._

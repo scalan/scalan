@@ -1,9 +1,8 @@
 package scalan
 
 import java.lang.reflect.Method
-
 import scala.language.higherKinds
-import scala.collection.mutable.{Map => MutMap}
+import scala.collection.mutable.{Map=>MutMap}
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
 

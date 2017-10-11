@@ -89,7 +89,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
     def fill[T](n: Rep[Int], elem: Rep[Thunk[T]]): Rep[WArray[T]] = {
       implicit val eT = elem.elem.eItem
       mkMethodCall(self,
-        this.getClass.getMethod("fill", classOf[Rep[_]], classOf[Rep[_]]),
+        this.getClass.getMethod("fill", classOf[Sym], classOf[Sym]),
         List(n, elem),
         true, element[WArray[T]]).asRep[WArray[T]]
     }
@@ -169,7 +169,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   }
 
   object UserTypeWArray {
-    def unapply(s: Exp[_]): Option[Iso[_, _]] = {
+    def unapply(s: Sym): Option[Iso[_, _]] = {
       s.elem match {
         case e: WArrayElem[a,to] => e.eItem match {
           case UnpackableElem(iso) => Some(iso)

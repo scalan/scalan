@@ -206,7 +206,7 @@ trait Base extends LazyLogging { scalan: Scalan =>
     def show(emitMetadata: Boolean): Unit = show(defaultGraphVizConfig.copy(emitMetadata = emitMetadata))
     def show(config: GraphVizConfig): Unit = showGraphs(this)(config)
   }
-  type ExpAny = Rep[_]
+  type Sym = Exp[_]
 
   abstract class BaseDef[+T](implicit val selfType: Elem[T @uncheckedVariance]) extends Def[T]
 
@@ -512,7 +512,7 @@ trait Base extends LazyLogging { scalan: Scalan =>
     }
 
     /** Shallow dependencies don't look into branches of IfThenElse  */
-    def getShallowDeps: List[ExpAny] = symbol match {
+    def getShallowDeps: List[Sym] = symbol match {
       case Def(IfThenElse(c, _, _)) => List(c)
       case _ => getDeps
     }

@@ -32,7 +32,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         case (ta, Some(expr)) => Some((ta, expr))
         case _ => None
       }
-    val argClassesStr = allArgs.rep(_ => s", classOf[Rep[_]]", "")
+    val argClassesStr = allArgs.rep(_ => s", classOf[Sym]", "")
     val elemClassesStr = (for {
       a <- md.tpeArgs
       cb <- a.contextBound
@@ -145,7 +145,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
   def emitContainerRewriteDef(e: EntityTemplateData) = {
     s"""
       |  object UserType${e.name} {
-      |    def unapply(s: Exp[_]): Option[Iso[_, _]] = {
+      |    def unapply(s: Sym): Option[Iso[_, _]] = {
       |      s.elem match {
       |        case e: ${e.name}Elem[a,to] => e.eItem match {
       |          case UnpackableElem(iso) => Some(iso)
