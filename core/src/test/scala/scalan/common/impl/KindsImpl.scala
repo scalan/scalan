@@ -293,7 +293,7 @@ implicit val eB = p.f.elem.eRange.typeArgs("A")._1.asElem[B]
           Some((receiver, f)).asInstanceOf[Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

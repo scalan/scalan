@@ -532,7 +532,7 @@ trait Structs extends Effects with StructItemsModule with StructKeysModule { sel
   }
 
   override def containSyms(e: Any): List[Exp[Any]] = e match {
-    case SimpleStruct(tag,fields) => fields.collect { case (k, v: Exp[_]) => v }.toList
+    case SimpleStruct(tag,fields) => fields.collect { case (k, v: Sym) => v }.toList
     case FieldUpdate(s, fn, v) => List(v)
     case FieldApply(s,x) => Nil
     case _ => super.containSyms(e)
@@ -611,7 +611,7 @@ trait Structs extends Effects with StructItemsModule with StructKeysModule { sel
   def shouldExtractFields = currentPass.config.shouldExtractFields
   def shouldSlice = currentPass.config.shouldSlice
 
-  override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
+  override def rewriteDef[T](d: Def[T]): Sym = d match {
     case FieldGet(v) if shouldExtractFields => v
     case SameStructAs(s) => s
     case _ => super.rewriteDef(d)

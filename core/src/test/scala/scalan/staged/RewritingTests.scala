@@ -12,7 +12,7 @@ class RewritingTests extends BaseCtxTests {
     val passName = "testTransformPass"
     lazy val builder = constantPass[GraphPass](passName, b => new GraphTransformPass(b, passName, DefaultMirror, NoRewriting))
 
-    def doTransform[A](e: Exp[A]): Exp[_] = {
+    def doTransform[A](e: Exp[A]): Sym = {
       val g0 = new PGraph(e)
       val pass = builder(g0)
       val g = pass.apply(g0)
@@ -24,7 +24,7 @@ class RewritingTests extends BaseCtxTests {
 
     lazy val mkRightFun = fun { x: Rep[Int] => x.asRight[Int] }
 
-    override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
+    override def rewriteDef[T](d: Def[T]): Sym = d match {
       // rewrite fun(x => Right(_)) to fun(x => Left(x))
       case lam: Lambda[a, |[_, b]] @unchecked =>
         lam.y match {

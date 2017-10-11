@@ -741,7 +741,7 @@ implicit val eB = p.itemConv.eR
           Some((receiver, x)).asInstanceOf[Option[(Rep[IdentityConv[A]], Rep[A]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IdentityConv[A]], Rep[A]) forSome {type A}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[IdentityConv[A]], Rep[A]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -753,7 +753,7 @@ implicit val eB = p.itemConv.eR
           Some(receiver).asInstanceOf[Option[Rep[IdentityConv[A]] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[IdentityConv[A]] forSome {type A}] = exp match {
+      def unapply(exp: Sym): Option[Rep[IdentityConv[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -780,7 +780,7 @@ implicit val eB = p.itemConv.eR
           Some((receiver, x)).asInstanceOf[Option[(Rep[BaseConverter[T, R]], Rep[T]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[BaseConverter[T, R]], Rep[T]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[BaseConverter[T, R]], Rep[T]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -810,7 +810,7 @@ implicit val eB = p.itemConv.eR
           Some((receiver, x)).asInstanceOf[Option[(Rep[PairConverter[A1, A2, B1, B2]], Rep[(A1, A2)]) forSome {type A1; type A2; type B1; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairConverter[A1, A2, B1, B2]], Rep[(A1, A2)]) forSome {type A1; type A2; type B1; type B2}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[PairConverter[A1, A2, B1, B2]], Rep[(A1, A2)]) forSome {type A1; type A2; type B1; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -822,7 +822,7 @@ implicit val eB = p.itemConv.eR
           Some(receiver).asInstanceOf[Option[Rep[PairConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[PairConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = exp match {
+      def unapply(exp: Sym): Option[Rep[PairConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -850,7 +850,7 @@ implicit val eB = p.itemConv.eR
           Some((receiver, x)).asInstanceOf[Option[(Rep[SumConverter[A1, A2, B1, B2]], Rep[$bar[A1, A2]]) forSome {type A1; type A2; type B1; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SumConverter[A1, A2, B1, B2]], Rep[$bar[A1, A2]]) forSome {type A1; type A2; type B1; type B2}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[SumConverter[A1, A2, B1, B2]], Rep[$bar[A1, A2]]) forSome {type A1; type A2; type B1; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -862,7 +862,7 @@ implicit val eB = p.itemConv.eR
           Some(receiver).asInstanceOf[Option[Rep[SumConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[SumConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = exp match {
+      def unapply(exp: Sym): Option[Rep[SumConverter[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -890,7 +890,7 @@ implicit val eB = p.itemConv.eR
           Some((receiver, a)).asInstanceOf[Option[(Rep[ComposeConverter[A, B, C]], Rep[A]) forSome {type A; type B; type C}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[ComposeConverter[A, B, C]], Rep[A]) forSome {type A; type B; type C}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[ComposeConverter[A, B, C]], Rep[A]) forSome {type A; type B; type C}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -902,7 +902,7 @@ implicit val eB = p.itemConv.eR
           Some(receiver).asInstanceOf[Option[Rep[ComposeConverter[A, B, C]] forSome {type A; type B; type C}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[ComposeConverter[A, B, C]] forSome {type A; type B; type C}] = exp match {
+      def unapply(exp: Sym): Option[Rep[ComposeConverter[A, B, C]] forSome {type A; type B; type C}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -929,7 +929,7 @@ implicit val eB = p.itemConv.eR
           Some((receiver, xs)).asInstanceOf[Option[(Rep[FunctorConverter[A, B, F]], Rep[F[A]]) forSome {type A; type B; type F[_]}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[FunctorConverter[A, B, F]], Rep[F[A]]) forSome {type A; type B; type F[_]}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[FunctorConverter[A, B, F]], Rep[F[A]]) forSome {type A; type B; type F[_]}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -941,7 +941,7 @@ implicit val eB = p.itemConv.eR
           Some(receiver).asInstanceOf[Option[Rep[FunctorConverter[A, B, F]] forSome {type A; type B; type F[_]}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[FunctorConverter[A, B, F]] forSome {type A; type B; type F[_]}] = exp match {
+      def unapply(exp: Sym): Option[Rep[FunctorConverter[A, B, F]] forSome {type A; type B; type F[_]}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -971,7 +971,7 @@ implicit val eB = p.itemConv.eR
           Some((receiver, xs)).asInstanceOf[Option[(Rep[NaturalConverter[A, F, G]], Rep[F[A]]) forSome {type A; type F[_]; type G[_]}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[NaturalConverter[A, F, G]], Rep[F[A]]) forSome {type A; type F[_]; type G[_]}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[NaturalConverter[A, F, G]], Rep[F[A]]) forSome {type A; type F[_]; type G[_]}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -998,7 +998,7 @@ implicit val eB = p.itemConv.eR
           Some(receiver).asInstanceOf[Option[Rep[Converter[T, R]] forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Converter[T, R]] forSome {type T; type R}] = exp match {
+      def unapply(exp: Sym): Option[Rep[Converter[T, R]] forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1010,7 +1010,7 @@ implicit val eB = p.itemConv.eR
           Some((receiver, x)).asInstanceOf[Option[(Rep[Converter[T, R]], Rep[T]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Converter[T, R]], Rep[T]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Converter[T, R]], Rep[T]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

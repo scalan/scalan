@@ -1004,7 +1004,7 @@ implicit val eB = p.innerIso.eTo
           Some(receiver).asInstanceOf[Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = exp match {
+      def unapply(exp: Sym): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1016,7 +1016,7 @@ implicit val eB = p.innerIso.eTo
           Some(receiver).asInstanceOf[Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = exp match {
+      def unapply(exp: Sym): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1032,7 +1032,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, x)).asInstanceOf[Option[(Rep[IdentityIso[A]], Rep[A]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IdentityIso[A]], Rep[A]) forSome {type A}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[IdentityIso[A]], Rep[A]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1044,7 +1044,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, x)).asInstanceOf[Option[(Rep[IdentityIso[A]], Rep[A]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IdentityIso[A]], Rep[A]) forSome {type A}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[IdentityIso[A]], Rep[A]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1056,7 +1056,7 @@ implicit val eB = p.innerIso.eTo
           Some(receiver).asInstanceOf[Option[Rep[IdentityIso[A]] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[IdentityIso[A]] forSome {type A}] = exp match {
+      def unapply(exp: Sym): Option[Rep[IdentityIso[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1083,7 +1083,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, b)).asInstanceOf[Option[(Rep[PairIso[A1, A2, B1, B2]], Rep[(B1, B2)]) forSome {type A1; type A2; type B1; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairIso[A1, A2, B1, B2]], Rep[(B1, B2)]) forSome {type A1; type A2; type B1; type B2}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[PairIso[A1, A2, B1, B2]], Rep[(B1, B2)]) forSome {type A1; type A2; type B1; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1095,7 +1095,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, a)).asInstanceOf[Option[(Rep[PairIso[A1, A2, B1, B2]], Rep[(A1, A2)]) forSome {type A1; type A2; type B1; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairIso[A1, A2, B1, B2]], Rep[(A1, A2)]) forSome {type A1; type A2; type B1; type B2}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[PairIso[A1, A2, B1, B2]], Rep[(A1, A2)]) forSome {type A1; type A2; type B1; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1107,7 +1107,7 @@ implicit val eB = p.innerIso.eTo
           Some(receiver).asInstanceOf[Option[Rep[PairIso[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[PairIso[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = exp match {
+      def unapply(exp: Sym): Option[Rep[PairIso[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1137,7 +1137,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, b)).asInstanceOf[Option[(Rep[AbsorbFirstUnitIso[A2, B2]], Rep[(Unit, B2)]) forSome {type A2; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbsorbFirstUnitIso[A2, B2]], Rep[(Unit, B2)]) forSome {type A2; type B2}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[AbsorbFirstUnitIso[A2, B2]], Rep[(Unit, B2)]) forSome {type A2; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1149,7 +1149,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, a)).asInstanceOf[Option[(Rep[AbsorbFirstUnitIso[A2, B2]], Rep[A2]) forSome {type A2; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbsorbFirstUnitIso[A2, B2]], Rep[A2]) forSome {type A2; type B2}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[AbsorbFirstUnitIso[A2, B2]], Rep[A2]) forSome {type A2; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1161,7 +1161,7 @@ implicit val eB = p.innerIso.eTo
           Some(receiver).asInstanceOf[Option[Rep[AbsorbFirstUnitIso[A2, B2]] forSome {type A2; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[AbsorbFirstUnitIso[A2, B2]] forSome {type A2; type B2}] = exp match {
+      def unapply(exp: Sym): Option[Rep[AbsorbFirstUnitIso[A2, B2]] forSome {type A2; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1188,7 +1188,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, b)).asInstanceOf[Option[(Rep[AbsorbSecondUnitIso[A1, B1]], Rep[(B1, Unit)]) forSome {type A1; type B1}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbsorbSecondUnitIso[A1, B1]], Rep[(B1, Unit)]) forSome {type A1; type B1}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[AbsorbSecondUnitIso[A1, B1]], Rep[(B1, Unit)]) forSome {type A1; type B1}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1200,7 +1200,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, a)).asInstanceOf[Option[(Rep[AbsorbSecondUnitIso[A1, B1]], Rep[A1]) forSome {type A1; type B1}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbsorbSecondUnitIso[A1, B1]], Rep[A1]) forSome {type A1; type B1}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[AbsorbSecondUnitIso[A1, B1]], Rep[A1]) forSome {type A1; type B1}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1212,7 +1212,7 @@ implicit val eB = p.innerIso.eTo
           Some(receiver).asInstanceOf[Option[Rep[AbsorbSecondUnitIso[A1, B1]] forSome {type A1; type B1}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[AbsorbSecondUnitIso[A1, B1]] forSome {type A1; type B1}] = exp match {
+      def unapply(exp: Sym): Option[Rep[AbsorbSecondUnitIso[A1, B1]] forSome {type A1; type B1}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1239,7 +1239,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, b)).asInstanceOf[Option[(Rep[SumIso[A1, A2, B1, B2]], Rep[$bar[B1, B2]]) forSome {type A1; type A2; type B1; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SumIso[A1, A2, B1, B2]], Rep[$bar[B1, B2]]) forSome {type A1; type A2; type B1; type B2}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[SumIso[A1, A2, B1, B2]], Rep[$bar[B1, B2]]) forSome {type A1; type A2; type B1; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1251,7 +1251,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, a)).asInstanceOf[Option[(Rep[SumIso[A1, A2, B1, B2]], Rep[$bar[A1, A2]]) forSome {type A1; type A2; type B1; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SumIso[A1, A2, B1, B2]], Rep[$bar[A1, A2]]) forSome {type A1; type A2; type B1; type B2}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[SumIso[A1, A2, B1, B2]], Rep[$bar[A1, A2]]) forSome {type A1; type A2; type B1; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1263,7 +1263,7 @@ implicit val eB = p.innerIso.eTo
           Some(receiver).asInstanceOf[Option[Rep[SumIso[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[SumIso[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = exp match {
+      def unapply(exp: Sym): Option[Rep[SumIso[A1, A2, B1, B2]] forSome {type A1; type A2; type B1; type B2}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1290,7 +1290,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, c)).asInstanceOf[Option[(Rep[ComposeIso[A, B, C]], Rep[C]) forSome {type A; type B; type C}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[ComposeIso[A, B, C]], Rep[C]) forSome {type A; type B; type C}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[ComposeIso[A, B, C]], Rep[C]) forSome {type A; type B; type C}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1302,7 +1302,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, a)).asInstanceOf[Option[(Rep[ComposeIso[A, B, C]], Rep[A]) forSome {type A; type B; type C}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[ComposeIso[A, B, C]], Rep[A]) forSome {type A; type B; type C}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[ComposeIso[A, B, C]], Rep[A]) forSome {type A; type B; type C}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1314,7 +1314,7 @@ implicit val eB = p.innerIso.eTo
           Some(receiver).asInstanceOf[Option[Rep[ComposeIso[A, B, C]] forSome {type A; type B; type C}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[ComposeIso[A, B, C]] forSome {type A; type B; type C}] = exp match {
+      def unapply(exp: Sym): Option[Rep[ComposeIso[A, B, C]] forSome {type A; type B; type C}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1341,7 +1341,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, f)).asInstanceOf[Option[(Rep[FuncIso[A, B, C, D]], Rep[B => D]) forSome {type A; type B; type C; type D}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[FuncIso[A, B, C, D]], Rep[B => D]) forSome {type A; type B; type C; type D}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[FuncIso[A, B, C, D]], Rep[B => D]) forSome {type A; type B; type C; type D}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1353,7 +1353,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, f)).asInstanceOf[Option[(Rep[FuncIso[A, B, C, D]], Rep[A => C]) forSome {type A; type B; type C; type D}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[FuncIso[A, B, C, D]], Rep[A => C]) forSome {type A; type B; type C; type D}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[FuncIso[A, B, C, D]], Rep[A => C]) forSome {type A; type B; type C; type D}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1365,7 +1365,7 @@ implicit val eB = p.innerIso.eTo
           Some(receiver).asInstanceOf[Option[Rep[FuncIso[A, B, C, D]] forSome {type A; type B; type C; type D}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[FuncIso[A, B, C, D]] forSome {type A; type B; type C; type D}] = exp match {
+      def unapply(exp: Sym): Option[Rep[FuncIso[A, B, C, D]] forSome {type A; type B; type C; type D}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1392,7 +1392,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, a)).asInstanceOf[Option[(Rep[ConverterIso[A, B]], Rep[A]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[ConverterIso[A, B]], Rep[A]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[ConverterIso[A, B]], Rep[A]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1404,7 +1404,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, b)).asInstanceOf[Option[(Rep[ConverterIso[A, B]], Rep[B]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[ConverterIso[A, B]], Rep[B]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[ConverterIso[A, B]], Rep[B]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1416,7 +1416,7 @@ implicit val eB = p.innerIso.eTo
           Some(receiver).asInstanceOf[Option[Rep[ConverterIso[A, B]] forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[ConverterIso[A, B]] forSome {type A; type B}] = exp match {
+      def unapply(exp: Sym): Option[Rep[ConverterIso[A, B]] forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1443,7 +1443,7 @@ implicit val eB = p.innerIso.eTo
           Some(receiver).asInstanceOf[Option[Rep[ThunkIso[A, B]] forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[ThunkIso[A, B]] forSome {type A; type B}] = exp match {
+      def unapply(exp: Sym): Option[Rep[ThunkIso[A, B]] forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1455,7 +1455,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, x)).asInstanceOf[Option[(Rep[ThunkIso[A, B]], Th[B]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[ThunkIso[A, B]], Th[B]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[ThunkIso[A, B]], Th[B]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1467,7 +1467,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, x)).asInstanceOf[Option[(Rep[ThunkIso[A, B]], Th[A]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[ThunkIso[A, B]], Th[A]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[ThunkIso[A, B]], Th[A]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1492,7 +1492,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, p)).asInstanceOf[Option[(Rep[IsoUR[From, To]], Rep[To]) forSome {type From; type To}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IsoUR[From, To]], Rep[To]) forSome {type From; type To}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[IsoUR[From, To]], Rep[To]) forSome {type From; type To}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1504,7 +1504,7 @@ implicit val eB = p.innerIso.eTo
           Some((receiver, p)).asInstanceOf[Option[(Rep[IsoUR[From, To]], Rep[From]) forSome {type From; type To}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IsoUR[From, To]], Rep[From]) forSome {type From; type To}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[IsoUR[From, To]], Rep[From]) forSome {type From; type To}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

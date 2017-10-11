@@ -331,7 +331,7 @@ implicit val eR = p.values.elem
           Some(receiver).asInstanceOf[Option[Rep[MT0]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[MT0]] = exp match {
+      def unapply(exp: Sym): Option[Rep[MT0]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -343,7 +343,7 @@ implicit val eR = p.values.elem
           Some(receiver).asInstanceOf[Option[Rep[MT0]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[MT0]] = exp match {
+      def unapply(exp: Sym): Option[Rep[MT0]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -355,7 +355,7 @@ implicit val eR = p.values.elem
           Some(receiver).asInstanceOf[Option[Rep[MT0]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[MT0]] = exp match {
+      def unapply(exp: Sym): Option[Rep[MT0]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -383,7 +383,7 @@ implicit val eR = p.values.elem
           Some(receiver).asInstanceOf[Option[Rep[MT1[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[MT1[T]] forSome {type T}] = exp match {
+      def unapply(exp: Sym): Option[Rep[MT1[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -395,7 +395,7 @@ implicit val eR = p.values.elem
           Some(receiver).asInstanceOf[Option[Rep[MT1[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[MT1[T]] forSome {type T}] = exp match {
+      def unapply(exp: Sym): Option[Rep[MT1[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -420,7 +420,7 @@ implicit val eR = p.values.elem
           Some(receiver).asInstanceOf[Option[Rep[MT2[T, R]] forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[MT2[T, R]] forSome {type T; type R}] = exp match {
+      def unapply(exp: Sym): Option[Rep[MT2[T, R]] forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -432,7 +432,7 @@ implicit val eR = p.values.elem
           Some(receiver).asInstanceOf[Option[Rep[MT2[T, R]] forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[MT2[T, R]] forSome {type T; type R}] = exp match {
+      def unapply(exp: Sym): Option[Rep[MT2[T, R]] forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -457,7 +457,7 @@ implicit val eR = p.values.elem
           Some(receiver).asInstanceOf[Option[Rep[MetaTest[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
+      def unapply(exp: Sym): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -469,7 +469,7 @@ implicit val eR = p.values.elem
           Some(receiver).asInstanceOf[Option[Rep[MetaTest[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
+      def unapply(exp: Sym): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -481,7 +481,7 @@ implicit val eR = p.values.elem
           Some(receiver).asInstanceOf[Option[Rep[MetaTest[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
+      def unapply(exp: Sym): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

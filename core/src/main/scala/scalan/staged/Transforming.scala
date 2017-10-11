@@ -73,8 +73,8 @@ trait Transforming { self: Scalan =>
     def keyPath = eKeyPath.asInstanceOf[SingletonElem[KeyPath]].value
   }
 
-  class MapTransformer(private val subst: Map[Exp[_], Exp[_]]) extends Transformer {
-    def this(substPairs: (Exp[_], Exp[_])*) {
+  class MapTransformer(private val subst: Map[Sym, Sym]) extends Transformer {
+    def this(substPairs: (Sym, Sym)*) {
       this(substPairs.toMap)
     }
     def apply[A](x: Exp[A]): Exp[A] = subst.get(x) match {
@@ -88,7 +88,7 @@ trait Transforming { self: Scalan =>
   }
 
   object MapTransformer {
-    val Empty = new MapTransformer(Map.empty[Exp[_], Exp[_]])
+    val Empty = new MapTransformer(Map.empty[Sym, Sym])
 
     implicit val ops: TransformerOps[MapTransformer] = new TransformerOps[MapTransformer] {
       def empty = Empty//new MapTransformer(Map.empty)
@@ -97,7 +97,7 @@ trait Transforming { self: Scalan =>
     }
   }
 
-  implicit class PartialRewriter(pf: PartialFunction[Exp[_], Exp[_]]) extends Rewriter {
+  implicit class PartialRewriter(pf: PartialFunction[Sym, Sym]) extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] =
       if (pf.isDefinedAt(x))
         pf(x).asInstanceOf[Exp[T]]
@@ -158,12 +158,12 @@ trait Transforming { self: Scalan =>
   }
 
   abstract class Mirror[Ctx <: Transformer : TransformerOps] {
-    def apply[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = (t, transformDef(d, t))
+    def apply[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Sym) = (t, transformDef(d, t))
 
-    protected def mirrorElem(node: Exp[_]): Elem[_] = node.elem
+    protected def mirrorElem(node: Sym): Elem[_] = node.elem
 
     // every mirrorXXX method should return a pair (t + (v -> v1), v1)
-    protected def mirrorVar[A](t: Ctx, rewriter: Rewriter, v: Exp[A]): (Ctx, Exp[_]) = {
+    protected def mirrorVar[A](t: Ctx, rewriter: Rewriter, v: Exp[A]): (Ctx, Sym) = {
       val newVar = fresh(Lazy(mirrorElem(v)))
       val (t1, mirroredMetadata) = mirrorMetadata(t, v, newVar)
       setAllMetadata(newVar, mirroredMetadata)
@@ -181,23 +181,23 @@ trait Transforming { self: Scalan =>
       res
     }
 
-    protected def mirrorDef[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = {
+    protected def mirrorDef[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Sym) = {
       val (t1, mirrored) = apply(t, rewriter, node, d)
       val (t2, mirroredMetadata) = mirrorMetadata(t1, node, mirrored)
       val res = rewriteUntilFixPoint(mirrored, mirroredMetadata, rewriter)
       (t2 + (node -> res), res)
     }
 
-    protected def getMirroredLambdaSym[A, B](node: Exp[A => B]): Exp[_] = fresh(Lazy(mirrorElem(node)))
+    protected def getMirroredLambdaSym[A, B](node: Exp[A => B]): Sym = fresh(Lazy(mirrorElem(node)))
 
     // require: should be called after oldlam.schedule is mirrored
-    private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], oldLam: Lambda[_,_], newRoot: Exp[_]): Lambda[_,_] = {
+    private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Sym, oldLam: Lambda[_,_], newRoot: Sym): Lambda[_,_] = {
       val newVar = t(oldLam.x)
       val newLambdaDef = new Lambda(None, newVar, newRoot, newLambdaSym.asRep[Any=>Any], oldLam.mayInline)
       newLambdaDef
     }
 
-    protected def mirrorLambda[A, B](t: Ctx, rewriter: Rewriter, node: Exp[A => B], lam: Lambda[A, B]): (Ctx, Exp[_]) = {
+    protected def mirrorLambda[A, B](t: Ctx, rewriter: Rewriter, node: Exp[A => B], lam: Lambda[A, B]): (Ctx, Sym) = {
       var tRes: Ctx = t
       val (t1, newVar) = mirrorNode(t, rewriter, lam, lam.x)
       val newLambdaSym = getMirroredLambdaSym(node)
@@ -228,7 +228,7 @@ trait Transforming { self: Scalan =>
       (tRes2 + (node -> resLam), resLam)
     }
 
-    protected def mirrorBranch[A](t: Ctx, rewriter: Rewriter, g: AstGraph, branch: ThunkDef[A]): (Ctx, Exp[_]) = {
+    protected def mirrorBranch[A](t: Ctx, rewriter: Rewriter, g: AstGraph, branch: ThunkDef[A]): (Ctx, Sym) = {
       // get original root unwrapping Reify nodes
       val originalRoot = branch.root match {
         case Def(Reify(x, _, _)) => x
@@ -240,7 +240,7 @@ trait Transforming { self: Scalan =>
       (t2, newRoot)
     }
 
-    protected def mirrorIfThenElse[A](t: Ctx, rewriter: Rewriter, g: AstGraph, node: Exp[A], ite: IfThenElse[A]): (Ctx, Exp[_]) = {
+    protected def mirrorIfThenElse[A](t: Ctx, rewriter: Rewriter, g: AstGraph, node: Exp[A], ite: IfThenElse[A]): (Ctx, Sym) = {
       g.branches.ifBranches.get(node) match {
         case Some(branches) =>
           var tRes: Ctx = t
@@ -259,7 +259,7 @@ trait Transforming { self: Scalan =>
       }
     }
 
-    protected def mirrorThunk[A](t: Ctx, rewriter: Rewriter, node: Exp[Thunk[A]], thunk: ThunkDef[A]): (Ctx, Exp[_]) = {
+    protected def mirrorThunk[A](t: Ctx, rewriter: Rewriter, node: Exp[Thunk[A]], thunk: ThunkDef[A]): (Ctx, Sym) = {
       val newThunkSym = fresh(Lazy(mirrorElem(node)))
       val newScope = new ThunkScope(newThunkSym)
 
@@ -278,16 +278,16 @@ trait Transforming { self: Scalan =>
     protected def mirrorMetadata[A, B](t: Ctx, old: Exp[A], mirrored: Exp[B]) =
       (t, allMetadataOf(old))
 
-    protected def isMirrored(t: Ctx, node: Exp[_]): Boolean = t.isDefinedAt(node)
+    protected def isMirrored(t: Ctx, node: Sym): Boolean = t.isDefinedAt(node)
 
-    private def setMirroredMetadata(t1: Ctx, node: Exp[_], mirrored: Exp[_]): (Ctx, Exp[_]) = {
+    private def setMirroredMetadata(t1: Ctx, node: Sym, mirrored: Sym): (Ctx, Sym) = {
       val (t2, mirroredMetadata) = mirrorMetadata(t1, node, mirrored)
       setAllMetadata(mirrored, mirroredMetadata.filterSinglePass)
       (t2, mirrored)
     }
 
     // TODO make protected
-    def mirrorNode[A](t: Ctx, rewriter: Rewriter, g: AstGraph, node: Exp[A]): (Ctx, Exp[_]) = {
+    def mirrorNode[A](t: Ctx, rewriter: Rewriter, g: AstGraph, node: Exp[A]): (Ctx, Sym) = {
       isMirrored(t, node) match {         // cannot use 'if' because it becomes staged
         case true => (t, t(node))
         case _ =>
@@ -319,8 +319,8 @@ trait Transforming { self: Scalan =>
       }
     }
 
-    def mirrorSymbols(t0: Ctx, rewriter: Rewriter, g: AstGraph, nodes: Seq[Exp[_]]) = {
-      val (t, revMirrored) = nodes.foldLeft((t0, List.empty[Exp[_]])) {
+    def mirrorSymbols(t0: Ctx, rewriter: Rewriter, g: AstGraph, nodes: Seq[Sym]) = {
+      val (t, revMirrored) = nodes.foldLeft((t0, List.empty[Sym])) {
         case ((t1, nodes), n) =>
           val (t2, n1) = mirrorNode(t1, rewriter, g, n)
           (t2, n1 :: nodes)
@@ -354,21 +354,21 @@ trait Transforming { self: Scalan =>
     ProjectionTree(root, newChildren)
   }
 
-  def pairMany(env: List[Exp[_]]): Exp[_] =
+  def pairMany(env: List[Sym]): Sym =
     env.reduceRight(Pair(_, _))
 
   abstract class SymbolTree {
-    def root: Exp[_]
+    def root: Sym
     def children: List[SymbolTree]
-    def mirror(leafSubst: Exp[_] => Exp[_]): SymbolTree
-    def paths: List[(TuplePath, Exp[_])]
+    def mirror(leafSubst: Sym => Sym): SymbolTree
+    def paths: List[(TuplePath, Sym)]
     def isLeaf = children.isEmpty
   }
 
-  class ProjectionTree(val root: Exp[_], val children: List[ProjectionTree]) extends SymbolTree {
+  class ProjectionTree(val root: Sym, val children: List[ProjectionTree]) extends SymbolTree {
     override def toString = s"""ProjTree(\n${paths.mkString("\n")})"""
 
-    lazy val paths: List[(TuplePath, Exp[_])] =
+    lazy val paths: List[(TuplePath, Sym)] =
       if (isLeaf) List((Nil, root))
       else{
         for {
@@ -380,24 +380,24 @@ trait Transforming { self: Scalan =>
           }
     }
 
-    def mkNewTree(r: Exp[_], cs: List[ProjectionTree]) = ProjectionTree(r, cs)
-    def mirror(subst: Exp[_] => Exp[_]): ProjectionTree = {
+    def mkNewTree(r: Sym, cs: List[ProjectionTree]) = ProjectionTree(r, cs)
+    def mirror(subst: Sym => Sym): ProjectionTree = {
       val newRoot = subst(root)
       projectTree(newRoot, this)
     }
   }
   object ProjectionTree {
-    def apply(root: Exp[_], children: List[ProjectionTree]) = new ProjectionTree(root, children)
-    def apply(root: Exp[_], unfoldChildren: Sym => List[Sym]): ProjectionTree =
+    def apply(root: Sym, children: List[ProjectionTree]) = new ProjectionTree(root, children)
+    def apply(root: Sym, unfoldChildren: Sym => List[Sym]): ProjectionTree =
       ProjectionTree(root, unfoldChildren(root) map (apply(_, unfoldChildren)))
   }
 
-  class TupleTree(val root: Exp[_], val children: List[TupleTree]) extends SymbolTree {
+  class TupleTree(val root: Sym, val children: List[TupleTree]) extends SymbolTree {
     override def toString =
       if (isLeaf) root.toString
       else "Tup(%s)".format(children.mkString(","))
 
-    lazy val paths: List[(TuplePath, Exp[_])] = children match {
+    lazy val paths: List[(TuplePath, Sym)] = children match {
       case Nil => List((Nil, root))
       case _ =>
         for {
@@ -406,7 +406,7 @@ trait Transforming { self: Scalan =>
         } yield (i + 1 :: p, s)
     }
 
-    def mirror(leafSubst: Exp[_] => Exp[_]): TupleTree =
+    def mirror(leafSubst: Sym => Sym): TupleTree =
       if (isLeaf)
         TupleTree(leafSubst(root), Nil)
       else {
@@ -417,7 +417,7 @@ trait Transforming { self: Scalan =>
   }
 
   object TupleTree {
-    def apply(root: Exp[_], children: List[TupleTree]) = new TupleTree(root, children)
+    def apply(root: Sym, children: List[TupleTree]) = new TupleTree(root, children)
 
     // require ptree to be sorted by projectionIndex
     def fromProjectionTree(ptree: ProjectionTree, subst: Sym => Sym): TupleTree =

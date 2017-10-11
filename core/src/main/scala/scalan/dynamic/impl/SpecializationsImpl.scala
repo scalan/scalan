@@ -175,7 +175,7 @@ implicit val eM = p.metric.elem.eRange
           Some((receiver, x)).asInstanceOf[Option[(Rep[IsoFuncBase[T, R, M]], Rep[T]) forSome {type T; type R; type M}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IsoFuncBase[T, R, M]], Rep[T]) forSome {type T; type R; type M}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[IsoFuncBase[T, R, M]], Rep[T]) forSome {type T; type R; type M}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -204,7 +204,7 @@ implicit val eM = p.metric.elem.eRange
           Some(receiver).asInstanceOf[Option[Rep[IsoFunc[T, R, M]] forSome {type T; type R; type M}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[IsoFunc[T, R, M]] forSome {type T; type R; type M}] = exp match {
+      def unapply(exp: Sym): Option[Rep[IsoFunc[T, R, M]] forSome {type T; type R; type M}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -216,7 +216,7 @@ implicit val eM = p.metric.elem.eRange
           Some(receiver).asInstanceOf[Option[Rep[IsoFunc[T, R, M]] forSome {type T; type R; type M}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[IsoFunc[T, R, M]] forSome {type T; type R; type M}] = exp match {
+      def unapply(exp: Sym): Option[Rep[IsoFunc[T, R, M]] forSome {type T; type R; type M}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -228,7 +228,7 @@ implicit val eM = p.metric.elem.eRange
           Some((receiver, x)).asInstanceOf[Option[(Rep[IsoFunc[T, R, M]], Rep[T]) forSome {type T; type R; type M}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IsoFunc[T, R, M]], Rep[T]) forSome {type T; type R; type M}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[IsoFunc[T, R, M]], Rep[T]) forSome {type T; type R; type M}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

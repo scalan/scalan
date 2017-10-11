@@ -228,7 +228,7 @@ trait StructKeysDefs extends StructKeys {
           Some(receiver).asInstanceOf[Option[Rep[IndexStructKey[Schema]] forSome {type Schema <: Struct}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[IndexStructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
+      def unapply(exp: Sym): Option[Rep[IndexStructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -255,7 +255,7 @@ trait StructKeysDefs extends StructKeys {
           Some(receiver).asInstanceOf[Option[Rep[NameStructKey[Schema]] forSome {type Schema <: Struct}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[NameStructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
+      def unapply(exp: Sym): Option[Rep[NameStructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -282,7 +282,7 @@ trait StructKeysDefs extends StructKeys {
           Some(receiver).asInstanceOf[Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
+      def unapply(exp: Sym): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -294,7 +294,7 @@ trait StructKeysDefs extends StructKeys {
           Some(receiver).asInstanceOf[Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
+      def unapply(exp: Sym): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

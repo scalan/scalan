@@ -180,7 +180,7 @@ trait SpecializationsModule extends impl.SpecializationsDefs with TypesApi { sca
 //    wrappers.flatten
 //  }
 
-  def specialize[A,B](f: Rep[A=>B], inFilter: TypePredicate = AllTypes, outFilter: TypePredicate = AllTypes)(implicit eA: Elem[A], eB:Elem[B]): List[Exp[_]] = {
+  def specialize[A,B](f: Rep[A=>B], inFilter: TypePredicate = AllTypes, outFilter: TypePredicate = AllTypes)(implicit eA: Elem[A], eB:Elem[B]): List[Sym] = {
     val inElems = eA.allConcreteSpecs(QueryParams(true))
     val outElems = eB.allConcreteSpecs(QueryParams(true))
     val specs = for {

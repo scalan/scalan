@@ -37,7 +37,7 @@ trait UnBinOps extends Base { self: Scalan =>
 
   def applyBinOp[A, R](op: BinOp[A, R], lhs: Rep[A], rhs: Rep[A]): Rep[R] = ApplyBinOp(op, lhs, rhs)
 
-  override def rewriteDef[T](d: Def[T]): Exp[_] =
+  override def rewriteDef[T](d: Def[T]): Sym =
     currentPass.config.constantPropagation match {
       case false => super.rewriteDef(d)
       case true =>

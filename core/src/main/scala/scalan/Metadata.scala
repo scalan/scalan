@@ -78,7 +78,7 @@ trait Metadata { self: Scalan =>
     val empty = new MetaNode(Map.empty)
   }
 
-  private var metadataPool = Map.empty[Exp[_], MetaNode]
+  private var metadataPool = Map.empty[Sym, MetaNode]
 
   def allMetadataOf(target: Rep[_]): MetaNode = metadataPool.getOrElse(target, MetaNode.empty)
 

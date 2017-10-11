@@ -315,7 +315,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some(receiver).asInstanceOf[Option[Rep[Interval]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Interval]] = exp match {
+      def unapply(exp: Sym): Option[Rep[Interval]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -327,7 +327,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some((receiver, ofs)).asInstanceOf[Option[(Rep[Interval], Rep[Int])]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Interval], Rep[Int])] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Interval], Rep[Int])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -339,7 +339,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some((receiver, seg)).asInstanceOf[Option[(Rep[Interval], Rep[Segment])]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Interval], Rep[Segment])] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Interval], Rep[Segment])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -367,7 +367,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some(receiver).asInstanceOf[Option[Rep[Slice]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Slice]] = exp match {
+      def unapply(exp: Sym): Option[Rep[Slice]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -379,7 +379,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some((receiver, ofs)).asInstanceOf[Option[(Rep[Slice], Rep[Int])]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Slice], Rep[Int])] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Slice], Rep[Int])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -391,7 +391,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some((receiver, seg)).asInstanceOf[Option[(Rep[Slice], Rep[Segment])]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Slice], Rep[Segment])] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Slice], Rep[Segment])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -419,7 +419,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some(receiver).asInstanceOf[Option[Rep[Centered]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Centered]] = exp match {
+      def unapply(exp: Sym): Option[Rep[Centered]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -431,7 +431,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some(receiver).asInstanceOf[Option[Rep[Centered]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Centered]] = exp match {
+      def unapply(exp: Sym): Option[Rep[Centered]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -443,7 +443,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some(receiver).asInstanceOf[Option[Rep[Centered]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Centered]] = exp match {
+      def unapply(exp: Sym): Option[Rep[Centered]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -455,7 +455,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some((receiver, ofs)).asInstanceOf[Option[(Rep[Centered], Rep[Int])]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Centered], Rep[Int])] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Centered], Rep[Int])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -467,7 +467,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some((receiver, seg)).asInstanceOf[Option[(Rep[Centered], Rep[Segment])]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Centered], Rep[Segment])] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Centered], Rep[Segment])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -495,7 +495,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some(receiver).asInstanceOf[Option[Rep[Segment]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Segment]] = exp match {
+      def unapply(exp: Sym): Option[Rep[Segment]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -507,7 +507,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some(receiver).asInstanceOf[Option[Rep[Segment]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Segment]] = exp match {
+      def unapply(exp: Sym): Option[Rep[Segment]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -519,7 +519,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some(receiver).asInstanceOf[Option[Rep[Segment]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Segment]] = exp match {
+      def unapply(exp: Sym): Option[Rep[Segment]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -531,7 +531,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some((receiver, ofs)).asInstanceOf[Option[(Rep[Segment], Rep[Int])]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Segment], Rep[Int])] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Segment], Rep[Int])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -543,7 +543,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
           Some((receiver, seg)).asInstanceOf[Option[(Rep[Segment], Rep[Segment])]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Segment], Rep[Segment])] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Segment], Rep[Segment])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

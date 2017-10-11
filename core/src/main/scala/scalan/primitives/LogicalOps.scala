@@ -50,7 +50,7 @@ trait LogicalOps extends Base { self: Scalan =>
   }
 
   @inline
-  private def matchBoolConsts(d: Def[_], lhs: Exp[_], rhs: Exp[_], ifTrue: Exp[_] => Exp[_], ifFalse: Exp[_] => Exp[_], ifEqual: Exp[_] => Exp[_], ifNegated: Exp[_] => Exp[_]): Exp[_] =
+  private def matchBoolConsts(d: Def[_], lhs: Sym, rhs: Sym, ifTrue: Sym => Sym, ifFalse: Sym => Sym, ifEqual: Sym => Sym, ifNegated: Sym => Sym): Sym =
     lhs match {
       case `rhs` =>
         ifEqual(lhs)

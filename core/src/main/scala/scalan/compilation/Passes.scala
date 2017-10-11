@@ -100,7 +100,7 @@ trait Passes {
       extends GraphPassBuilder[P](name, createPass)
 
   trait ExpPass extends Pass {
-    def apply[A](s: Exp[A]): Exp[_]
+    def apply[A](s: Exp[A]): Sym
   }
 
   class GraphTransformPass(val builder: PassBuilder[GraphPass], val name: String, mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {

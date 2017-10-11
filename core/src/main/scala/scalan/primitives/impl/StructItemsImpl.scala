@@ -181,7 +181,7 @@ implicit val eSchema = p.key.eSchema
           Some(receiver).asInstanceOf[Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
+      def unapply(exp: Sym): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -193,7 +193,7 @@ implicit val eSchema = p.key.eSchema
           Some(receiver).asInstanceOf[Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
+      def unapply(exp: Sym): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

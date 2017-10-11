@@ -463,7 +463,7 @@ trait ViewsModule extends impl.ViewsDefs { self: Scalan =>
         (iso1, convertAfterIso(iso2, toC, toD))
     (i1, i2)
   }
-  override protected def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = receiver match {
+  override protected def getResultElem(receiver: Sym, m: Method, args: List[AnyRef]): Elem[_] = receiver match {
     case Def(iso: IsoUR[_, _]) => m.getName match {
       case "from" => iso.eFrom
       case "to" => iso.eTo

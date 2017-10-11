@@ -46,7 +46,7 @@ trait Analyzing { self: Scalan =>
     * Represents usage summary of the symbol it is attached
     * @param counters Key - usage level, Value - symbols that use this symbol from the corresponding level
     */
-  case class UsageCount[T](counters: Map[Int, Seq[Exp[_]]])(implicit val elem: Elem[T]) extends Marking[T] {
+  case class UsageCount[T](counters: Map[Int, Seq[Sym]])(implicit val elem: Elem[T]) extends Marking[T] {
     def nonEmpty = true
   }
 
@@ -66,9 +66,9 @@ trait Analyzing { self: Scalan =>
     val levelAnalyzer = new LevelAnalyzer  // use this to access markings
     def lattice = UsageCountLattice
     def defaultMarking[T:Elem] = UsageCount[T](Map())
-    def mkUsageMark[T](counters: Map[Int,Seq[Exp[_]]])(eT: Elem[T]) = UsageCount(counters)(eT)
+    def mkUsageMark[T](counters: Map[Int,Seq[Sym]])(eT: Elem[T]) = UsageCount(counters)(eT)
 
-    def promoteMark[T](s: Exp[T], counters: Map[Int,Seq[Exp[_]]]): (Exp[T], UsageCount[T]) = {
+    def promoteMark[T](s: Exp[T], counters: Map[Int,Seq[Sym]]): (Exp[T], UsageCount[T]) = {
       s -> mkUsageMark(counters)(s.elem)
     }
 

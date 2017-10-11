@@ -244,7 +244,7 @@ trait TypeSum extends Base { self: Scalan =>
 
     case call@MethodCall(Def(foldD@SumFold(sum, left, right)), m, args, neverInvoke) => {
       implicit val resultElem: Elem[T] = d.selfType
-      def copyMethodCall(newReceiver: Exp[_]) =
+      def copyMethodCall(newReceiver: Sym) =
         mkMethodCall(newReceiver, m, args, neverInvoke, resultElem).asRep[T]
 
       sum.fold(

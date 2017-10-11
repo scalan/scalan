@@ -27,7 +27,7 @@ class RewriteRulesSuite extends BaseShouldTests {
   it should "create LemmaRule" in {
     val ctx = getCtx
     import ctx._
-    ctx.emitDepGraph(Seq[Exp[_]](testLemma, rule.lhs, rule.rhs), prefix, "testRule")(GraphVizConfig.default)
+    ctx.emitDepGraph(Seq[Sym](testLemma, rule.lhs, rule.rhs), prefix, "testRule")(GraphVizConfig.default)
   }
 
   it should "recognize pattern" in {

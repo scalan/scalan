@@ -142,13 +142,13 @@ trait Functions extends Base with ProgramGraphs { self: Scalan =>
     def argsTree = getLambda.argsTree
   }
 
-  type Subst = Map[Exp[_], Exp[_]]
+  type Subst = Map[Sym, Sym]
 
-  def alphaEqual(s1: Exp[_], s2: Exp[_]): Boolean = matchExps(s1, s2, false, Map.empty).isDefined
+  def alphaEqual(s1: Sym, s2: Sym): Boolean = matchExps(s1, s2, false, Map.empty).isDefined
 
-  def patternMatch(s1: Exp[_], s2: Exp[_]): Option[Subst] = matchExps(s1, s2, true, Map.empty)
+  def patternMatch(s1: Sym, s2: Sym): Option[Subst] = matchExps(s1, s2, true, Map.empty)
 
-  protected def matchExps(s1: Exp[_], s2: Exp[_], allowInexactMatch: Boolean, subst: Subst): Option[Subst] = s1 match {
+  protected def matchExps(s1: Sym, s2: Sym, allowInexactMatch: Boolean, subst: Subst): Option[Subst] = s1 match {
     case _ if s1 == s2 || subst.get(s1) == Some(s2) || subst.get(s2) == Some(s1) =>
       Some(subst)
     case Def(d1) => s2 match {
@@ -195,8 +195,8 @@ trait Functions extends Base with ProgramGraphs { self: Scalan =>
     }
 
   protected def matchAny(a1: Any, a2: Any, allowInexactMatch: Boolean, subst: Subst): Option[Subst] = a1 match {
-    case s1: Exp[_] => a2 match {
-      case s2: Exp[_] =>
+    case s1: Sym => a2 match {
+      case s2: Sym =>
         matchExps(s1, s2, allowInexactMatch, subst)
       case _ => None
     }
@@ -290,12 +290,12 @@ trait Functions extends Base with ProgramGraphs { self: Scalan =>
   }
 
   class LambdaStack {
-    var stack = new mutable.Stack[Exp[_]]()
-    def top: Option[Exp[_]] = stack.isEmpty match { case true => None case _ => Some(stack.top) }
-    def push(e: Exp[_]): this.type = { stack.push(e); this }
-    def pop: Exp[_] = stack.pop
+    var stack = new mutable.Stack[Sym]()
+    def top: Option[Sym] = stack.isEmpty match { case true => None case _ => Some(stack.top) }
+    def push(e: Sym): this.type = { stack.push(e); this }
+    def pop: Sym = stack.pop
   }
-  protected var recursion = Map.empty[_ => _, Exp[_]]
+  protected var recursion = Map.empty[_ => _, Sym]
 
   protected val lambdaStack = new LambdaStack
   private def executeFunction[A, B](f: Exp[A]=>Exp[B], x: Exp[A], fSym: Exp[A => B]): Exp[B] = {

@@ -23,8 +23,8 @@ trait ProgramGraphs extends AstGraphs { self: Scalan =>
       new ProgramGraph(newRoots, t1)
     }
 
-    def transformOne(oldExp:Exp[_], newExp:Exp[_]): ProgramGraph[Ctx] = {
-      val newRoots = roots map (x => x match {case v: Exp[_] if v == oldExp => newExp; case t => t }  )
+    def transformOne(oldExp:Sym, newExp:Sym): ProgramGraph[Ctx] = {
+      val newRoots = roots map (x => x match {case v: Sym if v == oldExp => newExp; case t => t }  )
       new ProgramGraph(newRoots, mapping)
     }
 

@@ -42,7 +42,7 @@ trait GraphVizExport { self: Scalan =>
     config.nodeLabel(parts)
   }
 
-  private def emitNode0(x: Exp[_], d: Option[Def[_]], acc: GraphData)(implicit stream: PrintWriter, config: GraphVizConfig) = {
+  private def emitNode0(x: Sym, d: Option[Def[_]], acc: GraphData)(implicit stream: PrintWriter, config: GraphVizConfig) = {
     stream.println(StringUtil.quote(x) + " [")
     val acc1 = acc.addNode(x, d)
     val xElem = x.elem
@@ -76,7 +76,7 @@ trait GraphVizExport { self: Scalan =>
     acc1
   }
 
-  private def emitNode(sym: Exp[_], rhs: Def[_], acc: GraphData)(implicit stream: PrintWriter, config: GraphVizConfig) = {
+  private def emitNode(sym: Sym, rhs: Def[_], acc: GraphData)(implicit stream: PrintWriter, config: GraphVizConfig) = {
     val acc1 = rhs match {
       case g: AstGraph =>
         g.boundVars.foldLeft(acc)((acc2, x) => emitNode0(x, None, acc2))
@@ -86,7 +86,7 @@ trait GraphVizExport { self: Scalan =>
     emitNode0(sym, Some(rhs), acc1)
   }
 
-  protected def formatMetadata(s: Exp[_]): List[String] = {
+  protected def formatMetadata(s: Sym): List[String] = {
     val metadata = s.allMetadata.meta
     if (metadata.nonEmpty)
       "Metadata:" :: metadata.map { case (k, v) => s"$k:${formatConst(v.value)}" }.toList
@@ -156,7 +156,7 @@ trait GraphVizExport { self: Scalan =>
     case _ => x.toString
   }
 
-  private def emitDepEdges(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter, config: GraphVizConfig) = {
+  private def emitDepEdges(sym: Sym, rhs: Def[_])(implicit stream: PrintWriter, config: GraphVizConfig) = {
     val (deps, lambdaVars) = rhs match {
       case l: Lambda[_, _] => lambdaDeps(l)
       case _ => (dep(rhs), Nil)
@@ -177,9 +177,9 @@ trait GraphVizExport { self: Scalan =>
 
   def emitDepGraph(d: Def[_], directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
     emitDepGraph(dep(d), directory, fileName)(config)
-  def emitDepGraph(start: Exp[_], directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
+  def emitDepGraph(start: Sym, directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
     emitDepGraph(List(start), directory, fileName)(config)
-  def emitDepGraph(ss: Seq[Exp[_]], directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
+  def emitDepGraph(ss: Seq[Sym], directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
     emitDepGraph(new PGraph(ss.toList), directory, fileName)(config)
   def emitExceptionGraph(e: Throwable, directory: File, fileName: String)(implicit config: GraphVizConfig): Option[GraphFile] =
     emitDepGraph(Left(e), directory, fileName)
@@ -217,7 +217,7 @@ trait GraphVizExport { self: Scalan =>
     } else None
   }
 
-  implicit class SeqExpExtensionsForEmitGraph(symbols: Seq[Exp[_]]) {
+  implicit class SeqExpExtensionsForEmitGraph(symbols: Seq[Sym]) {
     // Not default argument to allow use from the debugger
     def show(): Unit = show(defaultGraphVizConfig)
     def show(config: GraphVizConfig): Unit = showGraphs(symbols: _*)(config)
@@ -236,7 +236,7 @@ trait GraphVizExport { self: Scalan =>
     emitDepGraph(graph, directory, fileName)(config).foreach(_.open())
   }
 
-  private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
+  private def lambdaDeps(l: Lambda[_, _]): (List[Sym], List[Sym]) = l.y match {
     case Def(l1: Lambda[_, _]) =>
       val (ds, vs) = lambdaDeps(l1)
       (ds, l.x :: vs)
@@ -339,8 +339,8 @@ trait GraphVizExport { self: Scalan =>
   private case class NoAlias(label: String) extends Label
   private case class Alias(label: String, rhs: String, td: TypeDesc) extends Label
 
-  private case class GraphData(nodes: Map[Exp[_], Option[Def[_]]], labels: Map[TypeDesc, Label], aliases: List[Alias], aliasCounter: Int)(implicit config: GraphVizConfig) {
-    def addNode(s: Exp[_], d: Option[Def[_]]): GraphData = {
+  private case class GraphData(nodes: Map[Sym, Option[Def[_]]], labels: Map[TypeDesc, Label], aliases: List[Alias], aliasCounter: Int)(implicit config: GraphVizConfig) {
+    def addNode(s: Sym, d: Option[Def[_]]): GraphData = {
       val withType = config.maxTypeNameLength match {
         case Some(maxLength) =>
           val elems = d.map(_.selfType).toSet + s.elem

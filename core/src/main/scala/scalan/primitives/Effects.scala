@@ -240,7 +240,7 @@ trait Effects extends Base with GraphVizExport { self: Scalan =>
       // TODO the globalMutableSyms part was added later (June 2012) -- make sure it does the right thing
       if ((es contains x) || (globalMutableSyms contains x)) Nil
       else readSyms(x)
-    case s: Exp[_] => List(s)
+    case s: Sym => List(s)
     case p: Product => flatMapProduct(p, readSyms(_))
     case _ => Nil
   }
@@ -279,7 +279,7 @@ trait Effects extends Base with GraphVizExport { self: Scalan =>
   def aliasSyms(e: Any): List[Exp[Any]] = e match {
     case Reflect(x, u, es) => aliasSyms(x)
     case Reify(x, u, es) => syms(x)
-    case s: Exp[_] => List(s)
+    case s: Sym => List(s)
     case p: Product => flatMapProduct(p, aliasSyms(_))
     case _ => Nil
   }
@@ -287,7 +287,7 @@ trait Effects extends Base with GraphVizExport { self: Scalan =>
   def containSyms(e: Any): List[Exp[Any]] = e match {
     case Reflect(x, u, es) => containSyms(x)
     case Reify(x, u, es) => Nil
-    case s: Exp[_] => Nil
+    case s: Sym => Nil
     case p: Product => flatMapProduct(p, containSyms(_))
     case _ => Nil
   }
@@ -295,7 +295,7 @@ trait Effects extends Base with GraphVizExport { self: Scalan =>
   def extractSyms(e: Any): List[Exp[Any]] = e match {
     case Reflect(x, u, es) => extractSyms(x)
     case Reify(x, u, es) => Nil
-    case s: Exp[_] => Nil
+    case s: Sym => Nil
     case p: Product => flatMapProduct(p, extractSyms(_))
     case _ => Nil
   }
@@ -303,7 +303,7 @@ trait Effects extends Base with GraphVizExport { self: Scalan =>
   def copySyms(e: Any): List[Exp[Any]] = e match {
     case Reflect(x, u, es) => copySyms(x)
     case Reify(x, u, es) => Nil
-    case s: Exp[_] => Nil
+    case s: Sym => Nil
     case p: Product => flatMapProduct(p, copySyms(_))
     case _ => Nil
   }

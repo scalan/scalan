@@ -6,7 +6,7 @@ import scalan.compilation.{GraphVizConfig, Compiler}
 import scalan.util.FileUtil
 
 trait TestContexts extends TestUtils {
-  protected[this] def stage(scalan: Scalan)(testName: String, name: String, sfs: Seq[() => scalan.Exp[_]]): Unit = {
+  protected[this] def stage(scalan: Scalan)(testName: String, name: String, sfs: Seq[() => scalan.Sym]): Unit = {
     val directory = FileUtil.file(prefix, testName)
     implicit val graphVizConfig = scalan.defaultGraphVizConfig
     try {
@@ -32,13 +32,13 @@ trait TestContexts extends TestUtils {
     override def shouldUnpack(e: Elem[_]) = true
 
     // workaround for non-existence of by-name repeated parameters
-    def emitF(name: String, sfs: (() => Exp[_])*): Unit = stage(this)(testName, name, sfs)
-//    def emit(name: String, s1: => Exp[_]): Unit = emitF(name, () => s1)
-    def emit(name: String, ss: Exp[_]*): Unit = {
+    def emitF(name: String, sfs: (() => Sym)*): Unit = stage(this)(testName, name, sfs)
+//    def emit(name: String, s1: => Sym): Unit = emitF(name, () => s1)
+    def emit(name: String, ss: Sym*): Unit = {
       emitF(name, ss.map((s: Rep[_]) => () => s): _*)
     }
-    def emit(s1: => Exp[_]): Unit = emitF(testName, () => s1)
-    def emit(s1: => Exp[_], s2: Exp[_]*): Unit = {
+    def emit(s1: => Sym): Unit = emitF(testName, () => s1)
+    def emit(s1: => Sym, s2: Sym*): Unit = {
       emitF(testName, Seq(() => s1) ++ s2.map((s: Rep[_]) => () => s): _*)
     }
   }
@@ -56,16 +56,16 @@ trait TestContexts extends TestUtils {
     def test[A,B](f: => scalan.Exp[A => B]): CompilerOutput[A, B] = test(testName, f)
 
     // workaround for non-existence of by-name repeated parameters
-    def emitF(name: String, sfs: (() => scalan.Exp[_])*): Unit = stage(scalan)(testName, name, sfs)
-    def emit(name: String, s1: => scalan.Exp[_]): Unit = emitF(name, () => s1)
-    def emit(name: String, s1: => scalan.Exp[_], s2: => scalan.Exp[_]): Unit =
+    def emitF(name: String, sfs: (() => scalan.Sym)*): Unit = stage(scalan)(testName, name, sfs)
+    def emit(name: String, s1: => scalan.Sym): Unit = emitF(name, () => s1)
+    def emit(name: String, s1: => scalan.Sym, s2: => scalan.Sym): Unit =
       emitF(name, () => s1, () => s2)
-    def emit(name: String, s1: => scalan.Exp[_], s2: => scalan.Exp[_], s3: => scalan.Exp[_]): Unit =
+    def emit(name: String, s1: => scalan.Sym, s2: => scalan.Sym, s3: => scalan.Sym): Unit =
       emitF(name, () => s1, () => s2, () => s3)
-    def emit(s1: => scalan.Exp[_]): Unit = emitF(testName, () => s1)
-    def emit(s1: => scalan.Exp[_], s2: => scalan.Exp[_]): Unit =
+    def emit(s1: => scalan.Sym): Unit = emitF(testName, () => s1)
+    def emit(s1: => scalan.Sym, s2: => scalan.Sym): Unit =
       emitF(testName, () => s1, () => s2)
-    def emit(s1: => scalan.Exp[_], s2: => scalan.Exp[_], s3: => scalan.Exp[_]): Unit =
+    def emit(s1: => scalan.Sym, s2: => scalan.Sym, s3: => scalan.Sym): Unit =
       emitF(testName, () => s1, () => s2, () => s3)
   }
 }

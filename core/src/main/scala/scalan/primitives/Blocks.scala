@@ -34,7 +34,7 @@ trait Blocks extends Base { self: Scalan =>
   }
 
   object HasSemicolons {
-    def unapply(as: Seq[Rep[_]]): Option[Seq[Exp[_]]] = {
+    def unapply(as: Seq[Rep[_]]): Option[Seq[Sym]] = {
       val res = as.filter(a => a match {
         case Def(Semicolon(_,_)) => true
         case Def(SemicolonMulti(_,_)) => true

@@ -36,17 +36,17 @@ trait RewriteRules extends Base { self: Scalan =>
   def postulate[A:Elem, B:Elem, C:Elem, R](p: (Rep[A], Rep[B], Rep[C]) => RRewrite[R]): RRewrite[R] =
     p(fresh[A], fresh[B], fresh[C])
 
-  override def rewrite[T](s: Exp[T]): Exp[_] = {
+  override def rewrite[T](s: Exp[T]): Sym = {
     val result = rewriteWithRules(rewriteRules)(s)
     result.getOrElse {
       super.rewrite(s)
     }
   }
 
-  def rewriteWithRules[T](rules: List[RewriteRule[_]])(s: Exp[T]): Option[Exp[_]] = {
+  def rewriteWithRules[T](rules: List[RewriteRule[_]])(s: Exp[T]): Option[Sym] = {
     val eT = s.elem
     val iterator = rules.iterator
-    var result: Option[Exp[_]] = None
+    var result: Option[Sym] = None
     while (iterator.hasNext && result.isEmpty) {
       val rule = iterator.next()
       if (rule.eA >:> eT)
@@ -66,7 +66,7 @@ trait RewriteRules extends Base { self: Scalan =>
 
   trait RewriteRule[A] {
     def eA: Elem[A]
-    def apply(x: Exp[A]): Option[Exp[_]]
+    def apply(x: Exp[A]): Option[Sym]
   }
 
   case class PatternRewriteRule[A](lhs: Rep[A], rhs: Rep[A], eA: Elem[A]) extends RewriteRule[A] {

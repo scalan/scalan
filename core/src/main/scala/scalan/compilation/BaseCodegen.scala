@@ -83,7 +83,7 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
 
   /** Emits a node in the schedule. Override this for nodes which need more than one line, and
     * `rhs` for the simple cases. */
-  def emitNode(sym: Exp[_], d: Def[_], graph: AstGraph)
+  def emitNode(sym: Sym, d: Def[_], graph: AstGraph)
               (implicit stream: PrintWriter, indentLevel: IndentLevel) = d match {
     case Lambda(lam, _, x, y) =>
       val args = argList(sym, x)
@@ -93,8 +93,8 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
     case _ => emit(simpleNode(sym, d))
   }
 
-  def argList(f: Exp[_], x: Exp[_]): List[Exp[_]] = {
-    def argList(x: Exp[_], n: Int): List[Exp[_]] =
+  def argList(f: Sym, x: Sym): List[Sym] = {
+    def argList(x: Sym, n: Int): List[Sym] =
       n match {
         case 1 =>
           x :: Nil
@@ -112,8 +112,8 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
     argList(x, numArgs)
   }
 
-  def emitFunction(sym: Exp[_],
-                   args: List[Exp[_]],
+  def emitFunction(sym: Sym,
+                   args: List[Sym],
                    returnValue: Option[Exp[Any]],
                    lambdaOrThunk: AstGraph,
                    f: Schedule => Schedule = identity)(implicit stream: PrintWriter, indentLevel: IndentLevel): Unit = {
@@ -125,23 +125,23 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
     functionFooter().foreach(emit(_))
   }
 
-  def functionHeader(sym: Exp[_], args: List[Exp[_]]): String
+  def functionHeader(sym: Sym, args: List[Sym]): String
 
-  def functionReturn(y: Exp[_]): String
+  def functionReturn(y: Sym): String
 
   def functionFooter(): Option[String]
 
   /** Translation of a simple (non-complex) node. Normally calls `tpe(sym.elem)` (in typed languages),
     * `id(sym)` and `rhs(d)`. Example for C: `src"${sym.elem} $sym = $d;`.
     */
-  protected def simpleNode(sym: Exp[_], d: Def[_]): String
+  protected def simpleNode(sym: Sym, d: Def[_]): String
 
   /** Translation of the type represented by an `Elem` to the generated language
     * (no need to implement for weakly typed or fully type-inferred languages). */
   def tpe(elem: Elem[_]): String = !!!(s"$codegenName can't map ${elem.name } to $languageName")
 
   /** Translation of an `Exp` */
-  def id(s: Exp[_]) = s.varName
+  def id(s: Sym) = s.varName
 
   /** Translation of a literal. The default is C/Java literals for primitives and `null`. */
   def literal(value: Any): String = value match {
@@ -178,10 +178,10 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
 
   def specialNumericLiteral(x: SpecialNumericValue, t: BaseNumericType): String
 
-  def unOp(op: UnOp[_, _], x: Exp[_]): String =
+  def unOp(op: UnOp[_, _], x: Sym): String =
     src"${op.opName } $x"
 
-  def binOp(op: BinOp[_, _], x: Exp[_], y: Exp[_]): String =
+  def binOp(op: BinOp[_, _], x: Sym, y: Sym): String =
     src"$x ${op.opName } $y"
 
   /** Translation of a `Def` */
@@ -197,11 +197,11 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
     case _ => !!!(s"$codegenName can't translate definition $d (type ${d.selfType.name }) to $languageName")
   }
 
-  def applyFunction(f: Exp[_], args: Seq[Exp[_]]): String = src"$f($args)"
+  def applyFunction(f: Sym, args: Seq[Sym]): String = src"$f($args)"
 
   protected def translate(arg: Any): String = arg match {
     case elem: Elem[_] => tpe(elem)
-    case e: Exp[_] => id(e)
+    case e: Sym => id(e)
     case d: Def[_] => rhs(d)
     case str: String => str
     case num: Number => num.toString

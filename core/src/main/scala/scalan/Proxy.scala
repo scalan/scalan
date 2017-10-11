@@ -34,7 +34,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
   def delayInvoke = throw new DelayInvokeException
 
   // call mkMethodCall instead of constructor
-  case class MethodCall private[Proxy](receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean)(val selfType: Elem[Any]) extends Def[Any] {
+  case class MethodCall private[Proxy](receiver: Sym, method: Method, args: List[AnyRef], neverInvoke: Boolean)(val selfType: Elem[Any]) extends Def[Any] {
 
     override def toString = {
       val methodStr = method.toString.replace("java.lang.", "").
@@ -47,7 +47,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
         InvokeImpossible
       else
         findInvokableMethod[InvokeResult](receiver, method, args.toArray) {
-          res => InvokeSuccess(res.asInstanceOf[Exp[_]])
+          res => InvokeSuccess(res.asInstanceOf[Sym])
         } { InvokeFailure(_) } { InvokeImpossible }
   }
 
@@ -63,7 +63,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
     case _ => super.transformDef(d, t)
   }
 
-  def mkMethodCall(receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean): Exp[_] = {
+  def mkMethodCall(receiver: Sym, method: Method, args: List[AnyRef], neverInvoke: Boolean): Sym = {
     val resultElem = try {
       getResultElem(receiver, method, args)
     } catch {
@@ -74,7 +74,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
   }
 
   // prefer calling the above overload
-  def mkMethodCall(receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean, resultElem: Elem[_]): Exp[_] = {
+  def mkMethodCall(receiver: Sym, method: Method, args: List[AnyRef], neverInvoke: Boolean, resultElem: Elem[_]): Sym = {
     reifyObject(MethodCall(receiver, method, args, neverInvoke)(resultElem.asElem[Any]))
   }
 
@@ -109,10 +109,10 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
     case _ => super.formatDef(d)
   }
 
-  override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
+  override def rewriteDef[T](d: Def[T]): Sym = d match {
     // Rule: (if(c) t else e).m(args) ==> if (c) t.m(args) else e.m(args)
     case MethodCall(Def(IfThenElse(cond, t, e)), m, args, neverInvoke) =>
-      def copyMethodCall(newReceiver: Exp[_]) =
+      def copyMethodCall(newReceiver: Sym) =
         mkMethodCall(newReceiver, m, args, neverInvoke)
 
       IF (cond) {
@@ -165,7 +165,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
     proxy.asInstanceOf[Ops]
   }
 
-  private def findInvokableMethod[A](receiver: Exp[_], m: Method, args: Array[AnyRef])
+  private def findInvokableMethod[A](receiver: Sym, m: Method, args: Array[AnyRef])
                                     (onInvokeSuccess: AnyRef => A)
                                     (onInvokeException: Throwable => A)
                                     (onNoMethodFound: => A): A = {
@@ -308,7 +308,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
         // and Exp if defined in staged context.
         // If neither holds, the method again should be invoked immediately.
         val returnClass = m.getReturnType
-        !(returnClass == classOf[AnyRef] || returnClass == classOf[Exp[_]])
+        !(returnClass == classOf[AnyRef] || returnClass == classOf[Sym])
       }
     }
   }
@@ -335,7 +335,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
     }
 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
-  protected var methodCallReceivers = Set.empty[Exp[_]]
+  protected var methodCallReceivers = Set.empty[Sym]
 
   import Symbols._
 
@@ -635,7 +635,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
     returnType
   }
 
-  protected def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = {
+  protected def getResultElem(receiver: Sym, m: Method, args: List[AnyRef]): Elem[_] = {
     val e = receiver.elem
     val tpe = tpeFromElem(e)
     val instanceElemMap = getElemsMapFromInstanceElem(e, tpe)
@@ -649,7 +649,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
         val paramTypes = scalaMethod.paramLists.flatten.map(_.typeSignature.asSeenFrom(tpe, scalaMethod.owner).dealias)
         // reverse to let implicit elem parameters be first
         val elemsWithTypes: List[(TypeDesc, Type)] = args.zip(paramTypes).reverse.flatMap {
-          case (e: Exp[_], TypeRef(_, sym, List(tpeE))) if isStagedType(sym.name.toString) =>
+          case (e: Sym, TypeRef(_, sym, List(tpeE))) if isStagedType(sym.name.toString) =>
             List(e.elem -> tpeE)
           case (elem: Elem[_], TypeRef(_, ElementSym, List(tpeElem))) =>
             List(elem -> tpeElem)
@@ -762,7 +762,7 @@ trait Proxy extends Base with Metadata with GraphVizExport { self: Scalan =>
     }
   }
 
-  def throwInvocationException(whatFailed: String, cause: Throwable, receiver: Exp[_], m: Method, args: Seq[Any]) = {
+  def throwInvocationException(whatFailed: String, cause: Throwable, receiver: Sym, m: Method, args: Seq[Any]) = {
     val deps = receiver +: args.flatMap(syms)
     !!!(s"$whatFailed (${receiver.toStringWithType}).${m.getName}(${args.mkString(", ")}) failed", baseCause(cause), deps: _*)
   }
