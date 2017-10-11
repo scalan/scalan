@@ -1,11 +1,11 @@
-package scalan.common
+package scalan
 
-class Lazy[A] private (expr: => A) {
+class Lazy[A] private (block: => A) {
   @volatile private[this] var _isSet = false
-  
+
   lazy val value: A = {
     _isSet = true
-    expr
+    block
   }
   
   def isSet = _isSet
@@ -19,5 +19,5 @@ class Lazy[A] private (expr: => A) {
 }
 
 object Lazy {
-  def apply[A](expr: => A): Lazy[A] = new Lazy(expr)
+  def apply[A](block: => A): Lazy[A] = new Lazy(block)
 }

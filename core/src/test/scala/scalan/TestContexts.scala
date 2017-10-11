@@ -5,7 +5,7 @@ import java.lang.reflect.Method
 import scalan.compilation.{GraphVizConfig, Compiler}
 import scalan.util.FileUtil
 
-trait TestContexts extends TestsUtil {
+trait TestContexts extends TestUtils {
   protected[this] def stage(scalan: Scalan)(testName: String, name: String, sfs: Seq[() => scalan.Exp[_]]): Unit = {
     val directory = FileUtil.file(prefix, testName)
     implicit val graphVizConfig = scalan.defaultGraphVizConfig

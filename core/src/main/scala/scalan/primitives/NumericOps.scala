@@ -1,6 +1,5 @@
 package scalan.primitives
 
-import scalan.common.IdSupply
 import scalan.{Base, Scalan}
 
 trait NumericOps extends Base { self: Scalan =>

@@ -1,7 +1,6 @@
 package scalan.primitives
 
-import scalan.common.Lazy
-import scalan.{Base, Scalan}
+import scalan.{Base, Scalan, Lazy}
 
 trait Loops extends Base { self: Scalan =>
 

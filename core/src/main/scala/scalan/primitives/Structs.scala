@@ -3,7 +3,7 @@ package scalan.primitives
 import scalan._
 import scala.reflect.runtime.universe._
 import scalan.util.CollectionUtil
-import scalan.common.OverloadHack._
+import OverloadHack._
 import scalan.compilation.GraphVizConfig
 
 /**

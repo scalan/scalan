@@ -1,6 +1,6 @@
 package scalan
 
-import _root_.scalan.common.GraphUtil
+import scalan.util.GraphUtil
 
 class StronglyConnectedComponentsTests extends BaseTests {
   test("test1") {

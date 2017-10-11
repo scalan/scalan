@@ -1,7 +1,6 @@
 package scalan
 
-import scalan.common.OverloadHack
-import scalan.common.OverloadHack.Overloaded2
+import OverloadHack.Overloaded2
 
 trait Converters extends ViewsModule { self: Scalan =>
 

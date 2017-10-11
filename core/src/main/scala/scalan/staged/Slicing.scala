@@ -1,8 +1,7 @@
 package scalan.staged
 
 import scala.collection.mutable
-import scalan.Scalan
-import scalan.common.Lazy
+import scalan.{Scalan, Lazy}
 
 trait Slicing extends Scalan {
 

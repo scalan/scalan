@@ -4,7 +4,7 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.{Scalan, Base}
-import scalan.common.Utils
+import scalan.LogUtils._
 
 /*
  The code is taken from LMS and is used in Scalan with the same semantics
@@ -19,7 +19,7 @@ import scalan.common.Utils
  - mirroring implemented in Scalan way (though consistent with LMS)
  */
 
-trait Effects extends Base with Utils with GraphVizExport { self: Scalan =>
+trait Effects extends Base with GraphVizExport { self: Scalan =>
 
   case class Block[+T](val res: Exp[T]) { def elem: Elem[T @uncheckedVariance] = res.elem } // variance ...
 

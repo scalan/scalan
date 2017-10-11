@@ -1,8 +1,7 @@
 package scalan.staged
 
-import scalan.common.Lazy
-import scalan.compilation.{DummyCompiler, SlicingCompiler}
-import scalan.{BaseTests, Scalan, TestContexts}
+import scalan.compilation.{SlicingCompiler, DummyCompiler}
+import scalan.{BaseTests, TestContexts, Scalan, Lazy}
 
 abstract class AbstractSlicingTests extends BaseTests with TestContexts {
 

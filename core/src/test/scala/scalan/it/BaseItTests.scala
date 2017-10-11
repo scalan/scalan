@@ -6,10 +6,10 @@ import scalan.{BaseTests, TestContexts, Scalan}
  * Base class for integration testing
  *
  * @param mkProgStd By-name parameter to construct the sequential version of [[Prog]]. Called only once. `???` may be passed
- *                  if the class doesn't use [[ItTestsUtil.compareOutputWithStd]].
+ *                  if the class doesn't use [[ItTestUtils.compareOutputWithStd]].
  * @tparam Prog Program type
  */
-abstract class BaseItTests[Prog <: Scalan](mkProgStd: => Prog) extends BaseTests with ItTestsUtil[Prog] {
+abstract class BaseItTests[Prog <: Scalan](mkProgStd: => Prog) extends BaseTests with ItTestUtils[Prog] {
   lazy val progStd = mkProgStd
 }
 

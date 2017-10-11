@@ -18,7 +18,6 @@ class Scalan
   with LogicalOps
   with OrderingOps
   with MathOps
-  with Monoids
   with Equal
   with UniversalOps
   with Functions

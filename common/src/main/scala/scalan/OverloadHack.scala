@@ -1,4 +1,4 @@
-package scalan.common
+package scalan
 
 // hack to appease erasure
 

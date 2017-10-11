@@ -1,7 +1,6 @@
 package scalan.compilation
 
 import java.io.{File, PrintWriter}
-
 import scalan.Scalan
 import scalan.util.FileUtil
 
@@ -9,7 +8,6 @@ case class IndentLevel(level: Int) {
   def incr = IndentLevel(level + 1)
 }
 
-// based on scala.lms.internal.GenericCodegen
 /** Base class for code generators */
 abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
   import scalan._
@@ -25,7 +23,7 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
   /** File extension for generated code */
   def fileExtension: String = !!!(s"$codegenName must override either `fileExtension` or `fileName`")
 
-  /** Standard indentation for one level */
+  /** Standard indentation for one level is 4 spaces, can be according to defaults of the specific language */
   protected def indent = "    "
 
   /** File name (with extension) for generated code */
@@ -37,6 +35,8 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
   /** Finishes working with a kernel */
   def reset() = {}
 
+  /** Executes given function <code>f</code> with incremented identation.
+    * Current identation at call site is passed as implicit parameter. */
   def indented(f: IndentLevel => Unit)(implicit indentLevel: IndentLevel) = f(indentLevel.incr)
 
   def emit(string: String)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
@@ -72,7 +72,8 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
     new File(sourcesDir, fileName(functionName))
   }
 
-  def emitSchedule(graph: AstGraph, f: Schedule => Schedule = identity)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
+  def emitSchedule(graph: AstGraph, f: Schedule => Schedule = identity)
+                  (implicit stream: PrintWriter, indentLevel: IndentLevel) = {
     val originalSchedule = graph.schedule
     val schedule = f(originalSchedule)
     schedule.foreach { te =>
@@ -82,11 +83,12 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
 
   /** Emits a node in the schedule. Override this for nodes which need more than one line, and
     * `rhs` for the simple cases. */
-  def emitNode(sym: Exp[_], d: Def[_], graph: AstGraph)(implicit stream: PrintWriter, indentLevel: IndentLevel) = d match {
+  def emitNode(sym: Exp[_], d: Def[_], graph: AstGraph)
+              (implicit stream: PrintWriter, indentLevel: IndentLevel) = d match {
     case Lambda(lam, _, x, y) =>
       val args = argList(sym, x)
       emitFunction(sym, args, Some(y), lam)
-    case th @ ThunkDef(root, schedule) =>
+    case th@ThunkDef(root, schedule) =>
       emitFunction(sym, Nil, Some(root), th)
     case _ => emit(simpleNode(sym, d))
   }
@@ -100,9 +102,9 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
           x.elem match {
             case _: PairElem[a, b] =>
               val Pair(head, tail) = x.asRep[(a, b)]
-              head :: argList(tail, n -1)
+              head :: argList(tail, n - 1)
             case _ =>
-              !!!(s"$n arguments expected, but ${x.toStringWithDefinition} is not a nested tuple")
+              !!!(s"$n arguments expected, but ${x.toStringWithDefinition } is not a nested tuple")
           }
       }
 
@@ -110,7 +112,11 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
     argList(x, numArgs)
   }
 
-  def emitFunction(sym: Exp[_], args: List[Exp[_]], returnValue: Option[Exp[Any]], lambdaOrThunk: AstGraph, f: Schedule => Schedule = identity)(implicit stream: PrintWriter, indentLevel: IndentLevel): Unit = {
+  def emitFunction(sym: Exp[_],
+                   args: List[Exp[_]],
+                   returnValue: Option[Exp[Any]],
+                   lambdaOrThunk: AstGraph,
+                   f: Schedule => Schedule = identity)(implicit stream: PrintWriter, indentLevel: IndentLevel): Unit = {
     emit(functionHeader(sym, args))
     indented { implicit indentLevel =>
       emitSchedule(lambdaOrThunk, (s: Schedule) => f(s.filterNot(te => args.contains(te.sym))))
@@ -120,7 +126,9 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
   }
 
   def functionHeader(sym: Exp[_], args: List[Exp[_]]): String
+
   def functionReturn(y: Exp[_]): String
+
   def functionFooter(): Option[String]
 
   /** Translation of a simple (non-complex) node. Normally calls `tpe(sym.elem)` (in typed languages),
@@ -130,7 +138,7 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
 
   /** Translation of the type represented by an `Elem` to the generated language
     * (no need to implement for weakly typed or fully type-inferred languages). */
-  def tpe(elem: Elem[_]): String = !!!(s"$codegenName can't map ${elem.name} to $languageName")
+  def tpe(elem: Elem[_]): String = !!!(s"$codegenName can't map ${elem.name } to $languageName")
 
   /** Translation of an `Exp` */
   def id(s: Exp[_]) = s.varName
@@ -147,29 +155,34 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
     case f: Float => "%1.10f".format(f) + "F"
     case l: Long => l.toString + "L"
     case s: String =>
-      "\""+s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")+"\""
+      "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t") + "\""
     case c: Char =>
-      "'"+c.toString.replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")+"'"
+      "'" + c.toString.replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t") + "'"
     case null => "null"
-    case _ => !!!(s"$codegenName doesn't know literals for ${value.getClass} in $languageName")
+    case _ => !!!(s"$codegenName doesn't know literals for ${value.getClass } in $languageName")
   }
 
   sealed trait SpecialNumericValue
+
   case object PosInf extends SpecialNumericValue
+
   case object NegInf extends SpecialNumericValue
+
   case object NaN extends SpecialNumericValue
 
   sealed trait BaseNumericType
+
   case object FLOAT extends BaseNumericType
+
   case object DOUBLE extends BaseNumericType
 
   def specialNumericLiteral(x: SpecialNumericValue, t: BaseNumericType): String
 
   def unOp(op: UnOp[_, _], x: Exp[_]): String =
-    src"${op.opName} $x"
+    src"${op.opName } $x"
 
   def binOp(op: BinOp[_, _], x: Exp[_], y: Exp[_]): String =
-    src"$x ${op.opName} $y"
+    src"$x ${op.opName } $y"
 
   /** Translation of a `Def` */
   def rhs(d: Def[_]): String = d match {
@@ -181,7 +194,7 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
       applyFunction(f, args)
     case ThunkForce(th) =>
       applyFunction(th, Nil)
-    case _ => !!!(s"$codegenName can't translate definition $d (type ${d.selfType.name}) to $languageName")
+    case _ => !!!(s"$codegenName can't translate definition $d (type ${d.selfType.name }) to $languageName")
   }
 
   def applyFunction(f: Exp[_], args: Seq[Exp[_]]): String = src"$f($args)"
@@ -197,10 +210,11 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
     case _ => !!!(s"$codegenName can't translate $arg to $languageName")
   }
 
-  implicit class CodegenHelper(sc: StringContext) {
+  implicit class SrcHelper(sc: StringContext) {
     /** Generates code from interpolated string using `translate` for Scalan types (`Exp`, `Def`) */
     def src(args: Any*): String = {
       sc.raw(args.map(translate): _*).stripMargin
     }
   }
+
 }

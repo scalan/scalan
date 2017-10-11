@@ -1,7 +1,6 @@
 package scalan
 
-import scalan.common.OverloadHack
-import scalan.common.OverloadHack.Overloaded2
+import scalan.OverloadHack.Overloaded2
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
 

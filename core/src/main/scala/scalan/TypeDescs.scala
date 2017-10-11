@@ -1,6 +1,5 @@
 package scalan
 
-import scalan.common.Lazy
 import scala.annotation.implicitNotFound
 import scala.collection.immutable.ListMap
 import scala.reflect.runtime.universe._

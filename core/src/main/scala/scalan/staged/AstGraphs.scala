@@ -2,8 +2,8 @@ package scalan.staged
 
 import scala.collection._
 import scalan.Scalan
-import scalan.common.GraphUtil
 import scalan.compilation.GraphVizConfig
+import scalan.util.GraphUtil
 
 trait AstGraphs extends Transforming { self: Scalan =>
 

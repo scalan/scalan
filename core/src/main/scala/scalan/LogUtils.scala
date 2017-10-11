@@ -1,9 +1,7 @@
-package scalan.common
-
-import scalan.Base
+package scalan
 
 // TODO: add logging, etc.
-trait Utils {
+object LogUtils {
   val verbosity = Base.config.getInt("verbosity")
 
   def __ = throw new RuntimeException("unsupported embedded dsl operation")

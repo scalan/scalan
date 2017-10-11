@@ -3,8 +3,7 @@ package scalan.staged
 import java.lang.reflect.Method
 
 import scala.collection.{Seq, mutable}
-import scalan.Scalan
-import scalan.common.Lazy
+import scalan.{Scalan, Lazy}
 import scala.reflect.runtime.universe._
 
 trait Transforming { self: Scalan =>

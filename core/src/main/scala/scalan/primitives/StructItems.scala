@@ -3,7 +3,7 @@ package scalan.primitives
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scala.reflect.runtime.universe._
-import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
+import OverloadHack.{Overloaded2, Overloaded1}
 
 trait StructItems extends ViewsModule with Entities  { self: Structs with Scalan =>
 

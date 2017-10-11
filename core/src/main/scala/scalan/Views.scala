@@ -1,9 +1,9 @@
 package scalan
 
 import java.lang.reflect.Method
+
 import scala.language.higherKinds
 import scala.collection.mutable.{Map => MutMap}
-import scalan.common.Lazy
 
 trait Views extends TypeDescs with Proxy { self: ViewsModule with Scalan =>
   type Iso[From, To] = Rep[IsoUR[From, To]]

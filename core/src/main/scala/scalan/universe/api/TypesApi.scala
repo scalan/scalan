@@ -3,7 +3,7 @@ package scalan.universe.api
 import scala.collection.mutable
 import scala.language.reflectiveCalls
 import scalan.Scalan
-import scalan.common.OverloadHack.Overloaded1
+import scalan.OverloadHack.Overloaded1
 import scalan.meta.ScalanAst._
 import scalan.meta.PrintExtensions._
 import scalan.util.StringUtil

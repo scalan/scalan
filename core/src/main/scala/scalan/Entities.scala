@@ -3,7 +3,6 @@ package scalan
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.language.higherKinds
-import scalan.common.Lazy
 import scalan.meta.ScalanAst.{SModuleDef, STraitOrClassDef}
 import scalan.util.ReflectionUtil
 

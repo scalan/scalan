@@ -6,7 +6,7 @@ import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
 // extracted so it can be used with different suite styles
-trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
+trait ItTestUtils[Prog <: Scalan] extends TestUtils {
   override def testOutDir = "it-out"
 
   // can be overridden

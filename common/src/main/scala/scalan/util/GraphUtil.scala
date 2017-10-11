@@ -1,4 +1,4 @@
-package scalan.common
+package scalan.util
 
 import scala.collection.mutable.{HashMap, ArrayBuffer, Buffer, Stack, Map}
 

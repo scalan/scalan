@@ -8,9 +8,8 @@ import com.typesafe.config.{ConfigFactory, Config}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.annotation.unchecked.uncheckedVariance
-import scala.collection.{TraversableOnce, mutable}
+import scala.collection.{mutable, TraversableOnce}
 import scala.collection.mutable.ListBuffer
-import scalan.common.Lazy
 import scalan.compilation.GraphVizConfig
 import scalan.util.{ParamMirror, ReflectionUtil}
 import scala.reflect.runtime.universe._
@@ -207,7 +206,7 @@ trait Base extends LazyLogging { scalan: Scalan =>
     def show(emitMetadata: Boolean): Unit = show(defaultGraphVizConfig.copy(emitMetadata = emitMetadata))
     def show(config: GraphVizConfig): Unit = showGraphs(this)(config)
   }
-  type ExpAny = Exp[_]
+  type ExpAny = Rep[_]
 
   abstract class BaseDef[+T](implicit val selfType: Elem[T @uncheckedVariance]) extends Def[T]
 
@@ -220,7 +219,7 @@ trait Base extends LazyLogging { scalan: Scalan =>
     def apply[A](xs: Seq[Rep[A]]): Seq[Rep[A]] = xs map (e => apply(e))
     def apply[X,A](f: X=>Rep[A]): X=>Rep[A] = (z:X) => apply(f(z))
     def apply[X,Y,A](f: (X,Y)=>Rep[A]): (X,Y)=>Rep[A] = (z1:X,z2:Y) => apply(f(z1,z2))
-    def onlySyms[A](xs: List[Rep[A]]): List[Rep[A]] = xs map (e => apply(e)) collect { case e: Exp[A] => e }
+    def onlySyms[A](xs: List[Rep[A]]): List[Rep[A]] = xs map (e => apply(e)) collect { case e: Rep[A] => e }
   }
   def IdTransformer = MapTransformer.Empty
 
@@ -238,7 +237,7 @@ trait Base extends LazyLogging { scalan: Scalan =>
     def merge(other: Ctx): Ctx = ops.merge(self, other)
   }
 
-  protected def stagingExceptionMessage(message: String, syms: Seq[Exp[_]]) = {
+  protected def stagingExceptionMessage(message: String, syms: Seq[Rep[_]]) = {
     // Skip syms already in the message, assume that's the only source for s<N>
     val symsNotInMessage = syms.map(_.toString).filterNot(message.contains)
 
@@ -283,7 +282,7 @@ trait Base extends LazyLogging { scalan: Scalan =>
 
   private[this] val defClasses = collection.mutable.Map.empty[Class[_], ReflectedProductClass]
 
-  def transformDef[A](d: Def[A], t: Transformer): Exp[A] = d match {
+  def transformDef[A](d: Def[A], t: Transformer): Rep[A] = d match {
     case c: Const[_] => c.self
     case comp: CompanionDef[_] => comp.self
     case _ =>
@@ -292,7 +291,7 @@ trait Base extends LazyLogging { scalan: Scalan =>
   }
 
   protected def transformProductParam(x: Any, t: Transformer): Any = x match {
-    case e: Exp[_] => t(e)
+    case e: Rep[_] => t(e)
     case seq: Seq[_] => seq.map(transformProductParam(_, t))
     case arr: Array[_] => arr.map(transformProductParam(_, t))
     case opt: Option[_] => opt.map(transformProductParam(_, t))
@@ -358,64 +357,64 @@ trait Base extends LazyLogging { scalan: Scalan =>
     case _ => delayInvoke
   }
 
-  def def_unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
+  def def_unapply[T](e: Rep[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
 
   //  override def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T] = x.elem
   //  override def rep_getElem[T](x: Rep[T]): Elem[T] = x.elem
 
   object Var {
-    def unapply[T](e: Exp[T]): Option[Exp[T]] = e match {
+    def unapply[T](e: Rep[T]): Option[Rep[T]] = e match {
       case Def(_) => None
       case _ => Some(e)
     }
   }
 
   object ExpWithElem {
-    def unapply[T](s: Exp[T]): Option[(Exp[T],Elem[T])] = Some((s, s.elem))
+    def unapply[T](s: Rep[T]): Option[(Rep[T],Elem[T])] = Some((s, s.elem))
   }
 
   /**
     * Used for staged methods which can't be implemented based on other methods.
     * This just returns a value of the desired type.
     */
-  def defaultImpl[T](implicit elem: Elem[T]): Exp[T] = elem.defaultRepValue
+  def defaultImpl[T](implicit elem: Elem[T]): Rep[T] = elem.defaultRepValue
 
   abstract class Stm // statement (links syms and definitions)
 
   implicit class StmOps(stm: Stm) {
-    def lhs: List[Exp[Any]] = stm match {
+    def lhs: List[Rep[Any]] = stm match {
       case TableEntry(sym, rhs) => sym :: Nil
     }
 
-    def defines[A](sym: Exp[A]): Option[Def[A]] = stm match {
+    def defines[A](sym: Rep[A]): Option[Def[A]] = stm match {
       case TableEntry(`sym`, rhs: Def[A] @unchecked) => Some(rhs)
       case _ => None
     }
 
-    def defines[A](rhs: Def[A]): Option[Exp[A]] = stm match {
-      case TableEntry(sym: Exp[A] @unchecked, `rhs`) => Some(sym)
+    def defines[A](rhs: Def[A]): Option[Rep[A]] = stm match {
+      case TableEntry(sym: Rep[A] @unchecked, `rhs`) => Some(sym)
       case _ => None
     }
   }
 
   trait TableEntry[+T] extends Stm {
-    def sym: Exp[T]
-    def lambda: Option[Exp[_]]
+    def sym: Rep[T]
+    def lambda: Option[Rep[_]]
     def rhs: Def[T]
     def isLambda = rhs.isInstanceOf[Lambda[_, _]]
   }
 
   trait TableEntryCompanion {
-    def apply[T](sym: Exp[T], rhs: Def[T]): TableEntry[T]
-    def apply[T](sym: Exp[T], rhs: Def[T], lam: Exp[_]): TableEntry[T]
-    def unapply[T](tp: TableEntry[T]): Option[(Exp[T], Def[T])]
+    def apply[T](sym: Rep[T], rhs: Def[T]): TableEntry[T]
+    def apply[T](sym: Rep[T], rhs: Def[T], lam: Rep[_]): TableEntry[T]
+    def unapply[T](tp: TableEntry[T]): Option[(Rep[T], Def[T])]
   }
 
   object DefTableEntry {
-    def unapply[T](e: Exp[T]): Option[TableEntry[T]] = findDefinition(e)
+    def unapply[T](e: Rep[T]): Option[TableEntry[T]] = findDefinition(e)
   }
 
-  def decompose[T](d: Def[T]): Option[Exp[T]] = None
+  def decompose[T](d: Def[T]): Option[Rep[T]] = None
 
   def flatMapWithBuffer[A, T](iter: Iterator[A], f: A => TraversableOnce[T]): List[T] = {
     // performance hotspot: this is the same as
@@ -437,8 +436,8 @@ trait Base extends LazyLogging { scalan: Scalan =>
   }
 
   // regular data (and effect) dependencies
-  def syms(e: Any): List[Exp[_]] = e match {
-    case s: Exp[_] => List(s)
+  def syms(e: Any): List[Rep[_]] = e match {
+    case s: Rep[_] => List(s)
     case s: Iterable[_] =>
       flatMapWithBuffer(s.iterator, syms)
     // All case classes extend Product!
@@ -446,28 +445,28 @@ trait Base extends LazyLogging { scalan: Scalan =>
       flatMapProduct(p, syms)
     case _ => Nil
   }
-  def dep(e: Exp[_]): List[Exp[_]] = e match {
+  def dep(e: Rep[_]): List[Rep[_]] = e match {
     case Def(d) => syms(d)
     case _ => Nil
   }
-  def dep(d: Def[_]): List[Exp[_]] = syms(d)
+  def dep(d: Def[_]): List[Rep[_]] = syms(d)
 
   // symbols which are bound in a definition
-  def boundSyms(e: Any): List[Exp[Any]] = e match {
+  def boundSyms(e: Any): List[Rep[Any]] = e match {
     case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, boundSyms)
     case p: Product => flatMapProduct(p, boundSyms)
     case _ => Nil
   }
 
   // symbols which are bound in a definition, but also defined elsewhere
-  def tunnelSyms(e: Any): List[Exp[Any]] = e match {
+  def tunnelSyms(e: Any): List[Rep[Any]] = e match {
     case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, tunnelSyms)
     case p: Product => flatMapProduct(p, tunnelSyms)
     case _ => Nil
   }
 
   // symbols of effectful components of a definition
-  def effectSyms(x: Any): List[Exp[Any]] = x match {
+  def effectSyms(x: Any): List[Rep[Any]] = x match {
     case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, effectSyms)
     case p: Product => flatMapProduct(p, effectSyms)
     case _ => Nil
@@ -475,9 +474,9 @@ trait Base extends LazyLogging { scalan: Scalan =>
 
   // soft dependencies: they are not required but if they occur,
   // they must be scheduled before
-  def softSyms(e: Any): List[Exp[Any]] = e match {
+  def softSyms(e: Any): List[Rep[Any]] = e match {
     // empty by default
-    //case s: Exp[Any] => List(s)
+    //case s: Rep[Any] => List(s)
     case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, softSyms)
     case p: Product => flatMapProduct(p, softSyms)
     case _ => Nil
@@ -485,7 +484,7 @@ trait Base extends LazyLogging { scalan: Scalan =>
 
   // generic symbol traversal: f is expected to call rsyms again
   def rsyms[T](e: Any)(f: Any=>List[T]): List[T] = e match {
-    case s: Exp[Any] => f(s)
+    case s: Rep[Any] => f(s)
     case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, f)
     case p: Product => flatMapProduct(p, f)
     case _ => Nil
@@ -493,8 +492,8 @@ trait Base extends LazyLogging { scalan: Scalan =>
 
   // frequency information for dependencies: used/computed
   // often (hot) or not often (cold). used to drive code motion.
-  def symsFreq(e: Any): List[(Exp[Any], Double)] = e match {
-    case s: Exp[Any] => List((s,1.0))
+  def symsFreq(e: Any): List[(Rep[Any], Double)] = e match {
+    case s: Rep[Any] => List((s,1.0))
     case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, symsFreq)
     case p: Product => flatMapProduct(p, symsFreq)
     //case _ => rsyms(e)(symsFreq)
@@ -505,9 +504,9 @@ trait Base extends LazyLogging { scalan: Scalan =>
   def freqHot(e: Any) = symsFreq(e).map(p=>(p._1,p._2*1000.0))
   def freqCold(e: Any) = symsFreq(e).map(p=>(p._1,p._2*0.5))
 
-  implicit class ExpForSomeOps(symbol: Exp[_]) {
-    def inputs: List[Exp[Any]] = dep(symbol)
-    def getDeps: List[Exp[_]] = symbol match {
+  implicit class ExpForSomeOps(symbol: Rep[_]) {
+    def inputs: List[Rep[Any]] = dep(symbol)
+    def getDeps: List[Rep[_]] = symbol match {
       case Def(g: AstGraph) => g.freeVars.toList
       case _ => this.inputs
     }
@@ -525,11 +524,11 @@ trait Base extends LazyLogging { scalan: Scalan =>
     def tp: TableEntry[_] = findDefinition(symbol).getOrElse {
       !!!(s"No definition found for $symbol", symbol)
     }
-    def sameScopeAs(other: Exp[_]): Boolean = this.tp.lambda == other.tp.lambda
+    def sameScopeAs(other: Rep[_]): Boolean = this.tp.lambda == other.tp.lambda
   }
 
   implicit class DefForSomeOps(d: Def[_]) {
-    def getDeps: List[Exp[_]] = d match {
+    def getDeps: List[Rep[_]] = d match {
       case g: AstGraph => g.freeVars.toList
       case _ => syms(d)
     }
@@ -537,40 +536,40 @@ trait Base extends LazyLogging { scalan: Scalan =>
     def asDef[T] = d.asInstanceOf[Def[T]]
   }
 
-  case class HasArg(predicate: Exp[_] => Boolean) {
+  case class HasArg(predicate: Rep[_] => Boolean) {
     def unapply[T](d: Def[T]): Option[Def[T]] = {
       val args = dep(d)
       if (args.exists(predicate)) Some(d) else None
     }
   }
 
-  case class FindArg(predicate: Exp[_] => Boolean) {
-    def unapply[T](d: Def[T]): Option[Exp[_]] = {
+  case class FindArg(predicate: Rep[_] => Boolean) {
+    def unapply[T](d: Def[T]): Option[Rep[_]] = {
       val args = dep(d)
       for { a <- args.find(predicate) } yield a
     }
   }
 
-  def rewrite[T](s: Exp[T]): Exp[_] = s match {
+  def rewrite[T](s: Rep[T]): Rep[_] = s match {
     case Def(d) => rewriteDef(d)
     case _ => rewriteVar(s)
   }
 
-  def rewriteDef[T](d: Def[T]): Exp[_] = null
+  def rewriteDef[T](d: Def[T]): Rep[_] = null
 
-  def rewriteVar[T](s: Exp[T]): Exp[_] = null
+  def rewriteVar[T](s: Rep[T]): Rep[_] = null
 
   /**
     * A Sym is a symbolic reference used internally to refer to expressions.
     */
-  object Sym {
+  object SingleSym {
     private var currId = 0
-    def fresh[T: LElem]: Exp[T] = {
+    def fresh[T: LElem]: Rep[T] = {
       currId += 1
-      Sym(currId)
+      SingleSym(currId)
     }
   }
-  case class Sym[+T](id: Int)(implicit private val eT: LElem[T @uncheckedVariance]) extends Exp[T] {
+  case class SingleSym[+T](id: Int)(implicit private val eT: LElem[T @uncheckedVariance]) extends Rep[T] {
     override def elem: Elem[T @uncheckedVariance] = this match {
       case Def(d) => d.selfType
       case _ => eT.value
@@ -582,27 +581,27 @@ trait Base extends LazyLogging { scalan: Scalan =>
     def toStringWithDefinition = toStringWithType + definition.map(d => s" = $d").getOrElse("")
   }
 
-  def fresh[T: LElem]: Exp[T] = Sym.fresh[T]
+  def fresh[T: LElem]: Rep[T] = SingleSym.fresh[T]
 
-  case class TableEntrySingle[T](sym: Exp[T], rhs: Def[T], lambda: Option[Exp[_]]) extends TableEntry[T]
+  case class TableEntrySingle[T](sym: Rep[T], rhs: Def[T], lambda: Option[Rep[_]]) extends TableEntry[T]
 
   val TableEntry: TableEntryCompanion = new TableEntryCompanion {
-    def apply[T](sym: Exp[T], rhs: Def[T]) = new TableEntrySingle(sym, rhs, None)
-    def apply[T](sym: Exp[T], rhs: Def[T], lam: Exp[_]) = new TableEntrySingle(sym, rhs, Some(lam))
-    def unapply[T](tp: TableEntry[T]): Option[(Exp[T], Def[T])] = Some((tp.sym, tp.rhs))
-    //def unapply[T](s: Exp[T]): Option[TableEntry[T]] = findDefinition(s)
+    def apply[T](sym: Rep[T], rhs: Def[T]) = new TableEntrySingle(sym, rhs, None)
+    def apply[T](sym: Rep[T], rhs: Def[T], lam: Rep[_]) = new TableEntrySingle(sym, rhs, Some(lam))
+    def unapply[T](tp: TableEntry[T]): Option[(Rep[T], Def[T])] = Some((tp.sym, tp.rhs))
+    //def unapply[T](s: Rep[T]): Option[TableEntry[T]] = findDefinition(s)
   }
-  protected val globalThunkSym: Exp[_] = fresh[Int] // we could use any type here
-  private[this] val expToGlobalDefs: mutable.Map[Exp[_], TableEntry[_]] = mutable.HashMap.empty
-  private[this] val defToGlobalDefs: mutable.Map[(Exp[_], Def[_]), TableEntry[_]] = mutable.HashMap.empty
+  protected val globalThunkSym: Rep[_] = fresh[Int] // we could use any type here
+  private[this] val expToGlobalDefs: mutable.Map[Rep[_], TableEntry[_]] = mutable.HashMap.empty
+  private[this] val defToGlobalDefs: mutable.Map[(Rep[_], Def[_]), TableEntry[_]] = mutable.HashMap.empty
 
-  def findDefinition[T](s: Exp[T]): Option[TableEntry[T]] =
+  def findDefinition[T](s: Rep[T]): Option[TableEntry[T]] =
     expToGlobalDefs.get(s).asInstanceOf[Option[TableEntry[T]]]
 
-  def findDefinition[T](thunk: Exp[_], d: Def[T]): Option[TableEntry[T]] =
+  def findDefinition[T](thunk: Rep[_], d: Def[T]): Option[TableEntry[T]] =
     defToGlobalDefs.get((thunk,d)).asInstanceOf[Option[TableEntry[T]]]
 
-  def findOrCreateDefinition[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
+  def findOrCreateDefinition[T](d: Def[T], newSym: => Rep[T]): Rep[T] = {
     val optScope = thunkStack.top
     val optFound = optScope match {
       case Some(scope) =>
@@ -618,10 +617,10 @@ trait Base extends LazyLogging { scalan: Scalan =>
 
   }
 
-  def createDefinition[T](s: Exp[T], d: Def[T]): TableEntry[T] =
+  def createDefinition[T](s: Rep[T], d: Def[T]): TableEntry[T] =
     createDefinition(thunkStack.top, s, d)
 
-  private def createDefinition[T](optScope: Option[ThunkScope], s: Exp[T], d: Def[T]): TableEntry[T] = {
+  private def createDefinition[T](optScope: Option[ThunkScope], s: Rep[T], d: Def[T]): TableEntry[T] = {
     val te = lambdaStack.top match {
       case Some(fSym) => TableEntry(s, d, fSym)
       case _ => TableEntry(s, d)
@@ -645,7 +644,7 @@ trait Base extends LazyLogging { scalan: Scalan =>
     * @tparam T
     * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
     */
-  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
+  protected[scalan] def toExp[T](d: Def[T], newSym: => Rep[T]): Rep[T] = {
     var res = findOrCreateDefinition(d, newSym)
     var currSym = res
     var currDef = d
@@ -664,6 +663,15 @@ trait Base extends LazyLogging { scalan: Scalan =>
       }
     } while (res != currSym && currDef != null)
     res
+  }
+
+  object IdSupply {
+    private var _nextId = 0
+
+    def nextId = {
+      _nextId += 1
+      _nextId
+    }
   }
 }
 object Base {

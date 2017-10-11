@@ -1,10 +1,9 @@
 package scalan.primitives
 
 import scalan.staged.ProgramGraphs
-import scalan.{Base, Scalan}
+import scalan.{Base, Scalan, Lazy}
 import scala.collection.mutable
 import scala.language.implicitConversions
-import scalan.common.Lazy
 
 trait Functions extends Base with ProgramGraphs { self: Scalan =>
 

@@ -1,62 +1,68 @@
 package scalan.compilation.lua
 
 import java.io.{PrintWriter, File}
-
 import scalan.Scalan
 import scalan.compilation.{IndentLevel, BaseCodegen}
 
 class KotlinCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends BaseCodegen(_scalan) {
   import scalan._
 
-  def languageName = "Lua"
+  def languageName = "Kotlin"
 
-  override def fileExtension = "lua"
+  override def fileExtension = "kt"
 
-  override def indent = "  "
+  def emitLambdaHeader(f: Exp[_], lam: Lambda[_,_], functionName: String)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
+    emit(src"fun $f(${lam.x}: ${lam.x.elem}): ${lam.y.elem} {")
+  }
+
+  def emitLambdaFooter(lam: Lambda[_,_], functionName: String)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
+    indented { implicit indentLevel =>
+      emit(src"return ${lam.y}")
+    }
+    emit("}")
+  }
 
   def emitHeader(graph: PGraph, functionName: String)(implicit stream: PrintWriter) = {
-    val Def(lam: Lambda[_, _]) = graph.roots.head
-    stream.println(src"function $functionName(${lam.x})")
+    ???
   }
 
   def emitFooter(graph: PGraph, functionName: String)(implicit stream: PrintWriter) = {
-    // TODO this is ugly,
-    val f @ Def(lam: Lambda[_, _]) = graph.roots.head
-    stream.println(src"return $f(${lam.x})")
-    stream.println("end")
+    ???
   }
 
   def simpleNode(sym: Exp[_], d: Def[_]) = src"local $sym = $d"
 
-  override def emitNode(sym: Exp[_], d: Def[_], graph: AstGraph)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
+  override def emitNode(sym: Exp[_], d: Def[_], graph: AstGraph)
+                       (implicit stream: PrintWriter, indentLevel: IndentLevel) = {
     def initSym(rhs: Any = "{}") =
       emit(src"local $sym = $rhs")
+
     d match {
       // TODO See how to inline f in ArrayMap/ArrayFilter/etc.
-//      case ArrayMap(xs, f) =>
-//        initSym()
-//        emit(src"for i, v in ipairs($xs) do $sym[i] = $f(v) end")
-//      case ArrayFilter(xs, f) =>
-//        initSym()
-//        emit(src"for _, v in ipairs($xs) do if $f(v) then table.insert($sym, v) end end")
-//      case ArrayZip(xs, ys) =>
-//        initSym()
-//        emit(src"for i = 1, math.min(#$xs, #$ys) do $sym[i] = {$xs[i], $ys[i]} end")
-//      case ArrayReduce(xs, m) =>
-//        initSym(m.zero)
-//        val rhs = m.opName match {
-//          case "+" | "*" => src"$sym ${m.opName} v"
-//          case "||" => src"$sym or v"
-//          case "&&" => src"$sym and v"
-//          case _ => src"${m.append}({$sym, v})"
-//        }
-//        emit(src"for _, v in ipairs($xs) do $sym = $rhs end")
-//      case ArrayReplicate(len, v) =>
-//        initSym()
-//        emit(src"for i = 1, $len do $sym[i] = $v end")
-//      case ArrayRangeFrom0(n) =>
-//        initSym()
-//        emit(src"for i = 1, $n do $sym[i] = i - 1 end")
+      //      case ArrayMap(xs, f) =>
+      //        initSym()
+      //        emit(src"for i, v in ipairs($xs) do $sym[i] = $f(v) end")
+      //      case ArrayFilter(xs, f) =>
+      //        initSym()
+      //        emit(src"for _, v in ipairs($xs) do if $f(v) then table.insert($sym, v) end end")
+      //      case ArrayZip(xs, ys) =>
+      //        initSym()
+      //        emit(src"for i = 1, math.min(#$xs, #$ys) do $sym[i] = {$xs[i], $ys[i]} end")
+      //      case ArrayReduce(xs, m) =>
+      //        initSym(m.zero)
+      //        val rhs = m.opName match {
+      //          case "+" | "*" => src"$sym ${m.opName} v"
+      //          case "||" => src"$sym or v"
+      //          case "&&" => src"$sym and v"
+      //          case _ => src"${m.append}({$sym, v})"
+      //        }
+      //        emit(src"for _, v in ipairs($xs) do $sym = $rhs end")
+      //      case ArrayReplicate(len, v) =>
+      //        initSym()
+      //        emit(src"for i = 1, $len do $sym[i] = $v end")
+      //      case ArrayRangeFrom0(n) =>
+      //        initSym()
+      //        emit(src"for i = 1, $n do $sym[i] = i - 1 end")
       case IfThenElse(c, t, e) =>
         emit(src"local $sym")
         val optBranches = graph.branches.ifBranches.get(sym)
@@ -77,18 +83,20 @@ class KotlinCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends BaseCode
 
   def functionHeader(sym: Exp[_], args: List[Exp[_]]): String =
     src"local function $sym($args)"
+
   def functionReturn(y: Exp[_]): String = src"return $y"
+
   def functionFooter(): Option[String] = Some("end")
 
   override def rhs(d: Def[_]) = d match {
     case Tup(x, y) => src"{$x, $y}"
     case First(pair) => src"$pair[1]"
     case Second(pair) => src"$pair[2]"
-//    case ArrayApply(xs, i) => src"$xs[$i + 1]"
-//    case ArrayLength(xs) => src"#$xs"
-//    case ArrayEmpty() => "{}"
-//    case SymsArray(syms) =>
-//      tableLit(syms.map(translate))
+    //    case ArrayApply(xs, i) => src"$xs[$i + 1]"
+    //    case ArrayLength(xs) => src"#$xs"
+    //    case ArrayEmpty() => "{}"
+    //    case SymsArray(syms) =>
+    //      tableLit(syms.map(translate))
     case SimpleStruct(_, fields) =>
       tableLit(fields.map { case (key, value) => s"""["$key"] = $value""" })
     case FieldApply(struct, key) => src"""$struct["$key"]"""
@@ -101,8 +109,8 @@ class KotlinCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends BaseCode
     case MethodCall(receiver, method, args, _) =>
       // TODO "static" methods
       val args1 = args.flatMap(translateMethodArg)
-      src"$receiver:${method.getName}($args1)"
-    case Semicolon(_,b) => src"$b"
+      src"$receiver:${method.getName }($args1)"
+    case Semicolon(_, b) => src"$b"
     case _ => super.rhs(d)
   }
 
@@ -118,7 +126,7 @@ class KotlinCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends BaseCode
     case null => "nil"
     case xs: Array[_] => tableLit(xs.map(literal))
     case xs: Seq[_] => tableLit(xs.map(literal))
-    case map: Map[_, _] => tableLit(map.map { case (k, v) => s"""[${literal(k)}] = ${literal(v)}""" })
+    case map: Map[_, _] => tableLit(map.map { case (k, v) => s"""[${literal(k) }] = ${literal(v) }""" })
     case str: String if str.contains("\n") || str.contains("\"") =>
       val delimitersInString = """(\[=*\[)|(\]=*\])""".r.findAllMatchIn(str)
       val equalSigns =

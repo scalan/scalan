@@ -4,7 +4,7 @@
  */
 package scalan.primitives
 
-import scalan.common.OverloadHack._
+import scalan.OverloadHack._
 import scalan.{Base, Scalan}
 
 trait Tuples extends Base { self: Scalan =>
