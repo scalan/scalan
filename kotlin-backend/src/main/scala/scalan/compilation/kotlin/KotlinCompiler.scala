@@ -1,4 +1,4 @@
-package scalan.compilation.lua
+package scalan.compilation.kotlin
 
 import java.io.File
 

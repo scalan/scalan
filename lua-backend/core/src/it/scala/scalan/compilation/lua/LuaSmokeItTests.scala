@@ -1,4 +1,4 @@
-package scalan.compilation.lua
+package scalan.compilation.kotlin
 
 import scalan.ScalanDslExp
 import scalan.it.smoke.{SmokeItTests, SmokeProg}

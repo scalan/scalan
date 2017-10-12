@@ -1,11 +1,17 @@
-package scalan.compilation.lua
+package scalan.compilation.kotlin
 
 import java.io.{PrintWriter, File}
-import scalan.Scalan
-import scalan.compilation.{IndentLevel, BaseCodegen}
 
-class KotlinCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends BaseCodegen(_scalan) {
+import scala.collection.mutable
+import scalan.Scalan
+import scalan.compilation.{IndentLevel, FileCodegen}
+
+
+
+class KotlinCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends FileCodegen(_scalan) {
   import scalan._
+
+  val PairType = Name("kotlin", "Pair")
 
   def languageName = "Kotlin"
 
@@ -29,6 +35,8 @@ class KotlinCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends BaseCode
   def emitFooter(graph: PGraph, functionName: String)(implicit stream: PrintWriter) = {
     ???
   }
+
+  override def tpe(elem: Elem[_]): String = elem.name
 
   def simpleNode(sym: Exp[_], d: Def[_]) = src"local $sym = $d"
 
@@ -89,7 +97,7 @@ class KotlinCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends BaseCode
   def functionFooter(): Option[String] = Some("end")
 
   override def rhs(d: Def[_]) = d match {
-    case Tup(x, y) => src"{$x, $y}"
+    case Tup(x, y) => src"$PairType($x, $y)"
     case First(pair) => src"$pair[1]"
     case Second(pair) => src"$pair[2]"
     //    case ArrayApply(xs, i) => src"$xs[$i + 1]"
@@ -116,7 +124,7 @@ class KotlinCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends BaseCode
 
   def translateMethodArg(arg: AnyRef): Option[String] = arg match {
     case _: TypeDesc | _: Numeric[_] | _: Ordering[_] => None
-    case _ => Some(translate(arg))
+    case _ => Some(translateToSrc(arg))
   }
 
   override def literal(value: Any): String = value match {
@@ -186,4 +194,13 @@ class KotlinCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends BaseCode
   }
 
   def tableLit(elems: Iterable[String]) = "{" + elems.mkString(", ") + "}"
+
+  override protected def translateToSrc(arg: Any): String = arg match {
+    case _ =>
+      super.translateToSrc(arg)
+  }
+
+  class SrcStringHelperKotlin(sc: StringContext) extends SrcStringHelperBase(sc) { }
+
+  override implicit def srcStringHelper(sc: StringContext): SrcStringHelper = new SrcStringHelperKotlin(sc)
 }

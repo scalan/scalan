@@ -17,10 +17,10 @@ trait AstGraphs extends Transforming { self: Scalan =>
   }
 
   case class GraphNode(
-    override val graph: AstGraph,
-    sym: Sym, // this symbol
-    definition: Option[Def[_]], // definition
-    usages: List[Sym]) extends AstNode(graph) {
+          override val graph: AstGraph,
+          sym: Sym, // this symbol
+          definition: Option[Def[_]], // definition
+          usages: List[Sym]) extends AstNode(graph) {
     def inputSyms: List[Sym] = definition.toList.flatMap(_.getDeps)
     def outSyms = usages
     def addUsage(usage: Sym) = copy(usages = usage :: this.usages)

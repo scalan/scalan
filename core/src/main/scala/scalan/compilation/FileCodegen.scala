@@ -1,6 +1,8 @@
 package scalan.compilation
 
-import java.io.{File, PrintWriter}
+import java.io.{PrintWriter, File}
+
+import scala.collection.mutable
 import scalan.Scalan
 import scalan.util.FileUtil
 
@@ -9,7 +11,7 @@ case class IndentLevel(level: Int) {
 }
 
 /** Base class for code generators */
-abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
+abstract class FileCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
   import scalan._
 
   /** Codegen name (used in error messages) */
@@ -38,6 +40,8 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
   /** Executes given function <code>f</code> with incremented identation.
     * Current identation at call site is passed as implicit parameter. */
   def indented(f: IndentLevel => Unit)(implicit indentLevel: IndentLevel) = f(indentLevel.incr)
+
+  val importBuilder = new ImportBuilder
 
   def emit(string: String)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
     stream.print(indent * indentLevel.level)
@@ -93,6 +97,9 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
     case _ => emit(simpleNode(sym, d))
   }
 
+  /** Assume x is right-nested tuple like (a_1, (a_2, (a_3, ... (a_{N-1}, a_N)...)
+    *
+    * @return a list of a_i */
   def argList(f: Sym, x: Sym): List[Sym] = {
     def argList(x: Sym, n: Int): List[Sym] =
       n match {
@@ -140,7 +147,7 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
     * (no need to implement for weakly typed or fully type-inferred languages). */
   def tpe(elem: Elem[_]): String = !!!(s"$codegenName can't map ${elem.name } to $languageName")
 
-  /** Translation of an `Exp` */
+  /** Translation of a `Sym` to variable name */
   def id(s: Sym) = s.varName
 
   /** Translation of a literal. The default is C/Java literals for primitives and `null`. */
@@ -199,21 +206,32 @@ abstract class BaseCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
 
   def applyFunction(f: Sym, args: Seq[Sym]): String = src"$f($args)"
 
-  protected def translate(arg: Any): String = arg match {
+  protected def translateToSrc(arg: Any): String = arg match {
     case elem: Elem[_] => tpe(elem)
-    case e: Sym => id(e)
+    case s: Sym => id(s)
     case d: Def[_] => rhs(d)
     case str: String => str
     case num: Number => num.toString
-    case xs: Seq[_] => xs.map(translate).mkString(", ")
-    case xs: Array[_] => xs.map(translate).mkString(", ")
+    case xs: Seq[_] => xs.map(translateToSrc).mkString(", ")
+    case xs: Array[_] => xs.map(translateToSrc).mkString(", ")
+    case n @ Name(p, name) =>
+      if (importBuilder.findImportItem(n).isDefined) name
+      else
+      if (importBuilder.addImport(n)) name
+      else s"$p.$name"
     case _ => !!!(s"$codegenName can't translate $arg to $languageName")
   }
 
-  implicit class SrcHelper(sc: StringContext) {
+  trait SrcStringHelper {
+    def src(args: Any*): String
+  }
+
+  implicit def srcStringHelper(sc: StringContext): SrcStringHelper
+
+  class SrcStringHelperBase(sc: StringContext) extends SrcStringHelper {
     /** Generates code from interpolated string using `translate` for Scalan types (`Exp`, `Def`) */
     def src(args: Any*): String = {
-      sc.raw(args.map(translate): _*).stripMargin
+      sc.raw(args.map(translateToSrc): _*).stripMargin
     }
   }
 

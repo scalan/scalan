@@ -96,10 +96,10 @@ trait Metadata { self: Scalan =>
     target
   }
 
-  def getMetadata[A](target: Rep[_], key: MetaKey[A]): Option[A] =
+  def getMetadata[A](target: Sym, key: MetaKey[A]): Option[A] =
     allMetadataOf(target).get(key)
 
-  def removeMetadata[A](target: Rep[_], key: MetaKey[A]): Unit = {
+  def removeMetadata[A](target: Sym, key: MetaKey[A]): Unit = {
     metadataPool.get(target) match {
       case Some(node) =>
         if (node.meta.contains(key)) {
