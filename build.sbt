@@ -1,3 +1,6 @@
+
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
 lazy val buildSettings = Seq(
   scalaVersion := "2.11.8",
   organization := "com.huawei.scalan",
@@ -81,7 +84,8 @@ lazy val common = Project("scalan-common", file("common"))
   libraryDependencies ++= Seq(
     "com.typesafe.scala-logging" %% "scala-logging" % "3.4.0",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-    "commons-io" % "commons-io" % "2.5"
+    "commons-io" % "commons-io" % "2.5",
+    "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.9.1"
   ))
 
 lazy val meta = Project("scalan-meta", file("meta"))
@@ -173,7 +177,7 @@ lazy val core = Project("scalan-core", file("core"))
 //    libraryDependencies += "org.luaj" % "luaj-jse" % "3.0.1"
 //  )
 
-lazy val luaBackend = Project("scalan-kotlin-backend", file("kotlin-backend")).
+lazy val kotlinBackend = Project("scalan-kotlin-backend", file("kotlin-backend")).
   dependsOn(core % "compile->compile;it->test").
   configs(IntegrationTest)
   .settings(itSettings)
@@ -209,8 +213,5 @@ lazy val extraClassPathTask = TaskKey[String]("extraClassPath") // scalan.plugin
 //}.value
 
 lazy val root = Project("scalan", file("."))
-  .aggregate(common, meta, scalanizer, librarydef, core, library/*, lmsBackendCore,
-    collections, linalg, graphs, pointers, effects,
-    lmsBackendCollections, lmsBackendLinAlg, lmsBackendPointers, lmsBackendIT,
-    luaBackendCore, examples*/)
+  .aggregate(common, meta, scalanizer, librarydef, core, library, kotlinBackend)
   .settings(buildSettings, publishArtifact := false)

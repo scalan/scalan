@@ -4,11 +4,11 @@ import java.io.{PrintWriter, File}
 
 import scala.collection.mutable
 import scalan.Scalan
-import scalan.compilation.{IndentLevel, FileCodegen}
+import scalan.compilation.{IndentLevel, FileCodegen, Name}
 
 
 
-class KotlinCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends FileCodegen(_scalan) {
+class KotlinFileCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends FileCodegen(_scalan) {
   import scalan._
 
   val PairType = Name("kotlin", "Pair")
