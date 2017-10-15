@@ -1,7 +1,8 @@
 package scalan.util
 
+import com.fasterxml.jackson.core.{JsonGenerator, JsonParser}
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.{Module, ObjectMapper, JsonMappingException, JsonNode}
+import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import org.scalatest.{fixture, Matchers, Outcome}
@@ -19,6 +20,8 @@ abstract class JacksonUtilTests extends fixture.FlatSpec with Matchers {
   {
     val m = getMapper
     m.registerModule(module)
+    m.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, false)
+    m.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
     test(m)
   }
 
@@ -27,6 +30,7 @@ abstract class JacksonUtilTests extends fixture.FlatSpec with Matchers {
   def newMapper = {
     val result = new ObjectMapper
     result.registerModule(module)
+    result.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, false)
     result
   }
 
@@ -108,13 +112,4 @@ class OptionSerializerTests extends JacksonUtilTests {
     serialize(noneOption) should be ("null")
   }
 
-  it should "serialize concrete type when using Option[Trait] (in object)" in { f =>
-    // Additional test case for #240, for some reason this test case works fine.
-    // However, if the classes are moved outside of the object then it starts
-    // breaking.
-    val text = """{"m":{"label":"foo"}}"""
-    val obj = C1(Some(F1("foo")))
-    serialize(obj) should be (text)
-    f.readValue[C1](text) shouldBe obj
-  }
 }

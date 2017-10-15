@@ -2,6 +2,9 @@ package scalan.meta
 
 import java.lang.annotation.Annotation
 
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type
+import com.fasterxml.jackson.annotation.JsonTypeInfo.{Id, As}
+import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.typesafe.config.ConfigUtil
 
 import scala.reflect.internal.ModifierFlags
@@ -15,7 +18,28 @@ import ScalanAstExtensions._
 object ScalanAst {
 
   // STpe universe --------------------------------------------------------------------------
+
   /** Type expressions */
+  @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type")
+  @JsonSubTypes(Array(
+    new Type(value = classOf[STpeEmpty], name = "STpeEmpty"),
+    new Type(value = classOf[STpeConst], name = "STpeConst"),
+    new Type(value = classOf[STpePrimitive], name = "STpePrimitive"),
+    new Type(value = classOf[STpeSingleton], name = "STpeSingleton"),
+    new Type(value = classOf[STpeAnnotated], name = "STpeAnnotated"),
+    new Type(value = classOf[STpeStruct], name = "STpeStruct"),
+    new Type(value = classOf[STpeSelectFromTT], name = "STpeSelectFromTT"),
+    new Type(value = classOf[STpeCompound], name = "STpeCompound"),
+    new Type(value = classOf[STpeMethod], name = "STpeMethod"),
+    new Type(value = classOf[STpeBind], name = "STpeBind"),
+    new Type(value = classOf[STpeThis], name = "STpeThis"),
+    new Type(value = classOf[STpeTuple], name = "STpeTuple"),
+    new Type(value = classOf[STpeExistential], name = "STpeExistential"),
+    new Type(value = classOf[STpeSingle], name = "STpeSingle"),
+    new Type(value = classOf[STpeFunc], name = "STpeFunc"),
+    new Type(value = classOf[STraitCall], name = "STraitCall"),
+    new Type(value = classOf[STpeTypeBounds], name = "STpeTypeBounds")
+  ))
   sealed abstract class STpeExpr {
     def name: String
 
@@ -59,20 +83,32 @@ object ScalanAst {
     override def toString = ">:" + lo + "<:" + hi
   }
 
+  val TpeUnit = STpePrimitive("Unit", "()")
+  val TpeShort = STpePrimitive("Short", "0")
+  val TpeInt = STpePrimitive("Int", "0")
+  val TpeLong = STpePrimitive("Long", "0l")
+  val TpeByte = STpePrimitive("Byte", "0.toByte")
+  val TpeBoolean = STpePrimitive("Boolean", "false")
+  val TpeFloat = STpePrimitive("Float", "0.0f")
+  val TpeDouble = STpePrimitive("Double", "0.0")
+  val TpeString = STpePrimitive("String", "\"\"")
+  val TpeChar = STpePrimitive("Char", "0.toChar")
+  val TpeNothing = STpePrimitive("Nothing", "???")
+
   val STpePrimitives = Map(
     "Any" -> STpePrimitive("Any", "AnyElement.defaultRepValue"),
     "AnyRef" -> STpePrimitive("AnyRef", "AnyRefElement.defaultRepValue"),
-    "Nothing" -> STpePrimitive("Nothing", "???"),
-    "Unit" -> STpePrimitive("Unit", "()"),
-    "Short" -> STpePrimitive("Short", "0"),
-    "Int" -> STpePrimitive("Int", "0"),
-    "Long" -> STpePrimitive("Long", "0l"),
-    "Byte" -> STpePrimitive("Byte", "0.toByte"),
-    "Boolean" -> STpePrimitive("Boolean", "false"),
-    "Float" -> STpePrimitive("Float", "0.0f"),
-    "Double" -> STpePrimitive("Double", "0.0"),
-    "String" -> STpePrimitive("String", "\"\""),
-    "Char" -> STpePrimitive("Char", "0.toChar")
+    "Nothing" -> TpeNothing,
+    "Unit" -> TpeUnit,
+    "Short" -> TpeShort,
+    "Int" -> TpeInt,
+    "Long" -> TpeLong,
+    "Byte" -> TpeByte,
+    "Boolean" -> TpeBoolean,
+    "Float" -> TpeFloat,
+    "Double" -> TpeDouble,
+    "String" -> TpeString,
+    "Char" -> TpeChar
   )
 
   case class STpeTuple(override val tpeSExprs: List[STpeExpr]) extends STpeExpr {
@@ -294,6 +330,36 @@ object ScalanAst {
   final val ReifiedTypeArgAnnotation = classOf[Reified].getSimpleName
 
   // SExpr universe --------------------------------------------------------------------------
+  @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type")
+  @JsonSubTypes(Array(
+    new Type(value = classOf[SEmpty], name = "SEmpty"),
+    new Type(value = classOf[SConst], name = "SConst"),
+    new Type(value = classOf[SIdent], name = "SIdent"),
+    new Type(value = classOf[SAssign], name = "SAssign"),
+    new Type(value = classOf[SApply], name = "SApply"),
+    new Type(value = classOf[SExprApply], name = "SExprApply"),
+    new Type(value = classOf[SCase], name = "SCase"),
+    new Type(value = classOf[SSuper], name = "SSuper"),
+    new Type(value = classOf[SFunc], name = "SFunc"),
+    new Type(value = classOf[STuple], name = "STuple"),
+    new Type(value = classOf[SMatch], name = "SMatch"),
+    new Type(value = classOf[SAscr], name = "SAscr"),
+    new Type(value = classOf[STypeApply], name = "STypeApply"),
+    new Type(value = classOf[SBlock], name = "SBlock"),
+    new Type(value = classOf[SSelect], name = "SSelect"),
+    new Type(value = classOf[SIf], name = "SIf"),
+    new Type(value = classOf[SAnnotated], name = "SAnnotated"),
+    new Type(value = classOf[SValDef], name = "SValDef"),
+    new Type(value = classOf[SObjectDef], name = "SObjectDef"),
+    new Type(value = classOf[SClassDef], name = "SClassDef"),
+    new Type(value = classOf[STraitDef], name = "STraitDef"),
+    new Type(value = classOf[STpeDef], name = "STpeDef"),
+    new Type(value = classOf[SImportStat], name = "SImportStat"),
+    new Type(value = classOf[SMethodDef], name = "SMethodDef"),
+    new Type(value = classOf[SThis], name = "SThis"),
+    new Type(value = classOf[SContr], name = "SContr"),
+    new Type(value = classOf[SLiteral], name = "SLiteral")
+  ))
   trait SExpr {
     def exprType: Option[STpeExpr] = None
   }
