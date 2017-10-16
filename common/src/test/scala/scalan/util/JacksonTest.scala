@@ -2,9 +2,11 @@ package scalan.util
 
 import com.fasterxml.jackson.databind.{Module, ObjectMapper}
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Matchers, FunSpec}
 
-abstract class JacksonTest extends FlatSpec with Matchers {
+import scalan.TestUtils
+
+trait JacksonTest {
   def module: Module
 
   def newMapper = {

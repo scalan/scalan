@@ -1,10 +1,11 @@
 package scalan.util
 
-import java.lang.reflect.{Type, ParameterizedType}
+import java.lang.reflect.{ParameterizedType, Type}
 
 import com.fasterxml.jackson.core.`type`.TypeReference
+import org.scalatest.{Matchers, FlatSpec}
 
-trait DeserializerTest extends JacksonTest {
+trait DeserializerTest extends FlatSpec with Matchers with JacksonTest  {
 
   def serialize(o: AnyRef) = newMapper.writeValueAsString(o)
 

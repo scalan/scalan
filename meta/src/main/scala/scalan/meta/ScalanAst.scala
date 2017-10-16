@@ -4,8 +4,12 @@ import java.lang.annotation.Annotation
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.JsonTypeInfo.{Id, As}
-import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
+import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonIgnore, JsonTypeInfo}
+import com.fasterxml.jackson.databind.`type`.CollectionLikeType
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.databind.ser.std.IterableSerializer
 import com.typesafe.config.ConfigUtil
+import jdk.nashorn.internal.runtime.JSONListAdapter
 
 import scala.reflect.internal.ModifierFlags
 import PrintExtensions._
@@ -69,6 +73,7 @@ object ScalanAst {
   /** Invocation of a trait with arguments */
   case class STraitCall(val name: String, override val tpeSExprs: List[STpeExpr] = Nil) extends STpeExpr {
     override def toString = name + tpeSExprs.asTypeParams()
+    @JsonIgnore
     def isDef = (name == "Def")
     def toTypeApply = STypeApply(this, Nil)
   }
@@ -83,6 +88,8 @@ object ScalanAst {
     override def toString = ">:" + lo + "<:" + hi
   }
 
+  val TpeAny = STpePrimitive("Any", "AnyElement.defaultRepValue")
+  val TpeAnyRef = STpePrimitive("AnyRef", "AnyRefElement.defaultRepValue")
   val TpeUnit = STpePrimitive("Unit", "()")
   val TpeShort = STpePrimitive("Short", "0")
   val TpeInt = STpePrimitive("Int", "0")
@@ -96,8 +103,8 @@ object ScalanAst {
   val TpeNothing = STpePrimitive("Nothing", "???")
 
   val STpePrimitives = Map(
-    "Any" -> STpePrimitive("Any", "AnyElement.defaultRepValue"),
-    "AnyRef" -> STpePrimitive("AnyRef", "AnyRefElement.defaultRepValue"),
+    "Any" -> TpeAny,
+    "AnyRef" -> TpeAnyRef,
     "Nothing" -> TpeNothing,
     "Unit" -> TpeUnit,
     "Short" -> TpeShort,
@@ -357,8 +364,7 @@ object ScalanAst {
     new Type(value = classOf[SImportStat], name = "SImportStat"),
     new Type(value = classOf[SMethodDef], name = "SMethodDef"),
     new Type(value = classOf[SThis], name = "SThis"),
-    new Type(value = classOf[SContr], name = "SContr"),
-    new Type(value = classOf[SLiteral], name = "SLiteral")
+    new Type(value = classOf[SContr], name = "SContr")
   ))
   trait SExpr {
     def exprType: Option[STpeExpr] = None
@@ -375,7 +381,12 @@ object ScalanAst {
   case class SAssign(left: SExpr, right: SExpr,
                      override val exprType: Option[STpeExpr] = None) extends SExpr
 
-  case class SApply(fun: SExpr, ts: List[STpeExpr], argss: List[List[SExpr]],
+  case class SArgSection(args: List[SExpr])
+  implicit def toArgSection(args: List[SExpr]): SArgSection = SArgSection(args)
+  implicit def fromArgSection(section: SArgSection): List[SExpr] = section.args
+
+  case class SApply(fun: SExpr, ts: List[STpeExpr],
+                    argss: List[SArgSection],
                     override val exprType: Option[STpeExpr] = None) extends SExpr
 
   case class SExprApply(fun: SExpr, ts: List[STpeExpr],
@@ -409,8 +420,6 @@ object ScalanAst {
   case class SSuper(name: String, qual: String, field: String,
                     override val exprType: Option[STpeExpr] = None) extends SExpr
 
-  case class SLiteral(value: String, override val exprType: Option[STpeExpr] = None) extends SExpr
-
   case class SAnnotated(expr: SExpr, annot: String, override val exprType: Option[STpeExpr] = None) extends SExpr
 
   case class STuple(exprs: List[SExpr], override val exprType: Option[STpeExpr] = None) extends SExpr
@@ -421,6 +430,17 @@ object ScalanAst {
   case class SMatch(selector: SExpr, cases: List[SCase],
                     override val exprType: Option[STpeExpr] = None) extends SExpr
 
+  @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type")
+  @JsonSubTypes(Array(
+    new Type(value = classOf[STypedPattern], name = "STypedPattern"),
+    new Type(value = classOf[SStableIdPattern], name = "SStableIdPattern"),
+    new Type(value = classOf[SWildcardPattern], name = "SWildcardPattern"),
+    new Type(value = classOf[SAltPattern], name = "SAltPattern"),
+    new Type(value = classOf[SApplyPattern], name = "SApplyPattern"),
+    new Type(value = classOf[SBindPattern], name = "SBindPattern"),
+    new Type(value = classOf[SLiteralPattern], name = "SLiteralPattern"),
+    new Type(value = classOf[SSelPattern], name = "SSelPattern")
+  ))
   trait SPattern
 
   case class SWildcardPattern() extends SPattern
@@ -465,6 +485,7 @@ object ScalanAst {
 
     def allArgs = argSections.flatMap(_.args)
 
+    @JsonIgnore
     def getOriginal: Option[SMethodDef] = {
       annotations.collectFirst {
         case mannot@SMethodAnnotation("Constructor", _) => mannot.args collectFirst {
@@ -515,10 +536,12 @@ object ScalanAst {
                       tparams: List[STpeArg] = Nil,
                       flags: Long = ModifierFlags.PARAM,
                       annotations: List[STypeArgAnnotation] = Nil) {
+    @JsonIgnore
     def isHighKind = tparams.nonEmpty
     def classOrMethodArgName: String = if (isHighKind) "c" + name else "e" + name
     def descName: String = if (isHighKind) "Cont" else "Elem"
 
+    @JsonIgnore
     val variance =
       if (hasFlag(ModifierFlags.COVARIANT))
         Covariant
@@ -527,6 +550,7 @@ object ScalanAst {
       else
         Invariant
 
+    @JsonIgnore
     def isCovariant = variance == Covariant
 
     def hasFlag(flag: Long) = (flag & flags) != 0L
@@ -566,6 +590,7 @@ object ScalanAst {
     def tpe: STpeExpr
     def default: Option[SExpr]
     def annotations: List[SArgAnnotation]
+    @JsonIgnore
     def isArgList = annotations.exists(a => a.annotationClass == ArgListAnnotation)
     def isTypeDesc: Boolean
   }
@@ -619,6 +644,7 @@ object ScalanAst {
 
     def companion: Option[STraitOrClassDef]
 
+    @JsonIgnore
     def isTrait: Boolean
 
     def annotations: List[STraitOrClassAnnotation]
@@ -633,29 +659,36 @@ object ScalanAst {
 
     def firstAncestorType = ancestors.headOption.map(_.tpe)
 
+    @JsonIgnore
     def isWrapper = firstAncestorType match {
       case Some(TypeWrapperTpe(_)) => true
       case _ => false
     }
 
+    @JsonIgnore
     def isHighKind = tpeArgs.exists(_.isHighKind)
 
+    @JsonIgnore
     def isInheritedDeclared(propName: String, module: SModuleDef) = {
       getInheritedDeclaredFields(module).contains(propName)
     }
 
+    @JsonIgnore
     def isInheritedDefined(propName: String, module: SModuleDef) = {
       getInheritedDefinedFields(module).contains(propName)
     }
 
+    @JsonIgnore
     def getMethodsWithAnnotation(annClass: String) = body.collect {
       case md: SMethodDef if md.annotations.exists(a => a.annotationClass == annClass) => md
     }
 
+    @JsonIgnore
     def getFieldDefs: List[SMethodDef] = body.collect {
       case md: SMethodDef if md.allArgs.isEmpty => md
     }
 
+    @JsonIgnore
     def getAncestorTraits(module: SModuleDef): List[STraitOrClassDef] = {
       ancestors.filter(a => module.isEntity(a.tpe.name)).map(a => module.getEntity(a.tpe.name))
     }
@@ -680,6 +713,7 @@ object ScalanAst {
       getInheritedMethodDefs(module).collect { case md if md.body.isDefined => md.name }.toSet
     }
 
+    @JsonIgnore
     def getConcreteClasses = body.collect {
       case c: SClassDef if !c.hasAnnotation("InternalType") => c
     }
@@ -933,6 +967,7 @@ object ScalanAst {
                         isVirtualized: Boolean,
                         okEmitOrigModuleTrait: Boolean = true)
                        (@transient implicit val context: AstContext) {
+    @JsonIgnore
     def getModuleTraitName: String = SModuleDef.moduleTraitName(name)
     def getFullName(shortName: String): String = s"$packageName.$name.$shortName"
 

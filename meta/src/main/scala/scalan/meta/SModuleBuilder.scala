@@ -27,9 +27,9 @@ class SModuleBuilder(implicit val context: AstContext) {
           containsExistential(arg.exprType.getOrElse(STpeEmpty()))
         ))
         def castToUniversal(targs: List[STpeExpr]) = {
-          val newArgss = apply.argss map(_.map(arg =>
+          val newArgss = apply.argss map(sec => SArgSection(sec.map(arg =>
             SApply(SSelect(arg, "asRep"),targs, Nil)
-          ))
+          )))
           apply.copy(argss = newArgss)
         }
 

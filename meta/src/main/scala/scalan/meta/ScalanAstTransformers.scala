@@ -13,7 +13,7 @@ object ScalanAstTransformers {
     }
     def applyTransform(apply: SApply): SApply = {
       val newFun = exprTransform(apply.fun)
-      val newArgss = apply.argss map (_.map(exprTransform))
+      val newArgss = apply.argss map (sec => SArgSection(sec.map(exprTransform)))
 
       apply.copy(fun = newFun, argss = newArgss)
     }

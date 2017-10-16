@@ -85,6 +85,7 @@ lazy val common = Project("scalan-common", file("common"))
     "com.typesafe.scala-logging" %% "scala-logging" % "3.4.0",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     "commons-io" % "commons-io" % "2.5",
+    "io.spray" %%  "spray-json" % "1.3.3",
     "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.9.1"
   ))
 
