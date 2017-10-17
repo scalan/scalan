@@ -22,45 +22,45 @@ class SegmentMethodWrappersTests extends BaseNestedCtxTests {
   class SegmentMethodWrappersStaged(testName: String) extends TestContext(testName) with SegmentMethodWrappers with SegmentsModule {
   }
 
+  val ctx = new SegmentMethodWrappersStaged("start")
   describe("Start") {
     it("interval") {
-      val ctx = new SegmentMethodWrappersStaged("start")
       ctx.emit("Interval_start", ctx.Interval_start)
     }
     it("slice") {
-      val ctx = new SegmentMethodWrappersStaged("start")
+//      val ctx = new SegmentMethodWrappersStaged("start")
       ctx.emit("Slice_start", ctx.Slice_start)
     }
   }
 
   describe("Length") {
+//    val ctx = new SegmentMethodWrappersStaged("length")
     it("interval") {
-      val ctx = new SegmentMethodWrappersStaged("length")
       ctx.emit("Interval_length", ctx.Interval_length)
     }
     it("slice") {
-      val ctx = new SegmentMethodWrappersStaged("length")
+//      val ctx = new SegmentMethodWrappersStaged("length")
       ctx.emit("Slice_length", ctx.Slice_length)
     }
   }
 
   describe("End") {
     it("interval") {
-      val ctx = new SegmentMethodWrappersStaged("end")
+//      val ctx = new SegmentMethodWrappersStaged("end")
       ctx.emit("Interval_end", ctx.Interval_end)
     }
     it("slice") {
-      val ctx = new SegmentMethodWrappersStaged("end")
+//      val ctx = new SegmentMethodWrappersStaged("end")
       ctx.emit("Slice_end", ctx.Slice_end)
     }
   }
 
   it("Interval_shift") {
-    val ctx = new SegmentMethodWrappersStaged("shift")
+//    val ctx = new SegmentMethodWrappersStaged("shift")
     ctx.emit("Interval_shift", ctx.Interval_shift)
   }
   it("Slice_shift") {
-    val ctx = new SegmentMethodWrappersStaged("shift")
+//    val ctx = new SegmentMethodWrappersStaged("shift")
     ctx.emit("Slice_shift", ctx.Slice_shift)
   }
 

@@ -37,7 +37,7 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
         val optimizedImplicits = optimizeModuleImplicits(enrichedModuleDef)
         val virtAst = genUDModuleFile(optimizedImplicits, unit.body)
         val nameOnly = Path(unitName).stripExtension
-        saveWrapperCode(optimizedImplicits.packageName, nameOnly, showCode(virtAst))
+        saveWrapperCode(optimizedImplicits.packageName, nameOnly, showCode(virtAst), copyResource = true)
 
         /** produce boilerplate code using ModuleFileGenerator
           * Note: we need enriched module with all implicits in there place for correct boilerplate generation */

@@ -1,6 +1,6 @@
 package scalan.meta.serialization
 
-trait ScalanSerializer[T] {
-  def serialize(t: T): String
-  def deserialize(fromString: String): T
+trait ScalanSerializer {
+  def serialize[T](t: T): String
+  def deserialize[T: Manifest](fromString: String): T
 }

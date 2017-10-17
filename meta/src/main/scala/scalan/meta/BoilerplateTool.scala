@@ -7,6 +7,7 @@ class BoilerplateTool extends StrictLogging {
     CodegenConfig(
       name = name, entityFile = entityFile,
       srcPath = "core/src/main/scala",
+      resourcePath = "core/src/main/resources",
       baseContextTrait = "" // used like this: trait ${module.name}Defs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
     )
 
@@ -14,6 +15,7 @@ class BoilerplateTool extends StrictLogging {
     CodegenConfig(
       name = name, entityFile = entityFile,
       srcPath = "core/src/test/scala",
+      resourcePath = "core/src/test/resources",
       baseContextTrait = "scalan.Scalan")
 
   lazy val viewsConfig           = coreMainConfig("views", "scalan/Views.scala")

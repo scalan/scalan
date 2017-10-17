@@ -33,6 +33,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     CodegenConfig(
       name = name, entityFile = entityFile,
       srcPath = "librarydef/src/main/scala",
+      resourcePath = "librarydef/src/main/resources",
       baseContextTrait = "scalan.Scalan", // used like this: trait ${module.name}Defs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
       extraImports = List(
         "scala.reflect.runtime.universe._",
@@ -53,6 +54,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
   val wrappersCodegenConfig = CodegenConfig(
     name = "Wrappers Config",
     srcPath = "librarydef/src/main/scala",
+    resourcePath = "librarydef/src/main/resources",
     entityFile = "<shouldn't be used>",    // NOTE: there is no any wrapper source files
     extraImports = List(
       "scala.reflect.runtime.universe._",

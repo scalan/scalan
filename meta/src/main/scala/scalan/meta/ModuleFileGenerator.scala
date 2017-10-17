@@ -6,6 +6,7 @@ import scalan.meta.Base.!!!
 import scalan.meta.PrintExtensions._
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstExtensions._
+import scalan.meta.serialization.JacksonSerializer
 import scalan.util.{Serialization, StringUtil, ScalaNameUtil}
 import scalan.util.CollectionUtil._
 
@@ -651,10 +652,9 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
   }
 
   def emitModuleSerialization = {
+    val jsonPath = module.packageName.split('.').mkString("/") + s"/${module.name}.scala"
     s"""
-      |object ${module.name}Module extends scalan.ModuleInfo {
-      |  val dump = "${Serialization.save(module.clean)}"
-      |}
+      |object ${module.name}Module extends scalan.ModuleInfo("$jsonPath")
        """.stripMargin
   }
 
@@ -690,5 +690,10 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       // remove empty lines before and after braces
       replaceAll("""\r?\n\r?\n( *\})""", "\n$1").
       replaceAll("""( *\{)\r?\n\r?\n""", "$1\n")
+  }
+
+  def emitJson: String = {
+    val serde = new JacksonSerializer
+    serde.serialize(module)
   }
 }

@@ -149,7 +149,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
           Some(receiver).asInstanceOf[Option[Rep[ColOverArray[A]] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[ColOverArray[A]] forSome {type A}] = exp match {
+      def unapply(exp: Sym): Option[Rep[ColOverArray[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -161,7 +161,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
           Some((receiver, i)).asInstanceOf[Option[(Rep[ColOverArray[A]], Rep[Int]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[ColOverArray[A]], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[ColOverArray[A]], Rep[Int]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -189,7 +189,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
           Some(receiver).asInstanceOf[Option[Rep[Col[A]] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Col[A]] forSome {type A}] = exp match {
+      def unapply(exp: Sym): Option[Rep[Col[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -201,7 +201,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
           Some(receiver).asInstanceOf[Option[Rep[Col[A]] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Col[A]] forSome {type A}] = exp match {
+      def unapply(exp: Sym): Option[Rep[Col[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -213,7 +213,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
           Some((receiver, i)).asInstanceOf[Option[(Rep[Col[A]], Rep[Int]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Col[A]], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Col[A]], Rep[Int]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -227,7 +227,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
           Some(arr).asInstanceOf[Option[Rep[WArray[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[WArray[T]] forSome {type T}] = exp match {
+      def unapply(exp: Sym): Option[Rep[WArray[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -239,7 +239,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
           Some(v).asInstanceOf[Option[Rep[WArray[Double]]]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[WArray[Double]]] = exp match {
+      def unapply(exp: Sym): Option[Rep[WArray[Double]]] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -247,9 +247,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
   }
 }
 
-object ColsModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRgdr53acdI/Q4pAoIbIBNFWdumliIiDcZ0KMHHUjVpkKqrxemym3d0ZZsfBRlWPlWi5UPWExKESJxQhQS+IAxeEVHHoHXEDcUIg1ANVD0X9ZnZnvU7tOBzYw2hmdr6/9943u1t/oplAoMXAwS72Sx6RuGTreSWQRftt1u655BTp/MpuF25cf/ClhQ400V4anKVC9rBLPyLtJlpgl2oelQ1Bu6HBhsBU1tHemi+pHBQ9vSnRkXoYpqzClMeFKUYWK3VU2BhwYg985lMv9lCe7iFpBm6ePCcw50RsS+Xl6Y5GDcHVLPYdEkgmAomeD+3LDnNd4kjK/DL1vJ7ELZeU6zSQcP6Aw3xHEEnsqouDgAQfoCsoU0c5olzSeD2r14MGH/p9PC8NKaSl/IbnzxCu6xx4Eu2L0mlwlQqcyVKPMyFNiCy4e5+1zTLjY9hAhfpFvInLEKJbtqWgfhcs97NRGpXJnjqa49i5hLtkDSzVVhbqCIjbUXDrI32OUpxzENMJnUtpCE0phqakoCnaRFClHaxergvWH6DwSaUR6isXx6a4MB5IzW8Xr5133r1vz3mWMu7rGmfBx+EJmtZkAJJ3ztwI7p2+ddJC+SbK06DSCqTAjkwSHeE1h32fSZ1uDCEWXeBraRJfOkoFzgCkmRZrDwzZDvM49sFTBOw8MOVSh0p1WO3tj/gZizJQKTkxRzMAelzvpB5WthXO3cEPl7+//NuzPx+0UFqJsM9Fwm0a3O5QjpZCFbsulGNJExyi5kOmbOaRg0v36Hu3rksLpeoo1R/VV6N1EZhc6Qs0H1qEUv2Xnnz4y76OtCLiJxZh4p94p9MqbXzysYWsUZxmoQC7BkWZ5CRKV5kbwaPGpyVKVdQkr4b5vhqf2bbO75BDTOmLf/zV/vE4Oq8L1UIweOxKe+Ci8Mpn371A1r+yUK6pe3XVxV2tQkXJKRI4TZRjm0SE+9lN7KrZWCVm26SDe65p1CQmIamLE0nlRAG2AiqC3jPlz4X8rDGfFFfXi//YP93cUvSo908BqFgIA+eecxUh8GAKxgZZNS7sAI654r6+enXh7y8uPKEbM9ei0sO8ePw/tKXpov+z7eIaw7oOD9dqWAb1LYD6GkChhqiaDL+csEtgt5RKRSzoQxJZpGJAzdRc4k3FWaL5ZFDtJtbkc5Ng14XlHn76wL557RsLZd9EMx0QWzAW4JkW6/ltAyJ84STpy9fNXmYURAANC+zFH75NDNc2kCjRIaPJnqRu+Wy0HyoRnsUhvsvx7FWj0ENRJcq29IYfepXFo99ufUjvvrSq75IkLAncSiixKESSjABNg/ZGId7FBRKOpx+7RraJIhGptAvtKBrHSEZX9VaSVjW+tgNma/Gssj3n6ujJPIjMlAvaizCGT6xIfIaDuImXJqjJjtoGsLxy//O1I3dv/66v6rxqQLhS/PifZCiU+OKMQM6rPMJfkASukJ/qyUc+ZpAKsgoAAA=="
-}
+object ColsModule extends scalan.ModuleInfo("scalanizer/collections/Cols.scala")
 }
 
 trait ColsModule extends scalanizer.collections.impl.ColsDefs with scala.wrappers.WrappersModule

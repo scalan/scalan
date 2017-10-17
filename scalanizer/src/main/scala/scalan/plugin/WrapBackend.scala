@@ -37,7 +37,8 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
         saveWrapperCode(
           optimizedImplicits.packageName,
           optimizedImplicits.name,
-          showCode(wrapperPackage))
+          showCode(wrapperPackage),
+          copyResource = true)
 
         /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
         val boilerplateText = genWrapperBoilerplateText(module)

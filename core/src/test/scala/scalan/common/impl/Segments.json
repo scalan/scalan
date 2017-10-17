@@ -1,0 +1,1302 @@
+{
+  packageName : "scalan.common",
+  imports : [ {
+    type : "SImportStat",
+    name : "scala.reflect.runtime.universe._"
+  }, {
+    type : "SImportStat",
+    name : "scalan._"
+  } ],
+  name : "Segments",
+  entityRepSynonym : {
+    type : "STpeDef",
+    name : "RSeg",
+    tpeArgs : [ ],
+    rhs : {
+      type : "STraitCall",
+      name : "Rep",
+      tpeSExprs : [ {
+        type : "STraitCall",
+        name : "Segment",
+        tpeSExprs : [ ]
+      } ]
+    }
+  },
+  entityOps : {
+    type : "STraitDef",
+    name : "Segment",
+    tpeArgs : [ ],
+    ancestors : [ {
+      type : "STypeApply",
+      tpe : {
+        type : "STraitCall",
+        name : "Def",
+        tpeSExprs : [ {
+          type : "STraitCall",
+          name : "Segment",
+          tpeSExprs : [ ]
+        } ]
+      },
+      ts : [ ],
+      exprType : {
+        type : "STraitCall",
+        name : "Def",
+        tpeSExprs : [ {
+          type : "STraitCall",
+          name : "Segment",
+          tpeSExprs : [ ]
+        } ]
+      }
+    } ],
+    body : [ {
+      type : "SMethodDef",
+      name : "start",
+      tpeArgs : [ ],
+      argSections : [ ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STpePrimitive",
+          name : "Int",
+          defaultValueString : "0"
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : null,
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "length",
+      tpeArgs : [ ],
+      argSections : [ ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STpePrimitive",
+          name : "Int",
+          defaultValueString : "0"
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : null,
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "end",
+      tpeArgs : [ ],
+      argSections : [ ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STpePrimitive",
+          name : "Int",
+          defaultValueString : "0"
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : null,
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "shift",
+      tpeArgs : [ ],
+      argSections : [ {
+        args : [ {
+          impFlag : false,
+          overFlag : false,
+          name : "ofs",
+          tpe : {
+            type : "STraitCall",
+            name : "Rep",
+            tpeSExprs : [ {
+              type : "STpePrimitive",
+              name : "Int",
+              defaultValueString : "0"
+            } ]
+          },
+          default : null,
+          annotations : [ ],
+          isTypeDesc : false
+        } ]
+      } ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STraitCall",
+          name : "Segment",
+          tpeSExprs : [ ]
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : null,
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "attach",
+      tpeArgs : [ ],
+      argSections : [ {
+        args : [ {
+          impFlag : false,
+          overFlag : false,
+          name : "seg",
+          tpe : {
+            type : "STraitCall",
+            name : "Rep",
+            tpeSExprs : [ {
+              type : "STraitCall",
+              name : "Segment",
+              tpeSExprs : [ ]
+            } ]
+          },
+          default : null,
+          annotations : [ ],
+          isTypeDesc : false
+        } ]
+      } ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STraitCall",
+          name : "Segment",
+          tpeSExprs : [ ]
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : null,
+      isTypeDesc : false
+    } ],
+    selfType : null,
+    companion : {
+      type : "STraitDef",
+      name : "SegmentCompanion",
+      tpeArgs : [ ],
+      ancestors : [ ],
+      body : [ ],
+      selfType : null,
+      companion : null,
+      annotations : [ ],
+      args : {
+        args : [ ]
+      },
+      implicitArgs : {
+        args : [ ]
+      }
+    },
+    annotations : [ ],
+    args : {
+      args : [ ]
+    },
+    implicitArgs : {
+      args : [ ]
+    }
+  },
+  entities : [ {
+    type : "STraitDef",
+    name : "Segment",
+    tpeArgs : [ ],
+    ancestors : [ {
+      type : "STypeApply",
+      tpe : {
+        type : "STraitCall",
+        name : "Def",
+        tpeSExprs : [ {
+          type : "STraitCall",
+          name : "Segment",
+          tpeSExprs : [ ]
+        } ]
+      },
+      ts : [ ],
+      exprType : {
+        type : "STraitCall",
+        name : "Def",
+        tpeSExprs : [ {
+          type : "STraitCall",
+          name : "Segment",
+          tpeSExprs : [ ]
+        } ]
+      }
+    } ],
+    body : [ {
+      type : "SMethodDef",
+      name : "start",
+      tpeArgs : [ ],
+      argSections : [ ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STpePrimitive",
+          name : "Int",
+          defaultValueString : "0"
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : null,
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "length",
+      tpeArgs : [ ],
+      argSections : [ ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STpePrimitive",
+          name : "Int",
+          defaultValueString : "0"
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : null,
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "end",
+      tpeArgs : [ ],
+      argSections : [ ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STpePrimitive",
+          name : "Int",
+          defaultValueString : "0"
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : null,
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "shift",
+      tpeArgs : [ ],
+      argSections : [ {
+        args : [ {
+          impFlag : false,
+          overFlag : false,
+          name : "ofs",
+          tpe : {
+            type : "STraitCall",
+            name : "Rep",
+            tpeSExprs : [ {
+              type : "STpePrimitive",
+              name : "Int",
+              defaultValueString : "0"
+            } ]
+          },
+          default : null,
+          annotations : [ ],
+          isTypeDesc : false
+        } ]
+      } ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STraitCall",
+          name : "Segment",
+          tpeSExprs : [ ]
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : null,
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "attach",
+      tpeArgs : [ ],
+      argSections : [ {
+        args : [ {
+          impFlag : false,
+          overFlag : false,
+          name : "seg",
+          tpe : {
+            type : "STraitCall",
+            name : "Rep",
+            tpeSExprs : [ {
+              type : "STraitCall",
+              name : "Segment",
+              tpeSExprs : [ ]
+            } ]
+          },
+          default : null,
+          annotations : [ ],
+          isTypeDesc : false
+        } ]
+      } ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STraitCall",
+          name : "Segment",
+          tpeSExprs : [ ]
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : null,
+      isTypeDesc : false
+    } ],
+    selfType : null,
+    companion : {
+      type : "STraitDef",
+      name : "SegmentCompanion",
+      tpeArgs : [ ],
+      ancestors : [ ],
+      body : [ ],
+      selfType : null,
+      companion : null,
+      annotations : [ ],
+      args : {
+        args : [ ]
+      },
+      implicitArgs : {
+        args : [ ]
+      }
+    },
+    annotations : [ ],
+    args : {
+      args : [ ]
+    },
+    implicitArgs : {
+      args : [ ]
+    }
+  } ],
+  concreteSClasses : [ {
+    type : "SClassDef",
+    name : "Interval",
+    tpeArgs : [ ],
+    args : {
+      args : [ {
+        impFlag : false,
+        overFlag : false,
+        valFlag : true,
+        name : "start",
+        tpe : {
+          type : "STraitCall",
+          name : "Rep",
+          tpeSExprs : [ {
+            type : "STpePrimitive",
+            name : "Int",
+            defaultValueString : "0"
+          } ]
+        },
+        default : null,
+        annotations : [ ],
+        isTypeDesc : false
+      }, {
+        impFlag : false,
+        overFlag : false,
+        valFlag : true,
+        name : "end",
+        tpe : {
+          type : "STraitCall",
+          name : "Rep",
+          tpeSExprs : [ {
+            type : "STpePrimitive",
+            name : "Int",
+            defaultValueString : "0"
+          } ]
+        },
+        default : null,
+        annotations : [ ],
+        isTypeDesc : false
+      } ]
+    },
+    implicitArgs : {
+      args : [ ]
+    },
+    ancestors : [ {
+      type : "STypeApply",
+      tpe : {
+        type : "STraitCall",
+        name : "Segment",
+        tpeSExprs : [ ]
+      },
+      ts : [ ],
+      exprType : {
+        type : "STraitCall",
+        name : "Segment",
+        tpeSExprs : [ ]
+      }
+    } ],
+    body : [ {
+      type : "SMethodDef",
+      name : "length",
+      tpeArgs : [ ],
+      argSections : [ ],
+      tpeRes : null,
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : {
+        type : "SApply",
+        fun : {
+          type : "SSelect",
+          expr : {
+            type : "SIdent",
+            name : "end",
+            exprType : null
+          },
+          tname : "$minus",
+          exprType : null
+        },
+        ts : [ ],
+        argss : [ {
+          args : [ {
+            type : "SIdent",
+            name : "start",
+            exprType : null
+          } ]
+        } ],
+        exprType : null
+      },
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "shift",
+      tpeArgs : [ ],
+      argSections : [ {
+        args : [ {
+          impFlag : false,
+          overFlag : false,
+          name : "ofs",
+          tpe : {
+            type : "STraitCall",
+            name : "Rep",
+            tpeSExprs : [ {
+              type : "STpePrimitive",
+              name : "Int",
+              defaultValueString : "0"
+            } ]
+          },
+          default : null,
+          annotations : [ ],
+          isTypeDesc : false
+        } ]
+      } ],
+      tpeRes : null,
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : {
+        type : "SApply",
+        fun : {
+          type : "SIdent",
+          name : "Interval",
+          exprType : null
+        },
+        ts : [ ],
+        argss : [ {
+          args : [ {
+            type : "SApply",
+            fun : {
+              type : "SSelect",
+              expr : {
+                type : "SIdent",
+                name : "start",
+                exprType : null
+              },
+              tname : "$plus",
+              exprType : null
+            },
+            ts : [ ],
+            argss : [ {
+              args : [ {
+                type : "SIdent",
+                name : "ofs",
+                exprType : null
+              } ]
+            } ],
+            exprType : null
+          }, {
+            type : "SApply",
+            fun : {
+              type : "SSelect",
+              expr : {
+                type : "SIdent",
+                name : "end",
+                exprType : null
+              },
+              tname : "$plus",
+              exprType : null
+            },
+            ts : [ ],
+            argss : [ {
+              args : [ {
+                type : "SIdent",
+                name : "ofs",
+                exprType : null
+              } ]
+            } ],
+            exprType : null
+          } ]
+        } ],
+        exprType : null
+      },
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "attach",
+      tpeArgs : [ ],
+      argSections : [ {
+        args : [ {
+          impFlag : false,
+          overFlag : false,
+          name : "seg",
+          tpe : {
+            type : "STraitCall",
+            name : "Rep",
+            tpeSExprs : [ {
+              type : "STraitCall",
+              name : "Segment",
+              tpeSExprs : [ ]
+            } ]
+          },
+          default : null,
+          annotations : [ ],
+          isTypeDesc : false
+        } ]
+      } ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STraitCall",
+          name : "Segment",
+          tpeSExprs : [ ]
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : {
+        type : "SMatch",
+        selector : {
+          type : "SIdent",
+          name : "seg",
+          exprType : null
+        },
+        cases : [ {
+          type : "SCase",
+          pat : {
+            type : "SApplyPattern",
+            fun : {
+              type : "SIdent",
+              name : "Interval",
+              exprType : null
+            },
+            pats : [ {
+              type : "SBindPattern",
+              name : "start",
+              pat : {
+                type : "SWildcardPattern"
+              }
+            }, {
+              type : "SBindPattern",
+              name : "end",
+              pat : {
+                type : "SWildcardPattern"
+              }
+            } ]
+          },
+          guard : {
+            type : "SEmpty",
+            exprType : {
+              type : "STpeEmpty"
+            }
+          },
+          body : {
+            type : "SIdent",
+            name : "seg",
+            exprType : null
+          },
+          exprType : null
+        }, {
+          type : "SCase",
+          pat : {
+            type : "SApplyPattern",
+            fun : {
+              type : "SIdent",
+              name : "Slice",
+              exprType : null
+            },
+            pats : [ {
+              type : "SBindPattern",
+              name : "start",
+              pat : {
+                type : "SWildcardPattern"
+              }
+            }, {
+              type : "SBindPattern",
+              name : "length",
+              pat : {
+                type : "SWildcardPattern"
+              }
+            } ]
+          },
+          guard : {
+            type : "SEmpty",
+            exprType : {
+              type : "STpeEmpty"
+            }
+          },
+          body : {
+            type : "SIdent",
+            name : "self",
+            exprType : null
+          },
+          exprType : null
+        }, {
+          type : "SCase",
+          pat : {
+            type : "SApplyPattern",
+            fun : {
+              type : "SIdent",
+              name : "Centered",
+              exprType : null
+            },
+            pats : [ {
+              type : "SBindPattern",
+              name : "center",
+              pat : {
+                type : "SWildcardPattern"
+              }
+            }, {
+              type : "SBindPattern",
+              name : "radius",
+              pat : {
+                type : "SWildcardPattern"
+              }
+            } ]
+          },
+          guard : {
+            type : "SEmpty",
+            exprType : {
+              type : "STpeEmpty"
+            }
+          },
+          body : {
+            type : "SIdent",
+            name : "self",
+            exprType : null
+          },
+          exprType : null
+        }, {
+          type : "SCase",
+          pat : {
+            type : "SWildcardPattern"
+          },
+          guard : {
+            type : "SEmpty",
+            exprType : {
+              type : "STpeEmpty"
+            }
+          },
+          body : {
+            type : "SApply",
+            fun : {
+              type : "SSelect",
+              expr : {
+                type : "SIdent",
+                name : "seg",
+                exprType : null
+              },
+              tname : "attach",
+              exprType : null
+            },
+            ts : [ ],
+            argss : [ {
+              args : [ {
+                type : "SIdent",
+                name : "self",
+                exprType : null
+              } ]
+            } ],
+            exprType : null
+          },
+          exprType : null
+        } ],
+        exprType : null
+      },
+      isTypeDesc : false
+    } ],
+    selfType : null,
+    companion : {
+      type : "STraitDef",
+      name : "IntervalCompanion",
+      tpeArgs : [ ],
+      ancestors : [ ],
+      body : [ ],
+      selfType : null,
+      companion : null,
+      annotations : [ ],
+      args : {
+        args : [ ]
+      },
+      implicitArgs : {
+        args : [ ]
+      }
+    },
+    isAbstract : true,
+    annotations : [ ]
+  }, {
+    type : "SClassDef",
+    name : "Slice",
+    tpeArgs : [ ],
+    args : {
+      args : [ {
+        impFlag : false,
+        overFlag : false,
+        valFlag : true,
+        name : "start",
+        tpe : {
+          type : "STraitCall",
+          name : "Rep",
+          tpeSExprs : [ {
+            type : "STpePrimitive",
+            name : "Int",
+            defaultValueString : "0"
+          } ]
+        },
+        default : null,
+        annotations : [ ],
+        isTypeDesc : false
+      }, {
+        impFlag : false,
+        overFlag : false,
+        valFlag : true,
+        name : "length",
+        tpe : {
+          type : "STraitCall",
+          name : "Rep",
+          tpeSExprs : [ {
+            type : "STpePrimitive",
+            name : "Int",
+            defaultValueString : "0"
+          } ]
+        },
+        default : null,
+        annotations : [ ],
+        isTypeDesc : false
+      } ]
+    },
+    implicitArgs : {
+      args : [ ]
+    },
+    ancestors : [ {
+      type : "STypeApply",
+      tpe : {
+        type : "STraitCall",
+        name : "Segment",
+        tpeSExprs : [ ]
+      },
+      ts : [ ],
+      exprType : {
+        type : "STraitCall",
+        name : "Segment",
+        tpeSExprs : [ ]
+      }
+    } ],
+    body : [ {
+      type : "SMethodDef",
+      name : "end",
+      tpeArgs : [ ],
+      argSections : [ ],
+      tpeRes : null,
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : {
+        type : "SApply",
+        fun : {
+          type : "SSelect",
+          expr : {
+            type : "SIdent",
+            name : "start",
+            exprType : null
+          },
+          tname : "$plus",
+          exprType : null
+        },
+        ts : [ ],
+        argss : [ {
+          args : [ {
+            type : "SIdent",
+            name : "length",
+            exprType : null
+          } ]
+        } ],
+        exprType : null
+      },
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "shift",
+      tpeArgs : [ ],
+      argSections : [ {
+        args : [ {
+          impFlag : false,
+          overFlag : false,
+          name : "ofs",
+          tpe : {
+            type : "STraitCall",
+            name : "Rep",
+            tpeSExprs : [ {
+              type : "STpePrimitive",
+              name : "Int",
+              defaultValueString : "0"
+            } ]
+          },
+          default : null,
+          annotations : [ ],
+          isTypeDesc : false
+        } ]
+      } ],
+      tpeRes : null,
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : {
+        type : "SApply",
+        fun : {
+          type : "SIdent",
+          name : "Slice",
+          exprType : null
+        },
+        ts : [ ],
+        argss : [ {
+          args : [ {
+            type : "SApply",
+            fun : {
+              type : "SSelect",
+              expr : {
+                type : "SIdent",
+                name : "start",
+                exprType : null
+              },
+              tname : "$plus",
+              exprType : null
+            },
+            ts : [ ],
+            argss : [ {
+              args : [ {
+                type : "SIdent",
+                name : "ofs",
+                exprType : null
+              } ]
+            } ],
+            exprType : null
+          }, {
+            type : "SIdent",
+            name : "length",
+            exprType : null
+          } ]
+        } ],
+        exprType : null
+      },
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "attach",
+      tpeArgs : [ ],
+      argSections : [ {
+        args : [ {
+          impFlag : false,
+          overFlag : false,
+          name : "seg",
+          tpe : {
+            type : "STraitCall",
+            name : "Rep",
+            tpeSExprs : [ {
+              type : "STraitCall",
+              name : "Segment",
+              tpeSExprs : [ ]
+            } ]
+          },
+          default : null,
+          annotations : [ ],
+          isTypeDesc : false
+        } ]
+      } ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STraitCall",
+          name : "Segment",
+          tpeSExprs : [ ]
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : {
+        type : "SIdent",
+        name : "self",
+        exprType : null
+      },
+      isTypeDesc : false
+    } ],
+    selfType : null,
+    companion : {
+      type : "STraitDef",
+      name : "SliceCompanion",
+      tpeArgs : [ ],
+      ancestors : [ ],
+      body : [ ],
+      selfType : null,
+      companion : null,
+      annotations : [ ],
+      args : {
+        args : [ ]
+      },
+      implicitArgs : {
+        args : [ ]
+      }
+    },
+    isAbstract : true,
+    annotations : [ ]
+  }, {
+    type : "SClassDef",
+    name : "Centered",
+    tpeArgs : [ ],
+    args : {
+      args : [ {
+        impFlag : false,
+        overFlag : false,
+        valFlag : true,
+        name : "center",
+        tpe : {
+          type : "STraitCall",
+          name : "Rep",
+          tpeSExprs : [ {
+            type : "STpePrimitive",
+            name : "Int",
+            defaultValueString : "0"
+          } ]
+        },
+        default : null,
+        annotations : [ ],
+        isTypeDesc : false
+      }, {
+        impFlag : false,
+        overFlag : false,
+        valFlag : true,
+        name : "radius",
+        tpe : {
+          type : "STraitCall",
+          name : "Rep",
+          tpeSExprs : [ {
+            type : "STpePrimitive",
+            name : "Int",
+            defaultValueString : "0"
+          } ]
+        },
+        default : null,
+        annotations : [ ],
+        isTypeDesc : false
+      } ]
+    },
+    implicitArgs : {
+      args : [ ]
+    },
+    ancestors : [ {
+      type : "STypeApply",
+      tpe : {
+        type : "STraitCall",
+        name : "Segment",
+        tpeSExprs : [ ]
+      },
+      ts : [ ],
+      exprType : {
+        type : "STraitCall",
+        name : "Segment",
+        tpeSExprs : [ ]
+      }
+    } ],
+    body : [ {
+      type : "SMethodDef",
+      name : "start",
+      tpeArgs : [ ],
+      argSections : [ ],
+      tpeRes : null,
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : {
+        type : "SApply",
+        fun : {
+          type : "SSelect",
+          expr : {
+            type : "SIdent",
+            name : "center",
+            exprType : null
+          },
+          tname : "$minus",
+          exprType : null
+        },
+        ts : [ ],
+        argss : [ {
+          args : [ {
+            type : "SIdent",
+            name : "radius",
+            exprType : null
+          } ]
+        } ],
+        exprType : null
+      },
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "end",
+      tpeArgs : [ ],
+      argSections : [ ],
+      tpeRes : null,
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : {
+        type : "SApply",
+        fun : {
+          type : "SSelect",
+          expr : {
+            type : "SIdent",
+            name : "center",
+            exprType : null
+          },
+          tname : "$plus",
+          exprType : null
+        },
+        ts : [ ],
+        argss : [ {
+          args : [ {
+            type : "SIdent",
+            name : "radius",
+            exprType : null
+          } ]
+        } ],
+        exprType : null
+      },
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "length",
+      tpeArgs : [ ],
+      argSections : [ ],
+      tpeRes : null,
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : {
+        type : "SApply",
+        fun : {
+          type : "SSelect",
+          expr : {
+            type : "SIdent",
+            name : "radius",
+            exprType : null
+          },
+          tname : "$times",
+          exprType : null
+        },
+        ts : [ ],
+        argss : [ {
+          args : [ {
+            type : "SConst",
+            c : 2,
+            exprType : null
+          } ]
+        } ],
+        exprType : null
+      },
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "shift",
+      tpeArgs : [ ],
+      argSections : [ {
+        args : [ {
+          impFlag : false,
+          overFlag : false,
+          name : "ofs",
+          tpe : {
+            type : "STraitCall",
+            name : "Rep",
+            tpeSExprs : [ {
+              type : "STpePrimitive",
+              name : "Int",
+              defaultValueString : "0"
+            } ]
+          },
+          default : null,
+          annotations : [ ],
+          isTypeDesc : false
+        } ]
+      } ],
+      tpeRes : null,
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : {
+        type : "SApply",
+        fun : {
+          type : "SIdent",
+          name : "Centered",
+          exprType : null
+        },
+        ts : [ ],
+        argss : [ {
+          args : [ {
+            type : "SApply",
+            fun : {
+              type : "SSelect",
+              expr : {
+                type : "SIdent",
+                name : "center",
+                exprType : null
+              },
+              tname : "$plus",
+              exprType : null
+            },
+            ts : [ ],
+            argss : [ {
+              args : [ {
+                type : "SIdent",
+                name : "ofs",
+                exprType : null
+              } ]
+            } ],
+            exprType : null
+          }, {
+            type : "SIdent",
+            name : "radius",
+            exprType : null
+          } ]
+        } ],
+        exprType : null
+      },
+      isTypeDesc : false
+    }, {
+      type : "SMethodDef",
+      name : "attach",
+      tpeArgs : [ ],
+      argSections : [ {
+        args : [ {
+          impFlag : false,
+          overFlag : false,
+          name : "seg",
+          tpe : {
+            type : "STraitCall",
+            name : "Rep",
+            tpeSExprs : [ {
+              type : "STraitCall",
+              name : "Segment",
+              tpeSExprs : [ ]
+            } ]
+          },
+          default : null,
+          annotations : [ ],
+          isTypeDesc : false
+        } ]
+      } ],
+      tpeRes : {
+        type : "STraitCall",
+        name : "Rep",
+        tpeSExprs : [ {
+          type : "STraitCall",
+          name : "Segment",
+          tpeSExprs : [ ]
+        } ]
+      },
+      isImplicit : false,
+      isOverride : false,
+      overloadId : null,
+      annotations : [ ],
+      body : {
+        type : "SIdent",
+        name : "self",
+        exprType : null
+      },
+      isTypeDesc : false
+    } ],
+    selfType : null,
+    companion : {
+      type : "STraitDef",
+      name : "CenteredCompanion",
+      tpeArgs : [ ],
+      ancestors : [ ],
+      body : [ ],
+      selfType : null,
+      companion : null,
+      annotations : [ ],
+      args : {
+        args : [ ]
+      },
+      implicitArgs : {
+        args : [ ]
+      }
+    },
+    isAbstract : true,
+    annotations : [ ]
+  } ],
+  methods : [ ],
+  selfType : {
+    name : "self",
+    components : [ {
+      type : "STraitCall",
+      name : "SegmentsModule",
+      tpeSExprs : [ ]
+    } ]
+  },
+  ancestors : [ ],
+  origModuleTrait : null,
+  isVirtualized : true,
+  okEmitOrigModuleTrait : true
+}

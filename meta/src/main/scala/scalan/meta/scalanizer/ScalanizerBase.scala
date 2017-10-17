@@ -37,12 +37,17 @@ trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
   }
 
   def getWrappersHome = snConfig.targetModuleFolder + "/src/main/scala"
+  def getWrappersResourceHome = snConfig.targetModuleFolder + "/src/main/resources"
 
-  def saveWrapperCode(packageName: String, fileName: String, wrapperCode: String) = {
+  def saveWrapperCode(packageName: String, fileName: String, wrapperCode: String, copyResource: Boolean = false) = {
     val packagePath = packageName.split('.').mkString("/")
     val wrapperFile = FileUtil.file(getWrappersHome, packagePath, fileName + ".scala")
     wrapperFile.mkdirs()
     FileUtil.write(wrapperFile, wrapperCode)
+    if (copyResource) {
+      val wrapperResourceFile = FileUtil.file(getWrappersResourceHome, packagePath, fileName + ".scala")
+      FileUtil.copy(wrapperFile, wrapperResourceFile)
+    }
   }
 
   class External2WrapperTypeTransformer(name: String)(implicit context: AstContext) extends MetaAstReplacer(name, wrap)

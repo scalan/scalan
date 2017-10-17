@@ -1,14 +1,15 @@
 package scalan.meta
 
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import scalan.meta.serialization.JacksonScalanSerializer
+import scalan.meta.serialization.JacksonSerializer
 
 class ScalanAstSerializerTests extends ScalanAstTests with Examples {
   import ScalanAst._
   import compiler._
 
+  val serde = new JacksonSerializer()
+
   def test[T: Manifest](t: T): Unit = {
-    val serde = JacksonScalanSerializer[T]
     val str = serde.serialize(t)
     println(str)
     val v = serde.deserialize(str)

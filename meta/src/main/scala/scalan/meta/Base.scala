@@ -5,6 +5,7 @@ import java.io.FileReader
 
 case class CodegenConfig(name: String,
                          srcPath: String,
+                         resourcePath: String,
                          entityFile: String,
                          baseContextTrait: String = "scalan.Scalan",
                          extraImports: List[String] = List("scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}", "scalan.meta.ScalanAst._"),

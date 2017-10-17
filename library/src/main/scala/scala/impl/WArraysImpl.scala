@@ -111,7 +111,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
           Some((receiver, i)).asInstanceOf[Option[(Rep[WArray[T]], Rep[Int]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[WArray[T]], Rep[Int]) forSome {type T}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[WArray[T]], Rep[Int]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -123,7 +123,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
           Some((receiver, ys)).asInstanceOf[Option[(Rep[WArray[T]], Rep[WArray[B]]) forSome {type T; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[WArray[T]], Rep[WArray[B]]) forSome {type T; type B}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[WArray[T]], Rep[WArray[B]]) forSome {type T; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -135,7 +135,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
           Some((receiver, f)).asInstanceOf[Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -147,7 +147,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
           Some(receiver).asInstanceOf[Option[Rep[WArray[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[WArray[T]] forSome {type T}] = exp match {
+      def unapply(exp: Sym): Option[Rep[WArray[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -161,7 +161,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
           Some((n, elem)).asInstanceOf[Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -218,9 +218,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   }
 }
 
-object WArraysModule extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAIVVTWzcRBR+62y6STZ/DaQIxE8bLAGl2G05IJRTSBMJWLIVjloUKtCsd3aZ1p4x49lio6rHSrRcQLlyQOKEcoFeOHFBXDj0jriB4IJAiANVD0W8Gf+sN2QbHyx7PO97733f98Z7f8BkLOF47JOAcCekijieeV6Lle29IbqDgJ6jvZ/F7aVPb9370oLFHZhj8QUm1YAE7EPa3YFlcWUjZKotWT8L2JaEqRbMbXDFVGqHZlHByVaWxtVp3IPS2HnEaguWttOIeikXnIUlgns4QjUMYR6+KEkUUbmvlDOHA40GItQ04T6NlZCxghNZvOuLIKC+YoK7LAwHinQC6rZYrHD/oi+4L6mi3npA4pjG78N1qLdgimpIVr5Pm/e0HQ1x/1+XoRTL0rjZ/jdpZPpMQwXzeTntSJeCexosjIRURYoGwr0nusVrnRNcgKXWZXKVuJii73pKMt7HyAUxKqMOOdKCZkT8K6RPtzBSLzWwj5gGPU232ZJEUIuiCM101tTiDKlxSmocTY3tUcm0d4j+eF6KJIXsqk0AJBri1CEQBQLd4F375iX/7bteM7R0cKKLmTGNTiPQU2OMXdD51Y0by3998e5DFszswFSHqZBE9umq1jllTcK5UKbikkUi+yjZyjjJjOpruAdZrXdENy309kUYEY5IObezKFbAfKb0Zr22kEt0INGopoposbWOvJfdjhtjHbsWRUH63bVvr/3y+I9HLZjQPkwiWYGdQNgHtGMoWydBgO1YqkiOWWcysTwR0qMrf7N3Pr+lLKi1oJaMWqzduYxiriYSZrOIzK3/spfu/zTfU1au/dgmivxn3+p1nO2PP7LAGuVpGhvwNrCpojgFE6hxTo++P6rgyMU1KUk6uljbNrbRt9lkeH+sslqS/MKD6mvLTPXSLMw+9fJv53ZfN8UuDE1ktuV1GyOVJc+tC64I47TUJrPz0wqamwPuoynLD3lp40krPfjM7392vz8Nl4wy1YQlTpZl2dznYd/ys5V3Cc1Mvy3Bqb153v7H+2F3T8unvz+CLSxkHK9Xfe6YYJPuyTyThJUxZXu54VG963c/2zp55/avhsAZPTqYlauRo8zwmLeioK7HpZTriXFymRmauv/JPW/35tcWNF6DyV5A+vGBsz7ZEQPeLeYVD3ZFE/VKsVYf9SHOJ5EkLM/7qwRPKzxPFBwrhmugWOBeyNdXcYbNdXxIu1M+nShYP5Z3omOdV3mGquznv9n7gN15btPMz34HL45iITuNiv8dhX9/DVqR/szoZMznv8E4+yXsG5MX/wMpDLzbQAgAAA=="
-}
+object WArraysModule extends scalan.ModuleInfo("scala/WArrays.scala")
 }
 
 trait WArraysModule extends scala.impl.WArraysDefs {self: WrappersModule =>}

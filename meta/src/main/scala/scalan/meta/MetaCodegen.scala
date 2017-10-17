@@ -300,7 +300,7 @@ class MetaCodegen {
               |          Some($matchResult).asInstanceOf[$returnType]
               |        case _ => None
               |      }
-              |      def unapply(exp: Exp[_]): $returnType = exp match {
+              |      def unapply(exp: Sym): $returnType = exp match {
               |        case Def(d) => unapply(d)
               |        case _ => None
               |      }
