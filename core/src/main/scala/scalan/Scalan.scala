@@ -35,4 +35,5 @@ class Scalan
   with Thunks
   with Structs
   with ConvertersModule
+  with Modules
 

@@ -113,30 +113,6 @@ trait Entities extends TypeDescs { self: Scalan =>
     def asEntityElem = e.asInstanceOf[EntityElem[A]]
   }
 
-  private[this] lazy val modules = mutable.Map.empty[String, SModuleDef]
-  def getModules = modules
-
-  def allEntities = modules.values.flatMap(_.allEntities)
-
-  def registerModule(moduleInfo: ModuleInfo) = {
-    val m = moduleInfo.moduleDef
-    if (modules.contains(m.name))
-      !!!(s"Module ${m.name} already registered")
-    else {
-      modules += (m.name -> m)
-    }
-  }
-
-  def entityDef(e: EntityElem[_]): STraitOrClassDef = {
-    val elemClassSymbol = ReflectionUtil.classToSymbol(e.getClass)
-    val moduleName = elemClassSymbol.owner.name.toString.stripSuffix("Defs")
-    val module = modules.getOrElse(moduleName, !!!(s"Module $moduleName not found"))
-    val entityName = elemClassSymbol.name.toString.stripSuffix("Elem")
-    module.allEntities.find(_.name == entityName).getOrElse {
-      !!!(s"Entity $entityName not found in module $moduleName")
-    }
-  }
-
   def isConcreteElem(e: TypeDesc): Boolean = e match {
     case _: BaseElem[_] =>
       true
