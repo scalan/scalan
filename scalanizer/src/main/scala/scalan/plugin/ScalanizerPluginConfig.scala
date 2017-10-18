@@ -3,7 +3,7 @@ package scalan.plugin
 import java.lang.annotation.Annotation
 
 import scalan.{FunctorType, ContainerType}
-import scalan.meta.CodegenConfig
+import scalan.meta.MetaConfig
 import scalan.meta.ScalanAst.{WrapperConfig, NonWrapper}
 import scalan.meta.scalanizer.ScalanizerConfig
 
@@ -30,7 +30,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
   def withSaveMetaAst(b: Boolean): ScalanizerConfig = { saveMetaAst = b; this }
 
   private def unitConfig(name: String, entityFile: String) =
-    CodegenConfig(
+    MetaConfig(
       name = name, entityFile = entityFile,
       srcPath = "librarydef/src/main/scala",
       resourcePath = "librarydef/src/main/resources",
@@ -51,7 +51,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     sys.error(s"Cannot fing UnitConfig for '$unitName'")
   }
 
-  val wrappersCodegenConfig = CodegenConfig(
+  val wrappersMetaConfig = MetaConfig(
     name = "Wrappers Config",
     srcPath = "librarydef/src/main/scala",
     resourcePath = "librarydef/src/main/resources",
@@ -63,7 +63,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     isVirtualized = false,
     isStdEnabled = false
   )
-  val wrapperConfigs = List[WrapperConfig](
+  val wrapperConfigs     = List[WrapperConfig](
     WrapperConfig(
       name = "Array",
       annotations = List(classOf[ContainerType], classOf[FunctorType]).map(_.getSimpleName)

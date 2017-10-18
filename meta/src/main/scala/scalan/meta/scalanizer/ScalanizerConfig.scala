@@ -1,6 +1,6 @@
 package scalan.meta.scalanizer
 
-import scalan.meta.CodegenConfig
+import scalan.meta.MetaConfig
 import scalan.meta.ScalanAst.{WrapperConfig, NonWrapper}
 
 trait ScalanizerConfig {
@@ -28,11 +28,11 @@ trait ScalanizerConfig {
   def withSaveMetaAst(b: Boolean): ScalanizerConfig
 
   /** Config for Scalan Codegen. */
-  def unitConfigs: List[CodegenConfig]
-  def getUnitConfig(unitName: String): CodegenConfig
+  def unitConfigs: List[MetaConfig]
+  def getUnitConfig(unitName: String): MetaConfig
 
   /** Config for Scalan Wrapper Codegen */
-  def wrappersCodegenConfig: CodegenConfig
+  def wrappersMetaConfig: MetaConfig
 
   def wrapperConfigs: Map[String, WrapperConfig]
 

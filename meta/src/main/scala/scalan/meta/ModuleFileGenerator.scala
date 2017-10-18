@@ -10,7 +10,7 @@ import scalan.meta.serialization.JacksonSerializer
 import scalan.util.{Serialization, StringUtil, ScalaNameUtil}
 import scalan.util.CollectionUtil._
 
-class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: CodegenConfig) {
+class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: MetaConfig) {
   import codegen._
 
   val e = EntityTemplateData(module, module.entityOps)

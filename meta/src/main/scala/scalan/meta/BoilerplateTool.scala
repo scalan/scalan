@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.StrictLogging
 
 class BoilerplateTool extends StrictLogging {
   def coreMainConfig(name: String, entityFile: String) =
-    CodegenConfig(
+    MetaConfig(
       name = name, entityFile = entityFile,
       srcPath = "core/src/main/scala",
       resourcePath = "core/src/main/resources",
@@ -12,7 +12,7 @@ class BoilerplateTool extends StrictLogging {
     )
 
   def coreTestConfig(name: String, entityFile: String) =
-    CodegenConfig(
+    MetaConfig(
       name = name, entityFile = entityFile,
       srcPath = "core/src/test/scala",
       resourcePath = "core/src/test/resources",
@@ -42,7 +42,7 @@ class BoilerplateTool extends StrictLogging {
 
   def listGroups = runGroups.keySet.mkString(", ")
 
-  def getRequestedConfigs(requestedGroups: Array[String]): Seq[CodegenConfig] =
+  def getRequestedConfigs(requestedGroups: Array[String]): Seq[MetaConfig] =
     requestedGroups.flatMap { groupName => runGroups.getOrElse(groupName,
       sys.error(s"Unknown codegen config $groupName. Allowed values: $listGroups"))
     }.distinct

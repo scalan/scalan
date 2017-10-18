@@ -3,14 +3,14 @@ package scalan.meta
 import java.util.Properties
 import java.io.FileReader
 
-case class CodegenConfig(name: String,
-                         srcPath: String,
-                         resourcePath: String,
-                         entityFile: String,
-                         baseContextTrait: String = "scalan.Scalan",
-                         extraImports: List[String] = List("scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}", "scalan.meta.ScalanAst._"),
-                         isVirtualized: Boolean = true,
-                         isStdEnabled: Boolean = true) {
+case class MetaConfig(name: String,
+                      srcPath: String,
+                      resourcePath: String,
+                      entityFile: String,
+                      baseContextTrait: String = "scalan.Scalan",
+                      extraImports: List[String] = List("scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}", "scalan.meta.ScalanAst._"),
+                      isVirtualized: Boolean = true,
+                      isStdEnabled: Boolean = true) {
 }
 
 object Base {

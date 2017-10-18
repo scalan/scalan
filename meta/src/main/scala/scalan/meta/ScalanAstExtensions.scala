@@ -34,7 +34,7 @@ object ScalanAstExtensions {
   implicit class SMethodOrClassArgsOps(as: SMethodOrClassArgs) {
     def argNames = as.args.map(a => a.name)
 
-    def argNamesAndTypes(config: CodegenConfig) = {
+    def argNamesAndTypes(config: MetaConfig) = {
       as.args.map { arg =>
         if (config.isVirtualized || arg.isTypeDesc)
           s"${arg.name}: ${arg.tpe}"
@@ -106,7 +106,7 @@ object ScalanAstExtensions {
   }
 
   implicit class SMethodDefOps(md: SMethodDef) {
-    def explicitReturnType(config: CodegenConfig): String = {
+    def explicitReturnType(config: MetaConfig): String = {
       def error = throw new IllegalStateException(s"Explicit return type required for method $md")
 
       val tRes = md.tpeRes.getOrElse(error)
@@ -114,7 +114,7 @@ object ScalanAstExtensions {
       else s"Rep[$tRes]"
     }
 
-    def declaration(config: CodegenConfig, includeOverride: Boolean) = {
+    def declaration(config: MetaConfig, includeOverride: Boolean) = {
       val typesDecl = md.tpeArgs.declString
       val argss = md.argSections.rep(sec => s"(${sec.argNamesAndTypes(config).rep()})", "")
       s"${includeOverride.opt("override ")}def ${md.name}$typesDecl$argss: ${explicitReturnType(config)}"

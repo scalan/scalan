@@ -7,7 +7,7 @@ import scalan.Scalan
 /**
   * Created by slesarenko on 12/10/2017.
   */
-class MockFileCodegen[IR <: Scalan](ctx: IR) extends FileCodegen[IR](ctx) {
+class MockFileCodegen[IR <: Scalan](ctx: IR, config: CodegenConfig) extends FileCodegen[IR](ctx, config) {
   /** Name of language generated (used in error messages) */
   override def languageName: String = "mock"
 

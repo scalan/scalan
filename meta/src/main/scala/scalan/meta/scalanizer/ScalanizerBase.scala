@@ -3,7 +3,7 @@ package scalan.meta.scalanizer
 import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstTransformers.{MetaAstReplacer, TypeReplacer}
-import scalan.meta.{ScalanParsers, CodegenConfig, EntityManagement}
+import scalan.meta.{ScalanParsers, MetaConfig, EntityManagement}
 import scalan.util.FileUtil
 
 trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {

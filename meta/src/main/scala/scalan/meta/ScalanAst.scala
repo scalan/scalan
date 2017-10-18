@@ -896,7 +896,7 @@ object ScalanAst {
       Set("ClassTag").contains(name)
   }
 
-  class AstContext(val configs: List[CodegenConfig]) {
+  class AstContext(val configs: List[MetaConfig]) {
 
     /** Mapping of external type names to their wrappers. */
     val wrappers = MMap[String, WrapperDescr]()

@@ -11,7 +11,7 @@ case class IndentLevel(level: Int) {
 }
 
 /** Base class for code generators */
-abstract class FileCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake) {
+abstract class FileCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake, val config: CodegenConfig) {
   import scalan._
 
   /** Codegen name (used in error messages) */

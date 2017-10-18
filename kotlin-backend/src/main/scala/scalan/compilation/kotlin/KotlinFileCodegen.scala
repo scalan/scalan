@@ -4,11 +4,10 @@ import java.io.{PrintWriter, File}
 
 import scala.collection.mutable
 import scalan.Scalan
-import scalan.compilation.{IndentLevel, FileCodegen, Name}
+import scalan.compilation.{Name, IndentLevel, FileCodegen, CodegenConfig}
+import scalan.meta.{GenCtx, KotlinEmitters}
 
-
-
-class KotlinFileCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends FileCodegen(_scalan) {
+class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) extends FileCodegen(_scalan, config) {
   import scalan._
 
   val PairType = Name("kotlin", "Pair")
@@ -16,6 +15,17 @@ class KotlinFileCodegen[+ScalanCake <: Scalan](_scalan: ScalanCake) extends File
   def languageName = "Kotlin"
 
   override def fileExtension = "kt"
+
+  def modules = getModules
+
+  def emitModule(moduleName: String)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
+    val md = modules.getOrElse(moduleName, { sys.error(s"Cannot find module $moduleName") })
+    implicit val gctx = GenCtx(md)
+    val emitter = new KotlinEmitters()
+    for (c <- md.concreteSClasses) {
+      emit(emitter.genClass(c))
+    }
+  }
 
   def emitLambdaHeader(f: Exp[_], lam: Lambda[_,_], functionName: String)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
     emit(src"fun $f(${lam.x}: ${lam.x.elem}): ${lam.y.elem} {")

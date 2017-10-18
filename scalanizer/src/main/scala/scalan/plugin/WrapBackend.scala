@@ -55,7 +55,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   /** Calls Scalan Meta to generate boilerplate code for the wrapper. */
   def genWrapperBoilerplateText(module: SModuleDef): String = {
     val gen = new scalan.meta.ModuleFileGenerator(
-      ScalanCodegen, module, snConfig.wrappersCodegenConfig)
+      ScalanCodegen, module, snConfig.wrappersMetaConfig)
     val implCode = gen.emitImplFile
     implCode
   }

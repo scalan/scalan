@@ -3,7 +3,8 @@ package scalan.compilation
 import scalan.{BaseNestedTests, Scalan}
 
 class ImportBuilderTests extends BaseNestedTests {
-  val gen = new MockFileCodegen(new Scalan)
+  val config = CodegenConfig("core/generated")
+  val gen = new MockFileCodegen(new Scalan, config)
   val name = Name("scalan", "Scalan")
   import gen.importBuilder._
 

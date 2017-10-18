@@ -1,15 +1,14 @@
 package scalan.compilation.kotlin
 
 import java.io.File
+import scalan.Scalan
+import scalan.compilation.{ScalanCompiler, GraphVizConfig, CodegenConfig}
 
-import scalan.{Scalan}
-import scalan.compilation.{ScalanCompiler, GraphVizConfig}
-
-class KotlinCompiler[+ScalanCake <: Scalan](val _scalan: ScalanCake)
-  extends ScalanCompiler[ScalanCake, KotlinFileCodegen[ScalanCake]](_scalan) {
+class KotlinCompiler[+IR <: Scalan](val _scalan: IR, val config: CodegenConfig)
+  extends ScalanCompiler[IR, KotlinFileCodegen[IR]](_scalan) {
   import scalan._
 
-  val codegen = new KotlinFileCodegen[scalan.type](scalan)
+  val codegen = new KotlinFileCodegen[scalan.type](scalan, config)
 
   type CompilerConfig = Unit
 

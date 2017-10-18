@@ -171,7 +171,7 @@ class MetaCodegen {
     }
   }
 
-  def methodExtractorsString(module: SModuleDef, config: CodegenConfig, e: STraitOrClassDef) = {
+  def methodExtractorsString(module: SModuleDef, config: MetaConfig, e: STraitOrClassDef) = {
     def methodExtractorsString1(e: STraitOrClassDef, isCompanion: Boolean) = {
       val methods = e.body.collect { case m: SMethodDef => optimizeMethodImplicits(m, module) }
       val overloadIdsByName = collection.mutable.Map.empty[String, Set[Option[String]]].withDefaultValue(Set())
