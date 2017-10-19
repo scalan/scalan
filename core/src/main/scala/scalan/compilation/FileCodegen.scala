@@ -43,9 +43,15 @@ abstract class FileCodegen[+ScalanCake <: Scalan](val scalan: ScalanCake, val co
 
   val importBuilder = new ImportBuilder
 
-  def emit(string: String)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
-    stream.print(indent * indentLevel.level)
-    stream.println(string)
+  def emit(lines: Seq[String])(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
+    for (line <- lines) {
+      stream.print(indent * indentLevel.level)
+      stream.println(line)
+    }
+  }
+
+  def emit(string: String)(implicit stream: PrintWriter, indentLevel: IndentLevel): Unit = {
+    emit(string.split('\n'))
   }
 
   // May need to be split into emitFileHeader and emitKernelHeader if there are multiple kernels

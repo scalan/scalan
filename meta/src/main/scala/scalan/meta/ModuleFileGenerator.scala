@@ -652,9 +652,10 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
   }
 
   def emitModuleSerialization = {
-    val jsonPath = module.packageName.split('.').mkString("/") + s"/${module.name}.scala"
+    val moduleName = module.name
+    val jsonPath = module.packageName.split('.').mkString("/") + s"/$moduleName.scala"
     s"""
-      |object ${module.name}Module extends scalan.ModuleInfo("$jsonPath")
+      |object ${moduleName}Module extends scalan.ModuleInfo("$moduleName", "$jsonPath")
        """.stripMargin
   }
 
@@ -690,10 +691,5 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       // remove empty lines before and after braces
       replaceAll("""\r?\n\r?\n( *\})""", "\n$1").
       replaceAll("""( *\{)\r?\n\r?\n""", "$1\n")
-  }
-
-  def emitJson: String = {
-    val serde = new JacksonSerializer
-    serde.serialize(module)
   }
 }

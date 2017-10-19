@@ -1,15 +1,19 @@
 package scalan.compilation.kotlin
 
-import scalan.compilation.{CodegenConfig, IndentLevel}
+import scala.WArraysModule
+import scala.impl.WArraysModule
+import scalan.compilation.{IndentLevel, CodegenConfig}
 import scalan.util.FileUtil
 import scalan.{BaseNestedTests, Scalan}
+import scalanizer.collections.ColsModule
+import scalanizer.collections.impl.ColsModule
 
 class KotlinFileCodegenTests extends BaseNestedTests {
-  val config = CodegenConfig("kotlin-backend/generated")
-  val ctx = new Scalan
+  val ctx = new Scalan with WArraysModule with ColsModule
+  val config = CodegenConfig("kotlin-backend/generated", Seq(ColsModule.name))
   val gen = new KotlinFileCodegen(ctx, config)
 
-  describe("translateToSrc") {
+  it("generateModules") {
     for ((name, m) <- gen.modules) {
       val pn = m.packageName.split('.').mkString("/")
       val moduleFile = FileUtil.file(config.basePath, pn, s"$name.kt")

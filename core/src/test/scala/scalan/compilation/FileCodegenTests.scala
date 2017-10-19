@@ -5,7 +5,7 @@ import java.io.PrintWriter
 import scalan.{BaseNestedTests, Scalan}
 
 class FileCodegenTests extends BaseNestedTests {
-  val config = CodegenConfig("core/generated")
+  val config = CodegenConfig("core/generated", Nil)
   val gen = new MockFileCodegen(new Scalan, config)
   val name = Name("scalan", "Scalan")
   val otherPackage = Name("scalan2", "Scalan2")

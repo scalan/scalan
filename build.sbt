@@ -179,7 +179,7 @@ lazy val core = Project("scalan-core", file("core"))
 //  )
 
 lazy val kotlinBackend = Project("scalan-kotlin-backend", file("kotlin-backend")).
-  dependsOn(core % "compile->compile;it->test").
+  dependsOn(core % "compile->compile;it->test", library).
   configs(IntegrationTest)
   .settings(itSettings)
   .settings(

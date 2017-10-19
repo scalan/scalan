@@ -302,6 +302,6 @@ trait StructKeysDefs extends StructKeys {
   }
 }
 
-object StructKeysModule extends scalan.ModuleInfo("scalan/primitives/StructKeys.scala")
+object StructKeysModule extends scalan.ModuleInfo("StructKeys", "scalan/primitives/StructKeys.scala")
 }
 

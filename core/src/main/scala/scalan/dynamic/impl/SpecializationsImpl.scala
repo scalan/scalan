@@ -236,6 +236,6 @@ implicit val eM = p.metric.elem.eRange
   }
 }
 
-object SpecializationsModule extends scalan.ModuleInfo("scalan/dynamic/Specializations.scala")
+object SpecializationsModule extends scalan.ModuleInfo("Specializations", "scalan/dynamic/Specializations.scala")
 }
 

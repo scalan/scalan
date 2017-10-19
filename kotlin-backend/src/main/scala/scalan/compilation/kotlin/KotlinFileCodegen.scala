@@ -1,11 +1,13 @@
 package scalan.compilation.kotlin
 
-import java.io.{PrintWriter, File}
+import java.io.PrintWriter
 
-import scala.collection.mutable
 import scalan.Scalan
 import scalan.compilation.{Name, IndentLevel, FileCodegen, CodegenConfig}
-import scalan.meta.{GenCtx, KotlinEmitters}
+import scalan.meta.ScalanAst._
+import scalan.meta.PrintExtensions._
+
+case class GenCtx(module: SModuleDef, writer: PrintWriter)
 
 class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) extends FileCodegen(_scalan, config) {
   import scalan._
@@ -16,24 +18,141 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
 
   override def fileExtension = "kt"
 
-  def modules = getModules
+  implicit def ctxToWriter(implicit ctx: GenCtx): PrintWriter = ctx.writer
+  
+  def transitiveClosureSet(modules: Seq[SModuleDef], deps: SModuleDef => Iterable[SModuleDef]): Set[String] = {
+    //TODO implement transitive closure algorithm
+    modules.map(_.name).toSet
+  }
 
-  def emitModule(moduleName: String)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
-    val md = modules.getOrElse(moduleName, { sys.error(s"Cannot find module $moduleName") })
-    implicit val gctx = GenCtx(md)
-    val emitter = new KotlinEmitters()
-    for (c <- md.concreteSClasses) {
-      emit(emitter.genClass(c))
+  def modules: Map[String, SModuleDef] = {
+    val nameToModule = scalan.getModules
+    val modules = config.modules.map(mn =>
+      nameToModule.getOrElse(mn, sys.error(s"Module $mn not found")))
+    val closure = transitiveClosureSet(modules, m => m.dependencies)
+    closure.map(mn => (mn, nameToModule(mn))).toMap
+  }
+
+  def genParents(ancestors: List[STypeApply])(implicit ctx: GenCtx): List[String] = {
+    ancestors.map { a =>
+      val tpeName = a.tpe.name
+      val tpts = a.tpe.tpeSExprs.map(genTpeExpr)
+      s"$tpeName${tpts.optList("<", ">")}"
     }
   }
 
-  def emitLambdaHeader(f: Exp[_], lam: Lambda[_,_], functionName: String)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
-    emit(src"fun $f(${lam.x}: ${lam.x.elem}): ${lam.y.elem} {")
+  def genTypeArgs(tpeArgs: STpeArgs)
+                 (implicit ctx: GenCtx): List[String] = tpeArgs.map(genTypeArg)
+
+  def genTypeArg(arg: STpeArg)(implicit ctx: GenCtx): String = {
+    val tpname = arg.name
+    val tparams = arg.tparams.map(genTypeArg)
+    s"$tpname${tparams.optList("<", ">")}"
   }
 
-  def emitLambdaFooter(lam: Lambda[_,_], functionName: String)(implicit stream: PrintWriter, indentLevel: IndentLevel) = {
+  def genClassArg(arg: SClassArg)(implicit ctx: GenCtx): String = {
+    val tname = arg.name
+    val tpt = genTpeExpr(arg.tpe)
+    val valFlag = if (arg.valFlag) "val " else ""
+    val overFlag = if (arg.overFlag) "override " else ""
+    s"$overFlag$valFlag$tname: $tpt"
+  }
+
+  def genClassArgs(args: SClassArgs, implicitArgs: SClassArgs)
+                  (implicit ctx: GenCtx): List[List[String]] = {
+    val repArgs = args.args.map(genClassArg)
+    val repImplArgs = implicitArgs.args.map(genClassArg)
+    val repClassArgs = List[List[String]](repArgs, repImplArgs)
+    repClassArgs.filterNot(_.isEmpty)
+  }
+
+  def genMethodArg(arg: SMethodArg)
+                  (implicit ctx: GenCtx): String = {
+    val tname = arg.name
+    val tpt = genTpeExpr(arg.tpe)
+    s"$tname: $tpt"
+  }
+
+  def genMethodArgs(argSections: List[SMethodArgs])
+                   (implicit ctx: GenCtx): List[String] = {
+    argSections.map(_.args.map(genMethodArg).rep())
+  }
+
+  def genBodyItem(x: SBodyItem)(implicit ctx: GenCtx): String = x match {
+    case SValDef(n, tpe, isLazy, _, expr) =>
+      val optType = tpe.opt(t => s": ${genTpeExpr(t)}")
+      //      val rhs = emit(expr)
+      s"""val $n${optType} = ???"""
+    case md: SMethodDef =>
+      val args = genMethodArgs(md.argSections)
+      val optType = md.tpeRes.opt(t => s": ${genTpeExpr(t)}")
+      s"""def ${md.name}${args.rep(sep = "")}${optType} = ???"""
+    case _ =>
+      s"<<<Don't know how to emit ${x}>>>"
+  }
+  def genBody(body: List[SBodyItem])(implicit ctx: GenCtx): List[String] = body.map(genBodyItem)
+
+  def genTypeSel(ref: String, name: String)(implicit ctx: GenCtx) = s"$ref.$name"
+
+  def genTuple2(first: String, second: String)(implicit ctx: GenCtx): String = {
+    val tpt = genTypeSel("kotlin", "Pair")
+    val tpts = first :: second :: Nil
+    s"$tpt${tpts.optList("<", ">")}>"
+  }
+
+  def genTuples(elems: List[STpeExpr])(implicit ctx: GenCtx): String = elems match {
+    case x :: y :: Nil => genTuple2(genTpeExpr(x), genTpeExpr(y))
+    case x :: xs => genTuple2(genTpeExpr(x), genTuples(xs))
+    case Nil => throw new IllegalArgumentException("Tuple must have at least 2 elements.")
+  }
+
+  def genTpeExpr(tpeExpr: STpeExpr)(implicit ctx: GenCtx): String = tpeExpr match {
+    case STpeEmpty() => ""
+    case STpePrimitive(name: String, _) => name
+    case STraitCall(name: String, tpeSExprs: List[STpeExpr]) =>
+      val targs = tpeSExprs.map(genTpeExpr)
+      s"$name${targs.optList("<", ">")}"
+    case STpeTypeBounds(lo: STpeExpr, hi: STpeExpr) =>
+      ??? //TODO  TypeBoundsTree(genTypeExpr(lo), genTypeExpr(hi))
+    case STpeTuple(items: List[STpeExpr]) => genTuples(items)
+    case STpeFunc(domain: STpeExpr, range: STpeExpr) =>
+      val tDom = genTpeExpr(domain)
+      val tRange = genTpeExpr(range)
+      s"($tDom) -> $tRange"
+    case _ => throw new NotImplementedError(s"genTypeExpr($tpeExpr)")
+  }
+
+  def emitClass(c: SClassDef)(implicit ctx: GenCtx, l: IndentLevel) = {
+    val className = c.name
+    assert(c.selfType.isEmpty, "self types are not supported")
+    val parents = genParents(c.ancestors)
+    val bodyItems = genBody(c.body)
+    val paramss = genClassArgs(c.args, c.implicitArgs)
+    val tparams = c.tpeArgs.map(genTypeArg)
+    emit(s"""class $className${tparams.optList("<", ">")}${paramss.rep(sec => s"(${sec.rep()})")}${parents.optList(" : ", "")} { """)
+    indented { implicit l =>
+      emit(bodyItems)
+    }
+    emit("}")
+  }
+
+  def emitModule(moduleName: String)(implicit writer: PrintWriter, indentLevel: IndentLevel) = {
+    val md = modules.getOrElse(moduleName, { sys.error(s"Cannot find module $moduleName") })
+    implicit val gctx = GenCtx(md, writer)
+    for (c <- md.concreteSClasses) {
+      emitClass(c)
+    }
+  }
+
+  def emitLambdaHeader(f: Exp[_], lam: Lambda[_, _], functionName: String)
+                      (implicit stream: PrintWriter, indentLevel: IndentLevel) = {
+    emit(src"fun $f(${lam.x }: ${lam.x.elem }): ${lam.y.elem } {")
+  }
+
+  def emitLambdaFooter(lam: Lambda[_, _], functionName: String)
+                      (implicit stream: PrintWriter, indentLevel: IndentLevel) = {
     indented { implicit indentLevel =>
-      emit(src"return ${lam.y}")
+      emit(src"return ${lam.y }")
     }
     emit("}")
   }
@@ -210,7 +329,7 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
       super.translateToSrc(arg)
   }
 
-  class SrcStringHelperKotlin(sc: StringContext) extends SrcStringHelperBase(sc) { }
+  class SrcStringHelperKotlin(sc: StringContext) extends SrcStringHelperBase(sc) {}
 
   override implicit def srcStringHelper(sc: StringContext): SrcStringHelper = new SrcStringHelperKotlin(sc)
 }

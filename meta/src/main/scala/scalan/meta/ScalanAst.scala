@@ -1017,6 +1017,10 @@ object ScalanAst {
       }
     }
 
+    def dependencies: Seq[SModuleDef] = {
+      Seq() // TODO collect dependencies for the module
+    }
+
     def clean = {
       val _entities = entities.map(_.clean)
       val _concreteSClasses = concreteSClasses.map(_.clean)

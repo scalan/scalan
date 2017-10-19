@@ -6,7 +6,7 @@ import scala.reflect.internal.util.BatchSourceFile
 import scalan.meta.{BoilerplateToolRun, Parsers}
 import scalan.util.{ReflectionUtil, FileUtil}
 
-abstract class ModuleInfo(val sourceFileName: String) {
+abstract class ModuleInfo(val name: String, val sourceFileName: String) {
 }
 
 trait Modules extends Base { self: Scalan =>

@@ -247,7 +247,7 @@ trait ColsDefs extends scalan.Scalan with Cols {
   }
 }
 
-object ColsModule extends scalan.ModuleInfo("scalanizer/collections/Cols.scala")
+object ColsModule extends scalan.ModuleInfo("Cols", "scalanizer/collections/Cols.scala")
 }
 
 trait ColsModule extends scalanizer.collections.impl.ColsDefs with scala.wrappers.WrappersModule

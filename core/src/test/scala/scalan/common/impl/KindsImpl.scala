@@ -304,7 +304,7 @@ implicit val eB = p.f.elem.eRange.typeArgs("A")._1.asElem[B]
   }
 }
 
-object KindsModule extends scalan.ModuleInfo("scalan/common/Kinds.scala")
+object KindsModule extends scalan.ModuleInfo("Kinds", "scalan/common/Kinds.scala")
 }
 
 trait KindsModule extends scalan.common.impl.KindsDefs

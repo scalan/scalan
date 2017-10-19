@@ -15,7 +15,6 @@ import scala.tools.nsc.Global
 class Parsers(val configs: List[MetaConfig]) extends ScalanParsersEx[Global] {
   def getGlobal: Global = new Global(settings, reporter)
   implicit val context = new AstContext(configs)
-
   initCompiler()
 }
 
