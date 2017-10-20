@@ -28,7 +28,7 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
       val unitName = unit.source.file.name
       if (isModuleUnit(unitName)) try {
         val packageName = getModulePackage(unit)
-        val moduleDef = snState.getModule(packageName, unitName)
+        val moduleDef = snState.getModule(packageName, Path(unitName).stripExtension)
 
         /** Generates a virtualized version of original Scala AST, wraps types by Rep[] and etc. */
         val enrichedModuleDef = virtPipeline(moduleDef)

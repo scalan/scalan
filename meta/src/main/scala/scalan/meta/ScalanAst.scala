@@ -15,9 +15,10 @@ import scala.reflect.internal.ModifierFlags
 import PrintExtensions._
 import scala.collection.mutable.{Map => MMap}
 import scalan._
-import scalan.util.{Covariant, Contravariant, Invariant}
+import scalan.util.{Covariant, Contravariant, Invariant, FileUtil}
 import scalan.util.CollectionUtil._
 import ScalanAstExtensions._
+import scala.tools.nsc.Global
 
 object ScalanAst {
 
@@ -161,24 +162,9 @@ object ScalanAst {
 
     def unRep(module: SModuleDef, isVirtualized: Boolean): Option[STpeExpr] = self match {
       case t if !isVirtualized => Some(t)
-      case STraitCall("Elem", Seq(t)) =>  // Elem[t] --> self
+      case STraitCall("Elem", Seq(t)) =>  // Elem[t] --> tpe
         Some(self)
-      case STraitCall("Rep", Seq(t)) =>   // Rep[t] --> t
-        Some(t)
-      case STraitCall("RFunc", Seq(a, b)) =>  // RFunc[a,b] --> a => b
-        Some(STpeFunc(a, b))
-      case module.TypeSynonim(entityName, tyargs) => // RepCol[args] --> Col[args]
-        Some(STraitCall(entityName, tyargs))
-//      case STraitCall(name, args) =>
-//        def withoutPrefix(prefix: String): Option[String] = {
-//          val indexAfterPrefix = prefix.length
-//          if (name.startsWith(prefix) && name(indexAfterPrefix).isUpper)
-//            Some(name.substring(indexAfterPrefix))
-//          else
-//            None
-//        }
-//        // handle cases like RSeg, RepInt, IntRep
-//        val unReppedName = withoutPrefix("R").orElse(withoutPrefix("Rep").orElse(Some(name.stripSuffix("Rep")))).filter(_ != name)
+      case module.RepTypeOf(t) => Some(t)
       case _ => None
     }
 
@@ -896,12 +882,45 @@ object ScalanAst {
       Set("ClassTag").contains(name)
   }
 
-  class AstContext(val configs: List[MetaConfig]) {
+  class AstContext(val configs: List[MetaConfig], val parsers: ScalanParsers[Global], okLoadModules: Boolean = false) {
 
     /** Mapping of external type names to their wrappers. */
-    val wrappers = MMap[String, WrapperDescr]()
+    private val wrappers = MMap[String, WrapperDescr]()
 
-    val modules = MMap[String, SModuleDef]()
+    /** Mapping of <packageName>.<moduleName> to definition.
+      * Initial set of modules in loaded from configs and later new modules can be added. */
+    private val modules = MMap[String, SModuleDef]()
+
+    def loadModulesFromResources(): Unit = {
+      for (c <- configs) {
+        val m = parsers.loadModuleDefFromResource(c.entityFile)
+        addModule(m)
+      }
+    }
+
+    def loadModulesFromFolders(): Unit = {
+      for (c <- configs) {
+        val m = parsers.parseEntityModule(c.getFile)(new parsers.ParseCtx(c.isVirtualized)(this))
+        addModule(m)
+      }
+    }
+
+    def updateWrapper(typeName: String, descr: WrapperDescr) = {
+      wrappers(typeName) = descr
+    }
+
+    def externalTypes = wrappers.keySet
+
+    def hasWrapper(typeName: String) = wrappers.contains(typeName)
+    def getWrapper(typeName: String) = wrappers.get(typeName)
+
+    def forEachWrapper(action: ((String, WrapperDescr)) => Unit) = {
+      wrappers.foreach(action)
+    }
+
+    def transformWrappers(transformer: ((String, WrapperDescr)) => WrapperDescr) = {
+      wrappers.transform(scala.Function.untupled(transformer))
+    }
 
     /** The types that shouldn't be Rep[].
       * For example List("Elem", "Cont", "ClassTag") */
@@ -942,13 +961,16 @@ object ScalanAst {
         .toMap
     }
 
-    def getModule(packageName: String, unitName: String): SModuleDef = {
-      val key = s"$packageName.$unitName"
+    def getModule(packageName: String, moduleName: String): SModuleDef = {
+      val key = getModuleKey(packageName, moduleName)
       modules(key)
     }
 
-    def addModule(unitName: String, module: SModuleDef) = {
-      val key = s"${module.packageName}.$unitName"
+    def getModuleKey(packageName: String, moduleName: String): String = s"$packageName.$moduleName"
+    def getModuleKey(module: SModuleDef): String = getModuleKey(module.packageName, module.name)
+
+    def addModule(module: SModuleDef) = {
+      val key = getModuleKey(module)
       modules(key) = module
     }
   }
@@ -1066,6 +1088,17 @@ object ScalanAst {
       }
     }
 
+    object RepTypeOf {
+      def unapply(tpe: STpeExpr): Option[STpeExpr] = tpe match {
+        case STraitCall("Rep", Seq(t)) =>   // Rep[t] --> t
+          Some(t)
+        case STraitCall("RFunc", Seq(a, b)) =>  // RFunc[a,b] --> a => b
+          Some(STpeFunc(a, b))
+        case TypeSynonim(entityName, tyargs) => // RepCol[args] --> Col[args]
+          Some(STraitCall(entityName, tyargs))
+        case _ => None
+      }
+    }
   }
 
   object SModuleDef {

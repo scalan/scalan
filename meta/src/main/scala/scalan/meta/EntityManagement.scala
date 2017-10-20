@@ -14,7 +14,7 @@ import scala.tools.nsc.Global
 
 class Parsers(val configs: List[MetaConfig]) extends ScalanParsersEx[Global] {
   def getGlobal: Global = new Global(settings, reporter)
-  implicit val context = new AstContext(configs)
+  implicit val context = new AstContext(configs, this)
   initCompiler()
 }
 
@@ -27,7 +27,7 @@ class EnrichPipeline(implicit val context: AstContext) extends (SModuleDef => SM
   override def apply(module: Module): Module = chain(module)
 }
 
-class EntityManagement[G <: Global](val parsers: ScalanParsers[G]) extends LazyLogging {
+class EntityManagement[+G <: Global](val parsers: ScalanParsers[G]) extends LazyLogging {
   import parsers._
   def configs = parsers.context.configs
   implicit def context = parsers.context
@@ -40,8 +40,8 @@ class EntityManagement[G <: Global](val parsers: ScalanParsers[G]) extends LazyL
     try {
       inform(s"  parsing ${file} (relative to ${FileUtil.currentWorkingDir })")
       val module = parseEntityModule(file)(new ParseCtx(c.isVirtualized))
-      val unitName = file.getName
-      context.addModule(unitName, module)
+//      val unitName = file.getName
+      context.addModule(module)
       Some((c.name, new EntityManager(module.name, file, resourceFile, module, c)))
     } catch {
       case e: Exception =>

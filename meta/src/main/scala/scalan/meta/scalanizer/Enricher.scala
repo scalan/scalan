@@ -9,7 +9,7 @@ import scalan.meta.ScalanAstUtils._
 import scalan.util.FileUtil
 import scalan.util.CollectionUtil._
 
-trait Enricher[G <: Global] extends ScalanizerBase[G] {
+trait Enricher[+G <: Global] extends ScalanizerBase[G] {
 
   /** Gets all packages needed for the module and imports them. */
   def getImportByName(name: String): SImportStat = {

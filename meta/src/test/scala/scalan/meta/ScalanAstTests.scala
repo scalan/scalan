@@ -13,7 +13,9 @@ import scalan.meta.ScalanAst.{STpeExpr, SExpr, SModuleDef, SClassDef, STpePrimit
 trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
   def getGlobal = new Global(settings, reporter)
   initCompiler()
-  implicit val context = new AstContext(BoilerplateToolRun.allConfigs)
+  implicit val context = new AstContext(BoilerplateToolRun.allConfigs, this)
+  context.loadModulesFromFolders()
+
   implicit val ctx = new ParseCtx(true)
 
   val ast: this.type = this

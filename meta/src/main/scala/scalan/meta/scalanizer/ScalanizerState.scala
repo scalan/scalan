@@ -4,7 +4,7 @@ import scala.tools.nsc.Global
 import scalan.meta.ScalanAst.{SValDef, STpeExpr, STpeFunc, STpeEmpty, SModuleDef, STpeTuple, KernelType, SFunc, WrapperDescr}
 
 /** The object contains the current state and temporary data of the Scalanizer. */
-trait ScalanizerState[G <: Global] {
+trait ScalanizerState[+G <: Global] {
   import scala.collection.mutable.Map
   val scalanizer: Scalanizer[G]
   import scalanizer._
@@ -23,27 +23,27 @@ trait ScalanizerState[G <: Global] {
   val packageOfModule: Map[String, String]
 
   def updateWrapper(typeName: String, descr: WrapperDescr) = {
-    scalanizer.context.wrappers(typeName) = descr
+    scalanizer.context.updateWrapper(typeName, descr)
   }
   /** Names of external types. They must be read only after the WrapFrontend phase. */
-  def externalTypes = scalanizer.context.wrappers.keySet
+  def externalTypes = scalanizer.context.externalTypes
 
-  def hasWrapper(typeName: String) = scalanizer.context.wrappers.contains(typeName)
-  def getWrapper(typeName: String) = scalanizer.context.wrappers.get(typeName)
+  def hasWrapper(typeName: String) = scalanizer.context.hasWrapper(typeName)
+  def getWrapper(typeName: String) = scalanizer.context.getWrapper(typeName)
 
   def forEachWrapper(action: ((String, WrapperDescr)) => Unit) = {
-    scalanizer.context.wrappers.foreach(action)
+    scalanizer.context.forEachWrapper(action)
   }
 
   def transformWrappers(transformer: ((String, WrapperDescr)) => WrapperDescr) = {
-    scalanizer.context.wrappers.transform(scala.Function.untupled(transformer))
+    scalanizer.context.transformWrappers(transformer)
   }
 
-  def getModule(packageName: String, unitName: String): SModuleDef = {
-    scalanizer.context.getModule(packageName, unitName)
+  def getModule(packageName: String, moduleName: String): SModuleDef = {
+    scalanizer.context.getModule(packageName, moduleName)
   }
 
-  def addModule(unitName: String, module: SModuleDef) = {
-    scalanizer.context.addModule(unitName, module)
+  def addModule(module: SModuleDef) = {
+    scalanizer.context.addModule(module)
   }
 }

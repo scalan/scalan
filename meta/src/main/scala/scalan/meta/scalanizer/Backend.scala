@@ -7,7 +7,7 @@ import scalan.meta.ScalanAstTransformers._
 import scalan.meta.{ScalanCodegen, ModuleFileGenerator}
 import scalan.util.ScalaNameUtil.PackageAndName
 
-trait Backend[G <: Global] extends ScalanizerBase[G] {
+trait Backend[+G <: Global] extends ScalanizerBase[G] {
   import global._
 
   def createModuleTrait(mainModuleName: String) = {

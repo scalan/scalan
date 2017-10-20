@@ -12,7 +12,7 @@ class SModuleBuilder(implicit val context: AstContext) {
     new MetaAstTransformer {
       def containsExistential(tpe: STpeExpr): Boolean = {
         var hasExistential = false
-        new MetaTypeTransformer {
+        new TypeTransformer {
           override def existTypeTransform(existType: STpeExistential): STpeExistential = {
             hasExistential = true
             super.existTypeTransform(existType)

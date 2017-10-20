@@ -8,12 +8,14 @@ import java.io.File
 
 import scala.language.implicitConversions
 import scala.tools.nsc.Global
-import scala.reflect.internal.util.{RangePosition, OffsetPosition, SourceFile}
+import scala.reflect.internal.util.{SourceFile, OffsetPosition, RangePosition, BatchSourceFile}
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstUtils._
 import java.util.regex.Pattern
 
-trait ScalanParsers[G <: Global] {
+import scalan.util.FileUtil
+
+trait ScalanParsers[+G <: Global] {
   def getGlobal: G
   lazy val global: G = getGlobal
 
@@ -75,6 +77,14 @@ trait ScalanParsers[G <: Global] {
       moduleDefFromPackageDef(pd)
     case tree =>
       throw new Exception(s"Unexpected tree in $name:\n\n$tree")
+  }
+
+  def loadModuleDefFromResource(fileName: String): SModuleDef = {
+    val sourceCode = FileUtil.readAndCloseStream(this.getClass.getClassLoader.getResourceAsStream(fileName))
+    val sourceFile = new BatchSourceFile(fileName, sourceCode)
+    val tree = parseFile(sourceFile)
+    val module = moduleDefFromTree(fileName, tree)(new ParseCtx(true)(context))
+    module
   }
 
   def parseDeclaredImplementations(entities: List[STraitOrClassDef], moduleDefOpt: Option[ClassDef])(implicit ctx: ParseCtx) = {

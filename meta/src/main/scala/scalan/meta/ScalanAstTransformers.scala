@@ -1,5 +1,6 @@
 package scalan.meta
 
+import scalan.meta
 import scalan.meta.ScalanAst._
 
 object ScalanAstTransformers {
@@ -220,7 +221,7 @@ object ScalanAstTransformers {
   }
 
   /** Transforming of Meta AST related to types (children of STpeExpr)*/
-  class MetaTypeTransformer {
+  class TypeTransformer {
     def typeTransform(tpe: STpeExpr): STpeExpr = tpe match {
       case empty: STpeEmpty => emptyTransform(empty)
       case traitCall: STraitCall => traitCallTransform(traitCall)
@@ -265,7 +266,7 @@ object ScalanAstTransformers {
   }
 
   /** Renaming of all types with the given name by applying the repl function. */
-  class TypeReplacer(name: String, repl: String => String) extends MetaTypeTransformer {
+  class TypeReplacer(name: String, repl: String => String) extends TypeTransformer {
     override def traitCallNameTransform(tname: String): String = {
       if (tname == name) repl(tname)
       else tname
@@ -273,7 +274,7 @@ object ScalanAstTransformers {
   }
 
   /** Renaming of types with oldName to new name (newName). */
-  class TypeRenamer(oldName: String, newName: String) extends MetaTypeTransformer {
+  class TypeRenamer(oldName: String, newName: String) extends TypeTransformer {
     override def traitCallNameTransform(tname: String): String = {
       if (tname == oldName) newName
       else tname
@@ -283,6 +284,25 @@ object ScalanAstTransformers {
       else tpeArg
     }
   }
+
+  /** Removes all Rep types including RFunc and type synonims. */
+  class RepTypeRemover(module: SModuleDef) extends TypeTransformer {
+    override def typeTransform(tpe: STpeExpr): STpeExpr = {
+      val t = tpe match {
+        case module.RepTypeOf(t) => t
+        case _ => tpe
+      }
+      super.typeTransform(t)
+    }
+  }
+
+  /** Traverse whole META AST and rename types. Returns new tree. */
+//  class RepTypeRemoverInAst(implicit ctx: AstContext) extends MetaAstTransformer {
+//    def typeRemover(m: SModuleDef) = new RepTypeRemover(m)
+//
+//    override def methodResTransform(res: Option[STpeExpr]): Option[STpeExpr] = super.methodResTransform(res)
+//  }
+
   /** Traverse whole META AST and rename types. Returns new tree. */
   class TypeNameTransformer(oldName: String, newName: String)(implicit ctx: AstContext) extends MetaAstTransformer {
     val typeRenamer = new TypeRenamer(oldName, newName)

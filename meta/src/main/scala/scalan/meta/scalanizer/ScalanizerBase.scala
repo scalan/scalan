@@ -6,7 +6,7 @@ import scalan.meta.ScalanAstTransformers.{MetaAstReplacer, TypeReplacer}
 import scalan.meta.{ScalanParsers, MetaConfig, EntityManagement}
 import scalan.util.FileUtil
 
-trait ScalanizerBase[G <: Global] extends ScalanParsers[G] {
+trait ScalanizerBase[+G <: Global] extends ScalanParsers[G] {
   import global._
   import context._
 

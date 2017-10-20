@@ -21,7 +21,7 @@ trait Modules extends Base { self: Scalan =>
   def allEntities = modules.values.flatMap(_.allEntities)
 
   def registerModule(moduleInfo: ModuleInfo) = {
-    val m = loadModuleDef(moduleInfo)
+    val m = parsers.loadModuleDefFromResource(moduleInfo.sourceFileName)
     if (modules.contains(m.name))
       !!!(s"Module ${m.name} already registered")
     else {
@@ -29,15 +29,6 @@ trait Modules extends Base { self: Scalan =>
     }
   }
 
-  def loadModuleDef(moduleInfo: ModuleInfo): SModuleDef = {
-    import parsers._
-    val fileName = moduleInfo.sourceFileName
-    val sourceCode = FileUtil.readAndCloseStream(self.getClass.getClassLoader.getResourceAsStream(fileName))
-    val sourceFile = new BatchSourceFile(fileName, sourceCode)
-    val tree = parseFile(sourceFile)
-    val module = moduleDefFromTree(fileName, tree)(new ParseCtx(true)(parsers.context))
-    module
-  }
   def entityDef(e: EntityElem[_]): STraitOrClassDef = {
     val elemClassSymbol = ReflectionUtil.classToSymbol(e.getClass)
     val moduleName = elemClassSymbol.owner.name.toString.stripSuffix("Defs")

@@ -129,26 +129,27 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
         ancestors = L(STraitCall("Scalan", Nil).toTypeApply), None, true))
   }
 
-  val testModule =
-    """package scalan.test
-      |trait Module extends Scalan {
-      |  type Obs[A] = Rep[Observable[A]]
-      |  @ContainerType
-      |  trait Cont[A] extends Def[Cont[A]] {
-      |    implicit def eA: Elem[A]
-      |    @External
-      |    def map[B:Elem](
-      |  }
-      |  trait PairCont[A,B] extends Cont[(A,B)] {
-      |
-      |  }
-      |  class ContImpl1[A](implicit val eA: Elem[A]) extends Observable[A] {
-      |  }
-      |  class ContImpl2[A](implicit val eA: Elem[A]) extends Observable[A] {
-      |  }
-      |}
-    """.stripMargin
-  describe("annotations")  {
+  describe("AstContext methods") {
+    val m = parseModule(reactiveModule)
+
+    it("recognize type synonym") {
+      def test(t: STpeExpr, expected: Option[(String, List[STpeExpr])]): Unit = {
+        m.TypeSynonim.unapply(t) should be(expected)
+      }
+      test(STraitCall("Obs", List(TpeInt)), Some(("Observable", List(TpeInt))))
+      test(STraitCall("Iso", List(TpeInt, TpeInt)), Some(("IsoUR", List(TpeInt, TpeInt))))
+    }
+
+    it("recognize Rep type") {
+      def test(t: STpeExpr, expected: Option[STpeExpr]): Unit = {
+        m.RepTypeOf.unapply(t) should be(expected)
+      }
+      test(TpeInt, None)
+      test(STraitCall("Elem", List(TpeInt)), None)
+      test(STraitCall("Rep", List(TpeInt)), Some(TpeInt))
+      test(STraitCall("RFunc", List(TpeInt, TpeString)), Some(STpeFunc(TpeInt, TpeString)))
+      test(STraitCall("Obs", List(TpeInt)), Some(STraitCall("Observable", List(TpeInt))))
+    }
   }
 
   def testPath(module: SModuleDef, tpeString: String, name: String, expected: STpeExpr => Option[STpePath]): Unit = {
