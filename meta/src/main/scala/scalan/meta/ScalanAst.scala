@@ -640,6 +640,14 @@ object ScalanAst {
 
     def implicitArgs: SClassArgs
 
+    def findMethod(name: String): Option[SMethodDef] = {
+      body.collectFirst { case m: SMethodDef if m.name == name => m }
+    }
+
+    def findVal(name: String): Option[SValDef] = {
+      body.collectFirst { case v: SValDef if v.name == name => v }
+    }
+
     def tpeArgIndex(tpeArgName: String) = {
       tpeArgs.zipWithIndex.find { case (a, i) => a.name == tpeArgName }.get._2
     }

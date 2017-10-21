@@ -302,6 +302,17 @@ object ScalanAstTransformers {
     override def methodResTransform(res: Option[STpeExpr]): Option[STpeExpr] = {
       res.map(typeTrans)
     }
+    override def methodArgTransform(arg: SMethodArg): SMethodArg = {
+      arg.copy(tpe = typeTrans(arg.tpe))
+    }
+    override def classArgTransform(classArg: SClassArg): SClassArg = {
+      classArg.copy(tpe = typeTrans(classArg.tpe))
+    }
+
+    override def valdefTransform(valdef: SValDef): SValDef = {
+      val newVal = valdef.copy(tpe = valdef.tpe.map(typeTrans))
+      super.valdefTransform(newVal)
+    }
   }
 
   /** Traverse whole META AST and rename types. Returns new tree. */

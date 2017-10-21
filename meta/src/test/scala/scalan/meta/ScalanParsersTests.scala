@@ -132,7 +132,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   describe("AstContext methods") {
     val m = parseModule(reactiveModule)
     context.addModule(m)
-    val cols = parseModule(colsModule)
+    val cols = parseModule(colsModuleText)
     context.addModule(cols)
 
     it("recognize type synonym") {
