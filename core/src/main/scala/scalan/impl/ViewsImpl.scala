@@ -1507,6 +1507,6 @@ implicit val eB = p.innerIso.eTo
   }
 }
 
-object ViewsModule extends scalan.ModuleInfo("Views", "scalan/Views.scala")
+object ViewsModule extends scalan.ModuleInfo("scalan", "Views")
 }
 

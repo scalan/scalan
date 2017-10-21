@@ -1017,6 +1017,6 @@ implicit val eB = p.itemConv.eR
   }
 }
 
-object ConvertersModule extends scalan.ModuleInfo("Converters", "scalan/Converters.scala")
+object ConvertersModule extends scalan.ModuleInfo("scalan", "Converters")
 }
 

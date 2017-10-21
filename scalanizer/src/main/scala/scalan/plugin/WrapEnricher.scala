@@ -66,11 +66,6 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     * */
   def replaceExternalTypeByWrapper(module: SModuleDef)(implicit ctx: AstContext): SModuleDef = {
     class TypeInWrappersTransformer(name: String) extends External2WrapperTypeTransformer(name) {
-      override def methodTransform(method: SMethodDef): SMethodDef = {
-        if (method.name == "wrappedValue")
-          method
-        else super.methodTransform(method)
-      }
       override def classArgTransform(classArg: SClassArg) = classArg
       override def entityAncestorTransform(ancestor: STypeApply): STypeApply = {
           ancestor.copy(tpe = typeTransformer.traitCallTransform(ancestor.tpe))

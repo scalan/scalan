@@ -199,6 +199,6 @@ implicit val eSchema = p.key.eSchema
   }
 }
 
-object StructItemsModule extends scalan.ModuleInfo("StructItems", "scalan/primitives/StructItems.scala")
+object StructItemsModule extends scalan.ModuleInfo("scalan.primitives", "StructItems")
 }
 

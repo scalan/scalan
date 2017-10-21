@@ -2,11 +2,11 @@ package scalan.compilation.kotlin
 
 import java.io.PrintWriter
 
-import scalan.Scalan
-import scalan.compilation.{Name, IndentLevel, FileCodegen, CodegenConfig}
+import scalan.{ModuleInfo, Scalan}
+import scalan.compilation.{IndentLevel, FileCodegen, CodegenConfig}
 import scalan.meta.ScalanAst._
 import scalan.meta.PrintExtensions._
-import scalan.meta.ScalanAstTransformers
+import scalan.meta.{ScalanAstTransformers, Name}
 
 case class GenCtx(module: SModuleDef, writer: PrintWriter)
 
@@ -21,17 +21,17 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
 
   implicit def ctxToWriter(implicit ctx: GenCtx): PrintWriter = ctx.writer
   
-  def transitiveClosureSet(modules: Seq[SModuleDef], deps: SModuleDef => Iterable[SModuleDef]): Set[String] = {
+  def transitiveClosureSet(modules: Seq[SModuleDef], deps: SModuleDef => Iterable[SModuleDef]): Set[Name] = {
     //TODO implement transitive closure algorithm
-    modules.map(_.name).toSet
+    modules.map(m => Name(m.packageName, m.name)).toSet
   }
 
-  def modules: Map[String, SModuleDef] = {
+  def modules: Map[Name, SModuleDef] = {
     val nameToModule = scalan.getModules
-    val modules = config.modules.map(mn =>
-      nameToModule.getOrElse(mn, sys.error(s"Module $mn not found")))
+    val modules = config.moduleNames.map(n =>
+      nameToModule.getOrElse(n.mkFullName, sys.error(s"Module $n not found")))
     val closure = transitiveClosureSet(modules, m => m.dependencies)
-    closure.map(mn => (mn, nameToModule(mn))).toMap
+    closure.map(n => (n, nameToModule(n.mkFullName))).toMap
   }
 
   def genParents(ancestors: List[STypeApply])(implicit ctx: GenCtx): List[String] = {
@@ -140,8 +140,8 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
 
   val devirtPipeline = new ScalanAstTransformers.DevirtPipeline()
 
-  def emitModule(moduleName: String)(implicit writer: PrintWriter, indentLevel: IndentLevel) = {
-    val md = modules.getOrElse(moduleName, { sys.error(s"Cannot find module $moduleName") })
+  def emitModule(name: Name)(implicit writer: PrintWriter, indentLevel: IndentLevel) = {
+    val md = modules.getOrElse(name, { sys.error(s"Cannot find module $name") })
     val devirt = devirtPipeline(md)
     implicit val gctx = GenCtx(devirt, writer)
     for (c <- devirt.concreteSClasses) {

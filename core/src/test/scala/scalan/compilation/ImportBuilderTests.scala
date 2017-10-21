@@ -1,5 +1,6 @@
 package scalan.compilation
 
+import scalan.meta.Name
 import scalan.{BaseNestedTests, Scalan}
 
 class ImportBuilderTests extends BaseNestedTests {

@@ -4,6 +4,7 @@ import java.io.{PrintWriter, File}
 
 import scala.collection.mutable
 import scalan.Scalan
+import scalan.meta.Name
 import scalan.util.FileUtil
 
 case class IndentLevel(level: Int) {

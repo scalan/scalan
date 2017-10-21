@@ -20,6 +20,7 @@ import scalan.util.{Covariant, Contravariant, FileUtil, Invariant}
 import scalan.util.CollectionUtil._
 import ScalanAstExtensions._
 import scala.tools.nsc.Global
+import scalan.meta.ScalanAst.SModuleDef
 
 object ScalanAst {
 
@@ -855,7 +856,7 @@ object ScalanAst {
 
   /** Classification of external types by their names. */
   def isPrimitive(name: String): Boolean = {
-    STpePrimitives.keySet.contains(name)
+    STpePrimitives.contains(name)
   }
   def isStandardType(name: String): Boolean = {
     Set("Tuple", "Function").exists(name.startsWith(_)) ||
@@ -867,9 +868,12 @@ object ScalanAst {
     /** Mapping of external type names to their wrappers. */
     private val wrappers = MMap[String, WrapperDescr]()
 
+    /** Mapping of W-entities to the corresponding wrapped type name ("WArray" -> "Array") */
+    private[scalan] val entityToWrapper = MMap[String, String]()
+
     /** Mapping of <packageName>.<moduleName> to definition.
       * Initial set of modules in loaded from configs and later new modules can be added. */
-    private val modules = MMap[String, SModuleDef]()
+    private[scalan] val modules = MMap[String, SModuleDef]()
 
     def loadModulesFromResources(): Unit = {
       for (c <- configs) {
@@ -894,6 +898,8 @@ object ScalanAst {
 
     def updateWrapper(typeName: String, descr: WrapperDescr) = {
       wrappers(typeName) = descr
+      val entityName = descr.module.entities(0).name
+      entityToWrapper(entityName) = typeName
     }
 
     def externalTypes = wrappers.keySet
@@ -948,16 +954,20 @@ object ScalanAst {
         .toMap
     }
 
+    def hasModule(packageName: String, moduleName: String): Boolean = {
+      val key = Name.fullNameString(packageName, moduleName)
+      modules.contains(key)
+    }
+
     def getModule(packageName: String, moduleName: String): SModuleDef = {
-      val key = getModuleKey(packageName, moduleName)
+      val key = Name.fullNameString(packageName, moduleName)
       modules(key)
     }
 
-    def getModuleKey(packageName: String, moduleName: String): String = s"$packageName.$moduleName"
-    def getModuleKey(module: SModuleDef): String = getModuleKey(module.packageName, module.name)
+
 
     def addModule(module: SModuleDef) = {
-      val key = getModuleKey(module)
+      val key = module.getModuleKey
       modules(key) = module
     }
 
@@ -997,6 +1007,9 @@ object ScalanAst {
                         isVirtualized: Boolean,
                         okEmitOrigModuleTrait: Boolean = true)
                        (@transient implicit val context: AstContext) {
+    //TODO unify Module names
+    @JsonIgnore
+    def getModuleKey: String = Name.fullNameString(packageName, name)
     @JsonIgnore
     def getModuleTraitName: String = SModuleDef.moduleTraitName(name)
     def getFullName(shortName: String): String = s"$packageName.$name.$shortName"

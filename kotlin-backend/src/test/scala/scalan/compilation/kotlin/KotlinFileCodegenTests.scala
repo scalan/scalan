@@ -14,13 +14,14 @@ class KotlinFileCodegenTests extends BaseNestedTests {
   val gen = new KotlinFileCodegen(ctx, config)
 
   it("generateModules") {
-    for ((name, m) <- gen.modules) {
+    for ((mi, m) <- gen.modules) {
+      val name = m.name
       val pn = m.packageName.split('.').mkString("/")
       val moduleFile = FileUtil.file(config.basePath, pn, s"$name.kt")
       FileUtil.withFile(moduleFile) { implicit writer =>
         implicit val ident = IndentLevel(0)
         println(moduleFile)
-        gen.emitModule(name)
+        gen.emitModule(mi)
       }
     }
   }

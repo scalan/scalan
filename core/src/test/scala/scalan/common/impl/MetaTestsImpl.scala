@@ -488,6 +488,6 @@ implicit val eR = p.values.elem
   }
 }
 
-object MetaTestsModule extends scalan.ModuleInfo("MetaTests", "scalan/common/MetaTests.scala")
+object MetaTestsModule extends scalan.ModuleInfo("scalan.common", "MetaTests")
 }
 

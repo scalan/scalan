@@ -565,9 +565,8 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
 
   def emitModuleSerialization = {
     val moduleName = module.name
-    val jsonPath = module.packageName.split('.').mkString("/") + s"/$moduleName.scala"
     s"""
-      |object ${moduleName}Module extends scalan.ModuleInfo("$moduleName", "$jsonPath")
+      |object ${moduleName}Module extends scalan.ModuleInfo("${module.packageName}", "$moduleName")
        """.stripMargin
   }
 

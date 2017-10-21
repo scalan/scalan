@@ -2,6 +2,7 @@ package scalan.compilation
 
 import java.io.PrintWriter
 
+import scalan.meta.Name
 import scalan.{BaseNestedTests, Scalan}
 
 class FileCodegenTests extends BaseNestedTests {

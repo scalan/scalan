@@ -198,13 +198,13 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
   def mkCompanionAncestors(wClassName: String, kind: Int) =
     List(STraitCall("ExCompanion" + kind.toString, List(STraitCall(wClassName, Nil))).toTypeApply)
 
-  /** Creates Meta Module for an external type symbol. For example:
+  /** Creates scalan-meta Module for an external type symbol. For example:
     * trait WCols extends Base with TypeWrappers { self: Wrappers =>
-    * trait WCol[A] extends TypeWrapperDef[Col[A], WCol[A]] { self =>
-    * def arr: Array[A]
-    * };
-    * trait WColCompanion extends ExCompanion1[WCol]
-    * }
+    *   trait WCol[A] extends Def[WCol[A]] { self =>
+    *     def arr: Array[A]
+    *   };
+    *   trait WColCompanion extends ExCompanion1[WCol]
+    *   }
     * where
     * externalType is "class Col"
     * one of the members is "def arr: Array[A]"

@@ -1,20 +1,7 @@
 package scalan.compilation
 
 import scala.collection.mutable
-
-case class Name(packageName: String, name: String) {
-  def isImportedBy(item: ImportItem): Boolean = {
-    if (packageName != item.packageName) return false
-    item.importedNames.contains(Name.ImportAllWildcard) || item.importedNames.contains(name)
-  }
-}
-object Name {
-  /** Wildcard character used to signify imporing all names from namespace */
-  val ImportAllWildcard = "*"
-
-}
-
-case class ImportItem(packageName: String, importedNames: List[String])
+import scalan.meta.{Name, ImportItem}
 
 class ImportBuilder {
   /** Items imported from each package, constructed lazily based on actual usage */

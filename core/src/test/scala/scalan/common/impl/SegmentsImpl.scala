@@ -550,7 +550,7 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
   }
 }
 
-object SegmentsModule extends scalan.ModuleInfo("Segments", "scalan/common/Segments.scala")
+object SegmentsModule extends scalan.ModuleInfo("scalan.common", "Segments")
 }
 
 trait SegmentsModule extends scalan.common.impl.SegmentsDefs

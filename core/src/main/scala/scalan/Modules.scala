@@ -3,36 +3,38 @@ package scalan
 import scalan.meta.ScalanAst.{SModuleDef, STraitOrClassDef}
 import scala.collection.mutable
 import scala.reflect.internal.util.BatchSourceFile
-import scalan.meta.{BoilerplateToolRun, Parsers}
+import scalan.meta.{Parsers, BoilerplateToolRun, Name}
 import scalan.util.{ReflectionUtil, FileUtil}
 
-abstract class ModuleInfo(val name: String, val sourceFileName: String) {
-}
-
 trait Modules extends Base { self: Scalan =>
-  private[this] lazy val modules = mutable.Map.empty[String, SModuleDef]
   private[scalan] lazy val parsers = {
     val parsers = new Parsers(BoilerplateToolRun.allConfigs)
+    parsers.context.loadModulesFromResources()
     parsers
   }
 
-  def getModules = modules
+  private[this] lazy val modules = parsers.context.modules
 
-  def allEntities = modules.values.flatMap(_.allEntities)
+  def getModules: mutable.Map[String, SModuleDef] = modules
+
+  def allEntities = getModules.values.flatMap(_.allEntities)
 
   def registerModule(moduleInfo: ModuleInfo) = {
-    val m = parsers.loadModuleDefFromResource(moduleInfo.sourceFileName)
-    if (modules.contains(m.name))
-      !!!(s"Module ${m.name} already registered")
-    else {
-      modules += (m.name -> m)
+    val pack = moduleInfo.packageName
+    val name = moduleInfo.moduleName
+    if (!parsers.context.hasModule(pack, name)) {
+      val m = parsers.loadModuleDefFromResource(moduleInfo.sourceFileName)
+      parsers.context.addModule(m)
+      println(s"WARNING: module $pack.$name added by registerModule")
     }
   }
 
   def entityDef(e: EntityElem[_]): STraitOrClassDef = {
     val elemClassSymbol = ReflectionUtil.classToSymbol(e.getClass)
     val moduleName = elemClassSymbol.owner.name.toString.stripSuffix("Defs")
-    val module = modules.getOrElse(moduleName, !!!(s"Module $moduleName not found"))
+    val packageName = e.getClass.getPackage.getName.stripSuffix(".impl")
+    val key = Name.fullNameString(packageName, moduleName)
+    val module = modules.getOrElse(key, !!!(s"Module $key not found"))
     val entityName = elemClassSymbol.name.toString.stripSuffix("Elem")
     module.allEntities.find(_.name == entityName).getOrElse {
       !!!(s"Entity $entityName not found in module $moduleName")

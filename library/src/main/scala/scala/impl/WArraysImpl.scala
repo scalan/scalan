@@ -217,7 +217,7 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   }
 }
 
-object WArraysModule extends scalan.ModuleInfo("WArrays", "scala/WArrays.scala")
+object WArraysModule extends scalan.ModuleInfo("scala", "WArrays")
 }
 
 trait WArraysModule extends scala.impl.WArraysDefs {self: WrappersModule =>}
