@@ -78,8 +78,6 @@ lazy val allConfigDependency = "compile->compile;test->test"
 
 cancelable in Global := true
 
-// projects
-
 lazy val common = Project("scalan-common", file("common"))
   .settings(commonSettings,
   libraryDependencies ++= Seq(
@@ -98,7 +96,6 @@ lazy val meta = Project("scalan-meta", file("meta"))
       "com.github.kxbmap" %% "configs-java7" % "0.3.0"
       ),
     fork in Test := true,
-//    baseDirectory in Test := file("."),
     fork in run := true)
 
 lazy val scalanizer = Project("scalanizer", file("scalanizer"))
@@ -139,6 +136,10 @@ lazy val kotlinBackend = Project("scalan-kotlin-backend", file("kotlin-backend")
   .settings(
     //    libraryDependencies += "org.luaj" % "luaj-jse" % "3.0.1"
   )
+
+lazy val root = Project("scalan", file("."))
+  .aggregate(common, meta, scalanizer, librarydef, core, library, kotlinBackend)
+  .settings(buildSettings, publishArtifact := false)
 
 //lazy val collections = Project("scalan-collections", file("collections"))
 //  .dependsOn(core % allConfigDependency)
@@ -215,6 +216,4 @@ lazy val extraClassPathTask = TaskKey[String]("extraClassPath") // scalan.plugin
 //    files.mkString(java.io.File.pathSeparator)
 //}.value
 
-lazy val root = Project("scalan", file("."))
-  .aggregate(common, meta, scalanizer, librarydef, core, library, kotlinBackend)
-  .settings(buildSettings, publishArtifact := false)
+

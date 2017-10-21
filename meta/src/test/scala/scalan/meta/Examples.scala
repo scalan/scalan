@@ -16,4 +16,15 @@ trait Examples {
      |}
     """.stripMargin
 
+  val colsModule =
+    """package scalan.collection
+     |import scalan._
+     |trait Cols extends Scalan {
+     |  type Col[A] = Rep[Collection[A]]
+     |  trait Collection[A] {
+     |    implicit def eA: Elem[A]
+     |  }
+     |}
+    """.stripMargin
+
 }

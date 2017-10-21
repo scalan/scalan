@@ -132,14 +132,15 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   describe("AstContext methods") {
     val m = parseModule(reactiveModule)
     context.addModule(m)
+    val cols = parseModule(colsModule)
+    context.addModule(cols)
 
     it("recognize type synonym") {
       def test(t: STpeExpr, expected: Option[(String, List[STpeExpr])]): Unit = {
         context.TypeSynonim.unapply(t) should be(expected)
       }
       test(STraitCall("Obs", List(TpeInt)), Some(("Observable", List(TpeInt))))
-      test(STraitCall("Iso", List(TpeInt, TpeInt)), Some(("IsoUR", List(TpeInt, TpeInt))))
-      test(STraitCall("Conv", List(TpeInt, TpeInt)), Some(("Converter", List(TpeInt, TpeInt))))
+      test(STraitCall("Col", List(TpeString)), Some(("Collection", List(TpeString))))
     }
 
     it("recognize Rep type") {
