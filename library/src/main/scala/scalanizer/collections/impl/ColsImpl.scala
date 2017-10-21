@@ -35,7 +35,6 @@ trait ColsDefs extends scalan.Scalan with Cols {
         case e => !!!(s"Expected $x to have ColElem[_, _], but got $e", x)
       }
     }
-
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -66,7 +65,6 @@ trait ColsDefs extends scalan.Scalan with Cols {
     with ConcreteElem[ColOverArrayData[A], ColOverArray[A]] {
     override lazy val parent: Option[Elem[_]] = Some(colElement(element[A]))
     override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("A" -> (eA -> scalan.util.Invariant))
-
     override def convertCol(x: Rep[Col[A]]) = ColOverArray(x.arr)
     override def getDefaultRep = ColOverArray(element[WArray[A]].defaultRepValue)
     override lazy val tag = {

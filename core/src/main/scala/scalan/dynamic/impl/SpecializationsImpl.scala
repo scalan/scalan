@@ -42,7 +42,6 @@ trait SpecializationsDefs extends Specializations {
         case e => !!!(s"Expected $x to have IsoFuncElem[_, _, _, _], but got $e", x)
       }
     }
-
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -75,7 +74,6 @@ implicit val eM = metric.elem.eRange
     with ConcreteElem[IsoFuncBaseData[T, R, M], IsoFuncBase[T, R, M]] {
     override lazy val parent: Option[Elem[_]] = Some(isoFuncElement(element[T], element[R], element[M]))
     override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("T" -> (eT -> scalan.util.Invariant), "R" -> (eR -> scalan.util.Invariant), "M" -> (eM -> scalan.util.Invariant))
-
     override def convertIsoFunc(x: Rep[IsoFunc[T, R, M]]) = IsoFuncBase(x.func, x.metric)
     override def getDefaultRep = IsoFuncBase(constFun[T, R](element[R].defaultRepValue), constFun[T, M](element[M].defaultRepValue))
     override lazy val tag = {

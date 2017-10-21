@@ -40,7 +40,6 @@ trait StructItemsDefs extends StructItems {
         case e => !!!(s"Expected $x to have StructItemElem[_, _, _], but got $e", x)
       }
     }
-
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -72,7 +71,6 @@ implicit val eSchema = key.eSchema
     with ConcreteElem[StructItemBaseData[Val, Schema], StructItemBase[Val, Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(structItemElement(element[Val], element[Schema]))
     override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Val" -> (eVal -> scalan.util.Invariant), "Schema" -> (eSchema -> scalan.util.Invariant))
-
     override def convertStructItem(x: Rep[StructItem[Val, Schema]]) = StructItemBase(x.key, x.value)
     override def getDefaultRep = StructItemBase(element[StructKey[Schema]].defaultRepValue, element[Val].defaultRepValue)
     override lazy val tag = {

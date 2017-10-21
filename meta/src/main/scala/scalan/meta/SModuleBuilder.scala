@@ -291,64 +291,6 @@ class SModuleBuilder(implicit val context: AstContext) {
     }.moduleTransform(module)
   }
 
-  /** Adding of a method which return original external type. For example:
-    * def wrappedValue: Rep[Array[T]]; */
-  def addWrappedValue(module: SModuleDef): SModuleDef = {
-    val wrType = module.entityOps.ancestors.collect {
-      case STypeApply(TypeWrapperTpe(wrType),_) => wrType
-    }.headOption
-    val wrappedValue = SMethodDef(
-      name = "wrappedValue",
-      tpeArgs = Nil, argSections = Nil,
-      tpeRes = wrType,
-      isImplicit = false, isOverride = false, overloadId = None,
-      annotations = Nil, body = None, isTypeDesc = false
-    )
-    val updatedEntity = module.entityOps.copy(
-      body = wrappedValue :: module.entityOps.body
-    )
-    module.copy(entityOps = updatedEntity, entities = List(updatedEntity))(context)
-  }
-
-  /** Adding of a method which returns default value of external type.
-    * For example: def DefaultOfArray[T]: Default[Array[T]] = ???. */
-  def defaultMethod(module: SModuleDef): SModuleDef = {
-    val baseType = module.entityOps.optBaseType.get
-    val tpeArgs = module.entityOps.tpeArgs
-    val typeDescs = tpeArgs.map { a =>
-      SMethodArg(true, false,
-        "e" + a.name,
-        STraitCall("Elem", List(a.toTraitCall)),
-        None, isTypeDesc = true)
-    }
-    val defaultOfWrapper = SMethodDef(
-      name = "DefaultOf" + module.entityOps.baseInstanceName,
-      tpeArgs = tpeArgs,
-      argSections = List(SMethodArgs(typeDescs)),
-      tpeRes = Some(baseType),
-      isImplicit = false, isOverride = false, overloadId = None,
-      annotations = Nil,
-      body = Some(SConst(null, Some(baseType))),
-      isTypeDesc = false // Workaround: disable virtualization of the method
-    )
-    module.copy(methods = defaultOfWrapper :: module.methods)(context)
-  }
-
-  /** Adding of default implementation of the type wrapper. It is required by
-    * Scalan Codegen. When the module is stored, the default implementation
-    * is filtered. */
-  def defaultWrapperImpl(module: SModuleDef): SModuleDef = {
-    val wrapperTypes = module.entityOps.ancestors.collect {
-      case STypeApply(TypeWrapperTpe(w), _) => w
-    }
-    if (wrapperTypes.isEmpty) module
-    else {
-      val wrType = wrapperTypes.head
-      val wrImpl = wrapperImpl(module.entityOps, wrType, false)
-      module.copy(concreteSClasses = List(wrImpl))(context)
-    }
-  }
-
   /** Converts constructors (methods with name "<init>") to the apply method of companions. */
   def filterConstructor(module: SModuleDef): SModuleDef = {
     new AstTransformer {

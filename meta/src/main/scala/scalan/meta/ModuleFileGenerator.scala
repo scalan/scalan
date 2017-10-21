@@ -189,26 +189,6 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
   def emitTraitDefs(e: EntityTemplateData) = {
     val entityCompOpt = e.entity.companion
     val hasCompanion = entityCompOpt.isDefined
-    val proxyBT = e.optBaseType.opt { bt =>
-      s"""
-        |  implicit def unwrapValueOf${e.typeDecl}(w: Rep[${e.typeUse}]): Rep[${e.baseTypeUse}] = w.wrappedValue
-        |""".stripAndTrim
-    }
-    // note: currently can't cache them properly due to cyclical dependency between
-    // baseType elem and wrapper elem
-    val baseTypeElem = e.optBaseType.opt { bt =>
-      val defOrVal = if (e.tpeArgs.isEmpty) "lazy val" else "def"
-      val declaration =
-        s"implicit $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${e.typesWithElems}: Elem[${e.baseTypeUse}]"
-      val wrapperElemType = if (e.isCont)
-        "WrapperElem1[_, _, CBase, CW] forSome { type CBase[_]; type CW[_] }"
-      else
-        "WrapperElem[_, _]"
-      s"""
-        |  $declaration =
-        |    element[${e.typeUse}].asInstanceOf[$wrapperElemType].baseElem.asInstanceOf[Elem[${e.baseTypeUse}]]
-        |""".stripAndTrim
-    }
 
     def familyCont(e: EntityTemplateData) = {
       def container(name: String, isFunctor: Boolean, isWrapper: Boolean) = {
@@ -238,8 +218,6 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       s"""
         |  implicit def cast${e.name}Element${e.tpeArgsDecl}(elem: Elem[${e.typeUse}]): $entityElem =
         |    elem.asInstanceOf[$entityElem]
-        |
-        |  ${e.optBaseType.opt(bt => container(bt.name, false, false))}
         |
         |  ${container(e.name, e.isFunctor, true)}
         |
@@ -279,14 +257,6 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
               s"EntityElem[$toArgName]"
             }
           (None, parentElem)
-        case Some(TypeWrapperTpe(_)) =>
-          val parentElem =
-            if (e.isCont) {
-              s"WrapperElem1[${join(e.tpeArgNames, toArgName, e.baseTypeName, e.name)}](${e.tpeArgNames.rep("_e" + _)}, container[${e.baseTypeName}], container[${e.name}])"
-            } else {
-              s"WrapperElem[${e.baseTypeUse}, $toArgName]"
-            }
-          (None, parentElem)
         case Some(parent@STraitCall(parentName, parentTpeArgs)) =>
           (Some(parent), s"${parentName}Elem[${join(parentTpeArgs, toArgName)}]")
         case Some(p) => !!!(s"Unsupported parent type $p of the entity ${e.name}")
@@ -297,42 +267,12 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       val elemMethodDefinition = {
         if (!module.methods.exists(_.name == elemMethodName)) {
           val elemType = e.elemTypeUse()
-          val elemMethodBody =
-            if (e.isWrapper) {
-              s"""    elemCache.getOrElseUpdate(
-                |      (classOf[$elemType], ${e.implicitArgsUse.opt(x => s"Seq$x", "Nil")}),
-                |      new $elemType).asInstanceOf[Elem[${e.typeUse}]]"""
-            } else
-              s"    cachedElem[$elemType]${e.implicitArgsOrParens}"
           s"""
             |  implicit def $elemMethodName${e.tpeArgsDecl}${e.implicitArgsDecl()}: Elem[${e.typeUse}] =
-            |$elemMethodBody
+            |    cachedElem[$elemType]${e.implicitArgsOrParens}
             |""".stripMargin
         } else ""
       }
-      val baseTypeElem = e.optBaseType.opt { bt =>
-        val thisElem = s"this.asInstanceOf[Elem[${e.typeUse}]]"
-        if (e.isCont) {
-          val elems = e.tpeArgNames.rep(ty => s"element[$ty]")
-          s"""
-            |    lazy val baseElem =
-            |      new BaseTypeElem1[${join(e.tpeArgNames, e.baseTypeName, e.typeUse)}]($thisElem)(
-            |        $elems, container[${bt.name}])
-            |""".stripAndTrim
-        } else {
-          val weakTagsForTpeArgs = e.tpeArgNames.map { argName =>
-            s"      implicit val w$argName = element[$argName].tag"
-          }.mkString("\n")
-          s"""
-            |    lazy val baseElem = {
-            |      $weakTagsForTpeArgs
-            |      new BaseTypeElem[${e.baseTypeUse}, ${e.typeUse}]($thisElem)
-            |    }
-            |""".stripAndTrim
-        }
-      }
-      val eTo =
-        s"    lazy val eTo: Elem[_] = new ${e.name}ImplElem${e.tpeArgsUse}(iso${e.name}Impl${e.implicitArgsUse})${e.implicitArgsUse}"
 
       s"""
         |  // familyElem
@@ -356,8 +296,6 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e", x)
         |      }
         |    }
-        |${e.isWrapper.opt(baseTypeElem)}
-        |${e.isWrapper.opt(eTo)}
         |    override def getDefaultRep: Rep[$toArgName] = ???
         |  }
         |$elemMethodDefinition
@@ -408,32 +346,6 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       val parent = clazz.ancestors.head.tpe
       val parentTpeArgsStr = parent.tpeSExprs.rep()
       val elemTypeDecl = c.name + "Elem" + tpeArgsDecl
-      lazy val defaultImpl = e.optBaseType match {
-        case Some(bt) if className == s"${e.name}Impl" =>
-          val externalMethods = e.entity.getMethodsWithAnnotation(ExternalAnnotation)
-          val externalMethodsStr = externalMethods.rep(md => externalMethod(md), "\n    ")
-          s"""
-            |  // default wrapper implementation
-            |  abstract class ${e.name}Impl${tpeArgsDecl}(val wrappedValue: Rep[${e.baseTypeUse}])${c.optimizeImplicits().implicitArgsDecl("val ")} extends ${e.typeUse} with Def[${e.name}Impl${tpeArgsDecl}] {
-            |    ${c.extractionBuilder().extractableImplicits(true)}
-            |    lazy val selfType = element[${e.name}Impl${tpeArgsDecl}]
-            |    $externalMethodsStr
-            |  }
-            |  case class ${e.name}ImplCtor${tpeArgsDecl}(override val wrappedValue: Rep[${e.baseTypeUse}])${c.optimizeImplicits().implicitArgsDecl("override val ")} extends ${e.name}Impl${tpeArgsUse}(${fields.rep()}) {
-            |  }
-            |  trait ${e.name}ImplCompanion
-            |""".stripAndTrim
-        case Some(_) => ""
-        case None =>
-          s"""
-            |  case class ${c.typeDecl("Ctor")}
-            |      (${fieldsWithType.rep(f => s"override val $f")})${c.optimizeImplicits().implicitArgsDecl()}
-            |    extends ${c.typeUse}(${fields.rep()})${clazz.selfType.opt(t => s" with ${t.tpe}")} with Def[${c.typeUse}] {
-            |    ${c.extractionBuilder().extractableImplicits(true)}
-            |    lazy val selfType = element[${c.typeUse}]
-            |  }
-            |""".stripAndTrim
-      }
       val eFrom = {
         val elemMethodName = StringUtil.lowerCaseFirst(className + "DataElem")
         if (module.methods.exists(_.name == elemMethodName))
@@ -501,14 +413,18 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
           s"n match {\n$cases\n    }"
       }
       s"""
-        |$defaultImpl
+        |  case class ${c.typeDecl("Ctor") }
+        |      (${fieldsWithType.rep(f => s"override val $f") })${c.optimizeImplicits().implicitArgsDecl() }
+        |    extends ${c.typeUse }(${fields.rep() })${clazz.selfType.opt(t => s" with ${t.tpe }") } with Def[${c.typeUse }] {
+        |    ${c.extractionBuilder().extractableImplicits(true) }
+        |    lazy val selfType = element[${c.typeUse }]
+        |  }
         |  // elem for concrete class
         |  class $elemTypeDecl(val iso: Iso[$dataTpe, ${c.typeUse}])${c.implicitArgsDeclConcreteElem}
         |    extends ${parent.name}Elem[${join(parentTpeArgsStr, c.typeUse)}]
         |    with $concreteElemSuperType {
         |    override lazy val parent: Option[Elem[_]] = Some($parentElem)
         |    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs(${c.tpeSubstStr})
-        |    ${e.isWrapper.opt("override lazy val eTo: Elem[_] = this")}
         |    override def convert${parent.name}(x: Rep[$parent]) = $converterBody
         |    override def getDefaultRep = $className(${fieldTypes.rep(zeroSExpr(e.entity)(_))})
         |    override lazy val tag = {
@@ -620,10 +536,6 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       |  ${module.selfTypeString("")}
       |
       |${entityProxy(e)}
-      |
-      |$proxyBT
-      |
-      |$baseTypeElem
       |
       |${if (e.isCont) familyCont(e) else ""}
       |

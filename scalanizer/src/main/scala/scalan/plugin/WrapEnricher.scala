@@ -73,9 +73,6 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       }
       override def classArgTransform(classArg: SClassArg) = classArg
       override def entityAncestorTransform(ancestor: STypeApply): STypeApply = {
-        if (ancestor.tpe.name == TypeWrapperDefName)
-          ancestor
-        else
           ancestor.copy(tpe = typeTransformer.traitCallTransform(ancestor.tpe))
       }
     }

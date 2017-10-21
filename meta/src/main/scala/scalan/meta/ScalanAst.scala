@@ -296,8 +296,6 @@ object ScalanAst {
         Some(SNilPath)
       case tc@STraitCall(module.Entity(e), args) =>
         findInEntity(module, e, tc, argName)
-      case tc@STraitCall(module.WrapperEntity(e, _), args) =>
-        findInEntity(module, e, tc, argName)
       case _ => None
     }
   }
@@ -659,12 +657,6 @@ object ScalanAst {
     def firstAncestorType = ancestors.headOption.map(_.tpe)
 
     @JsonIgnore
-    def isWrapper = firstAncestorType match {
-      case Some(TypeWrapperTpe(_)) => true
-      case _ => false
-    }
-
-    @JsonIgnore
     def isHighKind = tpeArgs.exists(_.isHighKind)
 
     @JsonIgnore
@@ -736,21 +728,6 @@ object ScalanAst {
     def clean: STraitOrClassDef
   }
 
-  object TypeWrapperTpe {
-    def apply(wrappedType: STraitCall, wrapperType: STraitCall) =
-      STraitCall(TypeWrapperDefName, List(wrappedType, wrapperType))
-    def unapply(tc: STraitCall): Option[STraitCall] = tc match {
-      case STraitCall(TypeWrapperDefName, List(w@STraitCall(_, _), _)) => Some(w)
-      case _ => None
-    }
-  }
-
-  /** Extracts first argument of TypeWrapperDef from ancestors */
-  object WrapperEntity {
-    def unapply(e: STraitOrClassDef): Option[STraitCall] =
-      e.ancestors.map(_.tpe).collectFirst { case TypeWrapperTpe(w) => w }
-  }
-
   case class STraitDef(
                         name: String,
                         tpeArgs: List[STpeArg],
@@ -796,17 +773,7 @@ object ScalanAst {
     }
   }
 
-  final val TypeWrapperDefName = "TypeWrapperDef"
-
   implicit class STraitOrClassDefOps(td: STraitOrClassDef) {
-    def optBaseType: Option[STraitCall] = WrapperEntity.unapply(td)
-
-    def baseTypeName: String = optBaseType match {
-      case Some(STraitCall(name, _)) => name
-      case _ => td.name
-    }
-
-    def baseInstanceName: String = baseTypeName.stripSuffix(".type")
   }
 
   case class SClassDef(
@@ -1055,12 +1022,6 @@ object ScalanAst {
       res
     }
 
-    def findWrapperEntity(wrappedTypeName: String): Option[(STraitOrClassDef, STraitCall)] = {
-      entities.collectFirst {
-        case e@ScalanAst.WrapperEntity(w) if w.name == wrappedTypeName => (e, w)
-      }
-    }
-
     def getEntity(name: String): STraitOrClassDef = {
       findEntity(name, globalSearch = true).getOrElse {
         sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
@@ -1117,7 +1078,7 @@ object ScalanAst {
     }
 
     object WrapperEntity {
-      def unapply(name: String): Option[(STraitOrClassDef, STraitCall)] = findWrapperEntity(name)
+      def unapply(name: String): Option[(STraitOrClassDef, STraitCall)] = ???
     }
 
 

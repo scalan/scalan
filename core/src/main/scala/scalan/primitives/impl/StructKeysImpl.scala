@@ -35,7 +35,6 @@ trait StructKeysDefs extends StructKeys {
         case e => !!!(s"Expected $x to have StructKeyElem[_, _], but got $e", x)
       }
     }
-
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -65,7 +64,6 @@ trait StructKeysDefs extends StructKeys {
     with ConcreteElem[IndexStructKeyData[Schema], IndexStructKey[Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(structKeyElement(element[Schema]))
     override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
-
     override def convertStructKey(x: Rep[StructKey[Schema]]) = IndexStructKey(x.index)
     override def getDefaultRep = IndexStructKey(0)
     override lazy val tag = {
@@ -146,7 +144,6 @@ trait StructKeysDefs extends StructKeys {
     with ConcreteElem[NameStructKeyData[Schema], NameStructKey[Schema]] {
     override lazy val parent: Option[Elem[_]] = Some(structKeyElement(element[Schema]))
     override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Schema" -> (eSchema -> scalan.util.Invariant))
-
     override def convertStructKey(x: Rep[StructKey[Schema]]) = NameStructKey(x.name)
     override def getDefaultRep = NameStructKey("")
     override lazy val tag = {

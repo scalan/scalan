@@ -32,12 +32,7 @@ class MetaCodegen {
           s"c$name.lift(${args.rep(a => s"element[$a]")}).defaultRepValue"
       }
     case tc@STraitCall(name, args) => {
-      val isBT = entity.optBaseType.exists(bt => bt.name == name)
-      if (isBT) {
-        s"DefaultOf${tc.name + tc.tpeSExprs.asTypeParams()}"
-      } else {
         s"element[$t].defaultRepValue"
-      }
     }
     case STpeTuple(items) => pairify(items.map(zeroSExpr(entity)))
     case STpeFunc(domain, range) => s"""constFun[$domain, $range](${zeroSExpr(entity)(range)})"""
@@ -367,12 +362,6 @@ class MetaCodegen {
     }
     val implicitArgsUse = implicitArgs.opt(args => s"(${args.rep(_.name)})")
     val implicitArgsOrParens = if (implicitArgs.nonEmpty) implicitArgsUse else "()"
-    val optBaseType = entity.optBaseType
-//    val baseTypeName = optBaseType.map(_.name).getOrElse(name)
-    val baseTypeName = entity.baseTypeName
-    val baseInstanceName = entity.baseInstanceName
-    val baseTypeDecl = baseTypeName + tpeArgsDecl
-    val baseTypeUse = baseTypeName + tpeArgsUse
     val firstAncestorType = entity.firstAncestorType
     val entityRepSynonymOpt = module.entityRepSynonym
     val allArgs = entity.args.args ++ entity.implicitArgs.args
@@ -384,7 +373,6 @@ class MetaCodegen {
 
     def isCont = tpeArgs.length == 1 && entity.hasAnnotation(ContainerTypeAnnotation)
     def isFunctor = tpeArgs.length == 1 && entity.hasAnnotation(FunctorTypeAnnotation)
-    def isWrapper = entity.isWrapper
 
     def boundedTpeArgString(withTags: Boolean = false) = tpeArgs.getBoundedTpeArgString(withTags)
 

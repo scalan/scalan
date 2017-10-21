@@ -152,18 +152,12 @@ trait ScalanParsers[+G <: Global] {
     }
 
     val concreteClasses = mainTrait.getConcreteClasses.filterNot(isInternalClassOfCompanion(_, mainTrait))
-    val classes = entity.optBaseType match {
-      case Some(bt) =>
-        wrapperImpl(entity, bt, true) :: concreteClasses
-      case None =>
-        concreteClasses
-    }
     val methods = defs.collect {
       case md: SMethodDef if !isInternalMethodOfCompanion(md, mainTrait) => md
     }
 
     SModuleDef(packageName, imports, moduleName,
-      entityRepSynonym, entity, traits, classes, methods,
+      entityRepSynonym, entity, traits, concreteClasses, methods,
       mainTrait.selfType, mainTrait.ancestors,
       None, ctx.isVirtualized, okEmitOrigModuleTrait = !isDefinedModule)
   }

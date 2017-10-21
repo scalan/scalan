@@ -64,7 +64,6 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
         case e => !!!(s"Expected $x to have WArrayElem[_, _], but got $e", x)
       }
     }
-
     override def getDefaultRep: Rep[To] = ???
   }
 
