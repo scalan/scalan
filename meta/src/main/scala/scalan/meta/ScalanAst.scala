@@ -505,6 +505,10 @@ object ScalanAst {
     }
   }
 
+  object SMethodDef {
+    def emptyArgSection = List(SMethodArgs(Nil))
+  }
+
   case class SValDef(
                       name: String,
                       tpe: Option[STpeExpr],

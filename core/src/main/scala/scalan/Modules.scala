@@ -11,7 +11,7 @@ abstract class ModuleInfo(val name: String, val sourceFileName: String) {
 
 trait Modules extends Base { self: Scalan =>
   private[this] lazy val modules = mutable.Map.empty[String, SModuleDef]
-  private[this] lazy val parsers = {
+  private[scalan] lazy val parsers = {
     val parsers = new Parsers(BoilerplateToolRun.allConfigs)
     parsers
   }

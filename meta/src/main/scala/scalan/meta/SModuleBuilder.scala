@@ -404,4 +404,9 @@ class SModuleBuilder(implicit val context: AstContext) {
     val nonConflictModule = pipeline(module)
     nonConflictModule
   }
+  
+  def unrepAllTypes(module: SModuleDef): SModuleDef = {
+    val t = new TypeTransformerInAst(new RepTypeRemover())
+    t.moduleTransform(module)
+  }
 }

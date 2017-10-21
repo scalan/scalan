@@ -352,4 +352,23 @@ object ScalanAstTransformers {
 
   /** The external types that should be rejected during virtualization. */
   def isIgnoredExternalType(typeName: String) = Set("Object", "Any", "AnyRef").contains(typeName)
+
+  class EnrichPipeline(implicit val context: AstContext) extends (SModuleDef => SModuleDef) {
+    val moduleBuilder = new SModuleBuilder()
+    import moduleBuilder._
+    private val chain = scala.Function.chain(Seq(
+      genClassesImplicits _
+    ))
+    override def apply(module: Module): Module = chain(module)
+  }
+
+  class DevirtPipeline(implicit val context: AstContext) extends (SModuleDef => SModuleDef) {
+    val moduleBuilder = new SModuleBuilder()
+    import moduleBuilder._
+    private val chain = scala.Function.chain(Seq(
+      unrepAllTypes _
+    ))
+    override def apply(module: Module): Module = chain(module)
+  }
+
 }

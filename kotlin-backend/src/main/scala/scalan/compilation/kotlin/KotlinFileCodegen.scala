@@ -6,12 +6,13 @@ import scalan.Scalan
 import scalan.compilation.{Name, IndentLevel, FileCodegen, CodegenConfig}
 import scalan.meta.ScalanAst._
 import scalan.meta.PrintExtensions._
+import scalan.meta.ScalanAstTransformers
 
 case class GenCtx(module: SModuleDef, writer: PrintWriter)
 
 class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) extends FileCodegen(_scalan, config) {
   import scalan._
-
+  implicit val context = parsers.context
   val PairType = Name("kotlin", "Pair")
 
   def languageName = "Kotlin"
@@ -75,7 +76,7 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
 
   def genMethodArgs(argSections: List[SMethodArgs])
                    (implicit ctx: GenCtx): List[String] = {
-    argSections.map(_.args.map(genMethodArg).rep())
+    argSections.map(sec => s"(${sec.args.map(genMethodArg).rep()})")
   }
 
   def genBodyItem(x: SBodyItem)(implicit ctx: GenCtx): String = x match {
@@ -84,9 +85,10 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
       //      val rhs = emit(expr)
       s"""val $n${optType} = ???"""
     case md: SMethodDef =>
-      val args = genMethodArgs(md.argSections)
+      val sections = md.argSections
+      val args = genMethodArgs(if (sections.isEmpty) SMethodDef.emptyArgSection else sections)
       val optType = md.tpeRes.opt(t => s": ${genTpeExpr(t)}")
-      s"""def ${md.name}${args.rep(sep = "")}${optType} = ???"""
+      s"""fun ${md.name}${args.rep(sep = "")}${optType} = ???"""
     case _ =>
       s"<<<Don't know how to emit ${x}>>>"
   }
@@ -136,10 +138,13 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
     emit("}")
   }
 
+  val devirtPipeline = new ScalanAstTransformers.DevirtPipeline()
+
   def emitModule(moduleName: String)(implicit writer: PrintWriter, indentLevel: IndentLevel) = {
     val md = modules.getOrElse(moduleName, { sys.error(s"Cannot find module $moduleName") })
-    implicit val gctx = GenCtx(md, writer)
-    for (c <- md.concreteSClasses) {
+    val devirt = devirtPipeline(md)
+    implicit val gctx = GenCtx(devirt, writer)
+    for (c <- devirt.concreteSClasses) {
       emitClass(c)
     }
   }
