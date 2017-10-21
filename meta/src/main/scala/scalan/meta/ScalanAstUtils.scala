@@ -2,7 +2,7 @@ package scalan.meta
 
 import scalan.meta.ScalanAst._
 import scalan.meta.Base._
-import scalan.meta.ScalanAstTransformers.{MetaAstTransformer, TypeTransformer, MetaAstReplacer}
+import scalan.meta.ScalanAstTransformers.{AstTransformer, TypeTransformer, AstReplacer}
 import scalan.util.CollectionUtil._
 
 object ScalanAstUtils {

@@ -2,7 +2,7 @@ package scalan.universe.api
 
 import scala.language.reflectiveCalls
 import scalan._
-import scalan.common.{KindsModule, SegmentsModule}
+import scalan.common.{SegmentsModule, KindsModule, ViewExamples, CommonExamples}
 import scalan.universe.api.UniverseUtils._
 
 class ElemTests extends BaseCtxTests { suite =>
@@ -19,6 +19,16 @@ class ElemTests extends BaseCtxTests { suite =>
 
     def genElems[A](n: Int, e: Elem[A], f: Elem[A] => Iterator[Elem[_]]): Set[Elem[_]] = {
       genTuples(List.fill(n)(e))(f).map(es => Elem.pairify(es.toIterator)).toSet
+    }
+  }
+
+  test("EntityElem.entityDef") {
+    val ctx = new Ctx
+    import ctx._
+    {
+      val e = element[Segment].asEntityElem
+      val d = entityDef(e)
+      assert(d.name == "Segment")
     }
   }
 

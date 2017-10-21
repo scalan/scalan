@@ -9,15 +9,16 @@ class SModuleBuilder(implicit val context: AstContext) {
 
   // Pipeline Step
   def fixExistentialType(module: SModuleDef) = {
-    new MetaAstTransformer {
+    new AstTransformer {
       def containsExistential(tpe: STpeExpr): Boolean = {
         var hasExistential = false
-        new TypeTransformer {
+        val trans = new TypeTransformer {
           override def existTypeTransform(existType: STpeExistential): STpeExistential = {
             hasExistential = true
             super.existTypeTransform(existType)
           }
-        }.typeTransform(tpe)
+        }
+        trans(tpe)
 
         hasExistential
       }
@@ -111,7 +112,7 @@ class SModuleBuilder(implicit val context: AstContext) {
 
   /** ClassTags are removed because they can be extracted from Elems. */
   def cleanUpClassTags(module: SModuleDef) = {
-    class ClassTagTransformer extends MetaAstTransformer {
+    class ClassTagTransformer extends AstTransformer {
       override def methodArgsTransform(args: SMethodArgs): SMethodArgs = {
         val newArgs = args.args.filter {marg => marg.tpe match {
           case tc: STraitCall if tc.name == "ClassTag" => false
@@ -145,7 +146,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   }
 
   def replaceClassTagByElem(module: SModuleDef) = {
-    new MetaAstReplacer("ClassTag", (_:String) => "Elem") {
+    new AstReplacer("ClassTag", (_:String) => "Elem") {
       override def selectTransform(select: SSelect): SExpr = {
         val type2Elem = Map(
           "AnyRef" -> "AnyRefElement",
@@ -170,7 +171,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   }
 
   def eliminateClassTagApply(module: SModuleDef) = {
-    new MetaAstTransformer {
+    new AstTransformer {
       override def applyTransform(apply: SApply): SApply = apply match {
         case SApply(SSelect(SIdent("ClassTag",_), "apply",_), List(tpe), _,_) =>
           apply.copy(
@@ -253,7 +254,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   }
 
   def fixEntityCompanionName(module: SModuleDef) = {
-    class ECompanionTransformer extends MetaAstTransformer {
+    class ECompanionTransformer extends AstTransformer {
       override def applyTransform(apply: SApply): SApply = {
         apply match {
           case SApply(sel @ SSelect(SThis(clazz,_),_,_),_,_,_) if context.isEntity(clazz) =>
@@ -266,7 +267,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   }
 
   def fixEvidences(module: SModuleDef) = {
-    new MetaAstTransformer {
+    new AstTransformer {
       def implicitElem(tpeSExprs: List[STpeExpr]) = {
         SExprApply(
           SSelect(
@@ -350,7 +351,7 @@ class SModuleBuilder(implicit val context: AstContext) {
 
   /** Converts constructors (methods with name "<init>") to the apply method of companions. */
   def filterConstructor(module: SModuleDef): SModuleDef = {
-    new MetaAstTransformer {
+    new AstTransformer {
       override def bodyTransform(body: List[SBodyItem]): List[SBodyItem] = body.filter {
         case m: SMethodDef if m.name == "<init>" => false
         case _ => true
@@ -384,7 +385,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   /** Discards all ancestors of the entity except TypeWrapperDef. It could be used as temporary solution
     * if inheritance of type wrappers is not supported. */
   def filterAncestors(module: SModuleDef): SModuleDef = {
-    class filterAncestorTransformer extends MetaAstTransformer {
+    class filterAncestorTransformer extends AstTransformer {
       override def entityAncestorsTransform(ancestors: List[STypeApply]): List[STypeApply] = {
         ancestors.filter(_.tpe.isDef)
       }

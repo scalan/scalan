@@ -4,7 +4,7 @@ import scala.tools.nsc._
 import scalan.meta.{SModuleBuilder, ScalanAstUtils}
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstUtils._
-import scalan.meta.ScalanAstTransformers.MetaAstTransformer
+import scalan.meta.ScalanAstTransformers.AstTransformer
 
 object WrapEnricher {
   val name = "scalanizer-enricher"

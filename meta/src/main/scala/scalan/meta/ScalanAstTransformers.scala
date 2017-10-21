@@ -5,7 +5,7 @@ import scalan.meta.ScalanAst._
 
 object ScalanAstTransformers {
   /** The class implements a default Meta AST transformation strategy: breadth-first search */
-  class MetaAstTransformer(implicit val ctx: AstContext) {
+  class AstTransformer(implicit val ctx: AstContext) {
     def constTransform(c: SConst): SConst = c
     def identTransform(ident: SIdent): SExpr = ident
     def selectTransform(select: SSelect): SExpr = {
@@ -184,18 +184,18 @@ object ScalanAstTransformers {
   }
 
   /** Transform some Meta AST to another AST by applying the repl function to each type name. */
-  class MetaAstReplacer(name: String, repl: String => String)(implicit context: AstContext) extends MetaAstTransformer {
+  class AstReplacer(name: String, repl: String => String)(implicit context: AstContext) extends AstTransformer {
     val typeTransformer = new TypeReplacer(name, repl)
 
     override def methodArgTransform(arg: SMethodArg): SMethodArg = {
-      arg.copy(tpe = typeTransformer.typeTransform(arg.tpe))
+      arg.copy(tpe = typeTransformer(arg.tpe))
     }
     override def methodResTransform(res: Option[STpeExpr]): Option[STpeExpr] = res match {
       case Some(traitCall: STraitCall) => Some(typeTransformer.traitCallTransform(traitCall))
       case _ => super.methodResTransform(res)
     }
     override def classArgTransform(classArg: SClassArg): SClassArg = {
-      classArg.copy(tpe = typeTransformer.typeTransform(classArg.tpe))
+      classArg.copy(tpe = typeTransformer(classArg.tpe))
     }
     override def selectTransform(select: SSelect): SExpr = select match {
       case select: SSelect if select.tname == name =>
@@ -203,7 +203,7 @@ object ScalanAstTransformers {
       case _ => super.selectTransform(select)
     }
     override def ascrTransform(ascr: SAscr): SAscr = {
-      val newPt = typeTransformer.typeTransform(ascr.pt)
+      val newPt = typeTransformer(ascr.pt)
       super.ascrTransform(ascr.copy(pt = newPt))
     }
     override def applyTransform(apply: SApply): SApply = {
@@ -215,13 +215,14 @@ object ScalanAstTransformers {
       super.exprApplyTransform(exprApply.copy(ts = newTs))
     }
     override def valdefTransform(valdef: SValDef): SValDef = {
-      val newTpe = valdef.tpe.map(typeTransformer.typeTransform _)
+      val newTpe = valdef.tpe.map(typeTransformer(_))
       super.valdefTransform(valdef.copy(tpe = newTpe))
     }
   }
 
   /** Transforming of Meta AST related to types (children of STpeExpr)*/
-  class TypeTransformer {
+  class TypeTransformer extends (STpeExpr => STpeExpr) {
+    override def apply(tpe: STpeExpr): STpeExpr = typeTransform(tpe)
     def typeTransform(tpe: STpeExpr): STpeExpr = tpe match {
       case empty: STpeEmpty => emptyTransform(empty)
       case traitCall: STraitCall => traitCallTransform(traitCall)
@@ -286,10 +287,10 @@ object ScalanAstTransformers {
   }
 
   /** Removes all Rep types including RFunc and type synonims. */
-  class RepTypeRemover(module: SModuleDef) extends TypeTransformer {
+  class RepTypeRemover(implicit ctx: AstContext) extends TypeTransformer {
     override def typeTransform(tpe: STpeExpr): STpeExpr = {
       val t = tpe match {
-        case module.RepTypeOf(t) => t
+        case ctx.RepTypeOf(t) => t
         case _ => tpe
       }
       super.typeTransform(t)
@@ -297,25 +298,25 @@ object ScalanAstTransformers {
   }
 
   /** Traverse whole META AST and rename types. Returns new tree. */
-//  class RepTypeRemoverInAst(implicit ctx: AstContext) extends MetaAstTransformer {
-//    def typeRemover(m: SModuleDef) = new RepTypeRemover(m)
-//
-//    override def methodResTransform(res: Option[STpeExpr]): Option[STpeExpr] = super.methodResTransform(res)
-//  }
+  class TypeTransformerInAst(typeTrans: TypeTransformer)(implicit ctx: AstContext) extends AstTransformer {
+    override def methodResTransform(res: Option[STpeExpr]): Option[STpeExpr] = {
+      res.map(typeTrans)
+    }
+  }
 
   /** Traverse whole META AST and rename types. Returns new tree. */
-  class TypeNameTransformer(oldName: String, newName: String)(implicit ctx: AstContext) extends MetaAstTransformer {
+  class TypeNameTransformer(oldName: String, newName: String)(implicit ctx: AstContext) extends AstTransformer {
     val typeRenamer = new TypeRenamer(oldName, newName)
     override def entityTpeArgTransform(tpeArg: STpeArg): STpeArg = {
       if (tpeArg.name == oldName) tpeArg.copy(name = newName)
       else tpeArg
     }
     override def methodResTransform(res: Option[STpeExpr]): Option[STpeExpr] = res match {
-      case Some(resType) => Some(typeRenamer.typeTransform(resType))
+      case Some(resType) => Some(typeRenamer(resType))
       case _ => res
     }
     override def methodArgTransform(arg: SMethodArg): SMethodArg = {
-      val newTpe = typeRenamer.typeTransform(arg.tpe)
+      val newTpe = typeRenamer(arg.tpe)
       arg.copy(tpe = newTpe)
     }
     override def entityAncestorTransform(ancestor: STypeApply): STypeApply = {

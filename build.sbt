@@ -35,6 +35,7 @@ lazy val testSettings = Seq(
     // TODO separate benchmark configuration, see https://github.com/scalameter/scalameter-examples/blob/master/basic-with-separate-config/build.sbt
     "com.storm-enroute" %% "scalameter" % "0.6" % Test),
   parallelExecution in Test := false,
+  baseDirectory in Test := file("."),
   publishArtifact in Test := true,
   publishArtifact in (Test, packageSrc) := true,
   publishArtifact in (Test, packageDoc) := false,
@@ -97,6 +98,7 @@ lazy val meta = Project("scalan-meta", file("meta"))
       "com.github.kxbmap" %% "configs-java7" % "0.3.0"
       ),
     fork in Test := true,
+//    baseDirectory in Test := file("."),
     fork in run := true)
 
 lazy val scalanizer = Project("scalanizer", file("scalanizer"))
@@ -129,6 +131,14 @@ lazy val core = Project("scalan-core", file("core"))
       "org.objenesis" % "objenesis" % "2.4",
       "com.github.kxbmap" %% "configs-java7" % "0.3.0"
     ))
+
+lazy val kotlinBackend = Project("scalan-kotlin-backend", file("kotlin-backend")).
+  dependsOn(common % allConfigDependency, core % allConfigDependency, library).
+  configs(IntegrationTest)
+  .settings(itSettings)
+  .settings(
+    //    libraryDependencies += "org.luaj" % "luaj-jse" % "3.0.1"
+  )
 
 //lazy val collections = Project("scalan-collections", file("collections"))
 //  .dependsOn(core % allConfigDependency)
@@ -177,14 +187,6 @@ lazy val core = Project("scalan-core", file("core"))
 //  configs(IntegrationTest).settings(itSettings).settings(
 //    libraryDependencies += "org.luaj" % "luaj-jse" % "3.0.1"
 //  )
-
-lazy val kotlinBackend = Project("scalan-kotlin-backend", file("kotlin-backend")).
-  dependsOn(core % "compile->compile;it->test", library).
-  configs(IntegrationTest)
-  .settings(itSettings)
-  .settings(
-//    libraryDependencies += "org.luaj" % "luaj-jse" % "3.0.1"
-  )
 
 lazy val extraClassPathTask = TaskKey[String]("extraClassPath") // scalan.plugins.extraClassPath
 

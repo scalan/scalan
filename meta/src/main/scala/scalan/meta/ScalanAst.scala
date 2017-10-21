@@ -1,5 +1,6 @@
 package scalan.meta
 
+import java.io.File
 import java.lang.annotation.Annotation
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
@@ -15,7 +16,7 @@ import scala.reflect.internal.ModifierFlags
 import PrintExtensions._
 import scala.collection.mutable.{Map => MMap}
 import scalan._
-import scalan.util.{Covariant, Contravariant, Invariant, FileUtil}
+import scalan.util.{Covariant, Contravariant, FileUtil, Invariant}
 import scalan.util.CollectionUtil._
 import ScalanAstExtensions._
 import scala.tools.nsc.Global
@@ -164,7 +165,7 @@ object ScalanAst {
       case t if !isVirtualized => Some(t)
       case STraitCall("Elem", Seq(t)) =>  // Elem[t] --> tpe
         Some(self)
-      case module.RepTypeOf(t) => Some(t)
+      case module.context.RepTypeOf(t) => Some(t)
       case _ => None
     }
 
@@ -277,7 +278,7 @@ object ScalanAst {
         find(module, tT, argName)
       case STraitCall("Thunk", List(tT)) =>
         find(module, tT, argName).map(tail => SThunkPath(tpe, tail))
-      case module.TypeSynonim(en @ module.Entity(e), args) =>
+      case module.context.TypeSynonim(en @ module.Entity(e), args) =>
         findInEntity(module, e, STraitCall(en, args), argName)
       case s@STpeStruct(_) =>
         def findInStruct(s: STpeStruct): Option[STpePath] = {
@@ -900,8 +901,15 @@ object ScalanAst {
 
     def loadModulesFromFolders(): Unit = {
       for (c <- configs) {
-        val m = parsers.parseEntityModule(c.getFile)(new parsers.ParseCtx(c.isVirtualized)(this))
-        addModule(m)
+        val file = c.getFile
+        try {
+          val m = parsers.parseEntityModule(file)(new parsers.ParseCtx(c.isVirtualized)(this))
+          addModule(m)
+        } catch {
+          case t: Throwable =>
+            val fullName = new File(FileUtil.currentWorkingDir, file.getPath)
+            throw new RuntimeException(s"Error loading module from $fullName", t)
+        }
       }
     }
 
@@ -972,6 +980,27 @@ object ScalanAst {
     def addModule(module: SModuleDef) = {
       val key = getModuleKey(module)
       modules(key) = module
+    }
+
+    object TypeSynonim {
+      def unapply(tpe: STpeExpr): Option[(String, List[STpeExpr])] = tpe match {
+        case STraitCall(n, args) =>
+          val typeSynonyms = entityTypeSynonyms
+          typeSynonyms.get(n).map(entityName => (entityName, args))
+        case _ => None
+      }
+    }
+
+    object RepTypeOf {
+      def unapply(tpe: STpeExpr): Option[STpeExpr] = tpe match {
+        case STraitCall("Rep", Seq(t)) =>   // Rep[t] --> t
+          Some(t)
+        case STraitCall("RFunc", Seq(a, b)) =>  // RFunc[a,b] --> a => b
+          Some(STpeFunc(a, b))
+        case TypeSynonim(entityName, tyargs) => // RepCol[args] --> Col[args]
+          Some(STraitCall(entityName, tyargs))
+        case _ => None
+      }
     }
   }
 
@@ -1079,26 +1108,7 @@ object ScalanAst {
       def unapply(name: String): Option[(STraitOrClassDef, STraitCall)] = findWrapperEntity(name)
     }
 
-    object TypeSynonim {
-      def unapply(tpe: STpeExpr): Option[(String, List[STpeExpr])] = tpe match {
-        case STraitCall(n, args) =>
-          val typeSynonyms = context.entityTypeSynonyms ++ entityRepSynonym.map(syn => syn.name -> entityOps.name)
-          typeSynonyms.get(n).map(entityName => (entityName, args))
-        case _ => None
-      }
-    }
 
-    object RepTypeOf {
-      def unapply(tpe: STpeExpr): Option[STpeExpr] = tpe match {
-        case STraitCall("Rep", Seq(t)) =>   // Rep[t] --> t
-          Some(t)
-        case STraitCall("RFunc", Seq(a, b)) =>  // RFunc[a,b] --> a => b
-          Some(STpeFunc(a, b))
-        case TypeSynonim(entityName, tyargs) => // RepCol[args] --> Col[args]
-          Some(STraitCall(entityName, tyargs))
-        case _ => None
-      }
-    }
   }
 
   object SModuleDef {

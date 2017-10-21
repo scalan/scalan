@@ -11,7 +11,7 @@ class ScalanAstSerializerTests extends ScalanAstTests with Examples {
 
   def test[T: Manifest](t: T): Unit = {
     val str = serde.serialize(t)
-    println(str)
+//    println(str)
     val v = serde.deserialize(str)
     v should be(t)
   }
