@@ -160,7 +160,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
 
     it("resolve Entity by name") {
       List("Observable", "Collection", "WArray") foreach { en =>
-        en should matchPattern { case m.Entity(e) if e.name == en => }
+        en should matchPattern { case m.context.ModuleEntity(_, e) if e.name == en => }
       }
     }
 

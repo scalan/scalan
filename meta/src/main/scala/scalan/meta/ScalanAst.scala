@@ -2,6 +2,7 @@ package scalan.meta
 
 import java.io.File
 import java.lang.annotation.Annotation
+import java.util.Objects
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.JsonTypeInfo.{Id, As}
@@ -279,7 +280,7 @@ object ScalanAst {
         find(module, tT, argName)
       case STraitCall("Thunk", List(tT)) =>
         find(module, tT, argName).map(tail => SThunkPath(tpe, tail))
-      case module.context.TypeSynonim(en @ module.Entity(e), args) =>
+      case module.context.TypeSynonim(en @ module.context.ModuleEntity(_, e), args) =>
         findInEntity(module, e, STraitCall(en, args), argName)
       case s@STpeStruct(_) =>
         def findInStruct(s: STpeStruct): Option[STpePath] = {
@@ -295,7 +296,7 @@ object ScalanAst {
         findInStruct(s)
       case STraitCall(`argName`, Nil) =>
         Some(SNilPath)
-      case tc@STraitCall(module.Entity(e), args) =>
+      case tc@STraitCall(module.context.ModuleEntity(_, e), args) =>
         findInEntity(module, e, tc, argName)
       case _ => None
     }
@@ -625,7 +626,7 @@ object ScalanAst {
 
   type Module = SModuleDef
 
-  /** Correspond to TmplDef syntax constuct of Scala.
+  /** Correspond to TmplDef syntax construct of Scala.
     * (See http://scala-lang.org/files/archive/spec/2.12/05-classes-and-objects.html)
     */
   abstract class STmplDef extends SBodyItem {
@@ -948,12 +949,22 @@ object ScalanAst {
 
     def allModules: Iterator[SModuleDef] = wrappers.valuesIterator.map(_.module) ++ modules.valuesIterator
 
-    def findEntityInOtherModules(entityName: String, referencedInModule: SModuleDef): Option[(SModuleDef, STmplDef)] = {
-      allModules collectFirst scala.Function.unlift { m =>
-        if (m.name == referencedInModule.name) None
-        else m.findEntity(entityName, globalSearch = false).map { e => (m, e) }
+    //TODO refactor to use Name for more precise ModuleEntity search
+    def findModuleEntity(entityName: String): Option[(Module, Entity)] = {
+      def isEqualName(m: SModuleDef, shortName: String, fullName: String): Boolean =
+        fullName == shortName || fullName == s"${m.packageName}.$entityName.$shortName"
+
+      def findByName(m: SModuleDef, es: List[STmplDef]) =
+        es.find(e => isEqualName(m, e.name, entityName))
+
+      val res = allModules collectFirst scala.Function.unlift { m =>
+        findByName(m, m.entities)
+          .orElse(findByName(m, m.concreteSClasses))
+          .map((m, _))
       }
+      res
     }
+
     def entityTypeSynonyms: Map[String, String] = {
       allModules
         .flatMap(m => m.entityRepSynonym.map((m, _)))
@@ -998,6 +1009,12 @@ object ScalanAst {
         case _ => None
       }
     }
+
+    object ModuleEntity {
+      def unapply(name: String): Option[(Module, Entity)] =
+        findModuleEntity(name)
+    }
+
   }
 
   case class SModuleDef(packageName: String,
@@ -1025,27 +1042,15 @@ object ScalanAst {
       if (fullName == getFullName(shortName)) true
       else shortName == fullName
 
-    def findEntity(entityName: String, globalSearch: Boolean = false): Option[STmplDef] = {
-      def isEqualName(shortName: String, fullName: String): Boolean =
-        fullName == shortName || fullName == s"$packageName.$entityName.$shortName"
-
-      def findByName(es: List[STmplDef]) =
-        es.find(e => isEqualName(e.name, entityName))
-
-      val local = findByName(entities)
-        .orElse(findByName(concreteSClasses))
-      val res = local.orElse {
-        if (globalSearch)
-          context.findEntityInOtherModules(entityName, this).map(_._2)
-        else None
-      }
-      res
-    }
-
     def getEntity(name: String): STmplDef = {
-      findEntity(name, globalSearch = true).getOrElse {
+      findEntity(name).getOrElse {
         sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
       }
+    }
+
+    def findEntity(name: String): Option[Entity] = {
+      entities.collectFirst { case e if e.name == name => e }
+          .orElse(concreteSClasses.collectFirst { case c if c.name == name => c })
     }
 
     def isEntity(name: String) = entities.exists(e => e.name == name)
@@ -1093,13 +1098,9 @@ object ScalanAst {
       """)
     }
 
-    object Entity {
-      def unapply(name: String): Option[STmplDef] = findEntity(name, globalSearch = true)
-    }
-
     object WrapperEntity {
       def unapply(name: String): Option[(STmplDef, String)] = name match {
-        case Entity(e) =>
+        case context.ModuleEntity(_, e) =>
           e.getAnnotation(ExternalAnnotation) match {
             case Some(STmplAnnotation(_, List(SConst(externalName: String, _)))) => Some((e, externalName))
             case _ => None
@@ -1107,14 +1108,30 @@ object ScalanAst {
         case _ => None
       }
     }
-
-
   }
 
   object SModuleDef {
     /** Module trait name related to main trait */
     def moduleTraitName(mainTraitName: String) = mainTraitName + "Module"
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
+  }
+
+  /** Helper class to represent an entity in a module.
+    * STmplDef cannot have direct reference to module due to immutability of ScalanAst.
+    * This class implements equality and can be used as a key in a Map and as element of Set. */
+  class ModuleEntity(val module: SModuleDef, val entity: STmplDef) {
+    override def equals(other: Any) = (this eq other.asInstanceOf[AnyRef]) || (other match {
+      case other: ModuleEntity =>
+         module.packageName == other.module.packageName  &&
+         module.name == other.module.name &&
+         entity.name == other.entity.name
+      case _ => false
+    })
+    override def hashCode = Objects.hash(module.packageName, module.name, entity.name)
+  }
+  object ModuleEntity {
+    def apply(m: Module, e: STmplDef) = new ModuleEntity(m, e)
+    def unapply(me: ModuleEntity) = Some((me.module, me.entity))
   }
 
   object TypeDescTpe {

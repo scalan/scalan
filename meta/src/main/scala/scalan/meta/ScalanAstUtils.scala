@@ -103,7 +103,7 @@ object ScalanAstUtils {
   def argsSubstOfAncestorEntities(module: SModuleDef, clazz: STmplDef): List[((STmplDef, STpeArg), STpeExpr)] = {
     val res = clazz.ancestors.flatMap { anc =>
       val ancName = anc.tpe.name
-      val ancestorEnt_? = module.findEntity(ancName, globalSearch = true)
+      val ancestorEnt_? = module.context.findModuleEntity(ancName).map(_._2)
       ancestorEnt_? match {
         case Some(e) =>
           val ancArgs = anc.tpe.tpeSExprs
