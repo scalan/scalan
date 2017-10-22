@@ -226,7 +226,7 @@ class SModuleBuilder(implicit val context: AstContext) {
       case m: SMethodDef => genImplicitMethodArgs(module, m)
       case _ => item
     }
-    def genCompanion(companion: Option[STraitOrClassDef]) = companion match {
+    def genCompanion(companion: Option[STmplDef]) = companion match {
       case Some(t : STraitDef) => Some(t.copy(body = t.body.map(genBodyItem)))
       case Some(c : SClassDef) => Some(c.copy(body = c.body.map(genBodyItem)))
       case Some(unsupported) => throw new NotImplementedError(s"genCompanion: $unsupported")

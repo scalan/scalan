@@ -21,7 +21,7 @@ class MetaCodegen {
     case f :: fs => s"Pair($f, ${pairify(fs)})"
   }
 
-  def zeroSExpr(entity: STraitOrClassDef)(t: STpeExpr): String = t match {
+  def zeroSExpr(entity: STmplDef)(t: STpeExpr): String = t match {
     case STpePrimitive(_, defaultValueString) => defaultValueString
     case STraitCall(name, args) if entity.tpeArgs.exists(a => a.name == name && a.isHighKind) =>
       val arg = args(0)
@@ -68,7 +68,7 @@ class MetaCodegen {
     case _ => sys.error(s"Don't know how to construct Elem string for type $t")
   }
 
-  class EntityTypeBuilder(entity: STraitOrClassDef) {
+  class EntityTypeBuilder(entity: STmplDef) {
     private var _args: ArrayBuffer[String] = ArrayBuffer.empty
     private var _forSomeTypes: ArrayBuffer[String] = ArrayBuffer.empty
 
@@ -166,8 +166,8 @@ class MetaCodegen {
     }
   }
 
-  def methodExtractorsString(module: SModuleDef, config: MetaConfig, e: STraitOrClassDef) = {
-    def methodExtractorsString1(e: STraitOrClassDef, isCompanion: Boolean) = {
+  def methodExtractorsString(module: SModuleDef, config: MetaConfig, e: STmplDef) = {
+    def methodExtractorsString1(e: STmplDef, isCompanion: Boolean) = {
       val methods = e.body.collect { case m: SMethodDef => optimizeMethodImplicits(m, module) }
       val overloadIdsByName = collection.mutable.Map.empty[String, Set[Option[String]]].withDefaultValue(Set())
       methods.foreach { m =>
@@ -314,7 +314,7 @@ class MetaCodegen {
   }
 
   // methods to extract elements from data arguments
-  class ElemExtractionBuilder(module: SModuleDef, entity: STraitOrClassDef, argSubst: Map[String, String]) {
+  class ElemExtractionBuilder(module: SModuleDef, entity: STmplDef, argSubst: Map[String, String]) {
     val extractionExprs: List[Option[String]] =
        extractImplicitElems(module, entity.args.args, entity.tpeArgs, argSubst).map(_._2)
     val tyArgSubst = classArgsAsSeenFromAncestors(module, entity).map { case (_, (e,a)) => a }
@@ -340,7 +340,7 @@ class MetaCodegen {
     }
   }
 
-  abstract class TemplateData(val module: SModuleDef, val entity: STraitOrClassDef) {
+  abstract class TemplateData(val module: SModuleDef, val entity: STmplDef) {
     val name = entity.name
     val tpeArgs = entity.tpeArgs
     val tpeArgNames = tpeArgs.names

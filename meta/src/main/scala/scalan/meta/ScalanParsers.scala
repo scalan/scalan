@@ -87,7 +87,7 @@ trait ScalanParsers[+G <: Global] {
     module
   }
 
-  def parseDeclaredImplementations(entities: List[STraitOrClassDef], moduleDefOpt: Option[ClassDef])(implicit ctx: ParseCtx) = {
+  def parseDeclaredImplementations(entities: List[STmplDef], moduleDefOpt: Option[ClassDef])(implicit ctx: ParseCtx) = {
     val decls = for {
       dslModule <- moduleDefOpt.toList
       t <- entities
@@ -108,7 +108,7 @@ trait ScalanParsers[+G <: Global] {
     }
 
 
-  def isInternalMethodOfCompanion(md: SMethodDef, declaringDef: STraitOrClassDef): Boolean = {
+  def isInternalMethodOfCompanion(md: SMethodDef, declaringDef: STmplDef): Boolean = {
     val moduleVarName = md.name + global.nme.MODULE_VAR_SUFFIX.toString
     val hasClass = declaringDef.body.collectFirst({ case d: SClassDef if d.name == md.name => ()}).isDefined
     val hasModule = declaringDef.body.collectFirst({ case d: SValDef if d.name == moduleVarName => ()}).isDefined
@@ -116,7 +116,7 @@ trait ScalanParsers[+G <: Global] {
     hasClass && hasModule && hasMethod
   }
 
-  def isInternalClassOfCompanion(cd: STraitOrClassDef, outer: STraitOrClassDef): Boolean = {
+  def isInternalClassOfCompanion(cd: STmplDef, outer: STmplDef): Boolean = {
     val moduleVarName = cd.name + global.nme.MODULE_VAR_SUFFIX.toString
     if (cd.ancestors.nonEmpty) return false
     val hasClass = outer.body.collectFirst({ case d: SClassDef if d.name == cd.name => ()}).isDefined

@@ -109,7 +109,7 @@ object ScalanAstTransformers {
       obj.copy(body = newBody)
     }
 
-    def entityCompTransform(companion: Option[STraitOrClassDef]): Option[STraitOrClassDef] = {
+    def entityCompTransform(companion: Option[STmplDef]): Option[STmplDef] = {
       companion match {
         case Some(tr: STraitDef) => Some(traitCompTransform(tr))
         case Some(clazz: SClassDef) => Some(classCompTransform(clazz))
@@ -143,7 +143,7 @@ object ScalanAstTransformers {
       )
     }
 
-    def classCompanionTransform(companion: Option[STraitOrClassDef]): Option[STraitOrClassDef] = {
+    def classCompanionTransform(companion: Option[STmplDef]): Option[STmplDef] = {
       companion.map {
         case obj: SObjectDef => obj.copy(body = bodyTransform(obj.body))
         case tr: STraitDef => tr.copy(body = bodyTransform(tr.body))

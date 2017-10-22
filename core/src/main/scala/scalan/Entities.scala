@@ -3,7 +3,7 @@ package scalan
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.language.higherKinds
-import scalan.meta.ScalanAst.{SModuleDef, STraitOrClassDef}
+import scalan.meta.ScalanAst.{SModuleDef, STmplDef}
 import scalan.util.ReflectionUtil
 
 trait Entities extends TypeDescs { self: Scalan =>

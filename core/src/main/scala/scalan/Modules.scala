@@ -1,6 +1,6 @@
 package scalan
 
-import scalan.meta.ScalanAst.{SModuleDef, STraitOrClassDef}
+import scalan.meta.ScalanAst.{SModuleDef, STmplDef}
 import scala.collection.mutable
 import scala.reflect.internal.util.BatchSourceFile
 import scalan.meta.{Parsers, BoilerplateToolRun, Name}
@@ -29,7 +29,7 @@ trait Modules extends Base { self: Scalan =>
     }
   }
 
-  def entityDef(e: EntityElem[_]): STraitOrClassDef = {
+  def entityDef(e: EntityElem[_]): STmplDef = {
     val elemClassSymbol = ReflectionUtil.classToSymbol(e.getClass)
     val moduleName = elemClassSymbol.owner.name.toString.stripSuffix("Defs")
     val packageName = e.getClass.getPackage.getName.stripSuffix(".impl")

@@ -44,7 +44,7 @@ object ScalanAstUtils {
     * Checks if companion is represented by SObjectDef (e.g. parsed from object)
     * and converts into the companion trait (STraitDef).
     */
-  def convertCompanion(comp: STraitOrClassDef): STraitOrClassDef = comp match {
+  def convertCompanion(comp: STmplDef): STmplDef = comp match {
     case obj: SObjectDef =>
       STraitDef(name = obj.name + "Companion",
         tpeArgs = obj.tpeArgs, ancestors = obj.ancestors, body = obj.body, selfType = obj.selfType,
@@ -100,7 +100,7 @@ object ScalanAstUtils {
     * trait <e.name>[<e.tpeArgs>] { }
     * <clazz> == class <clazz>[<clsTpeArg>..] extends <ancName>[<ancArgs>]
     */
-  def argsSubstOfAncestorEntities(module: SModuleDef, clazz: STraitOrClassDef): List[((STraitOrClassDef, STpeArg), STpeExpr)] = {
+  def argsSubstOfAncestorEntities(module: SModuleDef, clazz: STmplDef): List[((STmplDef, STpeArg), STpeExpr)] = {
     val res = clazz.ancestors.flatMap { anc =>
       val ancName = anc.tpe.name
       val ancestorEnt_? = module.findEntity(ancName, globalSearch = true)
@@ -109,7 +109,7 @@ object ScalanAstUtils {
           val ancArgs = anc.tpe.tpeSExprs
           e.zipWithExpandedBy(_.tpeArgs) zip ancArgs
         case None =>
-          List[((STraitOrClassDef, STpeArg), STpeExpr)]()
+          List[((STmplDef, STpeArg), STpeExpr)]()
       }
     }
     res
@@ -118,8 +118,8 @@ object ScalanAstUtils {
   /** Checks for each type argument if it is used as argument of ancestor entity.
     * For each name of type argument returns a pair (e, tyArg)
     */
-  def classArgsAsSeenFromAncestors(module: SModuleDef, clazz: STraitOrClassDef) = {
-    val subst: List[((STraitOrClassDef, STpeArg), STpeExpr)] = argsSubstOfAncestorEntities(module, clazz)
+  def classArgsAsSeenFromAncestors(module: SModuleDef, clazz: STmplDef) = {
+    val subst: List[((STmplDef, STpeArg), STpeExpr)] = argsSubstOfAncestorEntities(module, clazz)
     val res = clazz.tpeArgs.map { clsTpeArg =>
 //      val argTpe = STraitCall(clsTpeArg.name) // don't use toTraitCall here
 //      val substOpt = subst.find { case ((e, eTpeArg), ancArg) => argTpe == ancArg }
@@ -137,7 +137,7 @@ object ScalanAstUtils {
     * trait <e.name>[<e.tpeArgs>] { }
     * <clazz> == class <clazz>[<clsTpeArg>..] extends <ancName>[<ancArgs>]
     */
-  def genImplicitArgsForClass(module: SModuleDef, clazz: STraitOrClassDef): List[SClassArg] = {
+  def genImplicitArgsForClass(module: SModuleDef, clazz: STmplDef): List[SClassArg] = {
     val argSubst = classArgsAsSeenFromAncestors(module, clazz)
     val implicitArgs = argSubst.map { case (clsTpeArg, (e, eTpeArg)) =>
       genImplicitClassArg(eTpeArg.isHighKind, eTpeArg.name, STraitCall(clsTpeArg.name))

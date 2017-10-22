@@ -237,10 +237,10 @@ object ScalanAst {
 
   case class SStructPath(base: STpeExpr, fieldName: String, tail: STpePath) extends SBasedPath
 
-  case class SEntityPath(base: STpeExpr, entity: STraitOrClassDef, tyArg: STpeArg, tail: STpePath) extends SBasedPath
+  case class SEntityPath(base: STpeExpr, entity: STmplDef, tyArg: STpeArg, tail: STpePath) extends SBasedPath
 
   object STpePath {
-    def findInEntity(module: SModuleDef, e: STraitOrClassDef,
+    def findInEntity(module: SModuleDef, e: STmplDef,
                      tc: STraitCall, argName: String): Option[STpePath] = {
       val args = tc.tpeSExprs
       for (i <- args.indices) {
@@ -624,7 +624,10 @@ object ScalanAst {
 
   type Module = SModuleDef
 
-  abstract class STraitOrClassDef extends SBodyItem {
+  /** Correspond to TmplDef syntax constuct of Scala.
+    * (See http://scala-lang.org/files/archive/spec/2.12/05-classes-and-objects.html)
+    */
+  abstract class STmplDef extends SBodyItem {
     def name: String
 
     def tpeArgs: List[STpeArg]
@@ -635,7 +638,7 @@ object ScalanAst {
 
     def selfType: Option[SSelfTypeDef]
 
-    def companion: Option[STraitOrClassDef]
+    def companion: Option[STmplDef]
 
     @JsonIgnore
     def isTrait: Boolean
@@ -684,7 +687,7 @@ object ScalanAst {
     }
 
     @JsonIgnore
-    def getAncestorTraits(module: SModuleDef): List[STraitOrClassDef] = {
+    def getAncestorTraits(module: SModuleDef): List[STmplDef] = {
       ancestors.filter(a => module.isEntity(a.tpe.name)).map(a => module.getEntity(a.tpe.name))
     }
 
@@ -729,7 +732,7 @@ object ScalanAst {
 
     def hasAnnotation(annotName: String) = getAnnotation(annotName).isDefined
 
-    def clean: STraitOrClassDef
+    def clean: STmplDef
   }
 
   case class STraitDef(
@@ -738,8 +741,8 @@ object ScalanAst {
                         ancestors: List[STypeApply],
                         body: List[SBodyItem],
                         selfType: Option[SSelfTypeDef],
-                        companion: Option[STraitOrClassDef],
-                        annotations: List[STraitOrClassAnnotation] = Nil) extends STraitOrClassDef {
+                        companion: Option[STmplDef],
+                        annotations: List[STraitOrClassAnnotation] = Nil) extends STmplDef {
     def isTrait = true
 
     val args = SClassArgs(Nil)
@@ -777,7 +780,7 @@ object ScalanAst {
     }
   }
 
-  implicit class STraitOrClassDefOps(td: STraitOrClassDef) {
+  implicit class STraitOrClassDefOps(td: STmplDef) {
   }
 
   case class SClassDef(
@@ -788,9 +791,9 @@ object ScalanAst {
                         ancestors: List[STypeApply],
                         body: List[SBodyItem],
                         selfType: Option[SSelfTypeDef],
-                        companion: Option[STraitOrClassDef],
+                        companion: Option[STmplDef],
                         isAbstract: Boolean,
-                        annotations: List[STraitOrClassAnnotation] = Nil) extends STraitOrClassDef {
+                        annotations: List[STraitOrClassAnnotation] = Nil) extends STmplDef {
     def isTrait = false
 
     def clean = {
@@ -805,7 +808,7 @@ object ScalanAst {
   case class SObjectDef(
                          name: String,
                          ancestors: List[STypeApply],
-                         body: List[SBodyItem]) extends STraitOrClassDef {
+                         body: List[SBodyItem]) extends STmplDef {
     val args = SClassArgs(Nil)
 
     def tpeArgs = Nil
@@ -843,7 +846,7 @@ object ScalanAst {
       }
   }
 
-  type Entity = STraitOrClassDef
+  type Entity = STmplDef
 
   /** Gets module name by its entity. TODO: Should be a general solution. */
   def mod(name: String) = name + "s"
@@ -944,7 +947,7 @@ object ScalanAst {
 
     def allModules: Iterator[SModuleDef] = wrappers.valuesIterator.map(_.module) ++ modules.valuesIterator
 
-    def findEntityInOtherModules(entityName: String, referencedInModule: SModuleDef): Option[(SModuleDef, STraitOrClassDef)] = {
+    def findEntityInOtherModules(entityName: String, referencedInModule: SModuleDef): Option[(SModuleDef, STmplDef)] = {
       allModules collectFirst scala.Function.unlift { m =>
         if (m.name == referencedInModule.name) None
         else m.findEntity(entityName, globalSearch = false).map { e => (m, e) }
@@ -1021,11 +1024,11 @@ object ScalanAst {
       if (fullName == getFullName(shortName)) true
       else shortName == fullName
 
-    def findEntity(entityName: String, globalSearch: Boolean = false): Option[STraitOrClassDef] = {
+    def findEntity(entityName: String, globalSearch: Boolean = false): Option[STmplDef] = {
       def isEqualName(shortName: String, fullName: String): Boolean =
         fullName == shortName || fullName == s"$packageName.$entityName.$shortName"
 
-      def findByName(es: List[STraitOrClassDef]) =
+      def findByName(es: List[STmplDef]) =
         es.find(e => isEqualName(e.name, entityName))
 
       val local = findByName(entities)
@@ -1038,7 +1041,7 @@ object ScalanAst {
       res
     }
 
-    def getEntity(name: String): STraitOrClassDef = {
+    def getEntity(name: String): STmplDef = {
       findEntity(name, globalSearch = true).getOrElse {
         sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
       }
@@ -1090,11 +1093,11 @@ object ScalanAst {
     }
 
     object Entity {
-      def unapply(name: String): Option[STraitOrClassDef] = findEntity(name, globalSearch = true)
+      def unapply(name: String): Option[STmplDef] = findEntity(name, globalSearch = true)
     }
 
     object WrapperEntity {
-      def unapply(name: String): Option[(STraitOrClassDef, String)] = name match {
+      def unapply(name: String): Option[(STmplDef, String)] = name match {
         case Entity(e) =>
           e.getAnnotation(ExternalAnnotation) match {
             case Some(STraitOrClassAnnotation(_, List(SConst(externalName: String, _)))) => Some((e, externalName))
@@ -1183,7 +1186,7 @@ object ScalanAst {
     t
   }
 
-  def optimizeComponentImplicits(t: STraitOrClassDef, module: SModuleDef): STraitOrClassDef = t match {
+  def optimizeComponentImplicits(t: STmplDef, module: SModuleDef): STmplDef = t match {
     case c: SClassDef => optimizeClassImplicits(c, module)
     case o: SObjectDef => optimizeObjectImplicits(o, module)
     case t: STraitDef => optimizeTraitImplicits(t, module)

@@ -108,7 +108,7 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
     genCompanion(module.entityOps.companion) :: module.concreteSClasses.map(clazz => genCompanion(clazz.companion))
   }
 
-  def genCompanion(comp: Option[STraitOrClassDef])(implicit ctx: GenCtx): Tree = comp match {
+  def genCompanion(comp: Option[STmplDef])(implicit ctx: GenCtx): Tree = comp match {
     case Some(comp) => comp match {
       case t: STraitDef => genTrait(t)
       case c: SClassDef => genClass(c)
