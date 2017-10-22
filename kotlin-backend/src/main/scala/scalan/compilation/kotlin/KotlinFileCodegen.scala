@@ -79,20 +79,35 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
     argSections.map(sec => s"(${sec.args.map(genMethodArg).rep()})")
   }
 
-  def genBodyItem(x: SBodyItem)(implicit ctx: GenCtx): String = x match {
+  def emitBodyItem(x: SBodyItem)(implicit ctx: GenCtx, l: IndentLevel) = x match {
     case SValDef(n, tpe, isLazy, _, expr) =>
       val optType = tpe.opt(t => s": ${genTpeExpr(t)}")
       //      val rhs = emit(expr)
-      s"""val $n${optType} = ???"""
+      emit(s"""val $n${optType} = ???""")
     case md: SMethodDef =>
       val sections = md.argSections
       val args = genMethodArgs(if (sections.isEmpty) SMethodDef.emptyArgSection else sections)
       val optType = md.tpeRes.opt(t => s": ${genTpeExpr(t)}")
-      s"""fun ${md.name}${args.rep(sep = "")}${optType} = ???"""
+      md.body match {
+        case Some(expr) =>
+          emit(s"""fun ${md.name}${args.rep(sep = "")}${optType} {""")
+          indented { implicit l =>
+            emit(s"""TODO("$expr")""")
+          }
+          emit("}")
+        case None =>
+          emit(s"""fun ${md.name}${args.rep(sep = "")}${optType}""")
+      }
+
     case _ =>
-      s"<<<Don't know how to emit ${x}>>>"
+      emit(s"<<<Don't know how to emit ${x}>>>")
   }
-  def genBody(body: List[SBodyItem])(implicit ctx: GenCtx): List[String] = body.map(genBodyItem)
+
+  def emitBody(body: List[SBodyItem])(implicit ctx: GenCtx, l: IndentLevel): Unit = {
+    body foreach { item =>
+      emitBodyItem(item)
+    }
+  }
 
   def genTypeSel(ref: String, name: String)(implicit ctx: GenCtx) = s"$ref.$name"
 
@@ -108,11 +123,17 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
     case Nil => throw new IllegalArgumentException("Tuple must have at least 2 elements.")
   }
 
+  def mapTypeName(name: String)(implicit ctx: GenCtx) = name match {
+    case ctx.module.WrapperEntity(e, externalName) => externalName
+    case _ => name
+  }
+
   def genTpeExpr(tpeExpr: STpeExpr)(implicit ctx: GenCtx): String = tpeExpr match {
     case STpeEmpty() => ""
     case STpePrimitive(name: String, _) => name
-    case STraitCall(name: String, tpeSExprs: List[STpeExpr]) =>
-      val targs = tpeSExprs.map(genTpeExpr)
+    case STraitCall(n: String, args: List[STpeExpr]) =>
+      val name = mapTypeName(n)
+      val targs = args.map(genTpeExpr)
       s"$name${targs.optList("<", ">")}"
     case STpeTypeBounds(lo: STpeExpr, hi: STpeExpr) =>
       ??? //TODO  TypeBoundsTree(genTypeExpr(lo), genTypeExpr(hi))
@@ -124,16 +145,27 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
     case _ => throw new NotImplementedError(s"genTypeExpr($tpeExpr)")
   }
 
+  def emitTrait(t: STraitDef)(implicit ctx: GenCtx, l: IndentLevel) = {
+    val traitName = t.name
+    assert(t.selfType.isEmpty, "self types are not supported")
+    val parents = genParents(t.ancestors)
+    val tparams = t.tpeArgs.map(genTypeArg)
+    emit(s"""interface $traitName${tparams.optList("<", ">")}${parents.optList(" : ", "")} { """)
+    indented { implicit l =>
+      emitBody(t.body)
+    }
+    emit("}")
+  }
+
   def emitClass(c: SClassDef)(implicit ctx: GenCtx, l: IndentLevel) = {
     val className = c.name
     assert(c.selfType.isEmpty, "self types are not supported")
     val parents = genParents(c.ancestors)
-    val bodyItems = genBody(c.body)
     val paramss = genClassArgs(c.args, c.implicitArgs)
     val tparams = c.tpeArgs.map(genTypeArg)
     emit(s"""class $className${tparams.optList("<", ">")}${paramss.rep(sec => s"(${sec.rep()})")}${parents.optList(" : ", "")} { """)
     indented { implicit l =>
-      emit(bodyItems)
+      emitBody(c.body)
     }
     emit("}")
   }
@@ -144,6 +176,9 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
     val md = modules.getOrElse(name, { sys.error(s"Cannot find module $name") })
     val devirt = devirtPipeline(md)
     implicit val gctx = GenCtx(devirt, writer)
+    for (t <- devirt.entities) {
+      emitTrait(t)
+    }
     for (c <- devirt.concreteSClasses) {
       emitClass(c)
     }

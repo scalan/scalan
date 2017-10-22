@@ -1,5 +1,5 @@
 package scala.wrappers {
   import scalan._
 
-  trait WrappersModule
+  trait WrappersModule extends WArraysModule
 }
