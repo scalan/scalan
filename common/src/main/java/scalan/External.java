@@ -5,8 +5,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.CLASS)
+/** Relate annotated element with an external type or method given by `value` property.
+* For example WArray related to Array is annotated as @External("Array")
+* This annotation is used to separate wrapper Entity from user defined virtualized Entity.
+* See isW */
+@Target({ElementType.TYPE, ElementType.METHOD})
 public @interface External {
-   String methodName() default "";
+   String value() default "";  // default value interpreted as "external name is equal to annotated element name"
 }

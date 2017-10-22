@@ -322,6 +322,9 @@ object ScalanAst {
   final val FunctorTypeAnnotation    = classOf[FunctorType].getSimpleName
   final val ReifiedTypeArgAnnotation = classOf[Reified].getSimpleName
 
+  def externalTypeAnnotation(externalTypeName: String) =
+    STraitOrClassAnnotation(ExternalAnnotation, List(SConst(externalTypeName,Some(TpeString))))
+
   // SExpr universe --------------------------------------------------------------------------
   @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type")
   @JsonSubTypes(Array(
@@ -1091,7 +1094,14 @@ object ScalanAst {
     }
 
     object WrapperEntity {
-      def unapply(name: String): Option[(STraitOrClassDef, STraitCall)] = ???
+      def unapply(name: String): Option[(STraitOrClassDef, String)] = name match {
+        case Entity(e) =>
+          e.getAnnotation(ExternalAnnotation) match {
+            case Some(STraitOrClassAnnotation(_, List(SConst(externalName: String, _)))) => Some((e, externalName))
+            case _ => None
+          }
+        case _ => None
+      }
     }
 
 

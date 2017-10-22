@@ -134,6 +134,8 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     context.addModule(m)
     val cols = parseModule(colsModuleText)
     context.addModule(cols)
+    val warrays = parseModule(warraysModuleText)
+    context.addModule(warrays)
 
     it("recognize type synonym") {
       def test(t: STpeExpr, expected: Option[(String, List[STpeExpr])]): Unit = {
@@ -141,6 +143,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
       }
       test(STraitCall("Obs", List(TpeInt)), Some(("Observable", List(TpeInt))))
       test(STraitCall("Col", List(TpeString)), Some(("Collection", List(TpeString))))
+      test(STraitCall("RepWArray", List(TpeString)), Some(("WArray", List(TpeString))))
     }
 
     it("recognize Rep type") {
@@ -152,6 +155,18 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
       test(STraitCall("Rep", List(TpeInt)), Some(TpeInt))
       test(STraitCall("RFunc", List(TpeInt, TpeString)), Some(STpeFunc(TpeInt, TpeString)))
       test(STraitCall("Obs", List(TpeInt)), Some(STraitCall("Observable", List(TpeInt))))
+      test(STraitCall("RepWArray", List(TpeInt)), Some(STraitCall("WArray", List(TpeInt))))
+    }
+
+    it("resolve Entity by name") {
+      List("Observable", "Collection", "WArray") foreach { en =>
+        en should matchPattern { case m.Entity(e) if e.name == en => }
+      }
+    }
+
+    it("resolve recognize wrapper entity by name") {
+      "WArray" should matchPattern { case m.WrapperEntity(e, "Array") if e.name == "WArray" => }
+      "Collection" shouldNot matchPattern { case m.WrapperEntity(e, _) => }
     }
   }
 

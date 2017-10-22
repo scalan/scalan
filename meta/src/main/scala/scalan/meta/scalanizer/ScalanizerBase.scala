@@ -16,7 +16,7 @@ trait ScalanizerBase[+G <: Global] extends ScalanParsers[G] {
 
 
   def isNonWrapper(name: String): Boolean = {
-    snConfig.nonWrappers.keys.toSet.contains(name)
+    snConfig.nonWrappers.contains(name)
   }
   def isWrapper(name: String): Boolean = {
     val ok = !Set(

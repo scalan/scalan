@@ -47,12 +47,12 @@ trait Enricher[+G <: Global] extends ScalanizerBase[G] {
     }
 
     /** Module parent is replaced by the parent with its extension. */
-    def composeParentWithExt(module: SModuleDef) = {
-      val parentsWithExts = module.ancestors.map { anc =>
-        anc.copy(tpe = anc.tpe.copy(name = anc.tpe.name + "Dsl"))
-      }
-      module.copy(ancestors = parentsWithExts)
-    }
+//    def composeParentWithExt(module: SModuleDef) = {
+//      val parentsWithExts = module.ancestors.map { anc =>
+//        anc.copy(tpe = anc.tpe.copy(name = anc.tpe.name + "Dsl"))
+//      }
+//      module.copy(ancestors = parentsWithExts)
+//    }
 
     /** Imports scalan._ and other packages needed by Scalan and further transformations. */
     def addImports(module: SModuleDef) = {
@@ -79,7 +79,7 @@ trait Enricher[+G <: Global] extends ScalanizerBase[G] {
     private val chain = scala.Function.chain(Seq(
       fixExistentialType _,
       externalTypeToWrapper _,
-      composeParentWithExt _,
+//      composeParentWithExt _,
       addBaseToAncestors _,
       addEntityAncestors _,
       updateSelf _,

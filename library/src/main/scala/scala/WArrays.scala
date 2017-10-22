@@ -7,7 +7,7 @@ package scala {
 
   trait WArrays extends Base { self: WrappersModule =>
     type RepWArray[T] = Rep[WArray[T]];
-    @ContainerType @FunctorType trait WArray[T] extends Def[WArray[T]] { self =>
+    @External("Array") @ContainerType @FunctorType trait WArray[T] extends Def[WArray[T]] { self =>
       implicit def eT: Elem[T];
       @External def apply(i: Rep[Int]): Rep[T];
       @External def zip[B](ys: Rep[WArray[B]]): Rep[WArray[scala.Tuple2[T, B]]];

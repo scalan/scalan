@@ -30,7 +30,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
       snState.forEachWrapper { case (_, WrapperDescr(m, _, config)) =>
         val module = m.copy(imports = m.imports :+ SImportStat("scala.wrappers.WrappersModule"))(scalanizer.context)
 
-        /** Form source code of the wrapper module and store it in a file */
+        /** Build source code of the wrapper module and store it in a file */
         val wrapperModuleWithoutImpl = module.copy(concreteSClasses = Nil)(context)
         val optimizedImplicits = optimizeModuleImplicits(wrapperModuleWithoutImpl)
         val wrapperPackage = genWrapperPackage(optimizedImplicits)

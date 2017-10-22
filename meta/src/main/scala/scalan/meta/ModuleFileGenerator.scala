@@ -191,22 +191,17 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     val hasCompanion = entityCompOpt.isDefined
 
     def familyCont(e: EntityTemplateData) = {
-      def container(name: String, isFunctor: Boolean, isWrapper: Boolean) = {
+      def container(name: String, isFunctor: Boolean) = {
         val contType = if (isFunctor) "Functor" else "Cont"
         s"""\n
           |  implicit lazy val container$name: $contType[$name] = new $contType[$name] {
           |    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[$name[A]]
           |    def lift[A](implicit evA: Elem[A]) = element[$name[A]]
           |    def unlift[A](implicit eFT: Elem[$name[A]]) =
-          |      cast${e.name}Element(eFT${(!isWrapper).opt(s".asInstanceOf[Elem[${e.name}[A]]]")}).${e.implicitArgs(0).name}
+          |      cast${e.name}Element(eFT).${e.implicitArgs(0).name}
           |    def getElem[A](fa: Rep[$name[A]]) = fa.elem
           |    def unapply[T](e: Elem[_]) = e match {
-          |      ${
-          if (isWrapper)
-            s"case e: ${e.name}Elem[_,_] => Some(e.asElem[${e.name}[T]])"
-          else
-            s"case e: BaseTypeElem1[_,_,_] if e.wrapperElem.isInstanceOf[${e.name}Elem[_,_]] => Some(e.asElem[$name[T]])"
-          }
+          |      case e: ${e.name}Elem[_,_] => Some(e.asElem[${e.name}[T]])
           |      case _ => None
           |    }
           |    ${isFunctor.opt(s"def map[A,B](xs: Rep[$name[A]])(f: Rep[A] => Rep[B]) = { implicit val eA = unlift(xs.elem); xs.map(fun(f))}")}
@@ -219,7 +214,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |  implicit def cast${e.name}Element${e.tpeArgsDecl}(elem: Elem[${e.typeUse}]): $entityElem =
         |    elem.asInstanceOf[$entityElem]
         |
-        |  ${container(e.name, e.isFunctor, true)}
+        |  ${container(e.name, e.isFunctor)}
         |
         |  case class ${e.name}Iso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, ${e.name}] {
         |    lazy val selfType = new ConcreteIsoElem[${e.name}[A], ${e.name}[B], ${e.name}Iso[A, B]](eFrom, eTo).
