@@ -307,7 +307,8 @@ object ScalanAst {
     def args: List[SExpr]
   }
 
-  case class STraitOrClassAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
+  /** Annotation that can be attached to any STmplDef */
+  case class STmplAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
 
   case class SMethodAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
 
@@ -322,8 +323,8 @@ object ScalanAst {
   final val FunctorTypeAnnotation    = classOf[FunctorType].getSimpleName
   final val ReifiedTypeArgAnnotation = classOf[Reified].getSimpleName
 
-  def externalTypeAnnotation(externalTypeName: String) =
-    STraitOrClassAnnotation(ExternalAnnotation, List(SConst(externalTypeName,Some(TpeString))))
+  def externalTmplAnnotation(externalTmplName: String) =
+    STmplAnnotation(ExternalAnnotation, List(SConst(externalTmplName,Some(TpeString))))
 
   // SExpr universe --------------------------------------------------------------------------
   @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type")
@@ -643,7 +644,7 @@ object ScalanAst {
     @JsonIgnore
     def isTrait: Boolean
 
-    def annotations: List[STraitOrClassAnnotation]
+    def annotations: List[STmplAnnotation]
 
     def args: SClassArgs
 
@@ -742,7 +743,7 @@ object ScalanAst {
                         body: List[SBodyItem],
                         selfType: Option[SSelfTypeDef],
                         companion: Option[STmplDef],
-                        annotations: List[STraitOrClassAnnotation] = Nil) extends STmplDef {
+                        annotations: List[STmplAnnotation] = Nil) extends STmplDef {
     def isTrait = true
 
     val args = SClassArgs(Nil)
@@ -793,7 +794,7 @@ object ScalanAst {
                         selfType: Option[SSelfTypeDef],
                         companion: Option[STmplDef],
                         isAbstract: Boolean,
-                        annotations: List[STraitOrClassAnnotation] = Nil) extends STmplDef {
+                        annotations: List[STmplAnnotation] = Nil) extends STmplDef {
     def isTrait = false
 
     def clean = {
@@ -1100,7 +1101,7 @@ object ScalanAst {
       def unapply(name: String): Option[(STmplDef, String)] = name match {
         case Entity(e) =>
           e.getAnnotation(ExternalAnnotation) match {
-            case Some(STraitOrClassAnnotation(_, List(SConst(externalName: String, _)))) => Some((e, externalName))
+            case Some(STmplAnnotation(_, List(SConst(externalName: String, _)))) => Some((e, externalName))
             case _ => None
           }
         case _ => None
