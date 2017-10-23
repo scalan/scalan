@@ -118,7 +118,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     testModule(
       reactiveModule,
       EMD("scalan.rx", L(SImportStat("scalan._")), "Reactive",
-        Some(STpeDef("Obs", L(STpeArg("A",None,Nil)) , TC("Rep", ancObsA))),
+        List(STpeDef("Obs", L(STpeArg("A",None,Nil)) , TC("Rep", ancObsA))),
         entity,
         List(entity),
         L(obsImpl1, obsImpl2),
@@ -138,12 +138,12 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     context.addModule(warrays)
 
     it("recognize type synonym") {
-      def test(t: STpeExpr, expected: Option[(String, List[STpeExpr])]): Unit = {
-        context.TypeSynonim.unapply(t) should be(expected)
+      def test(t: STpeExpr): Unit = {
+        context.TypeDef.unapply(t) should matchPattern { case Some(_) => }
       }
-      test(STraitCall("Obs", List(TpeInt)), Some(("Observable", List(TpeInt))))
-      test(STraitCall("Col", List(TpeString)), Some(("Collection", List(TpeString))))
-      test(STraitCall("RepWArray", List(TpeString)), Some(("WArray", List(TpeString))))
+      test(STraitCall("Obs", List(TpeInt)))
+      test(STraitCall("Col", List(TpeString)))
+      test(STraitCall("RepWArray", List(TpeString)))
     }
 
     it("recognize Rep type") {
@@ -154,8 +154,6 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
       test(STraitCall("Elem", List(TpeInt)), None)
       test(STraitCall("Rep", List(TpeInt)), Some(TpeInt))
       test(STraitCall("RFunc", List(TpeInt, TpeString)), Some(STpeFunc(TpeInt, TpeString)))
-      test(STraitCall("Obs", List(TpeInt)), Some(STraitCall("Observable", List(TpeInt))))
-      test(STraitCall("RepWArray", List(TpeInt)), Some(STraitCall("WArray", List(TpeInt))))
     }
 
     it("resolve Entity by name") {

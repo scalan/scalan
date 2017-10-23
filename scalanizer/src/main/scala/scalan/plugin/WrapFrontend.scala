@@ -261,7 +261,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       packageName = wrapPackage(packageName),
       imports = imports,
       name = wmod(externalTypeName),
-      entityRepSynonym = None,
+      typeDefs = Nil,
       entityOps = entity, entities = List(entity),
       concreteSClasses = Nil, methods = Nil,
       selfType = Some(SSelfTypeDef(

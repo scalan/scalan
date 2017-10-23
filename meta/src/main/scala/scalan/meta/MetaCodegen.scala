@@ -363,13 +363,10 @@ class MetaCodegen {
     val implicitArgsUse = implicitArgs.opt(args => s"(${args.rep(_.name)})")
     val implicitArgsOrParens = if (implicitArgs.nonEmpty) implicitArgsUse else "()"
     val firstAncestorType = entity.firstAncestorType
-    val entityRepSynonymOpt = module.entityRepSynonym
+//    val entityRepSynonymOpt = entity.entityRepSynonym
     val allArgs = entity.args.args ++ entity.implicitArgs.args
 
-    def entityRepSynonym = entityRepSynonymOpt match {
-      case Some(s) => s
-      case None => STpeDef("Rep" + name, tpeArgs, STraitCall("Rep", List(STraitCall(name, tpeArgs.map(_.toTraitCall)))))
-    }
+    def entityRepSynonym = STpeDef("Rep" + name, tpeArgs, STraitCall("Rep", List(STraitCall(name, tpeArgs.map(_.toTraitCall)))))
 
     def isCont = tpeArgs.length == 1 && entity.hasAnnotation(ContainerTypeAnnotation)
     def isFunctor = tpeArgs.length == 1 && entity.hasAnnotation(FunctorTypeAnnotation)

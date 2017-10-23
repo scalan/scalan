@@ -6,7 +6,6 @@ package scala {
   import scala.wrappers.WrappersModule
 
   trait WArrays extends Base { self: WrappersModule =>
-    type RepWArray[T] = Rep[WArray[T]];
     @External("Array") @ContainerType @FunctorType trait WArray[T] extends Def[WArray[T]] { self =>
       implicit def eT: Elem[T];
       @External def apply(i: Rep[Int]): Rep[T];

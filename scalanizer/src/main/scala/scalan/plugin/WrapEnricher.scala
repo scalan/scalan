@@ -38,7 +38,6 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
           addBaseToAncestors _,
           addEntityAncestors _,
           updateSelf _,
-          repSynonym _,
           checkEntityCompanion _,
           constr2apply _,
           cleanUpClassTags _,

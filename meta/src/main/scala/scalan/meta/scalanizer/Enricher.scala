@@ -83,7 +83,7 @@ trait Enricher[+G <: Global] extends ScalanizerBase[G] {
       addBaseToAncestors _,
       addEntityAncestors _,
       updateSelf _,
-      repSynonym _,
+//      addEntityRepSynonym _,
       addImports _,
       checkEntityCompanion _,
       checkClassCompanion _,

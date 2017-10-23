@@ -59,7 +59,7 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
   def genModuleTrait(module: SModuleDef)(implicit ctx: GenCtx): Tree = {
     val methods = module.methods.map(m => genMethod(m)(ctx.copy(toRep = !m.isTypeDesc)))
     val newstats =
-      module.entityRepSynonym.map(genTypeDef).toList :::
+      module.typeDefs.map(genTypeDef) :::
       genEntity(module.entityOps) ::
       (genConcreteClasses(module.concreteSClasses) ++ genCompanions(module) ++ methods)
     val newSelf = genModuleSelf(module)

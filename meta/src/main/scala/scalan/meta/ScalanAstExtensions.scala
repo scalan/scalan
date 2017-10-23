@@ -102,7 +102,7 @@ object ScalanAstExtensions {
   }
 
   implicit class STpeDefOps(td: STpeDef) {
-    def declaration = s"type ${td.name}${td.tpeArgs.declString} = Rep[${td.rhs}}]"
+    def declaration = s"type ${td.name}${td.tpeArgs.declString} = ${td.rhs}"
   }
 
   implicit class SMethodDefOps(md: SMethodDef) {

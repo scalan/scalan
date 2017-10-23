@@ -73,17 +73,18 @@ class SModuleBuilder(implicit val context: AstContext) {
     )))
   }
 
-  /** Introduces a synonym for the entity. If name of the entity is Matr, the method adds:
-    *   type RepMatr[T] = Rep[Matr[T]]
-    * */
-  def repSynonym(module: SModuleDef) = {
-    val entity = module.entityOps
-    module.copy(entityRepSynonym = Some(STpeDef(
-      name = "Rep" + entity.name,
-      tpeArgs = entity.tpeArgs,
-      rhs = STraitCall("Rep", List(STraitCall(entity.name, entity.tpeArgs.map(_.toTraitCall))))
-    )))
-  }
+//  /** Introduces a synonym for each entity. If name of the entity is Matr, the method adds:
+//    *   type RepMatr[T] = Rep[Matr[T]]
+//    * */
+//  def addEntityRepSynonym(module: SModuleDef) = {
+//    val entity = module.entityOps
+//    def synDef(entity: STraitDef) = STpeDef(
+//      name = "Rep" + entityName,
+//      tpeArgs = entity.tpeArgs,
+//      rhs = STraitCall("Rep", List(STraitCall(entity.name, entity.tpeArgs.map(_.toTraitCall))))
+//    )
+//    module.copy(entityRepSynonym = Some(synDef))
+//  }
 
   /** Checks that the entity has a companion. If the entity doesn't have it
     * then the method adds the companion. */

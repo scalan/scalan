@@ -142,7 +142,7 @@ trait ScalanParsers[+G <: Global] {
 
     val defs = mainTrait.body
 
-    val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
+    val typeDefs = defs.collect { case t: STpeDef => t }
 
     val traits = defs.collect {
       case t: STraitDef if !(t.name.endsWith("Companion") || t.hasAnnotation("InternalType")) => t
@@ -157,7 +157,8 @@ trait ScalanParsers[+G <: Global] {
     }
 
     SModuleDef(packageName, imports, moduleName,
-      entityRepSynonym, entity, traits, concreteClasses, methods,
+      typeDefs,
+      entity, traits, concreteClasses, methods,
       mainTrait.selfType, mainTrait.ancestors,
       None, ctx.isVirtualized, okEmitOrigModuleTrait = !isDefinedModule)
   }

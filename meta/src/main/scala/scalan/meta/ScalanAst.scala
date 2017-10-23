@@ -153,13 +153,11 @@ object ScalanAst {
       case STraitCall(n, args) => // higher-kind usage of names is not supported  Array[A] - ok, A[Int] - nok
         subst.get(n) match {
           case Some(t) => t
-          case None => STraitCall(n, args map {
-            _.applySubst(subst)
-          })
+          case None =>
+            STraitCall(n, args map { _.applySubst(subst) })
         }
-      case STpeTuple(items) => STpeTuple(items map {
-        _.applySubst(subst)
-      })
+      case STpeTuple(items) =>
+        STpeTuple(items map { _.applySubst(subst) })
       case _ => self
     }
 
@@ -280,7 +278,7 @@ object ScalanAst {
         find(module, tT, argName)
       case STraitCall("Thunk", List(tT)) =>
         find(module, tT, argName).map(tail => SThunkPath(tpe, tail))
-      case module.context.TypeSynonim(en @ module.context.ModuleEntity(_, e), args) =>
+      case module.context.TypeDef(_, module.context.RepTypeOf(STraitCall(en @ module.context.ModuleEntity(_, e), args))) =>
         findInEntity(module, e, STraitCall(en, args), argName)
       case s@STpeStruct(_) =>
         def findInStruct(s: STpeStruct): Option[STpePath] = {
@@ -965,11 +963,13 @@ object ScalanAst {
       res
     }
 
-    def entityTypeSynonyms: Map[String, String] = {
-      allModules
-        .flatMap(m => m.entityRepSynonym.map((m, _)))
-        .map { case (m, syn) => syn.name -> m.entityOps.name }
-        .toMap
+    def typeDefs: Map[String, STpeDef] = {
+      val defs = for {
+          m <- allModules
+          t <- m.typeDefs
+        }
+        yield t.name -> t
+      defs.toMap
     }
 
     def hasModule(packageName: String, moduleName: String): Boolean = {
@@ -989,11 +989,14 @@ object ScalanAst {
       modules(key) = module
     }
 
-    object TypeSynonim {
-      def unapply(tpe: STpeExpr): Option[(String, List[STpeExpr])] = tpe match {
+    object TypeDef {
+      /** Recognizes usage of STpeDef and substitutes args to rhs */
+      def unapply(tpe: STpeExpr): Option[(STpeDef, STpeExpr)] = tpe match {
         case STraitCall(n, args) =>
-          val typeSynonyms = entityTypeSynonyms
-          typeSynonyms.get(n).map(entityName => (entityName, args))
+          typeDefs.get(n).map { td =>
+            val subst = td.tpeArgs.map(_.name).zip(args).toMap
+            (td, td.rhs.applySubst(subst))
+          }
         case _ => None
       }
     }
@@ -1004,8 +1007,8 @@ object ScalanAst {
           Some(t)
         case STraitCall("RFunc", Seq(a, b)) =>  // RFunc[a,b] --> a => b
           Some(STpeFunc(a, b))
-        case TypeSynonim(entityName, tyargs) => // RepCol[args] --> Col[args]
-          Some(STraitCall(entityName, tyargs))
+        case TypeDef(td, RepTypeOf(t)) => // type RepCol[args] = Rep[Col[args]] then RepCol[args] --> Col[args]
+          Some(t)
         case _ => None
       }
     }
@@ -1020,7 +1023,7 @@ object ScalanAst {
   case class SModuleDef(packageName: String,
                         imports: List[SImportStat],
                         name: String,
-                        entityRepSynonym: Option[STpeDef],
+                        typeDefs: List[STpeDef],
                         entityOps: STraitDef,
                         entities: List[STraitDef],
                         concreteSClasses: List[SClassDef],
@@ -1036,11 +1039,6 @@ object ScalanAst {
     def getModuleKey: String = Name.fullNameString(packageName, name)
     @JsonIgnore
     def getModuleTraitName: String = SModuleDef.moduleTraitName(name)
-    def getFullName(shortName: String): String = s"$packageName.$name.$shortName"
-
-    def isEqualName(shortName: String, fullName: String): Boolean =
-      if (fullName == getFullName(shortName)) true
-      else shortName == fullName
 
     def getEntity(name: String): STmplDef = {
       findEntity(name).getOrElse {
@@ -1076,7 +1074,7 @@ object ScalanAst {
       val _entityOps = _entities.headOption.get
       copy(
         imports = Nil,
-        entityRepSynonym = None,
+        typeDefs = Nil,
         entityOps = _entityOps,
         entities = _entities,
         concreteSClasses = _concreteSClasses,

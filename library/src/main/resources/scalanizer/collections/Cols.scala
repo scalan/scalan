@@ -2,7 +2,6 @@ package scalanizer.collections {
   import scalan._
 
   trait Cols extends Base { self: ColsModule =>
-    type RepCol[A] = Rep[Col[A]];
     trait Col[A] extends Def[Col[A]] {
       implicit def eA: Elem[A];
       def arr: Rep[WArray[A]];

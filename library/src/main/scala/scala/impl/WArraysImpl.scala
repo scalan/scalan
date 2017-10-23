@@ -190,6 +190,8 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
 
+  type RepWArray[T] = Rep[WArray[T]]
+
   override def rewriteDef[T](d: Def[T]) = d match {
     case view1@ViewWArray(Def(view2@ViewWArray(arr, innerIso2)), innerIso1) =>
       val compIso = composeIso(innerIso1, innerIso2)

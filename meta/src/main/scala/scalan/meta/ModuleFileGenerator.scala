@@ -168,7 +168,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       |      super.unapplyViews(s)
       |  }).asInstanceOf[Option[Unpacked[T]]]
       |
-      |  ${e.entityRepSynonymOpt.isEmpty.opt(e.entityRepSynonym.declaration)}
+      |  ${e.entityRepSynonym.declaration}
       |
       |  override def rewriteDef[T](d: Def[T]) = d match {
       |    ${e.when(_.isCont, emitContRules)}
