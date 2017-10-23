@@ -57,10 +57,46 @@ trait ViewsDefs extends Views {
   implicit def proxyIsoURCompanionCtor(p: Rep[IsoURCompanionCtor]): IsoURCompanionCtor =
     proxyOps[IsoURCompanionCtor](p)
 
+  lazy val IsoUR: Rep[IsoURCompanionCtor] = new IsoURCompanionCtor {
+  }
+
+  object IsoURMethods {
+    object from {
+      def unapply(d: Def[_]): Option[(Rep[IsoUR[From, To]], Rep[To]) forSome {type From; type To}] = d match {
+        case MethodCall(receiver, method, Seq(p, _*), _) if receiver.elem.isInstanceOf[IsoURElem[_, _, _]] && method.getName == "from" =>
+          Some((receiver, p)).asInstanceOf[Option[(Rep[IsoUR[From, To]], Rep[To]) forSome {type From; type To}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[(Rep[IsoUR[From, To]], Rep[To]) forSome {type From; type To}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object to {
+      def unapply(d: Def[_]): Option[(Rep[IsoUR[From, To]], Rep[From]) forSome {type From; type To}] = d match {
+        case MethodCall(receiver, method, Seq(p, _*), _) if receiver.elem.isInstanceOf[IsoURElem[_, _, _]] && method.getName == "to" =>
+          Some((receiver, p)).asInstanceOf[Option[(Rep[IsoUR[From, To]], Rep[From]) forSome {type From; type To}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[(Rep[IsoUR[From, To]], Rep[From]) forSome {type From; type To}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    // WARNING: Cannot generate matcher for method `toString`: Overrides Object method
+
+    // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
+
+    // WARNING: Cannot generate matcher for method `isIdentity`: Method's return type Boolean is not a Rep
+  }
+
   // entityProxy: single proxy for each type family
   implicit def proxyIso1UR[A, B, C[_]](p: Rep[Iso1UR[A, B, C]]): Iso1UR[A, B, C] = {
     proxyOps[Iso1UR[A, B, C]](p)(scala.reflect.classTag[Iso1UR[A, B, C]])
   }
+
   // familyElem
   class Iso1URElem[A, B, C[_], To <: Iso1UR[A, B, C]](implicit _eA: Elem[A], _eB: Elem[B], _cC: Cont[C])
     extends IsoURElem[C[A], C[B], To] {
@@ -102,6 +138,37 @@ trait ViewsDefs extends Views {
   }
   implicit def proxyIso1URCompanionCtor(p: Rep[Iso1URCompanionCtor]): Iso1URCompanionCtor =
     proxyOps[Iso1URCompanionCtor](p)
+
+  lazy val Iso1UR: Rep[Iso1URCompanionCtor] = new Iso1URCompanionCtor {
+  }
+
+  object Iso1URMethods {
+    object innerIso {
+      def unapply(d: Def[_]): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = d match {
+        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: Iso1URElem[_, _, _, _] => true; case _ => false }) && method.getName == "innerIso" =>
+          Some(receiver).asInstanceOf[Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object isIdentity {
+      def unapply(d: Def[_]): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = d match {
+        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: Iso1URElem[_, _, _, _] => true; case _ => false }) && method.getName == "isIdentity" =>
+          Some(receiver).asInstanceOf[Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
+  }
 
   case class IdentityIsoCtor[A]
       ()(implicit eA: Elem[A])
@@ -980,40 +1047,6 @@ implicit val eB = p.innerIso.eTo
 
   registerModule(ViewsModule)
 
-  lazy val IsoUR: Rep[IsoURCompanionCtor] = new IsoURCompanionCtor {
-  }
-
-  lazy val Iso1UR: Rep[Iso1URCompanionCtor] = new Iso1URCompanionCtor {
-  }
-
-  object Iso1URMethods {
-    object innerIso {
-      def unapply(d: Def[_]): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = d match {
-        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: Iso1URElem[_, _, _, _] => true; case _ => false }) && method.getName == "innerIso" =>
-          Some(receiver).asInstanceOf[Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object isIdentity {
-      def unapply(d: Def[_]): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = d match {
-        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: Iso1URElem[_, _, _, _] => true; case _ => false }) && method.getName == "isIdentity" =>
-          Some(receiver).asInstanceOf[Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[Iso1UR[A, B, C]] forSome {type A; type B; type C[_]}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
-  }
-
   object IdentityIsoMethods {
     object from {
       def unapply(d: Def[_]): Option[(Rep[IdentityIso[A]], Rep[A]) forSome {type A}] = d match {
@@ -1472,38 +1505,6 @@ implicit val eB = p.innerIso.eTo
       Some((p.asRep[ThunkIso[A, B]].innerIso))
     case _ =>
       None
-  }
-
-  object IsoURMethods {
-    object from {
-      def unapply(d: Def[_]): Option[(Rep[IsoUR[From, To]], Rep[To]) forSome {type From; type To}] = d match {
-        case MethodCall(receiver, method, Seq(p, _*), _) if receiver.elem.isInstanceOf[IsoURElem[_, _, _]] && method.getName == "from" =>
-          Some((receiver, p)).asInstanceOf[Option[(Rep[IsoUR[From, To]], Rep[To]) forSome {type From; type To}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[(Rep[IsoUR[From, To]], Rep[To]) forSome {type From; type To}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object to {
-      def unapply(d: Def[_]): Option[(Rep[IsoUR[From, To]], Rep[From]) forSome {type From; type To}] = d match {
-        case MethodCall(receiver, method, Seq(p, _*), _) if receiver.elem.isInstanceOf[IsoURElem[_, _, _]] && method.getName == "to" =>
-          Some((receiver, p)).asInstanceOf[Option[(Rep[IsoUR[From, To]], Rep[From]) forSome {type From; type To}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[(Rep[IsoUR[From, To]], Rep[From]) forSome {type From; type To}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    // WARNING: Cannot generate matcher for method `toString`: Overrides Object method
-
-    // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
-
-    // WARNING: Cannot generate matcher for method `isIdentity`: Method's return type Boolean is not a Rep
   }
 }
 

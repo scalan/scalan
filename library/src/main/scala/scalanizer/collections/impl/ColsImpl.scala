@@ -53,6 +53,73 @@ trait ColsDefs extends scalan.Scalan with Cols {
   implicit def proxyColCompanionCtor(p: Rep[ColCompanionCtor]): ColCompanionCtor =
     proxyOps[ColCompanionCtor](p)
 
+  lazy val Col: Rep[ColCompanionCtor] = new ColCompanionCtor {
+  }
+
+  object ColMethods {
+    object arr {
+      def unapply(d: Def[_]): Option[Rep[Col[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ColElem[_, _]] && method.getName == "arr" =>
+          Some(receiver).asInstanceOf[Option[Rep[Col[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[Col[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object length {
+      def unapply(d: Def[_]): Option[Rep[Col[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ColElem[_, _]] && method.getName == "length" =>
+          Some(receiver).asInstanceOf[Option[Rep[Col[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[Col[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[Col[A]], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[ColElem[_, _]] && method.getName == "apply" =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[Col[A]], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[(Rep[Col[A]], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object ColCompanionMethods {
+    object fromArray {
+      def unapply(d: Def[_]): Option[Rep[WArray[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == ColCompanionElem && method.getName == "fromArray" =>
+          Some(arr).asInstanceOf[Option[Rep[WArray[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[WArray[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object ddmvm {
+      def unapply(d: Def[_]): Option[Rep[WArray[Double]]] = d match {
+        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem == ColCompanionElem && method.getName == "ddmvm" =>
+          Some(v).asInstanceOf[Option[Rep[WArray[Double]]]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[WArray[Double]]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
   case class ColOverArrayCtor[A]
       (override val arr: Rep[WArray[A]])
     extends ColOverArray[A](arr) with Def[ColOverArray[A]] {
@@ -137,9 +204,6 @@ trait ColsDefs extends scalan.Scalan with Cols {
 
   registerModule(ColsModule)
 
-  lazy val Col: Rep[ColCompanionCtor] = new ColCompanionCtor {
-  }
-
   object ColOverArrayMethods {
     object length {
       def unapply(d: Def[_]): Option[Rep[ColOverArray[A]] forSome {type A}] = d match {
@@ -178,70 +242,6 @@ trait ColsDefs extends scalan.Scalan with Cols {
       Some((p.asRep[ColOverArray[A]].arr))
     case _ =>
       None
-  }
-
-  object ColMethods {
-    object arr {
-      def unapply(d: Def[_]): Option[Rep[Col[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ColElem[_, _]] && method.getName == "arr" =>
-          Some(receiver).asInstanceOf[Option[Rep[Col[A]] forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[Col[A]] forSome {type A}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object length {
-      def unapply(d: Def[_]): Option[Rep[Col[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ColElem[_, _]] && method.getName == "length" =>
-          Some(receiver).asInstanceOf[Option[Rep[Col[A]] forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[Col[A]] forSome {type A}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object apply {
-      def unapply(d: Def[_]): Option[(Rep[Col[A]], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[ColElem[_, _]] && method.getName == "apply" =>
-          Some((receiver, i)).asInstanceOf[Option[(Rep[Col[A]], Rep[Int]) forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[(Rep[Col[A]], Rep[Int]) forSome {type A}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-  }
-
-  object ColCompanionMethods {
-    object fromArray {
-      def unapply(d: Def[_]): Option[Rep[WArray[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == ColCompanionElem && method.getName == "fromArray" =>
-          Some(arr).asInstanceOf[Option[Rep[WArray[T]] forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[WArray[T]] forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object ddmvm {
-      def unapply(d: Def[_]): Option[Rep[WArray[Double]]] = d match {
-        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem == ColCompanionElem && method.getName == "ddmvm" =>
-          Some(v).asInstanceOf[Option[Rep[WArray[Double]]]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[WArray[Double]]] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 }
 

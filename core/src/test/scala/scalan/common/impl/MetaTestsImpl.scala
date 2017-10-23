@@ -53,6 +53,50 @@ trait MetaTestsDefs extends scalan.Scalan with MetaTests {
   implicit def proxyMetaTestCompanionCtor(p: Rep[MetaTestCompanionCtor]): MetaTestCompanionCtor =
     proxyOps[MetaTestCompanionCtor](p)
 
+  lazy val MetaTest: Rep[MetaTestCompanionCtor] = new MetaTestCompanionCtor {
+  }
+
+  object MetaTestMethods {
+    object test {
+      def unapply(d: Def[_]): Option[Rep[MetaTest[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MetaTestElem[_, _]] && method.getName == "test" =>
+          Some(receiver).asInstanceOf[Option[Rep[MetaTest[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object give {
+      def unapply(d: Def[_]): Option[Rep[MetaTest[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MetaTestElem[_, _]] && method.getName == "give" =>
+          Some(receiver).asInstanceOf[Option[Rep[MetaTest[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object size {
+      def unapply(d: Def[_]): Option[Rep[MetaTest[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MetaTestElem[_, _]] && method.getName == "size" =>
+          Some(receiver).asInstanceOf[Option[Rep[MetaTest[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object MetaTestCompanionMethods {
+  }
+
   case class MT0Ctor
       (override val size: Rep[Int])
     extends MT0(size) with Def[MT0] {
@@ -317,9 +361,6 @@ implicit val eR = p.values.elem
 
   registerModule(MetaTestsModule)
 
-  lazy val MetaTest: Rep[MetaTestCompanionCtor] = new MetaTestCompanionCtor {
-  }
-
   object MT0Methods {
     object test {
       def unapply(d: Def[_]): Option[Rep[MT0]] = d match {
@@ -444,47 +485,6 @@ implicit val eR = p.values.elem
       Some((p.asRep[MT2[T, R]].indices, p.asRep[MT2[T, R]].values, p.asRep[MT2[T, R]].size))
     case _ =>
       None
-  }
-
-  object MetaTestMethods {
-    object test {
-      def unapply(d: Def[_]): Option[Rep[MetaTest[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MetaTestElem[_, _]] && method.getName == "test" =>
-          Some(receiver).asInstanceOf[Option[Rep[MetaTest[T]] forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object give {
-      def unapply(d: Def[_]): Option[Rep[MetaTest[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MetaTestElem[_, _]] && method.getName == "give" =>
-          Some(receiver).asInstanceOf[Option[Rep[MetaTest[T]] forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object size {
-      def unapply(d: Def[_]): Option[Rep[MetaTest[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MetaTestElem[_, _]] && method.getName == "size" =>
-          Some(receiver).asInstanceOf[Option[Rep[MetaTest[T]] forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[MetaTest[T]] forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-  }
-
-  object MetaTestCompanionMethods {
   }
 }
 

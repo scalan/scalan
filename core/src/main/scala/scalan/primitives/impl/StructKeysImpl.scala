@@ -53,6 +53,35 @@ trait StructKeysDefs extends StructKeys {
   implicit def proxyStructKeyCompanionCtor(p: Rep[StructKeyCompanionCtor]): StructKeyCompanionCtor =
     proxyOps[StructKeyCompanionCtor](p)
 
+  lazy val StructKey: Rep[StructKeyCompanionCtor] = new StructKeyCompanionCtor {
+  }
+
+  object StructKeyMethods {
+    object index {
+      def unapply(d: Def[_]): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructKeyElem[_, _]] && method.getName == "index" =>
+          Some(receiver).asInstanceOf[Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object name {
+      def unapply(d: Def[_]): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructKeyElem[_, _]] && method.getName == "name" =>
+          Some(receiver).asInstanceOf[Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
   case class IndexStructKeyCtor[Schema <: Struct]
       (override val index: Rep[Int])(implicit eSchema: Elem[Schema])
     extends IndexStructKey[Schema](index) with Def[IndexStructKey[Schema]] {
@@ -215,9 +244,6 @@ trait StructKeysDefs extends StructKeys {
 
   registerModule(StructKeysModule)
 
-  lazy val StructKey: Rep[StructKeyCompanionCtor] = new StructKeyCompanionCtor {
-  }
-
   object IndexStructKeyMethods {
     object name {
       def unapply(d: Def[_]): Option[Rep[IndexStructKey[Schema]] forSome {type Schema <: Struct}] = d match {
@@ -270,32 +296,6 @@ trait StructKeysDefs extends StructKeys {
       Some((p.asRep[NameStructKey[Schema]].name))
     case _ =>
       None
-  }
-
-  object StructKeyMethods {
-    object index {
-      def unapply(d: Def[_]): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructKeyElem[_, _]] && method.getName == "index" =>
-          Some(receiver).asInstanceOf[Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object name {
-      def unapply(d: Def[_]): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructKeyElem[_, _]] && method.getName == "name" =>
-          Some(receiver).asInstanceOf[Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[StructKey[Schema]] forSome {type Schema <: Struct}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 }
 

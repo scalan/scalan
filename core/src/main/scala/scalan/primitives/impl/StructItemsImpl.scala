@@ -58,6 +58,35 @@ trait StructItemsDefs extends StructItems {
   implicit def proxyStructItemCompanionCtor(p: Rep[StructItemCompanionCtor]): StructItemCompanionCtor =
     proxyOps[StructItemCompanionCtor](p)
 
+  lazy val StructItem: Rep[StructItemCompanionCtor] = new StructItemCompanionCtor {
+  }
+
+  object StructItemMethods {
+    object key {
+      def unapply(d: Def[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructItemElem[_, _, _]] && method.getName == "key" =>
+          Some(receiver).asInstanceOf[Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object value {
+      def unapply(d: Def[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructItemElem[_, _, _]] && method.getName == "value" =>
+          Some(receiver).asInstanceOf[Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
   case class StructItemBaseCtor[Val, Schema <: Struct]
       (override val key: Rep[StructKey[Schema]], override val value: Rep[Val])
     extends StructItemBase[Val, Schema](key, value) with Def[StructItemBase[Val, Schema]] {
@@ -155,9 +184,6 @@ implicit val eSchema = p.key.eSchema
 
   registerModule(StructItemsModule)
 
-  lazy val StructItem: Rep[StructItemCompanionCtor] = new StructItemCompanionCtor {
-  }
-
   object StructItemBaseMethods {
   }
 
@@ -170,32 +196,6 @@ implicit val eSchema = p.key.eSchema
       Some((p.asRep[StructItemBase[Val, Schema]].key, p.asRep[StructItemBase[Val, Schema]].value))
     case _ =>
       None
-  }
-
-  object StructItemMethods {
-    object key {
-      def unapply(d: Def[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructItemElem[_, _, _]] && method.getName == "key" =>
-          Some(receiver).asInstanceOf[Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object value {
-      def unapply(d: Def[_]): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StructItemElem[_, _, _]] && method.getName == "value" =>
-          Some(receiver).asInstanceOf[Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[StructItem[Val, Schema]] forSome {type Val; type Schema <: Struct}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 }
 

@@ -82,8 +82,6 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   implicit def proxyWArrayCompanionCtor(p: Rep[WArrayCompanionCtor]): WArrayCompanionCtor =
     proxyOps[WArrayCompanionCtor](p)
 
-  registerModule(WArraysModule)
-
   lazy val WArray: Rep[WArrayCompanionCtor] = new WArrayCompanionCtor {
     def fill[T](n: Rep[Int], elem: Rep[Thunk[T]]): Rep[WArray[T]] = {
       implicit val eT = elem.elem.eItem
@@ -217,6 +215,8 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
     }
     case _ => super.rewriteDef(d)
   }
+
+  registerModule(WArraysModule)
 }
 
 object WArraysModule extends scalan.ModuleInfo("scala", "WArrays")

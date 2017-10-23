@@ -52,6 +52,74 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
   implicit def proxySegmentCompanionCtor(p: Rep[SegmentCompanionCtor]): SegmentCompanionCtor =
     proxyOps[SegmentCompanionCtor](p)
 
+  lazy val Segment: Rep[SegmentCompanionCtor] = new SegmentCompanionCtor {
+  }
+
+  object SegmentMethods {
+    object start {
+      def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_]] && method.getName == "start" =>
+          Some(receiver).asInstanceOf[Option[Rep[Segment]]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[Segment]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object length {
+      def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_]] && method.getName == "length" =>
+          Some(receiver).asInstanceOf[Option[Rep[Segment]]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[Segment]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object end {
+      def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_]] && method.getName == "end" =>
+          Some(receiver).asInstanceOf[Option[Rep[Segment]]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[Segment]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object shift {
+      def unapply(d: Def[_]): Option[(Rep[Segment], Rep[Int])] = d match {
+        case MethodCall(receiver, method, Seq(ofs, _*), _) if receiver.elem.isInstanceOf[SegmentElem[_]] && method.getName == "shift" =>
+          Some((receiver, ofs)).asInstanceOf[Option[(Rep[Segment], Rep[Int])]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[(Rep[Segment], Rep[Int])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object attach {
+      def unapply(d: Def[_]): Option[(Rep[Segment], Rep[Segment])] = d match {
+        case MethodCall(receiver, method, Seq(seg, _*), _) if receiver.elem.isInstanceOf[SegmentElem[_]] && method.getName == "attach" =>
+          Some((receiver, seg)).asInstanceOf[Option[(Rep[Segment], Rep[Segment])]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[(Rep[Segment], Rep[Segment])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object SegmentCompanionMethods {
+  }
+
   case class IntervalCtor
       (override val start: Rep[Int], override val end: Rep[Int])
     extends Interval(start, end) with Def[Interval] {
@@ -301,9 +369,6 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
 
   registerModule(SegmentsModule)
 
-  lazy val Segment: Rep[SegmentCompanionCtor] = new SegmentCompanionCtor {
-  }
-
   object IntervalMethods {
     object length {
       def unapply(d: Def[_]): Option[Rep[Interval]] = d match {
@@ -482,71 +547,6 @@ trait SegmentsDefs extends scalan.Scalan with Segments {
       Some((p.asRep[Centered].center, p.asRep[Centered].radius))
     case _ =>
       None
-  }
-
-  object SegmentMethods {
-    object start {
-      def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_]] && method.getName == "start" =>
-          Some(receiver).asInstanceOf[Option[Rep[Segment]]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[Segment]] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object length {
-      def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_]] && method.getName == "length" =>
-          Some(receiver).asInstanceOf[Option[Rep[Segment]]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[Segment]] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object end {
-      def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_]] && method.getName == "end" =>
-          Some(receiver).asInstanceOf[Option[Rep[Segment]]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[Segment]] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object shift {
-      def unapply(d: Def[_]): Option[(Rep[Segment], Rep[Int])] = d match {
-        case MethodCall(receiver, method, Seq(ofs, _*), _) if receiver.elem.isInstanceOf[SegmentElem[_]] && method.getName == "shift" =>
-          Some((receiver, ofs)).asInstanceOf[Option[(Rep[Segment], Rep[Int])]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[(Rep[Segment], Rep[Int])] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object attach {
-      def unapply(d: Def[_]): Option[(Rep[Segment], Rep[Segment])] = d match {
-        case MethodCall(receiver, method, Seq(seg, _*), _) if receiver.elem.isInstanceOf[SegmentElem[_]] && method.getName == "attach" =>
-          Some((receiver, seg)).asInstanceOf[Option[(Rep[Segment], Rep[Segment])]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[(Rep[Segment], Rep[Segment])] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-  }
-
-  object SegmentCompanionMethods {
   }
 }
 

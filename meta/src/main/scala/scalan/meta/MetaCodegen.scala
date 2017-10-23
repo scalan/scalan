@@ -398,11 +398,14 @@ class MetaCodegen {
       new ElemExtractionBuilder(module, entity, argSubst)
   }
 
-  case class EntityTemplateData(m: SModuleDef, t: STraitDef) extends TemplateData(m, t) {
+  case class EntityTemplateData(m: SModuleDef, t: STmplDef) extends TemplateData(m, t) {
     def elemTypeUse(toType: String = typeUse) = s"${name}Elem[${join(tpeArgNames, toType)}]"
     val typesWithElems = boundedTpeArgString(false)
-    def optimizeImplicits(): EntityTemplateData = {
-      this.copy(t = optimizeTraitImplicits(t, m))
+    def optimizeImplicits(): EntityTemplateData = t match {
+      case t: STraitDef =>
+        this.copy(t = optimizeTraitImplicits(t, m))
+      case c: SClassDef =>
+        this.copy(t = optimizeClassImplicits(c, m))
     }
   }
 

@@ -55,6 +55,42 @@ trait ConvertersDefs extends Converters {
   implicit def proxyConverterCompanionCtor(p: Rep[ConverterCompanionCtor]): ConverterCompanionCtor =
     proxyOps[ConverterCompanionCtor](p)
 
+  lazy val Converter: Rep[ConverterCompanionCtor] = new ConverterCompanionCtor {
+  }
+
+  object ConverterMethods {
+    object convFun {
+      def unapply(d: Def[_]): Option[Rep[Converter[T, R]] forSome {type T; type R}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ConverterElem[_, _, _]] && method.getName == "convFun" =>
+          Some(receiver).asInstanceOf[Option[Rep[Converter[T, R]] forSome {type T; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[Rep[Converter[T, R]] forSome {type T; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[Converter[T, R]], Rep[T]) forSome {type T; type R}] = d match {
+        case MethodCall(receiver, method, Seq(x, _*), _) if receiver.elem.isInstanceOf[ConverterElem[_, _, _]] && method.getName == "apply" =>
+          Some((receiver, x)).asInstanceOf[Option[(Rep[Converter[T, R]], Rep[T]) forSome {type T; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[(Rep[Converter[T, R]], Rep[T]) forSome {type T; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    // WARNING: Cannot generate matcher for method `isIdentity`: Method's return type Boolean is not a Rep
+
+    // WARNING: Cannot generate matcher for method `toString`: Overrides Object method
+  }
+
+  object ConverterCompanionMethods {
+  }
+
   case class IdentityConvCtor[A]
       ()(implicit eT: Elem[A])
     extends IdentityConv[A]() with Def[IdentityConv[A]] {
@@ -723,9 +759,6 @@ implicit val eB = p.itemConv.eR
 
   registerModule(ConvertersModule)
 
-  lazy val Converter: Rep[ConverterCompanionCtor] = new ConverterCompanionCtor {
-  }
-
   object IdentityConvMethods {
     object apply {
       def unapply(d: Def[_]): Option[(Rep[IdentityConv[A]], Rep[A]) forSome {type A}] = d match {
@@ -981,39 +1014,6 @@ implicit val eB = p.itemConv.eR
       Some((p.asRep[NaturalConverter[A, F, G]].convFun))
     case _ =>
       None
-  }
-
-  object ConverterMethods {
-    object convFun {
-      def unapply(d: Def[_]): Option[Rep[Converter[T, R]] forSome {type T; type R}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ConverterElem[_, _, _]] && method.getName == "convFun" =>
-          Some(receiver).asInstanceOf[Option[Rep[Converter[T, R]] forSome {type T; type R}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[Rep[Converter[T, R]] forSome {type T; type R}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object apply {
-      def unapply(d: Def[_]): Option[(Rep[Converter[T, R]], Rep[T]) forSome {type T; type R}] = d match {
-        case MethodCall(receiver, method, Seq(x, _*), _) if receiver.elem.isInstanceOf[ConverterElem[_, _, _]] && method.getName == "apply" =>
-          Some((receiver, x)).asInstanceOf[Option[(Rep[Converter[T, R]], Rep[T]) forSome {type T; type R}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[(Rep[Converter[T, R]], Rep[T]) forSome {type T; type R}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    // WARNING: Cannot generate matcher for method `isIdentity`: Method's return type Boolean is not a Rep
-
-    // WARNING: Cannot generate matcher for method `toString`: Overrides Object method
-  }
-
-  object ConverterCompanionMethods {
   }
 }
 

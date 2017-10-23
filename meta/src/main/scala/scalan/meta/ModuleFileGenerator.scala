@@ -13,8 +13,6 @@ import scalan.util.CollectionUtil._
 class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: MetaConfig) {
   import codegen._
 
-  val e = EntityTemplateData(module, module.entityOps)
-
   def getCompanionMethods(e: EntityTemplateData) = e.entity.companion.map { comp =>
     val externalConstrs = comp.getMethodsWithAnnotation(ConstructorAnnotation)
     val externalMethods = comp.getMethodsWithAnnotation(ExternalAnnotation)
@@ -56,7 +54,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       |""".stripMargin
   }
 
-  def externalConstructor(method: SMethodDef) = {
+  def externalConstructor(e: EntityTemplateData, method: SMethodDef) = {
     def genConstr(method: SMethodDef) = {
       val md = optimizeMethodImplicits(method, module)
       val allArgs = md.allArgs
@@ -186,151 +184,174 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       |""".stripAndTrim
   }
 
-  def emitTraitDefs(e: EntityTemplateData) = {
-    val entityCompOpt = e.entity.companion
-    val hasCompanion = entityCompOpt.isDefined
-
-    def familyCont(e: EntityTemplateData) = {
-      def container(name: String, isFunctor: Boolean) = {
-        val contType = if (isFunctor) "Functor" else "Cont"
-        s"""\n
-          |  implicit lazy val container$name: $contType[$name] = new $contType[$name] {
-          |    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[$name[A]]
-          |    def lift[A](implicit evA: Elem[A]) = element[$name[A]]
-          |    def unlift[A](implicit eFT: Elem[$name[A]]) =
-          |      cast${e.name}Element(eFT).${e.implicitArgs(0).name}
-          |    def getElem[A](fa: Rep[$name[A]]) = fa.elem
-          |    def unapply[T](e: Elem[_]) = e match {
-          |      case e: ${e.name}Elem[_,_] => Some(e.asElem[${e.name}[T]])
-          |      case _ => None
-          |    }
-          |    ${isFunctor.opt(s"def map[A,B](xs: Rep[$name[A]])(f: Rep[A] => Rep[B]) = { implicit val eA = unlift(xs.elem); xs.map(fun(f))}")}
-          |  }
-           """.stripMargin
-      }
-
-      val entityElem = e.elemTypeUse()
-      s"""
-        |  implicit def cast${e.name}Element${e.tpeArgsDecl}(elem: Elem[${e.typeUse}]): $entityElem =
-        |    elem.asInstanceOf[$entityElem]
-        |
-        |  ${container(e.name, e.isFunctor)}
-        |
-        |  case class ${e.name}Iso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, ${e.name}] {
-        |    lazy val selfType = new ConcreteIsoElem[${e.name}[A], ${e.name}[B], ${e.name}Iso[A, B]](eFrom, eTo).
-        |      asInstanceOf[Elem[IsoUR[${e.name}[A], ${e.name}[B]]]]
-        |    def cC = container[${e.name}]
-        |    def from(x: Rep[${e.name}[B]]) = x.map(innerIso.fromFun)
-        |    def to(x: Rep[${e.name}[A]]) = x.map(innerIso.toFun)
-        |  }
-        |
-        |  def ${StringUtil.lowerCaseFirst(e.name)}Iso[A, B](innerIso: Iso[A, B]) =
-        |    reifyObject(${e.name}Iso[A, B](innerIso)).asInstanceOf[Iso1[A, B, ${e.name}]]
-        |""".stripAndTrim
-    }
-
-    def implicitTagsFromElems(t: TemplateData) = t.implicitArgs.flatMap(arg => arg.tpe match {
+  def implicitTagsFromElems(t: TemplateData) = t.implicitArgs.flatMap(arg =>
+    arg.tpe match {
       case STraitCall(name, List(tpe)) if name == "Elem" =>
-        Some(s"      implicit val tag${tpe.toIdentifier} = ${arg.name}.tag")
+        Some(s"      implicit val tag${tpe.toIdentifier } = ${arg.name }.tag")
       case _ => None
     }).mkString("\n")
 
-    def familyElem(e: EntityTemplateData) = {
-      val wildcardElem = s"${e.name}Elem[${Array.fill(e.tpeArgs.length + 1)("_").mkString(", ")}]"
-      val toArgName = {
-        // no point converting to set, since it's small and contains is unlikely to be called more than 2 times
-        val takenNames = e.name :: e.tpeArgs.map(_.name)
-        (Iterator.single("To") ++ Iterator.from(0).map("To" + _)).filterNot(takenNames.contains).next()
-      }
-      val elemTypeDecl = s"${e.name}Elem[${join(e.tpeArgs.decls, s"$toArgName <: ${e.typeUse}")}]"
-      val (optParent, parentElem) = e.firstAncestorType match {
-        case Some(STraitCall("Def", _)) =>
-          val parentElem =
-            if (e.isCont) {
-              s"EntityElem1[${e.tpeArgNames.rep()}, $toArgName, ${e.name}](${e.tpeArgNames.rep("_e" + _)}, container[${e.name}])"
-            } else {
-              s"EntityElem[$toArgName]"
-            }
-          (None, parentElem)
-        case Some(parent@STraitCall(parentName, parentTpeArgs)) =>
-          (Some(parent), s"${parentName}Elem[${join(parentTpeArgs, toArgName)}]")
-        case Some(p) => !!!(s"Unsupported parent type $p of the entity ${e.name}")
-        case None => !!!(s"Entity ${e.name} must extend Def, TypeWrapperDef, or another entity")
-      }
-      val overrideIfHasParent = optParent.ifDefined("override ")
-      val elemMethodName = entityElemMethodName(e.name)
-      val elemMethodDefinition = {
-        if (!module.methods.exists(_.name == elemMethodName)) {
-          val elemType = e.elemTypeUse()
-          s"""
-            |  implicit def $elemMethodName${e.tpeArgsDecl}${e.implicitArgsDecl()}: Elem[${e.typeUse}] =
-            |    cachedElem[$elemType]${e.implicitArgsOrParens}
-            |""".stripMargin
-        } else ""
-      }
-
-      s"""
-        |  // familyElem
-        |  class $elemTypeDecl${e.implicitArgsDecl("_")}
-        |    extends $parentElem {
-        |${e.implicitArgs.rep(a => s"    ${(e.entity.isInheritedDeclared(a.name, e.module)).opt("override ")}def ${a.name} = _${a.name}", "\n")}
-        |    ${overrideIfHasParent}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
-        |    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs(${e.tpeSubstStr})
-        |    override lazy val tag = {
-        |${implicitTagsFromElems(e)}
-        |      weakTypeTag[${e.typeUse}].asInstanceOf[WeakTypeTag[$toArgName]]
+  def familyCont(e: EntityTemplateData) = {
+    def container(name: String, isFunctor: Boolean) = {
+      val contType = if (isFunctor) "Functor" else "Cont"
+      s"""\n
+        |  implicit lazy val container$name: $contType[$name] = new $contType[$name] {
+        |    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[$name[A]]
+        |    def lift[A](implicit evA: Elem[A]) = element[$name[A]]
+        |    def unlift[A](implicit eFT: Elem[$name[A]]) =
+        |      cast${e.name}Element(eFT).${e.implicitArgs(0).name}
+        |    def getElem[A](fa: Rep[$name[A]]) = fa.elem
+        |    def unapply[T](e: Elem[_]) = e match {
+        |      case e: ${e.name}Elem[_,_] => Some(e.asElem[${e.name}[T]])
+        |      case _ => None
         |    }
-        |    override def convert(x: Rep[Def[_]]) = {
-        |      val conv = fun {x: Rep[${e.typeUse}] => convert${e.name}(x) }
-        |      tryConvert(element[${e.typeUse}], this, x, conv)
-        |    }
-        |
-         |    def convert${e.name}(x: Rep[${e.typeUse}]): Rep[$toArgName] = {
-        |      x.elem${e.t.isHighKind.opt(".asInstanceOf[Elem[_]]")} match {
-        |        case _: $wildcardElem => x.asRep[$toArgName]
-        |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e", x)
-        |      }
-        |    }
-        |    override def getDefaultRep: Rep[$toArgName] = ???
+        |    ${isFunctor.opt(s"def map[A,B](xs: Rep[$name[A]])(f: Rep[A] => Rep[B]) = { implicit val eA = unlift(xs.elem); xs.map(fun(f))}")}
         |  }
-        |$elemMethodDefinition
-        |""".stripAndTrim
+           """.stripMargin
     }
 
-    def companionAbs(e: EntityTemplateData) = {
-      val hasCompanion = e.entity.companion.isDefined
-      s"""
-        |  implicit case object ${e.companionName}Elem extends CompanionElem[${e.companionAbsName}] {
-        |    lazy val tag = weakTypeTag[${e.companionAbsName}]
-        |    protected def getDefaultRep = ${e.name}
-        |  }
-        |
-         |  abstract class ${e.companionAbsName} extends CompanionDef[${e.companionAbsName}]${hasCompanion.opt(s" with ${e.companionName}")} {
-        |    def selfType = ${e.companionName}Elem
-        |    override def toString = "${e.name}"
-        |    ${entityCompOpt.opt(_ => "")}
-        |  }
-        |${
-        hasCompanion.opt
+    val entityElem = e.elemTypeUse()
+    s"""
+      |  implicit def cast${e.name}Element${e.tpeArgsDecl}(elem: Elem[${e.typeUse}]): $entityElem =
+      |    elem.asInstanceOf[$entityElem]
+      |
+        |  ${container(e.name, e.isFunctor)}
+      |
+        |  case class ${e.name}Iso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, ${e.name}] {
+      |    lazy val selfType = new ConcreteIsoElem[${e.name}[A], ${e.name}[B], ${e.name}Iso[A, B]](eFrom, eTo).
+      |      asInstanceOf[Elem[IsoUR[${e.name}[A], ${e.name}[B]]]]
+      |    def cC = container[${e.name}]
+      |    def from(x: Rep[${e.name}[B]]) = x.map(innerIso.fromFun)
+      |    def to(x: Rep[${e.name}[A]]) = x.map(innerIso.toFun)
+      |  }
+      |
+        |  def ${StringUtil.lowerCaseFirst(e.name)}Iso[A, B](innerIso: Iso[A, B]) =
+      |    reifyObject(${e.name}Iso[A, B](innerIso)).asInstanceOf[Iso1[A, B, ${e.name}]]
+      |""".stripAndTrim
+  }
+
+  def familyElem(e: EntityTemplateData) = {
+    val wildcardElem = s"${e.name}Elem[${Array.fill(e.tpeArgs.length + 1)("_").mkString(", ")}]"
+    val toArgName = {
+      // no point converting to set, since it's small and contains is unlikely to be called more than 2 times
+      val takenNames = e.name :: e.tpeArgs.map(_.name)
+      (Iterator.single("To") ++ Iterator.from(0).map("To" + _)).filterNot(takenNames.contains).next()
+    }
+    val elemTypeDecl = s"${e.name}Elem[${join(e.tpeArgs.decls, s"$toArgName <: ${e.typeUse}")}]"
+    val (optParent, parentElem) = e.firstAncestorType match {
+      case Some(STraitCall("Def", _)) =>
+        val parentElem =
+          if (e.isCont) {
+            s"EntityElem1[${e.tpeArgNames.rep()}, $toArgName, ${e.name}](${e.tpeArgNames.rep("_e" + _)}, container[${e.name}])"
+          } else {
+            s"EntityElem[$toArgName]"
+          }
+        (None, parentElem)
+      case Some(parent@STraitCall(parentName, parentTpeArgs)) =>
+        (Some(parent), s"${parentName}Elem[${join(parentTpeArgs, toArgName)}]")
+      case Some(p) => !!!(s"Unsupported parent type $p of the entity ${e.name}")
+      case None => !!!(s"Entity ${e.name} must extend Def, TypeWrapperDef, or another entity")
+    }
+    val overrideIfHasParent = optParent.ifDefined("override ")
+    val elemMethodName = entityElemMethodName(e.name)
+    val elemMethodDefinition = {
+      if (!module.methods.exists(_.name == elemMethodName)) {
+        val elemType = e.elemTypeUse()
         s"""
-          |  implicit def proxy${e.companionAbsName}(p: Rep[${e.companionAbsName}]): ${e.companionAbsName} =
-          |    proxyOps[${e.companionAbsName}](p)
-          |""".stripAndTrim
-      }
+          |  implicit def $elemMethodName${e.tpeArgsDecl}${e.implicitArgsDecl()}: Elem[${e.typeUse}] =
+          |    cachedElem[$elemType]${e.implicitArgsOrParens}
+          |""".stripMargin
+      } else ""
+    }
+
+    s"""
+      |  // familyElem
+      |  class $elemTypeDecl${e.implicitArgsDecl("_")}
+      |    extends $parentElem {
+      |${e.implicitArgs.rep(a => s"    ${(e.entity.isInheritedDeclared(a.name, e.module)).opt("override ")}def ${a.name} = _${a.name}", "\n")}
+      |    ${overrideIfHasParent}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
+      |    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs(${e.tpeSubstStr})
+      |    override lazy val tag = {
+      |${implicitTagsFromElems(e)}
+      |      weakTypeTag[${e.typeUse}].asInstanceOf[WeakTypeTag[$toArgName]]
+      |    }
+      |    override def convert(x: Rep[Def[_]]) = {
+      |      val conv = fun {x: Rep[${e.typeUse}] => convert${e.name}(x) }
+      |      tryConvert(element[${e.typeUse}], this, x, conv)
+      |    }
+      |
+         |    def convert${e.name}(x: Rep[${e.typeUse}]): Rep[$toArgName] = {
+      |      x.elem${e.t.isHighKind.opt(".asInstanceOf[Elem[_]]")} match {
+      |        case _: $wildcardElem => x.asRep[$toArgName]
+      |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e", x)
+      |      }
+      |    }
+      |    override def getDefaultRep: Rep[$toArgName] = ???
+      |  }
+      |$elemMethodDefinition
+      |""".stripAndTrim
+  }
+
+  def companionAbs(e: EntityTemplateData) = {
+    val entityCompOpt = e.entity.companion
+    val hasCompanion = e.entity.companion.isDefined
+    s"""
+      |  implicit case object ${e.companionName}Elem extends CompanionElem[${e.companionAbsName}] {
+      |    lazy val tag = weakTypeTag[${e.companionAbsName}]
+      |    protected def getDefaultRep = ${e.name}
+      |  }
+      |
+         |  abstract class ${e.companionAbsName} extends CompanionDef[${e.companionAbsName}]${hasCompanion.opt(s" with ${e.companionName}")} {
+      |    def selfType = ${e.companionName}Elem
+      |    override def toString = "${e.name}"
+      |    ${entityCompOpt.opt(_ => "")}
+      |  }
+      |${
+      hasCompanion.opt
+      s"""
+        |  implicit def proxy${e.companionAbsName}(p: Rep[${e.companionAbsName}]): ${e.companionAbsName} =
+        |    proxyOps[${e.companionAbsName}](p)
         |""".stripAndTrim
     }
+      |""".stripAndTrim
+  }
 
-    val subEntities = for {entity <- module.entities.drop(1)} yield {
-      val templateData = EntityTemplateData(module, entity)
-
-      s"""
-        |${entityProxy(templateData)}
-        |${familyElem(templateData)}
-        |
-         |${companionAbs(templateData)}
-        |""".stripMargin
+  def emitEntityDefs(e: EntityTemplateData) = {
+    val entityCompOpt = e.entity.companion
+    val hasCompanion = entityCompOpt.isDefined
+    val companionMethods = getCompanionMethods(e).opt { case (constrs, methods) =>
+      constrs.rep(md => externalConstructor(e, md), "\n    ") +
+        methods.rep(md => externalMethod(md), "\n    ")
     }
+    val companionExpString =
+      s"""
+        |  lazy val ${e.name}: Rep[${e.companionAbsName}] = new ${e.companionAbsName} {
+        |    $companionMethods
+        |  }
+       """.stripMargin
+
+    s"""
+      |${entityProxy(e)}
+      |
+      |${if (e.isCont) familyCont(e) else ""}
+      |
+      |${familyElem(e)}
+      |
+      |${companionAbs(e)}
+      |
+      |${companionExpString}
+      |
+      |${e.when(_.isCont, familyView)}
+      |
+      |${methodExtractorsString(module, config, e.entity)}
+      |
+      |${e.when(_.isCont, emitContainerRewriteDef)}
+      |""".stripMargin
+  }
+
+  def emitClasses = {
     val concreteClasses = for {clazz <- module.concreteSClasses} yield {
+      val e = EntityTemplateData(module, clazz.getAncestorTraits(module).head)
       val className = clazz.name
       val c = ConcreteClassTemplateData(module, clazz)
       import c.{implicitArgsOrParens, implicitArgsUse, tpeArgsDecl, tpeArgsUse}
@@ -504,61 +525,32 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         |
          |""".stripAndTrim
     }
-    val companionMethods = getCompanionMethods(e).opt { case (constrs, methods) =>
-      constrs.rep(md => externalConstructor(md), "\n    ") +
-        methods.rep(md => externalMethod(md), "\n    ")
-    }
-    val extractorsForTraits = (for {entity <- module.entities.drop(1)} yield {
-      methodExtractorsString(module, config, entity)
-    }).mkString("\n\n")
+    concreteClasses.mkString("\n\n")
+  }
 
-    def companionExp(e: EntityTemplateData) = {
-      s"""
-        |  lazy val ${e.name}: Rep[${e.companionAbsName}] = new ${e.companionAbsName} {
-        |    $companionMethods
-        |  }
-       """.stripMargin
-    }
-
-    val companionExpString = (for {entity <- module.entities} yield {
+  def emitModuleDefs = {
+    val entities = for {entity <- module.entities} yield {
       val e = EntityTemplateData(module, entity)
-      companionExp(e)
-    }).mkString("\n\n")
-
+      emitEntityDefs(e)
+    }
     s"""
       |// Abs -----------------------------------
       |trait ${module.name}Defs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
       |  ${module.selfTypeString("")}
       |
-      |${entityProxy(e)}
+      |${entities.mkString("\n\n")}
       |
-      |${if (e.isCont) familyCont(e) else ""}
-      |
-      |${familyElem(e)}
-      |
-      |${companionAbs(e)}
-      |
-      |${subEntities.mkString("\n\n")}
-      |
-      |${concreteClasses.mkString("\n\n")}
+      |${emitClasses}
       |
       |  registerModule(${module.name}Module)
       |
-      |$companionExpString
-      |
-      |${e.when(_.isCont, familyView)}
-      |
-      |$extractorsForTraits
-      |
       |${module.concreteSClasses.map(getSClassExp).mkString("\n\n")}
       |
-      |${methodExtractorsString(module, config, e.entity)}
-      |${e.when(_.isCont, emitContainerRewriteDef)}
       |}
       |""".stripAndTrim
   }
 
-  def emitModuleSerialization = {
+  def emitModuleInfo = {
     val moduleName = module.name
     s"""
       |object ${moduleName}Module extends scalan.ModuleInfo("${module.packageName}", "$moduleName")
@@ -584,8 +576,8 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
     val topLevel = List(
       emitFileHeader,
       "package impl {",
-      emitTraitDefs(e),
-      emitModuleSerialization,
+      emitModuleDefs,
+      emitModuleInfo,
       "}",
       emitDslTraits
     )

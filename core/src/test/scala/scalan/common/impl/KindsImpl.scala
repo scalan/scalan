@@ -54,6 +54,28 @@ trait KindsDefs extends scalan.Scalan with Kinds {
   implicit def proxyKindCompanionCtor(p: Rep[KindCompanionCtor]): KindCompanionCtor =
     proxyOps[KindCompanionCtor](p)
 
+  lazy val Kind: Rep[KindCompanionCtor] = new KindCompanionCtor {
+  }
+
+  object KindMethods {
+    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+
+    object mapBy {
+      def unapply(d: Def[_]): Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: KindElem[_, _, _] => true; case _ => false }) && method.getName == "mapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Sym): Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object KindCompanionMethods {
+  }
+
   case class ReturnCtor[F[_], A]
       (override val a: Rep[A])(implicit cF: Cont[F])
     extends Return[F, A](a) with Def[Return[F, A]] {
@@ -242,9 +264,6 @@ implicit val eB = p.f.elem.eRange.typeArgs("A")._1.asElem[B]
 
   registerModule(KindsModule)
 
-  lazy val Kind: Rep[KindCompanionCtor] = new KindCompanionCtor {
-  }
-
   object ReturnMethods {
     // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
   }
@@ -279,25 +298,6 @@ implicit val eB = p.f.elem.eRange.typeArgs("A")._1.asElem[B]
       Some((p.asRep[Bind[F, S, B]].a, p.asRep[Bind[F, S, B]].f))
     case _ =>
       None
-  }
-
-  object KindMethods {
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
-
-    object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: KindElem[_, _, _] => true; case _ => false }) && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-  }
-
-  object KindCompanionMethods {
   }
 }
 
