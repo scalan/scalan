@@ -6,8 +6,7 @@ import scalan.meta.Base.!!!
 import scalan.meta.PrintExtensions._
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstExtensions._
-import scalan.meta.serialization.JacksonSerializer
-import scalan.util.{Serialization, StringUtil, ScalaNameUtil}
+import scalan.util.{StringUtil, ScalaNameUtil}
 import scalan.util.CollectionUtil._
 
 class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: MetaConfig) {

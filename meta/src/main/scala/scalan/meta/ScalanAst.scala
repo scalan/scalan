@@ -1,53 +1,23 @@
 package scalan.meta
 
 import java.io.File
-import java.lang.annotation.Annotation
 import java.util.Objects
 
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type
-import com.fasterxml.jackson.annotation.JsonTypeInfo.{Id, As}
-import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonIgnore, JsonTypeInfo}
-import com.fasterxml.jackson.databind.`type`.CollectionLikeType
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import com.fasterxml.jackson.databind.ser.std.IterableSerializer
 import com.typesafe.config.ConfigUtil
-import jdk.nashorn.internal.runtime.JSONListAdapter
 
-import scala.reflect.internal.ModifierFlags
-import PrintExtensions._
+import scalan.meta.PrintExtensions._
 import scala.collection.mutable.{Map => MMap}
+import scala.reflect.internal.ModifierFlags
 import scalan._
 import scalan.util.{Covariant, Contravariant, FileUtil, Invariant}
 import scalan.util.CollectionUtil._
-import ScalanAstExtensions._
+import scalan.meta.ScalanAstExtensions._
 import scala.tools.nsc.Global
-import scalan.meta.ScalanAst.SModuleDef
 
 object ScalanAst {
 
   // STpe universe --------------------------------------------------------------------------
 
-  /** Type expressions */
-  @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type")
-  @JsonSubTypes(Array(
-    new Type(value = classOf[STpeEmpty], name = "STpeEmpty"),
-    new Type(value = classOf[STpeConst], name = "STpeConst"),
-    new Type(value = classOf[STpePrimitive], name = "STpePrimitive"),
-    new Type(value = classOf[STpeSingleton], name = "STpeSingleton"),
-    new Type(value = classOf[STpeAnnotated], name = "STpeAnnotated"),
-    new Type(value = classOf[STpeStruct], name = "STpeStruct"),
-    new Type(value = classOf[STpeSelectFromTT], name = "STpeSelectFromTT"),
-    new Type(value = classOf[STpeCompound], name = "STpeCompound"),
-    new Type(value = classOf[STpeMethod], name = "STpeMethod"),
-    new Type(value = classOf[STpeBind], name = "STpeBind"),
-    new Type(value = classOf[STpeThis], name = "STpeThis"),
-    new Type(value = classOf[STpeTuple], name = "STpeTuple"),
-    new Type(value = classOf[STpeExistential], name = "STpeExistential"),
-    new Type(value = classOf[STpeSingle], name = "STpeSingle"),
-    new Type(value = classOf[STpeFunc], name = "STpeFunc"),
-    new Type(value = classOf[STraitCall], name = "STraitCall"),
-    new Type(value = classOf[STpeTypeBounds], name = "STpeTypeBounds")
-  ))
   sealed abstract class STpeExpr {
     def name: String
 
@@ -77,7 +47,6 @@ object ScalanAst {
   /** Invocation of a trait with arguments */
   case class STraitCall(val name: String, override val tpeSExprs: List[STpeExpr] = Nil) extends STpeExpr {
     override def toString = name + tpeSExprs.asTypeParams()
-    @JsonIgnore
     def isDef = (name == "Def")
     def toTypeApply = STypeApply(this, Nil)
   }
@@ -326,35 +295,6 @@ object ScalanAst {
     STmplAnnotation(ExternalAnnotation, List(SConst(externalTmplName,Some(TpeString))))
 
   // SExpr universe --------------------------------------------------------------------------
-  @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type")
-  @JsonSubTypes(Array(
-    new Type(value = classOf[SEmpty], name = "SEmpty"),
-    new Type(value = classOf[SConst], name = "SConst"),
-    new Type(value = classOf[SIdent], name = "SIdent"),
-    new Type(value = classOf[SAssign], name = "SAssign"),
-    new Type(value = classOf[SApply], name = "SApply"),
-    new Type(value = classOf[SExprApply], name = "SExprApply"),
-    new Type(value = classOf[SCase], name = "SCase"),
-    new Type(value = classOf[SSuper], name = "SSuper"),
-    new Type(value = classOf[SFunc], name = "SFunc"),
-    new Type(value = classOf[STuple], name = "STuple"),
-    new Type(value = classOf[SMatch], name = "SMatch"),
-    new Type(value = classOf[SAscr], name = "SAscr"),
-    new Type(value = classOf[STypeApply], name = "STypeApply"),
-    new Type(value = classOf[SBlock], name = "SBlock"),
-    new Type(value = classOf[SSelect], name = "SSelect"),
-    new Type(value = classOf[SIf], name = "SIf"),
-    new Type(value = classOf[SAnnotated], name = "SAnnotated"),
-    new Type(value = classOf[SValDef], name = "SValDef"),
-    new Type(value = classOf[SObjectDef], name = "SObjectDef"),
-    new Type(value = classOf[SClassDef], name = "SClassDef"),
-    new Type(value = classOf[STraitDef], name = "STraitDef"),
-    new Type(value = classOf[STpeDef], name = "STpeDef"),
-    new Type(value = classOf[SImportStat], name = "SImportStat"),
-    new Type(value = classOf[SMethodDef], name = "SMethodDef"),
-    new Type(value = classOf[SThis], name = "SThis"),
-    new Type(value = classOf[SContr], name = "SContr")
-  ))
   trait SExpr {
     def exprType: Option[STpeExpr] = None
   }
@@ -419,17 +359,6 @@ object ScalanAst {
   case class SMatch(selector: SExpr, cases: List[SCase],
                     override val exprType: Option[STpeExpr] = None) extends SExpr
 
-  @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type")
-  @JsonSubTypes(Array(
-    new Type(value = classOf[STypedPattern], name = "STypedPattern"),
-    new Type(value = classOf[SStableIdPattern], name = "SStableIdPattern"),
-    new Type(value = classOf[SWildcardPattern], name = "SWildcardPattern"),
-    new Type(value = classOf[SAltPattern], name = "SAltPattern"),
-    new Type(value = classOf[SApplyPattern], name = "SApplyPattern"),
-    new Type(value = classOf[SBindPattern], name = "SBindPattern"),
-    new Type(value = classOf[SLiteralPattern], name = "SLiteralPattern"),
-    new Type(value = classOf[SSelPattern], name = "SSelPattern")
-  ))
   trait SPattern
 
   case class SWildcardPattern() extends SPattern
@@ -474,7 +403,6 @@ object ScalanAst {
 
     def allArgs = argSections.flatMap(_.args)
 
-    @JsonIgnore
     def getOriginal: Option[SMethodDef] = {
       annotations.collectFirst {
         case mannot@SMethodAnnotation("Constructor", _) => mannot.args collectFirst {
@@ -529,12 +457,10 @@ object ScalanAst {
                       tparams: List[STpeArg] = Nil,
                       flags: Long = ModifierFlags.PARAM,
                       annotations: List[STypeArgAnnotation] = Nil) {
-    @JsonIgnore
     def isHighKind = tparams.nonEmpty
     def classOrMethodArgName: String = if (isHighKind) "c" + name else "e" + name
     def descName: String = if (isHighKind) "Cont" else "Elem"
 
-    @JsonIgnore
     val variance =
       if (hasFlag(ModifierFlags.COVARIANT))
         Covariant
@@ -543,7 +469,6 @@ object ScalanAst {
       else
         Invariant
 
-    @JsonIgnore
     def isCovariant = variance == Covariant
 
     def hasFlag(flag: Long) = (flag & flags) != 0L
@@ -583,7 +508,6 @@ object ScalanAst {
     def tpe: STpeExpr
     def default: Option[SExpr]
     def annotations: List[SArgAnnotation]
-    @JsonIgnore
     def isArgList = annotations.exists(a => a.annotationClass == ArgListAnnotation)
     def isTypeDesc: Boolean
   }
@@ -640,7 +564,6 @@ object ScalanAst {
 
     def companion: Option[STmplDef]
 
-    @JsonIgnore
     def isTrait: Boolean
 
     def annotations: List[STmplAnnotation]
@@ -663,30 +586,24 @@ object ScalanAst {
 
     def firstAncestorType = ancestors.headOption.map(_.tpe)
 
-    @JsonIgnore
     def isHighKind = tpeArgs.exists(_.isHighKind)
 
-    @JsonIgnore
     def isInheritedDeclared(propName: String, module: SModuleDef) = {
       getInheritedDeclaredFields(module).contains(propName)
     }
 
-    @JsonIgnore
     def isInheritedDefined(propName: String, module: SModuleDef) = {
       getInheritedDefinedFields(module).contains(propName)
     }
 
-    @JsonIgnore
     def getMethodsWithAnnotation(annClass: String) = body.collect {
       case md: SMethodDef if md.annotations.exists(a => a.annotationClass == annClass) => md
     }
 
-    @JsonIgnore
     def getFieldDefs: List[SMethodDef] = body.collect {
       case md: SMethodDef if md.allArgs.isEmpty => md
     }
 
-    @JsonIgnore
     def getAncestorTraits(module: SModuleDef): List[STmplDef] = {
       ancestors.filter(a => module.isEntity(a.tpe.name)).map(a => module.getEntity(a.tpe.name))
     }
@@ -711,7 +628,6 @@ object ScalanAst {
       getInheritedMethodDefs(module).collect { case md if md.body.isDefined => md.name }.toSet
     }
 
-    @JsonIgnore
     def getConcreteClasses = body.collect {
       case c: SClassDef if !c.hasAnnotation("InternalType") => c
     }
@@ -1034,9 +950,7 @@ object ScalanAst {
                         okEmitOrigModuleTrait: Boolean = true)
                        (@transient implicit val context: AstContext) {
     //TODO unify Module names
-    @JsonIgnore
     def getModuleKey: String = Name.fullNameString(packageName, name)
-    @JsonIgnore
     def getModuleTraitName: String = SModuleDef.moduleTraitName(name)
 
     def getEntity(name: String): STmplDef = {

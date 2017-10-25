@@ -59,9 +59,6 @@ class EntityManagement[+G <: Global](val parsers: ScalanParsers[G]) extends Lazy
         val implFile = getImplFile(man.file, "Impl", "scala")
         FileUtil.write(implFile, implCode)
         FileUtil.copy(man.file, man.resourceFile)
-//        val json = g.emitJson
-//        val jsonFile = getImplFile(man.file, "", "json")
-//        FileUtil.write(jsonFile, json)
       case None =>
         logger.error(s"Cannot generate code for config '$configName' because it is not found.")
     }

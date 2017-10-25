@@ -3,7 +3,6 @@ package scalan.plugin
 import scala.reflect.io.Path
 import scala.tools.nsc._
 import scalan.meta.ScalanAst.SModuleDef
-import scalan.util.Serialization
 import scalan.meta.ScalanAst._
 
 object FinalComponent {
