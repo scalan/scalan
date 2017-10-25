@@ -171,12 +171,9 @@ object ScalanAstTransformers {
     }
 
     def moduleTransform(module: SModuleDef): SModuleDef = {
-      val newEntityOps = entityTransform(module.entityOps)
       val newEntities = module.entities mapConserve entityTransform
       val newClasses = module.concreteSClasses mapConserve classTransform
-
       module.copy(
-        entityOps = newEntityOps,
         entities = newEntities,
         concreteSClasses = newClasses
       )

@@ -147,9 +147,6 @@ trait ScalanParsers[+G <: Global] {
     val traits = defs.collect {
       case t: STraitDef if !(t.name.endsWith("Companion") || t.hasAnnotation("InternalType")) => t
     }
-    val entity = traits.headOption.getOrElse {
-      throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
-    }
 
     val concreteClasses = mainTrait.getConcreteClasses.filterNot(isInternalClassOfCompanion(_, mainTrait))
     val methods = defs.collect {
@@ -158,7 +155,7 @@ trait ScalanParsers[+G <: Global] {
 
     SModuleDef(packageName, imports, moduleName,
       typeDefs,
-      entity, traits, concreteClasses, methods,
+      traits, concreteClasses, methods,
       mainTrait.selfType, mainTrait.ancestors,
       None, ctx.isVirtualized, okEmitOrigModuleTrait = !isDefinedModule)
   }

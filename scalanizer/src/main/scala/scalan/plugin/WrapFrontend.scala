@@ -262,7 +262,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       imports = imports,
       name = wmod(externalTypeName),
       typeDefs = Nil,
-      entityOps = entity, entities = List(entity),
+      entities = List(entity),
       concreteSClasses = Nil, methods = Nil,
       selfType = Some(SSelfTypeDef(
         name = "self",
@@ -333,41 +333,42 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     snState.updateWrapper(externalTypeName, updatedWrapper)
   }
 
-  /** Adds a method or a value to the wrapper. It checks the external type symbol
-    * to determine where to put the method (value) - into class or its companion. */
+  /** Adds a method or a value to the wrapper.
+    * The member is added into the first entity in the list if it is not already there.
+    * Other entities if any are ignored and left unchanged
+    * @param isCompanion specifies where to put the method (value) - into class or its companion. */
   def addMember(isCompanion: Boolean, member: SMethodDef, wrapper: WrapperDescr): WrapperDescr = {
-    val module = wrapper.module
 
-    def isAlreadyAdded = {
+    def isAlreadyAdded(e: STraitDef) = {
       if (isCompanion) {
-        module.entityOps.companion match {
-          case Some(companion) => companion.body.contains(member)
-          case None => false
-        }
+        e.companion.fold(false)(_.body.contains(member))
       }
-      else
-        module.entityOps.body.contains(member)
+      else e.body.contains(member)
     }
 
-    if (isAlreadyAdded) {
-      wrapper
-    } else {
-      val updatedEntity = if (isCompanion) {
-        val updatedCompanion = module.entityOps.companion match {
-          case Some(companion: STraitDef) =>
-            val updatedBody = member :: companion.body
-            Some(companion.copy(body = updatedBody))
-          case _ => throw new IllegalArgumentException(module.entityOps.companion.toString)
+    val module = wrapper.module
+    val newModule = module.updateFirstEntity { e =>
+      if (isAlreadyAdded(e)) e
+      else {
+        if (isCompanion) {
+          val updatedCompanion = e.companion match {
+            case Some(companion: STraitDef) =>
+              val updatedBody = member :: companion.body
+              Some(companion.copy(body = updatedBody))
+            case _ =>
+              throw new IllegalArgumentException(
+                s"Cannot add member $member to companion because it is not found: module ${module.name }, entity: ${e.name }")
+          }
+          e.copy(companion = updatedCompanion)
+        } else {
+          val updatedBody = member :: e.body
+          e.copy(body = updatedBody)
         }
-        module.entityOps.copy(companion = updatedCompanion)
-      } else {
-        val updatedBody = member :: module.entityOps.body
-        module.entityOps.copy(body = updatedBody)
       }
-      wrapper.copy(
-        module = module.copy(entityOps = updatedEntity, entities = List(updatedEntity))(context)
-      )
     }
+    wrapper.copy(
+      module = newModule
+    )
   }
 
   /** Converts curried method type its uncurried Meta AST representation. */

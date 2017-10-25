@@ -122,8 +122,15 @@ object ScalanAstExtensions {
   }
 
   implicit class SModuleOps(module: SModuleDef) {
+    implicit val ctx = module.context
     def selfTypeString(suffix: String) =
       module.selfType.opt(t => s"self: ${t.tpe}${suffix} =>")
+
+    def updateFirstEntity(updater: STraitDef => STraitDef) = {
+      val newEntity = updater(module.entities.head)
+      module.copy(entities = newEntity :: module.entities.tail)(ctx)
+    }
+
   }
 
 }

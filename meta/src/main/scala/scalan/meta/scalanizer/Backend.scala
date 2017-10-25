@@ -60,7 +60,7 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
     val methods = module.methods.map(m => genMethod(m)(ctx.copy(toRep = !m.isTypeDesc)))
     val newstats =
       module.typeDefs.map(genTypeDef) :::
-      genEntity(module.entityOps) ::
+      module.entities.map(genEntity) :::
       (genConcreteClasses(module.concreteSClasses) ++ genCompanions(module) ++ methods)
     val newSelf = genModuleSelf(module)
     val name = TypeName(module.name)
@@ -105,7 +105,9 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
   }
 
   def genCompanions(module: SModuleDef)(implicit ctx: GenCtx): List[Tree] = {
-    genCompanion(module.entityOps.companion) :: module.concreteSClasses.map(clazz => genCompanion(clazz.companion))
+    val fromEntities = module.entities.map(e => genCompanion(e.companion))
+    val fromClasses = module.concreteSClasses.map(clazz => genCompanion(clazz.companion))
+    fromEntities ::: fromClasses
   }
 
   def genCompanion(comp: Option[STmplDef])(implicit ctx: GenCtx): Tree = comp match {
@@ -335,20 +337,20 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
 
   def genTypeByName(name: String)(implicit ctx: GenCtx) = tq"${TypeName(name)}"
 
-  def genDefaultElem(module: SModuleDef)
-                    (implicit ctx: GenCtx): Tree = {
-    val entityName = module.entityOps.name
-    val entityNameType = genTypeByName(entityName)
-    val defaultClassName = module.concreteSClasses.head.name
-    val defaultClass = tq"${TypeName(defaultClassName)}"
-    val methodName = TermName("default" + entityName + "Elem")
-    val returnType = tq"Elem[$entityNameType]"
-    val defaultElem = q"""
-      implicit def $methodName: $returnType = element[$defaultClass].asElem[$entityNameType]
-      """
-
-    defaultElem
-  }
+//  def genDefaultElem(module: SModuleDef)
+//                    (implicit ctx: GenCtx): Tree = {
+//    val entityName = module.entityOps.name
+//    val entityNameType = genTypeByName(entityName)
+//    val defaultClassName = module.concreteSClasses.head.name
+//    val defaultClass = tq"${TypeName(defaultClassName)}"
+//    val methodName = TermName("default" + entityName + "Elem")
+//    val returnType = tq"Elem[$entityNameType]"
+//    val defaultElem = q"""
+//      implicit def $methodName: $returnType = element[$defaultClass].asElem[$entityNameType]
+//      """
+//
+//    defaultElem
+//  }
 
   def genTypeSel(ref: String, name: String)(implicit ctx: GenCtx) = {
     Select(Ident(ref), TypeName(name))

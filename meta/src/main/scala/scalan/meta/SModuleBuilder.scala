@@ -3,6 +3,7 @@ package scalan.meta
 import scalan.meta.ScalanAstTransformers._
 import scalan.meta.ScalanAstUtils._
 import scalan.meta.ScalanAst._
+import scalan.meta.ScalanAstExtensions._
 import scalan.util.CollectionUtil._
 
 class SModuleBuilder(implicit val context: AstContext) {
@@ -53,14 +54,12 @@ class SModuleBuilder(implicit val context: AstContext) {
 
   /** Pipeline Step
     * Extends the entity T by Def[T] */
-  def addEntityAncestors(module: SModuleDef) = {
+  def addEntityAncestors(module: SModuleDef) = module.updateFirstEntity { e =>
     val newAncestors = STraitCall(
       name = "Def",
-      tpeSExprs = List(STraitCall(module.entityOps.name,
-        module.entityOps.tpeArgs.map(arg => STraitCall(arg.name, List()))))
-    ).toTypeApply :: module.entityOps.ancestors
-    val newEntity = module.entityOps.copy(ancestors = newAncestors)
-    module.copy(entityOps = newEntity, entities = List(newEntity))
+      tpeSExprs = List(STraitCall(e.name, e.tpeArgs.map(arg => STraitCall(arg.name, List()))))
+    ).toTypeApply :: e.ancestors
+    e.copy(ancestors = newAncestors)
   }
 
   /** Puts the module to the cake. For example, trait Segments is transformed to
@@ -88,15 +87,12 @@ class SModuleBuilder(implicit val context: AstContext) {
 
   /** Checks that the entity has a companion. If the entity doesn't have it
     * then the method adds the companion. */
-  def checkEntityCompanion(module: SModuleDef) = {
-    val entity = module.entityOps
-    val newCompanion = entity.companion match {
+  def checkEntityCompanion(module: SModuleDef) = module.updateFirstEntity { e =>
+    val newCompanion = e.companion match {
       case Some(comp) => Some(convertCompanion(comp))
-      case None => Some(createCompanion(entity.name))
+      case None => Some(createCompanion(e.name))
     }
-    val newEntity = entity.copy(companion = newCompanion)
-
-    module.copy(entityOps = newEntity, entities = List(newEntity))
+    e.copy(companion = newCompanion)
   }
 
   /** Checks that concrete classes have their companions and adds them. */
@@ -184,10 +180,10 @@ class SModuleBuilder(implicit val context: AstContext) {
     }.moduleTransform(module)
   }
 
-  def genEntityImpicits(module: SModuleDef) = {
-    val newBody = genDescMethodsByTypeArgs(module.entityOps.tpeArgs) ++ module.entityOps.body
-    val newEntity = module.entityOps.copy(body = newBody)
-    module.copy(entityOps = newEntity, entities = List(newEntity))
+  /** Adds descriptor methods (def eA, def cF, etc) to the body of the first entity. */
+  def genEntityImpicits(module: SModuleDef) = module.updateFirstEntity { e =>
+    val newBody = genDescMethodsByTypeArgs(e.tpeArgs) ++ e.body
+    e.copy(body = newBody)
   }
 
   def genClassesImplicits(module: SModuleDef) = {
@@ -248,7 +244,7 @@ class SModuleBuilder(implicit val context: AstContext) {
       classes.map(genClass)
     }
 
-    module.copy(entityOps = genEntity(module.entityOps),
+    module.copy(
       entities = genEntities(module.entities),
       concreteSClasses = genClasses(module.concreteSClasses)
     )
@@ -302,26 +298,24 @@ class SModuleBuilder(implicit val context: AstContext) {
     }.moduleTransform(module)
   }
 
-  def constr2apply(module: SModuleDef): SModuleDef = {
-    val (constrs, entityBody) = module.entityOps.body partition {
+  def constr2apply(module: SModuleDef): SModuleDef = module.updateFirstEntity { e =>
+    val (constrs, entityBody) = e.body partition {
       case m: SMethodDef if m.name == "<init>" => true
       case _ => false
     }
     val applies = constrs collect {
       case c: SMethodDef => c.copy(
         name = "apply",
-        tpeArgs = (module.entityOps.tpeArgs ++ c.tpeArgs).distinct,
+        tpeArgs = (e.tpeArgs ++ c.tpeArgs).distinct,
         // This is an internal annotation. And it should be ignored during in the backend.
         annotations = List(SMethodAnnotation("Constructor", List(SAssign(SIdent("original"), c))))
       )
     }
-    val newEntityCompanion = module.entityOps.companion match {
+    val newEntityCompanion = e.companion match {
       case Some(companion: STraitDef) => Some(companion.copy(body = applies ++ companion.body))
       case other => other
     }
-    val newEntityOps = module.entityOps.copy(body = entityBody, companion = newEntityCompanion)
-
-    module.copy(entityOps = newEntityOps, entities = List(newEntityOps))(context)
+    e.copy(body = entityBody, companion = newEntityCompanion)
   }
 
 

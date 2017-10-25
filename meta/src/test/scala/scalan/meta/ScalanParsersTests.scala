@@ -119,7 +119,6 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
       reactiveModule,
       EMD("scalan.rx", L(SImportStat("scalan._")), "Reactive",
         List(STpeDef("Obs", L(STpeArg("A",None,Nil)) , TC("Rep", ancObsA))),
-        entity,
         List(entity),
         L(obsImpl1, obsImpl2),
         Nil,

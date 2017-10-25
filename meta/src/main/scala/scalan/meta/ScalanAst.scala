@@ -1024,7 +1024,6 @@ object ScalanAst {
                         imports: List[SImportStat],
                         name: String,
                         typeDefs: List[STpeDef],
-                        entityOps: STraitDef,
                         entities: List[STraitDef],
                         concreteSClasses: List[SClassDef],
                         methods: List[SMethodDef],
@@ -1071,11 +1070,9 @@ object ScalanAst {
     def clean = {
       val _entities = entities.map(_.clean)
       val _concreteSClasses = concreteSClasses.map(_.clean)
-      val _entityOps = _entities.headOption.get
       copy(
         imports = Nil,
         typeDefs = Nil,
-        entityOps = _entityOps,
         entities = _entities,
         concreteSClasses = _concreteSClasses,
         methods = Nil,
@@ -1232,7 +1229,6 @@ object ScalanAst {
     val newEntities = module.entities.map(e => optimizeTraitImplicits(e, module))
     val newClasses = module.concreteSClasses.map(c => optimizeClassImplicits(c, module))
     module.copy(
-      entityOps = newEntities(0),
       entities = newEntities,
       concreteSClasses = newClasses
     )(module.context)
