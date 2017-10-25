@@ -171,13 +171,13 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     val tpe = parseType(tpeString)
 
     it(s"find('${tpeString}', '${name}')") {
-      assertResult(STpePath.find(module, tpe, name))(expected(tpe))
+      assertResult(STpePath.find(tpe, name))(expected(tpe))
     }
   }
 
   def testStructPath(module: SModuleDef, tpe: STpeExpr, name: String, expected: Option[STpePath]): Unit = {
     it(s"find(${tpe}, '${name}')") {
-      assertResult(STpePath.find(module, tpe, name))(expected)
+      assertResult(STpePath.find(tpe, name))(expected)
     }
   }
 
@@ -224,10 +224,10 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
 
   def makePath(module: SModuleDef, tpeString: String, name: String): STpePath = {
     val tpe = parseType(tpeString)
-    STpePath.find(module, tpe, name).get
+    STpePath.find(tpe, name).get
   }
   def makePath(module: SModuleDef, tpe: STpeExpr, name: String): STpePath = {
-    STpePath.find(module, tpe, name).get
+    STpePath.find(tpe, name).get
   }
 
   import ScalanCodegen._

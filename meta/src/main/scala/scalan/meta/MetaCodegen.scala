@@ -152,7 +152,7 @@ class MetaCodegen {
       val paths = for {
           da <- dataArgs.iterator
           argTpe <- da.tpe.unRep(m, m.isVirtualized)
-          path <- STpePath.find(m, argTpe, ta.name)
+          path <- STpePath.find(argTpe, ta.name)(m.context)
         } yield (da, path)
       val expr = paths.find(_ => true).map {
         case (da, SEntityPath(_, e, tyArg, tail)) =>
@@ -167,8 +167,9 @@ class MetaCodegen {
   }
 
   def methodExtractorsString(module: SModuleDef, config: MetaConfig, e: STmplDef) = {
+    implicit val ctx = module.context
     def methodExtractorsString1(e: STmplDef, isCompanion: Boolean) = {
-      val methods = e.body.collect { case m: SMethodDef => optimizeMethodImplicits(m, module) }
+      val methods = e.body.collect { case m: SMethodDef => optimizeMethodImplicits(m) }
       val overloadIdsByName = collection.mutable.Map.empty[String, Set[Option[String]]].withDefaultValue(Set())
       methods.foreach { m =>
         val methodName = m.name
@@ -341,6 +342,7 @@ class MetaCodegen {
   }
 
   abstract class TemplateData(val module: SModuleDef, val entity: STmplDef) {
+    implicit val context = module.context
     val name = entity.name
     val tpeArgs = entity.tpeArgs
     val tpeArgNames = tpeArgs.names
@@ -403,16 +405,16 @@ class MetaCodegen {
     val typesWithElems = boundedTpeArgString(false)
     def optimizeImplicits(): EntityTemplateData = t match {
       case t: STraitDef =>
-        this.copy(t = optimizeTraitImplicits(t, m))
+        this.copy(t = optimizeTraitImplicits(t))
       case c: SClassDef =>
-        this.copy(t = optimizeClassImplicits(c, m))
+        this.copy(t = optimizeClassImplicits(c))
     }
   }
 
   case class ConcreteClassTemplateData(m: SModuleDef, c: SClassDef) extends TemplateData(m, c) {
     val elemTypeUse = name + "Elem" + tpeArgsUse
     def optimizeImplicits(): ConcreteClassTemplateData = {
-      this.copy(c = optimizeClassImplicits(c, m))
+      this.copy(c = optimizeClassImplicits(c))
     }
   }
 

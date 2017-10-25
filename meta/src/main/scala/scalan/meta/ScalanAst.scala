@@ -206,11 +206,11 @@ object ScalanAst {
   case class SEntityPath(base: STpeExpr, entity: STmplDef, tyArg: STpeArg, tail: STpePath) extends SBasedPath
 
   object STpePath {
-    def findInEntity(module: SModuleDef, e: STmplDef,
-                     tc: STraitCall, argName: String): Option[STpePath] = {
+    def findInEntity(e: STmplDef, tc: STraitCall, argName: String)
+                    (implicit context: AstContext): Option[STpePath] = {
       val args = tc.args
       for (i <- args.indices) {
-        find(module, args(i), argName) match {
+        find(args(i), argName) match {
           case Some(tailPath) =>
             return Some(SEntityPath(tc, e, e.tpeArgs(i), tailPath))
           case None =>
@@ -219,12 +219,12 @@ object ScalanAst {
       None
     }
 
-    def find(module: SModuleDef, tpe: STpeExpr, argName: String): Option[STpePath] = tpe match {
+    def find(tpe: STpeExpr, argName: String)(implicit context: AstContext): Option[STpePath] = tpe match {
       case STpePrimitive(_, _) => None
       case STpeFunc(d, r) =>
-        find(module, d, argName) match {
+        find(d, argName) match {
           case Some(tailPath) => Some(SDomPath(tpe, tailPath))
-          case None => find(module, r, argName) match {
+          case None => find(r, argName) match {
             case Some(tailPath) => Some(SRangePath(tpe, tailPath))
             case None => None
           }
@@ -232,7 +232,7 @@ object ScalanAst {
       case t@STpeTuple(_) =>
         def findInTuple(t: STpeTuple): Option[STpePath] = {
           for ((item, i) <- t.args.zipWithIndex) {
-            find(module, item, argName) match {
+            find(item, argName) match {
               case Some(tailPath) =>
                 return Some(STuplePath(t, i, tailPath))
               case None =>
@@ -242,15 +242,15 @@ object ScalanAst {
         }
         findInTuple(t)
       case STraitCall("Rep", List(tT)) =>
-        find(module, tT, argName)
+        find(tT, argName)
       case STraitCall("Thunk", List(tT)) =>
-        find(module, tT, argName).map(tail => SThunkPath(tpe, tail))
-      case module.context.TypeDef(_, module.context.RepTypeOf(STraitCall(en @ module.context.ModuleEntity(_, e), args))) =>
-        findInEntity(module, e, STraitCall(en, args), argName)
+        find(tT, argName).map(tail => SThunkPath(tpe, tail))
+      case context.TypeDef(_, context.RepTypeOf(STraitCall(en @ context.ModuleEntity(_, e), args))) =>
+        findInEntity(e, STraitCall(en, args), argName)
       case s@STpeStruct(_) =>
         def findInStruct(s: STpeStruct): Option[STpePath] = {
           for ((fn, ft) <- s.fields) {
-            find(module, ft, argName) match {
+            find(ft, argName) match {
               case Some(tailPath) =>
                 return Some(SStructPath(s, fn, tailPath))
               case None =>
@@ -261,8 +261,8 @@ object ScalanAst {
         findInStruct(s)
       case STraitCall(`argName`, Nil) =>
         Some(SNilPath)
-      case tc@STraitCall(module.context.ModuleEntity(_, e), args) =>
-        findInEntity(module, e, tc, argName)
+      case tc@STraitCall(context.ModuleEntity(_, e), args) =>
+        findInEntity(e, tc, argName)
       case _ => None
     }
   }
@@ -1082,12 +1082,12 @@ object ScalanAst {
     val Lua   = KernelType("Lua")
   }
 
-  def optimizeMethodImplicits(m: SMethodDef, module: SModuleDef): SMethodDef = {
+  def optimizeMethodImplicits(m: SMethodDef)(implicit ctx: AstContext): SMethodDef = {
     val explicitArgs = m.explicitArgs
     val newSections = m.argSections.filterMap(as => {
       val newArgs = as.args.filter {
         case arg@TypeDescArg(_, tyName) if arg.impFlag =>
-          !canBeExtracted(module, explicitArgs, tyName)
+          !canBeExtracted(explicitArgs, tyName)
         case _ => true
       }
       if (newArgs.nonEmpty) Some(SMethodArgs(newArgs)) else None
@@ -1095,40 +1095,38 @@ object ScalanAst {
     m.copy(argSections = newSections)
   }
 
-  def optimizeTraitImplicits(t: STraitDef, module: SModuleDef): STraitDef = {
+  def optimizeTraitImplicits(t: STraitDef)(implicit context: AstContext): STraitDef = {
     val newBody = t.body.map {
-      case m: SMethodDef => optimizeMethodImplicits(m, module)
+      case m: SMethodDef => optimizeMethodImplicits(m)
       case item => item
     }
-    val newCompanion = t.companion.map(optimizeComponentImplicits(_, module))
+    val newCompanion = t.companion.map(optimizeComponentImplicits(_))
     t.copy(
       body = newBody,
       companion = newCompanion
     )
   }
 
-  def optimizeObjectImplicits(t: SObjectDef, module: SModuleDef): SObjectDef = {
-    t
+  def optimizeObjectImplicits(objDef: SObjectDef): SObjectDef = objDef
+
+  def optimizeComponentImplicits(t: STmplDef)(implicit context: AstContext): STmplDef = t match {
+    case c: SClassDef => optimizeClassImplicits(c)
+    case o: SObjectDef => optimizeObjectImplicits(o)
+    case t: STraitDef => optimizeTraitImplicits(t)
   }
 
-  def optimizeComponentImplicits(t: STmplDef, module: SModuleDef): STmplDef = t match {
-    case c: SClassDef => optimizeClassImplicits(c, module)
-    case o: SObjectDef => optimizeObjectImplicits(o, module)
-    case t: STraitDef => optimizeTraitImplicits(t, module)
-  }
-
-  def canBeExtracted(module: SModuleDef, args: List[SMethodOrClassArg], tyName: String) = {
-    val res = args.exists(a => STpePath.find(module, a.tpe, tyName).isDefined)
+  def canBeExtracted(args: List[SMethodOrClassArg], tyName: String)(implicit context: AstContext) = {
+    val res = args.exists(a => STpePath.find(a.tpe, tyName).isDefined)
     res
   }
 
-  def optimizeClassImplicits(c: SClassDef, module: SModuleDef): SClassDef = {
+  def optimizeClassImplicits(c: SClassDef)(implicit ctx: AstContext): SClassDef = {
     if (c.args.args.isEmpty) c
     else {
       val newArgs = c.implicitArgs.args.filter { _ match {
         case TypeDescArg(_,tyName) =>
           val explicitArgs = c.args.args
-          !canBeExtracted(module, explicitArgs, tyName)
+          !canBeExtracted(explicitArgs, tyName)
         case _ => true
       }}
       c.copy(
@@ -1138,11 +1136,12 @@ object ScalanAst {
   }
 
   def optimizeModuleImplicits(module: SModuleDef): SModuleDef = {
-    val newEntities = module.entities.map(e => optimizeTraitImplicits(e, module))
-    val newClasses = module.concreteSClasses.map(c => optimizeClassImplicits(c, module))
+    implicit val ctx = module.context
+    val newEntities = module.entities.map(e => optimizeTraitImplicits(e))
+    val newClasses = module.concreteSClasses.map(c => optimizeClassImplicits(c))
     module.copy(
       entities = newEntities,
       concreteSClasses = newClasses
-    )(module.context)
+    )
   }
 }

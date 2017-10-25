@@ -11,6 +11,7 @@ import scalan.util.CollectionUtil._
 
 class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: MetaConfig) {
   import codegen._
+  implicit val context = module.context
 
   def getCompanionMethods(e: EntityTemplateData) = e.entity.companion.map { comp =>
     val externalConstrs = comp.getMethodsWithAnnotation(ConstructorAnnotation)
@@ -19,7 +20,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
   }
 
   def externalMethod(method: SMethodDef) = {
-    val md = optimizeMethodImplicits(method, module)
+    val md = optimizeMethodImplicits(method)
     val msgExplicitRetType = "External methods should be declared with explicit type of returning value (result type)"
     lazy val msgRepRetType = s"Invalid method $md. External methods should have return type of type Rep[T] for some T."
     val allArgs = md.allArgs
@@ -55,7 +56,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
 
   def externalConstructor(e: EntityTemplateData, method: SMethodDef) = {
     def genConstr(method: SMethodDef) = {
-      val md = optimizeMethodImplicits(method, module)
+      val md = optimizeMethodImplicits(method)
       val allArgs = md.allArgs
       s"""
         |    ${md.declaration(config, false)} =
