@@ -252,7 +252,7 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
 
     parents :: ancestors.map { anc =>
       val tpt = genTypeName(anc.tpe.name)
-      val tpts = anc.tpe.tpeSExprs.map(genTypeExpr)
+      val tpts = anc.tpe.args.map(genTypeExpr)
 
       tq"$tpt[..$tpts]"
     }

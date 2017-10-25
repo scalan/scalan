@@ -359,7 +359,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       val fieldTypes = clazz.args.argUnrepTypes(module, config.isVirtualized)
       val implicitArgsDecl = c.implicitArgsDecl()
       val parent = clazz.ancestors.head.tpe
-      val parentTpeArgsStr = parent.tpeSExprs.rep()
+      val parentTpeArgsStr = parent.args.rep()
       val elemTypeDecl = c.name + "Elem" + tpeArgsDecl
       val eFrom = {
         val elemMethodName = StringUtil.lowerCaseFirst(className + "DataElem")

@@ -37,7 +37,7 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
   def genParents(ancestors: List[STypeApply])(implicit ctx: GenCtx): List[String] = {
     ancestors.map { a =>
       val tpeName = a.tpe.name
-      val tpts = a.tpe.tpeSExprs.map(genTpeExpr)
+      val tpts = a.tpe.args.map(genTpeExpr)
       s"$tpeName${tpts.optList("<", ">")}"
     }
   }

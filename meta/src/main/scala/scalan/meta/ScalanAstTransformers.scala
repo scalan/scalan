@@ -235,9 +235,9 @@ object ScalanAstTransformers {
     def traitCallNameTransform(name: String): String = name
     def traitCallTransform(traitCall: STraitCall): STraitCall = {
       val newName = traitCallNameTransform(traitCall.name)
-      val newArgs = traitCallArgsTransform(traitCall.tpeSExprs)
+      val newArgs = traitCallArgsTransform(traitCall.args)
 
-      traitCall.copy(name = newName, tpeSExprs = newArgs)
+      traitCall.copy(name = newName, args = newArgs)
     }
     def tpeDefArgTransform(tpeArg: STpeArg): STpeArg = tpeArg
     def tpeDefArgsTransform(tpeArgs: STpeArgs): STpeArgs = {

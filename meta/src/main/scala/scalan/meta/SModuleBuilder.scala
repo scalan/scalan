@@ -48,7 +48,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   /** Pipeline Step
     * Make the module inherit from Base trait from Scalan */
   def addBaseToAncestors(module: SModuleDef) = {
-    val newAncestors = STraitCall(name = "Base", tpeSExprs = List()).toTypeApply :: module.ancestors
+    val newAncestors = STraitCall(name = "Base", args = List()).toTypeApply :: module.ancestors
     module.copy(ancestors = newAncestors)
   }
 
@@ -57,7 +57,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   def addEntityAncestors(module: SModuleDef) = module.updateFirstEntity { e =>
     val newAncestors = STraitCall(
       name = "Def",
-      tpeSExprs = List(STraitCall(e.name, e.tpeArgs.map(arg => STraitCall(arg.name, List()))))
+      args = List(STraitCall(e.name, e.tpeArgs.map(arg => STraitCall(arg.name, List()))))
     ).toTypeApply :: e.ancestors
     e.copy(ancestors = newAncestors)
   }

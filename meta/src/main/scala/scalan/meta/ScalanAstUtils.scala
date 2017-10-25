@@ -106,7 +106,7 @@ object ScalanAstUtils {
       val ancestorEnt_? = module.context.findModuleEntity(ancName).map(_._2)
       ancestorEnt_? match {
         case Some(e) =>
-          val ancArgs = anc.tpe.tpeSExprs
+          val ancArgs = anc.tpe.args
           e.zipWithExpandedBy(_.tpeArgs) zip ancArgs
         case None =>
           List[((STmplDef, STpeArg), STpeExpr)]()

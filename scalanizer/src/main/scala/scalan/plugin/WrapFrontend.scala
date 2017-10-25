@@ -232,7 +232,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     val (externalName, wClassName, companionName) = wrapperNames(externalTypeName)
     val wrapperConf = snConfig.wrapperConfigs.getOrElse(externalTypeName, WrapperConfig.default(externalTypeName))
     val typeParams = tpeArgs.map { arg =>
-      STraitCall(name = arg.name, tpeSExprs = Nil)
+      STraitCall(name = arg.name, args = Nil)
     }
     val baseType = STraitCall(externalName, typeParams)
     val entityAncestors = originalEntityAncestors

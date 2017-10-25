@@ -2,9 +2,7 @@ package scalan.meta
 
 import java.io.File
 import java.util.Objects
-
 import com.typesafe.config.ConfigUtil
-
 import scalan.meta.PrintExtensions._
 import scala.collection.mutable.{Map => MMap}
 import scala.reflect.internal.ModifierFlags
@@ -21,7 +19,7 @@ object ScalanAst {
   sealed abstract class STpeExpr {
     def name: String
 
-    def tpeSExprs: List[STpeExpr] = Nil
+    def args: List[STpeExpr] = Nil
   }
 
   type STpeExprs = List[STpeExpr]
@@ -45,8 +43,8 @@ object ScalanAst {
   case class STpeSingle(pre: STpeExpr, name: String) extends STpeExpr
 
   /** Invocation of a trait with arguments */
-  case class STraitCall(val name: String, override val tpeSExprs: List[STpeExpr] = Nil) extends STpeExpr {
-    override def toString = name + tpeSExprs.asTypeParams()
+  case class STraitCall(val name: String, override val args: List[STpeExpr] = Nil) extends STpeExpr {
+    override def toString = name + args.asTypeParams()
     def isDef = (name == "Def")
     def toTypeApply = STypeApply(this, Nil)
   }
@@ -91,10 +89,10 @@ object ScalanAst {
     "Char" -> TpeChar
   )
 
-  case class STpeTuple(override val tpeSExprs: List[STpeExpr]) extends STpeExpr {
-    def name = "Tuple" + tpeSExprs.length
+  case class STpeTuple(override val args: List[STpeExpr]) extends STpeExpr {
+    def name = "Tuple" + args.length
 
-    override def toString = tpeSExprs.mkString("(", ", ", ")")
+    override def toString = args.mkString("(", ", ", ")")
   }
 
   case class STpeStruct(fields: List[(String, STpeExpr)]) extends STpeExpr {
@@ -106,7 +104,7 @@ object ScalanAst {
   case class STpeFunc(domain: STpeExpr, range: STpeExpr) extends STpeExpr {
     def name = "Function1"
 
-    override def tpeSExprs = List(domain, range)
+    override def args = List(domain, range)
 
     override def toString = {
       val domainStr = domain match {
@@ -210,7 +208,7 @@ object ScalanAst {
   object STpePath {
     def findInEntity(module: SModuleDef, e: STmplDef,
                      tc: STraitCall, argName: String): Option[STpePath] = {
-      val args = tc.tpeSExprs
+      val args = tc.args
       for (i <- args.indices) {
         find(module, args(i), argName) match {
           case Some(tailPath) =>
@@ -233,7 +231,7 @@ object ScalanAst {
         }
       case t@STpeTuple(_) =>
         def findInTuple(t: STpeTuple): Option[STpePath] = {
-          for ((item, i) <- t.tpeSExprs.zipWithIndex) {
+          for ((item, i) <- t.args.zipWithIndex) {
             find(module, item, argName) match {
               case Some(tailPath) =>
                 return Some(STuplePath(t, i, tailPath))
