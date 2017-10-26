@@ -350,7 +350,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
   }
 
   def emitClasses = {
-    val concreteClasses = for {clazz <- module.concreteSClasses} yield {
+    val concreteClasses = for {clazz <- module.classes} yield {
       val e = EntityTemplateData(module, clazz.getAncestorTraits(module).head)
       val className = clazz.name
       val c = ConcreteClassTemplateData(module, clazz)
@@ -529,7 +529,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
   }
 
   def emitModuleDefs = {
-    val entities = for {entity <- module.entities} yield {
+    val entities = for {entity <- module.traits} yield {
       val e = EntityTemplateData(module, entity)
       emitEntityDefs(e)
     }
@@ -544,7 +544,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       |
       |  registerModule(${module.name}Module)
       |
-      |${module.concreteSClasses.map(getSClassExp).mkString("\n\n")}
+      |${module.classes.map(getSClassExp).mkString("\n\n")}
       |
       |}
       |""".stripAndTrim

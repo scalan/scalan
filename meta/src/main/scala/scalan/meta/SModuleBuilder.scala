@@ -97,14 +97,14 @@ class SModuleBuilder(implicit val context: AstContext) {
 
   /** Checks that concrete classes have their companions and adds them. */
   def checkClassCompanion(module: SModuleDef) = {
-    val newClasses = module.concreteSClasses.map{ clazz =>
+    val newClasses = module.classes.map{ clazz =>
       val newCompanion = clazz.companion match {
         case Some(comp) => Some(convertCompanion(comp))
         case None => Some(createCompanion(clazz.name))
       }
       clazz.copy(companion = newCompanion)
     }
-    module.copy(concreteSClasses = newClasses)
+    module.copy(classes = newClasses)
   }
 
   /** ClassTags are removed because they can be extracted from Elems. */
@@ -203,7 +203,7 @@ class SModuleBuilder(implicit val context: AstContext) {
         body = Some(SExprApply(SIdent("element"), unpackElem(classArg).toList)),
         isTypeDesc = true)
     }
-    val newClasses = module.concreteSClasses.map { clazz =>
+    val newClasses = module.classes.map { clazz =>
       val (definedElems, elemArgs) = genImplicitArgsForClass(module, clazz) partition isElemAlreadyDefined
       val newArgs = (clazz.implicitArgs.args ++ elemArgs).distinctBy(_.tpe match {
         case TypeDescTpe(_,ty) => ty
@@ -215,7 +215,7 @@ class SModuleBuilder(implicit val context: AstContext) {
       clazz.copy(implicitArgs = newImplicitArgs, body = newBody)
     }
 
-    module.copy(concreteSClasses = newClasses)
+    module.copy(classes = newClasses)
   }
 
   def genMethodsImplicits(module: SModuleDef) = {
@@ -245,8 +245,8 @@ class SModuleBuilder(implicit val context: AstContext) {
     }
 
     module.copy(
-      entities = genEntities(module.entities),
-      concreteSClasses = genClasses(module.concreteSClasses)
+      traits = genEntities(module.traits),
+      classes = genClasses(module.classes)
     )
   }
 

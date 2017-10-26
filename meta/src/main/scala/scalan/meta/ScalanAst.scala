@@ -818,7 +818,7 @@ object ScalanAst {
 
     def updateWrapper(typeName: String, descr: WrapperDescr) = {
       wrappers(typeName) = descr
-      val entityName = descr.module.entities(0).name
+      val entityName = descr.module.traits(0).name
       entityToWrapper(entityName) = typeName
     }
 
@@ -840,19 +840,19 @@ object ScalanAst {
     val typeClasses = Set("Elem", "Cont", "ClassTag", "Functor")
 
     def isEntity(name: String): Boolean = {
-      val res = for (m <- modules.values; e <- m.entities if e.name == name) yield ()
+      val res = for (m <- modules.values; e <- m.traits if e.name == name) yield ()
       res.nonEmpty
     }
     def isEntityCompanion(name: String): Boolean = {
-      val res = for (m <- modules.values; e <- m.entities; c <- e.companion if c.name == name) yield ()
+      val res = for (m <- modules.values; e <- m.traits; c <- e.companion if c.name == name) yield ()
       res.nonEmpty
     }
     def isClass(name: String): Boolean = {
-      val res = for (m <- modules.values; c <- m.concreteSClasses if c.name == name) yield ()
+      val res = for (m <- modules.values; c <- m.classes if c.name == name) yield ()
       res.nonEmpty
     }
     def isClassCompanion(name: String): Boolean = {
-      val res = for (m <- modules.values; c <- m.concreteSClasses; comp <- c.companion if comp.name == name) yield ()
+      val res = for (m <- modules.values; c <- m.classes; comp <- c.companion if comp.name == name) yield ()
       res.nonEmpty
     }
     def isModule(name: String): Boolean = {
@@ -870,8 +870,8 @@ object ScalanAst {
         es.find(e => isEqualName(m, e.name, entityName))
 
       val res = allModules collectFirst scala.Function.unlift { m =>
-        findByName(m, m.entities)
-          .orElse(findByName(m, m.concreteSClasses))
+        findByName(m, m.traits)
+          .orElse(findByName(m, m.classes))
           .map((m, _))
       }
       res
@@ -938,12 +938,12 @@ object ScalanAst {
                         imports: List[SImportStat],
                         name: String,
                         typeDefs: List[STpeDef],
-                        entities: List[STraitDef],
-                        concreteSClasses: List[SClassDef],
+                        traits: List[STraitDef],
+                        classes: List[SClassDef],
                         methods: List[SMethodDef],
                         selfType: Option[SSelfTypeDef],
                         ancestors: List[STypeApply],
-                        origModuleTrait: Option[STraitDef],  // original module trait declared
+                        origModuleTrait: Option[STraitDef], // original module trait declared
                         isVirtualized: Boolean,
                         okEmitOrigModuleTrait: Boolean = true)
                        (@transient implicit val context: AstContext) {
@@ -953,20 +953,20 @@ object ScalanAst {
 
     def getEntity(name: String): STmplDef = {
       findEntity(name).getOrElse {
-        sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
+        sys.error(s"Cannot find entity with name $name: available entities ${traits.map(_.name)}")
       }
     }
 
     def findEntity(name: String): Option[Entity] = {
-      entities.collectFirst { case e if e.name == name => e }
-          .orElse(concreteSClasses.collectFirst { case c if c.name == name => c })
+      traits.collectFirst { case e if e.name == name => e }
+          .orElse(classes.collectFirst { case c if c.name == name => c })
     }
 
-    def isEntity(name: String) = entities.exists(e => e.name == name)
+    def isEntity(name: String) = traits.exists(e => e.name == name)
 
-    def isClass(name: String) = concreteSClasses.exists(c => c.name == name)
+    def isClass(name: String) = classes.exists(c => c.name == name)
 
-    def allEntities = entities ++ concreteSClasses
+    def allEntities = traits ++ classes
 
     private def hasDeclaredImplFor(traitName: String, decls: Option[SDeclaredImplementations]) = {
       decls match {
@@ -980,13 +980,13 @@ object ScalanAst {
     }
 
     def clean = {
-      val _entities = entities.map(_.clean)
-      val _concreteSClasses = concreteSClasses.map(_.clean)
+      val _entities = traits.map(_.clean)
+      val _concreteSClasses = classes.map(_.clean)
       copy(
         imports = Nil,
         typeDefs = Nil,
-        entities = _entities,
-        concreteSClasses = _concreteSClasses,
+        traits = _entities,
+        classes = _concreteSClasses,
         methods = Nil,
         origModuleTrait = None,
         ancestors = Nil
@@ -994,8 +994,8 @@ object ScalanAst {
     }
 
     def printAst(ast: SModuleDef): Unit = {
-      val entityNames = ast.entities.map(_.name).mkString(",")
-      val concreteClassNames = ast.concreteSClasses.map(_.name).mkString(",")
+      val entityNames = ast.traits.map(_.name).mkString(",")
+      val concreteClassNames = ast.classes.map(_.name).mkString(",")
       print(
         s"""
           | Package name: ${ast.packageName}
@@ -1137,11 +1137,11 @@ object ScalanAst {
 
   def optimizeModuleImplicits(module: SModuleDef): SModuleDef = {
     implicit val ctx = module.context
-    val newEntities = module.entities.map(e => optimizeTraitImplicits(e))
-    val newClasses = module.concreteSClasses.map(c => optimizeClassImplicits(c))
+    val newEntities = module.traits.map(e => optimizeTraitImplicits(e))
+    val newClasses = module.classes.map(c => optimizeClassImplicits(c))
     module.copy(
-      entities = newEntities,
-      concreteSClasses = newClasses
+      traits = newEntities,
+      classes = newClasses
     )
   }
 }

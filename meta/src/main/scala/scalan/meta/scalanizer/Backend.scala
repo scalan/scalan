@@ -60,8 +60,8 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
     val methods = module.methods.map(m => genMethod(m)(ctx.copy(toRep = !m.isTypeDesc)))
     val newstats =
       module.typeDefs.map(genTypeDef) :::
-      module.entities.map(genEntity) :::
-      (genConcreteClasses(module.concreteSClasses) ++ genCompanions(module) ++ methods)
+      module.traits.map(genEntity) :::
+      (genConcreteClasses(module.classes) ++ genCompanions(module) ++ methods)
     val newSelf = genModuleSelf(module)
     val name = TypeName(module.name)
     val moduleParents = genParents(module.ancestors)
@@ -105,8 +105,8 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
   }
 
   def genCompanions(module: SModuleDef)(implicit ctx: GenCtx): List[Tree] = {
-    val fromEntities = module.entities.map(e => genCompanion(e.companion))
-    val fromClasses = module.concreteSClasses.map(clazz => genCompanion(clazz.companion))
+    val fromEntities = module.traits.map(e => genCompanion(e.companion))
+    val fromClasses = module.classes.map(clazz => genCompanion(clazz.companion))
     fromEntities ::: fromClasses
   }
 

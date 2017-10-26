@@ -176,10 +176,10 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
     val md = modules.getOrElse(name, { sys.error(s"Cannot find module $name") })
     val devirt = devirtPipeline(md)
     implicit val gctx = GenCtx(devirt, writer)
-    for (t <- devirt.entities) {
+    for (t <- devirt.traits) {
       emitTrait(t)
     }
-    for (c <- devirt.concreteSClasses) {
+    for (c <- devirt.classes) {
       emitClass(c)
     }
   }
