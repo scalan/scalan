@@ -5,14 +5,15 @@
 package scalan.meta
 
 import java.io.File
+import java.nio.file.Path
 
 import scala.language.implicitConversions
 import scala.tools.nsc.Global
-import scala.reflect.internal.util.{SourceFile, OffsetPosition, RangePosition, BatchSourceFile}
+import scala.reflect.internal.util.{BatchSourceFile, SourceFile, OffsetPosition, RangePosition}
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstUtils._
 import java.util.regex.Pattern
-
+import scalan.util.CollectionUtil._
 import scalan.util.FileUtil
 
 trait ScalanParsers[+G <: Global] {
@@ -72,11 +73,12 @@ trait ScalanParsers[+G <: Global] {
     compiler.newUnitParser(new compiler.CompilationUnit(source)).parse()
   }
 
-  def moduleDefFromTree(name: String, tree: Tree)(implicit ctx: ParseCtx): SModuleDef = tree match {
+  def moduleDefFromTree(file: String, tree: Tree)(implicit ctx: ParseCtx): SModuleDef = tree match {
     case pd: PackageDef =>
-      moduleDefFromPackageDef(pd)
+      val unitName = FileUtil.file(file).getName
+      moduleDefFromPackageDef(unitName, pd)
     case tree =>
-      throw new Exception(s"Unexpected tree in $name:\n\n$tree")
+      throw new Exception(s"Unexpected tree in $file:\n\n$tree")
   }
 
   def loadModuleDefFromResource(fileName: String): SModuleDef = {
@@ -108,55 +110,43 @@ trait ScalanParsers[+G <: Global] {
     }
 
 
-  def isInternalMethodOfCompanion(md: SMethodDef, declaringDef: STmplDef): Boolean = {
+  def isInternalMethodOfCompanion(md: SMethodDef, outerScope: List[SBodyItem]): Boolean = {
     val moduleVarName = md.name + global.nme.MODULE_VAR_SUFFIX.toString
-    val hasClass = declaringDef.body.collectFirst({ case d: SClassDef if d.name == md.name => ()}).isDefined
-    val hasModule = declaringDef.body.collectFirst({ case d: SValDef if d.name == moduleVarName => ()}).isDefined
-    val hasMethod = declaringDef.body.collectFirst({ case d: SMethodDef if d.name == md.name => ()}).isDefined
+    val hasClass = outerScope.collectFirst({ case d: SClassDef if d.name == md.name => ()}).isDefined
+    val hasModule = outerScope.collectFirst({ case d: SValDef if d.name == moduleVarName => ()}).isDefined
+    val hasMethod = outerScope.collectFirst({ case d: SMethodDef if d.name == md.name => ()}).isDefined
     hasClass && hasModule && hasMethod
   }
 
-  def isInternalClassOfCompanion(cd: STmplDef, outer: STmplDef): Boolean = {
+  def isInternalClassOfCompanion(cd: STmplDef, outerScope: List[SBodyItem]): Boolean = {
     val moduleVarName = cd.name + global.nme.MODULE_VAR_SUFFIX.toString
     if (cd.ancestors.nonEmpty) return false
-    val hasClass = outer.body.collectFirst({ case d: SClassDef if d.name == cd.name => ()}).isDefined
-    val hasModule = outer.body.collectFirst({ case d: SValDef if d.name == moduleVarName => ()}).isDefined
-    val hasMethod = outer.body.collectFirst({ case d: SMethodDef if d.name == cd.name => ()}).isDefined
+    val hasClass = outerScope.collectFirst({ case d: SClassDef if d.name == cd.name => ()}).isDefined
+    val hasModule = outerScope.collectFirst({ case d: SValDef if d.name == moduleVarName => ()}).isDefined
+    val hasMethod = outerScope.collectFirst({ case d: SMethodDef if d.name == cd.name => ()}).isDefined
     hasClass && hasModule && hasMethod
   }
 
-  def moduleDefFromPackageDef(packageDef: PackageDef)(implicit ctx: ParseCtx): SModuleDef = {
+  def moduleDefFromPackageDef(moduleName: String, packageDef: PackageDef)(implicit ctx: ParseCtx): SModuleDef = {
     val packageName = packageDef.pid.toString
     val statements = packageDef.stats
     val imports = statements.collect { case i: Import => importStat(i) }
-    val mainTraitTree = statements.collect {
-      case cd: ClassDef if cd.mods.isTrait && !cd.name.contains("Module") => cd
-    } match {
-      case List(only) => only
-      case seq => !!!(s"There must be exactly one trait with entity definition in a file, found ${seq.map(_.name.toString)}")
-    }
-    val mainTrait = traitDef(mainTraitTree, Some(mainTraitTree))
-    val moduleName = mainTrait.name
+    val defs = statements.filterMap { tree => optBodyItem(tree, None) }
     val isDefinedModule = findClassDefByName(statements, moduleName + "Module").isDefined
-//    val moduleTrait = definedModule.map(cd => traitDef(cd, Some(cd)))
-
-    val defs = mainTrait.body
-
     val typeDefs = defs.collect { case t: STpeDef => t }
-
     val traits = defs.collect {
       case t: STraitDef if !(t.name.endsWith("Companion") || t.hasAnnotation("InternalType")) => t
     }
+    val classes = defs
+          .collect { case c: SClassDef if !c.hasAnnotation("InternalType") => c }
+          .filterNot(isInternalClassOfCompanion(_, defs))
 
-    val concreteClasses = mainTrait.getConcreteClasses.filterNot(isInternalClassOfCompanion(_, mainTrait))
-    val methods = defs.collect {
-      case md: SMethodDef if !isInternalMethodOfCompanion(md, mainTrait) => md
-    }
+    val methods = defs.collect { case md: SMethodDef if !isInternalMethodOfCompanion(md, defs) => md }
 
     SModuleDef(packageName, imports, moduleName,
       typeDefs,
-      traits, concreteClasses, methods,
-      mainTrait.selfType, mainTrait.ancestors,
+      traits, classes, methods,
+      None, Nil,
       None, ctx.isVirtualized, okEmitOrigModuleTrait = !isDefinedModule)
   }
 

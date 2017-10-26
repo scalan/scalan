@@ -110,8 +110,13 @@ lazy val scalanizer = Project("scalanizer", file("scalanizer"))
     addArtifact(artifact in (Compile, assembly), assembly)
   )
 
-lazy val librarydef = Project("librarydef", file("librarydef"))
+lazy val libraryapi = Project("library-api", file("library-api"))
   .dependsOn(meta, scalanizer)
+  .settings(libraryDefSettings,
+    libraryDependencies ++= Seq())
+
+lazy val librarydef = Project("librarydef", file("librarydef"))
+  .dependsOn(meta, scalanizer, libraryapi % allConfigDependency)
   .settings(libraryDefSettings,
     libraryDependencies ++= Seq())
 

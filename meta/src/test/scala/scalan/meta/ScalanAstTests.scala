@@ -79,9 +79,9 @@ trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
     res
   }
   
-  def parseModule(moduleText: String)(implicit ctx: ParseCtx): SModuleDef = {
+  def parseModule(moduleName: String, moduleText: String)(implicit ctx: ParseCtx): SModuleDef = {
     val pkg = parseString(TopLevel, moduleText).asInstanceOf[PackageDef]
-    val module = moduleDefFromPackageDef(pkg)
+    val module = moduleDefFromPackageDef(moduleName, pkg)
     module
   }
 
@@ -93,8 +93,8 @@ trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
     }
   }
 
-  def testModule(prog: String, expected: SModuleDef)(implicit ctx: ParseCtx) {
-    test(TopLevel, prog, expected) { case tree: PackageDef => moduleDefFromPackageDef(tree) }
+  def testModule(moduleName: String, prog: String, expected: SModuleDef)(implicit ctx: ParseCtx) {
+    test(TopLevel, prog, expected) { case tree: PackageDef => moduleDefFromPackageDef(moduleName, tree) }
   }
 
   def testTrait(prog: String, expected: STraitDef)(implicit ctx: ParseCtx) {

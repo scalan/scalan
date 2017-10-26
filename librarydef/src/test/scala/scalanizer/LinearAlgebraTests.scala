@@ -1,10 +1,11 @@
 package scalanizer
 
 import org.scalatest._
-import scalanizer.linalgebra.LinearAlgebra
-import scala.util.Random
 
-class LinearAlgebraTests extends FunSuite with LinearAlgebra {
+import scala.util.Random
+import scalan.collection.ColOverArrayBuilder
+
+class LinearAlgebraTests extends FunSuite  {
 
   object CommonData {
     val rnd = new Random(1)
@@ -19,7 +20,7 @@ class LinearAlgebraTests extends FunSuite with LinearAlgebra {
   }
 
   test("ddmvm") {
-    val len = Col.ddmvm(Array(10, 20))
+    val len = new ColOverArrayBuilder().ddmvm(Array(10, 20))
     assertResult(2)(len)
   }
 //  test("ddmvm") {

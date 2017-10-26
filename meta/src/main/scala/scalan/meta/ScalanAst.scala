@@ -626,10 +626,6 @@ object ScalanAst {
       getInheritedMethodDefs(module).collect { case md if md.body.isDefined => md.name }.toSet
     }
 
-    def getConcreteClasses = body.collect {
-      case c: SClassDef if !c.hasAnnotation("InternalType") => c
-    }
-
     def getDeclaredElems(module: SModuleDef): List[(String, STpeExpr)] = {
       val res = (this :: getAncestorTraits(module))
         .flatMap(e => {

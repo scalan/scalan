@@ -45,7 +45,8 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
 
   /** A list of scalan modules that should be virtualized by scalan-meta. */
   val unitConfigs = List(
-    unitConfig("Cols.scala", "scalanizer/collections/Cols.scala")
+    unitConfig("Cols.scala", "scalan/collection/Cols.scala"),
+    unitConfig("ColsOverArrays.scala", "scalan/collection/ColsOverArrays.scala")
   )
   def getUnitConfig(unitName: String) = unitConfigs.find(_.name == unitName).getOrElse{
     sys.error(s"Cannot fing UnitConfig for '$unitName'")

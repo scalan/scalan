@@ -115,7 +115,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     val obsImpl1 = CD("ObservableImpl1", tpeArgA, SClassArgs(Nil), SClassArgs(argEA), ancObsA.map(_.toTypeApply), Nil, None, None, false)
     val obsImpl2 = obsImpl1.copy(name = "ObservableImpl2")
 
-    testModule(
+    testModule("Reactive",
       reactiveModule,
       EMD("scalan.rx", L(SImportStat("scalan._")), "Reactive",
         List(STpeDef("Obs", L(STpeArg("A",None,Nil)) , TC("Rep", ancObsA))),
@@ -125,15 +125,15 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
         None,
 //        stdDslImpls = Some(SDeclaredImplementations(Map())),
 //        expDslImpls = Some(SDeclaredImplementations(Map())),
-        ancestors = L(STraitCall("Scalan", Nil).toTypeApply), None, true))
+        ancestors = Nil, None, true))
   }
 
   describe("AstContext methods") {
-    val m = parseModule(reactiveModule)
+    val m = parseModule("Reactive", reactiveModule)
     context.addModule(m)
-    val cols = parseModule(colsModuleText)
+    val cols = parseModule("Cols", colsModuleText)
     context.addModule(cols)
-    val warrays = parseModule(warraysModuleText)
+    val warrays = parseModule("WArrays", warraysModuleText)
     context.addModule(warrays)
 
     it("recognize type synonym") {
@@ -182,7 +182,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   }
 
   describe("find TpePath") {
-    val module = parseModule(reactiveModule)
+    val module = parseModule("Reactive", reactiveModule)
     testPath(module, "Int", "A", _ => None)
     testPath(module, "A", "A", _ => Some(SNilPath))
     testPath(module, "A => Int", "A", t => Some(SDomPath(t, SNilPath)))
@@ -251,7 +251,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   }
 
   describe("emitImplicitElemDeclByTpePath") {
-    val module = parseModule(reactiveModule)
+    val module = parseModule("Reactive", reactiveModule)
     testEmit(module, "A", "A", "")
     testEmit(module, "A => Int", "A", ".eDom")
     testEmit(module, "Int => A", "A", ".eRange")
