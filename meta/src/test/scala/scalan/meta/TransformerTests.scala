@@ -4,7 +4,7 @@ import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstTransformers.{RepTypeRemover, TypeTransformerInAst}
 
 class TransformerTests extends ScalanAstTests with Examples {
-  val cols = parseModule("Cols", colsModuleText)
+  val cols = parseModule(colsVirtModule)
   context.addModule(cols)
   val trans = new TypeTransformerInAst(new RepTypeRemover())
 

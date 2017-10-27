@@ -143,7 +143,7 @@ lazy val kotlinBackend = Project("scalan-kotlin-backend", file("kotlin-backend")
   )
 
 lazy val root = Project("scalan", file("."))
-  .aggregate(common, meta, scalanizer, librarydef, core, library, kotlinBackend)
+  .aggregate(common, meta, scalanizer, libraryapi, librarydef, core, library, kotlinBackend)
   .settings(buildSettings, publishArtifact := false)
 
 //lazy val collections = Project("scalan-collections", file("collections"))

@@ -13,12 +13,12 @@ trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
   implicit val context = new AstContext(Nil, this)
   context.loadModulesFromFolders()
 
-  implicit val ctx = new ParseCtx(true)
-
   val ast: this.type = this
   import scalan.meta.ScalanAst.{STraitCall => TC, SModuleDef => EMD, SClassDef => CD, STpeTuple => T, SMethodArg => MA, STraitDef => TD, SMethodDef => MD, SMethodArgs => MAs, SImportStat => IS}
   import scala.{List => L}
   import compiler._
+
+  case class TestModule(moduleName: String, text: String, isVirt: Boolean)
 
   val INT = STpePrimitives("Int")
   val BOOL = STpePrimitives("Boolean")
@@ -78,11 +78,13 @@ trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
     val res = optBodyItem(tree, None).get
     res
   }
-  
-  def parseModule(moduleName: String, moduleText: String)(implicit ctx: ParseCtx): SModuleDef = {
-    val pkg = parseString(TopLevel, moduleText).asInstanceOf[PackageDef]
-    val module = moduleDefFromPackageDef(moduleName, pkg)
-    module
+
+  def parseModule(module: TestModule): SModuleDef = {
+    implicit val ctx = new ParseCtx(module.isVirt)
+    val pkg = parseString(TopLevel, module.text).asInstanceOf[PackageDef]
+    val m = moduleDefFromPackageDef(module.moduleName, pkg)
+    assertResult(module.isVirt)(m.isVirtualized)
+    m
   }
 
   def test[A](kind: TreeKind, prog: String, expected: A)(f: Tree => A) {
@@ -93,8 +95,10 @@ trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
     }
   }
 
-  def testModule(moduleName: String, prog: String, expected: SModuleDef)(implicit ctx: ParseCtx) {
-    test(TopLevel, prog, expected) { case tree: PackageDef => moduleDefFromPackageDef(moduleName, tree) }
+  def testModule(module: TestModule, expected: SModuleDef)(implicit ctx: ParseCtx) {
+    test(TopLevel, module.text, expected) { case tree: PackageDef =>
+       moduleDefFromPackageDef(module.moduleName, tree)
+    }
   }
 
   def testTrait(prog: String, expected: STraitDef)(implicit ctx: ParseCtx) {

@@ -690,7 +690,7 @@ object ScalanAst {
     }
   }
 
-  implicit class STraitOrClassDefOps(td: STmplDef) {
+  implicit class STmplDefOps(td: STmplDef) {
   }
 
   case class SClassDef(

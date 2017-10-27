@@ -1,9 +1,11 @@
 package scalan.meta
 
-trait Examples {
-  val reactiveModule =
+trait Examples { self: ScalanAstTests =>
+
+  val reactiveModule = TestModule("Reactives",
     """package scalan.rx
      |import scalan._
+     |trait Reactives extends Scalan {
      |  type Obs[A] = Rep[Observable[A]]
      |  trait Observable[A] {
      |    implicit def eA: Elem[A]
@@ -12,11 +14,13 @@ trait Examples {
      |  }
      |  class ObservableImpl2[A](implicit val eA: Elem[A]) extends Observable[A] {
      |  }
-    """.stripMargin
+     |}
+    """.stripMargin, true)
 
-  val colsModuleText =
+  val colsVirtModule = TestModule("Cols",
     """package scalan.collection
      |import scalan._
+     |trait Cols extends Scalan {
      |  type Col[A] = Rep[Collection[A]]
      |  trait Collection[A] {
      |    implicit def eA: Elem[A]
@@ -28,9 +32,35 @@ trait Examples {
      |    def length: Rep[Int] = ColOverArray.this.arr.length;
      |    def apply(i: Rep[Int]): Rep[A] = ColOverArray.this.arr.apply(i)
      |  };
-    """.stripMargin
+     |}
+    """.stripMargin, true)
 
-  val warraysModuleText =
+  val itersApiModule = TestModule("ItersApi",
+    """package scalan.iter
+     |import scalan._
+     |trait Iter[A] {
+     |  def length: Int;
+     |  def apply(i: Int): A
+     |}
+     |trait IterBuilder {
+     |  def fromArray[T](arr: Array[T]): Iter[T]
+     |}
+    """.stripMargin, false)
+
+  val itersImplModule = TestModule("ItersImpl",
+    """package scalan.iter
+     |import scalan._
+     |class IterOverArray[A](val arr: Array[A]) extends Iter[A] {
+     |  val list: List[A] = arr.toList
+     |  def length = arr.length
+     |  def apply(i: Int) = arr(i)
+     |}
+     |class IterOverArrayBuilder extends IterBuilder {
+     |  def fromArray[T](arr: Array[T]): Iter[T] = new IterOverArray[T](arr)
+     |}
+    """.stripMargin, false)
+
+  val warraysModule = TestModule("WArrays",
     """
      |package scala {
      |  import scalan._
@@ -51,6 +81,6 @@ trait Examples {
      |    }
      |  }
      |}
-    """.stripMargin
+    """.stripMargin, true)
 
 }

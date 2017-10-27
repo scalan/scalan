@@ -14,7 +14,6 @@ trait Col[A] {
 
 trait ColBuilder {
   def fromArray[T](arr: Array[T]): Col[T]
-  @HotSpot(KernelType.Scala)
   def ddmvm(v: Array[Double]): Int = {
     val xs = Array.fill(v.length)(0)
     val c = xs.zip(v).map(d => d)

@@ -12,6 +12,7 @@ import scala.tools.nsc.Global
 import scala.reflect.internal.util.{BatchSourceFile, SourceFile, OffsetPosition, RangePosition}
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstUtils._
+import scalan.meta.ScalanAstExtensions._
 import java.util.regex.Pattern
 import scalan.util.CollectionUtil._
 import scalan.util.FileUtil
@@ -109,7 +110,6 @@ trait ScalanParsers[+G <: Global] {
       case cd: ClassDef if cd.name.toString == name => cd
     }
 
-
   def isInternalMethodOfCompanion(md: SMethodDef, outerScope: List[SBodyItem]): Boolean = {
     val moduleVarName = md.name + global.nme.MODULE_VAR_SUFFIX.toString
     val hasClass = outerScope.collectFirst({ case d: SClassDef if d.name == md.name => ()}).isDefined
@@ -127,26 +127,61 @@ trait ScalanParsers[+G <: Global] {
     hasClass && hasModule && hasMethod
   }
 
+  implicit class SBodyItemOps(defs: List[SBodyItem]) {
+    def collectClasses = defs
+      .collect { case c: SClassDef if !c.hasAnnotation("InternalType") => c }
+      .filterNot(isInternalClassOfCompanion(_, defs))
+    def collectTraits = defs.collect {
+      case t: STraitDef if !(t.name.endsWith("Companion") || t.hasAnnotation("InternalType")) => t
+    }
+    def collectTypeDefs = defs.collect { case t: STpeDef => t }
+    def collectMethods = defs.collect { case md: SMethodDef if !isInternalMethodOfCompanion(md, defs) => md }
+  }
+
   def moduleDefFromPackageDef(moduleName: String, packageDef: PackageDef)(implicit ctx: ParseCtx): SModuleDef = {
+    if (ctx.isVirtualized) moduleDefFromVirtPackageDef(packageDef)
+    else {
+      val packageName = packageDef.pid.toString
+      val statements = packageDef.stats
+      val imports = statements.collect { case i: Import => importStat(i) }
+      val defs = statements.filterMap { tree => optBodyItem(tree, None) }
+      val isDefinedModule = findClassDefByName(statements, moduleName + "Module").isDefined
+      val typeDefs = defs.collectTypeDefs
+      val traits = defs.collectTraits
+      val classes = defs.collectClasses
+      val methods = defs.collectMethods
+      SModuleDef(packageName, imports, moduleName,
+        typeDefs,
+        traits, classes, methods,
+        None, Nil,
+        None, ctx.isVirtualized, okEmitOrigModuleTrait = !isDefinedModule)
+    }
+  }
+
+  def moduleDefFromVirtPackageDef(packageDef: PackageDef)(implicit ctx: ParseCtx): SModuleDef = {
     val packageName = packageDef.pid.toString
     val statements = packageDef.stats
     val imports = statements.collect { case i: Import => importStat(i) }
-    val defs = statements.filterMap { tree => optBodyItem(tree, None) }
-    val isDefinedModule = findClassDefByName(statements, moduleName + "Module").isDefined
-    val typeDefs = defs.collect { case t: STpeDef => t }
-    val traits = defs.collect {
-      case t: STraitDef if !(t.name.endsWith("Companion") || t.hasAnnotation("InternalType")) => t
+    val mainTraitTree = statements.collect {
+      case cd: ClassDef if cd.mods.isTrait && !cd.name.contains("Module") => cd
+    } match {
+      case List(only) => only
+      case seq => !!!(s"There must be exactly one trait with entity definition in a file, found ${seq.map(_.name.toString)}")
     }
-    val classes = defs
-          .collect { case c: SClassDef if !c.hasAnnotation("InternalType") => c }
-          .filterNot(isInternalClassOfCompanion(_, defs))
+    val mainTrait = traitDef(mainTraitTree, Some(mainTraitTree))
+    val moduleName = mainTrait.name
+    val isDefinedModule = findClassDefByName(statements, moduleName + "Module").isDefined
 
-    val methods = defs.collect { case md: SMethodDef if !isInternalMethodOfCompanion(md, defs) => md }
+    val defs = mainTrait.body
+    val typeDefs = defs.collectTypeDefs
+    val traits = defs.collectTraits
+    val classes = mainTrait.body.collectClasses
+    val methods = defs.collectMethods
 
     SModuleDef(packageName, imports, moduleName,
       typeDefs,
       traits, classes, methods,
-      None, Nil,
+      mainTrait.selfType, mainTrait.ancestors,
       None, ctx.isVirtualized, okEmitOrigModuleTrait = !isDefinedModule)
   }
 

@@ -12,6 +12,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   import scala.{List => L}
 
   describe("STpeExpr") {
+    implicit val ctx = new ParseCtx(true)
     testSTpe("Int", INT)
     testSTpe("(Int,Boolean)", STpeTuple(L(INT, BOOL)))
     testSTpe("Int=>Boolean", STpeFunc(INT, BOOL))
@@ -25,6 +26,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   }
 
   describe("SMethodDef") {
+    implicit val ctx = new ParseCtx(true)
     testSMethod("def f: Int", MD("f", Nil, Nil, Some(INT), false, false, None, Nil, None))
     testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(INT), true, false, Some("a"), L(SMethodAnnotation("OverloadId",List(SConst("a")))), None))
     testSMethod(
@@ -46,6 +48,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   }
 
   describe("TraitDef") {
+    implicit val ctx = new ParseCtx(true)
     val traitA = TD("A", Nil, Nil, Nil, None, None)
     val traitEdgeVE = TD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), Nil, Nil, None, None)
 
@@ -89,6 +92,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     """.stripMargin
 
   describe("SClassDef") {
+    implicit val ctx = new ParseCtx(true)
     val classA =
       CD("A", Nil, SClassArgs(Nil), SClassArgs(Nil), Nil, Nil, None, None, false)
     val classEdgeVE =
@@ -108,6 +112,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   }
 
   describe("SModuleDef") {
+    implicit val ctx = new ParseCtx(true)
     val tpeArgA = L(STpeArg("A", None, Nil))
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None, Nil, true))
@@ -115,9 +120,8 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     val obsImpl1 = CD("ObservableImpl1", tpeArgA, SClassArgs(Nil), SClassArgs(argEA), ancObsA.map(_.toTypeApply), Nil, None, None, false)
     val obsImpl2 = obsImpl1.copy(name = "ObservableImpl2")
 
-    testModule("Reactive",
-      reactiveModule,
-      EMD("scalan.rx", L(SImportStat("scalan._")), "Reactive",
+    testModule(reactiveModule,
+      EMD("scalan.rx", L(SImportStat("scalan._")), reactiveModule.moduleName,
         List(STpeDef("Obs", L(STpeArg("A",None,Nil)) , TC("Rep", ancObsA))),
         List(entity),
         L(obsImpl1, obsImpl2),
@@ -125,16 +129,20 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
         None,
 //        stdDslImpls = Some(SDeclaredImplementations(Map())),
 //        expDslImpls = Some(SDeclaredImplementations(Map())),
-        ancestors = Nil, None, true))
+        ancestors = L(STraitCall("Scalan", Nil).toTypeApply), None, true))
   }
 
   describe("AstContext methods") {
-    val m = parseModule("Reactive", reactiveModule)
+    val m = parseModule(reactiveModule)
     context.addModule(m)
-    val cols = parseModule("Cols", colsModuleText)
+    val cols = parseModule(colsVirtModule)
     context.addModule(cols)
-    val warrays = parseModule("WArrays", warraysModuleText)
+    val warrays = parseModule(warraysModule)
     context.addModule(warrays)
+    val itersApi = parseModule(itersApiModule)
+    context.addModule(itersApi)
+    val itersImpl = parseModule(itersImplModule)
+    context.addModule(itersImpl)
 
     it("recognize type synonym") {
       def test(t: STpeExpr): Unit = {
@@ -143,6 +151,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
       test(STraitCall("Obs", List(TpeInt)))
       test(STraitCall("Col", List(TpeString)))
       test(STraitCall("RepWArray", List(TpeString)))
+      context.TypeDef.unapply(STraitCall("RepIter", List(TpeString))) should matchPattern { case None => }
     }
 
     it("recognize Rep type") {
@@ -156,7 +165,8 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     }
 
     it("resolve Entity by name") {
-      List("Observable", "Collection", "WArray") foreach { en =>
+      List("Observable", "Collection", "WArray",
+           "Iter", "IterBuilder", "IterOverArray", "IterOverArrayBuilder") foreach { en =>
         en should matchPattern { case m.context.ModuleEntity(_, e) if e.name == en => }
       }
     }
@@ -168,6 +178,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   }
 
   def testPath(module: SModuleDef, tpeString: String, name: String, expected: STpeExpr => Option[STpePath]): Unit = {
+    implicit val ctx = new ParseCtx(module.isVirtualized)
     val tpe = parseType(tpeString)
 
     it(s"find('${tpeString}', '${name}')") {
@@ -182,7 +193,8 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   }
 
   describe("find TpePath") {
-    val module = parseModule("Reactive", reactiveModule)
+    val module = parseModule(reactiveModule)
+    implicit val ctx = new ParseCtx(module.isVirtualized)
     testPath(module, "Int", "A", _ => None)
     testPath(module, "A", "A", _ => Some(SNilPath))
     testPath(module, "A => Int", "A", t => Some(SDomPath(t, SNilPath)))
@@ -223,6 +235,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   }
 
   def makePath(module: SModuleDef, tpeString: String, name: String): STpePath = {
+    implicit val ctx = new ParseCtx(module.isVirtualized)
     val tpe = parseType(tpeString)
     STpePath.find(tpe, name).get
   }
@@ -251,7 +264,8 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   }
 
   describe("emitImplicitElemDeclByTpePath") {
-    val module = parseModule("Reactive", reactiveModule)
+    val module = parseModule(reactiveModule)
+    implicit val ctx = new ParseCtx(module.isVirtualized)
     testEmit(module, "A", "A", "")
     testEmit(module, "A => Int", "A", ".eDom")
     testEmit(module, "Int => A", "A", ".eRange")
