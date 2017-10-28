@@ -29,24 +29,33 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
   var saveMetaAst: Boolean    = true
   def withSaveMetaAst(b: Boolean): ScalanizerConfig = { saveMetaAst = b; this }
 
-  private def unitConfig(name: String, entityFile: String) =
+  private def unitConfigTemplate(name: String, entityFile: String) =
     MetaConfig(
-      name = name, entityFile = entityFile,
-      srcPath = "librarydef/src/main/scala",
-      resourcePath = "librarydef/src/main/resources",
+      name = name, srcPath = "", resourcePath = "", entityFile = entityFile,
       baseContextTrait = "scalan.Scalan", // used like this: trait ${module.name}Defs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
       extraImports = List(
         "scala.reflect.runtime.universe._",
         "scala.reflect._"
       ),
-      isVirtualized = false,
-      isStdEnabled = false
+      isVirtualized = false, isStdEnabled = false
+    )
+
+  private def apiUnit(name: String, entityFile: String) =
+    unitConfigTemplate(name, entityFile).copy(
+      srcPath = "library-api/src/main/scala",
+      resourcePath = "library-api/src/main/resources"
+    )
+
+  private def implUnit(name: String, entityFile: String) =
+    unitConfigTemplate(name, entityFile).copy(
+      srcPath = "library-impl/src/main/scala",
+      resourcePath = "library-impl/src/main/resources"
     )
 
   /** A list of scalan modules that should be virtualized by scalan-meta. */
   val unitConfigs = List(
-    unitConfig("Cols.scala", "scalan/collection/Cols.scala"),
-    unitConfig("ColsOverArrays.scala", "scalan/collection/ColsOverArrays.scala")
+    apiUnit("Cols.scala", "scalan/collection/Cols.scala"),
+    implUnit("ColsOverArrays.scala", "scalan/collection/ColsOverArrays.scala")
   )
   def getUnitConfig(unitName: String) = unitConfigs.find(_.name == unitName).getOrElse{
     sys.error(s"Cannot fing UnitConfig for '$unitName'")
@@ -54,17 +63,16 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
 
   val wrappersMetaConfig = MetaConfig(
     name = "Wrappers Config",
-    srcPath = "librarydef/src/main/scala",
-    resourcePath = "librarydef/src/main/resources",
+    srcPath = "library-api/src/main/scala",
+    resourcePath = "library-api/src/main/resources",
     entityFile = "<shouldn't be used>",    // NOTE: there is no any wrapper source files
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scala.reflect._"
     ),
-    isVirtualized = false,
-    isStdEnabled = false
+    isVirtualized = false, isStdEnabled = false
   )
-  val wrapperConfigs     = List[WrapperConfig](
+  val wrapperConfigs = List(
     WrapperConfig(
       name = "Array",
       annotations = List(classOf[ContainerType], classOf[FunctorType]).map(_.getSimpleName)

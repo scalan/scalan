@@ -121,8 +121,9 @@ object ScalanAstExtensions {
     }
   }
 
-  implicit class SModuleOps(module: SModuleDef) {
+  implicit class SModuleDefOps(module: SModuleDef) {
     implicit val ctx = module.context
+    def fullName = s"${module.packageName}.${module.name}"
     def selfTypeString(suffix: String) =
       module.selfType.opt(t => s"self: ${t.tpe}${suffix} =>")
 

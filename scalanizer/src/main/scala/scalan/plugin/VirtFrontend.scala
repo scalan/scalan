@@ -1,6 +1,7 @@
 package scalan.plugin
 
 import scala.tools.nsc._
+import scalan.meta.ScalanAstExtensions._
 
 object VirtFrontend {
   val name = "scalanizer-virt-frontend"
@@ -27,6 +28,7 @@ class VirtFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       if (isModuleUnit(unitName)) {
         implicit val ctx = new ParseCtx(false)(scalanizer.context)
         val moduleDef = moduleDefFromTree(unitName, unit.body)
+        scalanizer.inform(s"Adding module ${moduleDef.fullName} parsed from ${unit.source.file}")
         snState.addModule(moduleDef)
       }
     }

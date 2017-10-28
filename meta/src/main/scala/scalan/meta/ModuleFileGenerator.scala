@@ -238,19 +238,20 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
       (Iterator.single("To") ++ Iterator.from(0).map("To" + _)).filterNot(takenNames.contains).next()
     }
     val elemTypeDecl = s"${e.name}Elem[${join(e.tpeArgs.decls, s"$toArgName <: ${e.typeUse}")}]"
+    val defaultParentElem =
+      if (e.isCont) {
+        s"EntityElem1[${e.tpeArgNames.rep()}, $toArgName, ${e.name}](${e.tpeArgNames.rep("_e" + _)}, container[${e.name}])"
+      } else {
+        s"EntityElem[$toArgName]"
+      }
     val (optParent, parentElem) = e.firstAncestorType match {
-      case Some(STraitCall("Def", _)) =>
-        val parentElem =
-          if (e.isCont) {
-            s"EntityElem1[${e.tpeArgNames.rep()}, $toArgName, ${e.name}](${e.tpeArgNames.rep("_e" + _)}, container[${e.name}])"
-          } else {
-            s"EntityElem[$toArgName]"
-          }
-        (None, parentElem)
-      case Some(parent@STraitCall(parentName, parentTpeArgs)) =>
-        (Some(parent), s"${parentName}Elem[${join(parentTpeArgs, toArgName)}]")
+      case Some(STraitCall("Def", _)) => (None, defaultParentElem)
+      case Some(parent@STraitCall(context.ModuleEntity(m, e), parentTpeArgs))  =>
+        (Some(parent), s"${e.name}Elem[${join(parentTpeArgs, toArgName)}]")
       case Some(p) => !!!(s"Unsupported parent type $p of the entity ${e.name}")
-      case None => !!!(s"Entity ${e.name} must extend Def, TypeWrapperDef, or another entity")
+      case None if e.module.isVirtualized =>
+        !!!(s"Entity ${e.name} must extend Def, TypeWrapperDef, or another entity")
+      case None => (None, defaultParentElem)
     }
     val overrideIfHasParent = optParent.ifDefined("override ")
     val elemMethodName = entityElemMethodName(e.name)

@@ -115,13 +115,13 @@ lazy val libraryapi = Project("library-api", file("library-api"))
   .settings(libraryDefSettings,
     libraryDependencies ++= Seq())
 
-lazy val librarydef = Project("librarydef", file("librarydef"))
+lazy val libraryimpl = Project("library-impl", file("library-impl"))
   .dependsOn(meta, scalanizer, libraryapi % allConfigDependency)
   .settings(libraryDefSettings,
     libraryDependencies ++= Seq())
 
 lazy val library = Project("library", file("library"))
-  .dependsOn(common % allConfigDependency, core % allConfigDependency, librarydef)
+  .dependsOn(common % allConfigDependency, core % allConfigDependency, libraryimpl)
   .settings(commonSettings,
     libraryDependencies ++= Seq())
 
@@ -143,7 +143,7 @@ lazy val kotlinBackend = Project("scalan-kotlin-backend", file("kotlin-backend")
   )
 
 lazy val root = Project("scalan", file("."))
-  .aggregate(common, meta, scalanizer, libraryapi, librarydef, core, library, kotlinBackend)
+  .aggregate(common, meta, scalanizer, libraryapi, libraryimpl, core, library, kotlinBackend)
   .settings(buildSettings, publishArtifact := false)
 
 //lazy val collections = Project("scalan-collections", file("collections"))

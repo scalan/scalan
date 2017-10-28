@@ -14,6 +14,7 @@ import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstUtils._
 import scalan.meta.ScalanAstExtensions._
 import java.util.regex.Pattern
+
 import scalan.util.CollectionUtil._
 import scalan.util.FileUtil
 
@@ -76,7 +77,7 @@ trait ScalanParsers[+G <: Global] {
 
   def moduleDefFromTree(file: String, tree: Tree)(implicit ctx: ParseCtx): SModuleDef = tree match {
     case pd: PackageDef =>
-      val unitName = FileUtil.file(file).getName
+      val unitName = scala.reflect.io.File(file).stripExtension
       moduleDefFromPackageDef(unitName, pd)
     case tree =>
       throw new Exception(s"Unexpected tree in $file:\n\n$tree")
