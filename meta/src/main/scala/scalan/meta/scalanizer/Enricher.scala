@@ -11,15 +11,6 @@ import scalan.util.CollectionUtil._
 
 trait Enricher[+G <: Global] extends ScalanizerBase[G] {
 
-  /** Gets all packages needed for the module and imports them. */
-  def getImportByName(name: String): SImportStat = {
-    val pkgOfModule = snState.packageOfModule.get(name) match {
-      case Some(pkgName) => pkgName + "."
-      case _ => ""
-    }
-    SImportStat(pkgOfModule + "implOf"+name+".StagedEvaluation._")
-  }
-
   def saveDebugCode(fileName: String, code: String) = {
     val folder = new File("library")  // this is the root of 'library' module
     val file = FileUtil.file(folder, "debug", fileName)

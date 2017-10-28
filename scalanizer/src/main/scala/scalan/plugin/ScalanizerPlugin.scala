@@ -6,7 +6,10 @@ import scalan.meta.EntityManagement
 import scalan.meta.ScalanAst.AstContext
 import scalan.meta.scalanizer.{ScalanizerConfig, Scalanizer, ScalanizerState}
 
-class ScalanizerPlugin(val global: Global) extends Plugin { plugin =>
+abstract class ScalanPlugin(val global: Global) extends Plugin { plugin =>
+}
+
+class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
   val scalanizer: Scalanizer[plugin.global.type] = new Scalanizer[plugin.global.type] {
     def getGlobal: plugin.global.type = plugin.global
     val snConfig: ScalanizerConfig = new ScalanizerPluginConfig
