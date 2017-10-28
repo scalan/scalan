@@ -70,6 +70,7 @@ lazy val lmsBackendSettings = itSettings ++ scalaVirtualizedSettings ++ Seq(
 val libraryDefSettings = commonSettings ++ Seq(
   scalacOptions ++= Seq(
           "-Xplugin:scalanizer/target/scala-2.11/scalanizer-assembly-0.3.0-SNAPSHOT.jar"
+//          , "-P:scalanizer:disabled"
     //    , "-Xgenerate-phase-graph"
   )
 )

@@ -124,7 +124,7 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
   }
 
   def mapTypeName(name: String)(implicit ctx: GenCtx) = name match {
-    case ctx.module.WrapperEntity(e, externalName) => externalName
+    case ctx.module.context.WrapperEntity(e, externalName) => externalName
     case _ => name
   }
 

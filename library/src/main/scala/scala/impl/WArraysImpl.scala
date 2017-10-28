@@ -83,13 +83,6 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
     proxyOps[WArrayCompanionCtor](p)
 
   lazy val WArray: Rep[WArrayCompanionCtor] = new WArrayCompanionCtor {
-    def fill[T](n: Rep[Int], elem: Rep[Thunk[T]]): Rep[WArray[T]] = {
-      implicit val eT = elem.elem.eItem
-      mkMethodCall(self,
-        this.getClass.getMethod("fill", classOf[Sym], classOf[Sym]),
-        List(n, elem),
-        true, element[WArray[T]]).asRep[WArray[T]]
-    }
   }
 
   case class ViewWArray[A, B](source: Rep[WArray[A]], override val innerIso: Iso[A, B])
@@ -102,25 +95,13 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   }
 
   object WArrayMethods {
-    object zip {
-      def unapply(d: Def[_]): Option[(Rep[WArray[T]], Rep[WArray[B]]) forSome {type T; type B}] = d match {
-        case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "zip" =>
-          Some((receiver, ys)).asInstanceOf[Option[(Rep[WArray[T]], Rep[WArray[B]]) forSome {type T; type B}]]
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[WArray[T]], Rep[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "apply" =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[WArray[T]], Rep[Int]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Sym): Option[(Rep[WArray[T]], Rep[WArray[B]]) forSome {type T; type B}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object map {
-      def unapply(d: Def[_]): Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[WArrayElem[_, _]] && method.getName == "map" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[(Rep[WArray[T]], Rep[T => B]) forSome {type T; type B}] = exp match {
+      def unapply(exp: Sym): Option[(Rep[WArray[T]], Rep[Int]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -140,17 +121,6 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
   }
 
   object WArrayCompanionMethods {
-    object fill {
-      def unapply(d: Def[_]): Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(n, elem, _*), _) if receiver.elem == WArrayCompanionElem && method.getName == "fill" =>
-          Some((n, elem)).asInstanceOf[Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Sym): Option[(Rep[Int], Rep[Thunk[T]]) forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   object UserTypeWArray {

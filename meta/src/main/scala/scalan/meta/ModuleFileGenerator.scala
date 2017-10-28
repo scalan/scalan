@@ -401,7 +401,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: 
         s"ConcreteElem[$dataTpe, ${c.typeUse}]"
 
       def converterBody = {
-        val entity = module.getEntity(parent.name)
+        val entity = context.findModuleEntity(parent.name).get._2
         val entityFields = entity.getAvailableFields(module)
         val classFields = clazz.args.args.map(_.name)
         val missingFields = classFields.filterNot(entityFields.contains(_))

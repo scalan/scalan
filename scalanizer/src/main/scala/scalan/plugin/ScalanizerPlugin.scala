@@ -23,7 +23,8 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
 
   /** The compiler components that will be applied when running this plugin */
   val components: List[PluginComponent] = List(
-      new WrapFrontend(this)
+      new Assembler(this)
+    , new WrapFrontend(this)
     , new WrapEnricher(this)
     , new WrapBackend(this)
     , new VirtFrontend(this)
@@ -36,14 +37,18 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
   /** The description is printed with the option: -Xplugin-list */
   val description: String = "Optimization through staging"
 
-  /** Plugin-specific options without -P:scalan:  */
-  override def processOptions(options: List[String], error: String => Unit) {
+  /** Plugin-specific options without -P:scalanizer:  */
+  override def init(options: List[String], error: String => Unit): Boolean = {
+    var enabled = true
     options foreach {
       case "save" => scalanizer.snConfig.withSave(true)
       case "read" => scalanizer.snConfig.withRead(true)
       case "debug" => scalanizer.snConfig.withDebug(true)
+      case "disabled" =>
+        enabled = false
       case option => error("Option not understood: " + option)
     }
+    enabled
   }
 
   /** A description of the plugin's options */

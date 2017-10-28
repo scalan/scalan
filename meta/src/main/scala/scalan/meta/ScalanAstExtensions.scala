@@ -127,9 +127,11 @@ object ScalanAstExtensions {
     def selfTypeString(suffix: String) =
       module.selfType.opt(t => s"self: ${t.tpe}${suffix} =>")
 
-    def updateFirstEntity(updater: STraitDef => STraitDef) = {
-      val newEntity = updater(module.traits.head)
-      module.copy(traits = newEntity :: module.traits.tail)(ctx)
+    def updateFirstEntity(updater: STraitDef => STraitDef) = module.traits.headOption match {
+      case Some(e) =>
+        val newEntity = updater(module.traits.head)
+        module.copy(traits = newEntity :: module.traits.tail)(ctx)
+      case None => module
     }
 
   }

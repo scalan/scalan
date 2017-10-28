@@ -167,13 +167,13 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     it("resolve Entity by name") {
       List("Observable", "Collection", "WArray",
            "Iter", "IterBuilder", "IterOverArray", "IterOverArrayBuilder") foreach { en =>
-        en should matchPattern { case m.context.ModuleEntity(_, e) if e.name == en => }
+        en should matchPattern { case context.ModuleEntity(_, e) if e.name == en => }
       }
     }
 
     it("resolve recognize wrapper entity by name") {
-      "WArray" should matchPattern { case m.WrapperEntity(e, "Array") if e.name == "WArray" => }
-      "Collection" shouldNot matchPattern { case m.WrapperEntity(e, _) => }
+      "WArray" should matchPattern { case context.WrapperEntity(e, "Array") if e.name == "WArray" => }
+      "Collection" shouldNot matchPattern { case context.WrapperEntity(e, _) => }
     }
   }
 

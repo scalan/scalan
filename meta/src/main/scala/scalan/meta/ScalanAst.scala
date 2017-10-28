@@ -603,7 +603,8 @@ object ScalanAst {
     }
 
     def getAncestorTraits(module: SModuleDef): List[STmplDef] = {
-      ancestors.filter(a => module.isEntity(a.tpe.name)).map(a => module.getEntity(a.tpe.name))
+      ancestors.collect { case STypeApply(STraitCall(module.context.ModuleEntity(m, e),_), _) => e }
+//      ancestors.filter(a => module.isEntity(a.tpe.name)).map(a => module.getEntity(a.tpe.name))
     }
 
     def getAvailableFields(module: SModuleDef): Set[String] = {
@@ -928,6 +929,17 @@ object ScalanAst {
         findModuleEntity(name)
     }
 
+    object WrapperEntity {
+      def unapply(name: String): Option[(STmplDef, String)] = name match {
+        case ModuleEntity(_, e) =>
+          e.getAnnotation(ExternalAnnotation) match {
+            case Some(STmplAnnotation(_, List(SConst(externalName: String, _)))) => Some((e, externalName))
+            case _ => None
+          }
+        case _ => None
+      }
+    }
+
   }
 
   case class SModuleDef(packageName: String,
@@ -999,17 +1011,6 @@ object ScalanAst {
           | Entity: $entityNames
           | Concrete Classes: $concreteClassNames
       """)
-    }
-
-    object WrapperEntity {
-      def unapply(name: String): Option[(STmplDef, String)] = name match {
-        case context.ModuleEntity(_, e) =>
-          e.getAnnotation(ExternalAnnotation) match {
-            case Some(STmplAnnotation(_, List(SConst(externalName: String, _)))) => Some((e, externalName))
-            case _ => None
-          }
-        case _ => None
-      }
     }
   }
 
