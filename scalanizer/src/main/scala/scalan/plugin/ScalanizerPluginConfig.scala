@@ -3,11 +3,27 @@ package scalan.plugin
 import java.lang.annotation.Annotation
 
 import scalan.{FunctorType, ContainerType}
-import scalan.meta.MetaConfig
+import scalan.meta.UnitConfig
 import scalan.meta.ScalanAst.{WrapperConfig, NonWrapper}
 import scalan.meta.scalanizer.ScalanizerConfig
+import scala.collection.mutable.{Map => MMap}
+
+trait Conf {
+  def name: String
+}
+
+case class TargetModuleConf(
+      name: String,
+      sourceModules: MMap[String, SourceModuleConf]
+      ) extends Conf
+
+case class SourceModuleConf(
+      name: String,
+      units: MMap[String, UnitConfig]
+      ) extends Conf
 
 class ScalanizerPluginConfig extends ScalanizerConfig {
+  val targetModules: MMap[String, TargetModuleConf] = MMap[String, TargetModuleConf]()
   val targetModuleFolder = "library"
 
   /** The flag indicates that the plugin has to generate additional information and to store it
@@ -16,7 +32,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
   def withDebug(d: Boolean): ScalanizerConfig = { debug = d; this }
 
   private def unitConfigTemplate(name: String, entityFile: String) =
-    MetaConfig(
+    UnitConfig(
       name = name, srcPath = "", resourcePath = "", entityFile = entityFile,
       baseContextTrait = "scalan.Scalan", // used like this: trait ${module.name}Defs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
       extraImports = List(
@@ -47,7 +63,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     sys.error(s"Cannot fing UnitConfig for '$unitName'")
   }
 
-  val wrappersMetaConfig = MetaConfig(
+  val wrappersMetaConfig = UnitConfig(
     name = "Wrappers Config",
     srcPath = "library-api/src/main/scala",
     resourcePath = "library-api/src/main/resources",

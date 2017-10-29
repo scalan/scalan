@@ -12,7 +12,7 @@ import scalan.util.FileUtil
 import ScalanAst._
 import scala.tools.nsc.Global
 
-class Parsers(val configs: List[MetaConfig]) extends ScalanParsersEx[Global] {
+class Parsers(val configs: List[UnitConfig]) extends ScalanParsersEx[Global] {
   def getGlobal: Global = new Global(settings, reporter)
   implicit val context = new AstContext(configs, this)
   initCompiler()
@@ -23,7 +23,7 @@ class EntityManagement[+G <: Global](val parsers: ScalanParsers[G]) extends Lazy
   def configs = parsers.context.configs
   implicit def context = parsers.context
    
-  case class EntityManager(name: String, file: File, resourceFile: File, module: SUnitDef, config: MetaConfig)
+  case class EntityManager(name: String, file: File, resourceFile: File, module: SUnitDef, config: UnitConfig)
 
   protected val entities = (for(c <- configs) yield {
     val file = FileUtil.file(c.srcPath, c.entityFile)
@@ -43,7 +43,7 @@ class EntityManagement[+G <: Global](val parsers: ScalanParsers[G]) extends Lazy
     }
   }).flatten.toMap
 
-  def createFileGenerator(codegen: MetaCodegen, module: SUnitDef, config: MetaConfig) =
+  def createFileGenerator(codegen: MetaCodegen, module: SUnitDef, config: UnitConfig) =
     new ModuleFileGenerator(codegen, module, config)
 
   val enrichPipeline = new ScalanAstTransformers.EnrichPipeline()

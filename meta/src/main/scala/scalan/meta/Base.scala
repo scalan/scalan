@@ -5,7 +5,7 @@ import java.io.{FileReader, File}
 
 import scalan.util.FileUtil
 
-case class MetaConfig(name: String,
+case class UnitConfig(name: String,
                       srcPath: String, // the base path to where root package is located
                       resourcePath: String,
                       entityFile: String, // the package path and file name

@@ -780,7 +780,7 @@ object ScalanAst {
       Set("ClassTag").contains(name)
   }
 
-  class AstContext(val configs: List[MetaConfig], val parsers: ScalanParsers[Global], okLoadModules: Boolean = false) {
+  class AstContext(val configs: List[UnitConfig], val parsers: ScalanParsers[Global], okLoadModules: Boolean = false) {
 
     /** Mapping of external type names to their wrappers. */
     private val wrappers = MMap[String, WrapperDescr]()

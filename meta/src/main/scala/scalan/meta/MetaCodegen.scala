@@ -166,7 +166,7 @@ class MetaCodegen {
     }
   }
 
-  def methodExtractorsString(module: SUnitDef, config: MetaConfig, e: SEntityDef) = {
+  def methodExtractorsString(module: SUnitDef, config: UnitConfig, e: SEntityDef) = {
     implicit val ctx = module.context
     def methodExtractorsString1(e: SEntityDef, isCompanion: Boolean) = {
       val methods = e.body.collect { case m: SMethodDef => optimizeMethodImplicits(m) }
