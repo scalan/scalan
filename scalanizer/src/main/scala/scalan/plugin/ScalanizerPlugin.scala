@@ -23,8 +23,8 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
 
   /** The compiler components that will be applied when running this plugin */
   val components: List[PluginComponent] = List(
-      new Assembler(this)
-    , new WrapFrontend(this)
+//      new Assembler(this)
+     new WrapFrontend(this)
     , new WrapEnricher(this)
     , new WrapBackend(this)
     , new VirtFrontend(this)
@@ -37,6 +37,8 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
   /** The description is printed with the option: -Xplugin-list */
   val description: String = "Optimization through staging"
 
+  var sourceModuleName = ""
+
   /** Plugin-specific options without -P:scalanizer:  */
   override def init(options: List[String], error: String => Unit): Boolean = {
     var enabled = true
@@ -44,10 +46,14 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
       case "debug" => scalanizer.snConfig.withDebug(true)
       case "disabled" =>
         enabled = false
+      case o if o.startsWith("module=") =>
+        sourceModuleName = o.stripPrefix("module=")
       case option => error("Option not understood: " + option)
     }
     enabled
   }
+
+// 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90
 
   /** A description of the plugin's options */
   override val optionsHelp = Some(

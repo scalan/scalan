@@ -37,6 +37,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
         //        hotSpotFilter.hits foreach { hotSpot =>
         //          new ForeachTreeTraverser(catchWrapperUsage).traverse(hotSpot)
         //        }
+        scalanizer.inform(s"Catching wrappers in ${unit.source.file}")
         new ForeachTreeTraverser(catchWrapperUsage).traverse(unit.body)
       }
     }

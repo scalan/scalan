@@ -5,6 +5,7 @@ import java.io.File
 import scalan.util.FileUtil
 import scala.tools.nsc._
 import scalan.meta.ScalanAst._
+import scalan.meta.ScalanAstExtensions._
 import scalan.meta.{ScalanCodegen, SourceModuleConf}
 
 object WrapBackend {
@@ -41,7 +42,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
           optimizedImplicits.name,
           showCode(wrapperPackage))
         /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
-        val boilerplateText = genWrapperBoilerplateText(module)
+        val boilerplateText = genWrapperBoilerplateText(moduleConf, module)
         saveCode(moduleConf, module.packageName + ".impl", module.name + "Impl", boilerplateText)
         wrapperSlices = updateWrapperSlices(wrapperSlices, wrapperModuleWithoutImpl)
       }
@@ -52,9 +53,9 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   }
 
   /** Calls Scalan Meta to generate boilerplate code for the wrapper. */
-  def genWrapperBoilerplateText(module: SUnitDef): String = {
+  def genWrapperBoilerplateText(mc: SourceModuleConf, unit: SUnitDef): String = {
     val gen = new scalan.meta.ModuleFileGenerator(
-      ScalanCodegen, module, snConfig.wrappersMetaConfig)
+      ScalanCodegen, unit, mc.mkUnit(unit.unitName, unit.fileName))
     val implCode = gen.emitImplFile
     implCode
   }

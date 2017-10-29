@@ -121,9 +121,11 @@ object ScalanAstExtensions {
     }
   }
 
-  implicit class SModuleDefOps(module: SUnitDef) {
+  implicit class SUnitDefOps(module: SUnitDef) {
     implicit val ctx = module.context
     def fullName = s"${module.packageName}.${module.name}"
+    def fileName = s"${module.packageName.replace('.','/')}/${module.name}.scala"
+    def unitName = module.name + ".scala"
     def selfTypeString(suffix: String) =
       module.selfType.opt(t => s"self: ${t.tpe}${suffix} =>")
 

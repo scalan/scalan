@@ -13,7 +13,6 @@ class ConfMap[C <: Conf] private(val table: MMap[String, C]) extends (String => 
 
   def add(conf: C): this.type = {
     table += (conf.name -> conf)
-
     return this
   }
 
@@ -25,11 +24,10 @@ class ConfMap[C <: Conf] private(val table: MMap[String, C]) extends (String => 
 }
 
 object ConfMap {
-  def apply[C <: Conf]() = new ConfMap[C]()
+  def apply[C <: Conf](): ConfMap[C] = new ConfMap[C]()
 
-  def apply[C <: Conf](c: C, cs: C*) = {
-    val res = new ConfMap[C]()
-
+  def apply[C <: Conf](c: C, cs: C*): ConfMap[C] = {
+    val res = ConfMap[C].add(c)
     cs.foldLeft(res) { (res, c) => res.add(c) }
   }
 }
@@ -60,7 +58,7 @@ case class SourceModuleConf(
       isVirtualized = false, isStdEnabled = false
     )
 
-  private def mkUnit(unitName: String, unitFile: String) =
+  def mkUnit(unitName: String, unitFile: String) =
     unitConfigTemplate(unitName, unitFile).copy(
       srcPath = s"$name/src/main/scala",
       resourcePath = s"$name/src/main/resources"
@@ -70,7 +68,6 @@ case class SourceModuleConf(
 
   def addUnit(unitName: String, unitFile: String): this.type = {
     units.add(mkUnit(unitName, unitFile))
-
     this
   }
 }

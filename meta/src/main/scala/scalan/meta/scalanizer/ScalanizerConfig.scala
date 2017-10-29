@@ -24,9 +24,6 @@ trait ScalanizerConfig {
   def unitConfigs: List[UnitConfig]
   def getUnitConfig(unitName: String): UnitConfig
 
-  /** Config for Scalan Wrapper Codegen */
-  def wrappersMetaConfig: UnitConfig
-
   def wrapperConfigs: Map[String, WrapperConfig]
 
   def nonWrappers: Map[String, NonWrapper]

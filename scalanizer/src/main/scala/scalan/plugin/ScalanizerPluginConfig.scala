@@ -41,18 +41,6 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     sys.error(s"Cannot fing UnitConfig for '$unitName'")
   }
 
-  val wrappersMetaConfig = UnitConfig(
-    name = "Wrappers Config",
-    srcPath = "library-api/src/main/scala",
-    resourcePath = "library-api/src/main/resources",
-    entityFile = "<shouldn't be used>", // NOTE: there is no any wrapper source files
-    extraImports = List(
-      "scala.reflect.runtime.universe._",
-      "scala.reflect._"
-    ),
-    isVirtualized = false, isStdEnabled = false
-  )
-
   val wrapperConfigs: Map[String, WrapperConfig] = List(
     WrapperConfig(
       name = "Array",
