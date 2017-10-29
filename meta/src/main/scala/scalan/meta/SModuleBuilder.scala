@@ -9,7 +9,7 @@ import scalan.util.CollectionUtil._
 class SModuleBuilder(implicit val context: AstContext) {
 
   // Pipeline Step
-  def fixExistentialType(module: SModuleDef) = {
+  def fixExistentialType(module: SUnitDef) = {
     new AstTransformer {
       def containsExistential(tpe: STpeExpr): Boolean = {
         var hasExistential = false
@@ -47,14 +47,14 @@ class SModuleBuilder(implicit val context: AstContext) {
 
   /** Pipeline Step
     * Make the module inherit from Base trait from Scalan */
-  def addBaseToAncestors(module: SModuleDef) = {
+  def addBaseToAncestors(module: SUnitDef) = {
     val newAncestors = STraitCall(name = "Base", args = List()).toTypeApply :: module.ancestors
     module.copy(ancestors = newAncestors)
   }
 
   /** Pipeline Step
     * Extends the entity T by Def[T] */
-  def addEntityAncestors(module: SModuleDef) = module.updateFirstEntity { e =>
+  def addEntityAncestors(module: SUnitDef) = module.updateFirstEntity { e =>
     val newAncestors = STraitCall(
       name = "Def",
       args = List(STraitCall(e.name, e.tpeArgs.map(arg => STraitCall(arg.name, List()))))
@@ -65,7 +65,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   /** Puts the module to the cake. For example, trait Segments is transformed to
     * trait Segments {self: SegmentsDsl => ... }
     * Pipeline Step*/
-  def updateSelf(module: SModuleDef) = {
+  def updateSelf(module: SUnitDef) = {
     module.copy(selfType = Some(SSelfTypeDef(
       name = "self",
       components = selfModuleComponents(module, "Module")
@@ -87,7 +87,7 @@ class SModuleBuilder(implicit val context: AstContext) {
 
   /** Checks that the entity has a companion. If the entity doesn't have it
     * then the method adds the companion. */
-  def checkEntityCompanion(module: SModuleDef) = module.updateFirstEntity { e =>
+  def checkEntityCompanion(module: SUnitDef) = module.updateFirstEntity { e =>
     val newCompanion = e.companion match {
       case Some(comp) => Some(convertCompanion(comp))
       case None => Some(createCompanion(e.name))
@@ -96,7 +96,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   }
 
   /** Checks that concrete classes have their companions and adds them. */
-  def checkClassCompanion(module: SModuleDef) = {
+  def checkClassCompanion(module: SUnitDef) = {
     val newClasses = module.classes.map{ clazz =>
       val newCompanion = clazz.companion match {
         case Some(comp) => Some(convertCompanion(comp))
@@ -108,7 +108,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   }
 
   /** ClassTags are removed because they can be extracted from Elems. */
-  def cleanUpClassTags(module: SModuleDef) = {
+  def cleanUpClassTags(module: SUnitDef) = {
     class ClassTagTransformer extends AstTransformer {
       override def methodArgsTransform(args: SMethodArgs): SMethodArgs = {
         val newArgs = args.args.filter {marg => marg.tpe match {
@@ -142,7 +142,7 @@ class SModuleBuilder(implicit val context: AstContext) {
     new ClassTagTransformer().moduleTransform(module)
   }
 
-  def replaceClassTagByElem(module: SModuleDef) = {
+  def replaceClassTagByElem(module: SUnitDef) = {
     new AstReplacer("ClassTag", (_:String) => "Elem") {
       override def selectTransform(select: SSelect): SExpr = {
         val type2Elem = Map(
@@ -167,7 +167,7 @@ class SModuleBuilder(implicit val context: AstContext) {
     }.moduleTransform(module)
   }
 
-  def eliminateClassTagApply(module: SModuleDef) = {
+  def eliminateClassTagApply(module: SUnitDef) = {
     new AstTransformer {
       override def applyTransform(apply: SApply): SApply = apply match {
         case SApply(SSelect(SIdent("ClassTag",_), "apply",_), List(tpe), _,_) =>
@@ -181,12 +181,12 @@ class SModuleBuilder(implicit val context: AstContext) {
   }
 
   /** Adds descriptor methods (def eA, def cF, etc) to the body of the first entity. */
-  def genEntityImpicits(module: SModuleDef) = module.updateFirstEntity { e =>
+  def genEntityImpicits(module: SUnitDef) = module.updateFirstEntity { e =>
     val newBody = genDescMethodsByTypeArgs(e.tpeArgs) ++ e.body
     e.copy(body = newBody)
   }
 
-  def genClassesImplicits(module: SModuleDef) = {
+  def genClassesImplicits(module: SUnitDef) = {
     def unpackElem(classArg: SClassArg): Option[STpeExpr] = classArg.tpe match {
       case STraitCall("Elem", List(prim @ STpePrimitive(_,_))) => Some(prim)
       case _ => None
@@ -218,12 +218,12 @@ class SModuleBuilder(implicit val context: AstContext) {
     module.copy(classes = newClasses)
   }
 
-  def genMethodsImplicits(module: SModuleDef) = {
+  def genMethodsImplicits(module: SUnitDef) = {
     def genBodyItem(item: SBodyItem): SBodyItem = item match {
       case m: SMethodDef => genImplicitMethodArgs(module, m)
       case _ => item
     }
-    def genCompanion(companion: Option[STmplDef]) = companion match {
+    def genCompanion(companion: Option[SEntityDef]) = companion match {
       case Some(t : STraitDef) => Some(t.copy(body = t.body.map(genBodyItem)))
       case Some(c : SClassDef) => Some(c.copy(body = c.body.map(genBodyItem)))
       case Some(unsupported) => throw new NotImplementedError(s"genCompanion: $unsupported")
@@ -250,7 +250,7 @@ class SModuleBuilder(implicit val context: AstContext) {
     )
   }
 
-  def fixEntityCompanionName(module: SModuleDef) = {
+  def fixEntityCompanionName(module: SUnitDef) = {
     class ECompanionTransformer extends AstTransformer {
       override def applyTransform(apply: SApply): SApply = {
         apply match {
@@ -263,7 +263,7 @@ class SModuleBuilder(implicit val context: AstContext) {
     new ECompanionTransformer().moduleTransform(module)
   }
 
-  def fixEvidences(module: SModuleDef) = {
+  def fixEvidences(module: SUnitDef) = {
     new AstTransformer {
       def implicitElem(tpeSExprs: List[STpeExpr]) = {
         SExprApply(
@@ -289,7 +289,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   }
 
   /** Converts constructors (methods with name "<init>") to the apply method of companions. */
-  def filterConstructor(module: SModuleDef): SModuleDef = {
+  def filterConstructor(module: SUnitDef): SUnitDef = {
     new AstTransformer {
       override def bodyTransform(body: List[SBodyItem]): List[SBodyItem] = body.filter {
         case m: SMethodDef if m.name == "<init>" => false
@@ -298,7 +298,7 @@ class SModuleBuilder(implicit val context: AstContext) {
     }.moduleTransform(module)
   }
 
-  def constr2apply(module: SModuleDef): SModuleDef = module.updateFirstEntity { e =>
+  def constr2apply(module: SUnitDef): SUnitDef = module.updateFirstEntity { e =>
     val (constrs, entityBody) = e.body partition {
       case m: SMethodDef if m.name == "<init>" => true
       case _ => false
@@ -321,7 +321,7 @@ class SModuleBuilder(implicit val context: AstContext) {
 
   /** Discards all ancestors of the entity except TypeWrapperDef. It could be used as temporary solution
     * if inheritance of type wrappers is not supported. */
-  def filterAncestors(module: SModuleDef): SModuleDef = {
+  def filterAncestors(module: SUnitDef): SUnitDef = {
     class filterAncestorTransformer extends AstTransformer {
       override def entityAncestorsTransform(ancestors: List[STypeApply]): List[STypeApply] = {
         ancestors.filter(_.tpe.isDef)
@@ -332,7 +332,7 @@ class SModuleBuilder(implicit val context: AstContext) {
   }
 
   /** Adds a prefix for type parameters To, Elem and Cont, to eliminate name conflicts. */
-  def preventNameConflict(module: SModuleDef): SModuleDef = {
+  def preventNameConflict(module: SUnitDef): SUnitDef = {
     val pipeline = scala.Function.chain(Seq(
       new TypeNameTransformer("Elem", module.name + "Elem").moduleTransform _,
       new TypeNameTransformer("Cont", module.name + "Cont").moduleTransform _,
@@ -342,7 +342,7 @@ class SModuleBuilder(implicit val context: AstContext) {
     nonConflictModule
   }
   
-  def unrepAllTypes(module: SModuleDef): SModuleDef = {
+  def unrepAllTypes(module: SUnitDef): SUnitDef = {
     val t = new TypeTransformerInAst(new RepTypeRemover())
     t.moduleTransform(module)
   }

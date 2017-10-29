@@ -226,7 +226,7 @@ trait TypesApi { self: Scalan =>
     }
   }
 
-  class Entity private (entityDef: STmplDef, private[TypesApi] val module: SModuleDef) {
+  class Entity private (entityDef: SEntityDef, private[TypesApi] val module: SUnitDef) {
     def name = entityDef.name
     def isTrait = entityDef.isTrait
     lazy val typeArgs = entityDef.tpeArgs.map(a => new ArgElem(a))
@@ -324,7 +324,7 @@ trait TypesApi { self: Scalan =>
     override def hashCode = hashCode2(module.name, name)
   }
   object Entity {
-    private [TypesApi] def apply(e: STmplDef, m: SModuleDef) = new Entity(e, m)
+    private [TypesApi] def apply(e: SEntityDef, m: SUnitDef) = new Entity(e, m)
 
     def find(name: String): Option[Entity] = entities.get(name)
 
@@ -526,7 +526,7 @@ trait TypesApi { self: Scalan =>
 //    def unapply(t: Func): Option[(Type, Type)] = Some(t.domain, t.range)
 //  }
 
-  class Module(private[api] val module: SModuleDef) {
+  class Module(private[api] val module: SUnitDef) {
     def name = module.name
     def moduleEntitiesIter = module.allEntities.iterator.map(Entity(_, module))
   }

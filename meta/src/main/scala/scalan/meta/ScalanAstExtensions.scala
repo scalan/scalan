@@ -26,7 +26,7 @@ object ScalanAstExtensions {
   }
 
   implicit class SMethodOrClassArgOps(arg: SMethodOrClassArg) {
-    def unrepType(module: SModuleDef) =
+    def unrepType(module: SUnitDef) =
       if (module.isVirtualized) arg.tpe.unRep(module, module.isVirtualized)
       else arg.tpe
   }
@@ -43,7 +43,7 @@ object ScalanAstExtensions {
       }
     }
 
-    def argUnrepTypes(module: SModuleDef, isVirtualized: Boolean) = {
+    def argUnrepTypes(module: SUnitDef, isVirtualized: Boolean) = {
       if (isVirtualized) {
         as.args.map({ a =>
           val res = a.tpe.unRep(module, isVirtualized)
@@ -121,7 +121,7 @@ object ScalanAstExtensions {
     }
   }
 
-  implicit class SModuleDefOps(module: SModuleDef) {
+  implicit class SModuleDefOps(module: SUnitDef) {
     implicit val ctx = module.context
     def fullName = s"${module.packageName}.${module.name}"
     def selfTypeString(suffix: String) =

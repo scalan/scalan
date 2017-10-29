@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 class ScalanParsersTests extends ScalanAstTests with Examples {
 
   import compiler._
-  import scalan.meta.ScalanAst.{STraitCall => TC, SModuleDef => EMD, SClassDef => CD, STpeTuple => T, SMethodArg => MA, STraitDef => TD, SMethodDef => MD, SMethodArgs => MAs, SImportStat => IS}
+  import scalan.meta.ScalanAst.{STraitCall => TC, SUnitDef => EMD, SClassDef => CD, STpeTuple => T, SMethodArg => MA, STraitDef => TD, SMethodDef => MD, SMethodArgs => MAs, SImportStat => IS}
   import scala.{List => L}
 
   describe("STpeExpr") {
@@ -177,7 +177,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     }
   }
 
-  def testPath(module: SModuleDef, tpeString: String, name: String, expected: STpeExpr => Option[STpePath]): Unit = {
+  def testPath(module: SUnitDef, tpeString: String, name: String, expected: STpeExpr => Option[STpePath]): Unit = {
     implicit val ctx = new ParseCtx(module.isVirtualized)
     val tpe = parseType(tpeString)
 
@@ -186,7 +186,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     }
   }
 
-  def testStructPath(module: SModuleDef, tpe: STpeExpr, name: String, expected: Option[STpePath]): Unit = {
+  def testStructPath(module: SUnitDef, tpe: STpeExpr, name: String, expected: Option[STpePath]): Unit = {
     it(s"find(${tpe}, '${name}')") {
       assertResult(STpePath.find(tpe, name))(expected)
     }
@@ -234,18 +234,18 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     }
   }
 
-  def makePath(module: SModuleDef, tpeString: String, name: String): STpePath = {
+  def makePath(module: SUnitDef, tpeString: String, name: String): STpePath = {
     implicit val ctx = new ParseCtx(module.isVirtualized)
     val tpe = parseType(tpeString)
     STpePath.find(tpe, name).get
   }
-  def makePath(module: SModuleDef, tpe: STpeExpr, name: String): STpePath = {
+  def makePath(module: SUnitDef, tpe: STpeExpr, name: String): STpePath = {
     STpePath.find(tpe, name).get
   }
 
   import ScalanCodegen._
 
-  def testEmit(module: SModuleDef, inType: String, name: String, path: STpePath, expected: String): Unit = {
+  def testEmit(module: SUnitDef, inType: String, name: String, path: STpePath, expected: String): Unit = {
     val prefix = "x.elem"
     val code = emitImplicitElemDeclByTpePath(prefix, path)
     it(s"emit($inType, $name)") {
@@ -253,12 +253,12 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
     }
   }
 
-  def testEmit(module: SModuleDef, inType: String, name: String, expected: String): Unit = {
+  def testEmit(module: SUnitDef, inType: String, name: String, expected: String): Unit = {
     val path = makePath(module, inType, name)
     testEmit(module, inType, name, path, expected)
   }
 
-  def testEmit(module: SModuleDef, inType: STpeExpr, name: String, expected: String): Unit = {
+  def testEmit(module: SUnitDef, inType: STpeExpr, name: String, expected: String): Unit = {
     val path = makePath(module, inType, name)
     testEmit(module, inType.toString, name, path, expected)
   }

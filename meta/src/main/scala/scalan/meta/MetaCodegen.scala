@@ -21,7 +21,7 @@ class MetaCodegen {
     case f :: fs => s"Pair($f, ${pairify(fs)})"
   }
 
-  def zeroSExpr(entity: STmplDef)(t: STpeExpr): String = t match {
+  def zeroSExpr(entity: SEntityDef)(t: STpeExpr): String = t match {
     case STpePrimitive(_, defaultValueString) => defaultValueString
     case STraitCall(name, args) if entity.tpeArgs.exists(a => a.name == name && a.isHighKind) =>
       val arg = args(0)
@@ -68,7 +68,7 @@ class MetaCodegen {
     case _ => sys.error(s"Don't know how to construct Elem string for type $t")
   }
 
-  class EntityTypeBuilder(entity: STmplDef) {
+  class EntityTypeBuilder(entity: SEntityDef) {
     private var _args: ArrayBuffer[String] = ArrayBuffer.empty
     private var _forSomeTypes: ArrayBuffer[String] = ArrayBuffer.empty
 
@@ -143,7 +143,7 @@ class MetaCodegen {
     * @return a list, where for each type argument either Some(element extraction expression) or None is returned
     */
   def extractImplicitElems(
-                            m: SModuleDef, dataArgs: List[SMethodOrClassArg],
+                            m: SUnitDef, dataArgs: List[SMethodOrClassArg],
                             tpeArgs: List[STpeArg],
                             argSubst: Map[String, String] = Map()): List[(STpeArg, Option[String])] = {
     def subst(arg: String) = argSubst.getOrElse(arg, arg)
@@ -166,9 +166,9 @@ class MetaCodegen {
     }
   }
 
-  def methodExtractorsString(module: SModuleDef, config: MetaConfig, e: STmplDef) = {
+  def methodExtractorsString(module: SUnitDef, config: MetaConfig, e: SEntityDef) = {
     implicit val ctx = module.context
-    def methodExtractorsString1(e: STmplDef, isCompanion: Boolean) = {
+    def methodExtractorsString1(e: SEntityDef, isCompanion: Boolean) = {
       val methods = e.body.collect { case m: SMethodDef => optimizeMethodImplicits(m) }
       val overloadIdsByName = collection.mutable.Map.empty[String, Set[Option[String]]].withDefaultValue(Set())
       methods.foreach { m =>
@@ -315,7 +315,7 @@ class MetaCodegen {
   }
 
   // methods to extract elements from data arguments
-  class ElemExtractionBuilder(module: SModuleDef, entity: STmplDef, argSubst: Map[String, String]) {
+  class ElemExtractionBuilder(module: SUnitDef, entity: SEntityDef, argSubst: Map[String, String]) {
     val extractionExprs: List[Option[String]] =
        extractImplicitElems(module, entity.args.args, entity.tpeArgs, argSubst).map(_._2)
     val tyArgSubst = classArgsAsSeenFromAncestors(module, entity).map { case (_, (e,a)) => a }
@@ -341,7 +341,7 @@ class MetaCodegen {
     }
   }
 
-  abstract class TemplateData(val module: SModuleDef, val entity: STmplDef) {
+  abstract class TemplateData(val module: SUnitDef, val entity: SEntityDef) {
     implicit val context = module.context
     val name = entity.name
     val tpeArgs = entity.tpeArgs
@@ -400,7 +400,7 @@ class MetaCodegen {
       new ElemExtractionBuilder(module, entity, argSubst)
   }
 
-  case class EntityTemplateData(m: SModuleDef, t: STmplDef) extends TemplateData(m, t) {
+  case class EntityTemplateData(m: SUnitDef, t: SEntityDef) extends TemplateData(m, t) {
     def elemTypeUse(toType: String = typeUse) = s"${name}Elem[${join(tpeArgNames, toType)}]"
     val typesWithElems = boundedTpeArgString(false)
     def optimizeImplicits(): EntityTemplateData = t match {
@@ -411,7 +411,7 @@ class MetaCodegen {
     }
   }
 
-  case class ConcreteClassTemplateData(m: SModuleDef, c: SClassDef) extends TemplateData(m, c) {
+  case class ConcreteClassTemplateData(m: SUnitDef, c: SClassDef) extends TemplateData(m, c) {
     val elemTypeUse = name + "Elem" + tpeArgsUse
     def optimizeImplicits(): ConcreteClassTemplateData = {
       this.copy(c = optimizeClassImplicits(c))

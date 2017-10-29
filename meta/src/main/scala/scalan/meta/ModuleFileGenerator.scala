@@ -9,7 +9,7 @@ import scalan.meta.ScalanAstExtensions._
 import scalan.util.{StringUtil, ScalaNameUtil}
 import scalan.util.CollectionUtil._
 
-class ModuleFileGenerator(val codegen: MetaCodegen, module: SModuleDef, config: MetaConfig) {
+class ModuleFileGenerator(val codegen: MetaCodegen, module: SUnitDef, config: MetaConfig) {
   import codegen._
   implicit val context = module.context
 

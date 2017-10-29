@@ -128,7 +128,7 @@ object ScalanAst {
       case _ => self
     }
 
-    def unRep(module: SModuleDef, isVirtualized: Boolean): Option[STpeExpr] = self match {
+    def unRep(module: SUnitDef, isVirtualized: Boolean): Option[STpeExpr] = self match {
       case t if !isVirtualized => Some(t)
       case STraitCall("Elem", Seq(t)) =>  // Elem[t] --> tpe
         Some(self)
@@ -136,7 +136,7 @@ object ScalanAst {
       case _ => None
     }
 
-    def isRep(module: SModuleDef, isVirtualized: Boolean) = unRep(module, isVirtualized) match {
+    def isRep(module: SUnitDef, isVirtualized: Boolean) = unRep(module, isVirtualized) match {
       case Some(_) => true
       case None => false
     }
@@ -203,10 +203,10 @@ object ScalanAst {
 
   case class SStructPath(base: STpeExpr, fieldName: String, tail: STpePath) extends SBasedPath
 
-  case class SEntityPath(base: STpeExpr, entity: STmplDef, tyArg: STpeArg, tail: STpePath) extends SBasedPath
+  case class SEntityPath(base: STpeExpr, entity: SEntityDef, tyArg: STpeArg, tail: STpePath) extends SBasedPath
 
   object STpePath {
-    def findInEntity(e: STmplDef, tc: STraitCall, argName: String)
+    def findInEntity(e: SEntityDef, tc: STraitCall, argName: String)
                     (implicit context: AstContext): Option[STpePath] = {
       val args = tc.args
       for (i <- args.indices) {
@@ -544,12 +544,12 @@ object ScalanAst {
     def tpe = components.mkString(" with ")
   }
 
-  type Module = SModuleDef
+  type Module = SUnitDef
 
   /** Correspond to TmplDef syntax construct of Scala.
     * (See http://scala-lang.org/files/archive/spec/2.12/05-classes-and-objects.html)
     */
-  abstract class STmplDef extends SBodyItem {
+  abstract class SEntityDef extends SBodyItem {
     def name: String
 
     def tpeArgs: List[STpeArg]
@@ -560,7 +560,7 @@ object ScalanAst {
 
     def selfType: Option[SSelfTypeDef]
 
-    def companion: Option[STmplDef]
+    def companion: Option[SEntityDef]
 
     def isTrait: Boolean
 
@@ -586,11 +586,11 @@ object ScalanAst {
 
     def isHighKind = tpeArgs.exists(_.isHighKind)
 
-    def isInheritedDeclared(propName: String, module: SModuleDef) = {
+    def isInheritedDeclared(propName: String, module: SUnitDef) = {
       getInheritedDeclaredFields(module).contains(propName)
     }
 
-    def isInheritedDefined(propName: String, module: SModuleDef) = {
+    def isInheritedDefined(propName: String, module: SUnitDef) = {
       getInheritedDefinedFields(module).contains(propName)
     }
 
@@ -602,32 +602,32 @@ object ScalanAst {
       case md: SMethodDef if md.allArgs.isEmpty => md
     }
 
-    def getAncestorTraits(module: SModuleDef): List[STmplDef] = {
+    def getAncestorTraits(module: SUnitDef): List[SEntityDef] = {
       ancestors.collect { case STypeApply(STraitCall(module.context.ModuleEntity(m, e),_), _) => e }
 //      ancestors.filter(a => module.isEntity(a.tpe.name)).map(a => module.getEntity(a.tpe.name))
     }
 
-    def getAvailableFields(module: SModuleDef): Set[String] = {
+    def getAvailableFields(module: SUnitDef): Set[String] = {
       getFieldDefs.map(_.name).toSet ++ getAncestorTraits(module).flatMap(_.getAvailableFields(module))
     }
 
-    def getAvailableMethodDefs(module: SModuleDef): Seq[SMethodDef] = {
+    def getAvailableMethodDefs(module: SUnitDef): Seq[SMethodDef] = {
       getFieldDefs ++ getAncestorTraits(module).flatMap(_.getAvailableMethodDefs(module))
     }
 
-    def getInheritedMethodDefs(module: SModuleDef): Seq[SMethodDef] = {
+    def getInheritedMethodDefs(module: SUnitDef): Seq[SMethodDef] = {
       getAncestorTraits(module).flatMap(_.getAvailableMethodDefs(module))
     }
 
-    def getInheritedDeclaredFields(module: SModuleDef): Set[String] = {
+    def getInheritedDeclaredFields(module: SUnitDef): Set[String] = {
       getInheritedMethodDefs(module).collect { case md if md.body.isEmpty => md.name }.toSet
     }
 
-    def getInheritedDefinedFields(module: SModuleDef): Set[String] = {
+    def getInheritedDefinedFields(module: SUnitDef): Set[String] = {
       getInheritedMethodDefs(module).collect { case md if md.body.isDefined => md.name }.toSet
     }
 
-    def getDeclaredElems(module: SModuleDef): List[(String, STpeExpr)] = {
+    def getDeclaredElems(module: SUnitDef): List[(String, STpeExpr)] = {
       val res = (this :: getAncestorTraits(module))
         .flatMap(e => {
           val elems = e.body.collect {
@@ -643,7 +643,7 @@ object ScalanAst {
 
     def hasAnnotation(annotName: String) = getAnnotation(annotName).isDefined
 
-    def clean: STmplDef
+    def clean: SEntityDef
   }
 
   case class STraitDef(
@@ -652,8 +652,8 @@ object ScalanAst {
                         ancestors: List[STypeApply],
                         body: List[SBodyItem],
                         selfType: Option[SSelfTypeDef],
-                        companion: Option[STmplDef],
-                        annotations: List[STmplAnnotation] = Nil) extends STmplDef {
+                        companion: Option[SEntityDef],
+                        annotations: List[STmplAnnotation] = Nil) extends SEntityDef {
     def isTrait = true
 
     val args = SClassArgs(Nil)
@@ -691,7 +691,7 @@ object ScalanAst {
     }
   }
 
-  implicit class STmplDefOps(td: STmplDef) {
+  implicit class STmplDefOps(td: SEntityDef) {
   }
 
   case class SClassDef(
@@ -702,9 +702,9 @@ object ScalanAst {
                         ancestors: List[STypeApply],
                         body: List[SBodyItem],
                         selfType: Option[SSelfTypeDef],
-                        companion: Option[STmplDef],
+                        companion: Option[SEntityDef],
                         isAbstract: Boolean,
-                        annotations: List[STmplAnnotation] = Nil) extends STmplDef {
+                        annotations: List[STmplAnnotation] = Nil) extends SEntityDef {
     def isTrait = false
 
     def clean = {
@@ -719,7 +719,7 @@ object ScalanAst {
   case class SObjectDef(
                          name: String,
                          ancestors: List[STypeApply],
-                         body: List[SBodyItem]) extends STmplDef {
+                         body: List[SBodyItem]) extends SEntityDef {
     val args = SClassArgs(Nil)
 
     def tpeArgs = Nil
@@ -757,7 +757,7 @@ object ScalanAst {
       }
   }
 
-  type Entity = STmplDef
+  type Entity = SEntityDef
 
   /** Gets module name by its entity. TODO: Should be a general solution. */
   def mod(name: String) = name + "s"
@@ -790,7 +790,7 @@ object ScalanAst {
 
     /** Mapping of <packageName>.<moduleName> to definition.
       * Initial set of modules in loaded from configs and later new modules can be added. */
-    private[scalan] val modules = MMap[String, SModuleDef]()
+    private[scalan] val modules = MMap[String, SUnitDef]()
 
     def loadModulesFromResources(): Unit = {
       for (c <- configs) {
@@ -856,14 +856,14 @@ object ScalanAst {
       modules.valuesIterator.map(_.name).toSet.contains(name)
     }
 
-    def allModules: Iterator[SModuleDef] = wrappers.valuesIterator.map(_.module) ++ modules.valuesIterator
+    def allModules: Iterator[SUnitDef] = wrappers.valuesIterator.map(_.module) ++ modules.valuesIterator
 
     //TODO refactor to use Name for more precise ModuleEntity search
     def findModuleEntity(entityName: String): Option[(Module, Entity)] = {
-      def isEqualName(m: SModuleDef, shortName: String, fullName: String): Boolean =
+      def isEqualName(m: SUnitDef, shortName: String, fullName: String): Boolean =
         fullName == shortName || fullName == s"${m.packageName}.$entityName.$shortName"
 
-      def findByName(m: SModuleDef, es: List[STmplDef]) =
+      def findByName(m: SUnitDef, es: List[SEntityDef]) =
         es.find(e => isEqualName(m, e.name, entityName))
 
       val res = allModules collectFirst scala.Function.unlift { m =>
@@ -888,14 +888,14 @@ object ScalanAst {
       modules.contains(key)
     }
 
-    def getModule(packageName: String, moduleName: String): SModuleDef = {
+    def getModule(packageName: String, moduleName: String): SUnitDef = {
       val key = Name.fullNameString(packageName, moduleName)
       modules(key)
     }
 
 
 
-    def addModule(module: SModuleDef) = {
+    def addModule(module: SUnitDef) = {
       val key = module.getModuleKey
       modules(key) = module
     }
@@ -930,7 +930,7 @@ object ScalanAst {
     }
 
     object WrapperEntity {
-      def unapply(name: String): Option[(STmplDef, String)] = name match {
+      def unapply(name: String): Option[(SEntityDef, String)] = name match {
         case ModuleEntity(_, e) =>
           e.getAnnotation(ExternalAnnotation) match {
             case Some(STmplAnnotation(_, List(SConst(externalName: String, _)))) => Some((e, externalName))
@@ -942,24 +942,24 @@ object ScalanAst {
 
   }
 
-  case class SModuleDef(packageName: String,
-                        imports: List[SImportStat],
-                        name: String,
-                        typeDefs: List[STpeDef],
-                        traits: List[STraitDef],
-                        classes: List[SClassDef],
-                        methods: List[SMethodDef],
-                        selfType: Option[SSelfTypeDef],
-                        ancestors: List[STypeApply],
-                        origModuleTrait: Option[STraitDef], // original module trait declared
-                        isVirtualized: Boolean,
-                        okEmitOrigModuleTrait: Boolean = true)
-                       (@transient implicit val context: AstContext) {
+  case class SUnitDef(packageName: String,
+                      imports: List[SImportStat],
+                      name: String,
+                      typeDefs: List[STpeDef],
+                      traits: List[STraitDef],
+                      classes: List[SClassDef],
+                      methods: List[SMethodDef],
+                      selfType: Option[SSelfTypeDef],
+                      ancestors: List[STypeApply],
+                      origModuleTrait: Option[STraitDef], // original module trait declared
+                      isVirtualized: Boolean,
+                      okEmitOrigModuleTrait: Boolean = true)
+                     (@transient implicit val context: AstContext) {
     //TODO unify Module names
     def getModuleKey: String = Name.fullNameString(packageName, name)
-    def getModuleTraitName: String = SModuleDef.moduleTraitName(name)
+    def getModuleTraitName: String = SUnitDef.moduleTraitName(name)
 
-    def getEntity(name: String): STmplDef = {
+    def getEntity(name: String): SEntityDef = {
       findEntity(name).getOrElse {
         sys.error(s"Cannot find entity with name $name: available entities ${traits.map(_.name)}")
       }
@@ -983,7 +983,7 @@ object ScalanAst {
       }
     }
 
-    def dependencies: Seq[SModuleDef] = {
+    def dependencies: Seq[SUnitDef] = {
       Seq() // TODO collect dependencies for the module
     }
 
@@ -1001,7 +1001,7 @@ object ScalanAst {
       )
     }
 
-    def printAst(ast: SModuleDef): Unit = {
+    def printAst(ast: SUnitDef): Unit = {
       val entityNames = ast.traits.map(_.name).mkString(",")
       val concreteClassNames = ast.classes.map(_.name).mkString(",")
       print(
@@ -1014,7 +1014,7 @@ object ScalanAst {
     }
   }
 
-  object SModuleDef {
+  object SUnitDef {
     /** Module trait name related to main trait */
     def moduleTraitName(mainTraitName: String) = mainTraitName + "Module"
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
@@ -1023,7 +1023,7 @@ object ScalanAst {
   /** Helper class to represent an entity in a module.
     * STmplDef cannot have direct reference to module due to immutability of ScalanAst.
     * This class implements equality and can be used as a key in a Map and as element of Set. */
-  class ModuleEntity(val module: SModuleDef, val entity: STmplDef) {
+  class ModuleEntity(val module: SUnitDef, val entity: SEntityDef) {
     override def equals(other: Any) = (this eq other.asInstanceOf[AnyRef]) || (other match {
       case other: ModuleEntity =>
          module.packageName == other.module.packageName  &&
@@ -1034,7 +1034,7 @@ object ScalanAst {
     override def hashCode = Objects.hash(module.packageName, module.name, entity.name)
   }
   object ModuleEntity {
-    def apply(m: Module, e: STmplDef) = new ModuleEntity(m, e)
+    def apply(m: Module, e: SEntityDef) = new ModuleEntity(m, e)
     def unapply(me: ModuleEntity) = Some((me.module, me.entity))
   }
 
@@ -1062,7 +1062,7 @@ object ScalanAst {
     def default(name: String) = WrapperConfig(name)
   }
 
-  case class WrapperDescr(module: SModuleDef, ownerChain: List[String], config: WrapperConfig)
+  case class WrapperDescr(module: SUnitDef, ownerChain: List[String], config: WrapperConfig)
 
   case class KernelType(name: String, confKey: String)
 
@@ -1106,7 +1106,7 @@ object ScalanAst {
 
   def optimizeObjectImplicits(objDef: SObjectDef): SObjectDef = objDef
 
-  def optimizeComponentImplicits(t: STmplDef)(implicit context: AstContext): STmplDef = t match {
+  def optimizeComponentImplicits(t: SEntityDef)(implicit context: AstContext): SEntityDef = t match {
     case c: SClassDef => optimizeClassImplicits(c)
     case o: SObjectDef => optimizeObjectImplicits(o)
     case t: STraitDef => optimizeTraitImplicits(t)
@@ -1132,7 +1132,7 @@ object ScalanAst {
     }
   }
 
-  def optimizeModuleImplicits(module: SModuleDef): SModuleDef = {
+  def optimizeModuleImplicits(module: SUnitDef): SUnitDef = {
     implicit val ctx = module.context
     val newEntities = module.traits.map(e => optimizeTraitImplicits(e))
     val newClasses = module.classes.map(c => optimizeClassImplicits(c))

@@ -75,7 +75,7 @@ trait ScalanParsers[+G <: Global] {
     compiler.newUnitParser(new compiler.CompilationUnit(source)).parse()
   }
 
-  def moduleDefFromTree(file: String, tree: Tree)(implicit ctx: ParseCtx): SModuleDef = tree match {
+  def moduleDefFromTree(file: String, tree: Tree)(implicit ctx: ParseCtx): SUnitDef = tree match {
     case pd: PackageDef =>
       val unitName = scala.reflect.io.File(file).stripExtension
       moduleDefFromPackageDef(unitName, pd)
@@ -83,7 +83,7 @@ trait ScalanParsers[+G <: Global] {
       throw new Exception(s"Unexpected tree in $file:\n\n$tree")
   }
 
-  def loadModuleDefFromResource(fileName: String): SModuleDef = {
+  def loadModuleDefFromResource(fileName: String): SUnitDef = {
     val sourceCode = FileUtil.readAndCloseStream(this.getClass.getClassLoader.getResourceAsStream(fileName))
     val sourceFile = new BatchSourceFile(fileName, sourceCode)
     val tree = parseFile(sourceFile)
@@ -91,7 +91,7 @@ trait ScalanParsers[+G <: Global] {
     module
   }
 
-  def parseDeclaredImplementations(entities: List[STmplDef], moduleDefOpt: Option[ClassDef])(implicit ctx: ParseCtx) = {
+  def parseDeclaredImplementations(entities: List[SEntityDef], moduleDefOpt: Option[ClassDef])(implicit ctx: ParseCtx) = {
     val decls = for {
       dslModule <- moduleDefOpt.toList
       t <- entities
@@ -119,7 +119,7 @@ trait ScalanParsers[+G <: Global] {
     hasClass && hasModule && hasMethod
   }
 
-  def isInternalClassOfCompanion(cd: STmplDef, outerScope: List[SBodyItem]): Boolean = {
+  def isInternalClassOfCompanion(cd: SEntityDef, outerScope: List[SBodyItem]): Boolean = {
     val moduleVarName = cd.name + global.nme.MODULE_VAR_SUFFIX.toString
     if (cd.ancestors.nonEmpty) return false
     val hasClass = outerScope.collectFirst({ case d: SClassDef if d.name == cd.name => ()}).isDefined
@@ -139,7 +139,7 @@ trait ScalanParsers[+G <: Global] {
     def collectMethods = defs.collect { case md: SMethodDef if !isInternalMethodOfCompanion(md, defs) => md }
   }
 
-  def moduleDefFromPackageDef(moduleName: String, packageDef: PackageDef)(implicit ctx: ParseCtx): SModuleDef = {
+  def moduleDefFromPackageDef(moduleName: String, packageDef: PackageDef)(implicit ctx: ParseCtx): SUnitDef = {
     if (ctx.isVirtualized) moduleDefFromVirtPackageDef(packageDef)
     else {
       val packageName = packageDef.pid.toString
@@ -151,7 +151,7 @@ trait ScalanParsers[+G <: Global] {
       val traits = defs.collectTraits
       val classes = defs.collectClasses
       val methods = defs.collectMethods
-      SModuleDef(packageName, imports, moduleName,
+      SUnitDef(packageName, imports, moduleName,
         typeDefs,
         traits, classes, methods,
         None, Nil,
@@ -159,7 +159,7 @@ trait ScalanParsers[+G <: Global] {
     }
   }
 
-  def moduleDefFromVirtPackageDef(packageDef: PackageDef)(implicit ctx: ParseCtx): SModuleDef = {
+  def moduleDefFromVirtPackageDef(packageDef: PackageDef)(implicit ctx: ParseCtx): SUnitDef = {
     val packageName = packageDef.pid.toString
     val statements = packageDef.stats
     val imports = statements.collect { case i: Import => importStat(i) }
@@ -179,7 +179,7 @@ trait ScalanParsers[+G <: Global] {
     val classes = mainTrait.body.collectClasses
     val methods = defs.collectMethods
 
-    SModuleDef(packageName, imports, moduleName,
+    SUnitDef(packageName, imports, moduleName,
       typeDefs,
       traits, classes, methods,
       mainTrait.selfType, mainTrait.ancestors,

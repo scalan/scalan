@@ -1,6 +1,6 @@
 package scalan
 
-import scalan.meta.ScalanAst.{SModuleDef, STmplDef}
+import scalan.meta.ScalanAst.{SUnitDef, SEntityDef}
 import scala.collection.mutable
 import scala.reflect.internal.util.BatchSourceFile
 import scalan.meta.{Parsers, BoilerplateToolRun, Name}
@@ -15,7 +15,7 @@ trait Modules extends Base { self: Scalan =>
 
   private[this] lazy val modules = parsers.context.modules
 
-  def getModules: mutable.Map[String, SModuleDef] = modules
+  def getModules: mutable.Map[String, SUnitDef] = modules
 
   def allEntities = getModules.values.flatMap(_.allEntities)
 
@@ -29,7 +29,7 @@ trait Modules extends Base { self: Scalan =>
     }
   }
 
-  def entityDef(e: EntityElem[_]): STmplDef = {
+  def entityDef(e: EntityElem[_]): SEntityDef = {
     val elemClassSymbol = ReflectionUtil.classToSymbol(e.getClass)
     val moduleName = elemClassSymbol.owner.name.toString.stripSuffix("Defs")
     val packageName = e.getClass.getPackage.getName.stripSuffix(".impl")

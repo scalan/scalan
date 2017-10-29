@@ -63,7 +63,7 @@ class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComp
     * The external type Array is replaced by its wrapper WArray
     * trait Col[A] { def arr: WArray[A]; }
     * */
-  def replaceExternalTypeByWrapper(module: SModuleDef)(implicit ctx: AstContext): SModuleDef = {
+  def replaceExternalTypeByWrapper(module: SUnitDef)(implicit ctx: AstContext): SUnitDef = {
     class TypeInWrappersTransformer(name: String) extends External2WrapperTypeTransformer(name) {
       override def classArgTransform(classArg: SClassArg) = classArg
       override def entityAncestorTransform(ancestor: STypeApply): STypeApply = {

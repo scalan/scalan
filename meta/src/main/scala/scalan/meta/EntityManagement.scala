@@ -23,7 +23,7 @@ class EntityManagement[+G <: Global](val parsers: ScalanParsers[G]) extends Lazy
   def configs = parsers.context.configs
   implicit def context = parsers.context
    
-  case class EntityManager(name: String, file: File, resourceFile: File, module: SModuleDef, config: MetaConfig)
+  case class EntityManager(name: String, file: File, resourceFile: File, module: SUnitDef, config: MetaConfig)
 
   protected val entities = (for(c <- configs) yield {
     val file = FileUtil.file(c.srcPath, c.entityFile)
@@ -43,7 +43,7 @@ class EntityManagement[+G <: Global](val parsers: ScalanParsers[G]) extends Lazy
     }
   }).flatten.toMap
 
-  def createFileGenerator(codegen: MetaCodegen, module: SModuleDef, config: MetaConfig) =
+  def createFileGenerator(codegen: MetaCodegen, module: SUnitDef, config: MetaConfig) =
     new ModuleFileGenerator(codegen, module, config)
 
   val enrichPipeline = new ScalanAstTransformers.EnrichPipeline()

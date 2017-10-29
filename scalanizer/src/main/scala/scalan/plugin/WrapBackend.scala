@@ -53,7 +53,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   }
 
   /** Calls Scalan Meta to generate boilerplate code for the wrapper. */
-  def genWrapperBoilerplateText(module: SModuleDef): String = {
+  def genWrapperBoilerplateText(module: SUnitDef): String = {
     val gen = new scalan.meta.ModuleFileGenerator(
       ScalanCodegen, module, snConfig.wrappersMetaConfig)
     val implCode = gen.emitImplFile
@@ -61,7 +61,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
   }
 
   /** Generates Scala AST for the given wrapper (without implementation). */
-  def genWrapperPackage(module: SModuleDef): Tree = {
+  def genWrapperPackage(module: SUnitDef): Tree = {
     implicit val genCtx = GenCtx(module = module, toRep = true)
     val scalaAst = genModuleTrait(module)
     val imports = module.imports.map(genImport(_))
@@ -82,7 +82,7 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
     WrapperSlices(wmodule)
   }
 
-  def updateWrapperSlices(slices: WrapperSlices, module: SModuleDef): WrapperSlices = {
+  def updateWrapperSlices(slices: WrapperSlices, module: SUnitDef): WrapperSlices = {
     val absAncestors = slices.abs.ancestors :+ STraitCall(module.name + "Module", Nil).toTypeApply
     WrapperSlices(
       abs = slices.abs.copy(ancestors = absAncestors)

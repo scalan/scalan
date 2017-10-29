@@ -26,7 +26,7 @@ object ScalanAstUtils {
     }
   }
 
-  def selfModuleComponents(module: SModuleDef, suffix: String): List[STpeExpr] = {
+  def selfModuleComponents(module: SUnitDef, suffix: String): List[STpeExpr] = {
     selfComponentsWithSuffix(module.name, module.selfType, suffix)
   }
 
@@ -44,7 +44,7 @@ object ScalanAstUtils {
     * Checks if companion is represented by SObjectDef (e.g. parsed from object)
     * and converts into the companion trait (STraitDef).
     */
-  def convertCompanion(comp: STmplDef): STmplDef = comp match {
+  def convertCompanion(comp: SEntityDef): SEntityDef = comp match {
     case obj: SObjectDef =>
       STraitDef(name = obj.name + "Companion",
         tpeArgs = obj.tpeArgs, ancestors = obj.ancestors, body = obj.body, selfType = obj.selfType,
@@ -100,7 +100,7 @@ object ScalanAstUtils {
     * trait <e.name>[<e.tpeArgs>] { }
     * <clazz> == class <clazz>[<clsTpeArg>..] extends <ancName>[<ancArgs>]
     */
-  def argsSubstOfAncestorEntities(module: SModuleDef, clazz: STmplDef): List[((STmplDef, STpeArg), STpeExpr)] = {
+  def argsSubstOfAncestorEntities(module: SUnitDef, clazz: SEntityDef): List[((SEntityDef, STpeArg), STpeExpr)] = {
     val res = clazz.ancestors.flatMap { anc =>
       val ancName = anc.tpe.name
       val ancestorEnt_? = module.context.findModuleEntity(ancName).map(_._2)
@@ -109,7 +109,7 @@ object ScalanAstUtils {
           val ancArgs = anc.tpe.args
           e.zipWithExpandedBy(_.tpeArgs) zip ancArgs
         case None =>
-          List[((STmplDef, STpeArg), STpeExpr)]()
+          List[((SEntityDef, STpeArg), STpeExpr)]()
       }
     }
     res
@@ -118,8 +118,8 @@ object ScalanAstUtils {
   /** Checks for each type argument if it is used as argument of ancestor entity.
     * For each name of type argument returns a pair (e, tyArg)
     */
-  def classArgsAsSeenFromAncestors(module: SModuleDef, clazz: STmplDef) = {
-    val subst: List[((STmplDef, STpeArg), STpeExpr)] = argsSubstOfAncestorEntities(module, clazz)
+  def classArgsAsSeenFromAncestors(module: SUnitDef, clazz: SEntityDef) = {
+    val subst: List[((SEntityDef, STpeArg), STpeExpr)] = argsSubstOfAncestorEntities(module, clazz)
     val res = clazz.tpeArgs.map { clsTpeArg =>
 //      val argTpe = STraitCall(clsTpeArg.name) // don't use toTraitCall here
 //      val substOpt = subst.find { case ((e, eTpeArg), ancArg) => argTpe == ancArg }
@@ -137,7 +137,7 @@ object ScalanAstUtils {
     * trait <e.name>[<e.tpeArgs>] { }
     * <clazz> == class <clazz>[<clsTpeArg>..] extends <ancName>[<ancArgs>]
     */
-  def genImplicitArgsForClass(module: SModuleDef, clazz: STmplDef): List[SClassArg] = {
+  def genImplicitArgsForClass(module: SUnitDef, clazz: SEntityDef): List[SClassArg] = {
     val argSubst = classArgsAsSeenFromAncestors(module, clazz)
     val implicitArgs = argSubst.map { case (clsTpeArg, (e, eTpeArg)) =>
       genImplicitClassArg(eTpeArg.isHighKind, eTpeArg.name, STraitCall(clsTpeArg.name))
@@ -176,7 +176,7 @@ object ScalanAstUtils {
 
   /** Takes type arguments of the method and either add new section with implicits descriptor vals
     * or add them to existing implicit section */
-  def genImplicitMethodArgs(module: SModuleDef, method: SMethodDef): SMethodDef = {
+  def genImplicitMethodArgs(module: SUnitDef, method: SMethodDef): SMethodDef = {
     val newSections = genImplicitVals(method.tpeArgs) match {
       case Nil => method.argSections
       case as => method.argSections ++ List(SMethodArgs(as))

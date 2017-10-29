@@ -26,11 +26,11 @@ trait Enricher[+G <: Global] extends ScalanizerBase[G] {
     FileUtil.write(implFile, implCode)
   }
 
-  class ModuleVirtualizationPipeline(implicit val context: AstContext) extends (SModuleDef => SModuleDef) {
+  class ModuleVirtualizationPipeline(implicit val context: AstContext) extends (SUnitDef => SUnitDef) {
     val moduleBuilder = new SModuleBuilder()
     import moduleBuilder._
 
-    def externalTypeToWrapper(module: SModuleDef) = {
+    def externalTypeToWrapper(module: SUnitDef) = {
       val wrappedModule = snState.externalTypes.foldLeft(module){(acc, externalTypeName) =>
         new External2WrapperTypeTransformer(externalTypeName).moduleTransform(acc)
       }
@@ -46,7 +46,7 @@ trait Enricher[+G <: Global] extends ScalanizerBase[G] {
 //    }
 
     /** Imports scalan._ and other packages needed by Scalan and further transformations. */
-    def addImports(module: SModuleDef) = {
+    def addImports(module: SUnitDef) = {
       val usersImport = module.imports.collect{
         case imp @ SImportStat("scalan.compilation.KernelTypes._") => imp
       }
@@ -54,11 +54,11 @@ trait Enricher[+G <: Global] extends ScalanizerBase[G] {
     }
 
 
-    def addModuleTrait(module: SModuleDef) = {
+    def addModuleTrait(module: SUnitDef) = {
       if (module.origModuleTrait.isEmpty) {
         val mainName = module.name
         val mt = STraitDef(
-          name = SModuleDef.moduleTraitName(mainName),
+          name = SUnitDef.moduleTraitName(mainName),
           tpeArgs = Nil,
           ancestors = List(STraitCall(s"impl.${mainName}Defs"), STraitCall("scala.wrappers.WrappersModule")).map(STypeApply(_)),
           body = Nil, selfType = None, companion = None)

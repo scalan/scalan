@@ -8,14 +8,14 @@ class TransformerTests extends ScalanAstTests with Examples {
   context.addModule(cols)
   val trans = new TypeTransformerInAst(new RepTypeRemover())
 
-  def getMethod(module: SModuleDef, entityName: String, name: String) = {
+  def getMethod(module: SUnitDef, entityName: String, name: String) = {
     val res = for {
       e <- module.findEntity(entityName)
       m <- e.findMethod(name)
     } yield m
     res.get
   }
-  def getVal(module: SModuleDef, entityName: String, name: String) = {
+  def getVal(module: SUnitDef, entityName: String, name: String) = {
     val res = for {
       e <- module.findEntity(entityName)
       m <- e.findVal(name)
@@ -24,7 +24,7 @@ class TransformerTests extends ScalanAstTests with Examples {
   }
 
   describe("Rep removing") {
-    def test(m: SModuleDef, typeIn: SModuleDef => STpeExpr): Unit = {
+    def test(m: SUnitDef, typeIn: SUnitDef => STpeExpr): Unit = {
       val before = typeIn(m)
       val newCols = trans.moduleTransform(m)
       val after = typeIn(newCols)

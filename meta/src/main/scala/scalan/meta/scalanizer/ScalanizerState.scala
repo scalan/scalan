@@ -1,7 +1,7 @@
 package scalan.meta.scalanizer
 
 import scala.tools.nsc.Global
-import scalan.meta.ScalanAst.{SValDef, STpeExpr, STpeFunc, STpeEmpty, SModuleDef, STpeTuple, KernelType, SFunc, WrapperDescr}
+import scalan.meta.ScalanAst.{SValDef, STpeExpr, STpeFunc, STpeEmpty, SUnitDef, STpeTuple, KernelType, SFunc, WrapperDescr}
 
 /** The object contains the current state and temporary data of the Scalanizer. */
 trait ScalanizerState[+G <: Global] {
@@ -26,11 +26,11 @@ trait ScalanizerState[+G <: Global] {
     scalanizer.context.transformWrappers(transformer)
   }
 
-  def getModule(packageName: String, moduleName: String): SModuleDef = {
+  def getModule(packageName: String, moduleName: String): SUnitDef = {
     scalanizer.context.getModule(packageName, moduleName)
   }
 
-  def addModule(module: SModuleDef) = {
+  def addModule(module: SUnitDef) = {
     scalanizer.context.addModule(module)
   }
 }

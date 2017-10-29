@@ -109,7 +109,7 @@ object ScalanAstTransformers {
       obj.copy(body = newBody)
     }
 
-    def entityCompTransform(companion: Option[STmplDef]): Option[STmplDef] = {
+    def entityCompTransform(companion: Option[SEntityDef]): Option[SEntityDef] = {
       companion match {
         case Some(tr: STraitDef) => Some(traitCompTransform(tr))
         case Some(clazz: SClassDef) => Some(classCompTransform(clazz))
@@ -143,7 +143,7 @@ object ScalanAstTransformers {
       )
     }
 
-    def classCompanionTransform(companion: Option[STmplDef]): Option[STmplDef] = {
+    def classCompanionTransform(companion: Option[SEntityDef]): Option[SEntityDef] = {
       companion.map {
         case obj: SObjectDef => obj.copy(body = bodyTransform(obj.body))
         case tr: STraitDef => tr.copy(body = bodyTransform(tr.body))
@@ -170,7 +170,7 @@ object ScalanAstTransformers {
       )
     }
 
-    def moduleTransform(module: SModuleDef): SModuleDef = {
+    def moduleTransform(module: SUnitDef): SUnitDef = {
       val newEntities = module.traits mapConserve entityTransform
       val newClasses = module.classes mapConserve classTransform
       module.copy(
@@ -350,7 +350,7 @@ object ScalanAstTransformers {
   /** The external types that should be rejected during virtualization. */
   def isIgnoredExternalType(typeName: String) = Set("Object", "Any", "AnyRef").contains(typeName)
 
-  class EnrichPipeline(implicit val context: AstContext) extends (SModuleDef => SModuleDef) {
+  class EnrichPipeline(implicit val context: AstContext) extends (SUnitDef => SUnitDef) {
     val moduleBuilder = new SModuleBuilder()
     import moduleBuilder._
     private val chain = scala.Function.chain(Seq(
@@ -359,7 +359,7 @@ object ScalanAstTransformers {
     override def apply(module: Module): Module = chain(module)
   }
 
-  class DevirtPipeline(implicit val context: AstContext) extends (SModuleDef => SModuleDef) {
+  class DevirtPipeline(implicit val context: AstContext) extends (SUnitDef => SUnitDef) {
     val moduleBuilder = new SModuleBuilder()
     import moduleBuilder._
     private val chain = scala.Function.chain(Seq(

@@ -5,7 +5,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.tools.nsc.Global
 import scala.reflect.internal.util.BatchSourceFile
 import scalan.BaseNestedTests
-import scalan.meta.ScalanAst.{STpeExpr, SExpr, SModuleDef, SClassDef, STpePrimitives, STraitDef, SMethodDef, SBodyItem, AstContext}
+import scalan.meta.ScalanAst.{STpeExpr, SExpr, SUnitDef, SClassDef, STpePrimitives, STraitDef, SMethodDef, SBodyItem, AstContext}
 
 trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
   def getGlobal = new Global(settings, reporter)
@@ -14,7 +14,7 @@ trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
   context.loadModulesFromFolders()
 
   val ast: this.type = this
-  import scalan.meta.ScalanAst.{STraitCall => TC, SModuleDef => EMD, SClassDef => CD, STpeTuple => T, SMethodArg => MA, STraitDef => TD, SMethodDef => MD, SMethodArgs => MAs, SImportStat => IS}
+  import scalan.meta.ScalanAst.{STraitCall => TC, SUnitDef => EMD, SClassDef => CD, STpeTuple => T, SMethodArg => MA, STraitDef => TD, SMethodDef => MD, SMethodArgs => MAs, SImportStat => IS}
   import scala.{List => L}
   import compiler._
 
@@ -79,7 +79,7 @@ trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
     res
   }
 
-  def parseModule(module: TestModule): SModuleDef = {
+  def parseModule(module: TestModule): SUnitDef = {
     implicit val ctx = new ParseCtx(module.isVirt)
     val pkg = parseString(TopLevel, module.text).asInstanceOf[PackageDef]
     val m = moduleDefFromPackageDef(module.moduleName, pkg)
@@ -95,7 +95,7 @@ trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
     }
   }
 
-  def testModule(module: TestModule, expected: SModuleDef)(implicit ctx: ParseCtx) {
+  def testModule(module: TestModule, expected: SUnitDef)(implicit ctx: ParseCtx) {
     test(TopLevel, module.text, expected) { case tree: PackageDef =>
        moduleDefFromPackageDef(module.moduleName, tree)
     }

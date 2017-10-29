@@ -257,7 +257,7 @@ class WrapFrontend(override val plugin: ScalanizerPlugin) extends ScalanizerComp
       SImportStat("scalan._"),
       SImportStat("impl._")
     )
-    val module = SModuleDef(
+    val module = SUnitDef(
       packageName = wrapPackage(packageName),
       imports = imports,
       name = wmod(externalTypeName),

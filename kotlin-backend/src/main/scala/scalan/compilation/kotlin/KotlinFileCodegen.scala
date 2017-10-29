@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 import scalan.meta.PrintExtensions._
 import scalan.meta.{ScalanAstTransformers, Name}
 
-case class GenCtx(module: SModuleDef, writer: PrintWriter)
+case class GenCtx(module: SUnitDef, writer: PrintWriter)
 
 class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) extends FileCodegen(_scalan, config) {
   import scalan._
@@ -21,12 +21,12 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
 
   implicit def ctxToWriter(implicit ctx: GenCtx): PrintWriter = ctx.writer
   
-  def transitiveClosureSet(modules: Seq[SModuleDef], deps: SModuleDef => Iterable[SModuleDef]): Set[Name] = {
+  def transitiveClosureSet(modules: Seq[SUnitDef], deps: SUnitDef => Iterable[SUnitDef]): Set[Name] = {
     //TODO implement transitive closure algorithm
     modules.map(m => Name(m.packageName, m.name)).toSet
   }
 
-  def modules: Map[Name, SModuleDef] = {
+  def modules: Map[Name, SUnitDef] = {
     val nameToModule = scalan.getModules
     val modules = config.moduleNames.map(n =>
       nameToModule.getOrElse(n.mkFullName, sys.error(s"Module $n not found")))

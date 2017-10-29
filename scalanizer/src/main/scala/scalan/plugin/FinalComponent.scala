@@ -2,7 +2,7 @@ package scalan.plugin
 
 import scala.reflect.io.Path
 import scala.tools.nsc._
-import scalan.meta.ScalanAst.SModuleDef
+import scalan.meta.ScalanAst.SUnitDef
 import scalan.meta.ScalanAst._
 
 object FinalComponent {
@@ -95,7 +95,7 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
     *    object HotSpotManager {...}
     *  }}
     * */
-  def getStagedAst(origModuleDef: SModuleDef,
+  def getStagedAst(origModuleDef: SUnitDef,
                    virtAst: Tree,
                    boilerplate: Tree,
                    extensions: List[Tree],

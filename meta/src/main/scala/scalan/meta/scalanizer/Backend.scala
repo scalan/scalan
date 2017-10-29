@@ -12,7 +12,7 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
 
   def createModuleTrait(mainModuleName: String) = {
     val mt = STraitDef(
-      name = SModuleDef.moduleTraitName(mainModuleName),
+      name = SUnitDef.moduleTraitName(mainModuleName),
       tpeArgs = Nil,
       ancestors = List(STraitCall(s"impl.${mainModuleName}Defs"), STraitCall("scala.wrappers.WrappersModule")).map(STypeApply(_)),
       body = Nil, selfType = None, companion = None)
@@ -20,7 +20,7 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
   }
 
   /** Generate boilerplate text for virtualized user-defined module */
-  def genUDModuleBoilerplateText(unitName: String, module: SModuleDef): String = {
+  def genUDModuleBoilerplateText(unitName: String, module: SUnitDef): String = {
     val entityGen = new ModuleFileGenerator(
       ScalanCodegen,
       module.copy(
@@ -38,12 +38,12 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
 //    boilerplate
 //  }
 
-  case class GenCtx(module: SModuleDef, toRep: Boolean = true)
+  case class GenCtx(module: SUnitDef, toRep: Boolean = true)
 
 
 
   /** Generate file for virtualized user-defined module */
-  def genUDModuleFile(module: SModuleDef, orig: Tree): Tree = orig match {
+  def genUDModuleFile(module: SUnitDef, orig: Tree): Tree = orig match {
     case q"package $ref { ..$_ }" =>
       implicit val ctx = GenCtx(module, true)
       val imports = module.imports.map(genImport(_))
@@ -56,7 +56,7 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
       throw new IllegalArgumentException("Module must be in a package")
   }
 
-  def genModuleTrait(module: SModuleDef)(implicit ctx: GenCtx): Tree = {
+  def genModuleTrait(module: SUnitDef)(implicit ctx: GenCtx): Tree = {
     val methods = module.methods.map(m => genMethod(m)(ctx.copy(toRep = !m.isTypeDesc)))
     val newstats =
       module.typeDefs.map(genTypeDef) :::
@@ -104,13 +104,13 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
     classes.map{clazz => genClass(clazz.copy(isAbstract = true))}
   }
 
-  def genCompanions(module: SModuleDef)(implicit ctx: GenCtx): List[Tree] = {
+  def genCompanions(module: SUnitDef)(implicit ctx: GenCtx): List[Tree] = {
     val fromEntities = module.traits.map(e => genCompanion(e.companion))
     val fromClasses = module.classes.map(clazz => genCompanion(clazz.companion))
     fromEntities ::: fromClasses
   }
 
-  def genCompanion(comp: Option[STmplDef])(implicit ctx: GenCtx): Tree = comp match {
+  def genCompanion(comp: Option[SEntityDef])(implicit ctx: GenCtx): Tree = comp match {
     case Some(comp) => comp match {
       case t: STraitDef => genTrait(t)
       case c: SClassDef => genClass(c)
@@ -267,7 +267,7 @@ trait Backend[+G <: Global] extends ScalanizerBase[G] {
     case None => noSelfType
   }
 
-  def genModuleSelf(module: SModuleDef)(implicit ctx: GenCtx): Tree = {
+  def genModuleSelf(module: SUnitDef)(implicit ctx: GenCtx): Tree = {
     val tpeName = module.selfType match {
       case Some(st) if !st.components.isEmpty => st.components.head.name
       case _ => module.name + "Dsl"
