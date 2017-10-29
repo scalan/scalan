@@ -5,7 +5,7 @@ import java.io.File
 import scalan.util.FileUtil
 import scala.tools.nsc._
 import scalan.meta.ScalanAst._
-import scalan.meta.ScalanCodegen
+import scalan.meta.{ScalanCodegen, SourceModuleConf}
 
 object WrapBackend {
   val name = "scalanizer-backend"
@@ -29,24 +29,23 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
       var wrapperSlices = initWrapperSlices
       snState.forEachWrapper { case (_, WrapperDescr(m, _, config)) =>
         val module = m.copy(imports = m.imports :+ SImportStat("scala.wrappers.WrappersModule"))(scalanizer.context)
-
+        val unitName = module.name + ".scala"
+        val moduleConf = findUnitModule(unitName)
+            .getOrElse(sys.error(s"WrapBackend: SourceModuleConf not found for wrapper unit $unitName"))
         /** Build source code of the wrapper module and store it in a file */
         val wrapperModuleWithoutImpl = module.copy(classes = Nil)(context)
         val optimizedImplicits = optimizeModuleImplicits(wrapperModuleWithoutImpl)
         val wrapperPackage = genWrapperPackage(optimizedImplicits)
-        saveWrapperCode(
+        saveCode(moduleConf,
           optimizedImplicits.packageName,
           optimizedImplicits.name,
-          showCode(wrapperPackage),
-          copyResource = true)
-
+          showCode(wrapperPackage))
         /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
         val boilerplateText = genWrapperBoilerplateText(module)
-        saveWrapperCode(module.packageName + ".impl", module.name + "Impl", boilerplateText)
-
+        saveCode(moduleConf, module.packageName + ".impl", module.name + "Impl", boilerplateText)
         wrapperSlices = updateWrapperSlices(wrapperSlices, wrapperModuleWithoutImpl)
       }
-      saveWrapperSlices(wrapperSlices)
+//      saveWrapperSlices(wrapperSlices)
     }
 
     def apply(unit: CompilationUnit): Unit = ()
@@ -66,9 +65,9 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
     val scalaAst = genModuleTrait(module)
     val imports = module.imports.map(genImport(_))
     val selfType = Some(SSelfTypeDef("self", List(STraitCall("Wrappers", Nil))))
-//    val extensions = genExtensions(module.name, selfType, Nil).map(
-//      extTrait => genTrait(extTrait)(GenCtx(module, false))
-//    )
+    //    val extensions = genExtensions(module.name, selfType, Nil).map(
+    //      extTrait => genTrait(extTrait)(GenCtx(module, false))
+    //    )
     val pkgStats = imports :+ scalaAst
     val wrappersPackage = PackageDef(Ident(TermName(module.packageName)), pkgStats)
     wrappersPackage
@@ -76,9 +75,9 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
 
   def initWrapperSlices: WrapperSlices = {
     val wmodule = STraitDef("WrappersModule",
-          tpeArgs = Nil,
-          ancestors = List(),
-          body = Nil, selfType = None, companion = None)
+      tpeArgs = Nil,
+      ancestors = List(),
+      body = Nil, selfType = None, companion = None)
     WrapperSlices(wmodule)
   }
 
@@ -89,21 +88,20 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
     )
   }
 
-  /** Puts all wrappers to the cake WrappersDsl.
-    * Stores them into the file: <home>/scala/wrappers/WrappersModule.scala */
-  def saveWrapperSlices(cake: WrapperSlices): Unit = {
-    implicit val genCtx = GenCtx(module = null, toRep = false)
-    val absCake = genTrait(cake.abs)
-    val cakePackage =
-      q"""
-        package scala.wrappers {
-          import scalan._
-
-          $absCake
-        }
-     """
-    val code = showCode(cakePackage)
-    saveWrapperCode("scala.wrappers", cake.abs.name, code)
-  }
-
+//  /** Puts all wrappers to the cake WrappersDsl.
+//    * Stores them into the file: <home>/scala/wrappers/WrappersModule.scala */
+//  def saveWrapperSlices(module: SourceModuleConf, cake: WrapperSlices): Unit = {
+//    implicit val genCtx = GenCtx(module = null, toRep = false)
+//    val absCake = genTrait(cake.abs)
+//    val cakePackage =
+//      q"""
+//        package scala.wrappers {
+//          import scalan._
+//
+//          $absCake
+//        }
+//     """
+//    val code = showCode(cakePackage)
+//    saveWrapperCode("scala.wrappers", cake.abs.name, code)
+//  }
 }

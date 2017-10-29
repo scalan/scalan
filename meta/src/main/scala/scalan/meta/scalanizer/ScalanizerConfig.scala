@@ -1,13 +1,19 @@
 package scalan.meta.scalanizer
 
-import scalan.meta.UnitConfig
+import scalan.meta.{UnitConfig, ConfMap, TargetModuleConf, SourceModuleConf}
 import scalan.meta.ScalanAst.{WrapperConfig, NonWrapper}
 
 trait ScalanizerConfig {
 
-  /** The folder of the module where the generated code will be stored.
-    * This folder is relative to the project root folder. */
-  def targetModuleFolder: String
+  /** Modules that contain units to be virtualized by scalan-meta. */
+  val sourceModules: ConfMap[SourceModuleConf]
+
+  /** Modules that assemble virtualized units from source modules into virtualized cakes */
+  val targetModules: ConfMap[TargetModuleConf]
+
+//  /** The folder of the module where the generated code will be stored.
+//    * This folder is relative to the project root folder. */
+//  def targetModuleFolder: String
 
   /** The flag indicates that the plugin has to generate additional information and to store it
     * the debug folder and outputs to the console. */
