@@ -30,9 +30,8 @@ class WrapBackend(override val plugin: ScalanizerPlugin) extends ScalanizerCompo
       var wrapperSlices = initWrapperSlices
       snState.forEachWrapper { case (_, WrapperDescr(m, _, config)) =>
         val module = m.copy(imports = m.imports :+ SImportStat("scala.wrappers.WrappersModule"))(scalanizer.context)
-        val unitName = module.name + ".scala"
-        val moduleConf = findUnitModule(unitName)
-            .getOrElse(sys.error(s"WrapBackend: SourceModuleConf not found for wrapper unit $unitName"))
+        val moduleConf = getSourceModule
+
         /** Build source code of the wrapper module and store it in a file */
         val wrapperModuleWithoutImpl = module.copy(classes = Nil)(context)
         val optimizedImplicits = optimizeModuleImplicits(wrapperModuleWithoutImpl)

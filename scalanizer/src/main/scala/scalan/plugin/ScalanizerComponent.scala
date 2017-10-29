@@ -8,9 +8,16 @@ import scalan.meta.SourceModuleConf
   */
 abstract class ScalanizerComponent(val plugin: ScalanizerPlugin) extends PluginComponent {
   val global: plugin.global.type = plugin.global
-
   val scalanizer: plugin.scalanizer.type = plugin.scalanizer
   import global._
+
+  def getSourceModule = scalanizer.snConfig.sourceModules.get(plugin.sourceModuleName).getOrElse {
+    global.abort(
+      s"""Source module ${plugin.sourceModuleName } is not found in ${scalanizer.snConfig}.
+        |Declared modules ${scalanizer.snConfig.sourceModules.keySet}.
+       """.stripMargin
+    )
+  }
 
   def findUnitModule(unitName: String) = {
     scalanizer.snConfig.sourceModules.find(mc => mc.hasUnit(unitName))

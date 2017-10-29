@@ -16,9 +16,13 @@ class ConfMap[C <: Conf] private(val table: MMap[String, C]) extends (String => 
     return this
   }
 
+  def keySet = table.keySet
+
   def contains(name: String) = table.contains(name)
 
   def apply(name: String): C = table.getOrElse(name, sys.error(s"Cannot find config $name in collection $table"))
+
+  def get(name: String) = table.get(name)
 
   def find(p: C => Boolean): Option[C] = table.find { case (_, c) => p(c) }.map(_._2)
 }

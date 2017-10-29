@@ -37,7 +37,14 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
   /** The description is printed with the option: -Xplugin-list */
   val description: String = "Optimization through staging"
 
-  var sourceModuleName = ""
+  private var _sourceModuleName = ""
+  def sourceModuleName = _sourceModuleName
+  
+  private var _targetModuleName = ""
+  def targetModuleName = _targetModuleName
+
+  final val SourceModulePrefix = "sourceModule="
+  final val TargetModulePrefix = "targetModule="
 
   /** Plugin-specific options without -P:scalanizer:  */
   override def init(options: List[String], error: String => Unit): Boolean = {
@@ -46,8 +53,10 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
       case "debug" => scalanizer.snConfig.withDebug(true)
       case "disabled" =>
         enabled = false
-      case o if o.startsWith("module=") =>
-        sourceModuleName = o.stripPrefix("module=")
+      case o if o.startsWith(SourceModulePrefix) =>
+        _sourceModuleName = o.stripPrefix(SourceModulePrefix)
+      case o if o.startsWith(TargetModulePrefix) =>
+        _targetModuleName = o.stripPrefix(TargetModulePrefix)
       case option => error("Option not understood: " + option)
     }
     enabled
