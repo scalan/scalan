@@ -3,27 +3,13 @@ package scalan.plugin
 import java.lang.annotation.Annotation
 
 import scalan.{FunctorType, ContainerType}
-import scalan.meta.UnitConfig
+import scalan.meta.{ConfMap, TargetModuleConf, UnitConfig, SourceModuleConf}
 import scalan.meta.ScalanAst.{WrapperConfig, NonWrapper}
 import scalan.meta.scalanizer.ScalanizerConfig
-import scala.collection.mutable.{Map => MMap}
-
-trait Conf {
-  def name: String
-}
-
-case class TargetModuleConf(
-      name: String,
-      sourceModules: MMap[String, SourceModuleConf]
-      ) extends Conf
-
-case class SourceModuleConf(
-      name: String,
-      units: MMap[String, UnitConfig]
-      ) extends Conf
 
 class ScalanizerPluginConfig extends ScalanizerConfig {
-  val targetModules: MMap[String, TargetModuleConf] = MMap[String, TargetModuleConf]()
+  val targetModules: ConfMap[TargetModuleConf] = new ConfMap
+  val sourceModules: ConfMap[SourceModuleConf] = new ConfMap
   val targetModuleFolder = "library"
 
   /** The flag indicates that the plugin has to generate additional information and to store it
