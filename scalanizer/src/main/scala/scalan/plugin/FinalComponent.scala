@@ -65,12 +65,9 @@ class FinalComponent(override val plugin: ScalanizerPlugin) extends ScalanizerCo
 //              objectHotSpotManager)
 //        showTree("stagedAst", unitName, stagedAst)
 
-        if (snConfig.save) {
-//          saveImplCode(unit.source.file.file, showCode(stagedAst))
-        }
 
       } catch {
-        case e: Exception => print(s"Error: failed to parse ${unitName} due to " + e.printStackTrace())
+        case e: Exception => print(s"Error: failed to parse $unitName due to " + e.printStackTrace())
       }
     }
   }

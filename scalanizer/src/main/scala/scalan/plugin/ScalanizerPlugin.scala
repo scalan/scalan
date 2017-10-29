@@ -41,8 +41,6 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
   override def init(options: List[String], error: String => Unit): Boolean = {
     var enabled = true
     options foreach {
-      case "save" => scalanizer.snConfig.withSave(true)
-      case "read" => scalanizer.snConfig.withRead(true)
       case "debug" => scalanizer.snConfig.withDebug(true)
       case "disabled" =>
         enabled = false

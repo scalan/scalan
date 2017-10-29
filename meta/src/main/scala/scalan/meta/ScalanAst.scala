@@ -245,7 +245,7 @@ object ScalanAst {
         find(tT, argName)
       case STraitCall("Thunk", List(tT)) =>
         find(tT, argName).map(tail => SThunkPath(tpe, tail))
-      case context.TypeDef(_, context.RepTypeOf(STraitCall(en @ context.ModuleEntity(_, e), args))) =>
+      case context.TypeDef(_, context.RepTypeOf(STraitCall(en @ context.Entity(_, e), args))) =>
         findInEntity(e, STraitCall(en, args), argName)
       case s@STpeStruct(_) =>
         def findInStruct(s: STpeStruct): Option[STpePath] = {
@@ -261,7 +261,7 @@ object ScalanAst {
         findInStruct(s)
       case STraitCall(`argName`, Nil) =>
         Some(SNilPath)
-      case tc@STraitCall(context.ModuleEntity(_, e), args) =>
+      case tc@STraitCall(context.Entity(_, e), args) =>
         findInEntity(e, tc, argName)
       case _ => None
     }
@@ -603,7 +603,7 @@ object ScalanAst {
     }
 
     def getAncestorTraits(module: SUnitDef): List[SEntityDef] = {
-      ancestors.collect { case STypeApply(STraitCall(module.context.ModuleEntity(m, e),_), _) => e }
+      ancestors.collect { case STypeApply(STraitCall(module.context.Entity(m, e),_), _) => e }
 //      ancestors.filter(a => module.isEntity(a.tpe.name)).map(a => module.getEntity(a.tpe.name))
     }
 
@@ -924,14 +924,14 @@ object ScalanAst {
       }
     }
 
-    object ModuleEntity {
+    object Entity {
       def unapply(name: String): Option[(Module, Entity)] =
         findModuleEntity(name)
     }
 
     object WrapperEntity {
       def unapply(name: String): Option[(SEntityDef, String)] = name match {
-        case ModuleEntity(_, e) =>
+        case Entity(_, e) =>
           e.getAnnotation(ExternalAnnotation) match {
             case Some(STmplAnnotation(_, List(SConst(externalName: String, _)))) => Some((e, externalName))
             case _ => None

@@ -10,24 +10,10 @@ import scalan.meta.scalanizer.ScalanizerConfig
 class ScalanizerPluginConfig extends ScalanizerConfig {
   val targetModuleFolder = "library"
 
-  /** The flag indicates that generated code (virtualized code, boilerplate and type wrappers)
-    * should be stored on the file system. */
-  var save: Boolean           = true
-  def withSave(s: Boolean): ScalanizerConfig = {save = s; this}
-
-  /** Reload virtualized code from the file system. */
-  var read: Boolean           = false
-  def withRead(r: Boolean): ScalanizerConfig = { read = r; this }
-
   /** The flag indicates that the plugin has to generate additional information and to store it
     * the debug folder and outputs to the console. */
   var debug: Boolean          = true
   def withDebug(d: Boolean): ScalanizerConfig = { debug = d; this }
-
-  /** The flag indicates that Meta AST of entities should be serialized and assigned to some variable
-    * inside virtualized code. */
-  var saveMetaAst: Boolean    = true
-  def withSaveMetaAst(b: Boolean): ScalanizerConfig = { saveMetaAst = b; this }
 
   private def unitConfigTemplate(name: String, entityFile: String) =
     MetaConfig(
@@ -52,7 +38,7 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
       resourcePath = "library-impl/src/main/resources"
     )
 
-  /** A list of scalan modules that should be virtualized by scalan-meta. */
+  /** A list of units that should be virtualized by scalan-meta. */
   val unitConfigs = List(
     apiUnit("Cols.scala", "scalan/collection/Cols.scala"),
     implUnit("ColsOverArrays.scala", "scalan/collection/ColsOverArrays.scala")
@@ -72,14 +58,15 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
     ),
     isVirtualized = false, isStdEnabled = false
   )
-  val wrapperConfigs = List(
+
+  val wrapperConfigs: Map[String, WrapperConfig] = List(
     WrapperConfig(
       name = "Array",
       annotations = List(classOf[ContainerType], classOf[FunctorType]).map(_.getSimpleName)
     )
   ).map(w => (w.name, w)).toMap
 
-  val nonWrappers = List[NonWrapper](
+  val nonWrappers: Map[String, NonWrapper] = List[NonWrapper](
     NonWrapper(name = "Predef"),
     NonWrapper(name = "<byname>"),
     NonWrapper(name = "ArrayOps"),

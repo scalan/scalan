@@ -246,7 +246,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SUnitDef, config: Me
       }
     val (optParent, parentElem) = e.firstAncestorType match {
       case Some(STraitCall("Def", _)) => (None, defaultParentElem)
-      case Some(parent@STraitCall(context.ModuleEntity(m, e), parentTpeArgs))  =>
+      case Some(parent@STraitCall(context.Entity(m, e), parentTpeArgs))  =>
         (Some(parent), s"${e.name}Elem[${join(parentTpeArgs, toArgName)}]")
       case Some(p) => !!!(s"Unsupported parent type $p of the entity ${e.name}")
       case None if e.module.isVirtualized =>
