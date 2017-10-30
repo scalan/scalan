@@ -1,49 +1,40 @@
 package scalan.plugin
 
+import scala.reflect.internal.Phase
+import scala.tools.nsc.Global
 import scala.tools.nsc.plugins.PluginComponent
 import scalan.meta.SourceModuleConf
 
-/**
-  * Created by slesarenko on 01/04/17.
-  */
-abstract class ScalanizerComponent(val plugin: ScalanizerPlugin) extends PluginComponent {
-  val global: plugin.global.type = plugin.global
-  val scalanizer: plugin.scalanizer.type = plugin.scalanizer
-  import global._
-
-  def getSourceModule = scalanizer.snConfig.sourceModules.get(plugin.sourceModuleName).getOrElse {
-    global.abort(
-      s"""Source module ${plugin.sourceModuleName } is not found in ${scalanizer.snConfig}.
-        |Declared modules ${scalanizer.snConfig.sourceModules.keySet}.
-       """.stripMargin
-    )
-  }
-
-  def findUnitModule(unitName: String) = {
-    scalanizer.snConfig.sourceModules.find(mc => mc.hasUnit(unitName))
-  }
-
-  def isModuleUnit(unitName: String) = findUnitModule(unitName).isDefined
-
-  def getModulePackage(unit: global.CompilationUnit) = {
-    val packageName = unit.body match {
-      case pd: PackageDef =>
-        val packageName = pd.pid.toString
-        packageName
-    }
-    packageName
-  }
-
-  def withUnitModule(unit: CompilationUnit)(action: (SourceModuleConf, String) => Unit) = {
-    val unitName = unit.source.file.name
-    findUnitModule(unitName) match {
-      case Some(sm) => try {
-        action(sm, unitName)
-      } catch {
-        case e: Exception =>
-          print(s"Error: failed to parse $unitName from ${unit.source.file } due to " + e.printStackTrace())
-      }
-      case None =>
-    }
-  }
+abstract class ScalanizerComponent(
+    val phaseName: String,
+    val runsAfter: List[String],
+    val global: Global) extends PluginComponent {
+  //    val scalanizer: plugin.scalanizer.type = plugin.scalanizer
+  //  import global._
+  override def description: String = s"Scalanizer component at phase $phaseName runs after $runsAfter"
 }
+
+object ScalanizerComponent {
+  def forEachUnit[P <: ScalanizerPlugin](p: P)
+      (runsAfter: List[String], step: p.scalanizer.ForEachUnit) =
+    new ScalanizerComponent(step.name, runsAfter, p.scalanizer.global) {
+      def newPhase(prev: Phase) = new StdPhase(prev) {
+        def apply(unit: global.CompilationUnit): Unit = {
+          val context = new p.scalanizer.UnitContext(unit.asInstanceOf[p.scalanizer.global.CompilationUnit])
+          step.action(context)
+        }
+      }
+    }
+
+  def forRun[P <: ScalanizerPlugin](p: P)
+      (runsAfter: List[String], step: p.scalanizer.Run) =
+    new ScalanizerComponent(step.name, runsAfter, p.scalanizer.global) {
+      def newPhase(prev: Phase) = new StdPhase(prev) {
+        override def run(): Unit = {
+          step.action(())
+        }
+        def apply(unit: global.CompilationUnit): Unit = ()
+      }
+    }
+}
+

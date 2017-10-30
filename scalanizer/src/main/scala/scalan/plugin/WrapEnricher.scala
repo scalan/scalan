@@ -12,68 +12,51 @@ object WrapEnricher {
 
 // TODO ScalanParsers is used only to get wrapperImpl. Move it somewhere?
 /** Virtualization of type wrappers. */
-class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComponent(plugin) {
-  import scalanizer._
-  import scalanizer.global._
-
-  val phaseName: String = WrapEnricher.name
-
-  override def description: String = "Virtualization of type wrappers."
-
-  val runsAfter = List(WrapFrontend.name)
-
-  val virtPipeline = new ModuleVirtualizationPipeline()(context)
-
-  /** The phase prepares a wrapper for virtualization. */
-  def newPhase(prev: Phase) = new StdPhase(prev) {
-    override def run(): Unit = {
-      import virtPipeline._
-      import moduleBuilder._
-      implicit val context = virtPipeline.context
-
-      snState.transformWrappers { case (name, wrapperDescr) =>
-        /** Transformations of Wrappers by adding of Elem, Cont and other things. */
-        val pipeline = scala.Function.chain(Seq(
-          preventNameConflict _,
-          addBaseToAncestors _,
-          addEntityAncestors _,
-          updateSelf _,
-          checkEntityCompanion _,
-          constr2apply _,
-          cleanUpClassTags _,
-          preventNameConflict _,
-          genEntityImpicits _,
-          genMethodsImplicits _,
-          replaceExternalTypeByWrapper _,
-          /** Currently, inheritance of type wrappers is not supported.
-            * Print warnings and remove ancestors. */
-          filterAncestors _
-        ))
-        val enrichedModule = pipeline(wrapperDescr.module)
-
-        wrapperDescr.copy(module = enrichedModule)
-      }
-    }
-
-    def apply(unit: CompilationUnit): Unit = ()
-  }
-
-  /** Replaces external types by their wrappers. For example:
-    * trait Col[A] { def arr: Array[A]; }
-    * The external type Array is replaced by its wrapper WArray
-    * trait Col[A] { def arr: WArray[A]; }
-    * */
-  def replaceExternalTypeByWrapper(module: SUnitDef)(implicit ctx: AstContext): SUnitDef = {
-    class TypeInWrappersTransformer(name: String) extends External2WrapperTypeTransformer(name) {
-      override def classArgTransform(classArg: SClassArg) = classArg
-      override def entityAncestorTransform(ancestor: STypeApply): STypeApply = {
-          ancestor.copy(tpe = typeTransformer.traitCallTransform(ancestor.tpe))
-      }
-    }
-    val wrappedModule = snState.externalTypes.foldLeft(module){(acc, externalTypeName) =>
-      new TypeInWrappersTransformer(externalTypeName).moduleTransform(acc)
-    }
-    wrappedModule
-  }
-
-}
+//class WrapEnricher(override val plugin: ScalanizerPlugin) extends ScalanizerComponent(plugin) {
+//  import scalanizer._
+//  import scalanizer.global._
+//
+//  val phaseName: String = WrapEnricher.name
+//
+//  override def description: String = "Virtualization of type wrappers."
+//
+//  val runsAfter = List(WrapFrontend.name)
+//
+//  val virtPipeline = new ModuleVirtualizationPipeline()(context)
+//
+//  /** The phase prepares a wrapper for virtualization. */
+//  def newPhase(prev: Phase) = new StdPhase(prev) {
+//    override def run(): Unit = {
+////      import virtPipeline._
+////      import moduleBuilder._
+////      implicit val context = virtPipeline.context
+////
+////      snState.transformWrappers { case (name, wrapperDescr) =>
+////        /** Transformations of Wrappers by adding of Elem, Cont and other things. */
+////        val pipeline = scala.Function.chain(Seq(
+////          preventNameConflict _,
+////          addBaseToAncestors _,
+////          addEntityAncestors _,
+////          updateSelf _,
+////          checkEntityCompanion _,
+////          constr2apply _,
+////          cleanUpClassTags _,
+////          preventNameConflict _,
+////          genEntityImpicits _,
+////          genMethodsImplicits _,
+////          replaceExternalTypeByWrapper _,
+////          /** Currently, inheritance of type wrappers is not supported.
+////            * Print warnings and remove ancestors. */
+////          filterAncestors _
+////        ))
+////        val enrichedModule = pipeline(wrapperDescr.module)
+////
+////        wrapperDescr.copy(module = enrichedModule)
+////      }
+//    }
+//
+//    def apply(unit: CompilationUnit): Unit = ()
+//  }
+//
+//
+//}
