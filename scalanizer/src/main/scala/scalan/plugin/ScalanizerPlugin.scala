@@ -1,5 +1,6 @@
 package scalan.plugin
 
+import scala.collection.mutable.ListBuffer
 import scala.tools.nsc._
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
 import scalan.meta.{EntityManagement, SourceModuleConf}
@@ -22,38 +23,31 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
   }
   /** Visible name of the plugin */
   val name: String = "scalanizer"
-  val pipeline = new ScalanizerPipeline(scalanizer)
+  val pipeline = new SourceModulePipeline(scalanizer)
+
   /** The compiler components that will be applied when running this plugin */
   val components: List[PluginComponent] = {
-    val res = List()
+    val res = ListBuffer[PluginComponent]()
     var after = "typer"
     pipeline.steps.foreach {step =>
-      step.asInstanceOf[scalanizer.Phase] match {
-        case run: scalanizer.Run => ScalanizerComponent.forRun(this)(List(after), run)
-        case run: scalanizer.ForEachUnit => ScalanizerComponent.forEachUnit(this)(List(after), run)
+      val comp = step.asInstanceOf[scalanizer.PipelineStep] match {
+        case runStep: scalanizer.RunStep =>
+          ScalanizerComponent.forRun(this)(List(after), runStep)
+        case unitStep: scalanizer.ForEachUnitStep =>
+          ScalanizerComponent.forEachUnit(this)(List(after), unitStep)
       }
       after = step.name
+      res.append(comp)
     }
-    res
+    res.result()
   }
-  //  List(
-  //      new Assembler(this)
-  //     new WrapFrontend(this)
-  //    , new WrapEnricher(this)
-  //    , new WrapBackend(this)
-  //    , new VirtFrontend(this)
-  ////    , new VirtBackend(this)
-  ////    , new CheckExtensions(this)
-  //    , new FinalComponent(this)
-  //  , new Debug(this)
-  //  )
+
   /** The description is printed with the option: -Xplugin-list */
-  val description: String = "Optimization through staging"
+  val description: String = "Perform code virtualization for Scalan"
   private var _sourceModuleName = ""
+  private var _targetModuleName = ""
 
   def sourceModuleName = _sourceModuleName
-
-  private var _targetModuleName = ""
 
   def targetModuleName = _targetModuleName
 

@@ -16,7 +16,7 @@ abstract class ScalanizerComponent(
 
 object ScalanizerComponent {
   def forEachUnit[P <: ScalanizerPlugin](p: P)
-      (runsAfter: List[String], step: p.scalanizer.ForEachUnit) =
+      (runsAfter: List[String], step: p.scalanizer.ForEachUnitStep) =
     new ScalanizerComponent(step.name, runsAfter, p.scalanizer.global) {
       def newPhase(prev: Phase) = new StdPhase(prev) {
         def apply(unit: global.CompilationUnit): Unit = {
@@ -27,7 +27,7 @@ object ScalanizerComponent {
     }
 
   def forRun[P <: ScalanizerPlugin](p: P)
-      (runsAfter: List[String], step: p.scalanizer.Run) =
+      (runsAfter: List[String], step: p.scalanizer.RunStep) =
     new ScalanizerComponent(step.name, runsAfter, p.scalanizer.global) {
       def newPhase(prev: Phase) = new StdPhase(prev) {
         override def run(): Unit = {

@@ -15,13 +15,13 @@ trait Scalanizer[+G <: Global]
 
   class UnitContext(val unit: global.CompilationUnit)
 
-  sealed trait Phase {
+  sealed trait PipelineStep {
     def name: String
   }
 
-  case class ForEachUnit(name: String)(val action: UnitContext => Unit) extends Phase
+  case class ForEachUnitStep(name: String)(val action: UnitContext => Unit) extends PipelineStep
 
-  case class Run(name: String)(val action: Unit => Unit) extends Phase
+  case class RunStep(name: String)(val action: Unit => Unit) extends PipelineStep
 
   def sourceModuleName: String
 
