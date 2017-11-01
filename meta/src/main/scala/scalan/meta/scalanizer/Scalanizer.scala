@@ -12,18 +12,8 @@ trait Scalanizer[+G <: Global]
         with Backend[G]
         //  with HotSpots[G]
 {
-
-  class UnitContext(val unit: global.CompilationUnit)
-
-  sealed trait PipelineStep {
-    def name: String
-  }
-
-  case class ForEachUnitStep(name: String)(val action: UnitContext => Unit) extends PipelineStep
-
-  case class RunStep(name: String)(val action: Unit => Unit) extends PipelineStep
-
   def sourceModuleName: String
+  def targetModuleName: String
 
   def getSourceModule = snConfig.sourceModules.get(sourceModuleName).getOrElse {
     global.abort(

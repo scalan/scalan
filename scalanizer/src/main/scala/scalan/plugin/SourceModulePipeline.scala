@@ -15,7 +15,7 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
   import scalanizer._
   import scalanizer.global._
   val name = "scalanizer"
-  val runAfter = "typer"
+  val runAfter = List("typer")
   val virtPipeline = new ModuleVirtualizationPipeline()(context)
 
   val steps: List[PipelineStep] = List(

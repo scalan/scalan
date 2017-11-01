@@ -20,28 +20,36 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
     val snState: ScalanizerState[plugin.global.type] = new ScalanizerPluginState(this)
 
     override def sourceModuleName: String = plugin.sourceModuleName
+    override def targetModuleName: String = plugin.targetModuleName
   }
   /** Visible name of the plugin */
   val name: String = "scalanizer"
-  val pipeline = new SourceModulePipeline(scalanizer)
+  val srcPipeline = new SourceModulePipeline(scalanizer)
+  val targetPipeline = new TargetModulePipeline(scalanizer)
 
-  /** The compiler components that will be applied when running this plugin */
-  val components: List[PluginComponent] = {
+  def getPipelineComponents(pipeline: ScalanizerPipeline[Global]) = {
     val res = ListBuffer[PluginComponent]()
-    var after = "typer"
+    var after = pipeline.runAfter
     pipeline.steps.foreach {step =>
-      val comp = step.asInstanceOf[scalanizer.PipelineStep] match {
-        case runStep: scalanizer.RunStep =>
-          ScalanizerComponent.forRun(this)(List(after), runStep)
-        case unitStep: scalanizer.ForEachUnitStep =>
-          ScalanizerComponent.forEachUnit(this)(List(after), unitStep)
+      val comp = step.asInstanceOf[pipeline.PipelineStep] match {
+        case runStep: pipeline.RunStep =>
+          pipeline.forRunComponent(after, runStep)
+        case unitStep: pipeline.ForEachUnitStep =>
+          pipeline.forEachUnitComponent(after, unitStep)
       }
-      after = step.name
+      after = List(step.name)
       res.append(comp)
     }
     res.result()
   }
 
+  /** The compiler components that will be applied when running this plugin */
+  val components: List[PluginComponent] = {
+    val res = ListBuffer[PluginComponent]()
+    res.append(getPipelineComponents(srcPipeline): _*)
+    res.append(getPipelineComponents(targetPipeline): _*)
+    res.result()
+  }
   /** The description is printed with the option: -Xplugin-list */
   val description: String = "Perform code virtualization for Scalan"
   private var _sourceModuleName = ""
@@ -63,8 +71,10 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
         enabled = false
       case o if o.startsWith(SourceModulePrefix) =>
         _sourceModuleName = o.stripPrefix(SourceModulePrefix)
+        srcPipeline.isEnabled = true
       case o if o.startsWith(TargetModulePrefix) =>
         _targetModuleName = o.stripPrefix(TargetModulePrefix)
+        targetPipeline.isEnabled = true
       case option => error("Option not understood: " + option)
     }
     enabled
