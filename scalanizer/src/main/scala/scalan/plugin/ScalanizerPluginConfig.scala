@@ -1,8 +1,9 @@
 package scalan.plugin
 
 import java.lang.annotation.Annotation
+
 import scalan.{FunctorType, ContainerType}
-import scalan.meta.{ConfMap, TargetModuleConf, UnitConfig, SourceModuleConf}
+import scalan.meta._
 import scalan.meta.ScalanAst.{WrapperConfig, NonWrapper}
 import scalan.meta.scalanizer.ScalanizerConfig
 
@@ -18,13 +19,21 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
 
   /** Modules that assemble virtualized units from source modules into virtualized cakes */
   val targetModules: ConfMap[TargetModuleConf] = ConfMap()
-      .add(TargetModuleConf(
-        "library", "library",
+      .add(TargetModuleConf("library",
         sourceModules = ConfMap()
             .add(apiModule)
             .add(implModule)))
 
-//  val targetModuleFolder = "library"
+  def getModule(moduleName: String): ModuleConf = {
+    val source = sourceModules.get(moduleName)
+    val target = targetModules.get(moduleName)
+    if (source.isDefined && target.isDefined)
+        sys.error(s"ScalanPlugin configuration error: Module $moduleName found in both source modules and target modules")
+    else if (source.isEmpty && target.isEmpty)
+      sys.error(s"ScalanPlugin configuration error: Module $moduleName not found in both source and target lists")
+    else
+      source.getOrElse(target.get)
+  }
 
   /** The flag indicates that the plugin has to generate additional information and to store it
     * the debug folder and outputs to the console. */

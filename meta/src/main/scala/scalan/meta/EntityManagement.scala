@@ -56,19 +56,11 @@ class EntityManagement[+G <: Global](val parsers: ScalanParsers[G]) extends Lazy
         val g = createFileGenerator(ScalanCodegen, enrichedModule, man.config)
 
         val implCode = g.emitImplFile
-        val implFile = getImplFile(man.file, "Impl", "scala")
+        val implFile = UnitConfig.getImplFile(man.file, "Impl", "scala")
         FileUtil.write(implFile, implCode)
         FileUtil.copy(man.file, man.resourceFile)
       case None =>
         logger.error(s"Cannot generate code for config '$configName' because it is not found.")
     }
   }
-
-  def getImplFile(file: File, suffix: String, extension: String) = {
-    val fileName = file.getName.split('.')(0)
-    val folder = file.getParentFile
-    val implFile = FileUtil.file(folder, "impl", s"$fileName$suffix.$extension")
-    implFile
-  }
-
 }

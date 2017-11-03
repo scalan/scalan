@@ -3,7 +3,7 @@ package scalan.plugin
 import scala.collection.mutable.ListBuffer
 import scala.tools.nsc._
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
-import scalan.meta.{EntityManagement, SourceModuleConf}
+import scalan.meta.{EntityManagement, SourceModuleConf, TargetModuleConf}
 import scalan.meta.ScalanAst.AstContext
 import scalan.meta.scalanizer.{ScalanizerConfig, Scalanizer, ScalanizerState}
 
@@ -19,8 +19,7 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
     val entityManagment: EntityManagement[plugin.global.type] = new EntityManagement(this)
     val snState: ScalanizerState[plugin.global.type] = new ScalanizerPluginState(this)
 
-    override def sourceModuleName: String = plugin.sourceModuleName
-    override def targetModuleName: String = plugin.targetModuleName
+    override def moduleName: String = plugin.moduleName
   }
   /** Visible name of the plugin */
   val name: String = "scalanizer"
@@ -30,7 +29,7 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
   def getPipelineComponents(pipeline: ScalanizerPipeline[Global]) = {
     val res = ListBuffer[PluginComponent]()
     var after = pipeline.runAfter
-    pipeline.steps.foreach {step =>
+    pipeline.steps.foreach { step =>
       val comp = step.asInstanceOf[pipeline.PipelineStep] match {
         case runStep: pipeline.RunStep =>
           pipeline.forRunComponent(after, runStep)
@@ -52,15 +51,11 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
   }
   /** The description is printed with the option: -Xplugin-list */
   val description: String = "Perform code virtualization for Scalan"
-  private var _sourceModuleName = ""
-  private var _targetModuleName = ""
+  private var _moduleName = ""
 
-  def sourceModuleName = _sourceModuleName
+  def moduleName = _moduleName
 
-  def targetModuleName = _targetModuleName
-
-  final val SourceModulePrefix = "sourceModule="
-  final val TargetModulePrefix = "targetModule="
+  final val ModulePrefix = "module="
 
   /** Plugin-specific options without -P:scalanizer:  */
   override def init(options: List[String], error: String => Unit): Boolean = {
@@ -69,18 +64,20 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
       case "debug" => scalanizer.snConfig.withDebug(true)
       case "disabled" =>
         enabled = false
-      case o if o.startsWith(SourceModulePrefix) =>
-        _sourceModuleName = o.stripPrefix(SourceModulePrefix)
-        srcPipeline.isEnabled = true
-      case o if o.startsWith(TargetModulePrefix) =>
-        _targetModuleName = o.stripPrefix(TargetModulePrefix)
-        targetPipeline.isEnabled = true
+      case o if o.startsWith(ModulePrefix) =>
+        _moduleName = o.stripPrefix(ModulePrefix)
+        val module = scalanizer.snConfig.getModule(_moduleName)
+        module match {
+          case sm: SourceModuleConf =>
+            srcPipeline.isEnabled = true
+          case tm: TargetModuleConf =>
+            targetPipeline.isEnabled = true
+        }
       case option => error("Option not understood: " + option)
     }
     enabled
   }
 
-  // 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90
   /** A description of the plugin's options */
   override val optionsHelp = Some(
     "  -P:" + name + ":save     Save META boilerplate and virtualized code to a file.\n" +

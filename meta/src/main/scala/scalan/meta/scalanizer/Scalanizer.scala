@@ -12,12 +12,12 @@ trait Scalanizer[+G <: Global]
         with Backend[G]
         //  with HotSpots[G]
 {
-  def sourceModuleName: String
-  def targetModuleName: String
+  /** Project module for which this instance of Scalanizer is running. */
+  def moduleName: String
 
-  def getSourceModule = snConfig.sourceModules.get(sourceModuleName).getOrElse {
+  def getSourceModule = snConfig.sourceModules.get(moduleName).getOrElse {
     global.abort(
-      s"""Source module $sourceModuleName is not found in config instance of ${snConfig.getClass.getName}.
+      s"""Source module $moduleName is not found in config instance of ${snConfig.getClass.getName}.
         |Declared modules ${snConfig.sourceModules.keySet}.
        """.stripMargin
     )

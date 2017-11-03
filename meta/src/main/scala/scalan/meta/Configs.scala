@@ -18,6 +18,8 @@ class ConfMap[C <: Conf] private(val table: MMap[String, C]) extends (String => 
 
   def keySet = table.keySet
 
+  def values = table.values
+
   def contains(name: String) = table.contains(name)
 
   def apply(name: String): C = table.getOrElse(name, sys.error(s"Cannot find config $name in collection $table"))
@@ -41,7 +43,6 @@ abstract class ModuleConf extends Conf {
 
 case class TargetModuleConf(
     name: String,
-    targetFolder: String,
     sourceModules: ConfMap[SourceModuleConf]
 ) extends ModuleConf
 
@@ -78,13 +79,22 @@ case class SourceModuleConf(
 
 case class UnitConfig(
     name: String,
-    srcPath: String, // the base path to where root package is located
-    resourcePath: String,
-    entityFile: String, // the package path and file name
+    srcPath: String, // the base path to where root package is located (example: <module>/src/main/scala)
+    resourcePath: String, // example: <module>/src/main/resources
+    entityFile: String, // the package path and file name (example: scalan/collection/Col.scala)
     baseContextTrait: String = "scalan.Scalan",
     extraImports: List[String] = List("scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}", "scalan.meta.ScalanAst._"),
     isVirtualized: Boolean = true,
     isStdEnabled: Boolean = true) extends Conf {
   def getFile: File = FileUtil.file(srcPath, entityFile)
+  def getResourceFile: File = FileUtil.file(resourcePath, entityFile)
 }
 
+object UnitConfig {
+  def getImplFile(file: File, suffix: String, extension: String) = {
+    val fileName = file.getName.split('.')(0)
+    val folder = file.getParentFile
+    val implFile = FileUtil.file(folder, "impl", s"$fileName$suffix.$extension")
+    implFile
+  }
+}
