@@ -38,7 +38,7 @@ trait ScalanizerBase[+G <: Global] extends ScalanParsers[G] {
     }
   }
 
-  def saveCode(module: SourceModuleConf, packageName: String, fileName: String, code: String) = {
+  def saveCode(module: SourceModuleConf, packageName: String, fileName: String, code: String): Unit = {
     saveCode(module.getResourceHome, packageName, fileName, code)
   }
 
@@ -46,7 +46,7 @@ trait ScalanizerBase[+G <: Global] extends ScalanParsers[G] {
     saveCode(module.getResourceHome + "/wrappers", packageName, fileName, code)
   }
 
-  def saveCode(sourceRoot: String, packageName: String, fileName: String, code: String) = {
+  def saveCode(sourceRoot: String, packageName: String, fileName: String, code: String): Unit = {
     val packagePath = packageName.replace('.', '/')
     val resourceFile = FileUtil.file(sourceRoot, packagePath, fileName + ".scala")
     resourceFile.mkdirs()

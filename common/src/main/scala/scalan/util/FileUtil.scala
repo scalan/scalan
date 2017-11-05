@@ -6,9 +6,7 @@ import java.nio.charset.Charset
 import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.jar.JarFile
-
 import org.apache.commons.io.{FileUtils, IOUtils}
-
 import scala.Console
 import scala.collection.JavaConverters._
 
@@ -29,7 +27,7 @@ object FileUtil {
     }
   }
 
-  def write(file: File, text: String):Unit = withFile(file) { _.print(text) }
+  def write(file: File, text: String): Unit = withFile(file) { _.print(text) }
 
   def withStdOutAndErr(out: PrintStream)(func: => Unit): Unit = {
     val oldStdOut = System.out
@@ -48,8 +46,8 @@ object FileUtil {
   def captureStdOutAndErr(func: => Unit): String = {
     val out = new ByteArrayOutputStream
     val ps = new PrintStream(out)
-    try { withStdOutAndErr(ps)(func) }
-    finally { ps.close() }
+    try {withStdOutAndErr(ps)(func)}
+    finally {ps.close() }
     out.toString
   }
 
@@ -140,8 +138,8 @@ object FileUtil {
   }
 
   /**
-   * Copy file source to targetDir, keeping the original file name
-   */
+    * Copy file source to targetDir, keeping the original file name
+    */
   def copyToDir(source: File, targetDir: File): Unit =
     copy(source, new File(targetDir, source.getName))
 
@@ -152,14 +150,14 @@ object FileUtil {
       FileUtils.moveDirectory(source, target)
 
   /**
-   * Add header into the file
-   */
+    * Add header into the file
+    */
   def addHeader(file: File, header: String): Unit = write(file, header + "\n" + read(file))
 
   /**
-   * Like fileOrDirectory.delete() but works for non-empty directories
-   * and throws exceptions instead of returning false on failure
-   */
+    * Like fileOrDirectory.delete() but works for non-empty directories
+    * and throws exceptions instead of returning false on failure
+    */
   def delete(fileOrDirectory: File): Unit = {
     deleteRecursive(fileOrDirectory.toPath)
   }
@@ -174,10 +172,12 @@ object FileUtil {
         Files.delete(file)
         FileVisitResult.CONTINUE
       }
+
       override def visitFileFailed(file: Path, exc: IOException): FileVisitResult = {
         Files.delete(file)
         FileVisitResult.CONTINUE
       }
+
       override def postVisitDirectory(dir: Path, exc: IOException): FileVisitResult = {
         if (exc == null) {
           Files.delete(dir)
@@ -198,14 +198,23 @@ object FileUtil {
   def file(first: File, rest: String*): File =
     rest.foldLeft(first) { (file, child) => new File(file, child) }
 
+  final val AcceptAllFiles = new FilenameFilter {
+    override def accept(dir: File, name: String): Boolean = true
+  }
+  final val AcceptAllDirectories = new FilenameFilter {
+    override def accept(dir: File, name: String): Boolean = dir.isDirectory
+  }
+
   /**
-   * Same as dir.listFiles(filter), except it returns empty array instead of null
-   * if dir doesn't exist or is not a directory
-   */
-  def listFiles(dir: File, filter: FilenameFilter): Array[File] = dir.listFiles(filter) match {
+    * Same as dir.listFiles(filter), except it returns empty array instead of null
+    * if dir doesn't exist or is not a directory
+    */
+  def listFiles(dir: File, filter: FilenameFilter = AcceptAllFiles): Array[File] = dir.listFiles(filter) match {
     case null => Array.empty
     case array => array
   }
+
+  def listDirectories(dir: File): Array[File] = listFiles(dir, AcceptAllDirectories)
 
   def readAndCloseStream(stream: InputStream) = {
     try {
@@ -224,7 +233,7 @@ object FileUtil {
     }
 
   def replaceOrAppendExtension(fileName: String, extension: String): String =
-    s"${stripExtension(fileName)}.$extension"
+    s"${stripExtension(fileName) }.$extension"
 
   def modifyName(file: File)(f: String => String): File = {
     val parent = file.getParentFile
@@ -239,8 +248,8 @@ object FileUtil {
     * which can be used as a file name. For convenience, replaces spaces with hyphens.
     */
   def cleanFileName(string: String) = string.
-    replaceAll("""[ /\\:;<>|?*^]""", "_").
-    replaceAll("""['"]""", "")
+      replaceAll("""[ /\\:;<>|?*^]""", "_").
+      replaceAll("""['"]""", "")
 
   def isBadFileName(string: String) = cleanFileName(string) != string
 }

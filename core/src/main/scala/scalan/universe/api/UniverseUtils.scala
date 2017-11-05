@@ -26,29 +26,5 @@ object UniverseUtils {
     iter.map(_.toList).toList
   }
 
-  def join[K,V,R](ks: List[K], kv: Map[K,V])(f: (K,V) => R): List[R] = {
-    val vs = ks.map(k => kv.get(k) match {
-      case Some(v) => v
-      case None => sys.error(s"Cannot find value for key $k")
-    })
-    (ks zip vs).map(f.tupled)
-  }
-
-  def traverseDepthFirst[T](t: T)(f: T => List[T]): List[T] = {
-    var all: List[T] = Nil
-    var queue = List(t)
-    while (queue.nonEmpty) {
-      val h = queue.head
-      queue = queue.tail
-
-      var next = f(h).reverse
-      while (next.nonEmpty) {
-        queue = next.head :: queue
-        next = next.tail
-      }
-      all = h :: all
-    }
-    all.reverse
-  }
 
 }

@@ -5,6 +5,7 @@ import java.lang.reflect.Method
 import scalan.{Lazy, _}
 import scalan.universe.api.TypesApi
 import scalan.universe.api.UniverseUtils._
+import scalan.util.CollectionUtil._
 
 trait Specializations extends Views with Converters { self: Scalan =>
 
@@ -119,7 +120,7 @@ trait SpecializationsModule extends impl.SpecializationsDefs with TypesApi { sca
 //  }
 
   def allSpecs[A,B](iso: Iso[A,B])(implicit params: QueryParams): List[Iso[_,B]] =
-    traverseDepthFirst(iso)(directSpecs(_).map(_.asInstanceOf[Iso[A,B]])).distinct
+    iso.traverseDepthFirst(directSpecs(_).map(_.asInstanceOf[Iso[A,B]])).distinct
 
   def getTypeSpecs(t: TypeDesc)(implicit params: QueryParams): List[Elem[_]] = {
     val inSpecs = t.allConcreteSpecs

@@ -74,13 +74,36 @@ object CollectionUtil {
     res.toMap
   }
 
+  def join[K,V,R](ks: List[K], kv: Map[K,V])(f: (K,V) => R): List[R] = {
+    val vs = ks.map(k => kv.get(k) match {
+      case Some(v) => v
+      case None => sys.error(s"Cannot find value for key $k")
+    })
+    (ks zip vs).map(f.tupled)
+  }
+
   implicit class AnyOps[A](x: A) {
     def zipWithExpandedBy[B](f: A => List[B]): List[(A,B)] = {
       val ys = f(x)
       List.fill(ys.length)(x) zip ys
     }
-  }
+    def traverseDepthFirst(f: A => List[A]): List[A] = {
+      var all: List[A] = Nil
+      var stack = List(x)
+      while (stack.nonEmpty) {
+        val h = stack.head
+        stack = stack.tail
 
+        var next = f(h).reverse
+        while (next.nonEmpty) {
+          stack = next.head :: stack
+          next = next.tail
+        }
+        all = h :: all
+      }
+      all.reverse
+    }
+  }
 
   implicit class TraversableOps[A, Source[X] <: Traversable[X]](xs: Source[A]) {
     def filterMap[B](f: A => Option[B])(implicit cbf: CanBuildFrom[Source[A], B, Source[B]]): Source[B] = {

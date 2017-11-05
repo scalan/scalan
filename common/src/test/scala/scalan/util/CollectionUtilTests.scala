@@ -52,4 +52,37 @@ class CollectionUtilTests extends BaseTests {
     assertResult(Array((3, 0), (3, 1), (3, 2)))(3.zipWithExpandedBy(x => List.range(0,x)))
   }
 
+  def treeStep(tree: Array[List[Int]]): Int => List[Int] = i => tree(i)
+
+  test("traverseDepthFirst") {
+    {
+      val tree = Array(
+        List(1, 2), // 0
+        List(),     // 1
+        List(3),    // 2
+        List())     // 3
+      assertResult(List(0, 1, 2, 3))(0.traverseDepthFirst(treeStep(tree)))
+    }
+    {
+      /*
+       0
+         1
+           3
+             5
+             6
+         2
+           4
+      */
+      val tree = Array(
+        List(1, 2),  // 0
+        List(3),     // 1
+        List(4),     // 2
+        List(5,6),   // 3
+        List(),      // 4
+        List(),      // 5
+        List()       // 6
+      )
+      assertResult(List(0, 1, 3, 5, 6, 2, 4))(0.traverseDepthFirst(treeStep(tree)))
+    }
+  }
 }

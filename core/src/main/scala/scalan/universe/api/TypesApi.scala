@@ -7,6 +7,7 @@ import scalan.OverloadHack.Overloaded1
 import scalan.meta.ScalanAst._
 import scalan.meta.PrintExtensions._
 import scalan.util.StringUtil
+import scalan.util.CollectionUtil._
 
 trait TypesApi { self: Scalan =>
   import UniverseUtils._
@@ -187,7 +188,7 @@ trait TypesApi { self: Scalan =>
     }
 
     def allSpecs(implicit params: QueryParams) : List[TypeDesc] =
-      traverseDepthFirst(t)(_.directSpecsExclusive).distinct
+      t.traverseDepthFirst(_.directSpecsExclusive).distinct
 
     def isConcrete: Boolean = t match {
       case e: Elem[_] => e.isConcrete

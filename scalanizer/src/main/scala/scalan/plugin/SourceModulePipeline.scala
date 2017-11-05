@@ -68,9 +68,9 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
           optimizedImplicits.packageName,
           optimizedImplicits.name,
           showCode(wrapperPackage))
-        /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
-        val boilerplateText = genWrapperBoilerplateText(moduleConf, module)
-        saveWrapperCode(moduleConf, module.packageName + ".impl", module.name + "Impl", boilerplateText)
+//        /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
+//        val boilerplateText = genWrapperBoilerplateText(moduleConf, module)
+//        saveWrapperCode(moduleConf, module.packageName + ".impl", module.name + "Impl", boilerplateText)
         wrapperSlices = updateWrapperSlices(wrapperSlices, wrapperModuleWithoutImpl)
       }
     },

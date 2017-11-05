@@ -2,6 +2,7 @@ package scalan.meta
 
 import java.io.File
 import scalan.util.FileUtil
+import scalan.util.CollectionUtil._
 import scala.collection.mutable.{Map => MMap}
 
 sealed trait Conf {
@@ -51,6 +52,7 @@ case class SourceModuleConf(
     units: ConfMap[UnitConfig] = ConfMap()
 ) extends ModuleConf {
   def getResourceHome = name + "/src/main/resources"
+  def getWrappersHome = getResourceHome + "/wrappers"
 
   private def unitConfigTemplate(name: String, entityFile: String) =
     UnitConfig(
@@ -74,6 +76,11 @@ case class SourceModuleConf(
   def addUnit(unitName: String, unitFile: String): this.type = {
     units.add(mkUnit(unitName, unitFile))
     this
+  }
+
+  def listWrapperFiles: Array[File] = {
+    import FileUtil._
+    file(getWrappersHome).traverseDepthFirst(f => listDirectories(f))
   }
 }
 
