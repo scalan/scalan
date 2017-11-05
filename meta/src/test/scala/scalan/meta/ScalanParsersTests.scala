@@ -10,16 +10,15 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
   import compiler._
   import scalan.meta.ScalanAst.{STraitCall => TC, SUnitDef => EMD, SClassDef => CD, STpeTuple => T, SMethodArg => MA, STraitDef => TD, SMethodDef => MD, SMethodArgs => MAs, SImportStat => IS}
   import scala.{List => L}
-
   describe("STpeExpr") {
     implicit val ctx = new ParseCtx(true)
-    testSTpe("Int", INT)
-    testSTpe("(Int,Boolean)", STpeTuple(L(INT, BOOL)))
-    testSTpe("Int=>Boolean", STpeFunc(INT, BOOL))
-    testSTpe("Int=>Boolean=>Float", STpeFunc(INT, STpeFunc(BOOL, FLOAT)))
-    testSTpe("(Int,Boolean=>Float)", STpeTuple(L(INT, STpeFunc(BOOL, FLOAT))))
-    testSTpe("(Int,(Boolean=>Float))", STpeTuple(L(INT, STpeFunc(BOOL, FLOAT))))
-    testSTpe("(Int,Boolean)=>Float", STpeFunc(STpeTuple(L(INT, BOOL)), FLOAT))
+    testSTpe("Int", TpeInt)
+    testSTpe("(Int,Boolean)", STpeTuple(L(TpeInt, TpeBoolean)))
+    testSTpe("Int=>Boolean", STpeFunc(TpeInt, TpeBoolean))
+    testSTpe("Int=>Boolean=>Float", STpeFunc(TpeInt, STpeFunc(TpeBoolean, TpeFloat)))
+    testSTpe("(Int,Boolean=>Float)", STpeTuple(L(TpeInt, STpeFunc(TpeBoolean, TpeFloat))))
+    testSTpe("(Int,(Boolean=>Float))", STpeTuple(L(TpeInt, STpeFunc(TpeBoolean, TpeFloat))))
+    testSTpe("(Int,Boolean)=>Float", STpeFunc(STpeTuple(L(TpeInt, TpeBoolean)), TpeFloat))
     testSTpe("Edge", TC("Edge", Nil))
     testSTpe("Edge[V,E]", TC("Edge", L(TC("V", Nil), TC("E", Nil))))
     testSTpe("Rep[A=>B]", TC("Rep", L(STpeFunc(TC("A", Nil), TC("B", Nil)))))
@@ -27,24 +26,24 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
 
   describe("SMethodDef") {
     implicit val ctx = new ParseCtx(true)
-    testSMethod("def f: Int", MD("f", Nil, Nil, Some(INT), false, false, None, Nil, None))
-    testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(INT), true, false, Some("a"), L(SMethodAnnotation("OverloadId",List(SConst("a")))), None))
+    testSMethod("def f: Int", MD("f", Nil, Nil, Some(TpeInt), false, false, None, Nil, None))
+    testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(TpeInt), true, false, Some("a"), L(SMethodAnnotation("OverloadId",List(SConst("a")))), None))
     testSMethod(
       "def f(x: Int): Int",
-      MD("f", Nil, L(MAs(List(MA(false, false, "x", INT, None)))), Some(INT), false, false, None, Nil, None))
+      MD("f", Nil, L(MAs(List(MA(false, false, "x", TpeInt, None)))), Some(TpeInt), false, false, None, Nil, None))
     testSMethod(
       "def f[A <: T](x: A): Int",
-      MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)), L(MAs(L(MA(false, false, "x", TC("A", Nil), None)))), Some(INT), false, false, None, Nil, None))
+      MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)), L(MAs(L(MA(false, false, "x", TC("A", Nil), None)))), Some(TpeInt), false, false, None, Nil, None))
     testSMethod(
       "def f[A : Numeric]: Int",
-      MD("f", L(STpeArg("A", None, L("Numeric"))), Nil, Some(INT), false, false, None, Nil, None))
+      MD("f", L(STpeArg("A", None, L("Numeric"))), Nil, Some(TpeInt), false, false, None, Nil, None))
     testSMethod(
       "def f[A <: Int : Numeric : Fractional](x: A)(implicit y: A): Int",
       MD(
         "f",
-        L(STpeArg("A", Some(INT), L("Numeric", "Fractional"))),
+        L(STpeArg("A", Some(TpeInt), L("Numeric", "Fractional"))),
         L(MAs(L(MA(false, false, "x", TC("A", Nil), None))), MAs(L(MA(true, false, "y", TC("A", Nil), None)))),
-        Some(INT), false, false, None, Nil, None))
+        Some(TpeInt), false, false, None, Nil, None))
   }
 
   describe("TraitDef") {
@@ -63,7 +62,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
       traitEdgeVE.copy(
         body = L(MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)),
           L(MAs(L(MA(false, false, "x", TC("A", Nil), None), MA(false, false, "y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
-          Some(INT), false, false, None, Nil, None))))
+          Some(TpeInt), false, false, None, Nil, None))))
     testTrait(
       """trait A {
         |  import scalan._
@@ -75,8 +74,8 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
       TD("A", Nil, Nil, L(
         IS("scalan._"),
         STpeDef("Rep", L(STpeArg("A", None, Nil)), TC("A", Nil)),
-        MD("f", Nil, Nil, Some(T(L(INT, TC("A", Nil)))), false, false, None, Nil, None),
-        MD("g", Nil, L(MAs(L(MA(false, false, "x", BOOL, None)))), Some(TC("A", Nil)), false, false, Some("b"), L(SMethodAnnotation("OverloadId",List(SConst("b")))), None)), None, None))
+        MD("f", Nil, Nil, Some(T(L(TpeInt, TC("A", Nil)))), false, false, None, Nil, None),
+        MD("g", Nil, L(MAs(L(MA(false, false, "x", TpeBoolean, None)))), Some(TC("A", Nil)), false, false, Some("b"), L(SMethodAnnotation("OverloadId",List(SConst("b")))), None)), None, None))
 
   }
 
@@ -108,7 +107,7 @@ class ScalanParsersTests extends ScalanAstTests with Examples {
         args = SClassArgs(L(SClassArg(false, false, true, "x", TC("V", Nil), None))),
         body = L(MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)),
           L(MAs(L(MA(false, false, "x", TC("A", Nil), None), MA(false, false, "y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
-          Some(INT), false, false, None, Nil, None))))
+          Some(TpeInt), false, false, None, Nil, None))))
   }
 
   describe("SModuleDef") {

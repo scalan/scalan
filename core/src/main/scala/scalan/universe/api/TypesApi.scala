@@ -12,119 +12,11 @@ import scalan.util.CollectionUtil._
 trait TypesApi { self: Scalan =>
   import UniverseUtils._
 
-  type TypeArgSubst = Map[String, TypeDesc]
-  type TypePredicate = Elem[_] => Boolean
-  def AllTypes(e: Elem[_]): Boolean = true
-  val emptySubst = Map.empty[String, TypeDesc]
+
   case class QueryParams(checkVariance: Boolean, typeFilter: Elem[_] => Boolean = AllTypes)
 
-  implicit class ElemOpsForTypes(e: Elem[_]) {
-    def tyExpr: STpeExpr = e match {
-//      case ae: ArrayElem[a] =>
-//        ArrayType(ae.eItem)
-//      case ae: ArrayBufferElem[a] =>
-//        val a = Type(ae.eItem)
-//        BaseType("ArrayBuffer", List(a))
-//      case ae: ListElem[a] =>
-//        val a = Type(ae.eItem)
-//        BaseType("List", List(a))
-//      case ae: StructElem[a] =>
-//        val tpes = ae.fields.map { case (name, el) =>
-//          BaseType(name, List(el))
-//        }
-//        StructType(tpes.toList)
-//      case ee: EntityElem[a] =>
-//        val ent = Entity(entityDef(ee).name)
-//        val elemSubst = ee.typeArgs
-//        val subst = ent.typeArgs.map((a: ArgElem) => {
-//          val el = elemSubst.getOrElse(a.name, a)
-//          (a, el)
-//        })
-//        new EntityApply(ent, subst.toMap)
-//      case be: BaseTypeElem1[a,tExt,cBase] =>
-//        val a = Type(be.eItem)
-//        BaseType(be.runtimeClass.getSimpleName, List(a))
-//      case be: BaseTypeElem[tBase,tExt] =>
-//        BaseType(be.runtimeClass.getSimpleName, Nil)
-//      case _ if e == UnitElement => BaseType("Unit")
-//      case _ if e == BooleanElement => BaseType("Boolean")
-//      case _ if e == ByteElement => BaseType("Byte")
-//      case _ if e == ShortElement => BaseType("Short")
-//      case _ if e == IntElement => BaseType("Int")
-//      case _ if e == LongElement => BaseType("Long")
-//      case _ if e == FloatElement => BaseType("Float")
-//      case _ if e == DoubleElement => BaseType("Double")
-//      case _ if e == StringElement => BaseType("String")
-//      case _ if e == CharElement => BaseType("Char")
-//      case pe: PairElem[_,_] =>
-//        val a = Type(pe.eFst)
-//        val b = Type(pe.eSnd)
-//        Tuple(List(a,b))
-//      case pe: SumElem[_,_] =>
-//        val a = Type(pe.eLeft)
-//        val b = Type(pe.eRight)
-//        Sum(List(a,b))
-//      case pe: FuncElem[_,_] =>
-//        val a = Type(pe.eDom)
-//        val b = Type(pe.eRange)
-//        Func(a,b)
-      case _ => null
-    }
-  }
 
   implicit class TypeDescOpsForTypes(t: TypeDesc) {
-    def tyExpr: STpeExpr = t match {
-      case e: Elem[_] => e.tyExpr
-      case _ => ???
-    }
-    def applySubst(subst: TypeArgSubst): TypeDesc = t match {
-      case e: ArgElem => subst.getOrElse(e.argName, e)
-//      case ae: ArrayElem[a] =>
-//        arrayElement(ae.eItem.applySubst(subst).asElem)
-      //      case ae: ArrayBufferElem[a] =>
-      //      case ae: ListElem[a] =>
-      //      case ae: StructElem[a] =>
-      //        val tpes = (ae.fieldNames zip ae.fieldElems).map { case (name, el) =>
-      //          BaseType(name, List(Type(el)))
-      //        }
-      //        StructType(tpes.toList)
-      //      case ee: EntityElem[a] =>
-      //        val ent = Entity(entityDef(ee).name)
-      //        val elemSubst = ee.typeArgs
-      //        val subst = ent.typeArgs.map((a: ArgElem) => {
-      //          val el = elemSubst.getOrElse(a.name, a)
-      //          (a, el)
-      //        })
-      //        new EntityApply(ent, subst.toMap)
-      //      case be: BaseTypeElem1[a,tExt,cBase] =>
-      //        val a = Type(be.eItem)
-      //        BaseType(be.runtimeClass.getSimpleName, List(a))
-      //      case be: BaseTypeElem[tBase,tExt] =>
-      //        BaseType(be.runtimeClass.getSimpleName, Nil)
-      //      case _ if e == UnitElement => BaseType("Unit")
-      //      case _ if e == BooleanElement => BaseType("Boolean")
-      //      case _ if e == ByteElement => BaseType("Byte")
-      //      case _ if e == ShortElement => BaseType("Short")
-      //      case _ if e == IntElement => BaseType("Int")
-      //      case _ if e == LongElement => BaseType("Long")
-      //      case _ if e == FloatElement => BaseType("Float")
-      //      case _ if e == DoubleElement => BaseType("Double")
-      //      case _ if e == StringElement => BaseType("String")
-      //      case _ if e == CharElement => BaseType("Char")
-      //      case pe: PairElem[_,_] =>
-      //        val a = Type(pe.eFst)
-      //        val b = Type(pe.eSnd)
-      //        Tuple(List(a,b))
-      //      case pe: SumElem[_,_] =>
-      //        val a = Type(pe.eLeft)
-      //        val b = Type(pe.eRight)
-      //        Sum(List(a,b))
-      //      case pe: FuncElem[_,_] =>
-      //        val a = Type(pe.eDom)
-      //        val b = Type(pe.eRange)
-      //        Func(a,b)
-      case _ => t
-    }
 
     def directGens: List[TypeDesc] = List(t)
 
@@ -246,7 +138,7 @@ trait TypesApi { self: Scalan =>
         case STypeApply(STraitCall("Def", List(a)),_) if a.name == this.name => false
         case _ => true
       }
-      val types = ancestors.map(a => Type(a.tpe, env))
+      val types = ancestors.map(a => TypeDesc(a.tpe, env))
       types.toSeq
     }
 
@@ -338,57 +230,6 @@ trait TypesApi { self: Scalan =>
     }
   }
 
-  private def callMethod(methodName: String, descClasses: Array[Class[_]], paramDescs: List[AnyRef]): TypeDesc = {
-    try {
-      val method = self.getClass.getMethod(methodName, descClasses: _*)
-      try {
-        val result = method.invoke(self, paramDescs: _*)
-        result.asInstanceOf[Elem[_]]
-      } catch {
-        case e: Exception =>
-          !!!(s"Failed to invoke $methodName with parameters $paramDescs", e)
-      }
-    } catch {
-      case e: Exception =>
-        !!!(s"Failed to find elem-creating method with name $methodName with parameters $paramDescs: ${e.getMessage}")
-    }
-  }
-
-  object Type {
-    def apply(tpe: STpeExpr, env: TypeArgSubst): TypeDesc = tpe match {
-      case STpePrimitive(name,_) =>
-        val methodName = name + "Element"
-        callMethod(methodName, Array(), Nil)
-//      case ArrayType(a) =>
-//        arrayElement(Type(a, env).asElem)
-      case STraitCall("$bar", List(a, b)) =>
-        sumElement(Type(a, env).asElem, Type(b, env).asElem)
-      case STpeTuple(List(a, b)) =>
-        pairElement(Type(a, env).asElem, Type(b, env).asElem)
-      case STpeFunc(a, b) =>
-        funcElement(Type(a, env).asElem, Type(b, env).asElem)
-//      case ArrayCont(_) =>
-//        scalan.arrayContainer
-      case STraitCall(name, Nil) =>
-        env.get(name) match {
-          case Some(t) => t
-          case None =>
-            val methodName = StringUtil.lowerCaseFirst(name + "Element")
-            callMethod(methodName, Array(), List())
-        }
-      case STraitCall(name, args) =>
-        val argDescs = args.map(p => Type(p, env))
-        val argClasses = argDescs.map {
-          case e: Elem[_] => classOf[Elem[_]]
-          case c: Cont[_] => classOf[Cont[Any]]
-          case d => !!!(s"Unknown type descriptior $d")
-        }.toArray[Class[_]]
-        val methodName = StringUtil.lowerCaseFirst(name + "Element")
-        callMethod(methodName, argClasses, argDescs)
-
-      case _ => !!!(s"Unexpected STpeExpr: $tpe")
-    }
-  }
 
   object BaseType {
     def apply(tyName: String) = STpePrimitives(tyName)
@@ -421,10 +262,10 @@ trait TypesApi { self: Scalan =>
 //    case _ => None
 //  }
 //
-  object ArrayType {
-    def apply(tyItem: TypeDesc) = BaseType("Array", List(tyItem))
-    def unapply(ty: STpeExpr): Option[STpeExpr] = unmkBaseConstructorType1(ty, "Array")
-  }
+//  object ArrayType {
+//    def apply(tyItem: TypeDesc) = BaseType("Array", List(tyItem))
+//    def unapply(ty: STpeExpr): Option[STpeExpr] = unmkBaseConstructorType1(ty, "Array")
+//  }
 //  object StructType {
 //    def apply(tyItems: List[Type]) = BaseType("Struct", tyItems)
 //    def unapply(ty: STpeExpr) = unmkBaseConstructorTypes(ty, "Struct")
@@ -531,14 +372,6 @@ trait TypesApi { self: Scalan =>
     def name = module.name
     def moduleEntitiesIter = module.allEntities.iterator.map(Entity(_, module))
   }
-
-//  val tyInt = BaseType("Int")
-//  val tyDouble = BaseType("Double")
-//  val tyArrayInt = ArrayType(tyInt)
-//  val tyListInt = ListType(tyInt)
-//  val tyListDouble = ListType(tyDouble)
-//  val tyArrayBufferInt = ArrayBufferType(tyInt)
-
 
   def apiModulesIter: Iterator[Module] = apiModules.values.toIterator
 

@@ -84,9 +84,9 @@ lazy val common = Project("scalan-common", file("common"))
   libraryDependencies ++= Seq(
     "com.typesafe.scala-logging" %% "scala-logging" % "3.4.0",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-    "commons-io" % "commons-io" % "2.5",
-//    "io.spray" %%  "spray-json" % "1.3.3",
-    "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.9.1"
+    "commons-io" % "commons-io" % "2.5"
+
+//    "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.9.1"
   ))
 
 lazy val meta = Project("scalan-meta", file("meta"))
@@ -136,11 +136,18 @@ lazy val core = Project("scalan-core", file("core"))
     ))
 
 lazy val kotlinBackend = Project("scalan-kotlin-backend", file("kotlin-backend")).
-  dependsOn(common % allConfigDependency, core % allConfigDependency, library).
-  configs(IntegrationTest)
+  dependsOn(common % allConfigDependency, core % allConfigDependency, library)
+  .configs(IntegrationTest)
   .settings(itSettings)
   .settings(
     //    libraryDependencies += "org.luaj" % "luaj-jse" % "3.0.1"
+  )
+
+lazy val toolkit = Project("scalan-toolkit", file("toolkit")).
+  dependsOn(common % allConfigDependency, meta % allConfigDependency, core % allConfigDependency)
+  .settings(commonSettings)
+  .settings(
+    libraryDependencies ++= Seq("io.spray" %%  "spray-json" % "1.3.3")
   )
 
 lazy val root = Project("scalan", file("."))

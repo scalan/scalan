@@ -460,7 +460,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
 
   /** Generates Scala AST for the given wrapper (without implementation). */
   def genWrapperPackage(module: SUnitDef): Tree = {
-    implicit val genCtx = GenCtx(module = module, toRep = true)
+    implicit val genCtx = GenCtx(context = module.context, toRep = true)
     val scalaAst = genModuleTrait(module)
     val imports = module.imports.map(genImport(_))
     val selfType = Some(SSelfTypeDef("self", List(STraitCall("Wrappers", Nil))))

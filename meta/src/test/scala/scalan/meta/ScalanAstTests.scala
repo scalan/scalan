@@ -13,76 +13,10 @@ trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
   implicit val context = new AstContext(Nil, this)
   context.loadModulesFromFolders()
 
-  val ast: this.type = this
-  import scalan.meta.ScalanAst.{STraitCall => TC, SUnitDef => EMD, SClassDef => CD, STpeTuple => T, SMethodArg => MA, STraitDef => TD, SMethodDef => MD, SMethodArgs => MAs, SImportStat => IS}
-  import scala.{List => L}
   import compiler._
 
-  case class TestModule(moduleName: String, text: String, isVirt: Boolean)
-
-  val INT = STpePrimitives("Int")
-  val BOOL = STpePrimitives("Boolean")
-  val FLOAT = STpePrimitives("Float")
-
-  sealed trait TreeKind
-  case object TopLevel extends TreeKind
-  case object Type extends TreeKind
-  case object Member extends TreeKind
-  case object Expr extends TreeKind
-  case object Annotation extends TreeKind
-  case object AnnotationArg extends TreeKind
-
-  def parseString(kind: TreeKind, prog: String): Tree = {
-    // wrap the string into a complete file
-    val prog1 = kind match {
-      case TopLevel => prog
-      case Type => s"object o { val x: $prog }"
-      case Member => s"object o { $prog }"
-      case Expr => s"object o { val x = $prog }"
-      case Annotation => s"object o { @$prog val x = null }"
-      case AnnotationArg => s"object o { @OverloadId($prog) val x = null }"
-    }
-    val fakeSourceFile = new BatchSourceFile("<no file>", prog1.toCharArray)
-    // extract the part corresponding to original prog
-    (kind, parseFile(fakeSourceFile)) match {
-      case (TopLevel, tree) => tree
-      case (Member, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, tree)))))) =>
-        tree
-      case (Type, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(_, _, tree, _))))))) =>
-        tree
-      case (Expr, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(_, _, _, tree))))))) =>
-        tree
-      case (Annotation, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(Modifiers(_,_,List(tree)), _, _, _))))))) =>
-        tree
-      case (AnnotationArg, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(Modifiers(_,_,List(ExtractAnnotation(_,List(tree)))), _, _, _))))))) =>
-        tree
-      case (kind, tree) =>
-        ???(tree)
-    }
-  }
-
-  def parseType(tpeString: String)(implicit ctx: ParseCtx): STpeExpr = {
-    val tree = parseString(Type, tpeString)
-    val tpe = tpeExpr(tree)
-    tpe
-  }
-
-  def parseExpr(exprString: String)(implicit ctx: ParseCtx): SExpr = {
-    val tree = parseString(Expr, exprString)
-    val expr = parseExpr(tree)
-    expr
-  }
-
-  def parseBodyItem(defString: String)(implicit ctx: ParseCtx): SBodyItem = {
-    val tree = parseString(Member, defString)
-    val res = optBodyItem(tree, None).get
-    res
-  }
-
-  def parseModule(module: TestModule): SUnitDef = {
-    implicit val ctx = new ParseCtx(module.isVirt)
-    val pkg = parseString(TopLevel, module.text).asInstanceOf[PackageDef]
-    val m = moduleDefFromPackageDef(module.moduleName, pkg)
+  override def parseModule(module: TestModule): SUnitDef = {
+    val m = super.parseModule(module)
     assertResult(module.isVirt)(m.isVirtualized)
     m
   }

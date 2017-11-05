@@ -128,7 +128,7 @@ trait Entities extends TypeDescs { self: Scalan =>
     case _ => false
   }
 
-  implicit class ElemOps[T](e: Elem[T]) {
+  implicit class ElemOpsForEntities[T](e: Elem[T]) {
     def isConcrete = isConcreteElem(e)
     def getDataIso = getIsoByElem(e)
 

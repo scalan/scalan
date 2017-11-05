@@ -4,7 +4,7 @@ import scala.annotation.implicitNotFound
 import scala.collection.immutable.ListMap
 import scala.reflect.runtime.universe._
 import scala.reflect.{AnyValManifest, ClassTag}
-import scalan.meta.ScalanAst.STpeArg
+import scalan.meta.ScalanAst._
 import scalan.util._
 
 trait TypeDescs extends Base { self: Scalan =>
@@ -16,6 +16,59 @@ trait TypeDescs extends Base { self: Scalan =>
     override def toString = s"${getClass.getSimpleName}<$name>"
   }
 
+  object TypeDesc {
+    def apply(tpe: STpeExpr, env: TypeArgSubst): TypeDesc = tpe match {
+      case STpePrimitive(name,_) =>
+        val methodName = name + "Element"
+        callMethod(methodName, Array(), Nil)
+      case STraitCall("$bar", List(a, b)) =>
+        sumElement(TypeDesc(a, env).asElem, TypeDesc(b, env).asElem)
+      case STpeTuple(List(a, b)) =>
+        pairElement(TypeDesc(a, env).asElem, TypeDesc(b, env).asElem)
+      case STpeFunc(a, b) =>
+        funcElement(TypeDesc(a, env).asElem, TypeDesc(b, env).asElem)
+      case STraitCall(name, Nil) =>
+        env.get(name) match {
+          case Some(t) => t
+          case None =>
+            val methodName = StringUtil.lowerCaseFirst(name + "Element")
+            callMethod(methodName, Array(), List())
+        }
+      case STraitCall(name, args) =>
+        val argDescs = args.map(p => TypeDesc(p, env))
+        val argClasses = argDescs.map {
+          case e: Elem[_] => classOf[Elem[_]]
+          case c: Cont[_] => classOf[Cont[Any]]
+          case d => !!!(s"Unknown type descriptior $d")
+        }.toArray[Class[_]]
+        val methodName = StringUtil.lowerCaseFirst(name + "Element")
+        callMethod(methodName, argClasses, argDescs)
+
+      case _ => !!!(s"Unexpected STpeExpr: $tpe")
+    }
+  }
+
+  type TypeArgSubst = Map[String, TypeDesc]
+  type TypePredicate = Elem[_] => Boolean
+  def AllTypes(e: Elem[_]): Boolean = true
+  val emptySubst = Map.empty[String, TypeDesc]
+
+  private def callMethod(methodName: String, descClasses: Array[Class[_]], paramDescs: List[AnyRef]): TypeDesc = {
+    try {
+      val method = self.getClass.getMethod(methodName, descClasses: _*)
+      try {
+        val result = method.invoke(self, paramDescs: _*)
+        result.asInstanceOf[Elem[_]]
+      } catch {
+        case e: Exception =>
+          !!!(s"Failed to invoke $methodName with parameters $paramDescs", e)
+      }
+    } catch {
+      case e: Exception =>
+        !!!(s"Failed to find elem-creating method with name $methodName with parameters $paramDescs: ${e.getMessage}")
+    }
+  }
+
   implicit class TypeDescOps(d: TypeDesc) {
     def asElem[B]: Elem[B] = d.asInstanceOf[Elem[B]]
     def asElemOption[B]: Option[Elem[B]] = if (isElem) Some(d.asInstanceOf[Elem[B]]) else None
@@ -23,6 +76,103 @@ trait TypeDescs extends Base { self: Scalan =>
     def asContOption[C[_]]: Option[Cont[C]] = if (isCont) Some(d.asInstanceOf[Cont[C]]) else None
     def isElem: Boolean = d.isInstanceOf[Elem[_]]
     def isCont: Boolean = d.isInstanceOf[Cont[Any] @unchecked]
+    def tyExpr: STpeExpr = d match {
+      case e: Elem[_] => e.toTpeExpr
+      case _ => ???
+    }
+    def applySubst(subst: TypeArgSubst): TypeDesc = d match {
+      case e: ArgElem => subst.getOrElse(e.argName, e)
+      //      case ae: ArrayElem[a] =>
+      //        arrayElement(ae.eItem.applySubst(subst).asElem)
+      //      case ae: ArrayBufferElem[a] =>
+      //      case ae: ListElem[a] =>
+      //      case ae: StructElem[a] =>
+      //        val tpes = (ae.fieldNames zip ae.fieldElems).map { case (name, el) =>
+      //          BaseType(name, List(Type(el)))
+      //        }
+      //        StructType(tpes.toList)
+      //      case ee: EntityElem[a] =>
+      //        val ent = Entity(entityDef(ee).name)
+      //        val elemSubst = ee.typeArgs
+      //        val subst = ent.typeArgs.map((a: ArgElem) => {
+      //          val el = elemSubst.getOrElse(a.name, a)
+      //          (a, el)
+      //        })
+      //        new EntityApply(ent, subst.toMap)
+      //      case be: BaseTypeElem1[a,tExt,cBase] =>
+      //        val a = Type(be.eItem)
+      //        BaseType(be.runtimeClass.getSimpleName, List(a))
+      //      case be: BaseTypeElem[tBase,tExt] =>
+      //        BaseType(be.runtimeClass.getSimpleName, Nil)
+      //      case _ if e == UnitElement => BaseType("Unit")
+      //      case _ if e == BooleanElement => BaseType("Boolean")
+      //      case _ if e == ByteElement => BaseType("Byte")
+      //      case _ if e == ShortElement => BaseType("Short")
+      //      case _ if e == IntElement => BaseType("Int")
+      //      case _ if e == LongElement => BaseType("Long")
+      //      case _ if e == FloatElement => BaseType("Float")
+      //      case _ if e == DoubleElement => BaseType("Double")
+      //      case _ if e == StringElement => BaseType("String")
+      //      case _ if e == CharElement => BaseType("Char")
+      //      case pe: PairElem[_,_] =>
+      //        val a = Type(pe.eFst)
+      //        val b = Type(pe.eSnd)
+      //        Tuple(List(a,b))
+      //      case pe: SumElem[_,_] =>
+      //        val a = Type(pe.eLeft)
+      //        val b = Type(pe.eRight)
+      //        Sum(List(a,b))
+      //      case pe: FuncElem[_,_] =>
+      //        val a = Type(pe.eDom)
+      //        val b = Type(pe.eRange)
+      //        Func(a,b)
+      case _ => d
+    }
+  }
+
+  implicit class ElemOps(e: Elem[_]) {
+    def toTpeExpr: STpeExpr = e match {
+      case _ if e == UnitElement => TpeUnit
+      case _ if e == BooleanElement => TpeBoolean
+      case _ if e == ByteElement => TpeByte
+      case _ if e == ShortElement => TpeShort
+      case _ if e == IntElement => TpeInt
+      case _ if e == LongElement => TpeLong
+      case _ if e == FloatElement => TpeFloat
+      case _ if e == DoubleElement => TpeDouble
+      case _ if e == StringElement => TpeString
+      case _ if e == CharElement => TpeChar
+      case pe: PairElem[_,_] =>
+        val a = pe.eFst.toTpeExpr
+        val b = pe.eSnd.toTpeExpr
+        STpeTuple(List(a,b))
+      case pe: FuncElem[_,_] =>
+        val a = pe.eDom.toTpeExpr
+        val b = pe.eRange.toTpeExpr
+        STpeFunc(a,b)
+
+  //      case ae: StructElem[a] =>
+      //        val tpes = ae.fields.map { case (name, el) =>
+      //          BaseType(name, List(el))
+      //        }
+      //        StructType(tpes.toList)
+      //      case ee: EntityElem[a] =>
+      //        val ent = Entity(entityDef(ee).name)
+      //        val elemSubst = ee.typeArgs
+      //        val subst = ent.typeArgs.map((a: ArgElem) => {
+      //          val el = elemSubst.getOrElse(a.name, a)
+      //          (a, el)
+      //        })
+      //        new EntityApply(ent, subst.toMap)
+      //      case be: BaseTypeElem1[a,tExt,cBase] =>
+      //        val a = Type(be.eItem)
+      //        BaseType(be.runtimeClass.getSimpleName, List(a))
+      //      case be: BaseTypeElem[tBase,tExt] =>
+      //        BaseType(be.runtimeClass.getSimpleName, Nil)
+
+
+      case _ => null
+    }
   }
 
   type LElem[A] = Lazy[Elem[A]] // lazy element
