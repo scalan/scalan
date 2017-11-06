@@ -1,12 +1,13 @@
 package scalan.json
 
-import scalan.{Scalan, BaseNestedTests}
+import scalan.{BaseNestedTests, Scalan}
 import spray.json.JsonFormat
 import spray.json._
 
 trait JsonTests extends BaseNestedTests {
 
-  class JsonFormatTester[C <: Scalan](val ctx: C) {
+  class JsonFormatTester[C <: Scalan](val protocol: ScalanJsonProtocol[C]) {
+    import protocol._
     import ctx._
 
     def parse[T: JsonFormat](str: String, expected: T): Unit = {
@@ -35,4 +36,8 @@ trait JsonTests extends BaseNestedTests {
     }
   }
 
+  def getTester = {
+    val tester = new JsonFormatTester(new ScalanJsonProtocol(new Scalan))
+    tester
+  }
 }

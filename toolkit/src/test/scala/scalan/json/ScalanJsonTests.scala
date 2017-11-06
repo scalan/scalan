@@ -4,12 +4,25 @@ import scalan.{BaseNestedTests, Scalan}
 import spray.json._
 
 class ScalanJsonTests extends JsonTests {
+  describe("Extraction of UnOps") {
+    it("list classes") {
+      val tester = getTester
+      import tester._
+      import protocol._
+      import ctx._
+      val ints = ctx.getClass.getInterfaces
+      val unOpClasses = for {
+        int <- ints
+        c <- int.getDeclaredClasses if classOf[UnOp[_,_]].isAssignableFrom(c)
+      } yield c
+      println(unOpClasses)
+    }
+  }
   describe("Elem <-> Json iso") {
-    object ScalanJsonProtocol extends ScalanJsonProtocol(new Scalan)
-    import ScalanJsonProtocol._
-    import ScalanJsonProtocol.ctx._
-    val tester = new JsonFormatTester(ScalanJsonProtocol.ctx)
+    val tester = getTester
     import tester._
+    import protocol._
+    import ctx._
     describe("Elem parsing") {
       parse(""" "String" """, element[String])
       parse(""" "Int" """, element[Int])
@@ -34,27 +47,35 @@ class ScalanJsonTests extends JsonTests {
     }
   }
   describe("ProgramGraph <-> Json iso") {
-    object ScalanJsonProtocol extends ScalanJsonProtocol(new Scalan)
-    import ScalanJsonProtocol._
-    import ScalanJsonProtocol.ctx._
-    val tester = new JsonFormatTester(ScalanJsonProtocol.ctx)
-    import tester._
-    val f = fun { x: Rep[Int] => x + 1 }
-    describe("Lambda parsing") {
-
-    }
+    val graphJson =
+      """{
+       |  "type": "ProgramGraph",
+       |  "s1": ["Const", "1", "Int"],
+       |  "s2": {
+       |    "type": "Lambda",
+       |    "var": ["s4", "Int"],
+       |    "s3": ["+(s4, s1)", "Int"]
+       |  }
+       |}""".stripMargin
     describe("Lambda printing") {
+      val tester = getTester
+      import tester._
+      import protocol._
+      import ctx._
+      val f = fun { x: Rep[Int] => x + 1 }
       val g = new PGraph(f)
-      print(g,
-        """{
-         |  "type": "ProgramGraph",
-         |  "s1": ["Const", "1", "Int"],
-         |  "s2": {
-         |    "type": "Lambda",
-         |    "var": ["s4", "Int"],
-         |    "s3": ["+(s4, s1)", "Int"]
-         |  }
-         |}""".stripMargin)
+      print(g, graphJson)
     }
+    describe("Lambda parsing") {
+      val tester = getTester
+      import tester._
+      import protocol._
+      import ctx._
+      val f = fun { x: Rep[Int] => x + 1 }
+      val g = new PGraph(f)
+      parse(graphJson, g)
+    }
+
   }
+
 }
