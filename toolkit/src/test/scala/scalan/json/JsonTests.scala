@@ -4,6 +4,8 @@ import scalan.{BaseNestedTests, Scalan}
 import spray.json.JsonFormat
 import spray.json._
 
+import scalan.util.FileUtil
+
 trait JsonTests extends BaseNestedTests {
 
   class JsonFormatTester[C <: Scalan](val protocol: ScalanJsonProtocol[C]) {
@@ -26,10 +28,16 @@ trait JsonTests extends BaseNestedTests {
       }
     }
 
-    def test[T: JsonFormat](e: T): Unit = {
+    def test[T: JsonFormat](e: T, fileName: String = ""): Unit = {
       it(s"for $e") {
         val json = e.toJson
         val printed = json.prettyPrint
+
+        if (fileName.nonEmpty)
+          FileUtil.withFile(FileUtil.file(prefix, fileName + ".json")) { w =>
+            w.println(printed)
+          }
+
         val parsed = printed.parseJson.convertTo[T]
         parsed should be(e)
       }

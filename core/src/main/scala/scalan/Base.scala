@@ -33,6 +33,7 @@ trait Base extends LazyLogging { scalan: Scalan =>
   type DoubleRep = Rep[Double]
   type :=>[-A, +B] = PartialFunction[A, B]
   type RFunc[-A,+B] = Rep[Function1[A,B]]
+  type RPair[+A, +B] = Rep[(A,B)]
 
   // Consider if extra data should be Seq[Any] instead (change name in this case)
   class StagingException(message: String, cause: Throwable, val syms: Seq[Rep[_]]) extends

@@ -84,7 +84,8 @@ class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
       JsObject(ListMap(Seq( // ListMap to preserve order
         ("type", JsString("Lambda")),
         ("var", JsArray(JsString(mapSym(lam.x)), elementFormat.write(lam.x.elem)))) ++
-          fields: _*))
+          fields ++
+          Seq(("roots", JsString(mapSym(lam.y)))): _*))
     }
 
     def read(json: JsValue) = json match {
@@ -94,7 +95,7 @@ class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
   }
 
   object JsDef {
-    val fmt = """([\w$]+)\(([s\d\s,]+)\)""".r
+    val fmt = """([\w$+\-*\/]+)\(([s\d\s,]+)\)""".r
 
     def unapply(json: JsValue): Option[(String, Seq[Int], Elem[_])] = json match {
       case JsArray(Vector(JsString(fmt(opName, sArgs)), jsElem)) =>
@@ -129,7 +130,7 @@ class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
         (fields.get("type"), fields.get("roots")) match {
           case (Some(JsString("ProgramGraph")), Some(JsString(sRoots))) =>
             val roots = sRoots.split(',').map(readId(_)).toSeq
-            Some((fields - "type", roots))
+            Some((fields -- Seq("type", "roots"), roots))
           case _ => None
         }
       case _ => None
@@ -166,8 +167,14 @@ class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
             val f = fun({ x: Sym =>
               idToSym += (varId -> x)
               readDefs(lamBody.toList.sortBy(_._1))
+              mapId(roots(0))
             })(Lazy(eVar))
             idToSym += (id -> f)
+          case JsArray(Vector(JsString("Const"), JsString(sValue), jsElem)) =>
+            val e = elementFormat[Any].read(jsElem)
+            val value = readConstValue(sValue, e)
+            val s = toRep(value)(e)
+            idToSym += (id -> s)
           case JsDef(opName, argIds, eRes) =>
             val argSyms = argIds.map(idToSym(_))
             val s = addDef(opName, argSyms, eRes)
@@ -175,20 +182,67 @@ class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
         }
       }
 
-    private def addDef(opName: String, args: Seq[Sym], eRes: Elem[_]): Sym = {
-      ctx.???
+    def readConstValue[A](sValue: String, e: Elem[A]): A = (e match {
+      case _ if e == IntElement => sValue.toInt
+      case _ =>
+        ctx.!!!(s"""Don't know how to parse "$sValue" into type of $e.""")
+    }).asInstanceOf[A]
+
+    private def addDef(opName: String, args: Seq[Sym], eRes: Element): Sym = (opName, args, eRes) match {
+      case NumericBinOp(d) => d
+      case DeclaredUnOp(d) => d
+      case ("First", Seq(IsPair(p: RPair[a,b])), _) => reifyObject(First(p))
+      case ("Second", Seq(IsPair(p: RPair[a,b])), _) => reifyObject(Second(p))
+      case _ =>
+        ctx.!!!(s"Cannot add definition for operation $opName($args): $eRes.")
     }
 
-    val BinOps = Map(
-      "+" -> Map(
-         IntElement -> {}
-         ),
-      "-" -> Map(
-        IntElement -> {}
-      ),
-      "*" -> Map(
-        IntElement -> {}
-      ))
+    type Element = Elem[_]
+
+    object DeclaredUnOp {
+      val unOpClass = classOf[UnOp[_,_]]
+      val declaredOps = {
+        val ops = for {
+          int <- ctx.getClass.getInterfaces
+          m <- int.getDeclaredMethods if unOpClass.isAssignableFrom(m.getReturnType)
+        } yield {
+          val op = m.invoke(ctx).asInstanceOf[UnOp[Any,Any]]
+          (op.opName, op)
+        }
+        ops.toMap
+      }
+      def unapply(in: (String, Seq[Sym], Element)): Option[ApplyUnOp[_, _]] = declaredOps.get(in._1) match {
+        case Some(op: UnOp[a,b]) =>
+          Some(ApplyUnOp[a,b](op, in._2(0).asRep[a]))
+        case _ => None
+      }
+    }
+
+    object NumericBinOp {
+      def unapply(in : (String, Seq[Sym], Element)): Option[ApplyBinOp[_,_]] = {
+        val (opName: String, args: Seq[Sym], eRes) = in
+        BinOps.get(opName) match {
+          case Some(elems) => elems.get(eRes) match {
+            case Some(op: BinOp[a,b]) =>
+              Some(ApplyBinOp[a,b](op, args(0).asRep[a], args(1).asRep[a]))
+            case None => None
+          }
+          case None => None
+        }
+      }
+
+      val BinOps: Map[String, Map[Element, BinOp[_,_]]] = Map(
+        "+" -> Map[Element, BinOp[_,_]](
+          IntElement -> NumericPlus[Int](numeric[Int])
+        ),
+        "-" -> Map(
+          IntElement -> NumericMinus[Int](numeric[Int])
+        ),
+        "*" -> Map(
+          IntElement -> NumericTimes[Int](numeric[Int])
+        ))
+    }
+
   }
 
 }

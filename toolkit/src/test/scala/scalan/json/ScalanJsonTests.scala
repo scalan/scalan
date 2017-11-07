@@ -50,11 +50,13 @@ class ScalanJsonTests extends JsonTests {
     val graphJson =
       """{
        |  "type": "ProgramGraph",
+       |  "roots": "s2",
        |  "s1": ["Const", "1", "Int"],
        |  "s2": {
        |    "type": "Lambda",
        |    "var": ["s4", "Int"],
-       |    "s3": ["+(s4, s1)", "Int"]
+       |    "s3": ["+(s4, s1)", "Int"],
+       |    "roots": "s3"
        |  }
        |}""".stripMargin
     describe("Lambda printing") {
@@ -75,7 +77,17 @@ class ScalanJsonTests extends JsonTests {
       val g = new PGraph(f)
       parse(graphJson, g)
     }
-
+    describe("Various Lambda tests") {
+      val tester = getTester
+      import tester._
+      import protocol._
+      import ctx._
+      def testLam[A,B](f: Rep[A => B], fileName: String = ""): Unit = {
+        val g = new PGraph(f)
+        test(g, fileName)
+      }
+      testLam(fun { x: Rep[(Int,String)] => x._1 + x._2.length }, "lambda with Pair argument")
+    }
   }
 
 }

@@ -29,6 +29,22 @@ trait NumericOps extends Base { self: Scalan =>
     def %(y: Rep[T]): Rep[T] = mod(y)
   }
 
+  def numeric[T:Numeric]: Numeric[T] = implicitly[Numeric[T]]
+  def fractional[T:Fractional]: Fractional[T] = implicitly[Fractional[T]]
+  def integral[T:Integral]: Integral[T] = implicitly[Integral[T]]
+
+  val elemToNumeric = Map(
+    IntElement -> numeric[Int],
+    LongElement -> numeric[Long]
+  )
+  val elemToFractional = Map(
+    FloatElement -> fractional[Float],
+    DoubleElement -> fractional[Double]
+  )
+  val elemToIntegral = Map(
+    IntElement -> integral[Int],
+    LongElement -> integral[Long]
+  )
   case class NumericPlus[T: Elem](n: Numeric[T]) extends EndoBinOp[T]("+", n.plus)
 
   case class NumericMinus[T: Elem](n: Numeric[T]) extends EndoBinOp[T]("-", n.minus)

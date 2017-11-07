@@ -13,6 +13,13 @@ trait Tuples extends Base { self: Scalan =>
     def unapply[A, B](p: Rep[(A, B)]) = Some(unzipPair[A, B](p))
   }
 
+  object IsPair {
+    def unapply[A,B](s: Sym): Option[Rep[(A,B)]] = s.elem match {
+      case pe: PairElem[_,_] => Some(s.asRep[(A,B)])
+      case _ => None
+    }
+  }
+
   implicit class ListOps[A, B](t: Rep[(A, B)]) {
     def head: Rep[A] = { val Pair(x, _) = t; x }
     def tail: Rep[B] = { val Pair(_, x) = t; x }
