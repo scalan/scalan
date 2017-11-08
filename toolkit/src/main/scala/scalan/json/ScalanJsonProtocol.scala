@@ -8,6 +8,11 @@ import scalan.{Scalan, Lazy}
 import scala.collection.mutable.{Map => MMap}
 import scalan.meta.PrintExtensions._
 
+/** Extension of spray.json's default protocol to support Scalan specific types.
+  * See https://github.com/spray/spray-json  for details.
+  * Each instance of protocol is parameterized by Scalan cake containing IR nodes
+  * (see Def[_] hierarchy of classes).
+  * */
 class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
   import ctx._
   import parsers._
@@ -225,7 +230,7 @@ class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
           case Some(elems) => elems.get(eRes) match {
             case Some(op: BinOp[a,b]) =>
               Some(ApplyBinOp[a,b](op, args(0).asRep[a], args(1).asRep[a]))
-            case None => None
+            case _ => None
           }
           case None => None
         }

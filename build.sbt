@@ -69,7 +69,7 @@ lazy val lmsBackendSettings = itSettings ++ scalaVirtualizedSettings ++ Seq(
 
 def libraryDefSettings(scalanizerOption: String) = commonSettings ++ Seq(
   scalacOptions ++= Seq(
-          "-Xplugin:scalanizer/target/scala-2.11/scalanizer-assembly-0.3.0-SNAPSHOT.jar"
+          s"-Xplugin:${file(".").absolutePath}/scalanizer/target/scala-2.11/scalanizer-assembly-0.3.0-SNAPSHOT.jar"
           , s"-P:scalanizer:module=$scalanizerOption"
     //    , "-Xgenerate-phase-graph"
   )
@@ -122,8 +122,9 @@ lazy val libraryimpl = Project("library-impl", file("library-impl"))
     libraryDependencies ++= Seq())
 
 lazy val library = Project("library", file("library"))
-  .dependsOn(common % allConfigDependency, core % allConfigDependency, libraryimpl)
-  .settings(libraryDefSettings("library"),
+  .dependsOn(common % allConfigDependency, core % allConfigDependency/*, libraryimpl*/)
+  .settings(commonSettings,
+//    libraryDefSettings("library"),
     libraryDependencies ++= Seq())
 
 lazy val core = Project("scalan-core", file("core"))
@@ -144,7 +145,7 @@ lazy val kotlinBackend = Project("scalan-kotlin-backend", file("kotlin-backend")
   )
 
 lazy val toolkit = Project("scalan-toolkit", file("toolkit")).
-  dependsOn(common % allConfigDependency, meta % allConfigDependency, core % allConfigDependency)
+  dependsOn(common % allConfigDependency, meta % allConfigDependency, core % allConfigDependency, library)
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq("io.spray" %%  "spray-json" % "1.3.3")

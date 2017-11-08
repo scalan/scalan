@@ -4,22 +4,8 @@ import scalan.{BaseNestedTests, Scalan}
 import spray.json._
 
 class ScalanJsonTests extends JsonTests {
-  describe("Extraction of UnOps") {
-    it("list classes") {
-      val tester = getTester
-      import tester._
-      import protocol._
-      import ctx._
-      val ints = ctx.getClass.getInterfaces
-      val unOpClasses = for {
-        int <- ints
-        c <- int.getDeclaredClasses if classOf[UnOp[_,_]].isAssignableFrom(c)
-      } yield c
-      println(unOpClasses)
-    }
-  }
   describe("Elem <-> Json iso") {
-    val tester = getTester
+    val tester = getTester(new Scalan)
     import tester._
     import protocol._
     import ctx._
@@ -60,7 +46,7 @@ class ScalanJsonTests extends JsonTests {
        |  }
        |}""".stripMargin
     describe("Lambda printing") {
-      val tester = getTester
+      val tester = getTester(new Scalan)
       import tester._
       import protocol._
       import ctx._
@@ -69,7 +55,7 @@ class ScalanJsonTests extends JsonTests {
       print(g, graphJson)
     }
     describe("Lambda parsing") {
-      val tester = getTester
+      val tester = getTester(new Scalan)
       import tester._
       import protocol._
       import ctx._
@@ -78,7 +64,7 @@ class ScalanJsonTests extends JsonTests {
       parse(graphJson, g)
     }
     describe("Various Lambda tests") {
-      val tester = getTester
+      val tester = getTester(new Scalan)
       import tester._
       import protocol._
       import ctx._

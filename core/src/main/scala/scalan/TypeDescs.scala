@@ -150,20 +150,21 @@ trait TypeDescs extends Base { self: Scalan =>
         val a = pe.eDom.toTpeExpr
         val b = pe.eRange.toTpeExpr
         STpeFunc(a,b)
-
+//      case ee: EntityElem[a] =>
+//        val ent = Entity(entityDef(ee).name)
+//        val elemSubst = ee.typeArgs
+//        val subst = ent.typeArgs.map((a: ArgElem) => {
+//          val el = elemSubst.getOrElse(a.name, a)
+//          (a, el)
+//        })
+//        new EntityApply(ent, subst.toMap)
   //      case ae: StructElem[a] =>
       //        val tpes = ae.fields.map { case (name, el) =>
       //          BaseType(name, List(el))
       //        }
       //        StructType(tpes.toList)
-      //      case ee: EntityElem[a] =>
-      //        val ent = Entity(entityDef(ee).name)
-      //        val elemSubst = ee.typeArgs
-      //        val subst = ent.typeArgs.map((a: ArgElem) => {
-      //          val el = elemSubst.getOrElse(a.name, a)
-      //          (a, el)
-      //        })
-      //        new EntityApply(ent, subst.toMap)
+
+
       //      case be: BaseTypeElem1[a,tExt,cBase] =>
       //        val a = Type(be.eItem)
       //        BaseType(be.runtimeClass.getSimpleName, List(a))
@@ -171,7 +172,7 @@ trait TypeDescs extends Base { self: Scalan =>
       //        BaseType(be.runtimeClass.getSimpleName, Nil)
 
 
-      case _ => null
+      case _ => sys.error(s"Cannot perform toTpeExpr for $e")
     }
   }
 

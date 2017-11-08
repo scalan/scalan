@@ -22,7 +22,8 @@ class ScalanizerPluginConfig extends ScalanizerConfig {
       .add(TargetModuleConf("library",
         sourceModules = ConfMap()
             .add(apiModule)
-            .add(implModule)))
+//            .add(implModule)
+      ))
 
   def getModule(moduleName: String): ModuleConf = {
     val source = sourceModules.get(moduleName)

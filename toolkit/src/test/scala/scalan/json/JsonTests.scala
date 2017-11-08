@@ -44,8 +44,8 @@ trait JsonTests extends BaseNestedTests {
     }
   }
 
-  def getTester = {
-    val tester = new JsonFormatTester(new ScalanJsonProtocol(new Scalan))
+  def getTester[C <: Scalan](ctx: C) = {
+    val tester = new JsonFormatTester(new ScalanJsonProtocol(ctx))
     tester
   }
 }

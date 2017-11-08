@@ -1,4 +1,4 @@
-package scalanizer.collections {
+package scalan.collection {
   import scalan._
 
   trait Cols extends Base { self: ColsModule =>
@@ -8,18 +8,14 @@ package scalanizer.collections {
       def length: Rep[Int];
       def apply(i: Rep[Int]): Rep[A]
     };
-    abstract class ColOverArray[A](val arr: Rep[WArray[A]]) extends Col[A] {
-      def length: Rep[Int] = ColOverArray.this.arr.length;
-      def apply(i: Rep[Int]): Rep[A] = ColOverArray.this.arr.apply(i)
-    };
-    trait ColCompanion {
-      def fromArray[T](arr: Rep[WArray[T]]): Rep[Col[T]] = ColOverArray(arr);
+    trait ColBuilder {
+      def fromArray[T](arr: Rep[WArray[T]]): Rep[Col[T]];
       def ddmvm(v: Rep[WArray[Double]]): Rep[Int] = {
         val xs: Rep[WArray[Int]] = WArray.fill[Int](v.length, Thunk(toRep(0.asInstanceOf[Int])));
         val c: Rep[WArray[scala.Tuple2[Int, Double]]] = xs.zip(v).map(fun(((d: Rep[scala.Tuple2[Int, Double]]) => d)));
         c.length
       }
     };
-    trait ColOverArrayCompanion
+    trait ColCompanion
   }
 }
