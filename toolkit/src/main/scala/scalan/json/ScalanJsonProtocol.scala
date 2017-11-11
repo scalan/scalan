@@ -89,9 +89,9 @@ class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol wi
         val m = getMethod(className, methodName, args.map(_.getClass))
         val s = mkMethodCall(obj, m, args.toList, neverInvoke, eRes)
         s
-      case JsArray(Vector(JsString("Const"), JsString(sValue), jsElem)) =>
+      case JsArray(Vector(JsString("Const"), jsValue, jsElem)) =>
         val e = elementFormat[Any].read(jsElem)
-        val value = readConstValue(sValue, e)
+        val value = fromJsonValue(jsValue, e)
         val s = toRep(value)(e)
         s
       case JsDef(opName, argIds, eRes) =>

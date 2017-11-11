@@ -116,10 +116,49 @@ trait ScalanJsonContext[C <: Scalan] { self: ScalanJsonProtocol[C] =>
 
   type Element = Elem[_]
 
-  def readConstValue[A](sValue: String, e: Elem[A]): A = (e match {
-    case _ if e == IntElement => sValue.toInt
+  def toJsonValue[A](v: A, eA: Elem[A]): JsValue = (v, eA: TypeDesc) match {
+    case (v: Boolean, BooleanElement) => JsBoolean(v)
+    case (_, IntElement) => JsString(v.toString)
+    case (_, ShortElement) => JsString(v.toString)
+    case (_, LongElement) => JsString(v.toString)
+    case (_, ByteElement) => JsString(v.toString)
+    case (_, FloatElement) => JsString(v.toString)
+    case (_, DoubleElement) => JsString(v.toString)
+    case (_, UnitElement) => JsString("()")
+    case (_, CharElement) => JsString(v.toString)
+    case (_, StringElement) => JsString(v.toString)
+    case (_, pe: PairElem[a, b]) =>
+      val pv = v.asInstanceOf[(a,b)]
+      JsArray(toJsonValue(pv._1, pe.eFst), toJsonValue(pv._2, pe.eSnd))
+    case (Left(v), se: SumElem[a, b]) =>
+      val lv = v.asInstanceOf[a]
+      JsArray(JsString("left"), toJsonValue(lv, se.eLeft))
+    case (Right(v), se: SumElem[a, b]) =>
+      val rv = v.asInstanceOf[b]
+      JsArray(JsString("right"), toJsonValue(rv, se.eRight))
     case _ =>
-      ctx.!!!(s"""Don't know how to parse "$sValue" into type of $e.""")
+      ctx.!!!(s"""Don't know how to write "$v" of type $eA to json.""")
+  }
+
+  def fromJsonValue[A](jsValue: JsValue, e: Elem[A]): A = ((jsValue, e: TypeDesc) match {
+    case (JsBoolean(s), BooleanElement) => s
+    case (JsString(s), IntElement) => s.toInt
+    case (JsString(s), ShortElement) => s.toShort
+    case (JsString(s), LongElement) => s.toLong
+    case (JsString(s), ByteElement) => s.toByte
+    case (JsString(s), FloatElement) => s.toFloat
+    case (JsString(s), DoubleElement) => s.toDouble
+    case (JsString(s), UnitElement) => ()
+    case (JsString(s), CharElement) => s(0)
+    case (JsString(s), StringElement) => s
+    case (JsArray(Vector(jsA, jsB)), pe: PairElem[a,b]) =>
+      (fromJsonValue(jsA, pe.eFst), fromJsonValue(jsB, pe.eSnd))
+    case (JsArray(Vector(JsString("left"), jsLeft)), se: SumElem[a,b]) =>
+      Left(fromJsonValue(jsLeft, se.eLeft))
+    case (JsArray(Vector(JsString("right"), jsRight)), se: SumElem[a,b]) =>
+      Right(fromJsonValue(jsRight, se.eRight))
+    case _ =>
+      ctx.!!!(s"""Don't know how to read json "$jsValue" into a value of type $e.""")
   }).asInstanceOf[A]
 
   object DeclaredUnOp {
