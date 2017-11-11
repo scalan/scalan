@@ -1,6 +1,6 @@
 package scalan.json
 
-import spray.json.{deserializationError, DefaultJsonProtocol, PrettyPrinter, JsObject, JsArray, JsonFormat, JsString, JsValue}
+import spray.json.{deserializationError, DefaultJsonProtocol, PrettyPrinter, JsObject, JsArray, JsonFormat, JsString, JsValue, JsBoolean}
 import scala.annotation.tailrec
 import scala.collection.Seq
 import scala.collection.immutable.ListMap
@@ -13,30 +13,12 @@ import scalan.meta.PrintExtensions._
   * Each instance of protocol is parameterized by Scalan cake containing IR nodes
   * (see Def[_] hierarchy of classes).
   * */
-class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
+class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol with ScalanJsonContext[C] {
+
   import ctx._
-  import parsers._
-
-  implicit val context = parsers.context // for resolution and disambiguation
-  implicit val parseCtx = new ParseCtx(false)
-  implicit val genCtx = new GenCtx(context, toRep = false)
-  val symToId = MMap.empty[Sym, Int]
-  val idToSym = MMap.empty[Int, Sym]
-  private var currId: Int = 0
-
-  def newId(): Int = {currId += 1; currId }
-
-  def mapSym(s: Sym): String = symToId.get(s) match {
-    case Some(id) => s"s$id"
-    case None =>
-      val id = newId()
-      symToId += (s -> id)
-      s"s$id"
-  }
-
-  def mapId(id: Int): Sym = idToSym(id)
-
-  def readId(sId: String) = sId.trim.stripPrefix("s").toInt
+//  {PGraph, Lambda, Def, Elem, parsers, ElemOps, TypeDesc, emptySubst, Const, MethodCall, TypeDescOps,
+//              Sym, syms, ApplyBinOp, ApplyUnOp, TableEntry, MapTransformer, fun, toRep}
+  import parsers.{genTypeExpr, global, parseType}
 
   implicit def elementFormat[T]: JsonFormat[Elem[T]] = new JsonFormat[Elem[T]] {
     def write(e: Elem[T]) = {
@@ -55,26 +37,68 @@ class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
     }
   }
 
-  implicit def defFormat[T]: JsonFormat[Def[T]] = new JsonFormat[Def[T]] {
-    def opName(d: Def[T]) = d match {
+  implicit object SymFormat extends JsonFormat[Sym] {
+    private def opName(d: Def[_]) = d match {
       case d: ApplyUnOp[_, _] => d.op.opName
       case d: ApplyBinOp[_, _] => d.op.opName
-      case _ => d.getClass.getSimpleName
+      case d: MethodCall => d.getClass.getSimpleName
+      case First(_) | Second(_) => d.getClass.getSimpleName
+      case _ => ctx.!!!(s"Don't know how to get opName for $d")
+    }
+    private def addDef(opName: String, args: Seq[Sym], eRes: Element): Sym = (opName, args, eRes) match {
+      case NumericBinOp(d) => d
+      case DeclaredUnOp(d) => d
+      case ("First", Seq(IsPair(p: RPair[a,b])), _) => reifyObject(First(p))
+      case ("Second", Seq(IsPair(p: RPair[a,b])), _) => reifyObject(Second(p))
+      case _ =>
+        ctx.!!!(s"Cannot add definition for operation $opName($args): $eRes.")
     }
 
-    def write(d: Def[T]) = d match {
-      case Const(c) =>
-        JsArray(JsString("Const"), JsString(c.toString), elementFormat.write(d.selfType))
-      case d =>
+    def write(sym: Sym) = sym match {
+      case Def(Const(c)) =>
+        JsArray(JsString("Const"), JsString(c.toString), elementFormat.write(sym.elem))
+      case Def(MethodCall(obj, m, args, neverInvoke)) =>
+        val params = "MethodCall" :: mapSym(obj) :: m.getDeclaringClass.getName :: m.getName :: neverInvoke.toString ::
+              args.map(mapMCallArg(_)(mapSym(_)))
+//            args.map { _ match {
+//              case s: Sym => mapSym(s)
+//              case x => ctx.!!!(s"MethodCall with non-Sym argument $x is not supported for Json serialization of $d")
+//            }}
+        JsArray(params.map(JsString(_)) :+ elementFormat.write(sym.elem): _*)
+      case Def(d) =>
         val args = syms(d).map(mapSym(_))
-        val str = s"${opName(d) }(${args.rep() })"
+        val str = s"${opName(d)}(${args.rep()})"
         JsArray(JsString(str), elementFormat.write(d.selfType))
     }
 
-    def read(json: JsValue) = json match {
-      case JsString(tpeStr) =>
-        ctx.???
-      case _ => deserializationError("String expected of type term")
+    def readDefs(defs: Seq[(Int, JsValue)]): Unit =
+      for ((id, jsDef) <- defs) {
+        val s = SymFormat.read(jsDef)
+        idToSym += (id -> s)
+      }
+
+    def read(json: JsValue): Sym = json match {
+      case JsLambda(varId, eVar, lamBody, roots) =>
+        val f = fun({ x: Sym =>
+          idToSym += (varId -> x)
+          readDefs(sortedSchedule(lamBody))
+          mapId(roots(0))
+        })(Lazy(eVar))
+        f
+      case JsMethodCall(obj, className, methodName, neverInvoke, eRes, args) =>
+        val m = getMethod(className, methodName, args.map(_.getClass))
+        val s = mkMethodCall(obj, m, args.toList, neverInvoke, eRes)
+        s
+      case JsArray(Vector(JsString("Const"), JsString(sValue), jsElem)) =>
+        val e = elementFormat[Any].read(jsElem)
+        val value = readConstValue(sValue, e)
+        val s = toRep(value)(e)
+        s
+      case JsDef(opName, argIds, eRes) =>
+        val argSyms = argIds.map(idToSym(_))
+        val s = addDef(opName, argSyms, eRes)
+        s
+      case _ => deserializationError(s"Cannot read Def from $json")
     }
   }
 
@@ -84,7 +108,7 @@ class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
         case TableEntry(s, Lambda(l, _, x, y)) =>
           (mapSym(s), LambdaFormat.write(l))
         case TableEntry(s, d) =>
-          (mapSym(s), defFormat.write(d))
+          (mapSym(s), SymFormat.write(s))
       }
       JsObject(ListMap(Seq( // ListMap to preserve order
         ("type", JsString("Lambda")),
@@ -99,56 +123,13 @@ class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
     }
   }
 
-  object JsDef {
-    val fmt = """([\w$+\-*\/]+)\(([s\d\s,]+)\)""".r
-
-    def unapply(json: JsValue): Option[(String, Seq[Int], Elem[_])] = json match {
-      case JsArray(Vector(JsString(fmt(opName, sArgs)), jsElem)) =>
-        val argIds = sArgs.split(',').map(readId(_)).toSeq
-        val eRes = elementFormat.read(jsElem)
-        Some((opName, argIds, eRes))
-      case _ => None
-    }
-  }
-
-  object JsLambda {
-    val specialFields = Seq("type", "var", "roots")
-
-    def unapply(jsLam: JsValue): Option[(Int, Elem[Any], Map[String, JsValue], Seq[Int])] = jsLam match {
-      case obj @ JsObject(fields) =>
-        obj.getFields(specialFields: _*) match {
-          case Seq(JsString("Lambda"), JsArray(Vector(JsString(sId), jsType)), JsString(roots)) =>
-            val varId = readId(sId)
-            val eVar = elementFormat.read(jsType)
-            val defs = fields -- specialFields
-            val res = roots.split(',').map(readId(_)).toSeq
-            Some((varId, eVar.asElem[Any], defs, res))
-          case _ => None
-        }
-      case _ => None
-    }
-  }
-
-  object JsProgramGraph {
-    def unapply(json: JsValue): Option[(Map[String, JsValue], Seq[Int])] = json match {
-      case JsObject(fields) =>
-        (fields.get("type"), fields.get("roots")) match {
-          case (Some(JsString("ProgramGraph")), Some(JsString(sRoots))) =>
-            val roots = sRoots.split(',').map(readId(_)).toSeq
-            Some((fields -- Seq("type", "roots"), roots))
-          case _ => None
-        }
-      case _ => None
-    }
-  }
-
   implicit object ProgramGraphFormat extends JsonFormat[PGraph] {
     def write(g: PGraph) = {
       val fields = g.schedule.map {
         case TableEntry(s, Lambda(l, _, x, y)) =>
           (mapSym(s), LambdaFormat.write(l))
         case TableEntry(s, d) =>
-          (mapSym(s), defFormat.write(d))
+          (mapSym(s), SymFormat.write(s))
       }
       val roots = g.roots.map(mapSym(_))
       JsObject(ListMap( // ListMap to preserve order
@@ -158,96 +139,11 @@ class ScalanJsonProtocol[C <: Scalan](val ctx: C) extends DefaultJsonProtocol {
 
     def read(json: JsValue) = json match {
       case JsProgramGraph(fields, rootIds) =>
-        readDefs(fields.toList.sortBy(_._1))
+        SymFormat.readDefs(sortedSchedule(fields))
         val rootSyms = rootIds.map(mapId(_))
         new PGraph(rootSyms.toList)(MapTransformer.ops)
       case _ => deserializationError("String expected of type term")
     }
-
-    private def readDefs(defs: List[(String, JsValue)]): Unit =
-      for ((sId, jsDef) <- defs) {
-        val id = readId(sId)
-        jsDef match {
-          case JsLambda(varId, eVar, lamBody, roots) =>
-            val f = fun({ x: Sym =>
-              idToSym += (varId -> x)
-              readDefs(lamBody.toList.sortBy(_._1))
-              mapId(roots(0))
-            })(Lazy(eVar))
-            idToSym += (id -> f)
-          case JsArray(Vector(JsString("Const"), JsString(sValue), jsElem)) =>
-            val e = elementFormat[Any].read(jsElem)
-            val value = readConstValue(sValue, e)
-            val s = toRep(value)(e)
-            idToSym += (id -> s)
-          case JsDef(opName, argIds, eRes) =>
-            val argSyms = argIds.map(idToSym(_))
-            val s = addDef(opName, argSyms, eRes)
-            idToSym += (id -> s)
-        }
-      }
-
-    def readConstValue[A](sValue: String, e: Elem[A]): A = (e match {
-      case _ if e == IntElement => sValue.toInt
-      case _ =>
-        ctx.!!!(s"""Don't know how to parse "$sValue" into type of $e.""")
-    }).asInstanceOf[A]
-
-    private def addDef(opName: String, args: Seq[Sym], eRes: Element): Sym = (opName, args, eRes) match {
-      case NumericBinOp(d) => d
-      case DeclaredUnOp(d) => d
-      case ("First", Seq(IsPair(p: RPair[a,b])), _) => reifyObject(First(p))
-      case ("Second", Seq(IsPair(p: RPair[a,b])), _) => reifyObject(Second(p))
-      case _ =>
-        ctx.!!!(s"Cannot add definition for operation $opName($args): $eRes.")
-    }
-
-    type Element = Elem[_]
-
-    object DeclaredUnOp {
-      val unOpClass = classOf[UnOp[_,_]]
-      val declaredOps = {
-        val ops = for {
-          int <- ctx.getClass.getInterfaces
-          m <- int.getDeclaredMethods if unOpClass.isAssignableFrom(m.getReturnType)
-        } yield {
-          val op = m.invoke(ctx).asInstanceOf[UnOp[Any,Any]]
-          (op.opName, op)
-        }
-        ops.toMap
-      }
-      def unapply(in: (String, Seq[Sym], Element)): Option[ApplyUnOp[_, _]] = declaredOps.get(in._1) match {
-        case Some(op: UnOp[a,b]) =>
-          Some(ApplyUnOp[a,b](op, in._2(0).asRep[a]))
-        case _ => None
-      }
-    }
-
-    object NumericBinOp {
-      def unapply(in : (String, Seq[Sym], Element)): Option[ApplyBinOp[_,_]] = {
-        val (opName: String, args: Seq[Sym], eRes) = in
-        BinOps.get(opName) match {
-          case Some(elems) => elems.get(eRes) match {
-            case Some(op: BinOp[a,b]) =>
-              Some(ApplyBinOp[a,b](op, args(0).asRep[a], args(1).asRep[a]))
-            case _ => None
-          }
-          case None => None
-        }
-      }
-
-      val BinOps: Map[String, Map[Element, BinOp[_,_]]] = Map(
-        "+" -> Map[Element, BinOp[_,_]](
-          IntElement -> NumericPlus[Int](numeric[Int])
-        ),
-        "-" -> Map(
-          IntElement -> NumericMinus[Int](numeric[Int])
-        ),
-        "*" -> Map(
-          IntElement -> NumericTimes[Int](numeric[Int])
-        ))
-    }
-
   }
 
 }

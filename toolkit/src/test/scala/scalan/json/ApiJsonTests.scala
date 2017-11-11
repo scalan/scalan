@@ -4,7 +4,9 @@ import scala.wrappers.WrappersModule
 import scalan.Scalan
 
 class ApiJsonTests extends JsonTests {
+
   class Ctx extends Scalan with WrappersModule
+
   describe("Wrapped methods <-> Json") {
     val tester = getTester(new Ctx)
     import tester._
@@ -15,6 +17,11 @@ class ApiJsonTests extends JsonTests {
       test(g, fileName)
     }
 
-    testLam(fun { xs: Rep[WArray[Int]] => xs.length }, "lambda with Pair argument")
+    testLam(fun { xs: Rep[WArray[Int]] => xs.length }, "lambda with WArray argument")
+    testLam(
+      fun { p: Rep[(WArray[Int], WArray[Int])] =>
+        val Pair(xs, ys) = p
+        xs.length + ys.length
+      }, "lambda with (WArray,WArray) argument")
   }
 }

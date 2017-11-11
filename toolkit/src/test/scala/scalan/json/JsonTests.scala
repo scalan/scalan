@@ -29,7 +29,8 @@ trait JsonTests extends BaseNestedTests {
     }
 
     def test[T: JsonFormat](e: T, fileName: String = ""): Unit = {
-      it(s"for $e") {
+      val testName = if (fileName.nonEmpty) fileName else e.toString
+      it(s"for $testName") {
         val json = e.toJson
         val printed = json.prettyPrint
 
