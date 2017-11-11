@@ -7,6 +7,7 @@ import spray.json._
 import scalan.util.FileUtil
 
 trait JsonTests extends BaseNestedTests {
+  val resourcesDir = "toolkit/src/test/resources/scalan/json"
 
   class JsonFormatTester[C <: Scalan](val protocol: ScalanJsonProtocol[C]) {
     import protocol._
