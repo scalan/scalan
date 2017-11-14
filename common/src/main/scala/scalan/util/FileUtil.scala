@@ -9,7 +9,7 @@ import java.util.jar.JarFile
 import org.apache.commons.io.{FileUtils, IOUtils}
 import scala.Console
 import scala.collection.JavaConverters._
-import scalan.util.StringUtil.StringExtensions
+import scalan.util.StringUtil.StringUtilExtensions
 
 object FileUtil {
   def read(file: File): String = FileUtils.readFileToString(file, Charset.defaultCharset())
@@ -254,8 +254,8 @@ object FileUtil {
 
   def isBadFileName(string: String) = cleanFileName(string) != string
 
-  def extractModuleName(path: String): String = {
-    val moduleDir = path.prefixBefore("/src/main/scala")
+  def extractModuleName(path: String, sourceDir: String = "src/main/scala"): String = {
+    val moduleDir = path.prefixBefore("/" + sourceDir)
     if (moduleDir.length == path.length) return ""
     moduleDir.lastComponent('/')
   }

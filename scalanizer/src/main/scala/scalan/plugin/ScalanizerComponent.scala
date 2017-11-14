@@ -8,7 +8,7 @@ abstract class ScalanizerComponent(
     val runsAfter: List[String],
     val global: Global,
     val pipeline: ScalanizerPipeline[Global]) extends PluginComponent {
-  override def enabled: Boolean = pipeline.isEnabled
+  override def enabled: Boolean = true
   override def description: String = s"Scalanizer component at phase $phaseName runs after $runsAfter"
 }
 

@@ -18,6 +18,11 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
   val runAfter = List("typer")
   val virtPipeline = new ModuleVirtualizationPipeline()(context)
 
+  override def isEnabled: Boolean = {
+    val moduleName = s.moduleName
+    s.snConfig.sourceModules.get(moduleName).isDefined
+  }
+
   val steps: List[PipelineStep] = List(
     ForEachUnitStep("wrapfrontend") { context => import context._;
       val unitName = unit.source.file.name
@@ -68,9 +73,9 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
           optimizedImplicits.packageName,
           optimizedImplicits.name,
           showCode(wrapperPackage))
-        /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
-        val boilerplateText = genWrapperBoilerplateText(moduleConf, module)
-        saveWrapperCode(moduleConf, module.packageName + ".impl", module.name + "Impl", boilerplateText)
+//        /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
+//        val boilerplateText = genWrapperBoilerplateText(moduleConf, module)
+//        saveWrapperCode(moduleConf, module.packageName + ".impl", module.name + "Impl", boilerplateText)
         wrapperSlices = updateWrapperSlices(wrapperSlices, wrapperModuleWithoutImpl)
       }
     },
@@ -79,7 +84,7 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
       if (isModuleUnit(unitName)) {
         implicit val ctx = new ParseCtx(false)(scalanizer.context)
         val moduleDef = moduleDefFromTree(unitName, unit.body)
-        scalanizer.inform(s"Adding module ${moduleDef.fullName} parsed from ${unit.source.file}")
+        scalanizer.inform(s"Step(virtfrontend): Adding source unit ${moduleDef.fullName} parsed from ${unit.source.file}")
         snState.addModule(moduleDef)
       }
     },

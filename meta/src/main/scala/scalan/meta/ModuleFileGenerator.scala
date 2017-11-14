@@ -7,6 +7,7 @@ import scalan.meta.PrintExtensions._
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstExtensions._
 import scalan.util.{StringUtil, ScalaNameUtil}
+import StringUtil.StringUtilExtensions
 import scalan.util.CollectionUtil.TraversableOps
 
 class ModuleFileGenerator(val codegen: MetaCodegen, module: SUnitDef, config: UnitConfig) {

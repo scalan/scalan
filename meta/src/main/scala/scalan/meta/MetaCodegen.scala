@@ -3,6 +3,7 @@ package scalan.meta
 import scalan.meta.PrintExtensions._
 import scala.collection.mutable.ArrayBuffer
 import scalan.util.{StringUtil, ScalaNameUtil}
+import StringUtil.StringUtilExtensions
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstExtensions._
 import scalan.meta.ScalanAstUtils.classArgsAsSeenFromAncestors

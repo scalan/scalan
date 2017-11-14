@@ -9,7 +9,9 @@ object StringUtil {
     s.substring(0, 1).toLowerCase + s.substring(1)
   }
 
-  implicit class StringExtensions(val str: String) extends AnyVal {
+  implicit class StringUtilExtensions(val str: String) extends AnyVal {
+    def isNullOrEmpty = str == null || str.isEmpty
+
     def stripAndTrim = str.stripMargin.stripPrefix("\n").stripPrefix("\r\n").stripLineEnd
 
     def lastComponent(sep: Char): String = {

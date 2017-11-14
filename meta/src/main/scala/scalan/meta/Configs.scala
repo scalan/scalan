@@ -42,6 +42,11 @@ object ConfMap {
 abstract class ModuleConf extends Conf {
 }
 
+object ModuleConf {
+  val SourcesDir = "src/main/scala"
+  val ResourcesDir = "src/main/resources"
+}
+
 case class TargetModuleConf(
     name: String,
     sourceModules: ConfMap[SourceModuleConf]
@@ -51,7 +56,7 @@ case class SourceModuleConf(
     name: String,
     units: ConfMap[UnitConfig] = ConfMap()
 ) extends ModuleConf {
-  def getResourceHome = name + "/src/main/resources"
+  def getResourceHome = s"$name/${ModuleConf.ResourcesDir}"
   def getWrappersHome = getResourceHome + "/wrappers"
 
   private def unitConfigTemplate(name: String, entityFile: String) =
@@ -67,8 +72,8 @@ case class SourceModuleConf(
 
   def mkUnit(unitName: String, unitFile: String) =
     unitConfigTemplate(unitName, unitFile).copy(
-      srcPath = s"$name/src/main/scala",
-      resourcePath = s"$name/src/main/resources"
+      srcPath = s"$name/${ModuleConf.SourcesDir}",
+      resourcePath = s"$name/${ModuleConf.ResourcesDir}"
     )
 
   def hasUnit(unitName: String) = units.contains(unitName)
@@ -86,8 +91,8 @@ case class SourceModuleConf(
 
 case class UnitConfig(
     name: String,
-    srcPath: String, // the base path to where root package is located (example: <module>/src/main/scala)
-    resourcePath: String, // example: <module>/src/main/resources
+    srcPath: String, // the base path to where root package is located (example: <module>/<ModuleConf.SourceDir>)
+    resourcePath: String, // example: <module>/<ModuleConf.ResourcesDir>
     entityFile: String, // the package path and file name (example: scalan/collection/Col.scala)
     baseContextTrait: String = "scalan.Scalan",
     extraImports: List[String] = List("scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}", "scalan.meta.ScalanAst._"),

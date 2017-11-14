@@ -21,7 +21,8 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
 
   def steps: List[PipelineStep]
 
-  var isEnabled: Boolean = false // should be explicitly enabled based on passed options in ScalanPlugin.init()
+  def isEnabled: Boolean
+
   trait UnitContext {
     val unit: global.CompilationUnit
   }
@@ -42,6 +43,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
     new ScalanizerComponent(step.name, runsAfter, global, pipeline) {
       def newPhase(prev: Phase) = new StdPhase(prev) {
         def apply(unit: global.CompilationUnit): Unit = {
+          if (!pipeline.isEnabled) return
           val context = UnitContext(unit.asInstanceOf[scalanizer.global.CompilationUnit])
           step.action(context)
         }
@@ -52,6 +54,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
     new ScalanizerComponent(step.name, runsAfter, global, pipeline) {
       def newPhase(prev: Phase) = new StdPhase(prev) {
         override def run(): Unit = {
+          if (!pipeline.isEnabled) return
           step.action(())
         }
 
@@ -62,7 +65,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
   /** Checks that the method has @HotSpot */
   def isHotSpotTree(tree: Tree): Boolean = tree match {
     case method: DefDef =>
-      val isHotSpot = method.symbol.annotations exists {annotation =>
+      val isHotSpot = method.symbol.annotations exists { annotation =>
         annotation.symbol.nameString == "HotSpot"
       }
       isHotSpot
@@ -126,7 +129,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
 
   /** Form the list of method arguments in terms of Meta AST by using symbols from Scala AST. */
   def formMethodArgs(args: List[Symbol]): List[SMethodArg] = {
-    args.map {arg =>
+    args.map { arg =>
       val tpe = parseType(arg.tpe)
       val isTypeDesc = tpe match {
         case STraitCall("Elem", _) => true
@@ -143,7 +146,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
   }
 
   def formMethodTypeArgs(targs: List[Symbol]): List[STpeArg] = {
-    targs.map {targ =>
+    targs.map { targ =>
       STpeArg(
         name = targ.nameString,
         bound = None, contextBound = Nil, tparams = Nil
@@ -158,8 +161,8 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
       argSections: List[SMethodArgs],
       tpeRes: STpeExpr): SMethodDef = {
     val reifiedArgs = mutable.Set[STpeArg]()
-    val argsWithoutClassTags = argSections.filterMap {section =>
-      val filteredArgs = section.args.filterMap {arg =>
+    val argsWithoutClassTags = argSections.filterMap { section =>
+      val filteredArgs = section.args.filterMap { arg =>
         arg.tpe match {
           case STraitCall("ClassTag", List(tT)) =>
             tpeArgs.find(t => t.name == tT.name) match {
@@ -198,7 +201,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
   /** Gets the list of ancestors of the external type in term of Meta AST. */
   def getExtTypeAncestors(externalType: Type): List[STypeApply] = {
     def convToMetaType(types: List[Type]): List[STraitCall] = {
-      types map parseType collect {case t: STraitCall => t}
+      types map parseType collect { case t: STraitCall => t }
     }
 
     val ancestors = convToMetaType(getParents(externalType))
@@ -229,7 +232,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
     val externalTypeSym = externalType.typeSymbol
     val isCompanion = externalTypeSym.isModuleClass
     val clazz = if (isCompanion) externalTypeSym.companionClass else externalTypeSym
-    val tpeArgs = clazz.typeParams.map {param =>
+    val tpeArgs = clazz.typeParams.map { param =>
       STpeArg(name = param.nameString, bound = None, contextBound = Nil, tparams = Nil)
     }
     val originalEntityAncestors = getExtTypeAncestors(externalType)
@@ -247,13 +250,13 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
       ownerChain: List[String]): WrapperDescr = {
     val (externalName, wClassName, companionName) = wrapperNames(externalTypeName)
     val wrapperConf = snConfig.wrapperConfigs.getOrElse(externalTypeName, WrapperConfig.default(externalTypeName))
-    val typeParams = tpeArgs.map {arg =>
+    val typeParams = tpeArgs.map { arg =>
       STraitCall(name = arg.name, args = Nil)
     }
     val baseType = STraitCall(externalName, typeParams)
     val entityAncestors = originalEntityAncestors
     val externalAnnot = externalTmplAnnotation(externalTypeName)
-    val entityAnnotations = externalAnnot :: wrapperConf.annotations.map {a => STmplAnnotation(a, Nil)}
+    val entityAnnotations = externalAnnot :: wrapperConf.annotations.map { a => STmplAnnotation(a, Nil) }
     val entity = STraitDef(
       name = wClassName,
       tpeArgs = tpeArgs,
@@ -330,7 +333,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
           * }
           */
         formExternalMethodDef(methodName.toString, Nil, Nil, formMethodRes(sym.tpe))
-      case _ => throw new NotImplementedError(s"memberType = ${showRaw(memberType)}")
+      case _ => throw new NotImplementedError(s"memberType = ${showRaw(memberType) }")
     }
     val wrapper = snState.getWrapper(externalTypeName).getOrElse {
       createWrapper(objType)
@@ -368,7 +371,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
     }
 
     val module = wrapper.module
-    val newModule = module.updateFirstEntity {e =>
+    val newModule = module.updateFirstEntity { e =>
       if (isAlreadyAdded(e)) e
       else {
         if (isCompanion) {
@@ -378,7 +381,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
               Some(companion.copy(body = updatedBody))
             case _ =>
               throw new IllegalArgumentException(
-                s"Cannot add member $member to companion because it is not found: module ${module.name}, entity: ${e.name}")
+                s"Cannot add member $member to companion because it is not found: module ${module.name }, entity: ${e.name }")
           }
           e.copy(companion = updatedCompanion)
         } else {
@@ -422,7 +425,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
       case _ => Nil
     }
     val externalTypes = snState.externalTypes
-    parentDecls foreach {parent =>
+    parentDecls foreach { parent =>
       val name = parent.typeSymbol.nameString
       if (!isIgnoredExternalType(name) && !externalTypes.contains(name)) {
         val wrapperDescr = createWrapper(parent)
@@ -500,7 +503,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
         ancestor.copy(tpe = typeTransformer.traitCallTransform(ancestor.tpe))
       }
     }
-    val wrappedModule = snState.externalTypes.foldLeft(module) {(acc, externalTypeName) =>
+    val wrappedModule = snState.externalTypes.foldLeft(module) { (acc, externalTypeName) =>
       new TypeInWrappersTransformer(externalTypeName).moduleTransform(acc)
     }
     wrappedModule

@@ -70,7 +70,7 @@ lazy val lmsBackendSettings = itSettings ++ scalaVirtualizedSettings ++ Seq(
 def libraryDefSettings(scalanizerOption: String) = commonSettings ++ Seq(
   scalacOptions ++= Seq(
           s"-Xplugin:${file(".").absolutePath}/scalanizer/target/scala-2.11/scalanizer-assembly-0.3.0-SNAPSHOT.jar"
-          , s"-P:scalanizer:module=$scalanizerOption"
+//          , s"-P:scalanizer:module=$scalanizerOption"
     //    , "-Xgenerate-phase-graph"
   )
 )

@@ -15,7 +15,12 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
 
   val name = "target-assembler"
   val runAfter = List("parser")
-  //  val virtPipeline = new ModuleVirtualizationPipeline()(context)
+
+  override def isEnabled: Boolean = {
+    val moduleName = s.moduleName
+    s.snConfig.targetModules.get(moduleName).isDefined
+  }
+
   def copyFile(sourceFile: File, targetFile: File): Boolean = {
     val isNewFile = !targetFile.exists
     scalanizer.inform(s"Copying from $sourceFile to $targetFile ...")
@@ -27,11 +32,9 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
     val sourceFile = unit.getResourceFile
     val targetFile = FileUtil.file(target.name, "src/main/scala", unit.entityFile)
     val isNewFile = copyFile(sourceFile, targetFile)
-
     val sourceImpl = UnitConfig.getImplFile(sourceFile, "Impl", "scala")
     val targetImpl = UnitConfig.getImplFile(targetFile, "Impl", "scala")
     val isNewImpl = copyFile(sourceImpl, targetImpl)
-    
     if (isNewFile)
       global.currentRun.compileLate(new PlainFile(Path(targetFile)))
     if (isNewImpl)

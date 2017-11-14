@@ -1,11 +1,16 @@
 package scalan.plugin
 
+import java.io.File
+
 import scala.collection.mutable.ListBuffer
+import scala.reflect.internal.util.NoPosition
 import scala.tools.nsc._
-import scala.tools.nsc.plugins.{Plugin, PluginComponent}
-import scalan.meta.{EntityManagement, SourceModuleConf, TargetModuleConf}
+import scala.tools.nsc.plugins.{Plugin, PluginComponent, PluginLoadException}
+import scalan.meta.{EntityManagement, TargetModuleConf, SourceModuleConf, ModuleConf}
 import scalan.meta.ScalanAst.AstContext
 import scalan.meta.scalanizer.{ScalanizerConfig, Scalanizer, ScalanizerState}
+import scalan.util.FileUtil
+import scalan.util.StringUtil.StringUtilExtensions
 
 abstract class ScalanPlugin(val global: Global) extends Plugin { plugin =>
 }
@@ -19,7 +24,26 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
     val entityManagment: EntityManagement[plugin.global.type] = new EntityManagement(this)
     val snState: ScalanizerState[plugin.global.type] = new ScalanizerPluginState(this)
 
-    override def moduleName: String = plugin.moduleName
+    def informModuleNameError(msg: String) = {
+      val run = global.currentRun
+      val fullMsg = s"Cannot get module name for current $run: $msg"
+      throw new PluginLoadException(global.pluginDescriptions, fullMsg)
+    }
+
+    override lazy val moduleName: String = {
+      val run = global.currentRun
+      val anySource = run.compiledFiles.headOption
+      anySource match {
+        case Some(file) =>
+          val name = FileUtil.extractModuleName(file, ModuleConf.SourcesDir)
+          if (name.isNullOrEmpty)
+            informModuleNameError(
+              s"Source file is not in expected location sources directory ${ModuleConf.SourcesDir }")
+          name
+        case None =>
+          informModuleNameError("there is no compiledFiles")
+      }
+    }
   }
   /** Visible name of the plugin */
   val name: String = "scalanizer"
@@ -51,11 +75,6 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
   }
   /** The description is printed with the option: -Xplugin-list */
   val description: String = "Perform code virtualization for Scalan"
-  private var _moduleName = ""
-
-  def moduleName = _moduleName
-
-  final val ModulePrefix = "module="
 
   /** Plugin-specific options without -P:scalanizer:  */
   override def init(options: List[String], error: String => Unit): Boolean = {
@@ -64,15 +83,15 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
       case "debug" => scalanizer.snConfig.withDebug(true)
       case "disabled" =>
         enabled = false
-      case o if o.startsWith(ModulePrefix) =>
-        _moduleName = o.stripPrefix(ModulePrefix)
-        val module = scalanizer.snConfig.getModule(_moduleName)
-        module match {
-          case sm: SourceModuleConf =>
-            srcPipeline.isEnabled = true
-          case tm: TargetModuleConf =>
-            targetPipeline.isEnabled = true
-        }
+//      case o if o.startsWith(ModulePrefix) =>
+//        _moduleName = o.stripPrefix(ModulePrefix)
+//        val module = scalanizer.snConfig.getModule(_moduleName)
+//        module match {
+//          case sm: SourceModuleConf =>
+//            srcPipeline.isEnabled = true
+//          case tm: TargetModuleConf =>
+//            targetPipeline.isEnabled = true
+//        }
       case option => error("Option not understood: " + option)
     }
     enabled
