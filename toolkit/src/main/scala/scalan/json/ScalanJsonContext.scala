@@ -17,7 +17,11 @@ trait ScalanJsonContext[C <: Scalan] { self: ScalanJsonProtocol[C] =>
   val symToId = MMap.empty[Sym, Int]
   val idToSym = MMap.empty[Int, Sym]
   private var currId: Int = 0
-
+  def reset() = {
+    currId = 0
+    symToId.clear()
+    idToSym.clear()
+  }
   def newId(): Int = {currId += 1; currId }
 
   def mapSym(s: Sym): String = symToId.get(s) match {

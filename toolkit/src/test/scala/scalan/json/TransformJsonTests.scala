@@ -3,7 +3,6 @@ package scalan.json
 import scala.wrappers.WrappersModule
 import scalan.Scalan
 import spray.json._
-
 import scalan.util.FileUtil
 
 class TransformJsonTests extends JsonTests {
@@ -11,12 +10,7 @@ class TransformJsonTests extends JsonTests {
 
   class Ctx extends Scalan with WrappersModule
 
-  describe("Wrapped methods <-> Json") {
-    val pipeline = new TransformPipeline(new Ctx) {
-      override def apply(graph: ctx.PGraph): ctx.PGraph = {
-        graph
-      }
-    }
+  class PipelineTester[C <: Scalan](pipeline: TransformPipeline[C]) {
     val trans = new JsonTransformer(pipeline)
 
     def test[A, B](name: String, whatIsTested: String = ""): Unit = {
@@ -27,9 +21,39 @@ class TransformJsonTests extends JsonTests {
         val source = read(sourceFile)
         val target = read(targetFile)
         val res = trans(source)
-        res should be(target)
+        trans.read(res) should be(trans.read(target))
       }
     }
-    test("example1")
+  }
+
+  describe("Identity pipeline") {
+    val pipeline = new TransformPipeline(new Ctx) {
+      override def apply(graph: ctx.PGraph): ctx.PGraph = {
+        graph
+      }
+    }
+    val pt = new PipelineTester(pipeline)
+    pt.test("example1")
+  }
+
+  /** Define <code>rewriter</code> to implement concrete transformation */
+  abstract class SingleStagePipeline[C <: Scalan](c: C) extends TransformPipeline(c) {
+    val rewriter: ctx.Rewriter
+    override def apply(graph: ctx.PGraph): ctx.PGraph = {
+      graph.transform(ctx.DefaultMirror, rewriter, ctx.MapTransformer.Empty)
+    }
+  }
+
+  describe("Single stage pipeline") {
+    val pipeline = new SingleStagePipeline(new Ctx) {
+      import ctx.{Rewriter, Exp, Def, RepForSomeExtension}
+      val rewriter = new Rewriter {
+        def apply[T](x: Exp[T]): Exp[T] = (x match {
+          case _ => x
+        }).asRep[T]
+      }
+    }
+    val pt = new PipelineTester(pipeline)
+    pt.test("example1")
   }
 }

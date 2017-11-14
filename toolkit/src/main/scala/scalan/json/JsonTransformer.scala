@@ -25,4 +25,8 @@ class JsonTransformer[C <: Scalan](val pipeline: TransformPipeline[C]) {
     jsResult.prettyPrint
   }
 
+  def read(json: String): PGraph = {
+    val jsSource = json.parseJson
+    jsSource.convertTo[PGraph]
+  }
 }
