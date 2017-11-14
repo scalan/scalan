@@ -145,14 +145,14 @@ lazy val kotlinBackend = Project("scalan-kotlin-backend", file("kotlin-backend")
   )
 
 lazy val toolkit = Project("scalan-toolkit", file("toolkit")).
-  dependsOn(common % allConfigDependency, meta % allConfigDependency, core % allConfigDependency, library)
+  dependsOn(common % allConfigDependency, meta % allConfigDependency, core % allConfigDependency, library % allConfigDependency)
   .settings(commonSettings)
   .settings(
     libraryDependencies ++= Seq("io.spray" %%  "spray-json" % "1.3.3")
   )
 
 lazy val root = Project("scalan", file("."))
-  .aggregate(common, meta, scalanizer, libraryapi, libraryimpl, core, library, kotlinBackend)
+  .aggregate(common, meta, scalanizer, libraryapi, libraryimpl, core, library, kotlinBackend, toolkit)
   .settings(buildSettings, publishArtifact := false)
 
 //lazy val collections = Project("scalan-collections", file("collections"))
