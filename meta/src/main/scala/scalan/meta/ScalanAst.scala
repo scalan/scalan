@@ -658,28 +658,15 @@ object ScalanAst {
 
     val args = SClassArgs(Nil)
     lazy val implicitArgs: SClassArgs = {
-      val implicitMethods = body.collect {
-        case SMethodDef(name, _, _, Some(elemOrCont), _, _, _, _, _, true) =>
-          (name, elemOrCont)
+      val args: List[SClassArg] = tpeArgs.map { a =>
+        val argName = "e" + a.name
+        val tpe = if (a.isHighKind)
+          STraitCall("Cont", List(STraitCall(a.name)))
+        else
+          STraitCall("Elem", List(STraitCall(a.name)))
+        SClassArg(true, false, true, argName, tpe, None, Nil, true)
       }
-      val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map { a =>
-        val optMeth: Option[(String, STraitCall)] = implicitMethods.collectFirst {
-          case (methName, tpeRes@STraitCall(_, List(STraitCall(name, _)))) if name == a.name =>
-            (methName, tpeRes)
-          case (methName, tpeRes@STraitCall(_, List(STpeAnnotated(STraitCall(name, _), _)))) if name == a.name =>
-            (methName, tpeRes)
-        }
-        optMeth match {
-          case None =>
-            Left(a)
-          case Some((methName, tpeRes)) =>
-            Right(SClassArg(true, false, true, methName, tpeRes, None, Nil, true))
-        }
-      }
-      val missingElems = args.filter(_.isLeft)
-      if (missingElems.nonEmpty)
-        println /*sys.error*/ (s"implicit def eA: Elem[A] should be declared for all type parameters of ${name}: missing ${missingElems.mkString(", ")}")
-      SClassArgs(args.flatMap(a => a.fold(_ => Nil, List(_))))
+      SClassArgs(args)
     }
 
     def clean = {
