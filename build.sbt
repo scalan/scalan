@@ -67,7 +67,7 @@ lazy val lmsBackendSettings = itSettings ++ scalaVirtualizedSettings ++ Seq(
     // we know we use LMS snapshot here, ignore it
     releaseSnapshotDependencies := Seq.empty)
 
-def libraryDefSettings(scalanizerOption: String) = commonSettings ++ Seq(
+def libraryDefSettings = commonSettings ++ Seq(
   scalacOptions ++= Seq(
           s"-Xplugin:${file(".").absolutePath}/scalanizer/target/scala-2.11/scalanizer-assembly-0.3.0-SNAPSHOT.jar"
 //          , s"-P:scalanizer:module=$scalanizerOption"
@@ -113,18 +113,18 @@ lazy val scalanizer = Project("scalanizer", file("scalanizer"))
 
 lazy val libraryapi = Project("library-api", file("library-api"))
   .dependsOn(meta, scalanizer)
-  .settings(libraryDefSettings("library-api"),
+  .settings(libraryDefSettings,
     libraryDependencies ++= Seq())
 
 lazy val libraryimpl = Project("library-impl", file("library-impl"))
   .dependsOn(meta, scalanizer, libraryapi % allConfigDependency)
-  .settings(libraryDefSettings("library-impl"),
+  .settings(libraryDefSettings,
     libraryDependencies ++= Seq())
 
 lazy val library = Project("library", file("library"))
-  .dependsOn(common % allConfigDependency, core % allConfigDependency/*, libraryimpl*/)
-  .settings(commonSettings,
-//    libraryDefSettings("library"),
+  .dependsOn(common % allConfigDependency, core % allConfigDependency, libraryimpl)
+  .settings(//commonSettings,
+    libraryDefSettings,
     libraryDependencies ++= Seq())
 
 lazy val core = Project("scalan-core", file("core"))

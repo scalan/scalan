@@ -44,6 +44,7 @@ abstract class ModuleConf extends Conf {
 
 object ModuleConf {
   val SourcesDir = "src/main/scala"
+  val TestsDir = "src/test/scala"
   val ResourcesDir = "src/main/resources"
 }
 

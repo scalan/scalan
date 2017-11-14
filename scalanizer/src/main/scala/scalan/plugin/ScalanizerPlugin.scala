@@ -31,15 +31,15 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
     }
 
     override lazy val moduleName: String = {
+      import ModuleConf._
       val run = global.currentRun
       val anySource = run.compiledFiles.headOption
       anySource match {
         case Some(file) =>
-          val name = FileUtil.extractModuleName(file, ModuleConf.SourcesDir)
-          if (name.isNullOrEmpty)
+          var name = List(SourcesDir, TestsDir).find(!FileUtil.extractModuleName(file, _).isNullOrEmpty)
+          name.getOrElse(
             informModuleNameError(
-              s"Source file is not in expected location sources directory ${ModuleConf.SourcesDir }")
-          name
+              s"Source file is not in expected location sources directory ${ModuleConf.SourcesDir } or ${ModuleConf.TestsDir }"))
         case None =>
           informModuleNameError("there is no compiledFiles")
       }
