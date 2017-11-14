@@ -9,6 +9,7 @@ import java.util.jar.JarFile
 import org.apache.commons.io.{FileUtils, IOUtils}
 import scala.Console
 import scala.collection.JavaConverters._
+import scalan.util.StringUtil.StringExtensions
 
 object FileUtil {
   def read(file: File): String = FileUtils.readFileToString(file, Charset.defaultCharset())
@@ -252,6 +253,13 @@ object FileUtil {
       replaceAll("""['"]""", "")
 
   def isBadFileName(string: String) = cleanFileName(string) != string
+
+  def extractModuleName(path: String): String = {
+    val moduleDir = path.prefixBefore("/src/main/scala")
+    if (moduleDir.length == path.length) return ""
+    moduleDir.lastComponent('/')
+  }
+
 }
 
 case class ExtensionFilter(extension: String) extends FilenameFilter {

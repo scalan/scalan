@@ -10,4 +10,12 @@ class FileUtilTests extends BaseNestedTests {
       listFiles(dir) shouldBe Array(file(dir, "scalan"))
     }
   }
+  describe("file path methods") {
+    it("extractModuleName") {
+      extractModuleName("src/main/scala/d") shouldBe("")
+      extractModuleName("/src/main/scala/d") shouldBe("")
+      extractModuleName("b/src/main/scala/d") shouldBe("b")
+      extractModuleName("a/b/src/main/scala/d") shouldBe("b")
+    }
+  }
 }
