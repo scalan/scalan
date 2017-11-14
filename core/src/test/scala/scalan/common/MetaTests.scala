@@ -9,7 +9,7 @@ trait MetaTests { self: MetaTestsModule =>
     def test: RMetaTest[T]
     def give: Rep[T]
     def size: Rep[Int]
-    implicit def elem: Elem[T]
+    implicit def eT: Elem[T]
   }
   trait MetaTestCompanion
 
@@ -17,22 +17,21 @@ trait MetaTests { self: MetaTestsModule =>
 
     def test: RMetaTest[Unit] = ???
     def give: Rep[Unit] = ???
-    def elem = UnitElement
+    def eT = UnitElement
   }
   trait MT0Companion
 
   abstract class MT1[T](val data: Rep[T], val size: Rep[Int]) extends MetaTest[T] {
-    val elem = data.elem
     def test: RMetaTest[T] = ???
     def give: Rep[T] = ???
   }
 
-  abstract class MT2[T, R](val indices: Rep[T], val values: Rep[R], val size: Rep[Int])
-    extends MetaTest[(T, R)] {
-    implicit def eT: Elem[T]; implicit def eR: Elem[R]
-    def test: RMetaTest[(T, R)] = ???
-    def give: Rep[(T, R)] = ???
-    lazy val elem = element[(T, R)]
+  abstract class MT2[A, B](val indices: Rep[A], val values: Rep[B], val size: Rep[Int])
+    extends MetaTest[(A, B)] {
+    implicit def eA: Elem[A]; implicit def eB: Elem[B]
+    def test: RMetaTest[(A, B)] = ???
+    def give: Rep[(A, B)] = ???
+    lazy val eT = element[(A, B)]
   }
 }
 

@@ -659,11 +659,10 @@ object ScalanAst {
     val args = SClassArgs(Nil)
     lazy val implicitArgs: SClassArgs = {
       val args: List[SClassArg] = tpeArgs.map { a =>
-        val argName = "e" + a.name
-        val tpe = if (a.isHighKind)
-          STraitCall("Cont", List(STraitCall(a.name)))
+        val (argName, tpe) = if (a.isHighKind)
+          ("c" + a.name, STraitCall("Cont", List(STraitCall(a.name))))
         else
-          STraitCall("Elem", List(STraitCall(a.name)))
+          ("e" + a.name, STraitCall("Elem", List(STraitCall(a.name))))
         SClassArg(true, false, true, argName, tpe, None, Nil, true)
       }
       SClassArgs(args)

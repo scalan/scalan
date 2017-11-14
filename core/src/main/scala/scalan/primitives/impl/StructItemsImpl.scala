@@ -18,14 +18,14 @@ trait StructItemsDefs extends StructItems {
   }
 
   // familyElem
-  class StructItemElem[Val, Schema <: Struct, To <: StructItem[Val, Schema]](implicit _eVal: Elem[Val @uncheckedVariance], _eSchema: Elem[Schema])
+  class StructItemElem[Val, Schema <: Struct, To <: StructItem[Val, Schema]](implicit _eVal: Elem[Val], _eSchema: Elem[Schema])
     extends EntityElem[To] {
     def eVal = _eVal
     def eSchema = _eSchema
     lazy val parent: Option[Elem[_]] = None
     override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("Val" -> (eVal -> scalan.util.Covariant), "Schema" -> (eSchema -> scalan.util.Invariant))
     override lazy val tag = {
-      implicit val tagAnnotatedVal = eVal.tag
+      implicit val tagVal = eVal.tag
       implicit val tagSchema = eSchema.tag
       weakTypeTag[StructItem[Val, Schema]].asInstanceOf[WeakTypeTag[To]]
     }
@@ -43,7 +43,7 @@ trait StructItemsDefs extends StructItems {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def structItemElement[Val, Schema <: Struct](implicit eVal: Elem[Val @uncheckedVariance], eSchema: Elem[Schema]): Elem[StructItem[Val, Schema]] =
+  implicit def structItemElement[Val, Schema <: Struct](implicit eVal: Elem[Val], eSchema: Elem[Schema]): Elem[StructItem[Val, Schema]] =
     cachedElem[StructItemElem[Val, Schema, StructItem[Val, Schema]]](eVal, eSchema)
 
   implicit case object StructItemCompanionElem extends CompanionElem[StructItemCompanionCtor] {

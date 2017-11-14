@@ -4,6 +4,7 @@ import java.lang.reflect.Method
 import scalan.{Lazy, _}
 import scalan.universe.api.TypesApi
 import scalan.universe.api.UniverseUtils._
+import scalan.util.CollectionUtil._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 import scalan.meta.ScalanAst._
 
