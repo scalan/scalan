@@ -106,6 +106,13 @@ object CollectionUtil {
   }
 
   implicit class TraversableOps[A, Source[X] <: Traversable[X]](xs: Source[A]) {
+    def mapFirst[B](f: A => Option[B]): Option[B] = {
+      for (x <- xs) {
+        val y = f(x)
+        if (y.isDefined) return y
+      }
+      return None
+    }
     def filterMap[B](f: A => Option[B])(implicit cbf: CanBuildFrom[Source[A], B, Source[B]]): Source[B] = {
        val b = cbf()
        for (x <- xs) {

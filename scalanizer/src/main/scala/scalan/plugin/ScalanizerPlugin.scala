@@ -11,6 +11,7 @@ import scalan.meta.ScalanAst.AstContext
 import scalan.meta.scalanizer.{ScalanizerConfig, Scalanizer, ScalanizerState}
 import scalan.util.FileUtil
 import scalan.util.StringUtil.StringUtilExtensions
+import scalan.util.CollectionUtil.TraversableOps
 
 abstract class ScalanPlugin(val global: Global) extends Plugin { plugin =>
 }
@@ -36,7 +37,10 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
       val anySource = run.compiledFiles.headOption
       anySource match {
         case Some(file) =>
-          var name = List(SourcesDir, TestsDir).find(!FileUtil.extractModuleName(file, _).isNullOrEmpty)
+          var name = List(SourcesDir, TestsDir).mapFirst { dir =>
+            val n = FileUtil.extractModuleName(file, dir)
+            if (n.isNullOrEmpty) None else Some(n)
+          }
           name.getOrElse(
             informModuleNameError(
               s"Source file is not in expected location sources directory ${ModuleConf.SourcesDir } or ${ModuleConf.TestsDir }"))

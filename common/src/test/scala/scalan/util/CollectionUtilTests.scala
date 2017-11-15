@@ -41,6 +41,11 @@ class CollectionUtilTests extends BaseTests {
     assertResult(Seq("b" -> 4, "c" -> 6, "d" -> 8))(joinPairs(outer, outer))
   }
 
+  test("mapFirst") {
+    val xs = List(1, 2, 3)
+    xs.mapFirst(x => if (x > 2) Some(s"x = $x") else None) should be(Some("x = 3"))
+  }
+
   test("distinctBy") {
     val items = Array((1, "a"), (2, "b"), (1, "c")).toIterable
     val res = items.distinctBy(_._1)
