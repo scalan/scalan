@@ -10,6 +10,7 @@ import org.apache.commons.io.{FileUtils, IOUtils}
 import scala.Console
 import scala.collection.JavaConverters._
 import scalan.util.StringUtil.StringUtilExtensions
+import scalan.util.CollectionUtil.AnyOps
 
 object FileUtil {
   def read(file: File): String = FileUtils.readFileToString(file, Charset.defaultCharset())
@@ -200,10 +201,10 @@ object FileUtil {
     rest.foldLeft(first) { (file, child) => new File(file, child) }
 
   final val AcceptAllFiles = new FilenameFilter {
-    override def accept(dir: File, name: String): Boolean = true
+    override def accept(dir: File, name: String): Boolean = !file(dir, name).isDirectory
   }
   final val AcceptAllDirectories = new FilenameFilter {
-    override def accept(dir: File, name: String): Boolean = dir.isDirectory
+    override def accept(dir: File, name: String): Boolean = file(dir, name).isDirectory
   }
 
   /**
@@ -216,6 +217,16 @@ object FileUtil {
   }
 
   def listDirectories(dir: File): Array[File] = listFiles(dir, AcceptAllDirectories)
+
+  /** Starts from <code>dir</code> and builds an array of sub-directories including <code>dir</code> */
+  def listDirectoriesRecursive(dir: File): Array[File] = {
+    dir.traverseDepthFirst(f => listDirectories(f).toList).toArray
+  }
+
+  def listFilesRecursive(dir: File): Array[File] = {
+    val dirs = listDirectoriesRecursive(dir)
+    for {d <- dirs; f <- listFiles(d)} yield f
+  }
 
   def readAndCloseStream(stream: InputStream) = {
     try {

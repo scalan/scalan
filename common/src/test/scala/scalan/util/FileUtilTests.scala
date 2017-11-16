@@ -5,9 +5,27 @@ import scalan.BaseNestedTests
 class FileUtilTests extends BaseNestedTests {
   import FileUtil._
   describe("File traversals") {
-    val dir = file("common/src/test/scala")
+    val root = file("common/src/test/resources/root")
+    val subdir = file(root, "subdir")
+    val subsubdir = file(subdir, "subsubdir")
+    val empty = file(root, "empty")
+    val A = file(root, "A.txt")
+    val B = file(root, "B.txt")
+    val C = file(subdir, "C.txt")
+    val D = file(subsubdir, "D.txt")
+
     it("list all files") {
-      listFiles(dir) shouldBe Array(file(dir, "scalan"))
+      listFiles(root).toSet shouldBe Set(A, B)
+      listFiles(empty) shouldBe Array()
+    }
+    it("list directories") {
+      listDirectories(root).toSet shouldBe Set(subdir, empty)
+    }
+    it("list directories recursive") {
+      listDirectoriesRecursive(root).toSet shouldBe Set(root, subdir, empty, subsubdir)
+    }
+    it("list files recursive") {
+      listFilesRecursive(root).toSet shouldBe Set(A, B, C, D)
     }
   }
   describe("file path methods") {

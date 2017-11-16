@@ -86,7 +86,7 @@ case class SourceModuleConf(
 
   def listWrapperFiles: Array[File] = {
     import FileUtil._
-    file(getWrappersHome).traverseDepthFirst(f => listDirectories(f).toList).toArray
+    listFilesRecursive(file(getWrappersHome))
   }
 }
 
