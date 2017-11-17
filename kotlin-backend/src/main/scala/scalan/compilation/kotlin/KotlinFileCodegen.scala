@@ -6,14 +6,14 @@ import scalan.{ModuleInfo, Scalan}
 import scalan.compilation.{IndentLevel, FileCodegen, CodegenConfig}
 import scalan.meta.ScalanAst._
 import scalan.meta.PrintExtensions._
-import scalan.meta.{ScalanAstTransformers, Name}
+import scalan.meta.{ScalanAstTransformers, SName}
 
 case class GenCtx(module: SUnitDef, writer: PrintWriter)
 
 class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) extends FileCodegen(_scalan, config) {
   import scalan._
   implicit val context = parsers.context
-  val PairType = Name("kotlin", "Pair")
+  val PairType = SName("kotlin", "Pair")
 
   def languageName = "Kotlin"
 
@@ -21,12 +21,12 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
 
   implicit def ctxToWriter(implicit ctx: GenCtx): PrintWriter = ctx.writer
   
-  def transitiveClosureSet(modules: Seq[SUnitDef], deps: SUnitDef => Iterable[SUnitDef]): Set[Name] = {
+  def transitiveClosureSet(modules: Seq[SUnitDef], deps: SUnitDef => Iterable[SUnitDef]): Set[SName] = {
     //TODO implement transitive closure algorithm
-    modules.map(m => Name(m.packageName, m.name)).toSet
+    modules.map(m => SName(m.packageName, m.name)).toSet
   }
 
-  def modules: Map[Name, SUnitDef] = {
+  def modules: Map[SName, SUnitDef] = {
     val nameToModule = scalan.getModules
     val modules = config.moduleNames.map(n =>
       nameToModule.getOrElse(n.mkFullName, sys.error(s"Module $n not found")))
@@ -172,7 +172,7 @@ class KotlinFileCodegen[+IR <: Scalan](_scalan: IR, config: CodegenConfig) exten
 
   val devirtPipeline = new ScalanAstTransformers.DevirtPipeline()
 
-  def emitModule(name: Name)(implicit writer: PrintWriter, indentLevel: IndentLevel) = {
+  def emitModule(name: SName)(implicit writer: PrintWriter, indentLevel: IndentLevel) = {
     val md = modules.getOrElse(name, { sys.error(s"Cannot find module $name") })
     val devirt = devirtPipeline(md)
     implicit val gctx = GenCtx(devirt, writer)

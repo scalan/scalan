@@ -1,16 +1,16 @@
 package scalan.compilation
 
 import scala.collection.mutable
-import scalan.meta.{Name, ImportItem}
+import scalan.meta.{SName, ImportItem}
 
 class ImportBuilder {
   /** Items imported from each package, constructed lazily based on actual usage */
   val importedItems = mutable.Map[String, ImportItem]()
 
-  def findImportItem(n: Name) =
+  def findImportItem(n: SName) =
     importedItems.get(n.packageName).filter { item => n.isImportedBy(item)}
 
-  def addImport(n: Name): Boolean = {
+  def addImport(n: SName): Boolean = {
     val existingImport = importedItems.find { case (p, item) => item.importedNames.contains(n.name) }
     existingImport match {
       case Some((_, ImportItem(pn, _))) if pn == n.packageName => true // already imported

@@ -870,12 +870,12 @@ object ScalanAst {
     }
 
     def hasModule(packageName: String, moduleName: String): Boolean = {
-      val key = Name.fullNameString(packageName, moduleName)
+      val key = SName.fullNameString(packageName, moduleName)
       modules.contains(key)
     }
 
     def getModule(packageName: String, moduleName: String): SUnitDef = {
-      val key = Name.fullNameString(packageName, moduleName)
+      val key = SName.fullNameString(packageName, moduleName)
       modules(key)
     }
 
@@ -942,7 +942,7 @@ object ScalanAst {
                       okEmitOrigModuleTrait: Boolean = true)
                      (@transient implicit val context: AstContext) {
     //TODO unify Module names
-    def getModuleKey: String = Name.fullNameString(packageName, name)
+    def getModuleKey: String = SName.fullNameString(packageName, name)
     def getModuleTraitName: String = SUnitDef.moduleTraitName(name)
 
     def getEntity(name: String): SEntityDef = {

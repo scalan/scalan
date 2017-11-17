@@ -2,14 +2,14 @@ package scalan.compilation
 
 import java.io.PrintWriter
 
-import scalan.meta.Name
+import scalan.meta.SName
 import scalan.{BaseNestedTests, Scalan}
 
 class FileCodegenTests extends BaseNestedTests {
   val config = CodegenConfig("core/generated", Nil)
   val gen = new MockFileCodegen(new Scalan, config)
-  val name = Name("scalan", "Scalan")
-  val otherPackage = Name("scalan2", "Scalan2")
+  val name = SName("scalan", "Scalan")
+  val otherPackage = SName("scalan2", "Scalan2")
   import gen.importBuilder._
 
   describe("translateToSrc") {
@@ -26,7 +26,7 @@ class FileCodegenTests extends BaseNestedTests {
       code shouldEqual("Scalan2")
     }
     it("long name for confilcting names") {
-      val newName = Name("scalan", "Scalan2") // assume Scalan2 already imported from scalan2
+      val newName = SName("scalan", "Scalan2") // assume Scalan2 already imported from scalan2
       val code = gen.translateToSrc(newName)
       code shouldEqual("scalan.Scalan2")
     }

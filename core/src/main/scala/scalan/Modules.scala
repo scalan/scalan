@@ -3,7 +3,7 @@ package scalan
 import scalan.meta.ScalanAst.{SUnitDef, SEntityDef}
 import scala.collection.mutable
 import scala.reflect.internal.util.BatchSourceFile
-import scalan.meta.{Parsers, BoilerplateToolRun, Name}
+import scalan.meta.{Parsers, BoilerplateToolRun, SName}
 import scalan.util.{ReflectionUtil, FileUtil}
 
 trait Modules extends Base { self: Scalan =>
@@ -33,7 +33,7 @@ trait Modules extends Base { self: Scalan =>
     val elemClassSymbol = ReflectionUtil.classToSymbol(e.getClass)
     val moduleName = elemClassSymbol.owner.name.toString.stripSuffix("Defs")
     val packageName = e.getClass.getPackage.getName.stripSuffix(".impl")
-    val key = Name.fullNameString(packageName, moduleName)
+    val key = SName.fullNameString(packageName, moduleName)
     val module = modules.getOrElse(key, !!!(s"Module $key not found"))
     val entityName = elemClassSymbol.name.toString.stripSuffix("Elem")
     module.allEntities.find(_.name == entityName).getOrElse {
