@@ -1,4 +1,4 @@
-package scala.impl
+package scala
 
 import scalan._
 import impl._
@@ -6,8 +6,7 @@ import scala.wrappers.WrappersModule
 import scala.reflect.runtime.universe._
 import scala.reflect._
 
-trait WArraysModule extends scala.impl.WArraysDefs {self: WrappersModule =>}
-
+package impl {
 // Abs -----------------------------------
 trait WArraysDefs extends scalan.Scalan with WArrays {
   self: WrappersModule =>
@@ -209,3 +208,6 @@ trait WArraysDefs extends scalan.Scalan with WArrays {
 }
 
 object WArraysModule extends scalan.ModuleInfo("scala", "WArrays")
+}
+
+trait WArraysModule extends scala.impl.WArraysDefs {self: WrappersModule =>}

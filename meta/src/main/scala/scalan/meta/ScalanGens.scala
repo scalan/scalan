@@ -11,7 +11,7 @@ import scalan.util.ScalaNameUtil.PackageAndName
 trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
   import global._
 
-  case class GenCtx(context: AstContext, toRep: Boolean = true)
+  case class GenCtx(context: AstContext, isVirtualized: Boolean, toRep: Boolean = true)
 
   def createModuleTrait(mainModuleName: String) = {
     val mt = STraitDef(
@@ -25,7 +25,7 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
   /** Generate file for virtualized user-defined module */
   def genUDModuleFile(module: SUnitDef, orig: Tree): Tree = orig match {
     case q"package $ref { ..$_ }" =>
-      implicit val ctx = GenCtx(module.context, true)
+      implicit val ctx = GenCtx(module.context, isVirtualized = false, toRep = true)
       val imports = module.imports.map(genImport(_))
       val moduleBody = List[Tree](genModuleTrait(module))
       PackageDef(ref,
@@ -165,7 +165,9 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
       }
     case block: SBlock => Block(block.init.map(genExpr), genExpr(block.last))
     case sIf: SIf => q"IF (${genExpr(sIf.cond)}) THEN {${genExpr(sIf.th)}} ELSE {${genExpr(sIf.el)}}"
-    case ascr: SAscr => q"${genExpr(ascr.expr)}: ${repTypeExpr(ascr.pt)}"
+    case ascr: SAscr =>
+      val tpe = if (ctx.isVirtualized) genTypeExpr(ascr.pt) else repTypeExpr(ascr.pt)
+      q"${genExpr(ascr.expr)}: $tpe"
     case constr: SContr => genConstr(constr)
     case func: SFunc => genFunc(func)
     case sThis: SThis =>
@@ -202,7 +204,7 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
     val flags = Flag.PARAM | impFlag | overFlag
     val mods = Modifiers(flags, tpnme.EMPTY, genAnnotations(m.annotations))
     val tpt = m.tpeRes match {
-      case Some(tpeRes) => if (ctx.toRep) repTypeExpr(tpeRes) else genTypeExpr(tpeRes)
+      case Some(tpeRes) => if (!ctx.isVirtualized && ctx.toRep) repTypeExpr(tpeRes) else genTypeExpr(tpeRes)
       case None => EmptyTree
     }
     val paramss = genMethodArgs(m.argSections).filter(!_.isEmpty)
@@ -218,7 +220,7 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
   def genMethodArg(arg: SMethodArg)
       (implicit ctx: GenCtx): Tree = {
     val tname = TermName(arg.name)
-    val tpt = if (arg.isTypeDesc) genTypeExpr(arg.tpe) else repTypeExpr(arg.tpe)
+    val tpt = if (ctx.isVirtualized || arg.isTypeDesc) genTypeExpr(arg.tpe) else repTypeExpr(arg.tpe)
     val overFlag = if (arg.overFlag) Flag.OVERRIDE else NoFlags
     val impFlag = if (arg.impFlag) Flag.IMPLICIT else NoFlags
     val flags = overFlag | impFlag
@@ -238,7 +240,7 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
     val mods = Modifiers(impFlag | lazyFlag)
     val tname = TermName(v.name)
     val tpt =v.tpe match {
-      case Some(tpe) => repTypeExpr(tpe)
+      case Some(tpe) => if(ctx.isVirtualized) genTypeExpr(tpe) else repTypeExpr(tpe)
       case None => TypeTree()
     }
     val expr = genExpr(v.expr)
@@ -326,7 +328,7 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
 
   def genClassArg(arg: SClassArg)(implicit ctx: GenCtx): Tree = {
     val tname = TermName(arg.name)
-    val tpt = if (arg.isTypeDesc) genTypeExpr(arg.tpe) else repTypeExpr(arg.tpe)
+    val tpt = if (ctx.isVirtualized || arg.isTypeDesc) genTypeExpr(arg.tpe) else repTypeExpr(arg.tpe)
     val valFlag = if (arg.valFlag) Flag.PARAMACCESSOR else NoFlags
     val overFlag = if (arg.overFlag) Flag.OVERRIDE else NoFlags
     val impFlag = if (arg.impFlag) Flag.IMPLICIT else NoFlags
@@ -360,7 +362,7 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
       val tAst = genTuples(t)
       val (_, vals) = func.params.foldLeft((1, List[Tree]())) { (acc, param) =>
         val tres = param.tpe match {
-          case Some(tpe) => repTypeExpr(tpe)
+          case Some(tpe) => if (ctx.isVirtualized) genTypeExpr(tpe) else repTypeExpr(tpe)
           case None => TypeTree()
         }
         val inval = q"in.${TermName("_" + acc._1.toString())}"

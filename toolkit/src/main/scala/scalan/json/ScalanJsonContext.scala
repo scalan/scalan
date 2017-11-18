@@ -13,7 +13,7 @@ trait ScalanJsonContext[C <: Scalan] { self: ScalanJsonProtocol[C] =>
 
   implicit val context = parsers.context // for resolution and disambiguation
   implicit val parseCtx = new ParseCtx(false)
-  implicit val genCtx = new GenCtx(context, toRep = false)
+  implicit val genCtx = new GenCtx(context, toRep = false, isVirtualized = false)
   val symToId = MMap.empty[Sym, Int]
   val idToSym = MMap.empty[Int, Sym]
   private var currId: Int = 0

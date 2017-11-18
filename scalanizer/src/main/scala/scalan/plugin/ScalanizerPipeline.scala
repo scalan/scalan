@@ -9,7 +9,7 @@ import scalan.meta.ScalanAstTransformers.isIgnoredExternalType
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstExtensions._
 import scalan.util.CollectionUtil._
-import scalan.meta.{SourceModuleConf, ScalanCodegen}
+import scalan.meta.{SourceModuleConf, ScalanCodegen, ModuleConf}
 
 abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) { pipeline =>
   import scalanizer._
@@ -454,24 +454,20 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
   case class WrapperSlices(abs: STraitDef)
 
   /** Calls Scalan Meta to generate boilerplate code for the wrapper. */
-  def genWrapperBoilerplateText(mc: SourceModuleConf, unit: SUnitDef): String = {
+  def genWrapperBoilerplateText(mc: ModuleConf, unit: SUnitDef, isVirtualized: Boolean): String = {
     val gen = new scalan.meta.ModuleFileGenerator(
-      ScalanCodegen, unit, mc.mkUnit(unit.unitName, unit.fileName))
+      ScalanCodegen, unit, mc.mkUnit(unit.unitName, unit.fileName, isVirtualized = isVirtualized))
     val implCode = gen.emitImplFile
     implCode
   }
 
   /** Generates Scala AST for the given wrapper (without implementation). */
-  def genWrapperPackage(module: SUnitDef): Tree = {
-    implicit val genCtx = GenCtx(context = module.context, toRep = true)
-    val scalaAst = genModuleTrait(module)
-    val imports = module.imports.map(genImport(_))
-    val selfType = Some(SSelfTypeDef("self", List(STraitCall("Wrappers", Nil))))
-    //    val extensions = genExtensions(module.name, selfType, Nil).map(
-    //      extTrait => genTrait(extTrait)(GenCtx(module, false))
-    //    )
+  def genWrapperPackage(unit: SUnitDef, isVirtualized: Boolean = false): Tree = {
+    implicit val genCtx = GenCtx(context = unit.context, isVirtualized, toRep = !isVirtualized)
+    val scalaAst = genModuleTrait(unit)
+    val imports = unit.imports.map(genImport(_))
     val pkgStats = imports :+ scalaAst
-    val wrappersPackage = PackageDef(Ident(TermName(module.packageName)), pkgStats)
+    val wrappersPackage = PackageDef(Ident(TermName(unit.packageName)), pkgStats)
     wrappersPackage
   }
 

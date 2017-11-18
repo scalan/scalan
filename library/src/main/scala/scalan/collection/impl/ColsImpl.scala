@@ -3,6 +3,7 @@ package scalan.collection
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect._
+import scala.wrappers.WrappersModule
 
 package impl {
 // Abs -----------------------------------

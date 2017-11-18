@@ -215,7 +215,10 @@ trait ScalanParsers[+G <: Global] {
         case _ => None
       }.flatten
       val tparams = tdTree.tparams.map(tpeArg)
-      STpeArg(tdTree.name, bound, contextBounds, tparams, tdTree.mods.flags)
+      val annotations = tdTree.mods.annotations.map {
+        case ExtractAnnotation(name, args) => STypeArgAnnotation(name, args.map(parseExpr(_)))
+      }
+      STpeArg(tdTree.name, bound, contextBounds, tparams, tdTree.mods.flags, annotations)
     }
 
     typeParams.map(tpeArg)
@@ -385,8 +388,9 @@ trait ScalanParsers[+G <: Global] {
 
   //  val HasExternalAnnotation = new ExtractAnnotation("External")
   //  val HasConstructorAnnotation = new ExtractAnnotation("Constructor")
-  val HasArgListAnnotation = new HasAnnotation("ArgList")
+  val HasArgListAnnotation = new HasAnnotation(ArgListAnnotation)
   val OverloadIdAnnotation = new HasAnnotation("OverloadId")
+  val ReifiedAnnotation = new HasAnnotation(ReifiedTypeArgAnnotation)
 
   def methodDef(md: DefDef, isElem: Boolean = false)(implicit ctx: ParseCtx) = {
     val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))
