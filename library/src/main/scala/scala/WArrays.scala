@@ -10,7 +10,8 @@ package scala {
       implicit def eT: Elem[T];
       @External def zip[B](ys: Rep[WArray[B]]): Rep[WArray[scala.Tuple2[T, B]]];
       @External def map[B](f: Rep[scala.Function1[T, B]]): Rep[WArray[B]];
-      @External def length: Rep[Int]
+      @External def length: Rep[Int];
+      @External def apply(i: Rep[Int]): Rep[T]
     };
     trait WArrayCompanion {
       @External def fill[@Reified T](n: Rep[Int], elem: Rep[Thunk[T]]): Rep[WArray[T]]

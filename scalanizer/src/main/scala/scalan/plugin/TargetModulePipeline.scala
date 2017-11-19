@@ -76,6 +76,7 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
       scalanizer.inform(s"Processing target module ${scalanizer.moduleName }")
       // merge all partial wrappers from source modules
       val target = snConfig.targetModules(moduleName)
+      val sourceRoot = s"${target.name }/${ModuleConf.SourcesDir }"
       for (source <- target.sourceModules.values) {
         for (wFile <- source.listWrapperFiles) {
           val unit = parseEntityModule(wFile)(new ParseCtx(isVirtualized = true)(context))
@@ -86,17 +87,16 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
       var wrappersCake = initWrapperCake()
       for (w <- wrappers.values) {
         val wPackage = genWrapperPackage(w, isVirtualized = true)
-        val sourceRoot = s"${target.name }/${ModuleConf.SourcesDir }"
-        saveCode(sourceRoot,
-          w.packageName, w.name,
-          showCode(wPackage))
+        saveCode(sourceRoot, w.packageName, w.name, showCode(wPackage))
+
         val boilerplateText = genWrapperBoilerplateText(target, w, isVirtualized = true)
         saveCode(sourceRoot, w.packageName + ".impl", w.name + "Impl", boilerplateText)
+
         wrappersCake = updateWrappersCake(wrappersCake, w)
       }
 
       // generate WrappersModule cake
-      saveWrappersCake(s"${target.name }/${ModuleConf.SourcesDir }", wrappersCake)
+      saveWrappersCake(sourceRoot, wrappersCake)
 
       // copy scalanized units from source modules
       for (source <- target.sourceModules.values) {
