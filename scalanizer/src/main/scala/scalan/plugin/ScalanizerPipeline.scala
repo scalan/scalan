@@ -451,7 +451,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
     new DependencyTraverser().traverse(memberType)
   }
 
-  case class WrapperSlices(abs: STraitDef)
+  case class WrapperCake(traitDef: STraitDef, wrappers: List[SUnitDef])
 
   /** Calls Scalan Meta to generate boilerplate code for the wrapper. */
   def genWrapperBoilerplateText(mc: ModuleConf, unit: SUnitDef, isVirtualized: Boolean): String = {
@@ -471,18 +471,19 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
     wrappersPackage
   }
 
-  def initWrapperSlices: WrapperSlices = {
-    val wmodule = STraitDef("WrappersModule",
+  def initWrapperCake(): WrapperCake = {
+    val cakeDef = STraitDef("WrappersModule",
       tpeArgs = Nil,
       ancestors = List(),
       body = Nil, selfType = None, companion = None)
-    WrapperSlices(wmodule)
+    WrapperCake(cakeDef, Nil)
   }
 
-  def updateWrapperSlices(slices: WrapperSlices, module: SUnitDef): WrapperSlices = {
-    val absAncestors = slices.abs.ancestors :+ STraitCall(module.name + "Module", Nil).toTypeApply
-    WrapperSlices(
-      abs = slices.abs.copy(ancestors = absAncestors)
+  def updateWrappersCake(cake: WrapperCake, wUnit: SUnitDef): WrapperCake = {
+    val newAncestors = cake.traitDef.ancestors :+ STraitCall(wUnit.name + "Module", Nil).toTypeApply
+    cake.copy(
+      traitDef = cake.traitDef.copy(ancestors = newAncestors),
+      wrappers = cake.wrappers :+ wUnit
     )
   }
 

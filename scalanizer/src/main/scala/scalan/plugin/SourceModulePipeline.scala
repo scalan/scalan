@@ -60,7 +60,6 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
       ()
     },
     RunStep("wrapbackend") { _ =>
-      var wrapperSlices = initWrapperSlices
       snState.forEachWrapper { case (_, WrapperDescr(m, _, config)) =>
         val module = m.copy(imports = m.imports :+ SImportStat("scala.wrappers.WrappersModule"))(scalanizer.context)
         val moduleConf = getSourceModule
@@ -76,7 +75,6 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
 //        /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
 //        val boilerplateText = genWrapperBoilerplateText(moduleConf, module)
 //        saveWrapperCode(moduleConf, module.packageName + ".impl", module.name + "Impl", boilerplateText)
-        wrapperSlices = updateWrapperSlices(wrapperSlices, wrapperModuleWithoutImpl)
       }
     },
     ForEachUnitStep("virtfrontend") { context => import context._;

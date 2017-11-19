@@ -121,19 +121,19 @@ object ScalanAstExtensions {
     }
   }
 
-  implicit class SUnitDefOps(module: SUnitDef) {
-    implicit val ctx = module.context
-    def fullName = s"${module.packageName}.${module.name}"
-    def fileName = s"${module.packageName.replace('.','/')}/${module.name}.scala"
-    def unitName = module.name + ".scala"
+  implicit class SUnitDefOps(unit: SUnitDef) {
+    implicit val ctx = unit.context
+    def fullName = s"${unit.packageName}.${unit.name}"
+    def fileName = s"${unit.packageName.replace('.','/')}/${unit.name}.scala"
+    def unitName = unit.name + ".scala"
     def selfTypeString(suffix: String) =
-      module.selfType.opt(t => s"self: ${t.tpe}${suffix} =>")
+      unit.selfType.opt(t => s"self: ${t.tpe}${suffix} =>")
 
-    def updateFirstEntity(updater: STraitDef => STraitDef) = module.traits.headOption match {
+    def updateFirstEntity(updater: STraitDef => STraitDef) = unit.traits.headOption match {
       case Some(e) =>
-        val newEntity = updater(module.traits.head)
-        module.copy(traits = newEntity :: module.traits.tail)(ctx)
-      case None => module
+        val newEntity = updater(unit.traits.head)
+        unit.copy(traits = newEntity :: unit.traits.tail)(ctx)
+      case None => unit
     }
 
   }

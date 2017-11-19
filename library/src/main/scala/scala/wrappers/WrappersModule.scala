@@ -1,6 +1,7 @@
 package scala.wrappers {
-  import scala.impl.WArraysModule
   import scalan._
+
+  import scala.WArraysModule
 
   trait WrappersModule extends WArraysModule
 }
