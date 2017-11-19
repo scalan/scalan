@@ -8,7 +8,7 @@ class FileUtilTests extends BaseNestedTests {
     val root = file("common/src/test/resources/root")
     val subdir = file(root, "subdir")
     val subsubdir = file(subdir, "subsubdir")
-    val empty = file(root, "empty")
+    val empty = { val dir = file(root, "empty"); dir.mkdir(); dir }
     val A = file(root, "A.txt")
     val B = file(root, "B.txt")
     val C = file(subdir, "C.txt")

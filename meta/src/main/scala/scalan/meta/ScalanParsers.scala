@@ -243,7 +243,7 @@ trait ScalanParsers[+G <: Global] {
     val selfType = this.selfType(td.impl.self)
     val name = td.name.toString
     val companion = findCompanion(name, parentScope)
-    val annotations = parseAnnotations(td)((n,as) => STmplAnnotation(n,as.map(parseExpr)))
+    val annotations = parseAnnotations(td)((n,as) => SEntityAnnotation(n,as.map(parseExpr)))
     STraitDef(name, tpeArgs, ancestors, body, selfType, companion, annotations)
   }
 
@@ -271,7 +271,7 @@ trait ScalanParsers[+G <: Global] {
     val isAbstract = cd.mods.hasAbstractFlag
     val name = cd.name.toString
     val companion = findCompanion(name, parentScope)
-    val annotations = parseAnnotations(cd)((n,as) => STmplAnnotation(n,as.map(parseExpr)))
+    val annotations = parseAnnotations(cd)((n,as) => SEntityAnnotation(n,as.map(parseExpr)))
     SClassDef(cd.name, tpeArgs, args, implicitArgs, ancestors, body, selfType, companion, isAbstract, annotations)
   }
 

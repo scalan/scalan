@@ -48,4 +48,20 @@ trait ScalanAstTests extends BaseNestedTests with ScalanParsersEx[Global] {
   def testSMethod(prog: String, expected: SMethodDef)(implicit ctx: ParseCtx) {
     test(Member, prog, expected) { case tree: DefDef => methodDef(tree) }
   }
+
+  def getMethod(module: SUnitDef, entityName: String, name: String) = {
+    val res = for {
+      e <- module.findEntity(entityName)
+      m <- e.findMethod(name)
+    } yield m
+    res.get
+  }
+  def getVal(module: SUnitDef, entityName: String, name: String) = {
+    val res = for {
+      e <- module.findEntity(entityName)
+      m <- e.findVal(name)
+    } yield m
+    res.get
+  }
+
 }

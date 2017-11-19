@@ -274,7 +274,7 @@ object ScalanAst {
   }
 
   /** Annotation that can be attached to any STmplDef */
-  case class STmplAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
+  case class SEntityAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
 
   case class SMethodAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
 
@@ -290,7 +290,7 @@ object ScalanAst {
   final val ReifiedTypeArgAnnotation = classOf[Reified].getSimpleName
 
   def externalTmplAnnotation(externalTmplName: String) =
-    STmplAnnotation(ExternalAnnotation, List(SConst(externalTmplName,Some(TpeString))))
+    SEntityAnnotation(ExternalAnnotation, List(SConst(externalTmplName,Some(TpeString))))
 
   // SExpr universe --------------------------------------------------------------------------
   trait SExpr {
@@ -564,7 +564,7 @@ object ScalanAst {
 
     def isTrait: Boolean
 
-    def annotations: List[STmplAnnotation]
+    def annotations: List[SEntityAnnotation]
 
     def args: SClassArgs
 
@@ -653,7 +653,7 @@ object ScalanAst {
                         body: List[SBodyItem],
                         selfType: Option[SSelfTypeDef],
                         companion: Option[SEntityDef],
-                        annotations: List[STmplAnnotation] = Nil) extends SEntityDef {
+                        annotations: List[SEntityAnnotation] = Nil) extends SEntityDef {
     def isTrait = true
 
     val args = SClassArgs(Nil)
@@ -677,7 +677,7 @@ object ScalanAst {
     }
   }
 
-  implicit class STmplDefOps(td: SEntityDef) {
+  implicit class SEntityDefOps(td: SEntityDef) {
   }
 
   case class SClassDef(
@@ -690,7 +690,7 @@ object ScalanAst {
                         selfType: Option[SSelfTypeDef],
                         companion: Option[SEntityDef],
                         isAbstract: Boolean,
-                        annotations: List[STmplAnnotation] = Nil) extends SEntityDef {
+                        annotations: List[SEntityAnnotation] = Nil) extends SEntityDef {
     def isTrait = false
 
     def clean = {
@@ -919,7 +919,7 @@ object ScalanAst {
       def unapply(name: String): Option[(SEntityDef, String)] = name match {
         case Entity(_, e) =>
           e.getAnnotation(ExternalAnnotation) match {
-            case Some(STmplAnnotation(_, List(SConst(externalName: String, _)))) => Some((e, externalName))
+            case Some(SEntityAnnotation(_, List(SConst(externalName: String, _)))) => Some((e, externalName))
             case _ => None
           }
         case _ => None

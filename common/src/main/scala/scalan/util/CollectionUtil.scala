@@ -105,7 +105,16 @@ object CollectionUtil {
     }
   }
 
+  implicit class OptionOps[A](source: Option[A]) {
+    def mergeWith[K](other: Option[A], merge: (A,A) => A): Option[A] = (source, other) match {
+      case (_, None) => source
+      case (None, Some(_)) => other
+      case (Some(x), Some(y)) => Some(merge(x, y))
+    }
+  }
+
   implicit class TraversableOps[A, Source[X] <: Traversable[X]](xs: Source[A]) {
+
     def mapFirst[B](f: A => Option[B]): Option[B] = {
       for (x <- xs) {
         val y = f(x)
@@ -113,6 +122,7 @@ object CollectionUtil {
       }
       return None
     }
+
     def filterMap[B](f: A => Option[B])(implicit cbf: CanBuildFrom[Source[A], B, Source[B]]): Source[B] = {
        val b = cbf()
        for (x <- xs) {
@@ -124,6 +134,7 @@ object CollectionUtil {
        }
        b.result()
     }
+
     def distinctBy[K](key: A => K)(implicit cbf: CanBuildFrom[Source[A], A, Source[A]]): Source[A] = {
       val keys = mutable.Set[K]()
       val b = cbf()
@@ -136,6 +147,29 @@ object CollectionUtil {
       }
       b.result()
     }
+
+    def mapReduce[K, V](map: A => (K, V))(reduce: (V, V) => V)
+                       (implicit cbf: CanBuildFrom[Source[A], (K,V), Source[(K,V)]]): Source[(K, V)] = {
+      val result = scala.collection.mutable.LinkedHashMap.empty[K, V]
+      xs.foldLeft(result)((r, x) => {
+        val (key, value) = map(x)
+        result.update(key, if (result.contains(key)) reduce(result(key), value) else value)
+        result
+      })
+      val b = cbf()
+      for (kv <- result) b += kv
+      b.result()
+    }
+
+    def mergeWith[K]
+          (ys: Source[A], key: A => K, merge: (A,A) => A)
+          (implicit cbf: CanBuildFrom[Source[A], A, Source[A]]): Source[A] = {
+      val b = cbf()
+      for (v <- (xs ++ ys).mapReduce(x => (key(x), x))(merge))
+        b += v._2
+      b.result()
+    }
+
   }
 }
 

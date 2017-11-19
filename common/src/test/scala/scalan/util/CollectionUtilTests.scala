@@ -41,15 +41,51 @@ class CollectionUtilTests extends BaseTests {
     assertResult(Seq("b" -> 4, "c" -> 6, "d" -> 8))(joinPairs(outer, outer))
   }
 
+  test("filterMap") {
+    val xs = List(1, 2, 3)
+    xs.filterMap(x => if (x <= 2) Some(s"x = $x") else None) should be(List("x = 1", "x = 2"))
+  }
+
   test("mapFirst") {
     val xs = List(1, 2, 3)
     xs.mapFirst(x => if (x > 2) Some(s"x = $x") else None) should be(Some("x = 3"))
+    xs.mapFirst(x => if (x > 3) Some(x) else None) should be(None)
   }
 
+  val items: Iterable[(Int, String)] = Array((1, "a"), (2, "b"), (1, "c"))
+
   test("distinctBy") {
-    val items = Array((1, "a"), (2, "b"), (1, "c")).toIterable
     val res = items.distinctBy(_._1)
     assertResult(Array((1, "a"), (2, "b")))(res)
+  }
+
+  test("mapReduce") {
+    val res = items.mapReduce(p => (p._1, p._2))((v1, v2) => v1 + v2)
+    assertResult(List((1, "ac"), (2, "b")))(res)
+  }
+
+  test("mergeWith") {
+    type V = (Int, String)
+    def key(p: V) = p._1
+    def merge(v1: V, v2: V) = (v1._1, v1._2 + v2._2)
+
+    {
+      val res = List().mergeWith(List(), key, merge)
+      assertResult(List())(res)
+    }
+    {
+      val res = List((1, "a"), (2, "b"), (1, "c")).mergeWith(List(), key, merge)
+      assertResult(List((1, "ac"), (2, "b")))(res)
+    }
+    {
+      val res = List().mergeWith(List((1, "a"), (2, "b"), (1, "c")), key, merge)
+      assertResult(List((1, "ac"), (2, "b")))(res)
+    }
+    {
+      val ys = List((2, "c"), (3, "d"))
+      val res = List((1, "a"), (2, "b"), (1, "c")).mergeWith(ys, key, merge)
+      assertResult(List((1, "ac"), (2, "bc"), (3, "d")))(res)
+    }
   }
 
   test("zipWithExpandedBy") {

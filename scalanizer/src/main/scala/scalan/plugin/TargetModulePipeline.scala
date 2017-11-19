@@ -7,10 +7,9 @@ import scalan.meta.scalanizer.Scalanizer
 import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstExtensions._
-import scalan.meta.{TargetModuleConf, UnitConfig, ModuleConf}
+import scalan.meta._
 import scalan.util.FileUtil
 import scala.collection.mutable.{Map => MMap}
-import scalan.meta.SName
 
 class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPipeline[G](s) {
   import scalanizer._
@@ -18,6 +17,7 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
 
   val name = "target-assembler"
   val runAfter = List("parser")
+  val wrappers = MMap[SName, SUnitDef]()
 
   override def isEnabled: Boolean = {
     val moduleName = s.moduleName
@@ -46,14 +46,15 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
       global.currentRun.compileLate(new PlainFile(Path(targetImpl)))
   }
 
-  val wrappers = MMap[SName, SUnitDef]()
-
   def mergeWrapperUnit(unit: SUnitDef) = {
     val wName = SName(unit.packageName, unit.name)
     scalanizer.inform(s"Merging wrapper $wName")
     wrappers.get(wName) match {
       case Some(existingUnit) =>
         scalanizer.inform(s"Cannot merge $wName")
+        val merger = new SUnitMerger(existingUnit)(scalanizer.context)
+        val newUnit =merger.merge(unit)
+        wrappers(wName) = newUnit
       case None =>
         wrappers(wName) = unit
     }
@@ -77,7 +78,6 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
         saveCode(sourceRoot,
           w.packageName, w.name,
           showCode(wPackage))
-        /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
         val boilerplateText = genWrapperBoilerplateText(target, w, isVirtualized = true)
         saveCode(sourceRoot, w.packageName + ".impl", w.name + "Impl", boilerplateText)
       }

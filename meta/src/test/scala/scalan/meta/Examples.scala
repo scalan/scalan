@@ -64,8 +64,8 @@ trait Examples { self: ScalanAstTests =>
     """
      |package scala {
      |  import scalan._
-     |  import impl._
      |  import scala.wrappers.WrappersModule
+     |  import impl._
      |
      |  trait WArrays extends Base { self: WrappersModule =>
      |    type RepWArray[T] = Rep[WArray[T]];
@@ -73,6 +73,45 @@ trait Examples { self: ScalanAstTests =>
      |      implicit def eT: Elem[T];
      |      @External def apply(i: Rep[Int]): Rep[T];
      |      @External def zip[B](ys: Rep[WArray[B]]): Rep[WArray[scala.Tuple2[T, B]]];
+     |      @External def map[B](f: Rep[scala.Function1[T, B]]): Rep[WArray[B]];
+     |      @External def length: Rep[Int]
+     |    };
+     |    trait WArrayCompanion {
+     |      @External def fill[@Reified T](n: Rep[Int], elem: Rep[Thunk[T]]): Rep[WArray[T]]
+     |    }
+     |  }
+     |}
+    """.stripMargin, true)
+
+  val warrays1Module = TestModule("WArrays",
+    """
+     |package scala {
+     |  import scalan._
+     |  import scala.wrappers.WrappersModule
+     |
+     |  trait WArrays extends Base { self: WrappersModule =>
+     |    type RepWArray[T] = Rep[WArray[T]];
+     |    @External("Array") @ContainerType trait WArray[T] extends Def[WArray[T]] { self =>
+     |      implicit def eT: Elem[T];
+     |      @External def apply(i: Rep[Int]): Rep[T];
+     |      @External def zip[B](ys: Rep[WArray[B]]): Rep[WArray[scala.Tuple2[T, B]]];
+     |    };
+     |    trait WArrayCompanion {
+     |    }
+     |  }
+     |}
+    """.stripMargin, true)
+
+  val warrays2Module = TestModule("WArrays",
+    """
+     |package scala {
+     |  import scalan._
+     |  import impl._
+     |
+     |  trait WArrays extends Base { self: WrappersModule =>
+     |    type RepWArray[T] = Rep[WArray[T]];
+     |    @External("Array") @FunctorType trait WArray[T] extends Def[WArray[T]] { self =>
+     |      @External def apply(i: Rep[Int]): Rep[T];
      |      @External def map[B](f: Rep[scala.Function1[T, B]]): Rep[WArray[B]];
      |      @External def length: Rep[Int]
      |    };
