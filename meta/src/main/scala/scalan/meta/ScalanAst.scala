@@ -1104,18 +1104,22 @@ object ScalanAst {
   }
 
   def optimizeClassImplicits(c: SClassDef)(implicit ctx: AstContext): SClassDef = {
-    if (c.args.args.isEmpty) c
-    else {
-      val newArgs = c.implicitArgs.args.filter { _ match {
-        case TypeDescArg(_,tyName) =>
-          val explicitArgs = c.args.args
-          !canBeExtracted(explicitArgs, tyName)
-        case _ => true
-      }}
-      c.copy(
-        implicitArgs = SClassArgs(newArgs)
-      )
+    val optArgs =
+      if (c.args.args.isEmpty) c
+      else {
+        val newArgs = c.implicitArgs.args.filter { _ match {
+          case TypeDescArg(_,tyName) =>
+            val explicitArgs = c.args.args
+            !canBeExtracted(explicitArgs, tyName)
+          case _ => true
+        }}
+        c.copy(implicitArgs = SClassArgs(newArgs))
+      }
+    val newBody = optArgs.body.map {
+      case m: SMethodDef => optimizeMethodImplicits(m)
+      case item => item
     }
+    optArgs.copy(body = newBody)
   }
 
   def optimizeModuleImplicits(module: SUnitDef): SUnitDef = {

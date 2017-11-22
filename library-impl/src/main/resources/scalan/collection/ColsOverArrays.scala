@@ -7,7 +7,7 @@ package scalan.collection {
       def apply(i: Rep[Int]): Rep[A] = ColOverArray.this.arr.apply(i)
     };
     abstract class ColOverArrayBuilder extends ColBuilder {
-      def fromArray[T](arr: Rep[WArray[T]])(implicit emT: Elem[T]): Rep[Col[T]] = ColOverArray(arr)
+      def fromArray[T](arr: Rep[WArray[T]]): Rep[Col[T]] = ColOverArray(arr)
     };
     trait ColOverArrayCompanion;
     trait ColOverArrayBuilderCompanion

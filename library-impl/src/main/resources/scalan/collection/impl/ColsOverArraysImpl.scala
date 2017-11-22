@@ -17,7 +17,7 @@ trait ColsOverArraysDefs extends scalan.Scalan with ColsOverArrays {
     lazy val selfType = element[ColOverArray[A]]
   }
   // elem for concrete class
-  class ColOverArrayElem[A](val iso: Iso[ColOverArrayData[A], ColOverArray[A]])(implicit val eA: Elem[A])
+  class ColOverArrayElem[A](val iso: Iso[ColOverArrayData[A], ColOverArray[A]])(implicit override val eA: Elem[A])
     extends ColElem[A, ColOverArray[A]]
     with ConcreteElem[ColOverArrayData[A], ColOverArray[A]] {
     override lazy val parent: Option[Elem[_]] = Some(colElement(element[A]))
