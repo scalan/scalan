@@ -26,8 +26,8 @@ trait ScalanizerState[+G <: Global] {
     scalanizer.context.transformWrappers(transformer)
   }
 
-  def getModule(packageName: String, moduleName: String): SUnitDef = {
-    scalanizer.context.getModule(packageName, moduleName)
+  def getUnit(packageName: String, unitName: String): SUnitDef = {
+    scalanizer.context.getModule(packageName, unitName)
   }
 
   def addUnit(unit: SUnitDef) = {

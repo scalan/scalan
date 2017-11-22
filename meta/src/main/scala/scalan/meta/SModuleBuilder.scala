@@ -181,11 +181,12 @@ class SModuleBuilder(implicit val context: AstContext) {
   }
 
   /** Adds descriptor methods (def eA, def cF, etc) to the body of the first entity. */
-  def genEntityImpicits(module: SUnitDef) = module.updateFirstEntity { e =>
+  def genEntityImplicits(module: SUnitDef) = module.updateFirstEntity { e =>
     val newBody = genDescMethodsByTypeArgs(e.tpeArgs) ++ e.body
     e.copy(body = newBody)
   }
 
+  /** Add implicit Elem arguments and implicit descriptor methods. */
   def genClassesImplicits(module: SUnitDef) = {
     def unpackElem(classArg: SClassArg): Option[STpeExpr] = classArg.tpe match {
       case STraitCall("Elem", List(prim @ STpePrimitive(_,_))) => Some(prim)

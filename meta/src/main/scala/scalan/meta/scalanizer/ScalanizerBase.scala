@@ -15,7 +15,7 @@ trait ScalanizerBase[+G <: Global]
 
   def snConfig: ScalanizerConfig
 
-  def entityManagment: EntityManagement[G]
+//  def entityManagment: EntityManagement[G]
 
   def isNonWrapper(name: String): Boolean = {
     snConfig.nonWrappers.contains(name)

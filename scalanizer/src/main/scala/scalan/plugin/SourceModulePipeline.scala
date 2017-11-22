@@ -24,6 +24,23 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
   }
 
   val steps: List[PipelineStep] = List(
+    RunStep("dependencies") { step =>
+      val module = s.getSourceModule
+      // add virtualized units from dependencies
+      for (inModule <- module.collectInputModules()) {
+        for (unitConf <- inModule.units.values) {
+          val unit = parseEntityModule(unitConf.getResourceFile)(new ParseCtx(isVirtualized = true)(context))
+          scalanizer.inform(s"Step(${step.name}): Adding dependency ${unit.fullName} parsed from ${unitConf.getResourceFile}")
+          snState.addUnit(unit)
+        }
+      }
+      // add not yet virtualized units from the current module
+      for (unitConf <- module.units.values) {
+        val unit = parseEntityModule(unitConf.getFile)(new ParseCtx(isVirtualized = false)(context))
+        scalanizer.inform(s"Step(${step.name}): Adding unit ${unit.fullName} form module '${s.moduleName}' (parsed from ${unitConf.getFile})")
+        snState.addUnit(unit)
+      }
+    },
     ForEachUnitStep("wrapfrontend") { context => import context._;
       val unitName = unit.source.file.name
       if (isModuleUnit(unitName)) {
@@ -46,7 +63,7 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
           constr2apply _,
           cleanUpClassTags _,
           preventNameConflict _,
-          genEntityImpicits _,
+          genEntityImplicits _,
           genMethodsImplicits _,
           replaceExternalTypeByWrapper _,
           /** Currently, inheritance of type wrappers is not supported.
@@ -74,29 +91,27 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
           showCode(wrapperPackage))
       }
     },
-    RunStep("dependencies") { step =>
-      val module = s.getSourceModule
-      for (inModule <- module.collectInputModules()) {
-          for (unitConf <- inModule.units.values) {
-            val unit = parseEntityModule(unitConf.getResourceFile)(new ParseCtx(isVirtualized = true)(context))
-            scalanizer.inform(s"Step(${step.name}): Adding dependency ${unit.fullName} parsed from ${unitConf.getResourceFile}")
-            snState.addUnit(unit)
-          }
-      }
-    },
     ForEachUnitStep("virtfrontend") { context => import context._;
-      withUnitModule(unit) { (module, unitName) =>
+      withUnitModule(unit) { (module, unitFileName) =>
+        val packageName = getUnitPackage(unit)
+        val unitName = Path(unitFileName).stripExtension
+
+        // this unit has been added in 'dependencies' step
+        // now it can be replaced with the body which has passed namer and typer
+        val existingUnit = snState.getUnit(packageName, unitName)
+
         implicit val ctx = new ParseCtx(false)(scalanizer.context)
-        val unitDef = unitDefFromTree(unitName, unit.body)
-        scalanizer.inform(s"Step(virtfrontend): Adding source unit ${unitDef.fullName} parsed from CompilationUnit(${unit.source.file})")
+        // here unit.body already passed namer and typer phases
+        val unitDef = unitDefFromTree(unitFileName, unit.body)
+        scalanizer.inform(s"Step(virtfrontend): Updating source unit ${existingUnit.fullName} with version from CompilationUnit(${unit.source.file})")
         snState.addUnit(unitDef)
       }
     },
     ForEachUnitStep("virtfinal") { context => import context._
-      withUnitModule(unit) { (module, unitName) =>
-        val packageName = getModulePackage(unit)
-
-        val unitDef = snState.getModule(packageName, Path(unitName).stripExtension)
+      withUnitModule(unit) { (module, unitFileName) =>
+        val packageName = getUnitPackage(unit)
+        val unitName = Path(unitFileName).stripExtension
+        val unitDef = snState.getUnit(packageName, unitName)
 
         /** Generates a virtualized version of original Scala AST, wraps types by Rep[] and etc. */
         val enrichedModuleDef = virtPipeline(unitDef)
@@ -106,13 +121,13 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
 
         val virtAst = genUDModuleFile(optimizedImplicits, unit.body)
 
-        val nameOnly = Path(unitName).stripExtension
+        val nameOnly = unitName
 
         saveCode(module, optimizedImplicits.packageName, nameOnly, showCode(virtAst))
 
         /** produce boilerplate code using ModuleFileGenerator
           * Note: we need enriched module with all implicits in there place for correct boilerplate generation */
-        val boilerplateText = genUDModuleBoilerplateText(unitName, enrichedModuleDef)
+        val boilerplateText = genUDModuleBoilerplateText(unitFileName, enrichedModuleDef)
 
         saveCode(module, enrichedModuleDef.packageName + ".impl", nameOnly + "Impl", boilerplateText)
 

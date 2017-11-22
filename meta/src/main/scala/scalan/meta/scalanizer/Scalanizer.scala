@@ -29,7 +29,7 @@ trait Scalanizer[+G <: Global]
 
   def isModuleUnit(unitName: String) = findUnitModule(unitName).isDefined
 
-  def getModulePackage(unit: global.CompilationUnit) = {
+  def getUnitPackage(unit: global.CompilationUnit) = {
     val packageName = unit.body match {
       case pd: global.PackageDef =>
         val packageName = pd.pid.toString

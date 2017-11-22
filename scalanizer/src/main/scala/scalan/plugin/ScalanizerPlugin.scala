@@ -21,8 +21,8 @@ class ScalanizerPlugin(g: Global) extends ScalanPlugin(g) { plugin =>
     def getGlobal: plugin.global.type = plugin.global
 
     val snConfig: ScalanizerConfig = new ScalanizerPluginConfig
-    val context: AstContext = new AstContext(snConfig.unitConfigs, this)
-    val entityManagment: EntityManagement[plugin.global.type] = new EntityManagement(this)
+    val context: AstContext = new AstContext(Nil, this)
+//    val entityManagment: EntityManagement[plugin.global.type] = new EntityManagement(this)
     val snState: ScalanizerState[plugin.global.type] = new ScalanizerPluginState(this)
 
     def informModuleNameError(msg: String) = {

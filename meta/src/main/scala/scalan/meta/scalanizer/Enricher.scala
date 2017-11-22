@@ -81,7 +81,7 @@ trait Enricher[+G <: Global] extends ScalanizerBase[G] {
       cleanUpClassTags _,
       replaceClassTagByElem _,
       eliminateClassTagApply _,
-      genEntityImpicits _, genClassesImplicits _, genMethodsImplicits _,
+      genEntityImplicits _, genClassesImplicits _, genMethodsImplicits _,
       fixEntityCompanionName _,
       fixEvidences _
     ))
