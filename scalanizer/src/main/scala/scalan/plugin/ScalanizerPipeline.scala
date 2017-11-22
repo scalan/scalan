@@ -37,7 +37,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
 
   case class ForEachUnitStep(name: String)(val action: UnitContext => Unit) extends PipelineStep
 
-  case class RunStep(name: String)(val action: Unit => Unit) extends PipelineStep
+  case class RunStep(name: String)(val action: PipelineStep => Unit) extends PipelineStep
 
   def forEachUnitComponent(runsAfter: List[String], step: ForEachUnitStep) =
     new ScalanizerComponent(step.name, runsAfter, global, pipeline) {
@@ -55,7 +55,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
       def newPhase(prev: Phase) = new StdPhase(prev) {
         override def run(): Unit = {
           if (!pipeline.isEnabled) return
-          step.action(())
+          step.action(step)
         }
 
         def apply(unit: global.CompilationUnit): Unit = ()

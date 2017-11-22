@@ -1,7 +1,8 @@
 package scalan.meta
 
 import java.io.File
-import scalan.util.FileUtil
+
+import scalan.util.{FileUtil, GraphUtil}
 import scalan.util.CollectionUtil._
 import scala.collection.mutable.{Map => MMap}
 
@@ -33,14 +34,22 @@ class ConfMap[C <: Conf] private(val table: MMap[String, C]) extends (String => 
 object ConfMap {
   def apply[C <: Conf](): ConfMap[C] = new ConfMap[C]()
 
-  def apply[C <: Conf](c: C, cs: C*): ConfMap[C] = {
-    val res = ConfMap[C].add(c)
+  def apply[C <: Conf](cs: C*): ConfMap[C] = {
+    val res = ConfMap[C]()
     cs.foldLeft(res) { (res, c) => res.add(c) }
   }
 }
 
 abstract class ModuleConf extends Conf {
-  def getResourceHome = s"$name/${ModuleConf.ResourcesDir}"
+  def units: ConfMap[UnitConfig]
+
+  def dependencies: ConfMap[ModuleConf]
+
+  def collectInputModules(): Set[ModuleConf] =
+    GraphUtil.depthFirstSetFrom(Set(this.dependencies.values.toSeq: _*))(m => m.dependencies.values)
+
+  def getResourceHome = s"$name/${ModuleConf.ResourcesDir }"
+
   def getWrappersHome = getResourceHome + "/wrappers"
 
   private def unitConfigTemplate(name: String, entityFile: String) =
@@ -56,11 +65,10 @@ abstract class ModuleConf extends Conf {
 
   def mkUnit(unitName: String, unitFile: String, isVirtualized: Boolean) =
     unitConfigTemplate(unitName, unitFile).copy(
-      srcPath = s"$name/${ModuleConf.SourcesDir}",
-      resourcePath = s"$name/${ModuleConf.ResourcesDir}",
+      srcPath = s"$name/${ModuleConf.SourcesDir }",
+      resourcePath = s"$name/${ModuleConf.ResourcesDir }",
       isVirtualized = isVirtualized
     )
-
 }
 
 object ModuleConf {
@@ -69,20 +77,31 @@ object ModuleConf {
   val ResourcesDir = "src/main/resources"
 }
 
-case class TargetModuleConf(
-    name: String,
-    sourceModules: ConfMap[SourceModuleConf]
-) extends ModuleConf
-
-case class SourceModuleConf(
-    name: String,
-    units: ConfMap[UnitConfig] = ConfMap()
+class TargetModuleConf(
+    val name: String,
+    val sourceModules: ConfMap[SourceModuleConf]
 ) extends ModuleConf {
+  override def units: ConfMap[UnitConfig] = ConfMap()
+
+  override def dependencies: ConfMap[ModuleConf] = ConfMap(sourceModules.values.map(v => v: ModuleConf).toSeq: _*)
+}
+
+class SourceModuleConf(
+    val name: String,
+    val units: ConfMap[UnitConfig] = ConfMap(),
+    val deps: ConfMap[SourceModuleConf] = ConfMap()
+) extends ModuleConf {
+  override def dependencies: ConfMap[ModuleConf] = deps.asInstanceOf[ConfMap[ModuleConf]]
 
   def hasUnit(unitName: String) = units.contains(unitName)
 
   def addUnit(unitName: String, unitFile: String): this.type = {
     units.add(mkUnit(unitName, unitFile, isVirtualized = false))
+    this
+  }
+
+  def dependsOn(us: SourceModuleConf*): this.type = {
+    for ( u <- us ) deps.add(u)
     this
   }
 
@@ -101,6 +120,7 @@ case class UnitConfig(
     extraImports: List[String] = List("scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}", "scalan.meta.ScalanAst._"),
     isVirtualized: Boolean = true) extends Conf {
   def getFile: File = FileUtil.file(srcPath, entityFile)
+
   def getResourceFile: File = FileUtil.file(resourcePath, entityFile)
 }
 

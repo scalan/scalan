@@ -48,7 +48,6 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
 
   def mergeWrapperUnit(unit: SUnitDef) = {
     val wName = SName(unit.packageName, unit.name)
-    scalanizer.inform(s"Merging wrapper $wName")
     wrappers.get(wName) match {
       case Some(existingUnit) =>
         val merger = new SUnitMerger(existingUnit)(scalanizer.context)
@@ -73,13 +72,14 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
 
   val steps: List[PipelineStep] = List(
     RunStep("assembler") { _ =>
-      scalanizer.inform(s"Processing target module ${scalanizer.moduleName }")
+      scalanizer.inform(s"Processing target module '${scalanizer.moduleName }'")
       // merge all partial wrappers from source modules
       val target = snConfig.targetModules(moduleName)
       val sourceRoot = s"${target.name }/${ModuleConf.SourcesDir }"
       for (source <- target.sourceModules.values) {
         for (wFile <- source.listWrapperFiles) {
           val unit = parseEntityModule(wFile)(new ParseCtx(isVirtualized = true)(context))
+          scalanizer.inform(s"Merging into wrapper ${unit.fullName} from $wFile")
           mergeWrapperUnit(unit)
         }
       }

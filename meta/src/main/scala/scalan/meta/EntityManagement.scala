@@ -26,12 +26,11 @@ class EntityManagement[+G <: Global](val parsers: ScalanParsers[G]) extends Lazy
   case class EntityManager(name: String, file: File, resourceFile: File, module: SUnitDef, config: UnitConfig)
 
   protected val entities = (for(c <- configs) yield {
-    val file = FileUtil.file(c.srcPath, c.entityFile)
-    val resourceFile = FileUtil.file(c.resourcePath, c.entityFile)
+    val file = c.getFile
+    val resourceFile = c.getResourceFile
     try {
-      inform(s"  parsing ${file} (relative to ${FileUtil.currentWorkingDir })")
       val module = parseEntityModule(file)(new ParseCtx(c.isVirtualized))
-//      val unitName = file.getName
+      inform(s"Adding unit parsed from ${file} (relative to ${FileUtil.currentWorkingDir })")
       context.addModule(module)
       Some((c.name, new EntityManager(module.name, file, resourceFile, module, c)))
     } catch {

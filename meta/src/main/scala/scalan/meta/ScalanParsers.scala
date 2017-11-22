@@ -68,14 +68,14 @@ trait ScalanParsers[+G <: Global] {
   def parseEntityModule(file: File)(implicit ctx: ParseCtx) = {
     val sourceFile = compiler.getSourceFile(file.getPath)
     val tree = parseFile(sourceFile)
-    moduleDefFromTree(file.getPath, tree)
+    unitDefFromTree(file.getPath, tree)
   }
 
   def parseFile(source: SourceFile): compiler.Tree = {
     compiler.newUnitParser(new compiler.CompilationUnit(source)).parse()
   }
 
-  def moduleDefFromTree(file: String, tree: Tree)(implicit ctx: ParseCtx): SUnitDef = tree match {
+  def unitDefFromTree(file: String, tree: Tree)(implicit ctx: ParseCtx): SUnitDef = tree match {
     case pd: PackageDef =>
       val unitName = scala.reflect.io.File(file).stripExtension
       moduleDefFromPackageDef(unitName, pd)
@@ -87,7 +87,7 @@ trait ScalanParsers[+G <: Global] {
     val sourceCode = FileUtil.readAndCloseStream(this.getClass.getClassLoader.getResourceAsStream(fileName))
     val sourceFile = new BatchSourceFile(fileName, sourceCode)
     val tree = parseFile(sourceFile)
-    val module = moduleDefFromTree(fileName, tree)(new ParseCtx(true)(context))
+    val module = unitDefFromTree(fileName, tree)(new ParseCtx(true)(context))
     module
   }
 

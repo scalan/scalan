@@ -881,9 +881,9 @@ object ScalanAst {
 
 
 
-    def addModule(module: SUnitDef) = {
-      val key = module.getModuleKey
-      modules(key) = module
+    def addModule(unit: SUnitDef) = {
+      val key = unit.getUnitKey
+      modules(key) = unit
     }
 
     object TypeDef {
@@ -942,7 +942,7 @@ object ScalanAst {
                       okEmitOrigModuleTrait: Boolean = true)
                      (@transient implicit val context: AstContext) {
     //TODO unify Module names
-    def getModuleKey: String = SName.fullNameString(packageName, name)
+    def getUnitKey: String = SName.fullNameString(packageName, name)
     def getModuleTraitName: String = SUnitDef.moduleTraitName(name)
 
     def getEntity(name: String): SEntityDef = {

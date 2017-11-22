@@ -72,28 +72,34 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
           optimizedImplicits.packageName,
           optimizedImplicits.name,
           showCode(wrapperPackage))
-//        /** Invoking of Scalan META to produce boilerplate code for the wrapper. */
-//        val boilerplateText = genWrapperBoilerplateText(moduleConf, module)
-//        saveWrapperCode(moduleConf, module.packageName + ".impl", module.name + "Impl", boilerplateText)
+      }
+    },
+    RunStep("dependencies") { step =>
+      val module = s.getSourceModule
+      for (inModule <- module.collectInputModules()) {
+          for (unitConf <- inModule.units.values) {
+            val unit = parseEntityModule(unitConf.getResourceFile)(new ParseCtx(isVirtualized = true)(context))
+            scalanizer.inform(s"Step(${step.name}): Adding dependency ${unit.fullName} parsed from ${unitConf.getResourceFile}")
+            snState.addUnit(unit)
+          }
       }
     },
     ForEachUnitStep("virtfrontend") { context => import context._;
-      val unitName = unit.source.file.name
-      if (isModuleUnit(unitName)) {
+      withUnitModule(unit) { (module, unitName) =>
         implicit val ctx = new ParseCtx(false)(scalanizer.context)
-        val moduleDef = moduleDefFromTree(unitName, unit.body)
-        scalanizer.inform(s"Step(virtfrontend): Adding source unit ${moduleDef.fullName} parsed from ${unit.source.file}")
-        snState.addModule(moduleDef)
+        val unitDef = unitDefFromTree(unitName, unit.body)
+        scalanizer.inform(s"Step(virtfrontend): Adding source unit ${unitDef.fullName} parsed from CompilationUnit(${unit.source.file})")
+        snState.addUnit(unitDef)
       }
     },
     ForEachUnitStep("virtfinal") { context => import context._
       withUnitModule(unit) { (module, unitName) =>
         val packageName = getModulePackage(unit)
 
-        val moduleDef = snState.getModule(packageName, Path(unitName).stripExtension)
+        val unitDef = snState.getModule(packageName, Path(unitName).stripExtension)
 
         /** Generates a virtualized version of original Scala AST, wraps types by Rep[] and etc. */
-        val enrichedModuleDef = virtPipeline(moduleDef)
+        val enrichedModuleDef = virtPipeline(unitDef)
 
         /** Scala AST of virtualized module */
         val optimizedImplicits = optimizeModuleImplicits(enrichedModuleDef)

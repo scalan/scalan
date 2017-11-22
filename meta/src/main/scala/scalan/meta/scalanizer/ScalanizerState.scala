@@ -30,7 +30,7 @@ trait ScalanizerState[+G <: Global] {
     scalanizer.context.getModule(packageName, moduleName)
   }
 
-  def addModule(module: SUnitDef) = {
-    scalanizer.context.addModule(module)
+  def addUnit(unit: SUnitDef) = {
+    scalanizer.context.addModule(unit)
   }
 }
