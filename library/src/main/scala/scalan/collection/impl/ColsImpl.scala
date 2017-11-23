@@ -8,7 +8,7 @@ import scala.wrappers.WrappersModule
 package impl {
 // Abs -----------------------------------
 trait ColsDefs extends scalan.Scalan with Cols {
-  self: ColsModule =>
+  self: Library =>
 
   // entityProxy: single proxy for each type family
   implicit def proxyCol[A](p: Rep[Col[A]]): Col[A] = {
@@ -175,4 +175,4 @@ trait ColsDefs extends scalan.Scalan with Cols {
 object ColsModule extends scalan.ModuleInfo("scalan.collection", "Cols")
 }
 
-trait ColsModule extends scalan.collection.impl.ColsDefs with scala.wrappers.WrappersModule
+trait ColsModule extends scalan.collection.impl.ColsDefs with scala.wrappers.WrappersModule { self: Library => }

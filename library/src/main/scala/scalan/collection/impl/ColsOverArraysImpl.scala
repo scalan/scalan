@@ -7,8 +7,8 @@ import scala.wrappers.WrappersModule
 
 package impl {
 // Abs -----------------------------------
-trait ColsOverArraysDefs extends scalan.Scalan with ColsOverArrays with ColsModule {
-  self: ColsOverArraysModule =>
+trait ColsOverArraysDefs extends scalan.Scalan with ColsOverArrays {
+  self: Library =>
 
   case class ColOverArrayCtor[A]
       (override val arr: Rep[WArray[A]])
@@ -248,4 +248,6 @@ trait ColsOverArraysDefs extends scalan.Scalan with ColsOverArrays with ColsModu
 object ColsOverArraysModule extends scalan.ModuleInfo("scalan.collection", "ColsOverArrays")
 }
 
-trait ColsOverArraysModule extends scalan.collection.impl.ColsOverArraysDefs with scala.wrappers.WrappersModule
+trait ColsOverArraysModule extends scalan.collection.impl.ColsOverArraysDefs with scala.wrappers.WrappersModule {
+  self: Library =>
+}

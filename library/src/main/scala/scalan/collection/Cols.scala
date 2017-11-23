@@ -1,7 +1,7 @@
 package scalan.collection {
   import scalan._
 
-  trait Cols extends Base { self: ColsModule =>
+  trait Cols extends Base { self: Library =>
     trait Col[A] extends Def[Col[A]] {
       implicit def eA: Elem[A];
       def arr: Rep[WArray[A]];
