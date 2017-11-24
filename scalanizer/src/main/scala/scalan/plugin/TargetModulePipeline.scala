@@ -31,15 +31,27 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
     isNewFile
   }
 
-  def copyScalanizedUnit(unit: UnitConfig, target: TargetModuleConf): Unit = {
-    val sourceFile = unit.getResourceFile
-    val targetFile = FileUtil.file(target.name, ModuleConf.SourcesDir, unit.entityFile)
+  def prepareSourceUnit(unit: SUnitDef): SUnitDef = {
+    unit
+  }
 
-    val sourceImpl = UnitConfig.getImplFile(sourceFile, "Impl", "scala")
-    val targetImpl = UnitConfig.getImplFile(targetFile, "Impl", "scala")
+  def copyScalanizedUnit(unitConf: UnitConfig, target: TargetModuleConf): Unit = {
+    val sourceFile = unitConf.getResourceFile
+    val targetRoot = s"${target.name }/${ModuleConf.SourcesDir }"
+    val targetFile = FileUtil.file(targetRoot, unitConf.entityFile)
+    val isNewFile = !targetFile.exists
 
-    val isNewFile = copyFile(sourceFile, targetFile)
-    val isNewImpl = copyFile(sourceImpl, targetImpl)
+    implicit val parseCtx = new ParseCtx(isVirtualized = true)(context)
+    implicit val getCtx = new GenCtx(context, isVirtualized = true, toRep = true)
+    val sourceUnit = parseEntityModule(sourceFile)
+    val preparedUnit = prepareSourceUnit(sourceUnit)
+    val unitTree = genUnitPackageDef(preparedUnit)
+    saveCode(targetRoot, preparedUnit.packageName, preparedUnit.name, showCode(unitTree))
+
+    val boilerplateText = genUnitBoilerplateText(target, preparedUnit, isVirtualized = true)
+    val targetImpl = saveCode(targetRoot, preparedUnit.packageName + ".impl", preparedUnit.name + "Impl", boilerplateText)
+    val isNewImpl = !targetFile.exists
+
     if (isNewFile)
       global.currentRun.compileLate(new PlainFile(Path(targetFile)))
     if (isNewImpl)
@@ -89,7 +101,7 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
         val wPackage = genWrapperPackage(w, isVirtualized = true)
         saveCode(sourceRoot, w.packageName, w.name, showCode(wPackage))
 
-        val boilerplateText = genWrapperBoilerplateText(target, w, isVirtualized = true)
+        val boilerplateText = genUnitBoilerplateText(target, w, isVirtualized = true)
         saveCode(sourceRoot, w.packageName + ".impl", w.name + "Impl", boilerplateText)
 
         wrappersCake = updateWrappersCake(wrappersCake, w)

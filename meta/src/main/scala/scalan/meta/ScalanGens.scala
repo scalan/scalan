@@ -36,6 +36,32 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
       throw new IllegalArgumentException("Module must be in a package")
   }
 
+//  @tailrec
+//  final def genRefTree(qualifier: Tree, packageNames: List[String]): RefTree = packageNames match {
+//    case lastName :: Nil => RefTree(qualifier, TermName(lastName))
+//    case name :: tail => genRefTree(Select(qualifier, name), tail)
+//  }
+
+  def genRefTree(packageName: String): RefTree = {
+    val names = packageName.split('.').toList
+    names match {
+      case h :: (t @ List(_, _*)) => t.foldLeft[RefTree](Ident(h)) ((qualifier, n) => Select(qualifier, n))
+      case h :: Nil => Ident(h)
+      case _ => sys.error(s"Invalid packageName $packageName")
+    }
+  }
+
+  /** Generate PackageDef for a given SUnitDef */
+  def genUnitPackageDef(unit: SUnitDef)(implicit ctx: GenCtx): Tree = {
+      val ref = genRefTree(unit.packageName)
+      val imports = unit.imports.map(genImport(_))
+      val moduleBody = List[Tree](genModuleTrait(unit))
+      PackageDef(ref,
+        imports ++
+            moduleBody
+      )
+  }
+
   def genModuleTrait(module: SUnitDef)(implicit ctx: GenCtx): Tree = {
     val methods = module.methods.map(m => genMethod(m)(ctx.copy(toRep = !m.isTypeDesc)))
     val newstats =
@@ -140,7 +166,7 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
     case empty: SEmpty => q""
     case const: SConst =>
       val constTree = Literal(Constant(const.c))
-      if (ctx.toRep)
+      if (!ctx.isVirtualized && ctx.toRep)
         const.exprType match {
           case Some(t) =>
             q"toRep($constTree.asInstanceOf[${genTypeExpr(t)}])"

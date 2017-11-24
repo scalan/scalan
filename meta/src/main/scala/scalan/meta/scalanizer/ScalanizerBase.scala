@@ -1,5 +1,6 @@
 package scalan.meta.scalanizer
 
+import java.io.File
 import scala.tools.nsc.Global
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstTransformers.{AstReplacer, TypeReplacer}
@@ -47,11 +48,12 @@ trait ScalanizerBase[+G <: Global]
     saveCode(module.getResourceHome + "/wrappers", packageName, fileName, code)
   }
 
-  def saveCode(sourceRoot: String, packageName: String, fileName: String, code: String): Unit = {
+  def saveCode(sourceRoot: String, packageName: String, unitName: String, code: String): File = {
     val packagePath = packageName.replace('.', '/')
-    val resourceFile = FileUtil.file(sourceRoot, packagePath, fileName + ".scala")
-    resourceFile.mkdirs()
-    FileUtil.write(resourceFile, code)
+    val file = FileUtil.file(sourceRoot, packagePath, unitName + ".scala")
+    file.mkdirs()
+    FileUtil.write(file, code)
+    file
   }
 
   class External2WrapperTypeTransformer(name: String)(implicit context: AstContext) extends AstReplacer(name, wrap)
