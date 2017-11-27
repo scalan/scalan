@@ -39,10 +39,10 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
     val sourceFile = unitConf.getResourceFile
     val targetRoot = s"${target.name }/${ModuleConf.SourcesDir }"
     val targetFile = FileUtil.file(targetRoot, unitConf.entityFile)
-    val isNewFile = !targetFile.exists
+    val isNewTargetFile = !targetFile.exists
 
     implicit val parseCtx = new ParseCtx(isVirtualized = true)(context)
-    implicit val getCtx = new GenCtx(context, isVirtualized = true, toRep = true)
+    implicit val genCtx = new GenCtx(context, isVirtualized = true, toRep = true)
     val sourceUnit = parseEntityModule(sourceFile)
     val preparedUnit = prepareSourceUnit(sourceUnit)
     val unitTree = genUnitPackageDef(preparedUnit)
@@ -50,9 +50,9 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
 
     val boilerplateText = genUnitBoilerplateText(target, preparedUnit, isVirtualized = true)
     val targetImpl = saveCode(targetRoot, preparedUnit.packageName + ".impl", preparedUnit.name + "Impl", boilerplateText)
-    val isNewImpl = !targetFile.exists
+    val isNewImpl = !targetImpl.exists
 
-    if (isNewFile)
+    if (isNewTargetFile)
       global.currentRun.compileLate(new PlainFile(Path(targetFile)))
     if (isNewImpl)
       global.currentRun.compileLate(new PlainFile(Path(targetImpl)))
