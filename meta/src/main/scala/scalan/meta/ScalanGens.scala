@@ -382,7 +382,10 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
 
   def genFunc(func: SFunc)(implicit ctx: GenCtx): Tree = {
     if (func.params.length == 1) {
-      q"fun { (${genVal(func.params.head)}) => ${genExpr(func.res)} }"
+      if (ctx.isVirtualized)
+        q"{ (${genVal(func.params.head) }) => ${genExpr(func.res) } }"
+      else
+        q"fun { (${genVal(func.params.head) }) => ${genExpr(func.res) } }"
     } else {
       val t: List[STpeExpr] = func.params.map(_.tpe.getOrElse(STpeEmpty()))
       val tAst = genTuples(t)
