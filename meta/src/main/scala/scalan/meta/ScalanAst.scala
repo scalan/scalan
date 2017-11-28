@@ -627,6 +627,19 @@ object ScalanAst {
       getInheritedMethodDefs(module).collect { case md if md.body.isDefined => md.name }.toSet
     }
 
+    def getInheritedTypes(implicit ctx: AstContext): List[STraitCall] = {
+      val ancs = ancestors.collect { case STypeApply(tc, _) => tc }
+      val res = ancs.flatMap {
+        case tc @ STraitCall(ctx.Entity(_, e), _) => tc :: e.getInheritedTypes
+        case t => List(t)
+      }
+      res
+    }
+
+    def isInherit(traitName: String)(implicit ctx: AstContext): Boolean = {
+      getInheritedTypes.exists(_.name == traitName)
+    }
+
     def getDeclaredElems(module: SUnitDef): List[(String, STpeExpr)] = {
       val res = (this :: getAncestorTraits(module))
         .flatMap(e => {

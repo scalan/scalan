@@ -45,21 +45,35 @@ class SModuleBuilder(implicit val context: AstContext) {
     }.moduleTransform(module)
   }
 
-  /** Pipeline Step
-    * Make the module inherit from Base trait from Scalan */
+  /** Make the module inherit from Base trait from Scalan */
   def addBaseToAncestors(module: SUnitDef) = {
     val newAncestors = STraitCall(name = "Base", args = List()).toTypeApply :: module.ancestors
     module.copy(ancestors = newAncestors)
   }
 
   /** Pipeline Step
-    * Extends the entity T by Def[T] */
-  def addEntityAncestors(module: SUnitDef) = module.updateFirstEntity { e =>
+    * Make the trait Col[T] extends Def[Col[T] ] */
+  def addEntityDefAncestor(e: SEntityDef): SEntityDef = {
     val newAncestors = STraitCall(
       name = "Def",
       args = List(STraitCall(e.name, e.tpeArgs.map(arg => STraitCall(arg.name, List()))))
     ).toTypeApply :: e.ancestors
     e.copy(ancestors = newAncestors)
+  }
+
+  /** Pipeline Step
+    * Make all traits in a given unit extend Def directly or indirectly (i.e. Col[T] extends Def[Col[T] ]) */
+  def addEntityAncestors(unit: SUnitDef) = {
+    var extended = List[SEntityDef]()
+    for (t <- unit.traits) {
+      val alreadyInherit = extended.exists(e => t.isInherit(e.name)) || t.isInherit("Def")
+
+      if (!alreadyInherit) {
+        val newTrait =
+        extended =  :: extended
+      }
+    }
+
   }
 
   /** Puts the module to the cake. For example, trait Segments is transformed to

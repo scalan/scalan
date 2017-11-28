@@ -113,6 +113,9 @@ object CollectionUtil {
     }
   }
 
+  implicit class ListOps[A](source: List[A]) {
+  }
+
   implicit class TraversableOps[A, Source[X] <: Traversable[X]](xs: Source[A]) {
 
     def mapFirst[B](f: A => Option[B]): Option[B] = {

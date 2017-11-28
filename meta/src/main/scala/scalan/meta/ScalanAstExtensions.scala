@@ -136,6 +136,10 @@ object ScalanAstExtensions {
       case None => unit
     }
 
+    def updateEntities(updater: STraitDef => STraitDef) = {
+      val newTraits = unit.traits.map(updater)
+      unit.copy(traits = newTraits)(ctx)
+    }
   }
 
 }
