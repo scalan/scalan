@@ -5,11 +5,11 @@ import scalan.meta.scalanizer.Scalanizer
 import scala.tools.nsc.Global
 import scala.annotation.tailrec
 import scala.reflect.internal.Phase
-import scalan.meta.ScalanAstTransformers.isIgnoredExternalType
+import scalan.meta.ScalanAstTransformers.{isIgnoredExternalType, External2WrapperTypeTransformer}
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstExtensions._
 import scalan.util.CollectionUtil._
-import scalan.meta.{SourceModuleConf, ScalanCodegen, ModuleConf}
+import scalan.meta.{SourceModuleConf, ModuleConf, ScalanCodegen}
 
 abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) { pipeline =>
   import scalanizer._
@@ -424,7 +424,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
       case ClassInfoType(parents, _, _) => parents
       case _ => Nil
     }
-    val externalTypes = snState.externalTypes
+    val externalTypes = context.externalTypes
     parentDecls foreach { parent =>
       val name = parent.typeSymbol.nameString
       if (!isIgnoredExternalType(name) && !externalTypes.contains(name)) {
@@ -500,7 +500,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
         ancestor.copy(tpe = typeTransformer.traitCallTransform(ancestor.tpe))
       }
     }
-    val wrappedModule = snState.externalTypes.foldLeft(module) { (acc, externalTypeName) =>
+    val wrappedModule = ctx.externalTypes.foldLeft(module) { (acc, externalTypeName) =>
       new TypeInWrappersTransformer(externalTypeName).moduleTransform(acc)
     }
     wrappedModule

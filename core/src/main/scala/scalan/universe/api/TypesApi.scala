@@ -127,7 +127,7 @@ trait TypesApi { self: Scalan =>
     lazy val superEntities: Seq[Entity] = {
       val res = for {
         m <- apiModulesIter
-        e <- entityDef.getAncestorTraits(m.module).iterator.map(t => Entity(t.name))
+        e <- entityDef.getAncestorTraits(m.module.context).iterator.map(t => Entity(t.name))
       } yield e
       res.toSeq
     }

@@ -8,7 +8,6 @@ import scalan.meta.SourceModuleConf
   * Scalanizer object is created for a set of Scalan modules of scalan-meta (SModuleDef) */
 trait Scalanizer[+G <: Global]
     extends ScalanizerBase[G]
-        with Enricher[G]
         with Backend[G]
         //  with HotSpots[G]
 {

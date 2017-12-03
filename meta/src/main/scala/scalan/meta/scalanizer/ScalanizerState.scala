@@ -12,8 +12,6 @@ trait ScalanizerState[+G <: Global] {
   def updateWrapper(typeName: String, descr: WrapperDescr) = {
     scalanizer.context.updateWrapper(typeName, descr)
   }
-  /** Names of external types. They must be read only after the WrapFrontend phase. */
-  def externalTypes = scalanizer.context.externalTypes
 
   def hasWrapper(typeName: String) = scalanizer.context.hasWrapper(typeName)
   def getWrapper(typeName: String) = scalanizer.context.getWrapper(typeName)

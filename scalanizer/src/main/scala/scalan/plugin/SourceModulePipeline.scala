@@ -5,6 +5,7 @@ import scala.collection.mutable
 import scala.reflect.io.Path
 import scalan.meta.scalanizer.Scalanizer
 import scala.tools.nsc.Global
+import scalan.meta.ModuleVirtualizationPipeline
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstExtensions._
 import scalan.util.CollectionUtil._
@@ -57,7 +58,7 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
         val pipeline = scala.Function.chain(Seq(
           preventNameConflict _,
           addBaseToAncestors _,
-          addEntityAncestors _,
+          addDefAncestorToAllEntities _,
           updateSelf _,
           checkEntityCompanion _,
           constr2apply _,

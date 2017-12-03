@@ -17,21 +17,38 @@ trait Examples { self: ScalanAstTests =>
      |}
     """.stripMargin, true)
 
+  val colsModule = TestModule("Cols",
+    """package scalan.collection
+     |  class ColOverArray[A](val arr: Array[A]) extends Collection[A] {
+     |    val list: List[A] = arr.toList
+     |    def length: Int = ColOverArray.this.arr.length;
+     |    def apply(i: Int): A = ColOverArray.this.arr.apply(i)
+     |  };
+     |  trait PairCollection[A, B] extends Collection[(A,B)]{
+     |  }
+     |  trait Collection[A] {
+     |    def length: Int;
+     |    def apply(i: Int): A
+     |  };
+    """.stripMargin, false)
+
   val colsVirtModule = TestModule("Cols",
     """package scalan.collection
      |import scalan._
      |trait Cols extends Scalan {
      |  type Col[A] = Rep[Collection[A]]
-     |  trait Collection[A] extends Def[Collection[A]] {
-     |    implicit def eA: Elem[A]
-     |    def length: Rep[Int];
-     |    def apply(i: Rep[Int]): Rep[A]
-     |  }
      |  abstract class ColOverArray[A](val arr: Rep[WArray[A]]) extends Collection[A] {
      |    val list: Rep[WList[A]] = arr.toList
      |    def length: Rep[Int] = ColOverArray.this.arr.length;
      |    def apply(i: Rep[Int]): Rep[A] = ColOverArray.this.arr.apply(i)
      |  };
+     |  trait PairCollection[A, B] extends Collection[(A,B)]{
+     |  }
+     |  trait Collection[A] extends Def[Collection[A]] {
+     |    implicit def eA: Elem[A]
+     |    def length: Rep[Int];
+     |    def apply(i: Rep[Int]): Rep[A]
+     |  }
      |}
     """.stripMargin, true)
 

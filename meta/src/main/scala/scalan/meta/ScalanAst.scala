@@ -586,12 +586,12 @@ object ScalanAst {
 
     def isHighKind = tpeArgs.exists(_.isHighKind)
 
-    def isInheritedDeclared(propName: String, module: SUnitDef) = {
-      getInheritedDeclaredFields(module).contains(propName)
+    def isInheritedDeclared(propName: String)(implicit context: AstContext) = {
+      getInheritedDeclaredFields.contains(propName)
     }
 
-    def isInheritedDefined(propName: String, module: SUnitDef) = {
-      getInheritedDefinedFields(module).contains(propName)
+    def isInheritedDefined(propName: String)(implicit context: AstContext) = {
+      getInheritedDefinedFields.contains(propName)
     }
 
     def getMethodsWithAnnotation(annClass: String) = body.collect {
@@ -602,29 +602,32 @@ object ScalanAst {
       case md: SMethodDef if md.allArgs.isEmpty => md
     }
 
-    def getAncestorTraits(module: SUnitDef): List[SEntityDef] = {
-      ancestors.collect { case STypeApply(STraitCall(module.context.Entity(m, e),_), _) => e }
-//      ancestors.filter(a => module.isEntity(a.tpe.name)).map(a => module.getEntity(a.tpe.name))
+    def getAncestorTraits(implicit context: AstContext): List[SEntityDef] = {
+      ancestors.collect { case STypeApply(STraitCall(context.Entity(m, e),_), _) => e }
     }
 
-    def getAvailableFields(module: SUnitDef): Set[String] = {
-      getFieldDefs.map(_.name).toSet ++ getAncestorTraits(module).flatMap(_.getAvailableFields(module))
+    def getAncestorTypeNames(implicit context: AstContext): List[String] = {
+      ancestors.collect { case STypeApply(STraitCall(name,_), _) => name }
     }
 
-    def getAvailableMethodDefs(module: SUnitDef): Seq[SMethodDef] = {
-      getFieldDefs ++ getAncestorTraits(module).flatMap(_.getAvailableMethodDefs(module))
+    def getAvailableFields(implicit context: AstContext): Set[String] = {
+      getFieldDefs.map(_.name).toSet ++ getAncestorTraits.flatMap(_.getAvailableFields)
     }
 
-    def getInheritedMethodDefs(module: SUnitDef): Seq[SMethodDef] = {
-      getAncestorTraits(module).flatMap(_.getAvailableMethodDefs(module))
+    def getAvailableMethodDefs(implicit context: AstContext): Seq[SMethodDef] = {
+      getFieldDefs ++ getAncestorTraits.flatMap(_.getAvailableMethodDefs)
     }
 
-    def getInheritedDeclaredFields(module: SUnitDef): Set[String] = {
-      getInheritedMethodDefs(module).collect { case md if md.body.isEmpty => md.name }.toSet
+    def getInheritedMethodDefs(implicit context: AstContext): Seq[SMethodDef] = {
+      getAncestorTraits.flatMap(_.getAvailableMethodDefs)
     }
 
-    def getInheritedDefinedFields(module: SUnitDef): Set[String] = {
-      getInheritedMethodDefs(module).collect { case md if md.body.isDefined => md.name }.toSet
+    def getInheritedDeclaredFields(implicit context: AstContext): Set[String] = {
+      getInheritedMethodDefs.collect { case md if md.body.isEmpty => md.name }.toSet
+    }
+
+    def getInheritedDefinedFields(implicit context: AstContext): Set[String] = {
+      getInheritedMethodDefs.collect { case md if md.body.isDefined => md.name }.toSet
     }
 
     def getInheritedTypes(implicit ctx: AstContext): List[STraitCall] = {
@@ -640,8 +643,8 @@ object ScalanAst {
       getInheritedTypes.exists(_.name == traitName)
     }
 
-    def getDeclaredElems(module: SUnitDef): List[(String, STpeExpr)] = {
-      val res = (this :: getAncestorTraits(module))
+    def getDeclaredElems(implicit context: AstContext): List[(String, STpeExpr)] = {
+      val res = (this :: getAncestorTraits)
         .flatMap(e => {
           val elems = e.body.collect {
             case SMethodDef(name, _, _, Some(elemOrCont), true, _, _, _, _, true) =>
@@ -892,11 +895,13 @@ object ScalanAst {
       modules(key)
     }
 
-
-
     def addModule(unit: SUnitDef) = {
       val key = unit.getUnitKey
       modules(key) = unit
+    }
+
+    def removeModule(key: String) = {
+      modules.remove(key)
     }
 
     object TypeDef {
@@ -969,11 +974,11 @@ object ScalanAst {
           .orElse(classes.collectFirst { case c if c.name == name => c })
     }
 
-    def isEntity(name: String) = traits.exists(e => e.name == name)
+    def isTrait(name: String) = traits.exists(e => e.name == name)
 
     def isClass(name: String) = classes.exists(c => c.name == name)
 
-    def allEntities = traits ++ classes
+    def allEntities: List[SEntityDef] = traits ++ classes
 
     private def hasDeclaredImplFor(traitName: String, decls: Option[SDeclaredImplementations]) = {
       decls match {

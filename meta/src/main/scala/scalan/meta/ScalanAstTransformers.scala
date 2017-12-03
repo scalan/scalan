@@ -368,4 +368,8 @@ object ScalanAstTransformers {
     override def apply(module: Module): Module = chain(module)
   }
 
+  class External2WrapperTypeTransformer(name: String)(implicit context: AstContext) extends AstReplacer(name, wrap)
+
+  class ExtType2WrapperTypeTransformer(name: String) extends TypeReplacer(name, wrap)
+
 }

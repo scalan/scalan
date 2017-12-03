@@ -270,7 +270,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SUnitDef, config: Un
       |  // familyElem
       |  class $elemTypeDecl${e.implicitArgsDecl("_")}
       |    extends $parentElem {
-      |${e.implicitArgs.rep(a => s"    ${(e.entity.isInheritedDeclared(a.name, e.module)).opt("override ")}def ${a.name} = _${a.name}", "\n")}
+      |${e.implicitArgs.rep(a => s"    ${(e.entity.isInheritedDeclared(a.name)).opt("override ")}def ${a.name} = _${a.name}", "\n")}
       |    ${overrideIfHasParent}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
       |    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs(${e.tpeSubstStr})
       |    override lazy val tag = {
@@ -353,7 +353,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SUnitDef, config: Un
 
   def emitClasses = {
     val concreteClasses = for {clazz <- module.classes} yield {
-      val e = EntityTemplateData(module, clazz.getAncestorTraits(module).head)
+      val e = EntityTemplateData(module, clazz.getAncestorTraits(context).head)
       val className = clazz.name
       val c = ConcreteClassTemplateData(module, clazz)
       import c.{implicitArgsOrParens, implicitArgsUse, tpeArgsDecl, tpeArgsUse}
@@ -403,7 +403,7 @@ class ModuleFileGenerator(val codegen: MetaCodegen, module: SUnitDef, config: Un
 
       def converterBody = {
         val entity = context.findModuleEntity(parent.name).get._2
-        val entityFields = entity.getAvailableFields(module)
+        val entityFields = entity.getAvailableFields
         val classFields = clazz.args.args.map(_.name)
         val missingFields = classFields.filterNot(entityFields.contains(_))
         if (missingFields.isEmpty) {

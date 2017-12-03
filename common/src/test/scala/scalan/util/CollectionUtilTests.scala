@@ -126,4 +126,13 @@ class CollectionUtilTests extends BaseTests {
       assertResult(List(0, 1, 3, 5, 6, 2, 4))(0.traverseDepthFirst(treeStep(tree)))
     }
   }
+
+  test("partitionByType") {
+    val xs: List[Any] = List(1, "a", "b", 2, 3, 1.0, 2.0)
+    val (ints, others) = xs.partitionByType[Integer, Any]
+    ints shouldBe(List(1,2,3))
+    val (strs, doubles) = others.partitionByType[String, Double]
+    strs shouldBe(List("a", "b"))
+    doubles shouldBe(List(1.0, 2.0))
+  }
 }

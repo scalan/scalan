@@ -5,6 +5,7 @@ package scalan.meta
   */
 import ScalanAst._
 import PrintExtensions._
+import scalan.util.GraphUtil
 
 object ScalanAstExtensions {
 
@@ -128,6 +129,18 @@ object ScalanAstExtensions {
     def unitName = unit.name + ".scala"
     def selfTypeString(suffix: String) =
       unit.selfType.opt(t => s"self: ${t.tpe}${suffix} =>")
+
+    /** Returns traits and classes of this unit topologically sorted by inheritance (ancestors first). */
+    def allEntitiesSorted: List[SEntityDef] = {
+      val localEntityNames = unit.allEntities.map(_.name).toSet
+      def inherit(n: String) = {
+        val e = unit.getEntity(n)
+        val as = e.getAncestorTypeNames.filter(n => localEntityNames.contains(n))
+        as
+      }
+      val es = GraphUtil.stronglyConnectedComponents(unit.allEntities.map(_.name))(inherit).flatten
+      es.map(unit.getEntity).toList
+    }
 
     def updateFirstEntity(updater: STraitDef => STraitDef) = unit.traits.headOption match {
       case Some(e) =>

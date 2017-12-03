@@ -3,6 +3,7 @@ package scalan.util
 import scala.collection.{Seq, mutable}
 import mutable.{HashMap, ArrayBuffer}
 import scala.collection.generic.CanBuildFrom
+import scala.reflect.{ClassTag, classTag}
 
 object CollectionUtil {
 
@@ -173,6 +174,19 @@ object CollectionUtil {
       b.result()
     }
 
+    def partitionByType[B <: A, C <: A]
+        (implicit tB: ClassTag[B], tC: ClassTag[C],
+                  cbB: CanBuildFrom[Source[A], B, Source[B]],
+                  cbC: CanBuildFrom[Source[A], C, Source[C]]): (Source[B], Source[C]) = {
+      val bs = cbB()
+      val cs = cbC()
+      for (x <- xs)
+        if (tB.runtimeClass.isAssignableFrom(x.getClass))
+          bs += x.asInstanceOf[B]
+        else
+          cs += x.asInstanceOf[C]
+      (bs.result(), cs.result())
+    }
   }
 }
 

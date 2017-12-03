@@ -56,8 +56,18 @@ trait ScalanizerBase[+G <: Global]
     file
   }
 
-  class External2WrapperTypeTransformer(name: String)(implicit context: AstContext) extends AstReplacer(name, wrap)
+  def saveDebugCode(fileName: String, code: String) = {
+    val folder = new File("library")  // this is the root of 'library' module
+    val file = FileUtil.file(folder, "debug", fileName)
+    file.mkdirs()
+    FileUtil.write(file, code)
+  }
 
-  class ExtType2WrapperTypeTransformer(name: String) extends TypeReplacer(name, wrap)
-
+  def saveImplCode(file: File, implCode: String) = {
+    val fileName = file.getName.split('.')(0)
+    val folder = file.getParentFile
+    val implFile = FileUtil.file(folder, "impl", s"${fileName}Impl.scala")
+    implFile.mkdirs()
+    FileUtil.write(implFile, implCode)
+  }
 }

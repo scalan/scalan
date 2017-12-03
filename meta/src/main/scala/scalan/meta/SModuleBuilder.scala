@@ -9,6 +9,14 @@ import scalan.util.CollectionUtil._
 class SModuleBuilder(implicit val context: AstContext) {
 
   // Pipeline Step
+  def externalTypeToWrapper(unit: SUnitDef) = {
+    val wrapped = context.externalTypes.foldLeft(unit){(acc, externalTypeName) =>
+      new External2WrapperTypeTransformer(externalTypeName).moduleTransform(acc)
+    }
+    wrapped
+  }
+
+  // Pipeline Step
   def fixExistentialType(module: SUnitDef) = {
     new AstTransformer {
       def containsExistential(tpe: STpeExpr): Boolean = {
@@ -53,27 +61,34 @@ class SModuleBuilder(implicit val context: AstContext) {
 
   /** Pipeline Step
     * Make the trait Col[T] extends Def[Col[T] ] */
-  def addEntityDefAncestor(e: SEntityDef): SEntityDef = {
+  def addDefAncestor(e: SEntityDef): SEntityDef = {
     val newAncestors = STraitCall(
       name = "Def",
       args = List(STraitCall(e.name, e.tpeArgs.map(arg => STraitCall(arg.name, List()))))
     ).toTypeApply :: e.ancestors
-    e.copy(ancestors = newAncestors)
+    e match {
+      case t: STraitDef =>
+        t.copy(ancestors = newAncestors)
+      case c: SClassDef =>
+        c.copy(ancestors = newAncestors)
+    }
   }
 
   /** Pipeline Step
     * Make all traits in a given unit extend Def directly or indirectly (i.e. Col[T] extends Def[Col[T] ]) */
-  def addEntityAncestors(unit: SUnitDef) = {
+  def addDefAncestorToAllEntities(unit: SUnitDef): SUnitDef = {
     var extended = List[SEntityDef]()
-    for (t <- unit.traits) {
-      val alreadyInherit = extended.exists(e => t.isInherit(e.name)) || t.isInherit("Def")
-
-      if (!alreadyInherit) {
-        val newTrait =
-        extended =  :: extended
-      }
+    for (entity <- unit.allEntitiesSorted) {
+      val alreadyInherit = extended.exists(ext => entity.isInherit(ext.name)) || entity.isInherit("Def")
+      val newEntity =
+        if (alreadyInherit) entity
+        else {
+          addDefAncestor(entity)
+        }
+      extended ::= newEntity
     }
-
+    val (ts, cs) = extended.reverse.partitionByType[STraitDef, SClassDef]
+    unit.copy(traits = ts, classes = cs)
   }
 
   /** Puts the module to the cake. For example, trait Segments is transformed to
@@ -361,4 +376,51 @@ class SModuleBuilder(implicit val context: AstContext) {
     val t = new TypeTransformerInAst(new RepTypeRemover())
     t.moduleTransform(module)
   }
+
+  /** Imports scalan._ and other packages needed by Scalan and further transformations. */
+  def addImports(unit: SUnitDef) = {
+    val usersImport = unit.imports.collect{
+      case imp @ SImportStat("scalan.compilation.KernelTypes._") => imp
+    }
+    unit.copy(imports = SImportStat("scalan._") :: (usersImport))
+  }
+
+  def addModuleTrait(unit: SUnitDef) = {
+    if (unit.origModuleTrait.isEmpty) {
+      val mainName = unit.name
+      val mt = STraitDef(
+        name = SUnitDef.moduleTraitName(mainName),
+        tpeArgs = Nil,
+        ancestors = List(STraitCall(s"impl.${mainName}Defs"), STraitCall("scala.wrappers.WrappersModule")).map(STypeApply(_)),
+        body = Nil, selfType = None, companion = None)
+      unit.copy(origModuleTrait = Some(mt))
+    }
+    else unit
+  }
+
+}
+
+class ModuleVirtualizationPipeline(implicit val context: AstContext) extends (SUnitDef => SUnitDef) {
+  val moduleBuilder = new SModuleBuilder()
+  import moduleBuilder._
+
+  private val chain = scala.Function.chain(Seq(
+    fixExistentialType _,
+    externalTypeToWrapper _,
+    //      composeParentWithExt _,
+    addBaseToAncestors _,
+    addDefAncestorToAllEntities _,
+    updateSelf _,
+    //      addEntityRepSynonym _,
+    addImports _,
+    checkEntityCompanion _,
+    checkClassCompanion _,
+    cleanUpClassTags _,
+    replaceClassTagByElem _,
+    eliminateClassTagApply _,
+    genEntityImplicits _, genClassesImplicits _, genMethodsImplicits _,
+    fixEntityCompanionName _,
+    fixEvidences _
+  ))
+  override def apply(module: Module): Module = chain(module)
 }
