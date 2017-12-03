@@ -18,6 +18,7 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
   val name = "target-assembler"
   val runAfter = List("parser")
   val wrappers = MMap[SName, SUnitDef]()
+  val preparedUnits = MMap[SName, (SUnitDef, UnitConfig)]()
 
   override def isEnabled: Boolean = {
     val moduleName = s.moduleName
@@ -31,20 +32,22 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
     isNewFile
   }
 
-  def prepareSourceUnit(unit: SUnitDef): SUnitDef = {
-    unit
+  def prepareSourceUnit(unitConf: UnitConfig, target: TargetModuleConf) = {
+    val sourceFile = unitConf.getResourceFile
+    implicit val parseCtx = new ParseCtx(isVirtualized = true)(context)
+
+    val sourceUnit = parseEntityModule(sourceFile)
+    val b = new SModuleBuilder()
+    val preparedUnit = b.setSelfType(target.name.capitalize)(sourceUnit)
+    preparedUnit
   }
 
-  def copyScalanizedUnit(unitConf: UnitConfig, target: TargetModuleConf): Unit = {
-    val sourceFile = unitConf.getResourceFile
+  def copyScalanizedUnit(preparedUnit: SUnitDef, unitConf: UnitConfig, target: TargetModuleConf): Unit = {
     val targetRoot = s"${target.name }/${ModuleConf.SourcesDir }"
     val targetFile = FileUtil.file(targetRoot, unitConf.entityFile)
     val isNewTargetFile = !targetFile.exists
 
-    implicit val parseCtx = new ParseCtx(isVirtualized = true)(context)
     implicit val genCtx = new GenCtx(context, isVirtualized = true, toRep = true)
-    val sourceUnit = parseEntityModule(sourceFile)
-    val preparedUnit = prepareSourceUnit(sourceUnit)
     val unitTree = genUnitPackageDef(preparedUnit)
     saveCode(targetRoot, preparedUnit.packageName, preparedUnit.name, showCode(unitTree))
 
@@ -110,11 +113,25 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
       // generate WrappersModule cake
       saveWrappersCake(sourceRoot, wrappersCake)
 
-      // copy scalanized units from source modules
+      // add wrappers to the context
+      for (w <- wrappers.values) {
+        val externalName = w.traits(0).getExternalName.get
+        context.updateWrapper(externalName, WrapperDescr(w, Nil, WrapperConfig.default(externalName)))
+      }
+
+      // prepare units from source modules
       for (source <- target.sourceModules.values) {
-        for (unit <- source.units.values) {
-          copyScalanizedUnit(unit, target)
+        for (srcUnit <- source.units.values) {
+          val prepared = prepareSourceUnit(srcUnit, target)
+          context.addModule(prepared)
+          val name = SName(prepared.packageName, prepared.name)
+          preparedUnits += ((name, (prepared, srcUnit)))
         }
+      }
+
+      // generate CompilationUnit for each prepared unit from all source modules
+      for ((_, (unit, conf)) <- preparedUnits) {
+        copyScalanizedUnit(unit, conf, target)
       }
       ()
     }

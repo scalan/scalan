@@ -101,6 +101,13 @@ class SModuleBuilder(implicit val context: AstContext) {
     )))
   }
 
+  def setSelfType(selfTypeName: String)(unit: SUnitDef): SUnitDef = {
+    unit.copy(selfType = Some(SSelfTypeDef(
+      name = "self",
+      components = List(STraitCall(selfTypeName, List()))
+    )))
+  }
+
 //  /** Introduces a synonym for each entity. If name of the entity is Matr, the method adds:
 //    *   type RepMatr[T] = Rep[Matr[T]]
 //    * */

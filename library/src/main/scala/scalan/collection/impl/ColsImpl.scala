@@ -3,7 +3,6 @@ package scalan.collection
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scala.wrappers.WrappersModule
 
 package impl {
 // Abs -----------------------------------
@@ -175,4 +174,4 @@ trait ColsDefs extends scalan.Scalan with Cols {
 object ColsModule extends scalan.ModuleInfo("scalan.collection", "Cols")
 }
 
-trait ColsModule extends scalan.collection.impl.ColsDefs with scala.wrappers.WrappersModule { self: Library => }
+trait ColsModule extends scalan.collection.impl.ColsDefs {self: Library =>}

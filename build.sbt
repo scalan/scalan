@@ -123,8 +123,8 @@ lazy val libraryimpl = Project("library-impl", file("library-impl"))
 
 lazy val library = Project("library", file("library"))
   .dependsOn(common % allConfigDependency, core % allConfigDependency, libraryimpl)
-  .settings(commonSettings,
-//    libraryDefSettings,
+  .settings(//commonSettings,
+    libraryDefSettings,
     libraryDependencies ++= Seq())
 
 lazy val core = Project("scalan-core", file("core"))

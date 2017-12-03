@@ -289,8 +289,17 @@ object ScalanAst {
   final val FunctorTypeAnnotation    = classOf[FunctorType].getSimpleName
   final val ReifiedTypeArgAnnotation = classOf[Reified].getSimpleName
 
-  def externalTmplAnnotation(externalTmplName: String) =
-    SEntityAnnotation(ExternalAnnotation, List(SConst(externalTmplName,Some(TpeString))))
+
+  object ExternalEntityAnnotation {
+    def apply(externalName: String) =
+      SEntityAnnotation(ExternalAnnotation, List(SConst(externalName,Some(TpeString))))
+
+    def unapply(a: SEntityAnnotation): Option[String] = a match {
+      case SEntityAnnotation(ExternalAnnotation, List(SConst(externalName,_))) =>
+        Some(externalName.toString)
+      case _ => None
+    }
+  }
 
   // SExpr universe --------------------------------------------------------------------------
   trait SExpr {
@@ -693,7 +702,11 @@ object ScalanAst {
     }
   }
 
-  implicit class SEntityDefOps(td: SEntityDef) {
+  implicit class SEntityDefOps(e: SEntityDef) {
+    def getExternalName: Option[String] = e.getAnnotation(ExternalAnnotation) match {
+      case Some(ExternalEntityAnnotation(externalName)) => Some(externalName)
+      case _ => None
+    }
   }
 
   case class SClassDef(

@@ -255,7 +255,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
     }
     val baseType = STraitCall(externalName, typeParams)
     val entityAncestors = originalEntityAncestors
-    val externalAnnot = externalTmplAnnotation(externalTypeName)
+    val externalAnnot = ExternalEntityAnnotation(externalTypeName)
     val entityAnnotations = externalAnnot :: wrapperConf.annotations.map { a => SEntityAnnotation(a, Nil) }
     val entity = STraitDef(
       name = wClassName,

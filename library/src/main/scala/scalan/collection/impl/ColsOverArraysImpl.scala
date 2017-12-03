@@ -3,7 +3,6 @@ package scalan.collection
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scala.wrappers.WrappersModule
 
 package impl {
 // Abs -----------------------------------
@@ -17,15 +16,14 @@ trait ColsOverArraysDefs extends scalan.Scalan with ColsOverArrays {
     lazy val selfType = element[ColOverArray[A]]
   }
   // elem for concrete class
-  class ColOverArrayElem[A](val iso: Iso[ColOverArrayData[A], ColOverArray[A]])(implicit override val eA: Elem[A])
+  class ColOverArrayElem[A](val iso: Iso[ColOverArrayData[A], ColOverArray[A]])
     extends ColElem[A, ColOverArray[A]]
     with ConcreteElem[ColOverArrayData[A], ColOverArray[A]] {
     override lazy val parent: Option[Elem[_]] = Some(colElement(element[A]))
-    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("A" -> (eA -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs()
     override def convertCol(x: Rep[Col[A]]) = ColOverArray(x.arr)
     override def getDefaultRep = ColOverArray(element[WArray[A]].defaultRepValue)
     override lazy val tag = {
-      implicit val tagA = eA.tag
       weakTypeTag[ColOverArray[A]]
     }
   }
@@ -34,7 +32,7 @@ trait ColsOverArraysDefs extends scalan.Scalan with ColsOverArrays {
   type ColOverArrayData[A] = WArray[A]
 
   // 3) Iso for concrete class
-  class ColOverArrayIso[A](implicit eA: Elem[A])
+  class ColOverArrayIso[A]
     extends EntityIso[ColOverArrayData[A], ColOverArray[A]] with Def[ColOverArrayIso[A]] {
     override def from(p: Rep[ColOverArray[A]]) =
       p.arr
@@ -44,17 +42,16 @@ trait ColsOverArraysDefs extends scalan.Scalan with ColsOverArrays {
     }
     lazy val eFrom = element[WArray[A]]
     lazy val eTo = new ColOverArrayElem[A](self)
-    lazy val selfType = new ColOverArrayIsoElem[A](eA)
-    def productArity = 1
-    def productElement(n: Int) = eA
+    lazy val selfType = new ColOverArrayIsoElem[A]
+    def productArity = 0
+    def productElement(n: Int) = ???
   }
-  case class ColOverArrayIsoElem[A](eA: Elem[A]) extends Elem[ColOverArrayIso[A]] {
-    def getDefaultRep = reifyObject(new ColOverArrayIso[A]()(eA))
+  case class ColOverArrayIsoElem[A]() extends Elem[ColOverArrayIso[A]] {
+    def getDefaultRep = reifyObject(new ColOverArrayIso[A]())
     lazy val tag = {
-      implicit val tagA = eA.tag
       weakTypeTag[ColOverArrayIso[A]]
     }
-    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs("A" -> (eA -> scalan.util.Invariant))
+    override def buildTypeArgs = super.buildTypeArgs ++ TypeArgs()
   }
   // 4) constructor and deconstructor
   class ColOverArrayCompanionCtor extends CompanionDef[ColOverArrayCompanionCtor] with ColOverArrayCompanion {
@@ -84,13 +81,13 @@ trait ColsOverArraysDefs extends scalan.Scalan with ColsOverArrays {
   implicit class ExtendedColOverArray[A](p: Rep[ColOverArray[A]]) {
     def toData: Rep[ColOverArrayData[A]] = {
       implicit val eA = p.arr.eT
-      isoColOverArray(eA).from(p)
+      isoColOverArray.from(p)
     }
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoColOverArray[A](implicit eA: Elem[A]): Iso[ColOverArrayData[A], ColOverArray[A]] =
-    reifyObject(new ColOverArrayIso[A]()(eA))
+  implicit def isoColOverArray[A]: Iso[ColOverArrayData[A], ColOverArray[A]] =
+    reifyObject(new ColOverArrayIso[A]())
 
   case class ColOverArrayBuilderCtor
       ()
@@ -248,6 +245,4 @@ trait ColsOverArraysDefs extends scalan.Scalan with ColsOverArrays {
 object ColsOverArraysModule extends scalan.ModuleInfo("scalan.collection", "ColsOverArrays")
 }
 
-trait ColsOverArraysModule extends scalan.collection.impl.ColsOverArraysDefs with scala.wrappers.WrappersModule {
-  self: Library =>
-}
+trait ColsOverArraysModule extends scalan.collection.impl.ColsOverArraysDefs {self: Library =>}

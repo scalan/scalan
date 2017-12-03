@@ -8,7 +8,7 @@ package scalan.collection {
       def length: Rep[Int];
       def apply(i: Rep[Int]): Rep[A]
     };
-    trait ColBuilder {
+    trait ColBuilder extends Def[ColBuilder] {
       def fromArray[T](arr: Rep[WArray[T]]): Rep[Col[T]];
       def ddmvm(v: Rep[WArray[Double]]): Rep[Int] = {
         val xs: Rep[WArray[Int]] = WArray.fill[Int](v.length, Thunk(toRep(0.asInstanceOf[Int])));
