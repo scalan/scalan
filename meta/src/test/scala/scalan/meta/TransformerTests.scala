@@ -37,7 +37,7 @@ class TransformerTests extends ScalanAstTests with Examples {
   describe("Unit transforms") {
     it("allEntitiesSorted") {
       val es = colsVirt.allEntitiesSorted.map(e => e.name)
-      es shouldBe(List("Collection", "ColOverArray"))
+      es shouldBe(List("Collection", "PairCollection", "ColOverArray"))
     }
 
     it("addDefAncestorToAllEntities doesn't change virtualized unit") {
