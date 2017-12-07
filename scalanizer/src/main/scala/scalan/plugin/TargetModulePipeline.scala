@@ -32,13 +32,15 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
     isNewFile
   }
 
+  val moduleBuilder = new SModuleBuilder()(context)
+
   def prepareSourceUnit(unitConf: UnitConfig, target: TargetModuleConf) = {
     val sourceFile = unitConf.getResourceFile
     implicit val parseCtx = new ParseCtx(isVirtualized = true)(context)
 
     val sourceUnit = parseEntityModule(sourceFile)
-    val b = new SModuleBuilder()
-    val preparedUnit = b.setSelfType(target.name.capitalize)(sourceUnit)
+
+    val preparedUnit = moduleBuilder.setSelfType(target.name.capitalize)(sourceUnit)
     preparedUnit
   }
 
@@ -51,8 +53,11 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
     val unitTree = genUnitPackageDef(preparedUnit)
     saveCode(targetRoot, preparedUnit.packageName, preparedUnit.name, showCode(unitTree))
 
-    val boilerplateText = genUnitBoilerplateText(target, preparedUnit, isVirtualized = true)
-    val targetImpl = saveCode(targetRoot, preparedUnit.packageName + ".impl", preparedUnit.name + "Impl", boilerplateText)
+    val transforms = Seq((u: SUnitDef) => moduleBuilder.genClassesImplicits(u))
+    val enriched = scala.Function.chain(transforms)(preparedUnit)
+
+    val boilerplateText = genUnitBoilerplateText(target, enriched, isVirtualized = true)
+    val targetImpl = saveCode(targetRoot, enriched.packageName + ".impl", enriched.name + "Impl", boilerplateText)
     val isNewImpl = !targetImpl.exists
 
     if (isNewTargetFile)
