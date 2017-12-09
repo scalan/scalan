@@ -43,17 +43,6 @@ lazy val testSettings = Seq(
 
 lazy val commonSettings = buildSettings ++ testSettings
 
-lazy val scalaVirtualizedVersion = sys.env.getOrElse("SCALA_VIRTUALIZED_VERSION", "2.11.2")
-
-lazy val scalaVirtualizedSettings = Seq(
-  scalaVersion := scalaVirtualizedVersion,
-  scalaOrganization := "org.scala-lang.virtualized",
-  libraryDependencies ++= Seq(
-    "org.scala-lang.virtualized" % "scala-library" % scalaVirtualizedVersion,
-    "org.scala-lang.virtualized" % "scala-compiler" % scalaVirtualizedVersion
-  )
-)
-
 lazy val itSettings = commonSettings ++ Defaults.itSettings ++
   Seq(
     libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "it",
@@ -61,11 +50,6 @@ lazy val itSettings = commonSettings ++ Defaults.itSettings ++
       Seq("-Xmx3g", "-XX:PermSize=384m", "-XX:MaxPermSize=384m", "-XX:ReservedCodeCacheSize=384m"),
     parallelExecution in IntegrationTest := false,
     fork in IntegrationTest := true)
-
-lazy val lmsBackendSettings = itSettings ++ scalaVirtualizedSettings ++ Seq(
-    libraryDependencies += "org.scala-lang.lms" %% "lms-core" % "0.9.1-SNAPSHOT",
-    // we know we use LMS snapshot here, ignore it
-    releaseSnapshotDependencies := Seq.empty)
 
 def libraryDefSettings = commonSettings ++ Seq(
   scalacOptions ++= Seq(
@@ -87,6 +71,12 @@ lazy val common = Project("scalan-common", file("common"))
     "commons-io" % "commons-io" % "2.5"
 
 //    "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.9.1"
+  ))
+
+lazy val macros = Project("scalan-macros", file("macros"))
+  .dependsOn(common % allConfigDependency)
+  .settings(commonSettings,
+  libraryDependencies ++= Seq(
   ))
 
 lazy val meta = Project("scalan-meta", file("meta"))
@@ -128,7 +118,7 @@ lazy val library = Project("library", file("library"))
     libraryDependencies ++= Seq())
 
 lazy val core = Project("scalan-core", file("core"))
-  .dependsOn(common % allConfigDependency, meta)
+  .dependsOn(common % allConfigDependency, meta, macros)
   .settings(commonSettings,
     libraryDependencies ++= Seq(
       "cglib" % "cglib" % "3.2.3",
@@ -152,7 +142,7 @@ lazy val toolkit = Project("scalan-toolkit", file("toolkit")).
   )
 
 lazy val root = Project("scalan", file("."))
-  .aggregate(common, meta, scalanizer, libraryapi, libraryimpl, core, library, kotlinBackend, toolkit)
+  .aggregate(common, meta, macros, scalanizer, libraryapi, libraryimpl, core, library, kotlinBackend, toolkit)
   .settings(buildSettings, publishArtifact := false)
 
 //lazy val collections = Project("scalan-collections", file("collections"))
