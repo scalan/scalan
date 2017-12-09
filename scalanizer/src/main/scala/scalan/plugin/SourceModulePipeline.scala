@@ -26,16 +26,18 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
 
   val steps: List[PipelineStep] = List(
     RunStep("dependencies") { step =>
-      val module = s.getSourceModule
+      val module = scalanizer.getSourceModule
       // add virtualized units from dependencies
-      for (inModule <- module.collectInputModules()) {
-        for (unitConf <- inModule.units.values) {
+      for (depModule <- module.dependsOnModules()) {
+        for (unitConf <- depModule.units.values) {
           val unit = parseEntityModule(unitConf.getResourceFile)(new ParseCtx(isVirtualized = true)(context))
           scalanizer.inform(s"Step(${step.name}): Adding dependency ${unit.fullName} parsed from ${unitConf.getResourceFile}")
           snState.addUnit(unit)
         }
       }
       // add not yet virtualized units from the current module
+      // because we are running after typer, all the names has been resolved by the compiler
+      // we need to ensure visibility of all the names by scalanizer as well
       for (unitConf <- module.units.values) {
         val unit = parseEntityModule(unitConf.getFile)(new ParseCtx(isVirtualized = false)(context))
         scalanizer.inform(s"Step(${step.name}): Adding unit ${unit.fullName} form module '${s.moduleName}' (parsed from ${unitConf.getFile})")
@@ -78,78 +80,47 @@ class SourceModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
       ()
     },
     RunStep("wrapbackend") { _ =>
-      snState.forEachWrapper { case (_, WrapperDescr(m, _, config)) =>
-        val module = m.copy(imports = m.imports :+ SImportStat("scala.wrappers.WrappersModule"))(scalanizer.context)
+      snState.forEachWrapper { case (_, WrapperDescr(u, _, config)) =>
+        val wUnit = u.copy(imports = u.imports :+ SImportStat("scala.wrappers.WrappersModule"))(scalanizer.context)
         val moduleConf = getSourceModule
 
-        /** Build source code of the wrapper module and store it in a file */
-        val wrapperModuleWithoutImpl = module.copy(classes = Nil)(context)
-        val optimizedImplicits = optimizeModuleImplicits(wrapperModuleWithoutImpl)
-        val wrapperPackage = genWrapperPackage(optimizedImplicits)
+        /** Build source code of the wrapper unit and store it in a file */
+        val wUnitWithoutImpl = wUnit.copy(classes = Nil)(context)
+        val optImplicits = optimizeModuleImplicits(wUnitWithoutImpl)
+        val wrapperPackage = genPackageDef(optImplicits, isVirtualized = false)(scalanizer.context)
         saveWrapperCode(moduleConf,
-          optimizedImplicits.packageName,
-          optimizedImplicits.name,
+          optImplicits.packageName,
+          optImplicits.name,
           showCode(wrapperPackage))
       }
     },
     ForEachUnitStep("virtfrontend") { context => import context._;
       withUnitModule(unit) { (module, unitFileName) =>
-        val packageName = getUnitPackage(unit)
-        val unitName = Path(unitFileName).stripExtension
-
         // this unit has been added in 'dependencies' step
-        // now it can be replaced with the body which has passed namer and typer
-        val existingUnit = snState.getUnit(packageName, unitName)
+        val existingUnit = context.getUnit
 
-        implicit val ctx = new ParseCtx(false)(scalanizer.context)
-        // here unit.body already passed namer and typer phases
+        // now it can be replaced with the body which has passed namer and typer
+        implicit val ctx = new ParseCtx(isVirtualized = false)(scalanizer.context)
         val unitDef = unitDefFromTree(unitFileName, unit.body)
-        scalanizer.inform(s"Step(virtfrontend): Updating source unit ${existingUnit.fullName} with version from CompilationUnit(${unit.source.file})")
+
+        scalanizer.inform(
+            s"Step(virtfrontend): Updating source unit ${existingUnit.fullName} " +
+            s"with version from CompilationUnit(${unit.source.file})")
         snState.addUnit(unitDef)
       }
     },
     ForEachUnitStep("virtfinal") { context => import context._
       withUnitModule(unit) { (module, unitFileName) =>
-        val packageName = getUnitPackage(unit)
-        val unitName = Path(unitFileName).stripExtension
-        val unitDef = snState.getUnit(packageName, unitName)
+        val unitDef = context.getUnit
 
         /** Generates a virtualized version of original Scala AST, wraps types by Rep[] and etc. */
-        val enrichedModuleDef = virtPipeline(unitDef)
+        val virtUnitDef = virtPipeline(unitDef)
 
         /** Scala AST of virtualized module */
-        val optimizedImplicits = optimizeModuleImplicits(enrichedModuleDef)
-
-        val virtAst = genUDModuleFile(optimizedImplicits, unit.body)
-
-        val nameOnly = unitName
-
-        saveCode(module, optimizedImplicits.packageName, nameOnly, showCode(virtAst))
-
-        /** produce boilerplate code using ModuleFileGenerator
-          * Note: we need enriched module with all implicits in there place for correct boilerplate generation */
-        val boilerplateText = genUDModuleBoilerplateText(unitFileName, enrichedModuleDef)
-
-        saveCode(module, enrichedModuleDef.packageName + ".impl", nameOnly + "Impl", boilerplateText)
-
-        /** Checking of user's extensions like SegmentDsl, SegmentDslStd and SegmentDslExp */
-        //        val extensions: List[Tree] = getExtensions(moduleDef)
-        //        for ((e,i) <- extensions.zipWithIndex)
-        //          showTree(s"extensions$i", unitName, e)
-        /** Serialize Virtualized AST for passing to run-time. */
-        //        val serializedModuleDef = serializeModuleDef(moduleDef)
-        //        showTree("serializedAst", unitName, serializedModuleDef)
-        /** Replace of hot spots by optimized kernels in the original Scala AST of current compilation unit. */
-        //        val accelAst = transformHotSpots(moduleDef, unit)
-        //        showTree("accelAst", unitName, accelAst)
-        /** Staged Ast is package which contains virtualized Tree + boilerplate */
-        //        val objectHotSpotKernels = getHotSpotKernels(moduleDef)
-        //        val objectHotSpotManager = getHotSpotManager(moduleDef)
-        //        val stagedAst = getStagedAst(
-        //              moduleDef, virtAst, boilerplate, extensions, serializedModuleDef,
-        //              objectHotSpotKernels,
-        //              objectHotSpotManager)
-        //        showTree("stagedAst", unitName, stagedAst)
+        implicit val ctx = GenCtx(scalanizer.context, isVirtualized = false, toRep = true)
+        val virtAst = genPackageDef(virtUnitDef)
+        
+        saveCodeToResources(module, virtUnitDef.packageName, virtUnitDef.name, showCode(virtAst))
       }
     }
   )

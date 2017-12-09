@@ -14,7 +14,7 @@ class ConfTests extends ScalanAstTests with Examples {
       val implModule = new SourceModuleConf("library-impl")
           .addUnit("ColsOverArrays.scala", "scalan/collection/ColsOverArrays.scala")
           .dependsOn(apiModule, warrayModule)
-      implModule.collectInputModules() shouldBe (Set(warrayModule, apiModule))
+      implModule.dependsOnModules() shouldBe (Set(warrayModule, apiModule))
     }
   }
 }

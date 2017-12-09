@@ -4,6 +4,7 @@ import java.io.File
 
 import scalan.util.{FileUtil, GraphUtil}
 import scalan.util.CollectionUtil._
+import scalan.util.StringUtil._
 import scala.collection.mutable.{Map => MMap}
 
 sealed trait Conf {
@@ -45,7 +46,7 @@ abstract class ModuleConf extends Conf {
 
   def dependencies: ConfMap[ModuleConf]
 
-  def collectInputModules(): Set[ModuleConf] =
+  def dependsOnModules(): Set[ModuleConf] =
     GraphUtil.depthFirstSetFrom(Set(this.dependencies.values.toSeq: _*))(m => m.dependencies.values)
 
   def getResourceHome = s"$name/${ModuleConf.ResourcesDir }"
@@ -75,6 +76,7 @@ object ModuleConf {
   val SourcesDir = "src/main/scala"
   val TestsDir = "src/test/scala"
   val ResourcesDir = "src/main/resources"
+  val ResourceFileExtension = ".scalan"
 }
 
 class TargetModuleConf(
@@ -120,8 +122,10 @@ case class UnitConfig(
     extraImports: List[String] = List("scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}", "scalan.meta.ScalanAst._"),
     isVirtualized: Boolean = true) extends Conf {
   def getFile: File = FileUtil.file(srcPath, entityFile)
-
-  def getResourceFile: File = FileUtil.file(resourcePath, entityFile)
+  def getResourceFile: File = {
+    val entityResource = entityFile.replaceSuffix(".scala", ModuleConf.ResourceFileExtension)
+    FileUtil.file(resourcePath, entityResource)
+  }
 }
 
 object UnitConfig {

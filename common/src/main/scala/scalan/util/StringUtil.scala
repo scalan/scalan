@@ -23,6 +23,16 @@ object StringUtil {
       val res = if (pos == -1) str else str.substring(0, pos)
       res
     }
+
+    def replaceSuffix(suffix: String, newSuffix: String) = {
+      if (str.isNullOrEmpty || suffix.isNullOrEmpty) str
+      else {
+        val stripped = str.stripSuffix(suffix)
+        if (stripped.length == str.length) str
+        else
+          stripped + (if (newSuffix == null) "" else newSuffix)
+      }
+    }
   }
 
 }

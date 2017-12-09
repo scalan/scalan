@@ -5,9 +5,6 @@ import scalan.meta.ScalanAst.{STraitCall, SClassArg, STpeDef, SUnitDef, SValDef,
 import scalan.meta.ScalanAstTransformers.filterInternalAnnot
 import scalan.util.ScalaNameUtil.PackageAndName
 
-/**
-  * Created by slesarenko on 05/11/2017.
-  */
 trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
   import global._
 
@@ -22,26 +19,6 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
     mt
   }
 
-  /** Generate file for virtualized user-defined module */
-  def genUDModuleFile(module: SUnitDef, orig: Tree): Tree = orig match {
-    case q"package $ref { ..$_ }" =>
-      implicit val ctx = GenCtx(module.context, isVirtualized = false, toRep = true)
-      val imports = module.imports.map(genImport(_))
-      val moduleBody = List[Tree](genModuleTrait(module))
-      PackageDef(ref,
-        imports ++
-            moduleBody
-      )
-    case tree =>
-      throw new IllegalArgumentException("Module must be in a package")
-  }
-
-//  @tailrec
-//  final def genRefTree(qualifier: Tree, packageNames: List[String]): RefTree = packageNames match {
-//    case lastName :: Nil => RefTree(qualifier, TermName(lastName))
-//    case name :: tail => genRefTree(Select(qualifier, name), tail)
-//  }
-
   def genRefTree(packageName: String): RefTree = {
     val names = packageName.split('.').toList
     names match {
@@ -51,8 +28,13 @@ trait ScalanGens[+G <: Global] { self: ScalanParsers[G] =>
     }
   }
 
-  /** Generate PackageDef for a given SUnitDef */
-  def genUnitPackageDef(unit: SUnitDef)(implicit ctx: GenCtx): Tree = {
+  /** Generates PackageDef (Scala AST) for the given SUnitDef. */
+  def genPackageDef(unit: SUnitDef, isVirtualized: Boolean = false)(implicit ctx: AstContext): PackageDef = {
+    implicit val genCtx = GenCtx(ctx, isVirtualized, toRep = !isVirtualized)
+    genPackageDef(unit)(genCtx)
+  }
+
+  def genPackageDef(unit: SUnitDef)(implicit ctx: GenCtx): PackageDef = {
       val ref = genRefTree(unit.packageName)
       val imports = unit.imports.map(genImport(_))
       val moduleBody = List[Tree](genModuleTrait(unit))

@@ -40,34 +40,31 @@ trait ScalanizerBase[+G <: Global]
     }
   }
 
-  def saveCode(module: SourceModuleConf, packageName: String, fileName: String, code: String): Unit = {
-    saveCode(module.getResourceHome, packageName, fileName, code)
+  def saveCodeToResources(module: SourceModuleConf, packageName: String, fileName: String, code: String): Unit = {
+    saveCode(module.getResourceHome, packageName, fileName, ModuleConf.ResourceFileExtension, code)
   }
 
   def saveWrapperCode(module: SourceModuleConf, packageName: String, fileName: String, code: String) = {
-    saveCode(module.getResourceHome + "/wrappers", packageName, fileName, code)
+    saveCode(module.getResourceHome + "/wrappers", packageName, fileName, ModuleConf.ResourceFileExtension, code)
   }
 
-  def saveCode(sourceRoot: String, packageName: String, unitName: String, code: String): File = {
+  def saveImplCode(sourceRoot: String, packageName: String, unitName: String, ext: String, code: String): File = {
+    saveCode(sourceRoot, packageName + ".impl", unitName + "Impl", ext, code)
+  }
+
+  def saveCode(sourceRoot: String, packageName: String, unitName: String, ext: String, code: String): File = {
     val packagePath = packageName.replace('.', '/')
-    val file = FileUtil.file(sourceRoot, packagePath, unitName + ".scala")
+    val file = FileUtil.file(sourceRoot, packagePath, unitName + ext)
     file.mkdirs()
     FileUtil.write(file, code)
     file
   }
 
-  def saveDebugCode(fileName: String, code: String) = {
-    val folder = new File("library")  // this is the root of 'library' module
-    val file = FileUtil.file(folder, "debug", fileName)
-    file.mkdirs()
-    FileUtil.write(file, code)
-  }
-
-  def saveImplCode(file: File, implCode: String) = {
-    val fileName = file.getName.split('.')(0)
-    val folder = file.getParentFile
-    val implFile = FileUtil.file(folder, "impl", s"${fileName}Impl.scala")
-    implFile.mkdirs()
-    FileUtil.write(implFile, implCode)
-  }
+//  def saveImplCode(file: File, implCode: String) = {
+//    val fileName = file.getName.split('.')(0)
+//    val folder = file.getParentFile
+//    val implFile = FileUtil.file(folder, "impl", s"${fileName}Impl.scala")
+//    implFile.mkdirs()
+//    FileUtil.write(implFile, implCode)
+//  }
 }

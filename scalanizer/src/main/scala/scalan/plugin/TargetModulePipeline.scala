@@ -45,23 +45,26 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
   }
 
   def copyScalanizedUnit(preparedUnit: SUnitDef, unitConf: UnitConfig, target: TargetModuleConf): Unit = {
-    val targetRoot = s"${target.name }/${ModuleConf.SourcesDir }"
-    val targetFile = FileUtil.file(targetRoot, unitConf.entityFile)
-    val isNewTargetFile = !targetFile.exists
+    val targetSrcRoot = s"${target.name }/${ModuleConf.SourcesDir }"
+    val targetSrcFile = FileUtil.file(targetSrcRoot, unitConf.entityFile)
+    val isNewTargetFile = !targetSrcFile.exists
 
+    val optImplicits = optimizeModuleImplicits(preparedUnit)
     implicit val genCtx = new GenCtx(context, isVirtualized = true, toRep = true)
-    val unitTree = genUnitPackageDef(preparedUnit)
-    saveCode(targetRoot, preparedUnit.packageName, preparedUnit.name, showCode(unitTree))
+    val unitTree = genPackageDef(optImplicits)
+    saveCode(targetSrcRoot, optImplicits.packageName, optImplicits.name, ".scala", showCode(unitTree))
 
-    val transforms = Seq((u: SUnitDef) => moduleBuilder.genClassesImplicits(u))
-    val enriched = scala.Function.chain(transforms)(preparedUnit)
+//    val transforms = Seq((u: SUnitDef) => moduleBuilder.genClassesImplicits(u))
+//    val enriched = scala.Function.chain(transforms)(preparedUnit)
 
-    val boilerplateText = genUnitBoilerplateText(target, enriched, isVirtualized = true)
-    val targetImpl = saveCode(targetRoot, enriched.packageName + ".impl", enriched.name + "Impl", boilerplateText)
+    /** produce boilerplate code using ModuleFileGenerator
+      * NOTE: we need original preparedUnit with all implicits in there place for correct boilerplate generation */
+    val boilerplateText = genUnitBoilerplateText(target, preparedUnit, isVirtualized = true)
+    val targetImpl = saveImplCode(targetSrcRoot, preparedUnit.packageName, preparedUnit.name, ".scala", boilerplateText)
     val isNewImpl = !targetImpl.exists
 
     if (isNewTargetFile)
-      global.currentRun.compileLate(new PlainFile(Path(targetFile)))
+      global.currentRun.compileLate(new PlainFile(Path(targetSrcFile)))
     if (isNewImpl)
       global.currentRun.compileLate(new PlainFile(Path(targetImpl)))
   }
@@ -87,7 +90,7 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
     val pkgStats = imports :+ cakeTree
     val wrappersPackage = PackageDef(RefTree(Ident(TermName("scala")), TermName("wrappers")), pkgStats)
     val code = showCode(wrappersPackage)
-    saveCode(sourceRoot, "scala.wrappers", cake.traitDef.name, code)
+    saveCode(sourceRoot, "scala.wrappers", cake.traitDef.name, ".scala", code)
   }
 
   val steps: List[PipelineStep] = List(
@@ -95,7 +98,7 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
       scalanizer.inform(s"Processing target module '${scalanizer.moduleName }'")
       // merge all partial wrappers from source modules
       val target = snConfig.targetModules(moduleName)
-      val sourceRoot = s"${target.name }/${ModuleConf.SourcesDir }"
+      val sourceRoot = s"${target.name}/${ModuleConf.SourcesDir}"
       for (source <- target.sourceModules.values) {
         for (wFile <- source.listWrapperFiles) {
           val unit = parseEntityModule(wFile)(new ParseCtx(isVirtualized = true)(context))
@@ -103,14 +106,15 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
           mergeWrapperUnit(unit)
         }
       }
-      // 1) gen boilerplate and save for all merged wrappers 2) build wrappers cake
+      // 1) gen boilerplate and save for all merged wrappers
+      // 2) build wrappers cake
       var wrappersCake = initWrapperCake()
       for (w <- wrappers.values) {
-        val wPackage = genWrapperPackage(w, isVirtualized = true)
-        saveCode(sourceRoot, w.packageName, w.name, showCode(wPackage))
+        val wPackage = genPackageDef(w, isVirtualized = true)(context)
+        saveCode(sourceRoot, w.packageName, w.name, ".scala", showCode(wPackage))
 
         val boilerplateText = genUnitBoilerplateText(target, w, isVirtualized = true)
-        saveCode(sourceRoot, w.packageName + ".impl", w.name + "Impl", boilerplateText)
+        saveImplCode(sourceRoot, w.packageName, w.name, ".scala", boilerplateText)
 
         wrappersCake = updateWrappersCake(wrappersCake, w)
       }
@@ -125,12 +129,12 @@ class TargetModulePipeline[+G <: Global](s: Scalanizer[G]) extends ScalanizerPip
       }
 
       // prepare units from source modules
-      for (source <- target.sourceModules.values) {
-        for (srcUnit <- source.units.values) {
-          val prepared = prepareSourceUnit(srcUnit, target)
+      for (srcModule <- target.sourceModules.values) {
+        for (srcUnitConf <- srcModule.units.values) {
+          val prepared = prepareSourceUnit(srcUnitConf, target)
           context.addModule(prepared)
           val name = SName(prepared.packageName, prepared.name)
-          preparedUnits += ((name, (prepared, srcUnit)))
+          preparedUnits += ((name, (prepared, srcUnitConf)))
         }
       }
 

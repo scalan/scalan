@@ -5,6 +5,7 @@ import scalan.meta.scalanizer.Scalanizer
 import scala.tools.nsc.Global
 import scala.annotation.tailrec
 import scala.reflect.internal.Phase
+import scala.reflect.io.Path
 import scalan.meta.ScalanAstTransformers.{isIgnoredExternalType, External2WrapperTypeTransformer}
 import scalan.meta.ScalanAst._
 import scalan.meta.ScalanAstExtensions._
@@ -23,19 +24,27 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
 
   def isEnabled: Boolean
 
-  trait UnitContext {
+  trait UnitStepContext {
     val unit: global.CompilationUnit
+
+    def getUnit: SUnitDef = {
+      val packageName = getUnitPackage(unit)
+      val unitFileName = unit.source.file.name
+      val unitName = Path(unitFileName).stripExtension
+      val unitDef = snState.getUnit(packageName, unitName)
+      unitDef
+    }
   }
 
-  object UnitContext {
-    def apply(u: global.CompilationUnit) = new UnitContext {val unit = u}
+  object UnitStepContext {
+    def apply(u: global.CompilationUnit) = new UnitStepContext {val unit = u}
   }
 
   sealed trait PipelineStep {
     def name: String
   }
 
-  case class ForEachUnitStep(name: String)(val action: UnitContext => Unit) extends PipelineStep
+  case class ForEachUnitStep(name: String)(val action: UnitStepContext => Unit) extends PipelineStep
 
   case class RunStep(name: String)(val action: PipelineStep => Unit) extends PipelineStep
 
@@ -44,7 +53,7 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
       def newPhase(prev: Phase) = new StdPhase(prev) {
         def apply(unit: global.CompilationUnit): Unit = {
           if (!pipeline.isEnabled) return
-          val context = UnitContext(unit.asInstanceOf[scalanizer.global.CompilationUnit])
+          val context = UnitStepContext(unit.asInstanceOf[scalanizer.global.CompilationUnit])
           step.action(context)
         }
       }
@@ -459,16 +468,6 @@ abstract class ScalanizerPipeline[+G <: Global](val scalanizer: Scalanizer[G]) {
       ScalanCodegen, unit, mc.mkUnit(unit.unitName, unit.fileName, isVirtualized = isVirtualized))
     val implCode = gen.emitImplFile
     implCode
-  }
-
-  /** Generates Scala AST for the given wrapper (without implementation). */
-  def genWrapperPackage(unit: SUnitDef, isVirtualized: Boolean = false): Tree = {
-    implicit val genCtx = GenCtx(context = unit.context, isVirtualized, toRep = !isVirtualized)
-    val scalaAst = genModuleTrait(unit)
-    val imports = unit.imports.map(genImport(_))
-    val pkgStats = imports :+ scalaAst
-    val wrappersPackage = PackageDef(Ident(TermName(unit.packageName)), pkgStats)
-    wrappersPackage
   }
 
   def initWrapperCake(): WrapperCake = {
